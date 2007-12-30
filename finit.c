@@ -1,5 +1,5 @@
 
-#include <stdout.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/mount.h>
@@ -8,6 +8,9 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <linux/fs.h>
 #include <linux/reboot.h>
 
 
@@ -23,6 +26,9 @@
 
 #define touch(x) close(creat((x), 0644))
 
+
+void shutdown();
+void wait_all();
 
 void dummy()
 {
@@ -51,7 +57,7 @@ int main(int argv, char **argc)
 	 * Signal management
 	 */
 	for (i = 1; i < NSIG; i++)
-		SETSIG(sa, f, SIG_IGN, SA_RESTART);
+		SETSIG(sa, i, SIG_IGN, SA_RESTART);
 
 	SETSIG(sa, SIGINT,  shutdown, 0);
 	SETSIG(sa, SIGPWR,  dummy,    0);
@@ -82,7 +88,7 @@ int main(int argv, char **argc)
 			close(1);
 			close(2);
 		}
-		fclose(s);
+		fclose(f);
 	}
 
 	setsid();
@@ -100,7 +106,7 @@ int main(int argv, char **argc)
 	/*
 	 * Time adjustments
 	 */
-	if ((fd = open("/etc/adjtime")) < 0) {
+	if ((fd = creat("/etc/adjtime", 0644)) < 0) {
 		write(fd, "0.0 0 0.0\n", 10);
 		close(fd);
 	}
@@ -114,9 +120,10 @@ int main(int argv, char **argc)
 
 	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
 		while ((d = readdir(dir)) != NULL) {
-			if (isalnum(d.name[0]))
+			if (isalnum(d->d_name[0]))
 				continue;
-			sprintf(filename, "/etc/resolvconf/run/interface/%s", d.name);
+			sprintf(filename, "/etc/resolvconf/run/interface/%s",
+								d->d_name);
 			unlink(filename);
 		}
 	}
@@ -172,7 +179,7 @@ int main(int argv, char **argc)
 		sigemptyset(&nmask1);
 		sigemptyset(&nmask2);
 		sigaddset(&nmask2, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, nmask2, NULL);
+		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
 
 		for (i = 0; i < NSIG; i++)
 			sigaction(i, nmask3, NULL);
@@ -238,6 +245,6 @@ void wait_all()
 	int status;
 
 	do {
-		wait(&status, WNOHANG);
+		waitpid(-1, &status, WNOHANG);
 	} while (errno != ECHILD);
 }
