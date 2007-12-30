@@ -154,8 +154,8 @@ int main()
 
 	/*
 	 * Set random seed
-	 * Bug here! the eeepc never sets its random seed from file!
 	 */
+	/* Bug: the eeepc never sets its random seed from file */
 	system("/bin/cat /var/lib/urandom/random-seed >/dev/urandom > /dev/null 2>&1");
 	unlink("/var/lib/urandom/random-seed");
 
@@ -188,6 +188,7 @@ int main()
 		sigaddset(&nmask2, SIGCHLD);
 		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
 
+		/* Bug: no signal 0 */
 		for (i = 0; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
 
