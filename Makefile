@@ -4,7 +4,7 @@ LD	= gcc
 LDFLAGS	=
 LIBS	=
 
-.o.c:
+.c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
 
 all: finit
