@@ -47,11 +47,10 @@ int main()
 	DIR *dir;
 	struct dirent *d;
 	char filename[1024];
-	struct sigaction sa;
+	struct sigaction sa, act;
 	char hline[1024];
 	char *x;
-	sigset_t nmask, nmask1, nmask2;
-	struct stat buf;
+	sigset_t nmask, nmask2;
 
 	chdir("/");
 	umask(022);
@@ -99,9 +98,9 @@ int main()
 	/*
 	 * Mount filesystems
 	 */
-	mount("proc", "/", "proc", 0, NULL);
+	mount("proc", "/proc", "proc", 0, NULL);
 	mount("sysfs", "/sys", "sysfs", 0, NULL);
-	mount("devpts", "/dev/pts", "devpts", MS_MOVE, "gid=5,mode=620");
+	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
 	mount("/mnt", "/", NULL, MS_MOVE, NULL);
@@ -129,6 +128,8 @@ int main()
 								d->d_name);
 			unlink(filename);
 		}
+
+		closedir(dir);
 	}
 
 	touch("/var/run/utmp");
@@ -156,11 +157,13 @@ int main()
 	 * Set random seed
 	 */
 	/* Bug: the eeepc never sets its random seed from file */
-	system("/bin/cat /var/lib/urandom/random-seed >/dev/urandom > /dev/null 2>&1");
+	system("/bin/cat /var/lib/urandom/random-seed >/dev/urandom "
+						"> /dev/null 2>&1");
 	unlink("/var/lib/urandom/random-seed");
 
 	umask(077);
-	system("/bin/dd if=/dev/urandom of=/var/lib/urandom/random-seed bs=4096 count=1 >/dev/null 2>&1");
+	system("/bin/dd if=/dev/urandom of=/var/lib/urandom/random-seed "
+					"bs=4096 count=1 >/dev/null 2>&1");
 
 	/*
 	 * Misc setup
@@ -168,12 +171,14 @@ int main()
 	system("/bin/rm -rf /tmp/* /tmp/.* 2>/dev/null");
 	unlink("/var/run/.clean");
 	unlink("/var/lock/.clean");
-	umask(0000);
+	umask(0);
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(0022);
 
-	if (fork()) {
+	if (!fork()) {
+		/* child process */
+
 		vhangup();
 
 		close(2);
@@ -183,7 +188,9 @@ int main()
 		if (open("/dev/tty1", O_RDWR, 0))
 			exit(1);
 
-		sigemptyset(&nmask1);
+		sigemptyset(&act.sa_mask);
+		act.sa_handler = SIG_DFL;
+
 		sigemptyset(&nmask2);
 		sigaddset(&nmask2, SIGCHLD);
 		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
@@ -198,12 +205,14 @@ int main()
 
 		touch("/tmp/nologin");
 		
-		if (stat("/tmp/shutdown", &buf) < 0)
+		while (access("/tmp/shutdown", F_OK) < 0)
 			system("su -c startx -l user &> /dev/null");
 
 		exit(0);
 	}
 	
+	/* parent process */
+
 	system("/sbin/getty 38400 tty3 &");
 	sleep(1);
 	system("/usr/sbin/services.sh &> /dev/null &");
