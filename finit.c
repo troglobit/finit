@@ -224,7 +224,7 @@ int main()
 }
 
 
-void shutdown(char *t)
+void shutdown()
 {
 	int ret;
 	int fd;

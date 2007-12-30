@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -Os -Wall -mno-push-args
+CFLAGS	= -Os -Wall #-mno-push-args
 LD	= gcc
 LDFLAGS	=
 LIBS	=
