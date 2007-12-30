@@ -30,12 +30,8 @@
 
 
 void shutdown(int);
-void wait_all(int);
-
-void dummy(int sig)
-{
-	/* do nothing */
-}
+void signal_handler(int);
+void chld_handler(int);
 
 
 int main()
@@ -61,17 +57,17 @@ int main()
 	for (i = 1; i < NSIG; i++)
 		SETSIG(sa, i, SIG_IGN, SA_RESTART);
 
-	SETSIG(sa, SIGINT,  shutdown, 0);
-	SETSIG(sa, SIGPWR,  dummy,    0);
-	SETSIG(sa, SIGUSR1, shutdown, 0);
-	SETSIG(sa, SIGUSR2, shutdown, 0);
-	SETSIG(sa, SIGTERM, dummy,    0);
-	SETSIG(sa, SIGKILL, dummy,    0);
-	SETSIG(sa, SIGALRM, dummy,    0);
-	SETSIG(sa, SIGHUP,  wait_all, 0);
-	SETSIG(sa, SIGSTOP, dummy,    SA_RESTART);
-	SETSIG(sa, SIGCONT, dummy,    SA_RESTART);
-	SETSIG(sa, SIGCHLD, wait_all, SA_RESTART);
+	SETSIG(sa, SIGINT,  shutdown,       0);
+	SETSIG(sa, SIGPWR,  signal_handler, 0);
+	SETSIG(sa, SIGUSR1, shutdown,       0);
+	SETSIG(sa, SIGUSR2, shutdown,       0);
+	SETSIG(sa, SIGTERM, signal_handler, 0);
+	SETSIG(sa, SIGKILL, signal_handler, 0);
+	SETSIG(sa, SIGALRM, signal_handler, 0);
+	SETSIG(sa, SIGHUP,  signal_handler, 0);
+	SETSIG(sa, SIGSTOP, signal_handler, SA_RESTART);
+	SETSIG(sa, SIGCONT, signal_handler, SA_RESTART);
+	SETSIG(sa, SIGCHLD, chld_handler,   SA_RESTART);
 	
 	/* Block sigchild while forking */
 	sigemptyset(&nmask);
@@ -224,6 +220,9 @@ int main()
 }
 
 
+/*
+ * Shut down on INT USR1 USR2
+ */
 void shutdown(int sig)
 {
 	int fd;
@@ -259,13 +258,25 @@ void shutdown(int sig)
 }
 
 
-void wait_all(int sig)
+/*
+ * SIGCHLD: one of our children has died
+ */
+void chld_handler(int sig)
 {
 	int status;
-	pid_t pid;
 
-	do {
-		pid = waitpid(-1, &status, WNOHANG);
-	} while (pid != 0 && errno != ECHILD);
+	while (waitpid(-1, &status, WNOHANG) != 0) {
+		if (errno == ECHILD)
+			break;
+	}
+}
+
+
+/*
+ * We got a signal (PWR TERM ALRM HUP STOP CONT)
+ */
+void signal_handler(int sig)
+{
+	/* do nothing */
 }
 
