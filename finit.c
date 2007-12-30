@@ -29,10 +29,10 @@
 #define touch(x) close(open((x), O_CREAT|O_WRONLY|O_TRUNC, 0644))
 
 
-void shutdown();
-void wait_all();
+void shutdown(int);
+void wait_all(int);
 
-void dummy()
+void dummy(int sig)
 {
 	/* do nothing */
 }
@@ -174,7 +174,7 @@ int main()
 	umask(0);
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
-	umask(0022);
+	umask(022);
 
 	if (!fork()) {
 		/* child process */
@@ -224,9 +224,8 @@ int main()
 }
 
 
-void shutdown()
+void shutdown(int sig)
 {
-	int ret;
 	int fd;
 
 	system("/usr/bin/touch /tmp/shutdown");
@@ -248,9 +247,9 @@ void shutdown()
 	sync();
 	system("/bin/mount -n -o remount,ro /");
 
-	ret = system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
+	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
-	if (ret == 2 && ret == 10)
+	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
 	if ((fd = open("/proc/acpi/sleep", O_WRONLY)) >= 0) {
@@ -260,11 +259,13 @@ void shutdown()
 }
 
 
-void wait_all()
+void wait_all(int sig)
 {
 	int status;
+	pid_t pid;
 
 	do {
-		waitpid(-1, &status, WNOHANG);
-	} while (errno != ECHILD);
+		pid = waitpid(-1, &status, WNOHANG);
+	} while (pid != 0 && errno != ECHILD);
 }
+
