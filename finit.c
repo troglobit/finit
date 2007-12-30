@@ -26,7 +26,7 @@
 			sigaction(sig, &sa, NULL); \
 		} while(0)
 
-#define touch(x) close(creat((x), 0644))
+#define touch(x) close(open((x), O_CREAT|O_WRONLY|O_TRUNC, 0644))
 
 
 void shutdown();
@@ -108,7 +108,7 @@ int main()
 	/*
 	 * Time adjustments
 	 */
-	if ((fd = creat("/etc/adjtime", 0644)) < 0) {
+	if ((fd = open("/etc/adjtime", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
 		write(fd, "0.0 0 0.0\n", 10);
 		close(fd);
 	}
@@ -141,7 +141,7 @@ int main()
 	
 	touch("/etc/network/run/ifstate");
 
-	if ((f = fopen("/etc/hostname", "r")) == NULL) {
+	if ((f = fopen("/etc/hostname", "r")) != NULL) {
 		fgets(hline, 1023, f);	
 		if ((x = strchr(hline, 0x0a)) != NULL)
 			*x = 0;
