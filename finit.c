@@ -48,7 +48,7 @@ int main(int argv, char **argc)
 	struct sigaction sa;
 	char hline[1024];
 	char *x;
-	sigset_t nmask, nmask1, nmask2, nmask3;
+	sigset_t nmask, nmask1, nmask2;
 
 	chdir("/");
 	umask(022);
@@ -132,7 +132,7 @@ int main(int argv, char **argc)
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
-	system("bin/run-parts --arg=-i /etc/resolvconf/update.d");
+	system("/bin/run-parts --arg=-i /etc/resolvconf/update.d");
 	chdir("/");
 	
 	touch("/etc/network/run/ifstate");
@@ -142,6 +142,8 @@ int main(int argv, char **argc)
 		if ((x = strchr(hline, 0x0a)) != NULL)
 			*x = 0;
 	}
+
+	/* ... */
 
 	system("/sbin/ifconfig lo 127.0.0.1 netmask 255.0.0.0 up > /dev/null");
 
@@ -182,7 +184,7 @@ int main(int argv, char **argc)
 		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
 
 		for (i = 0; i < NSIG; i++)
-			sigaction(i, nmask3, NULL);
+			sigaction(i, &sa, NULL);
 
 		dup2(0, 0);
 		dup2(0, 1);
@@ -190,7 +192,7 @@ int main(int argv, char **argc)
 
 		touch("/tmp/nologin");
 		
-		if (stat("/tmp/shutdown") < 0)
+		if (stat("/tmp/shutdown", NULL) < 0)
 			system("su -c startx -l user &> /dev/null");
 
 		exit(0);
@@ -201,8 +203,10 @@ int main(int argv, char **argc)
 	system("/usr/sbin/services.sh &> /dev/null &");
 
 	while (1) {
+/*
 		sigemptyset(...);
 		pselect(0, NULL, NULL, NULL, ...);
+*/
 	}
 }
 
@@ -213,16 +217,19 @@ void shutdown(char *t)
 	int fd;
 
 	system("/usr/bin/touch /tmp/shutdown");
-	something(-1, 15);
 
-	system("/bin/echo -e \"\033[?25l\033[30;40m\"; /bin/cp /boot/shutdown.b /dev/fb/0");
+	kill(-1, SIGTERM);
+
+	system("/bin/echo -e \"\033[?25l\033[30;40m\"; "
+				"/bin/cp /boot/shutdown.b /dev/fb/0");
 	sleep(1);
 	sleep(1);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
 	system("/sbin/hwclock --systohc --localtime");
 	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
-	something(-1, 9);
+
+	kill(-1, SIGKILL);
 
 	sync();
 	sync();
