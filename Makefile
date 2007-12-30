@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -Os
+CFLAGS	= -Os -Wall -mno-push-args -fomit-frame-pointer
 LD	= gcc
 LDFLAGS	=
 LIBS	=
@@ -16,3 +16,5 @@ finit: finit.o
 
 clean:
 	rm -f *.o core *~
+
+finit.o: finit.c Makefile

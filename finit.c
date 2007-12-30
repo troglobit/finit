@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,9 +10,10 @@
 #include <dirent.h>
 #include <errno.h>
 #include <signal.h>
+#include <unistd.h>
+#include <sys/reboot.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
-#include <linux/reboot.h>
 
 
 /* From sysvinit */
@@ -36,7 +38,7 @@ void dummy()
 }
 
 
-int main(int argv, char **argc)
+int main()
 {
 	int i;
 	FILE *f;
@@ -49,6 +51,7 @@ int main(int argv, char **argc)
 	char hline[1024];
 	char *x;
 	sigset_t nmask, nmask1, nmask2;
+	struct stat buf;
 
 	chdir("/");
 	umask(022);
@@ -76,7 +79,7 @@ int main(int argv, char **argc)
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, NULL);
 
-	reboot(LINUX_REBOOT_CMD_CAD_OFF);
+	reboot(RB_DISABLE_CAD);
 
 	/*
 	 * Parse kernel parameters
@@ -141,9 +144,11 @@ int main(int argv, char **argc)
 		fgets(hline, 1023, f);	
 		if ((x = strchr(hline, 0x0a)) != NULL)
 			*x = 0;
-	}
 
-	/* ... */
+		sethostname(hline, strlen(hline)); 
+		fclose(f);
+		
+	}
 
 	system("/sbin/ifconfig lo 127.0.0.1 netmask 255.0.0.0 up > /dev/null");
 
@@ -192,7 +197,7 @@ int main(int argv, char **argc)
 
 		touch("/tmp/nologin");
 		
-		if (stat("/tmp/shutdown", NULL) < 0)
+		if (stat("/tmp/shutdown", &buf) < 0)
 			system("su -c startx -l user &> /dev/null");
 
 		exit(0);
@@ -203,10 +208,8 @@ int main(int argv, char **argc)
 	system("/usr/sbin/services.sh &> /dev/null &");
 
 	while (1) {
-/*
-		sigemptyset(...);
-		pselect(0, NULL, NULL, NULL, ...);
-*/
+		sigemptyset(&nmask);
+		pselect(0, NULL, NULL, NULL, NULL, &nmask);
 	}
 }
 
@@ -238,7 +241,7 @@ void shutdown(char *t)
 	ret = system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
 	if (ret == 2 && ret == 10)
-		reboot(LINUX_REBOOT_CMD_RESTART);
+		reboot(RB_AUTOBOOT);
 
 	if ((fd = open("/proc/acpi/sleep", O_WRONLY)) >= 0) {
 		write(fd, "5", 1);
