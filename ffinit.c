@@ -70,8 +70,6 @@ int main()
 	char *x;
 	sigset_t nmask, nmask2;
 
-	makepath("/usr/local/bin/bla");
-exit(0);
 	chdir("/");
 	umask(022);
 	
@@ -86,10 +84,10 @@ exit(0);
 	SETSIG(sa, SIGUSR1, shutdown,       0);
 	SETSIG(sa, SIGUSR2, shutdown,       0);
 	SETSIG(sa, SIGTERM, signal_handler, 0);
-	SETSIG(sa, SIGKILL, signal_handler, 0);
+	//SETSIG(sa, SIGKILL, signal_handler, 0);
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP,  signal_handler, 0);
-	SETSIG(sa, SIGSTOP, signal_handler, SA_RESTART);
+	//SETSIG(sa, SIGSTOP, signal_handler, SA_RESTART);
 	SETSIG(sa, SIGCONT, signal_handler, SA_RESTART);
 	SETSIG(sa, SIGCHLD, chld_handler,   SA_RESTART);
 	
@@ -215,8 +213,7 @@ exit(0);
 		sigaddset(&nmask2, SIGCHLD);
 		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
 
-		/* Bug: no signal 0 */
-		for (i = 0; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
 
 		dup2(0, 0);
@@ -251,7 +248,7 @@ void shutdown(int sig)
 {
 	int fd;
 
-	system("/usr/bin/touch /tmp/shutdown");
+	touch("/tmp/shutdown");
 
 	kill(-1, SIGTERM);
 
