@@ -7,12 +7,17 @@ LIBS	=
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
 
-all: finit
-
+all: finit finit-mdv
 
 finit: finit.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
+
+finit-mdv: finit-mdv.o
+	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
+
+finit-mdv.o: ffinit.c
+	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ $+
 
 clean:
 	rm -f *.o core *~
