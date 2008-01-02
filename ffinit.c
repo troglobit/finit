@@ -21,6 +21,13 @@
 #include <linux/limits.h>
 
 
+#ifdef DIST_MDV
+#define RANDOMSEED "/var/lib/random-seed"
+#else
+#define RANDOMSEED "/var/lib/urandom/random-seed"
+#endif
+
+
 /* From sysvinit */
 /* Set a signal handler. */
 #define SETSIG(sa, sig, fun, flags) \
@@ -157,7 +164,10 @@ int main()
 	system("/bin/run-parts --arg=-i /etc/resolvconf/update.d");
 	chdir("/");
 	
+#ifdef DIST_MDV
+#else
 	touch("/etc/network/run/ifstate");
+#endif
 
 	if ((f = fopen("/etc/hostname", "r")) != NULL) {
 		fgets(hline, 1023, f);	
@@ -175,13 +185,12 @@ int main()
 	 * Set random seed
 	 */
 	/* Bug: the eeepc never sets its random seed from file */
-	system("/bin/cat /var/lib/urandom/random-seed >/dev/urandom "
-						"> /dev/null 2>&1");
-	unlink("/var/lib/urandom/random-seed");
+	system("/bin/cat " RANDOMSEED " >/dev/urandom 2> /dev/null");
+	unlink(RANDOMSEED);
 
 	umask(077);
-	system("/bin/dd if=/dev/urandom of=/var/lib/urandom/random-seed "
-					"bs=4096 count=1 >/dev/null 2>&1");
+	system("/bin/dd if=/dev/urandom of=" RANDOMSEED "bs=4096 count=1 "
+							">/dev/null 2>&1");
 
 	/*
 	 * Misc setup
