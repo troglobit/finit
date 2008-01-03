@@ -6,3 +6,19 @@ the original bugs and lack of optimization.
 ffinit.c is a fixed/optimized version with quirks for alternative linux
 distributions running on the Eeepc.
 
+
+
+* Utilities available in the Eeepc initramfs busybox:
+
+[		cat		cp		cut		dd
+dmesg		echo		env		expr		false
+grep		insmod		ln		losetup		ls
+mdev		mkdir		mknod		mount		mv
+pivot_root	realpath	rm		rmmod		sed
+sh		sleep		switch_root	test		true
+umount		vi
+
+
+* Devices in the Eeepc initramfs /dev:
+
+console  fb  null  ram0  sda1  sda2  sda3  sr0  tty0
