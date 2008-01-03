@@ -1,4 +1,7 @@
 
+Eeepc "fastinit" reimplementations
+----------------------------------
+
 finit.c is a reimplementation of the Asus Eeepc fastinit program based
 on its library calls. It tries to be an accurate re-creation and keeps
 the original bugs and lack of optimization.
@@ -6,6 +9,23 @@ the original bugs and lack of optimization.
 ffinit.c is a fixed/optimized version with quirks for alternative linux
 distributions running on the Eeepc.
 
+
+* Eeepc boot process
+
+The essential steps in the boot process carried out in initramfs are:
+
+ ROOT=`sed 's!.*root=\([^ ]*\).*!\1!' < /proc/cmdline`
+ mount -t proc proc /proc
+ mount -t ext2 -o ro $ROOT /mnt-system
+ mount -t ext3 -o rw /dev/sda2 /mnt-user
+ mount -t unionfs -o dirs=/mnt-user=rw:/mnt-system=ro unionfs /mnt
+ mount --move /mnt-system /mnt/mnt
+ umount -l /mnt-user
+ umount /proc
+ exec switch_root /mnt /sbin/fastinit "$@" </mnt/dev/console >/mnt/dev/console
+
+If mounting the root filesystem fails, execute a maintenance shell. If
+mounting the user filesystem fails, fsck and reboot.
 
 
 * Utilities available in the Eeepc initramfs busybox:
@@ -22,3 +42,4 @@ umount		vi
 * Devices in the Eeepc initramfs /dev:
 
 console  fb  null  ram0  sda1  sda2  sda3  sr0  tty0
+
