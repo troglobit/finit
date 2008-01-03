@@ -38,7 +38,6 @@
 #define GETTY		"/sbin/mingetty tty3"
 #define RUNPARTS	"/usr/bin/run-parts --arg=-i"
 #define DEFUSER		"u"
-#define STARTX		"/usr/bin/startx"
 #define HOMEDEV		"/dev/sda3"
 #define AGPDRV		"intel-agp"
 #define SERVICES	"/etc/rc"
@@ -50,7 +49,6 @@
 #define GETTY		"/sbin/getty 38400 tty3"
 #define RUNPARTS	"/bin/run-parts --arg=-i"
 #define DEFUSER		"user"
-#define STARTX		"startx"
 #define SERVICES	"/usr/sbin/services.sh"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
@@ -301,12 +299,12 @@ int main()
 #endif
 		
 		while (access("/tmp/shutdown", F_OK) < 0) {
-			debug("run " STARTX " as " DEFUSER);
+			debug("start X as " DEFUSER);
 #ifdef DEBUG
-			system("su -c " STARTX " -l " DEFUSER);
+			system("su -c startx -l " DEFUSER);
 			system("/bin/sh");
 #else
-			system("su -c " STARTX " -l " DEFUSER " &> /dev/null");
+			system("su -c startx -l " DEFUSER " &> /dev/null");
 #endif
 		}
 
