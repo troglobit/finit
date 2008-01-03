@@ -20,11 +20,36 @@
 #include <linux/fs.h>
 #include <linux/limits.h>
 
+#define DEBUG
 
-#ifdef DIST_MDV
-#define RANDOMSEED "/var/lib/random-seed"
+#ifdef DEBUG
+#define debug(x...) do { \
+		printf("finit: %d: ", __LINE__); printf(x); printf("\n"); \
+	} while (0)
 #else
-#define RANDOMSEED "/var/lib/urandom/random-seed"
+#define debug(x...)
+#endif
+
+/* Distribution configuration */
+
+#ifdef DIST_MDV		/* Mandriva */
+#define RANDOMSEED	"/var/lib/random-seed"
+#define SYSROOT		"/sysroot"
+#define GETTY		"/sbin/mingetty tty3"
+#define RUNPARTS	"/usr/bin/run-parts --arg=-i"
+#define DEFUSER		"u"
+#define STARTX		"/usr/bin/startx"
+#define HOMEDEV		"/dev/sda3"
+#define AGPDRV		"intel-agp"
+#define REMOUNT_ROOTFS_RW
+#define MAKE_DEVICES
+#else			/* original Eeepc distribution */
+#define RANDOMSEED	"/var/lib/urandom/random-seed"
+#define SYSROOT		"/mnt"
+#define GETTY		"/sbin/getty 38400 tty3"
+#define RUNPARTS	"/bin/run-parts --arg=-i"
+#define DEFUSER		"user"
+#define STARTX		"startx"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 
@@ -37,9 +62,11 @@
 			sa.sa_flags = flags; \
 			sigemptyset(&sa.sa_mask); \
 			sigaction(sig, &sa, NULL); \
-		} while(0)
+		} while (0)
 
-#define touch(x) close(open((x), O_CREAT|O_WRONLY|O_TRUNC, 0644))
+//#define touch(x) close(open((x), O_CREAT|O_WRONLY|O_TRUNC, 0644))
+#define touch(x) mknod((x), S_IFREG|0644, 0)
+#define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 
 
 int makepath(char *p)
@@ -77,6 +104,8 @@ int main()
 	char hline[1024];
 	char *x;
 	sigset_t nmask, nmask2;
+
+	debug("start");
 
 	chdir("/");
 	umask(022);
@@ -124,12 +153,36 @@ int main()
 	/*
 	 * Mount filesystems
 	 */
+	debug("mount filesystems");
+
+#ifdef REMOUNT_ROOTFS_RW
+	system("/bin/mount -n -o remount,rw /");
+#endif
+
+	mkdir("/dev/pts", 0644);
+	mkdir("/dev/shm", 0644);
+
 	mount("proc", "/proc", "proc", 0, NULL);
 	mount("sysfs", "/sys", "sysfs", 0, NULL);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
-	mount("/mnt", "/", NULL, MS_MOVE, NULL);
+#ifdef HOMEDEV
+	mount(HOMEDEV, "/home", "ext3", 0, NULL);
+#endif
+	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+
+#ifdef MAKE_DEVICES
+	debug("make devices");
+	umask(0777);
+	mkdir("/dev/input", 0644);
+	chardev("/dev/null", 0666, 1, 3);
+	chardev("/dev/mem",  0640, 1, 1);
+	chardev("/dev/tty",  0666, 5, 0);
+	chardev("/dev/input/mice",  0660, 13, 63);
+	chardev("/dev/agpgart",  0660, 10, 175);
+	umask(0022);
+#endif
 
 	/*
 	 * Time adjustments
@@ -162,7 +215,7 @@ int main()
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
-	system("/bin/run-parts --arg=-i /etc/resolvconf/update.d");
+	system(RUNPARTS "/etc/resolvconf/update.d");
 	chdir("/");
 	
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
@@ -202,6 +255,8 @@ int main()
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
+	debug("forking");
+
 	if (!fork()) {
 		/* child process */
 
@@ -229,16 +284,28 @@ int main()
 		dup2(0, 2);
 
 		touch("/tmp/nologin");
+
+#ifdef AGPDRV
+		system("/sbin/modprobe agpgart");
+		system("/sbin/modprobe " AGPDRV);
+#endif
 		
-		while (access("/tmp/shutdown", F_OK) < 0)
-			system("su -c startx -l user &> /dev/null");
+		while (access("/tmp/shutdown", F_OK) < 0) {
+			debug("run " STARTX " as " DEFUSER);
+#ifdef DEBUG
+			system("su -c " STARTX " -l " DEFUSER);
+			system("/bin/sh");
+#else
+			system("su -c " STARTX " -l " DEFUSER " &> /dev/null");
+#endif
+		}
 
 		exit(0);
 	}
 	
 	/* parent process */
 
-	system("/sbin/getty 38400 tty3 &");
+	system(GETTY " &");
 	sleep(1);
 	system("/usr/sbin/services.sh &> /dev/null &");
 
@@ -256,6 +323,7 @@ void shutdown(int sig)
 {
 	int fd;
 
+	debug("shutdown");
 	touch("/tmp/shutdown");
 
 	kill(-1, SIGTERM);
