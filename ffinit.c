@@ -41,8 +41,9 @@
 #define STARTX		"/usr/bin/startx"
 #define HOMEDEV		"/dev/sda3"
 #define AGPDRV		"intel-agp"
+#define SERVICES	"/etc/rc"
 #define REMOUNT_ROOTFS_RW
-#define MAKE_DEVICES
+#define START_UDEV
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -50,6 +51,7 @@
 #define RUNPARTS	"/bin/run-parts --arg=-i"
 #define DEFUSER		"user"
 #define STARTX		"startx"
+#define SERVICES	"/usr/sbin/services.sh"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 
@@ -159,8 +161,8 @@ int main()
 	system("/bin/mount -n -o remount,rw /");
 #endif
 
-	mkdir("/dev/pts", 0644);
 	mkdir("/dev/shm", 0644);
+	mkdir("/dev/pts", 0644);
 
 	mount("proc", "/proc", "proc", 0, NULL);
 	mount("sysfs", "/sys", "sysfs", 0, NULL);
@@ -175,13 +177,21 @@ int main()
 #ifdef MAKE_DEVICES
 	debug("make devices");
 	umask(0777);
-	mkdir("/dev/input", 0644);
+	chardev("/dev/ptmx", 0666, 5, 2);
+	mkdir("/dev/input", 0755);
 	chardev("/dev/null", 0666, 1, 3);
 	chardev("/dev/mem",  0640, 1, 1);
+	chmod("/dev/null", 0667);
+	chmod("/dev/mem", 0640);
 	chardev("/dev/tty",  0666, 5, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/agpgart",  0660, 10, 175);
 	umask(0022);
+#endif
+
+#ifdef START_UDEV
+	// FIXME: udev is too slow, don't use it here
+	system("/etc/init.d/udev start");
 #endif
 
 	/*
@@ -307,7 +317,7 @@ int main()
 
 	system(GETTY " &");
 	sleep(1);
-	system("/usr/sbin/services.sh &> /dev/null &");
+	system(SERVICES " &> /dev/null &");
 
 	while (1) {
 		sigemptyset(&nmask);
