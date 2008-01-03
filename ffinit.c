@@ -25,6 +25,7 @@
 #define RANDOMSEED "/var/lib/random-seed"
 #else
 #define RANDOMSEED "/var/lib/urandom/random-seed"
+#define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 
 
@@ -164,8 +165,7 @@ int main()
 	system("/bin/run-parts --arg=-i /etc/resolvconf/update.d");
 	chdir("/");
 	
-#ifdef DIST_MDV
-#else
+#ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");
 #endif
 
@@ -184,7 +184,6 @@ int main()
 	/*
 	 * Set random seed
 	 */
-	/* Bug: the eeepc never sets its random seed from file */
 	system("/bin/cat " RANDOMSEED " >/dev/urandom 2> /dev/null");
 	unlink(RANDOMSEED);
 
