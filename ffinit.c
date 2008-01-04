@@ -58,8 +58,8 @@ THE SOFTWARE.
 #define SYSROOT		"/sysroot"
 #define GETTY		"/sbin/mingetty tty3"
 #define RUNPARTS	"/usr/bin/run-parts --arg=-i"
-#define DEFUSER		"u"
-#define HOMEDEV		"/dev/sda3"
+#define DEFUSER		"user"
+#define HOMEDEV		"/dev/sda6"
 #define AGPDRV		"intel-agp"
 #define SERVICES	"/etc/rc"
 #define REMOUNT_ROOTFS_RW
@@ -176,9 +176,10 @@ int main()
 #ifdef REMOUNT_ROOTFS_RW
 	system("/bin/mount -n -o remount,rw /");
 #endif
+	umask(0);
 
-	mkdir("/dev/shm", 0644);
-	mkdir("/dev/pts", 0644);
+	mkdir("/dev/shm", 0755);
+	mkdir("/dev/pts", 0755);
 
 	mount("proc", "/proc", "proc", 0, NULL);
 	mount("sysfs", "/sys", "sysfs", 0, NULL);
@@ -192,9 +193,8 @@ int main()
 
 #ifdef MAKE_DEVICES
 	debug("make devices");
-	umask(0777);
-	chardev("/dev/ptmx", 0666, 5, 2);
 	mkdir("/dev/input", 0755);
+	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
 	chardev("/dev/mem",  0640, 1, 1);
 	chmod("/dev/null", 0667);
@@ -202,8 +202,9 @@ int main()
 	chardev("/dev/tty",  0666, 5, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/agpgart",  0660, 10, 175);
-	umask(0022);
 #endif
+
+	umask(0022);
 
 	/*
 	 * Time adjustments
@@ -236,7 +237,7 @@ int main()
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
-	system(RUNPARTS "/etc/resolvconf/update.d");
+	system(RUNPARTS " /etc/resolvconf/update.d");
 	chdir("/");
 	
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
@@ -250,7 +251,6 @@ int main()
 
 		sethostname(hline, strlen(hline)); 
 		fclose(f);
-		
 	}
 
 	system("/sbin/ifconfig lo 127.0.0.1 netmask 255.0.0.0 up > /dev/null");
