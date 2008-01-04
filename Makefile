@@ -7,7 +7,7 @@ LIBS	=
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
 
-all: finit finit-mdv
+all: finit-mdv
 
 finit: finit.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
@@ -16,8 +16,8 @@ finit: finit.o
 finit-mdv: finit-mdv.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 
-finit-mdv.o: ffinit.c
-	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ $+
+finit-mdv.o: ffinit.c Makefile
+	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ ffinit.c
 
 clean:
 	rm -f *.o core *~

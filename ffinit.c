@@ -1,7 +1,26 @@
-
 /*
- * Improved fast init
- */
+Improved fast init
+
+Copyright (c) 2008 Claudio Matsuoka
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +38,8 @@
 #include <sys/wait.h>
 #include <linux/fs.h>
 #include <linux/limits.h>
+
+#define VERSION "0.0"
 
 #define DEBUG
 
@@ -42,7 +63,7 @@
 #define AGPDRV		"intel-agp"
 #define SERVICES	"/etc/rc"
 #define REMOUNT_ROOTFS_RW
-#define START_UDEV
+#define MAKE_DEVICES
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -64,7 +85,6 @@
 			sigaction(sig, &sa, NULL); \
 		} while (0)
 
-//#define touch(x) close(open((x), O_CREAT|O_WRONLY|O_TRUNC, 0644))
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 
@@ -105,7 +125,7 @@ int main()
 	char *x;
 	sigset_t nmask, nmask2;
 
-	debug("start");
+	puts("finit " VERSION);
 
 	chdir("/");
 	umask(022);
@@ -121,10 +141,8 @@ int main()
 	SETSIG(sa, SIGUSR1, shutdown,       0);
 	SETSIG(sa, SIGUSR2, shutdown,       0);
 	SETSIG(sa, SIGTERM, signal_handler, 0);
-	//SETSIG(sa, SIGKILL, signal_handler, 0);
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP,  signal_handler, 0);
-	//SETSIG(sa, SIGSTOP, signal_handler, SA_RESTART);
 	SETSIG(sa, SIGCONT, signal_handler, SA_RESTART);
 	SETSIG(sa, SIGCHLD, chld_handler,   SA_RESTART);
 	
@@ -185,11 +203,6 @@ int main()
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/agpgart",  0660, 10, 175);
 	umask(0022);
-#endif
-
-#ifdef START_UDEV
-	// FIXME: udev is too slow, don't use it here
-	system("/etc/init.d/udev start");
 #endif
 
 	/*
