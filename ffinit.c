@@ -61,7 +61,7 @@ THE SOFTWARE.
 #define DEFUSER		"user"
 #define HOMEDEV		"/dev/sda6"
 #define AGPDRV		"intel-agp"
-#define SERVICES	"/etc/rc"
+#define SERVICES	"/sbin/services.sh"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #else			/* original Eeepc distribution */
