@@ -194,6 +194,7 @@ int main()
 #ifdef MAKE_DEVICES
 	debug("make devices");
 	mkdir("/dev/input", 0755);
+	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
 	chardev("/dev/mem",  0640, 1, 1);
