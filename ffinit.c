@@ -158,33 +158,33 @@ int main()
 	mount("proc", "/proc", "proc", 0, NULL);
 
 	/*
-	 * Parse kernel parameters
+	 * Parse conf file
 	 */
-	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
-		char *t;
-
-		fgets(line, 2095, f);
-		debug("cmdline = %s", line);
-
-		t = strtok(line, " ");
-		while (t) {
-			debug("t = %s", t);
-			if (!strcmp(t, "quiet")) {
-				close(0);
-				close(1);
-				close(2);
-			} else if (!strncmp(t, "home=", 5)) {
-				strncpy(homedev, t + 5, 64);
-			} else if (!strncmp(t, "user=", 5)) {
-				strncpy(defuser, t + 5, 64);
+	if ((f = fopen("/etc/finit.conf", "r")) != NULL) {
+		while(!feof(f)) {
+			fgets(line, 2095, f);
+			if (!strncmp(line, "home=", 5)) {
+				strncpy(homedev, line + 5, 64);
+			} else if (!strncmp(line, "user=", 5)) {
+				strncpy(defuser, line + 5, 64);
 			}
-			t = strtok(NULL, " ");
 		}
-		
-		fclose(f);
 	}
 	debug("home = %s", homedev);
 	debug("user = %s", defuser);
+	
+	/*
+	 * Parse kernel parameters
+	 */
+	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
+		fgets(line, 2095, f);
+		if (strstr(line, "quiet")) {
+			close(0);
+			close(1);
+			close(2);
+		}
+		fclose(f);
+	}
 
 	setsid();
 
@@ -375,7 +375,6 @@ void shutdown(int sig)
 
 	system("/bin/echo -e \"\033[?25l\033[30;40m\"; "
 				"/bin/cp /boot/shutdown.b /dev/fb/0");
-	sleep(1);
 	sleep(1);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
