@@ -120,7 +120,6 @@ int main()
 	char hline[1024];
 	char *x;
 	sigset_t nmask, nmask2;
-	char defuser[64], homedev[64];
 
 	puts("finit " VERSION);
 
@@ -150,27 +149,8 @@ int main()
 
 	reboot(RB_DISABLE_CAD);
 
-	strncpy(homedev, "", 64);
-	strncpy(defuser, DEFUSER, 64);
-
 	mount("proc", "/proc", "proc", 0, NULL);
 
-	/*
-	 * Parse conf file
-	 */
-	if ((f = fopen("/etc/finit.conf", "r")) != NULL) {
-		while(!feof(f)) {
-			fgets(line, 2095, f);
-			if (!strncmp(line, "home=", 5)) {
-				strncpy(homedev, line + 5, 64);
-			} else if (!strncmp(line, "user=", 5)) {
-				strncpy(defuser, line + 5, 64);
-			}
-		}
-	}
-	debug("home = %s", homedev);
-	debug("user = %s", defuser);
-	
 	/*
 	 * Parse kernel parameters
 	 */
@@ -203,13 +183,9 @@ int main()
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
-
-	if (strlen(homedev)) {
-		debug("mount home at %s", homedev);
-		mount(homedev, "/home", "ext3", 0, NULL);
-	}
-
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+
+	system("mount -a");
 
 #ifdef MAKE_DEVICES
 	debug("make devices");
