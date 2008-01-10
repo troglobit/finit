@@ -41,8 +41,6 @@ THE SOFTWARE.
 
 #define VERSION "0.0"
 
-#define DEBUG
-
 #ifdef DEBUG
 #define debug(x...) do { \
 		printf("finit: %d: ", __LINE__); printf(x); printf("\n"); \
@@ -124,6 +122,7 @@ int main()
 	char hline[1024];
 	char *x;
 	sigset_t nmask, nmask2;
+	char defuser[64], homedev[64];
 
 	puts("finit " VERSION);
 
@@ -153,18 +152,39 @@ int main()
 
 	reboot(RB_DISABLE_CAD);
 
+	strncpy(homedev, "", 64);
+	strncpy(defuser, DEFUSER, 64);
+
+	mount("proc", "/proc", "proc", 0, NULL);
+
 	/*
 	 * Parse kernel parameters
 	 */
 	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
+		char *t;
+
 		fgets(line, 2095, f);
-		if (strstr(line, "quiet")) {
-			close(0);
-			close(1);
-			close(2);
+		debug("cmdline = %s", line);
+
+		t = strtok(line, " ");
+		while (t) {
+			debug("t = %s", t);
+			if (!strcmp(t, "quiet")) {
+				close(0);
+				close(1);
+				close(2);
+			} else if (!strncmp(t, "home=", 5)) {
+				strncpy(homedev, t + 5, 64);
+			} else if (!strncmp(t, "user=", 5)) {
+				strncpy(defuser, t + 5, 64);
+			}
+			t = strtok(NULL, " ");
 		}
+		
 		fclose(f);
 	}
+	debug("home = %s", homedev);
+	debug("user = %s", defuser);
 
 	setsid();
 
@@ -181,14 +201,16 @@ int main()
 	mkdir("/dev/shm", 0755);
 	mkdir("/dev/pts", 0755);
 
-	mount("proc", "/proc", "proc", 0, NULL);
 	mount("sysfs", "/sys", "sysfs", 0, NULL);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
-#ifdef HOMEDEV
-	mount(HOMEDEV, "/home", "ext3", 0, NULL);
-#endif
+
+	if (strlen(homedev)) {
+		debug("mount home at %s", homedev);
+		mount(homedev, "/home", "ext3", 0, NULL);
+	}
+
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
 #ifdef MAKE_DEVICES
@@ -202,6 +224,7 @@ int main()
 	chmod("/dev/mem", 0640);
 	chardev("/dev/tty",  0666, 5, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
+	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);
 #endif
 
