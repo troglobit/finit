@@ -185,6 +185,7 @@ int main()
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
+	unlink("/etc/mtab");
 	system("mount -a");
 
 #ifdef MAKE_DEVICES

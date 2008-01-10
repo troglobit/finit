@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -Os -Wall #-DDEBUG
+CFLAGS	= -Os -Wall -DDEBUG
 LD	= gcc
 LDFLAGS	=
 LIBS	=
