@@ -59,7 +59,6 @@ THE SOFTWARE.
 #define DEFUSER		"user"
 #define HOMEDEV		"/dev/sda6"
 #define AGPDRV		"intel-agp"
-#define SERVICES	"/sbin/services.sh"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #else			/* original Eeepc distribution */
@@ -68,7 +67,6 @@ THE SOFTWARE.
 #define GETTY		"/sbin/getty 38400 tty3"
 #define RUNPARTS	"/bin/run-parts --arg=-i"
 #define DEFUSER		"user"
-#define SERVICES	"/usr/sbin/services.sh"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 
@@ -352,7 +350,7 @@ int main()
 
 	system(GETTY " &");
 	sleep(1);
-	system(SERVICES " &> /dev/null &");
+	system("/usr/sbin/services.sh &> /dev/null &");
 
 	while (1) {
 		sigemptyset(&nmask);
