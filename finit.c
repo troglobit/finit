@@ -232,7 +232,7 @@ void shutdown(int sig)
 	kill(-1, SIGTERM);
 
 	system("/bin/echo -e \"\033[?25l\033[30;40m\"; "
-				"/bin/cp /boot/shutdown.b /dev/fb/0");
+				"/bin/cp /boot/shutdown.fb /dev/fb/0");
 	sleep(1);
 	sleep(1);
 
