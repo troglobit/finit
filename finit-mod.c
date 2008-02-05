@@ -27,7 +27,9 @@ THE SOFTWARE.
 Changelog from the original Eeepc fastinit:
 
 - Use mknod() instead of close(creat()) call to create empty file
-
+- Fix random seed initialization
+- Don't try to handle signal 0
+- Implement makepath() to avoid system("mkdir -p")
 
 */
 
@@ -59,6 +61,23 @@ Changelog from the original Eeepc fastinit:
 		} while(0)
 
 #define touch(x) mknod((x), S_IFREG|0644, 0)
+
+
+int makepath(char *p)
+{
+	char *x, path[PATH_MAX];
+	int ret;
+	
+	x = path;
+
+	do {
+		do { *x++ = *p++; } while (*p && *p != '/');
+		ret = mkdir(path, 0777);
+	} while (*p && (*p != '/' || *(p + 1))); /* ignore trailing slash */
+
+	return ret;
+}
+
 
 
 void shutdown(int);
@@ -145,8 +164,8 @@ int main()
 	/*
 	 * Network stuff
 	 */
-	system("mkdir -p /dev/shm/network");
-	system("mkdir -p /dev/shm/resolvconf/interface");
+	makepath("/dev/shm/network");
+	makepath("/dev/shm/resolvconf/interface");
 
 	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
 		while ((d = readdir(dir)) != NULL) {

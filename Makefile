@@ -9,15 +9,7 @@ LIBS	=
 
 all: finit finit-mod finit-mdv
 
-finit: finit.o
-	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
-	strip $@
-
-finit-mod: finit-mod.o
-	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
-	strip $@
-
-finit-mdv: finit-mdv.o
+%: %.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
