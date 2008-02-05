@@ -22,6 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+/*
+
+Changelog from the original Eeepc fastinit:
+
+- Use mknod() instead of close(creat()) call to create empty file
+
+
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -49,7 +58,7 @@ THE SOFTWARE.
 			sigaction(sig, &sa, NULL); \
 		} while(0)
 
-#define touch(x) close(open((x), O_CREAT|O_WRONLY|O_TRUNC, 0644))
+#define touch(x) mknod((x), S_IFREG|0644, 0)
 
 
 void shutdown(int);
@@ -175,9 +184,8 @@ int main()
 	/*
 	 * Set random seed
 	 */
-	/* Bug: the eeepc never sets its random seed from file */
 	system("/bin/cat /var/lib/urandom/random-seed >/dev/urandom "
-						"> /dev/null 2>&1");
+						"2> /dev/null");
 	unlink("/var/lib/urandom/random-seed");
 
 	umask(077);
@@ -214,8 +222,7 @@ int main()
 		sigaddset(&nmask2, SIGCHLD);
 		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
 
-		/* Bug: no signal 0 */
-		for (i = 0; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
 
 		dup2(0, 0);
