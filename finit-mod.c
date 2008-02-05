@@ -28,7 +28,7 @@ Changelog from the original Eeepc fastinit:
 
 - Use mknod() instead of close(creat()) call to create empty file
 - Fix random seed initialization
-- Don't try to handle signal 0
+- Don't try to handle signal 0, SIGKILL or SIGSTOP
 - Implement makepath() to avoid system("mkdir -p")
 
 */
@@ -113,10 +113,8 @@ int main()
 	SETSIG(sa, SIGUSR1, shutdown,       0);
 	SETSIG(sa, SIGUSR2, shutdown,       0);
 	SETSIG(sa, SIGTERM, signal_handler, 0);
-	SETSIG(sa, SIGKILL, signal_handler, 0);
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP,  signal_handler, 0);
-	SETSIG(sa, SIGSTOP, signal_handler, SA_RESTART);
 	SETSIG(sa, SIGCONT, signal_handler, SA_RESTART);
 	SETSIG(sa, SIGCHLD, chld_handler,   SA_RESTART);
 	
