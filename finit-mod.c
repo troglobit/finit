@@ -30,6 +30,9 @@ Changelog from the original Eeepc fastinit:
 - Fix random seed initialization
 - Don't try to handle signal 0, SIGKILL or SIGSTOP
 - Implement makepath() to avoid system("mkdir -p")
+- Omit first hwclock if user has CONFIG_RTC_HCTOSYS in kernel (by Metalshark)
+- Add –directisa to hwclock if user has disabled CONFIG_GENRTC and enabled
+  CONFIG_RTC but not CONFIG_HPET_TIMER and CONFIG_HPET_RTC_IRQ (by Metalshark)
 
 */
 
@@ -48,6 +51,12 @@ Changelog from the original Eeepc fastinit:
 #include <sys/reboot.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
+
+#ifdef DIRECTISA
+#define HWCLOCK_DIRECTISA " --directisa"
+#else
+#define HWCLOCK_DIRECTISA
+#endif
 
 
 /* From sysvinit */
@@ -157,7 +166,9 @@ int main()
 		write(fd, "0.0 0 0.0\n", 10);
 		close(fd);
 	}
-	system("/sbin/hwclock --hctosys --localtime");
+#ifndef NO_HCTOSYS
+	system("/sbin/hwclock --hctosys --localtime" HWCLOCK_DIRECTISA);
+#endif
 
 	/*
 	 * Network stuff
@@ -284,7 +295,7 @@ void shutdown(int sig)
 	sleep(1);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
-	system("/sbin/hwclock --systohc --localtime");
+	system("/sbin/hwclock --systohc --localtime" HWCLOCK_DIRECTISA);
 	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
 	kill(-1, SIGKILL);

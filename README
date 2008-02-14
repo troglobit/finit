@@ -12,6 +12,8 @@ finit-alt.c is a fixed/improved version of finit.c for alternative Linux
 distributions running on the Eeepc (previously ffinit.c). Currently able
 to boot unmodified Mandriva Linux.
 
+See Makefile for configurable parameters to better suit your system.
+
 
 * Eeepc boot process
 

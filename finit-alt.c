@@ -70,6 +70,12 @@ THE SOFTWARE.
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 
+#ifdef DIRECTISA
+#define HWCLOCK_DIRECTISA " --directisa"
+#else
+#define HWCLOCK_DIRECTISA
+#endif
+
 
 /* From sysvinit */
 /* Set a signal handler. */
@@ -212,7 +218,9 @@ int main()
 		write(fd, "0.0 0 0.0\n", 10);
 		close(fd);
 	}
-	system("/sbin/hwclock --hctosys --localtime");
+#ifndef NO_HCTOSYS
+	system("/sbin/hwclock --hctosys --localtime" HWCLOCK_DIRECTISA);
+#endif
 
 	/*
 	 * Network stuff
@@ -353,7 +361,7 @@ void shutdown(int sig)
 	sleep(1);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
-	system("/sbin/hwclock --systohc --localtime");
+	system("/sbin/hwclock --systohc --localtime" HWCLOCK_DIRECTISA);
 	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
 	kill(-1, SIGKILL);
