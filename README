@@ -48,3 +48,24 @@ umount		vi
 
 console  fb  null  ram0  sda1  sda2  sda3  sr0  tty0
 
+
+
+Using finit with alternative systems
+------------------------------------
+
+Currently tested only with Mandriva 2008. Proceed with caution, there are
+problems related to udev and pam.
+
+1 - add init=/sbin/finit-mdv to the kernel boot line
+
+2 - provide a suitable /usr/sbin/services.sh, this is the one I use in my
+    test system:
+
+    mkdir /var/lock/subsys
+    chmod 1777 /var/lock/subsys
+    /etc/init.d/network start
+    dhclient eth0
+    /sbin/start_udev&
+    /etc/init.d/portmap start
+    /etc/init.d/nfs-common start
+
