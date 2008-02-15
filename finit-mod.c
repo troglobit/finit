@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 Changelog from the original Eeepc fastinit:
 
-- Use mknod() instead of close(creat()) call to create empty file
+- Use mknod() instead of close(open()) call to create empty file
 - Fix random seed initialization
 - Don't try to handle signal 0, SIGKILL or SIGSTOP
 - Implement makepath() to avoid system("mkdir -p")
