@@ -287,7 +287,7 @@ void shutdown(int sig)
 {
 	int fd;
 
-	system("/usr/bin/touch /tmp/shutdown");
+	touch("/tmp/shutdown");
 
 	kill(-1, SIGTERM);
 

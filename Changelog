@@ -1,5 +1,6 @@
 
 0.2 ()
+	- replace system("touch") with touch() in finit-mod (Metalshark)
 
 
 0.1 (20081214)
