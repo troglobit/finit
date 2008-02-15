@@ -1,7 +1,7 @@
 
 0.2 ()
 	- replace system("touch") with touch() in finit-mod (Metalshark)
-
+	- disable NO_HCTOSYS by default to match stock Eeepc kernel
 
 0.1 (20081214)
 	- initial release
