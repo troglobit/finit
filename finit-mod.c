@@ -108,6 +108,8 @@ int main()
 	char *x;
 	sigset_t nmask, nmask2;
 
+	puts("finit-mod " VERSION " (built " __DATE__ " by " WHOAMI ")");
+
 	chdir("/");
 	umask(022);
 	

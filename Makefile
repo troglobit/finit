@@ -1,9 +1,10 @@
 CC	= gcc
-CFLAGS	= -Os -Wall
+CFLAGS	= -Os -Wall -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 LD	= gcc
 LDFLAGS	=
 LIBS	=
-
+VERSION	= 0.1
+PKG	= finit-$(VERSION)
 
 #### Configurable parameters
 
@@ -43,3 +44,11 @@ clean:
 finit.o: finit.c Makefile
 
 finit-mod.o: finit-mod.c Makefile
+
+dist:
+	rm -Rf $(PKG)
+	mkdir $(PKG)
+	cp Makefile README finit.c finit-mod.c finit-alt.c $(PKG)
+	tar cf - $(PKG) | gzip -c > $(PKG).tar.gz
+	rm -Rf $(PKG)
+	ls -l $(PKG).tar.gz

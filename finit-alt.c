@@ -39,7 +39,6 @@ THE SOFTWARE.
 #include <linux/fs.h>
 #include <linux/limits.h>
 
-#define VERSION "0.0"
 
 #ifdef DEBUG
 #define debug(x...) do { \
@@ -127,7 +126,7 @@ int main()
 	char *x;
 	sigset_t nmask, nmask2;
 
-	puts("finit " VERSION);
+	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
 
 	chdir("/");
 	umask(022);
