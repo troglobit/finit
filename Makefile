@@ -3,8 +3,9 @@ CFLAGS	= -Os -Wall -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 LD	= gcc
 LDFLAGS	=
 LIBS	=
-VERSION	= 0.1
+VERSION	= 0.2
 PKG	= finit-$(VERSION)
+
 
 #### Configurable parameters
 
