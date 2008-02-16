@@ -2,6 +2,7 @@
 0.2 ()
 	- replace system("touch") with touch() in finit-mod (Metalshark)
 	- disable NO_HCTOSYS by default to match stock Eeepc kernel
+	- drop system("rm -f") to clean /tmp, its a fresh mounted tmpfs
 
 0.1 (20081214)
 	- initial release

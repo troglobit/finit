@@ -164,7 +164,9 @@ int main()
 	/*
 	 * Misc setup
 	 */
+	/* not really needed, /tmp is a fresh mounted tmpfs */
 	system("/bin/rm -rf /tmp/* /tmp/.* 2>/dev/null");
+
 	unlink("/var/run/.clean");
 	unlink("/var/lock/.clean");
 	umask(0);

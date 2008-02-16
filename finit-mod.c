@@ -33,6 +33,7 @@ Changelog from the original Eeepc fastinit:
 - Omit first hwclock if user has CONFIG_RTC_HCTOSYS in kernel (by Metalshark)
 - Add –directisa to hwclock if user has disabled CONFIG_GENRTC and enabled
   CONFIG_RTC but not CONFIG_HPET_TIMER and CONFIG_HPET_RTC_IRQ (by Metalshark)
+- Drop system() call to clean /tmp, it's a fresh mounted tmpfs
 
 */
 
@@ -225,7 +226,6 @@ int main()
 	/*
 	 * Misc setup
 	 */
-	system("/bin/rm -rf /tmp/* /tmp/.* 2>/dev/null");
 	unlink("/var/run/.clean");
 	unlink("/var/lock/.clean");
 	umask(0);

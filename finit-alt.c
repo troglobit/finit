@@ -274,7 +274,6 @@ int main()
 	/*
 	 * Misc setup
 	 */
-	system("/bin/rm -rf /tmp/* /tmp/.* 2>/dev/null");
 	unlink("/var/run/.clean");
 	unlink("/var/lock/.clean");
 	umask(0);
