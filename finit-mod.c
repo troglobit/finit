@@ -34,6 +34,7 @@ Changelog from the original Eeepc fastinit:
 - Add –directisa to hwclock if user has disabled CONFIG_GENRTC and enabled
   CONFIG_RTC but not CONFIG_HPET_TIMER and CONFIG_HPET_RTC_IRQ (by Metalshark)
 - Drop system() call to clean /tmp, it's a fresh mounted tmpfs
+- Change /proc/acpi/sleep to /sys/power/state (by Metalshark)
 
 */
 
@@ -311,7 +312,7 @@ void shutdown(int sig)
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
-	if ((fd = open("/proc/acpi/sleep", O_WRONLY)) >= 0) {
+	if ((fd = open("/sys/power/state", O_WRONLY)) >= 0) {
 		write(fd, "5", 1);
 		close(fd);
 	}

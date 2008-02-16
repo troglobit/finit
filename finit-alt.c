@@ -373,7 +373,7 @@ void shutdown(int sig)
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
-	if ((fd = open("/proc/acpi/sleep", O_WRONLY)) >= 0) {
+	if ((fd = open("/sys/power/state", O_WRONLY)) >= 0) {
 		write(fd, "5", 1);
 		close(fd);
 	}

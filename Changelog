@@ -3,6 +3,8 @@
 	- replace system("touch") with touch() in finit-mod (Metalshark)
 	- disable NO_HCTOSYS by default to match stock Eeepc kernel
 	- drop system("rm -f") to clean /tmp, its a fresh mounted tmpfs
+	- write ACPI sleep state to /sys/power/state instead of
+	  /proc/acpi/sleep (Metalshark)
 
 0.1 (20081214)
 	- initial release
