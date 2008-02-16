@@ -94,7 +94,7 @@ int makepath(char *p)
 	return ret;
 }
 
-void ifconfig(char *name, char *inet, char *broadcast, int flags)
+void ifconfig(char *name, char *inet, char *mask, int flags)
 {
 	struct ifreq ifr;
 	struct sockaddr_in *a = (struct sockaddr_in *)&(ifr.ifr_addr);
@@ -108,7 +108,7 @@ void ifconfig(char *name, char *inet, char *broadcast, int flags)
 	a->sin_family = AF_INET;
 	inet_aton(inet, &a->sin_addr);
 	ioctl(sock, SIOCSIFADDR, &ifr);
-	inet_aton(broadcast, &a->sin_addr);
+	inet_aton(mask, &a->sin_addr);
 	ioctl(sock, SIOCSIFNETMASK, &ifr);
 	ioctl(sock, SIOCGIFFLAGS, &ifr);
 	ifr.ifr_flags |= flags;
