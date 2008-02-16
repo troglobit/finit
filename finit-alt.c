@@ -420,7 +420,7 @@ void chld_handler(int sig)
 
 
 /*
- * We got a signal (PWR TERM ALRM HUP STOP CONT)
+ * We got a signal (PWR TERM ALRM HUP CONT)
  */
 void signal_handler(int sig)
 {
