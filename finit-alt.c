@@ -37,7 +37,10 @@ THE SOFTWARE.
 #include <sys/reboot.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
-#include <linux/limits.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 
 #ifdef DEBUG
@@ -105,9 +108,31 @@ int makepath(char *p)
 	return ret;
 }
 
+void ifconfig(char *name, char *inet, char *broadcast, int flags)
+{
+	struct ifreq ifr;
+	struct sockaddr_in *a = (struct sockaddr_in *)&(ifr.ifr_addr);
+	int sock;
+
+	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
+		return;
+
+	memset(&ifr, 0, sizeof (ifr));
+	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+	a->sin_family = AF_INET;
+	inet_aton(inet, &a->sin_addr);
+	ioctl(sock, SIOCSIFADDR, &ifr);
+	inet_aton(broadcast, &a->sin_addr);
+	ioctl(sock, SIOCSIFNETMASK, &ifr);
+	ioctl(sock, SIOCGIFFLAGS, &ifr);
+	ifr.ifr_flags |= flags;
+	ioctl(sock, SIOCSIFFLAGS, &ifr);
+	close(sock);
+}
 
 
-void shutdown(int);
+
+void do_shutdown(int);
 void signal_handler(int);
 void chld_handler(int);
 
@@ -137,10 +162,10 @@ int main()
 	for (i = 1; i < NSIG; i++)
 		SETSIG(sa, i, SIG_IGN, SA_RESTART);
 
-	SETSIG(sa, SIGINT,  shutdown,       0);
+	SETSIG(sa, SIGINT,  do_shutdown,    0);
 	SETSIG(sa, SIGPWR,  signal_handler, 0);
-	SETSIG(sa, SIGUSR1, shutdown,       0);
-	SETSIG(sa, SIGUSR2, shutdown,       0);
+	SETSIG(sa, SIGUSR1, do_shutdown,    0);
+	SETSIG(sa, SIGUSR2, do_shutdown,    0);
 	SETSIG(sa, SIGTERM, signal_handler, 0);
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP,  signal_handler, 0);
@@ -259,7 +284,7 @@ int main()
 		fclose(f);
 	}
 
-	system("/sbin/ifconfig lo 127.0.0.1 netmask 255.0.0.0 up > /dev/null");
+	ifconfig("lo", "127.0.0.1", "255.0.0.0", IFF_UP);
 
 	/*
 	 * Set random seed
@@ -345,7 +370,7 @@ int main()
 /*
  * Shut down on INT USR1 USR2
  */
-void shutdown(int sig)
+void do_shutdown(int sig)
 {
 	int fd;
 

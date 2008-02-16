@@ -5,6 +5,7 @@
 	- drop system("rm -f") to clean /tmp, its a fresh mounted tmpfs
 	- write ACPI sleep state to /sys/power/state instead of
 	  /proc/acpi/sleep (Metalshark)
+	- use direct calls to set loopback instead of fork ifconfig
 
 0.1 (20081214)
 	- initial release
