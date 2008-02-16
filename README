@@ -70,3 +70,4 @@ problems related to udev and pam.
     /etc/init.d/nfs-common start
 
 3 - Create /etc/hostname if you don't have it already
+

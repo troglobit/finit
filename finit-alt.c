@@ -93,6 +93,10 @@ THE SOFTWARE.
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 
 
+/*
+ * Helpers to replace system() calls
+ */
+
 int makepath(char *p)
 {
 	char *x, path[PATH_MAX];
@@ -128,6 +132,21 @@ void ifconfig(char *name, char *inet, char *mask, int flags)
 	ifr.ifr_flags |= flags;
 	ioctl(sock, SIOCSIFFLAGS, &ifr);
 	close(sock);
+}
+
+void copy4k(char *src, char *dst)
+{
+	char buffer[4096];
+	int s, d, n;
+
+	if ((s = open(src, O_RDONLY)) >= 0) {
+		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
+			if ((n = read(s, buffer, 4096)) > 0)
+				write(d, buffer, n);
+			close(d);
+		}
+		close(s);
+	}
 }
 
 
@@ -289,12 +308,10 @@ int main()
 	/*
 	 * Set random seed
 	 */
-	system("/bin/cat " RANDOMSEED " >/dev/urandom 2> /dev/null");
+	copy4k(RANDOMSEED, "/dev/urandom");
 	unlink(RANDOMSEED);
-
 	umask(077);
-	system("/bin/dd if=/dev/urandom of=" RANDOMSEED "bs=4096 count=1 "
-							">/dev/null 2>&1");
+	copy4k("/dev/urandom", RANDOMSEED);
 
 	/*
 	 * Misc setup

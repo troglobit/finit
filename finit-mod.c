@@ -36,6 +36,7 @@ Changelog from the original Eeepc fastinit:
 - Drop system() call to clean /tmp, it's a fresh mounted tmpfs
 - Change /proc/acpi/sleep to /sys/power/state (by Metalshark)
 - Set loopback interface using direct calls instead of system("ifconfig")
+- Copy 4096 data block in C instead of system("cat") or system("dd")
 
 */
 
@@ -79,6 +80,10 @@ Changelog from the original Eeepc fastinit:
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 
 
+/*
+ * Helpers to replace system() calls
+ */
+
 int makepath(char *p)
 {
 	char *x, path[PATH_MAX];
@@ -114,6 +119,21 @@ void ifconfig(char *name, char *inet, char *mask, int flags)
 	ifr.ifr_flags |= flags;
 	ioctl(sock, SIOCSIFFLAGS, &ifr);
 	close(sock);
+}
+
+void copy4k(char *src, char *dst)
+{
+	char buffer[4096];
+	int s, d, n;
+
+	if ((s = open(src, O_RDONLY)) >= 0) {
+		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
+			if ((n = read(s, buffer, 4096)) > 0)
+				write(d, buffer, n);
+			close(d);
+		}
+		close(s);
+	}
 }
 
 
@@ -243,13 +263,10 @@ int main()
 	/*
 	 * Set random seed
 	 */
-	system("/bin/cat /var/lib/urandom/random-seed >/dev/urandom "
-						"2> /dev/null");
+	copy4k("/var/lib/urandom/random-seed", "/dev/urandom");
 	unlink("/var/lib/urandom/random-seed");
-
 	umask(077);
-	system("/bin/dd if=/dev/urandom of=/var/lib/urandom/random-seed "
-					"bs=4096 count=1 >/dev/null 2>&1");
+	copy4k("/dev/urandom", "/var/lib/urandom/random-seed");
 
 	/*
 	 * Misc setup
