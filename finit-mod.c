@@ -79,7 +79,7 @@ Changelog from the original Eeepc fastinit:
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 
 
-void do_shutdown(int);
+void shutdown(int);
 void signal_handler(int);
 void chld_handler(int);
 
@@ -109,10 +109,10 @@ int main()
 	for (i = 1; i < NSIG; i++)
 		SETSIG(sa, i, SIG_IGN, SA_RESTART);
 
-	SETSIG(sa, SIGINT,  do_shutdown,    0);
+	SETSIG(sa, SIGINT,  shutdown,    0);
 	SETSIG(sa, SIGPWR,  signal_handler, 0);
-	SETSIG(sa, SIGUSR1, do_shutdown,    0);
-	SETSIG(sa, SIGUSR2, do_shutdown,    0);
+	SETSIG(sa, SIGUSR1, shutdown,    0);
+	SETSIG(sa, SIGUSR2, shutdown,    0);
 	SETSIG(sa, SIGTERM, signal_handler, 0);
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP,  signal_handler, 0);
@@ -269,7 +269,7 @@ int main()
 /*
  * Shut down on INT USR1 USR2
  */
-void do_shutdown(int sig)
+void shutdown(int sig)
 {
 	int fd;
 

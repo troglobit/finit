@@ -37,10 +37,6 @@ THE SOFTWARE.
 #include <sys/reboot.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "helpers.h"
 
@@ -94,7 +90,7 @@ THE SOFTWARE.
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 
 
-void do_shutdown(int);
+void shutdown(int);
 void signal_handler(int);
 void chld_handler(int);
 
@@ -124,10 +120,10 @@ int main()
 	for (i = 1; i < NSIG; i++)
 		SETSIG(sa, i, SIG_IGN, SA_RESTART);
 
-	SETSIG(sa, SIGINT,  do_shutdown,    0);
+	SETSIG(sa, SIGINT,  shutdown,    0);
 	SETSIG(sa, SIGPWR,  signal_handler, 0);
-	SETSIG(sa, SIGUSR1, do_shutdown,    0);
-	SETSIG(sa, SIGUSR2, do_shutdown,    0);
+	SETSIG(sa, SIGUSR1, shutdown,    0);
+	SETSIG(sa, SIGUSR2, shutdown,    0);
 	SETSIG(sa, SIGTERM, signal_handler, 0);
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP,  signal_handler, 0);
@@ -246,7 +242,7 @@ int main()
 		fclose(f);
 	}
 
-	ifconfig("lo", "127.0.0.1", "255.0.0.0", IFF_UP);
+	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 
 	/*
 	 * Set random seed
@@ -330,7 +326,7 @@ int main()
 /*
  * Shut down on INT USR1 USR2
  */
-void do_shutdown(int sig)
+void shutdown(int sig)
 {
 	int fd;
 
