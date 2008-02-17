@@ -278,7 +278,7 @@ void do_shutdown(int sig)
 	kill(-1, SIGTERM);
 
 	write(1, "\033[?25l\033[30;40m", 14);
-	copyfile("/boot/shutdown.fb", "/dev/fb/0");
+	copyfile("/boot/shutdown.fb", "/dev/fb/0", 0);
 	sleep(2);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
