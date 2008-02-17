@@ -7,6 +7,7 @@
 	  /proc/acpi/sleep (Metalshark)
 	- use direct calls to set loopback instead of system("ifconfig")
 	- replace system("cat") and system("dd") with C implementation
+	- moved finit-mod and finit-alt helpers to helpers.c
 
 0.1 (20081214)
 	- initial release

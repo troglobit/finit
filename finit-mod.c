@@ -55,10 +55,8 @@ Changelog from the original Eeepc fastinit:
 #include <sys/reboot.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
+#include "helpers.h"
 
 #ifdef DIRECTISA
 #define HWCLOCK_DIRECTISA " --directisa"
@@ -78,64 +76,6 @@ Changelog from the original Eeepc fastinit:
 		} while(0)
 
 #define touch(x) mknod((x), S_IFREG|0644, 0)
-
-
-/*
- * Helpers to replace system() calls
- */
-
-int makepath(char *p)
-{
-	char *x, path[PATH_MAX];
-	int ret;
-	
-	x = path;
-
-	do {
-		do { *x++ = *p++; } while (*p && *p != '/');
-		ret = mkdir(path, 0777);
-	} while (*p && (*p != '/' || *(p + 1))); /* ignore trailing slash */
-
-	return ret;
-}
-
-void ifconfig(char *name, char *inet, char *mask, int flags)
-{
-	struct ifreq ifr;
-	struct sockaddr_in *a = (struct sockaddr_in *)&(ifr.ifr_addr);
-	int sock;
-
-	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
-		return;
-
-	memset(&ifr, 0, sizeof (ifr));
-	strncpy(ifr.ifr_name, name, IFNAMSIZ);
-	a->sin_family = AF_INET;
-	inet_aton(inet, &a->sin_addr);
-	ioctl(sock, SIOCSIFADDR, &ifr);
-	inet_aton(mask, &a->sin_addr);
-	ioctl(sock, SIOCSIFNETMASK, &ifr);
-	ioctl(sock, SIOCGIFFLAGS, &ifr);
-	ifr.ifr_flags |= flags;
-	ioctl(sock, SIOCSIFFLAGS, &ifr);
-	close(sock);
-}
-
-void copy4k(char *src, char *dst)
-{
-	char buffer[4096];
-	int s, d, n;
-
-	if ((s = open(src, O_RDONLY)) >= 0) {
-		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
-			if ((n = read(s, buffer, 4096)) > 0)
-				write(d, buffer, n);
-			close(d);
-		}
-		close(s);
-	}
-}
-
 
 
 void do_shutdown(int);
@@ -258,15 +198,15 @@ int main()
 		
 	}
 
-	ifconfig("lo", "127.0.0.1", "255.0.0.0", IFF_UP);
+	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 
 	/*
 	 * Set random seed
 	 */
-	copy4k("/var/lib/urandom/random-seed", "/dev/urandom");
+	copyfile("/var/lib/urandom/random-seed", "/dev/urandom", 0);
 	unlink("/var/lib/urandom/random-seed");
 	umask(077);
-	copy4k("/dev/urandom", "/var/lib/urandom/random-seed");
+	copyfile("/dev/urandom", "/var/lib/urandom/random-seed", 4096);
 
 	/*
 	 * Misc setup

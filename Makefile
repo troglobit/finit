@@ -5,6 +5,7 @@ LDFLAGS	=
 LIBS	=
 VERSION	= 0.2
 PKG	= finit-$(VERSION)
+DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h
 
 
 #### Configurable parameters
@@ -32,7 +33,15 @@ CFLAGS += -march=pentium-m
 
 all: finit finit-mod finit-mdv
 
-%: %.o
+finit: finit.o
+	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
+	strip $@
+
+finit-mod: finit-mod.o helpers.o
+	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
+	strip $@
+
+finit-mdv: finit-mdv.o helpers.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
@@ -49,7 +58,7 @@ finit-mod.o: finit-mod.c Makefile
 dist:
 	rm -Rf $(PKG)
 	mkdir $(PKG)
-	cp Makefile README finit.c finit-mod.c finit-alt.c $(PKG)
+	cp Makefile $(DFILES) $(PKG)
 	tar cf - $(PKG) | gzip -c > $(PKG).tar.gz
 	rm -Rf $(PKG)
 	ls -l $(PKG).tar.gz

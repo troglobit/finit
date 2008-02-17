@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "helpers.h"
 
 #ifdef DEBUG
 #define debug(x...) do { \
@@ -91,64 +92,6 @@ THE SOFTWARE.
 
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
-
-
-/*
- * Helpers to replace system() calls
- */
-
-int makepath(char *p)
-{
-	char *x, path[PATH_MAX];
-	int ret;
-	
-	x = path;
-
-	do {
-		do { *x++ = *p++; } while (*p && *p != '/');
-		ret = mkdir(path, 0777);
-	} while (*p && (*p != '/' || *(p + 1))); /* ignore trailing slash */
-
-	return ret;
-}
-
-void ifconfig(char *name, char *inet, char *mask, int flags)
-{
-	struct ifreq ifr;
-	struct sockaddr_in *a = (struct sockaddr_in *)&(ifr.ifr_addr);
-	int sock;
-
-	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
-		return;
-
-	memset(&ifr, 0, sizeof (ifr));
-	strncpy(ifr.ifr_name, name, IFNAMSIZ);
-	a->sin_family = AF_INET;
-	inet_aton(inet, &a->sin_addr);
-	ioctl(sock, SIOCSIFADDR, &ifr);
-	inet_aton(mask, &a->sin_addr);
-	ioctl(sock, SIOCSIFNETMASK, &ifr);
-	ioctl(sock, SIOCGIFFLAGS, &ifr);
-	ifr.ifr_flags |= flags;
-	ioctl(sock, SIOCSIFFLAGS, &ifr);
-	close(sock);
-}
-
-void copy4k(char *src, char *dst)
-{
-	char buffer[4096];
-	int s, d, n;
-
-	if ((s = open(src, O_RDONLY)) >= 0) {
-		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
-			if ((n = read(s, buffer, 4096)) > 0)
-				write(d, buffer, n);
-			close(d);
-		}
-		close(s);
-	}
-}
-
 
 
 void do_shutdown(int);
@@ -308,10 +251,10 @@ int main()
 	/*
 	 * Set random seed
 	 */
-	copy4k(RANDOMSEED, "/dev/urandom");
+	copyfile(RANDOMSEED, "/dev/urandom", 0);
 	unlink(RANDOMSEED);
 	umask(077);
-	copy4k("/dev/urandom", RANDOMSEED);
+	copyfile("/dev/urandom", RANDOMSEED, 4096);
 
 	/*
 	 * Misc setup
