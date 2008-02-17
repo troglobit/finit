@@ -71,8 +71,8 @@ void copyfile(char *src, char *dst, int size)
 	if ((s = open(src, O_RDONLY)) >= 0) {
 		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
 
-			/* Size <= 0 means copy entire file */
-			if (size <= 0) {
+			/* Size == 0 means copy entire file */
+			if (size == 0) {
 				do {
 					if ((n = read(s, buffer, BUF_SIZE)) > 0)
 						write(d, buffer, n);

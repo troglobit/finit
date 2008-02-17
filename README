@@ -56,9 +56,9 @@ Using finit with alternative systems
 Currently tested only with Mandriva 2008. Proceed with caution, there are
 problems related to udev and pam.
 
-1 - add init=/sbin/finit-mdv to the kernel boot line
+1 - Add init=/sbin/finit-mdv to the kernel boot line
 
-2 - provide a suitable /usr/sbin/services.sh, this is the one I use in my
+2 - Provide a suitable /usr/sbin/services.sh, this is the one I use in my
     test system:
 
     mkdir /var/lock/subsys
@@ -69,5 +69,7 @@ problems related to udev and pam.
     /etc/init.d/portmap start
     /etc/init.d/nfs-common start
 
-3 - Create /etc/hostname if you don't have it already
+3 - Provide /etc/hostname if you don't have it already
+
+4 - Set the pointer device in the X server configuration to /dev/input/mice
 
