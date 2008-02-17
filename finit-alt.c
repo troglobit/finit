@@ -316,9 +316,9 @@ int main()
 	
 	/* parent process */
 
-	system(GETTY " &");
+	system(GETTY "&");
 	sleep(1);
-	system("/usr/sbin/services.sh &> /dev/null &");
+	system("/usr/sbin/services.sh &>/dev/null&");
 
 	while (1) {
 		sigemptyset(&nmask);
@@ -339,9 +339,9 @@ void do_shutdown(int sig)
 
 	kill(-1, SIGTERM);
 
-	system("/bin/echo -e \"\033[?25l\033[30;40m\"; "
-				"/bin/cp /boot/shutdown.fb /dev/fb/0");
-	sleep(1);
+	write(1, "\033[?25l\033[30;40m", 14);
+	copyfile("/boot/shutdown.fb", "/dev/fb/0");
+	sleep(2);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
 	system("/sbin/hwclock --systohc --localtime" HWCLOCK_DIRECTISA);

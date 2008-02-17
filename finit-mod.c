@@ -37,6 +37,7 @@ Changelog from the original Eeepc fastinit:
 - Change /proc/acpi/sleep to /sys/power/state (by Metalshark)
 - Set loopback interface using direct calls instead of system("ifconfig")
 - Copy 4096 data block in C instead of system("cat") or system("dd")
+- Draw shutdown splash screen using C calls instead of system("echo;cat")
 
 */
 
@@ -254,9 +255,9 @@ int main()
 	
 	/* parent process */
 
-	system("/sbin/getty 38400 tty3 &");
+	system("/sbin/getty 38400 tty3&");
 	sleep(1);
-	system("/usr/sbin/services.sh &> /dev/null &");
+	system("/usr/sbin/services.sh &>/dev/null&");
 
 	while (1) {
 		sigemptyset(&nmask);
@@ -276,10 +277,9 @@ void do_shutdown(int sig)
 
 	kill(-1, SIGTERM);
 
-	system("/bin/echo -e \"\033[?25l\033[30;40m\"; "
-				"/bin/cp /boot/shutdown.fb /dev/fb/0");
-	sleep(1);
-	sleep(1);
+	write(1, "\033[?25l\033[30;40m", 14);
+	copyfile("/boot/shutdown.fb", "/dev/fb/0");
+	sleep(2);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
 	system("/sbin/hwclock --systohc --localtime" HWCLOCK_DIRECTISA);
