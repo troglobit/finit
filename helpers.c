@@ -43,20 +43,22 @@ void ifconfig(char *name, char *inet, char *mask, int up)
 	memset(&ifr, 0, sizeof (ifr));
 	strncpy(ifr.ifr_name, name, IFNAMSIZ);
 	a->sin_family = AF_INET;
-	inet_aton(inet, &a->sin_addr);
 
 	if (up) {
+		inet_aton(inet, &a->sin_addr);
 		ioctl(sock, SIOCSIFADDR, &ifr);
 		inet_aton(mask, &a->sin_addr);
 		ioctl(sock, SIOCSIFNETMASK, &ifr);
-		ioctl(sock, SIOCGIFFLAGS, &ifr);
-		ifr.ifr_flags |= IFF_UP;
-		ioctl(sock, SIOCSIFFLAGS, &ifr);
-	} else {
-		ioctl(sock, SIOCGIFFLAGS, &ifr);
-		ifr.ifr_flags &= ~IFF_UP;
-		ioctl(sock, SIOCSIFFLAGS, &ifr);
 	}
+
+	ioctl(sock, SIOCGIFFLAGS, &ifr);
+
+	if (up)
+		ifr.ifr_flags |= IFF_UP;
+	else
+		ifr.ifr_flags &= ~IFF_UP;
+
+	ioctl(sock, SIOCSIFFLAGS, &ifr);
 	
 	close(sock);
 }
@@ -68,25 +70,19 @@ void copyfile(char *src, char *dst, int size)
 	char buffer[BUF_SIZE];
 	int s, d, n;
 
+	/* Size == 0 means copy entire file */
+	if (size == 0)
+		size = INT_MAX;
+
 	if ((s = open(src, O_RDONLY)) >= 0) {
 		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
-
-			/* Size == 0 means copy entire file */
-			if (size == 0) {
-				do {
-					if ((n = read(s, buffer, BUF_SIZE)) > 0)
-						write(d, buffer, n);
-				} while (n == BUF_SIZE);
-			} else {
-				do {
-					int csize = size > BUF_SIZE ?
-							BUF_SIZE : size;
-			
-					if ((n = read(s, buffer, csize)) > 0)
-						write(d, buffer, n);
-					size -= csize;
-				} while (size > 0 && n == BUF_SIZE);
-			}
+			do {
+				int csize = size > BUF_SIZE ?  BUF_SIZE : size;
+		
+				if ((n = read(s, buffer, csize)) > 0)
+					write(d, buffer, n);
+				size -= csize;
+			} while (size > 0 && n == BUF_SIZE);
 			close(d);
 		}
 		close(s);
