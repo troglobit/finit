@@ -34,7 +34,7 @@ int makepath(char *p)
 void ifconfig(char *name, char *inet, char *mask, int up)
 {
 	struct ifreq ifr;
-	struct sockaddr_in *a = (struct sockaddr_in *)&(ifr.ifr_addr);
+	struct sockaddr_in *a = (struct sockaddr_in *)&ifr.ifr_addr;
 	int sock;
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
