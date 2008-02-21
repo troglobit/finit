@@ -6,6 +6,7 @@ LIBS	=
 VERSION	= 0.3-pre
 PKG	= finit-$(VERSION)
 DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h
+BINS	= finit finit-mod finit-mdv
 
 
 #### Configurable parameters
@@ -31,7 +32,7 @@ CFLAGS += -march=pentium-m
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
 
-all: finit finit-mod finit-mdv
+all: $(BINS)
 
 finit: finit.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
@@ -49,7 +50,7 @@ finit-mdv.o: finit-alt.c Makefile
 	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ finit-alt.c
 
 clean:
-	rm -f *.o core *~
+	rm -f *.o core *~ $(BINS)
 
 finit.o: finit.c Makefile
 

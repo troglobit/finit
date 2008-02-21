@@ -38,6 +38,8 @@ Changelog from the original Eeepc fastinit:
 - Set loopback interface using direct calls instead of system("ifconfig")
 - Copy 4096 data block in C instead of system("cat") or system("dd")
 - Draw shutdown splash screen using C calls instead of system("echo;cat")
+- Change poweroff method from writing 5 to /sys/power/state to
+  reboot(RB_POWER_OFF) (by Metalshark)
 
 */
 
@@ -271,8 +273,6 @@ int main()
  */
 void shutdown(int sig)
 {
-	int fd;
-
 	touch("/tmp/shutdown");
 
 	kill(-1, SIGTERM);
@@ -296,10 +296,7 @@ void shutdown(int sig)
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
-	if ((fd = open("/sys/power/state", O_WRONLY)) >= 0) {
-		write(fd, "5", 1);
-		close(fd);
-	}
+	reboot(RB_POWER_OFF);
 }
 
 

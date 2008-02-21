@@ -328,8 +328,6 @@ int main()
  */
 void shutdown(int sig)
 {
-	int fd;
-
 	debug("shutdown");
 	touch("/tmp/shutdown");
 
@@ -354,10 +352,7 @@ void shutdown(int sig)
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
-	if ((fd = open("/sys/power/state", O_WRONLY)) >= 0) {
-		write(fd, "5", 1);
-		close(fd);
-	}
+	reboot(RB_POWER_OFF);
 }
 
 
