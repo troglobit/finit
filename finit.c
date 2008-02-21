@@ -240,14 +240,12 @@ void shutdown(int sig)
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
 	system("/sbin/hwclock --systohc --localtime");
-	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
 	kill(-1, SIGKILL);
 
 	sync();
 	sync();
 	system("/bin/mount -n -o remount,ro /");
-
 	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
 	if (sig == SIGINT || sig == SIGUSR1)
