@@ -25,6 +25,7 @@ int makepath(char *p)
 
 	do {
 		do { *x++ = *p++; } while (*p && *p != '/');
+		*x = 0;
 		ret = mkdir(path, 0777);
 	} while (*p && (*p != '/' || *(p + 1))); /* ignore trailing slash */
 
