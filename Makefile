@@ -12,7 +12,7 @@ BINS	= finit finit-mod finit-mdv
 #### Configurable parameters
 
 # Add -DDEBUG to build with debug messages, also drops to terminal after X
-#CFLAGS += -DDEBUG
+CFLAGS += -DDEBUG
 
 # Parameters added by Metalshark
 

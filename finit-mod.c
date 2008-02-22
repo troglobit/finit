@@ -40,6 +40,7 @@ Changelog from the original Eeepc fastinit:
 - Draw shutdown splash screen using C calls instead of system("echo;cat")
 - Change poweroff method from writing 5 to /sys/power/state to
   reboot(RB_POWER_OFF) (by Metalshark)
+- Mount /var/run and /var/lock as tmpfs
 
 */
 
@@ -151,6 +152,8 @@ int main()
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
+	mount("tmpfs", "/var/run", "tmpfs", 0, "mode=0755");
+	mount("tmpfs", "/var/lock", "tmpfs", 0, "mode=1777");
 	mount("/mnt", "/", NULL, MS_MOVE, NULL);
 
 	/*

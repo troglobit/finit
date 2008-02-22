@@ -171,6 +171,8 @@ int main()
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
+	mount("tmpfs", "/var/run", "tmpfs", 0, "mode=0755");
+	mount("tmpfs", "/var/lock", "tmpfs", 0, "mode=1777");
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
 	unlink("/etc/mtab");
@@ -251,13 +253,17 @@ int main()
 	unlink(RANDOMSEED);
 	umask(077);
 	copyfile("/dev/urandom", RANDOMSEED, 4096);
+	umask(0);
+
+	/*
+	 * Console setup (for X)
+	 */
+	makepath("/var/run/console");
+	touch("/var/run/console/" DEFUSER);
 
 	/*
 	 * Misc setup
 	 */
-	unlink("/var/run/.clean");
-	unlink("/var/lock/.clean");
-	umask(0);
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
