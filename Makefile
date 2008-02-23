@@ -3,7 +3,7 @@ CFLAGS	= -Os -Wall -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 LD	= gcc
 LDFLAGS	=
 LIBS	=
-VERSION	= 0.3-pre
+VERSION	= 0.3
 PKG	= finit-$(VERSION)
 DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h
 BINS	= finit finit-mod finit-mdv
@@ -12,7 +12,7 @@ BINS	= finit finit-mod finit-mdv
 #### Configurable parameters
 
 # Add -DDEBUG to build with debug messages, also drops to terminal after X
-CFLAGS += -DDEBUG
+#CFLAGS += -DDEBUG
 
 # Parameters added by Metalshark
 
