@@ -191,7 +191,6 @@ int main()
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);
-	mkfifo("/dev/initctl", 0600);
 #endif
 
 	umask(0022);
