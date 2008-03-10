@@ -1,4 +1,7 @@
-0.3 ()
+O.4 ()
+	- create /dev/initctl fifo in finit-alt (for reboot)
+
+0.3 (20080223)
 	- Change poweroff method to reboot(RB_POWER_OFF) (Metalshark)
 	- Remove duplicate unionctl() reimplementation error
 	- Fix string termination in path creation
