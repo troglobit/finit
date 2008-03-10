@@ -48,6 +48,10 @@ THE SOFTWARE.
 #define debug(x...)
 #endif
 
+#ifndef DEFUSER
+#define DEFUSER "user"
+#endif
+
 /* Distribution configuration */
 
 #ifdef DIST_MDV		/* Mandriva */
@@ -55,9 +59,6 @@ THE SOFTWARE.
 #define SYSROOT		"/sysroot"
 #define GETTY		"/sbin/mingetty tty3"
 #define RUNPARTS	"/usr/bin/run-parts --arg=-i"
-#define DEFUSER		"user"
-#define HOMEDEV		"/dev/sda6"
-#define AGPDRV		"intel-agp"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #else			/* original Eeepc distribution */
@@ -65,7 +66,6 @@ THE SOFTWARE.
 #define SYSROOT		"/mnt"
 #define GETTY		"/sbin/getty 38400 tty3"
 #define RUNPARTS	"/bin/run-parts --arg=-i"
-#define DEFUSER		"user"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 

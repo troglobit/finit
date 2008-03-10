@@ -9,7 +9,11 @@ DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h
 BINS	= finit finit-mod finit-mdv
 
 
+
 #### Configurable parameters
+
+# Default user for finit-alt if not "user"
+#USER=fred
 
 # Add -DDEBUG to build with debug messages, also drops to terminal after X
 #CFLAGS += -DDEBUG
@@ -20,6 +24,7 @@ BINS	= finit finit-mod finit-mdv
 CFLAGS += -march=pentium-m
 
 # Omit the first /sbin/hwclock if CONFIG_RTC_HCTOSYS is enabled in the kernel 
+
 #CFLAGS += -DNO_HCTOSYS
 
 # Append –directisa to /sbin/hwclock lines if the user has disabled
@@ -27,6 +32,9 @@ CFLAGS += -march=pentium-m
 # and CONFIG_HPET_RTC_IRQ.
 #CFLAGS += -DDIRECTISA
 
+ifneq ($(USER), "user")
+CFLAGS += -DDEFUSER=\"$(USER)\"
+endif
 
 
 .c.o:
