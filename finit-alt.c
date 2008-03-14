@@ -58,7 +58,7 @@ THE SOFTWARE.
 #define RANDOMSEED	"/var/lib/random-seed"
 #define SYSROOT		"/sysroot"
 #define GETTY		"/sbin/mingetty tty3"
-#define RUNPARTS	"/usr/bin/run-parts --arg=-i"
+#define RUNPARTS	"/usr/bin/run-parts"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #else			/* original Eeepc distribution */
@@ -230,7 +230,7 @@ int main()
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
-	system(RUNPARTS " /etc/resolvconf/update.d");
+	system(RUNPARTS " --arg=i /etc/resolvconf/update.d");
 	chdir("/");
 	
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE

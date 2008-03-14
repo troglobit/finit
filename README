@@ -73,5 +73,5 @@ problems related to udev and pam.
 
 4 - Set the pointer device in the X server configuration to /dev/input/mice
 
-5 - Have a user named "user", or change DEFUSER in the source file
+5 - Have a user named "user", or change the default in Makefile
 

@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -9,6 +10,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <dirent.h>
+#include <stdarg.h>
 
 #include "helpers.h"
 
@@ -90,3 +93,72 @@ void copyfile(char *src, char *dst, int size)
 	}
 }
 
+#if 0
+
+/* Running the system /bin/run-parts is good enough, enable this if you
+   can't use it. Some distributions have it under /usr/bin, in this case
+   you can assume that the distribution is broken or run-parts is not used
+   in the boot process.
+ */
+
+#define NUM_SCRIPTS 128		/* ought to be enough for anyone */
+#define NUM_ARGS 16
+
+static int cmp(const void *s1, const void *s2)
+{
+	return strcmp(*(char **)s1, *(char **)s2);
+}
+
+int run_parts(char *dir, ...)
+{
+	DIR *d;
+	struct dirent *e;
+	struct stat st;
+	char *ent[NUM_SCRIPTS];
+	int i, num = 0, argnum = 1;
+	char *args[NUM_ARGS];
+	va_list ap;
+
+	if ((d = opendir(dir)) == NULL)
+		return -1;
+	
+	if (chdir(dir))
+		return -1;
+
+	va_start(ap, dir);
+	while (argnum < NUM_ARGS && (args[argnum++] = va_arg(ap, char *)));
+	va_end(ap);
+
+	while (1) {
+		e = readdir(d);
+		if (e) {
+			if (e->d_type == DT_REG) {
+				if (stat(e->d_name, &st))
+					continue;
+				
+				if (st.st_mode & S_IXUSR) {
+					ent[num++] = strdup(e->d_name);
+					if (num >= NUM_SCRIPTS)
+						break;
+				}
+
+			}
+		} else
+			break;
+	}
+
+	if (num == 0)
+		return 0;
+
+	qsort(ent, num, sizeof(char *), cmp);
+
+	for (i = 0; i < num; i++) {
+		args[0] = ent[i];
+		execv(ent[i], args);
+		free(ent[i]);
+	}
+
+	return 0;
+}
+
+#endif

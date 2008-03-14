@@ -4,5 +4,6 @@
 int	makepath	(char *);
 void	ifconfig	(char *, char *, char *, int);
 void	copyfile	(char *, char *, int);
+int	run_parts	(char *, ...);
 
 #endif
