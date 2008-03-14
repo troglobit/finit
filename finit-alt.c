@@ -88,6 +88,7 @@ THE SOFTWARE.
 
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
+#define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 
 
 void shutdown(int);
@@ -191,6 +192,7 @@ int main()
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);
+	blkdev("/dev/loop0",  0600, 7, 0);
 #endif
 
 	umask(0022);
