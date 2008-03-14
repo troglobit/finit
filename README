@@ -75,3 +75,12 @@ problems related to udev and pam.
 
 5 - Have a user named "user", or change the default in Makefile
 
+
+
+Reboot and poweroff
+-------------------
+
+Stock reboot and poweroff utilities of a modern Linux distribution may not
+work correctly with finit. You can replace them with simple scripts that
+send SIGUSR1 to finit for reboot, SIGUSR2 for poweroff.
+
