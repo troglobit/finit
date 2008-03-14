@@ -65,8 +65,13 @@ THE SOFTWARE.
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
 #define GETTY		"/sbin/getty 38400 tty3"
-#define RUNPARTS	"/bin/run-parts --arg=-i"
+#define RUNPARTS	"/bin/run-parts"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
+#endif
+
+#ifdef USE_SQUASHFS
+#undef RUNPARTS
+#define RUNPARTS	"/bin/run-parts"
 #endif
 
 #ifdef DIRECTISA
