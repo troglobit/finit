@@ -14,6 +14,7 @@
 #ifdef BUILTIN_RUNPARTS
 #include <dirent.h>
 #include <stdarg.h>
+#include <sys/wait.h>
 #endif
 
 #include "helpers.h"
@@ -127,21 +128,19 @@ int run_parts(char *dir, ...)
 	va_end(ap);
 
 	while (1) {
-		e = readdir(d);
-		if (e) {
-			if (e->d_type == DT_REG) {
-				if (stat(e->d_name, &st))
-					continue;
-				
-				if (st.st_mode & S_IXUSR) {
-					ent[num++] = strdup(e->d_name);
-					if (num >= NUM_SCRIPTS)
-						break;
-				}
-
-			}
-		} else
+		if ((e = readdir(d)) == NULL)
 			break;
+
+		if (e->d_type == DT_REG) {
+			if (stat(e->d_name, &st))
+				continue;
+			
+			if (st.st_mode & S_IXUSR) {
+				ent[num++] = strdup(e->d_name);
+				if (num >= NUM_SCRIPTS)
+					break;
+			}
+		}
 	}
 
 	if (num == 0)
@@ -151,7 +150,11 @@ int run_parts(char *dir, ...)
 
 	for (i = 0; i < num; i++) {
 		args[0] = ent[i];
-		execv(ent[i], args);
+		if (!fork()) {
+			execv(ent[i], args);
+			exit(0);
+		}
+		wait(NULL);
 		free(ent[i]);
 	}
 
