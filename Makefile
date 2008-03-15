@@ -69,7 +69,7 @@ finit-mod.o: finit-mod.c Makefile
 
 dist:
 	rm -Rf $(PKG)
-	mkdir $(PKG)
+	mkdir -p $(PKG)/contrib
 	cp Makefile $(DFILES) $(PKG)
 	tar cf - $(PKG) | gzip -c > $(PKG).tar.gz
 	rm -Rf $(PKG)
