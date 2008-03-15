@@ -69,11 +69,6 @@ THE SOFTWARE.
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
 
-#ifdef USE_SQUASHFS
-#undef RUNPARTS
-#define RUNPARTS	"/bin/run-parts"
-#endif
-
 #ifdef DIRECTISA
 #define HWCLOCK_DIRECTISA " --directisa"
 #else
