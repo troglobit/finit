@@ -10,8 +10,11 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#ifdef BUILTIN_RUNPARTS
 #include <dirent.h>
 #include <stdarg.h>
+#endif
 
 #include "helpers.h"
 
@@ -93,13 +96,7 @@ void copyfile(char *src, char *dst, int size)
 	}
 }
 
-#if 0
-
-/* Running the system /bin/run-parts is good enough, enable this if you
-   can't use it. Some distributions have it under /usr/bin, in this case
-   you can assume that the distribution is broken or run-parts is not used
-   in the boot process.
- */
+#ifdef BUILTIN_RUNPARTS
 
 #define NUM_SCRIPTS 128		/* ought to be enough for anyone */
 #define NUM_ARGS 16

@@ -32,6 +32,9 @@ CFLAGS += -march=pentium-m
 # and CONFIG_HPET_RTC_IRQ.
 #CFLAGS += -DDIRECTISA
 
+# Use built-in run-parts instead of /bin/run-parts
+#CFLAGS += BUILTIN_RUNPARTS
+
 ifneq ($(USER), "user")
 CFLAGS += -DDEFUSER=\"$(USER)\"
 endif

@@ -189,7 +189,11 @@ int main()
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
+#ifdef BUILTIN_RUNPARTS
+	run_parts("/etc/resolvconf/update.d", "-i", NULL);
+#else
 	system("/bin/run-parts --arg=-i /etc/resolvconf/update.d");
+#endif
 	chdir("/");
 	
 	touch("/etc/network/run/ifstate");

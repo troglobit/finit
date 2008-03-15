@@ -235,7 +235,11 @@ int main()
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
+#ifdef BUILTIN_RUNPARTS
+	run_parts("/etc/resolvconf/update.d", "-i", NULL);
+#else
 	system(RUNPARTS " --arg=i /etc/resolvconf/update.d");
+#endif
 	chdir("/");
 	
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE

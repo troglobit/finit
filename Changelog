@@ -2,6 +2,7 @@ O.4 ()
 	- create /dev/initctl fifo in finit-alt (for reboot)
 	- default username for finit-alt configurable in Makefile
 	- create loopback device node in finit-alt (for squashfs)
+	- add option to use built-in run-parts instead of /bin/run-parts
 
 0.3 (20080223)
 	- Change poweroff method to reboot(RB_POWER_OFF) (Metalshark)
