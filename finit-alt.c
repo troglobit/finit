@@ -176,9 +176,6 @@ int main()
 	mount("tmpfs", "/var/lock", "tmpfs", 0, "mode=1777");
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
-	unlink("/etc/mtab");
-	system("mount -a");
-
 #ifdef MAKE_DEVICES
 	debug("make devices");
 	mkdir("/dev/input", 0755);
@@ -194,6 +191,9 @@ int main()
 	chardev("/dev/agpgart",  0660, 10, 175);
 	blkdev("/dev/loop0",  0600, 7, 0);
 #endif
+
+	unlink("/etc/mtab");
+	system("mount -a");	/* must be after creation of /dev/loop0 */
 
 	umask(0022);
 
