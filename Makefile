@@ -33,7 +33,7 @@ CFLAGS += -march=pentium-m
 #CFLAGS += -DDIRECTISA
 
 # Use built-in run-parts instead of /bin/run-parts
-#CFLAGS += BUILTIN_RUNPARTS
+CFLAGS += -DBUILTIN_RUNPARTS
 
 ifneq ($(USER), "user")
 CFLAGS += -DDEFUSER=\"$(USER)\"
@@ -66,6 +66,8 @@ clean:
 finit.o: finit.c Makefile
 
 finit-mod.o: finit-mod.c Makefile
+
+helpers.o: helpers.c  Makefile
 
 dist:
 	rm -Rf $(PKG)
