@@ -183,7 +183,7 @@ int main()
 		close(1);
 		close(0);
 
-		if (open("/dev/tty1", O_RDWR) != 0)
+		if (open("/dev/tty1", O_RDWR, 0))
 			exit(1);
 
 		sigemptyset(&act.sa_mask);
