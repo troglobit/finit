@@ -19,13 +19,10 @@ BINS	= finit finit-mod finit-mdv
 # Add -DDEBUG to build with debug messages, also drops to terminal after X
 #CFLAGS += -DDEBUG
 
-# Parameters added by Metalshark
-
 # Use -march=pentium-m to build for Eeepc
 CFLAGS += -march=pentium-m
 
 # Omit the first /sbin/hwclock if CONFIG_RTC_HCTOSYS is enabled in the kernel 
-
 #CFLAGS += -DNO_HCTOSYS
 
 # Append –directisa to /sbin/hwclock lines if the user has disabled
@@ -36,10 +33,13 @@ CFLAGS += -march=pentium-m
 # Use built-in run-parts instead of /bin/run-parts
 CFLAGS += -DBUILTIN_RUNPARTS
 
+#### End of configurable parameters
+
+
+
 ifneq ($(USER), "user")
 CFLAGS += -DDEFUSER=\"$(USER)\"
 endif
-
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
@@ -77,3 +77,4 @@ dist:
 	tar cf - $(PKG) | gzip -c > $(PKG).tar.gz
 	rm -Rf $(PKG)
 	ls -l $(PKG).tar.gz
+
