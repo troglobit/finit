@@ -90,6 +90,7 @@ THE SOFTWARE.
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 #define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 
+#define LINE_SIZE 1024
 
 void shutdown(int);
 void signal_handler(int);
@@ -100,13 +101,11 @@ int main()
 {
 	int i;
 	FILE *f;
-	char line[2096];
+	char line[LINE_SIZE];
 	int fd;
 	DIR *dir;
 	struct dirent *d;
-	char filename[1024];
 	struct sigaction sa, act;
-	char hline[1024];
 	char *x;
 	sigset_t nmask, nmask2;
 
@@ -144,7 +143,7 @@ int main()
 	 * Parse kernel parameters
 	 */
 	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
-		fgets(line, 2095, f);
+		fgets(line, LINE_SIZE, f);
 		if (strstr(line, "quiet")) {
 			close(0);
 			close(1);
@@ -222,9 +221,9 @@ int main()
 		while ((d = readdir(dir)) != NULL) {
 			if (isalnum(d->d_name[0]))
 				continue;
-			sprintf(filename, "/etc/resolvconf/run/interface/%s",
-								d->d_name);
-			unlink(filename);
+			snprintf(line, LINE_SIZE,
+				"/etc/resolvconf/run/interface/%s", d->d_name);
+			unlink(line);
 		}
 
 		closedir(dir);
@@ -246,11 +245,11 @@ int main()
 #endif
 
 	if ((f = fopen("/etc/hostname", "r")) != NULL) {
-		fgets(hline, 1023, f);	
-		if ((x = strchr(hline, 0x0a)) != NULL)
+		fgets(line, LINE_SIZE, f);	
+		if ((x = strchr(line, 0x0a)) != NULL)
 			*x = 0;
 
-		sethostname(hline, strlen(hline)); 
+		sethostname(line, strlen(line)); 
 		fclose(f);
 	}
 
