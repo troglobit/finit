@@ -21,6 +21,9 @@ Mandriva 2008
 
 5 - Have a user named "user", or change the default in Makefile
 
+6 - Add the default user to group audio to be able to use sound (permissions
+    are not changed using pam)
+
 
 
 Mandriva 2008.1
