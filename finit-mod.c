@@ -41,6 +41,8 @@ Changelog from the original Eeepc fastinit:
 - Change poweroff method from writing 5 to /sys/power/state to
   reboot(RB_POWER_OFF) (by Metalshark)
 - Mount /var/run and /var/lock as tmpfs
+- Add built-in run-parts option to be used instead of system("run-parts")
+- Reuse cmdline buffer as hostname and filename buffers
 
 */
 
