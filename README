@@ -1,4 +1,3 @@
-
 Eeepc "fastinit" reimplementations
 ----------------------------------
 
@@ -55,4 +54,13 @@ Reboot and poweroff
 Stock reboot and poweroff utilities of a modern Linux distribution may not
 work correctly with finit. You can replace them with simple scripts that
 send SIGUSR1 to finit for reboot, SIGUSR2 for poweroff.
+
+
+Using finit with KDE
+--------------------
+
+If you use finit to start KDE with auto-login enabled, hal-based device
+automounting may not work correctly. That happens because the session
+is started before the system message bus, so add a "dcop kded mediamanager
+reloadBackends" call in the user AutoStart to restart the client.
 
