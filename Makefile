@@ -5,7 +5,8 @@ LDFLAGS	=
 LIBS	=
 VERSION	= 0.4-pre
 PKG	= finit-$(VERSION)
-DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h
+DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h \
+	  patches/*patch
 BINS	= finit finit-mod finit-mdv
 
 
@@ -71,8 +72,8 @@ helpers.o: helpers.c  Makefile
 
 dist:
 	rm -Rf $(PKG)
-	mkdir -p $(PKG)/contrib
-	cp Makefile $(DFILES) $(PKG)
+	mkdir -p $(PKG)/contrib $(PKG)/patches
+	for i in $(DFILES); do cp $$i $(PKG)/`dirname $$i`; done
 	tar cf - $(PKG) | gzip -c > $(PKG).tar.gz
 	rm -Rf $(PKG)
 	ls -l $(PKG).tar.gz

@@ -193,7 +193,7 @@ int main()
 #endif
 
 	unlink("/etc/mtab");
-	system("mount -a");	/* must be after creation of /dev/loop0 */
+	system("mount -a");
 
 	umask(0022);
 
