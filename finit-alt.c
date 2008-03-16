@@ -165,8 +165,11 @@ int main()
 #endif
 	umask(0);
 
+#ifdef MAKE_DEVICES
+	mount("udev", "/dev", "tmpfs", 0, "mode=0755");
 	mkdir("/dev/shm", 0755);
 	mkdir("/dev/pts", 0755);
+#endif
 
 	mount("sysfs", "/sys", "sysfs", 0, NULL);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
@@ -186,6 +189,7 @@ int main()
 	chmod("/dev/null", 0667);
 	chmod("/dev/mem", 0640);
 	chardev("/dev/tty",  0666, 5, 0);
+	chardev("/dev/tty3",  0666, 4, 3);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);
@@ -285,7 +289,7 @@ int main()
 		close(1);
 		close(0);
 
-		if (open("/dev/tty1", O_RDWR, 0))
+		if (open("/dev/tty1", O_RDWR) != 0)
 			exit(1);
 
 		sigemptyset(&act.sa_mask);
