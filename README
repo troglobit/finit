@@ -1,15 +1,17 @@
+
 Eeepc "fastinit" reimplementations
 ----------------------------------
 
 finit.c is a reimplementation of the Asus Eeepc fastinit program based
 on its library calls. It tries to be an accurate re-creation and keeps
-the original bugs and lack of optimization.
+the original bugs and unoptimized calls.
 
-finit-mod.c is a fixed/improved version of finit.c.
+finit-mod.c is a fixed/improved version of finit.c intended to be a drop-in
+replacement for the original Eeepc OS.
 
 finit-alt.c is a fixed/improved version of finit.c for alternative Linux
-distributions running on the Eeepc (previously ffinit.c). Currently able
-to boot unmodified Mandriva Linux.
+distributions running on the Eeepc (previously ffinit.c). It's currently
+able to boot an almost unmodified Mandriva Linux 2008.0/2008.1.
 
 See Makefile for configurable parameters to better suit your system.
 
