@@ -5,7 +5,7 @@ Mandriva 2008
 1 - Add init=/sbin/finit-mdv to the kernel boot line
 
 2 - Provide a suitable /usr/sbin/services.sh, this is the one I use in my
-    test system:
+    test system running e17:
 
     mkdir /var/lock/subsys
     chmod 1777 /var/lock/subsys
@@ -14,6 +14,8 @@ Mandriva 2008
     /sbin/start_udev&
     /etc/init.d/portmap start
     /etc/init.d/nfs-common start
+
+    If you use KDE or need more services, see examples in contrib/
 
 3 - Provide /etc/hostname if you don't have it already
 
