@@ -14,7 +14,7 @@ BINS	= finit finit-mod finit-mdv
 #### Configurable parameters
 
 # Default user for finit-alt if not "user"
-#USER=fred
+#DEFUSER = fred
 
 # Add -DDEBUG to build with debug messages, also drops to terminal after X
 #CFLAGS += -DDEBUG
@@ -37,8 +37,8 @@ CFLAGS += -DBUILTIN_RUNPARTS
 
 
 
-ifneq ($(USER), "user")
-CFLAGS += -DDEFUSER=\"$(USER)\"
+ifneq ($(DEFUSER),)
+CFLAGS += -DDEFUSER=\"$(DEFUSER)\"
 endif
 
 .c.o:
