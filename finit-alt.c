@@ -165,7 +165,6 @@ int main()
 	umask(0);
 
 #ifdef MAKE_DEVICES
-	mount("udev", "/dev", "tmpfs", 0, "mode=0755");
 	mkdir("/dev/shm", 0755);
 	mkdir("/dev/pts", 0755);
 #endif
