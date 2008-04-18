@@ -61,6 +61,7 @@ THE SOFTWARE.
 #define RUNPARTS	"/usr/bin/run-parts"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
+#define PAM_CONSOLE
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -266,6 +267,14 @@ int main()
 	 */
 	makepath("/var/run/console");
 	touch("/var/run/console/" DEFUSER);
+
+#ifdef PAM_CONSOLE
+	if ((fd = open("/var/run/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
+		write(fd, DEFUSER, strlen(DEFUSER));
+		close(fd);
+		system("/sbin/pam_console_apply");
+	}
+#endif
 
 	/*
 	 * Misc setup
