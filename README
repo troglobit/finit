@@ -4,13 +4,14 @@ Eeepc "fastinit" reimplementations
 
 finit.c is a reimplementation of the Asus Eeepc fastinit program based
 on its library calls. It tries to be an accurate re-creation and keeps
-the original bugs and lack of optimization.
+the original bugs and unoptimized calls.
 
-finit-mod.c is a fixed/improved version of finit.c.
+finit-mod.c is a fixed/improved version of finit.c intended to be a drop-in
+replacement for the original Eeepc OS.
 
 finit-alt.c is a fixed/improved version of finit.c for alternative Linux
-distributions running on the Eeepc (previously ffinit.c). Currently able
-to boot unmodified Mandriva Linux.
+distributions running on the Eeepc (previously ffinit.c). It's currently
+able to boot Mandriva Linux 2008.0/2008.1.
 
 See Makefile for configurable parameters to better suit your system.
 
@@ -49,38 +50,19 @@ umount		vi
 console  fb  null  ram0  sda1  sda2  sda3  sr0  tty0
 
 
-
-Using finit with alternative systems
-------------------------------------
-
-Currently tested only with Mandriva 2008. Proceed with caution, there are
-problems related to udev and pam.
-
-1 - Add init=/sbin/finit-mdv to the kernel boot line
-
-2 - Provide a suitable /usr/sbin/services.sh, this is the one I use in my
-    test system:
-
-    mkdir /var/lock/subsys
-    chmod 1777 /var/lock/subsys
-    /etc/init.d/network start
-    dhclient eth0
-    /sbin/start_udev&
-    /etc/init.d/portmap start
-    /etc/init.d/nfs-common start
-
-3 - Provide /etc/hostname if you don't have it already
-
-4 - Set the pointer device in the X server configuration to /dev/input/mice
-
-5 - Have a user named "user", or change the default in Makefile
-
-
-
 Reboot and poweroff
 -------------------
 
 Stock reboot and poweroff utilities of a modern Linux distribution may not
 work correctly with finit. You can replace them with simple scripts that
 send SIGUSR1 to finit for reboot, SIGUSR2 for poweroff.
+
+
+Using finit with KDE
+--------------------
+
+If you use finit to start KDE with auto-login enabled, hal-based device
+automounting may not work correctly. That happens because the session
+is started before the system message bus, so add a "dcop kded mediamanager
+reloadBackends" call in the user AutoStart to restart the client.
 

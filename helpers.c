@@ -117,24 +117,18 @@ int run_parts(char *dir, ...)
 	char *args[NUM_ARGS];
 	va_list ap;
 
-	if ((d = opendir(dir)) == NULL)
-		return -1;
-	
 	if (chdir(dir))
+		return -1;
+
+	if ((d = opendir(dir)) == NULL)
 		return -1;
 
 	va_start(ap, dir);
 	while (argnum < NUM_ARGS && (args[argnum++] = va_arg(ap, char *)));
 	va_end(ap);
 
-	while (1) {
-		if ((e = readdir(d)) == NULL)
-			break;
-
-		if (e->d_type == DT_REG) {
-			if (stat(e->d_name, &st))
-				continue;
-			
+	while ((e = readdir(d))) {
+		if (e->d_type == DT_REG && stat(e->d_name, &st) == 0) {
 			if (st.st_mode & S_IXUSR) {
 				ent[num++] = strdup(e->d_name);
 				if (num >= NUM_SCRIPTS)
@@ -142,6 +136,8 @@ int run_parts(char *dir, ...)
 			}
 		}
 	}
+
+	closedir(d);
 
 	if (num == 0)
 		return 0;

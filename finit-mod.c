@@ -42,6 +42,8 @@ Changelog from the original Eeepc fastinit:
   reboot(RB_POWER_OFF) (by Metalshark)
 - Mount /var/run and /var/lock as tmpfs
 - Use SIG_IGN instead of empty signal handler (by Metalshark)
+- Add built-in run-parts option to be used instead of system("run-parts")
+- Reuse cmdline buffer as hostname and filename buffers
 
 */
 
@@ -82,6 +84,7 @@ Changelog from the original Eeepc fastinit:
 
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 
+#define LINE_SIZE 1024
 
 void shutdown(int);
 void chld_handler(int);
@@ -91,13 +94,11 @@ int main()
 {
 	int i;
 	FILE *f;
-	char line[2096];
+	char line[LINE_SIZE];
 	int fd;
 	DIR *dir;
 	struct dirent *d;
-	char filename[1024];
 	struct sigaction sa, act;
-	char hline[1024];
 	char *x;
 	sigset_t nmask, nmask2;
 
@@ -133,7 +134,7 @@ int main()
 	 * Parse kernel parameters
 	 */
 	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
-		fgets(line, 2095, f);
+		fgets(line, LINE_SIZE, f);
 		if (strstr(line, "quiet")) {
 			close(0);
 			close(1);
@@ -177,9 +178,9 @@ int main()
 		while ((d = readdir(dir)) != NULL) {
 			if (isalnum(d->d_name[0]))
 				continue;
-			sprintf(filename, "/etc/resolvconf/run/interface/%s",
-								d->d_name);
-			unlink(filename);
+			snprintf(line, LINE_SIZE,
+				"/etc/resolvconf/run/interface/%s", d->d_name);
+			unlink(line);
 		}
 
 		closedir(dir);
@@ -199,11 +200,11 @@ int main()
 	touch("/etc/network/run/ifstate");
 
 	if ((f = fopen("/etc/hostname", "r")) != NULL) {
-		fgets(hline, 1023, f);	
-		if ((x = strchr(hline, 0x0a)) != NULL)
+		fgets(line, LINE_SIZE, f);	
+		if ((x = strchr(line, 0x0a)) != NULL)
 			*x = 0;
 
-		sethostname(hline, strlen(hline)); 
+		sethostname(line, strlen(line)); 
 		fclose(f);
 		
 	}
@@ -237,7 +238,7 @@ int main()
 		close(1);
 		close(0);
 
-		if (open("/dev/tty1", O_RDWR, 0))
+		if (open("/dev/tty1", O_RDWR) != 0)
 			exit(1);
 
 		sigemptyset(&act.sa_mask);

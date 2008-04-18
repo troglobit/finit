@@ -1,10 +1,13 @@
 O.4 ()
-	- create /dev/initctl fifo in finit-alt (for reboot)
 	- default username for finit-alt configurable in Makefile
 	- create loopback device node in finit-alt (for squashfs)
 	- add option to use built-in run-parts instead of /bin/run-parts
+<<<<<<< HEAD:Changelog
 	- ignore signal instead of setting to an empty handler (Metalshark)
 	- handle pam_console permissions in finit-alt for Mandriva
+=======
+	- add services.sh example and nash-hotplug patch for Mandriva
+>>>>>>> a3ad99798e6ade97a981adf5b4376e758c97b894:Changelog
 
 0.3 (20080223)
 	- Change poweroff method to reboot(RB_POWER_OFF) (Metalshark)
