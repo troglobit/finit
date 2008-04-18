@@ -41,6 +41,7 @@ Changelog from the original Eeepc fastinit:
 - Change poweroff method from writing 5 to /sys/power/state to
   reboot(RB_POWER_OFF) (by Metalshark)
 - Mount /var/run and /var/lock as tmpfs
+- Use SIG_IGN instead of empty signal handler (by Metalshark)
 
 */
 
@@ -83,7 +84,6 @@ Changelog from the original Eeepc fastinit:
 
 
 void shutdown(int);
-void signal_handler(int);
 void chld_handler(int);
 
 
@@ -112,15 +112,15 @@ int main()
 	for (i = 1; i < NSIG; i++)
 		SETSIG(sa, i, SIG_IGN, SA_RESTART);
 
-	SETSIG(sa, SIGINT,  shutdown,    0);
-	SETSIG(sa, SIGPWR,  signal_handler, 0);
-	SETSIG(sa, SIGUSR1, shutdown,    0);
-	SETSIG(sa, SIGUSR2, shutdown,    0);
-	SETSIG(sa, SIGTERM, signal_handler, 0);
-	SETSIG(sa, SIGALRM, signal_handler, 0);
-	SETSIG(sa, SIGHUP,  signal_handler, 0);
-	SETSIG(sa, SIGCONT, signal_handler, SA_RESTART);
-	SETSIG(sa, SIGCHLD, chld_handler,   SA_RESTART);
+	SETSIG(sa, SIGINT,  shutdown, 0);
+	SETSIG(sa, SIGPWR,  SIG_IGN, 0);
+	SETSIG(sa, SIGUSR1, shutdown, 0);
+	SETSIG(sa, SIGUSR2, shutdown, 0);
+	SETSIG(sa, SIGTERM, SIG_IGN, 0);
+	SETSIG(sa, SIGALRM, SIG_IGN, 0);
+	SETSIG(sa, SIGHUP,  SIG_IGN, 0);
+	SETSIG(sa, SIGCONT, SIG_IGN, SA_RESTART);
+	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
 	
 	/* Block sigchild while forking */
 	sigemptyset(&nmask);
@@ -316,14 +316,5 @@ void chld_handler(int sig)
 		if (errno == ECHILD)
 			break;
 	}
-}
-
-
-/*
- * We got a signal (PWR TERM ALRM HUP CONT)
- */
-void signal_handler(int sig)
-{
-	/* do nothing */
 }
 
