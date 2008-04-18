@@ -271,7 +271,7 @@ int main()
 	touch("/var/run/console/" DEFUSER);
 
 #ifdef PAM_CONSOLE
-	if ((fd = open("/var/run/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
+	if ((fd = open("/var/run/console/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
 		write(fd, DEFUSER, strlen(DEFUSER));
 		close(fd);
 		system("/sbin/pam_console_apply");
