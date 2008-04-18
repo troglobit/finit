@@ -23,9 +23,6 @@ Mandriva 2008
 
 5 - Have a user named "user", or change the default in Makefile
 
-6 - Add the default user to group audio to be able to use sound (permissions
-    are not changed using pam)
-
 
 
 Mandriva 2008.1
@@ -33,5 +30,4 @@ Mandriva 2008.1
 
 If you have a stuck nash-hotplug consuming 100% of CPU after the boot, you
 may want to patch mkinitrd using patches/mkinitrd-6.0.34-nash-hotplug.patch
-
 
