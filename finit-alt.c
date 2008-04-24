@@ -176,6 +176,7 @@ int main()
 	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
 	mount("tmpfs", "/var/run", "tmpfs", 0, "mode=0755");
 	mount("tmpfs", "/var/lock", "tmpfs", 0, "mode=1777");
+	mount("usbfs", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
 #ifdef MAKE_DEVICES
