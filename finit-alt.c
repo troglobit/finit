@@ -62,6 +62,7 @@ THE SOFTWARE.
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #define PAM_CONSOLE
+#define CHECK_FS
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -144,12 +145,25 @@ int main()
 	 * Parse kernel parameters
 	 */
 	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
+		char *x;
 		fgets(line, LINE_SIZE, f);
 		if (strstr(line, "quiet")) {
 			close(0);
 			close(1);
 			close(2);
 		}
+#ifdef CHECK_FS
+		if ((x = strstr(line, "CHECKFS="))) {
+			char *c, cmd[256];
+			strncpy(cmd, "e2fsck -C -p -f ", LINE_SIZE);
+			c = cmd + strlen(cmd);
+			while (x && *x != ' ') *c++ = *x++;
+			system(cmd);
+			sync();
+			sync();
+			reboot(RB_AUTOBOOT);
+		}
+#endif
 		fclose(f);
 	}
 
