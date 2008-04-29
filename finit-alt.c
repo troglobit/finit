@@ -155,7 +155,7 @@ int main()
 #ifdef CHECK_FS
 		if ((x = strstr(line, "CHECKFS="))) {
 			char *c, cmd[256];
-			strcpy(cmd, "e2fsck -C -p -f ");
+			strcpy(cmd, "e2fsck -C -p ");
 			c = cmd + strlen(cmd);
 			while (x && *x != ' ') *c++ = *x++;
 			system(cmd);
