@@ -54,7 +54,6 @@ THE SOFTWARE.
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #define PAM_CONSOLE
-#define CHECK_FS
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -103,8 +102,12 @@ int main()
 	char *x;
 	sigset_t nmask, nmask2;
 	int debug = 0;
+	char username[16];
+	char *c, cmd[256];
 
 	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
+
+	strncpy(username, DEFUSER, 16);
 
 	chdir("/");
 	umask(022);
@@ -145,9 +148,8 @@ int main()
 			close(1);
 			close(2);
 		}
-#ifdef CHECK_FS
 		if ((x = strstr(line, "CHECKFS="))) {
-			char *c, cmd[256];
+			x += 8;
 			strcpy(cmd, "e2fsck -C -p ");
 			c = cmd + strlen(cmd);
 			while (x && *x != ' ') *c++ = *x++;
@@ -156,7 +158,11 @@ int main()
 			sync();
 			reboot(RB_AUTOBOOT);
 		}
-#endif
+		if ((x = strstr(line, "USERNAME="))) {
+			x += 9;
+			c = cmd + strlen(cmd);
+			while (x && *x != ' ') *c++ = *x++;
+		}
 		if ((strstr(line, "DEBUG"))) {
 			debug = 1;
 		}
@@ -276,11 +282,12 @@ int main()
 	 * Console setup (for X)
 	 */
 	makepath("/var/run/console");
-	touch("/var/run/console/" DEFUSER);
+	snprintf(line, LINE_SIZE, "/var/run/console/%s", username);
+	touch(line);
 
 #ifdef PAM_CONSOLE
 	if ((fd = open("/var/run/console/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-		write(fd, DEFUSER, strlen(DEFUSER));
+		write(fd, username, strlen(username));
 		close(fd);
 		system("/sbin/pam_console_apply");
 	}
@@ -328,10 +335,16 @@ int main()
 		
 		while (access("/tmp/shutdown", F_OK) < 0) {
 			if (debug) {
-				system("su -c startx -l " DEFUSER);
+				printf("Starting X as %s\n", username);
+				snprintf(line, LINE_SIZE,
+					"su -c startx -l %s\n", username);
+				system(line);
 				system("/bin/sh");
 			} else {
-				system("su -c startx -l " DEFUSER " &> /dev/null");
+				snprintf(line, LINE_SIZE,
+					"su -c startx -l %s\n &> /dev/null",
+					username);
+				system(line);
 			}
 		}
 
