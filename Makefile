@@ -16,9 +16,6 @@ BINS	= finit finit-mod finit-mdv
 # Default user for finit-alt if not "user"
 #DEFUSER = fred
 
-# Add -DDEBUG to build with debug messages, also drops to terminal after X
-#CFLAGS += -DDEBUG
-
 # Use -march=pentium-m to build for Eeepc
 CFLAGS += -march=pentium-m
 

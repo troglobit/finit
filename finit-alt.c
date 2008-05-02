@@ -40,14 +40,6 @@ THE SOFTWARE.
 
 #include "helpers.h"
 
-#ifdef DEBUG
-#define debug(x...) do { \
-		printf("finit: %d: ", __LINE__); printf(x); printf("\n"); \
-	} while (0)
-#else
-#define debug(x...)
-#endif
-
 #ifndef DEFUSER
 #define DEFUSER "user"
 #endif
@@ -110,6 +102,7 @@ int main()
 	struct sigaction sa, act;
 	char *x;
 	sigset_t nmask, nmask2;
+	int debug = 0;
 
 	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
 
@@ -164,6 +157,9 @@ int main()
 			reboot(RB_AUTOBOOT);
 		}
 #endif
+		if ((strstr(line, "DEBUG"))) {
+			debug = 1;
+		}
 		fclose(f);
 	}
 
@@ -172,8 +168,6 @@ int main()
 	/*
 	 * Mount filesystems
 	 */
-	debug("mount filesystems");
-
 #ifdef REMOUNT_ROOTFS_RW
 	system("/bin/mount -n -o remount,rw /");
 #endif
@@ -194,7 +188,6 @@ int main()
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
 #ifdef MAKE_DEVICES
-	debug("make devices");
 	mkdir("/dev/input", 0755);
 	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
@@ -300,8 +293,6 @@ int main()
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
-	debug("forking");
-
 	if (!fork()) {
 		/* child process */
 
@@ -336,13 +327,12 @@ int main()
 #endif
 		
 		while (access("/tmp/shutdown", F_OK) < 0) {
-			debug("start X as " DEFUSER);
-#ifdef DEBUG
-			system("su -c startx -l " DEFUSER);
-			system("/bin/sh");
-#else
-			system("su -c startx -l " DEFUSER " &> /dev/null");
-#endif
+			if (debug) {
+				system("su -c startx -l " DEFUSER);
+				system("/bin/sh");
+			} else {
+				system("su -c startx -l " DEFUSER " &> /dev/null");
+			}
 		}
 
 		exit(0);
@@ -366,7 +356,6 @@ int main()
  */
 void shutdown(int sig)
 {
-	debug("shutdown");
 	touch("/tmp/shutdown");
 
 	kill(-1, SIGTERM);
