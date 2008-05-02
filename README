@@ -66,3 +66,10 @@ automounting may not work correctly. That happens because the session
 is started before the system message bus, so add a "dcop kded mediamanager
 reloadBackends" call in the user AutoStart to restart the client.
 
+
+finit-alt parameters
+--------------------
+
+CHECKFS=<dev>	run fsck on the specified device
+DEBUG		enable runtime debug (drops to shell after X session)
+
