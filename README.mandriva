@@ -21,7 +21,8 @@ Mandriva 2008
 
 4 - Set the pointer device in the X server configuration to /dev/input/mice
 
-5 - Have a user named "user", or change the default in Makefile
+5 - Have a user named "user", change the default in Makefile or configure
+    in /etc/finit.conf
 
 
 

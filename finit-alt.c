@@ -137,34 +137,59 @@ int main()
 
 	mount("proc", "/proc", "proc", 0, NULL);
 
+
 	/*
 	 * Parse kernel parameters
 	 */
 	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
-		char *x;
 		fgets(line, LINE_SIZE, f);
 		if (strstr(line, "quiet")) {
 			close(0);
 			close(1);
 			close(2);
 		}
-		if ((x = strstr(line, "CHECKFS="))) {
-			x += 8;
-			strcpy(cmd, "e2fsck -C -p ");
-			c = cmd + strlen(cmd);
-			while (x && *x != ' ') *c++ = *x++;
-			system(cmd);
-			sync();
-			sync();
-			reboot(RB_AUTOBOOT);
-		}
-		if ((x = strstr(line, "USERNAME="))) {
-			x += 9;
-			c = cmd + strlen(cmd);
-			while (x && *x != ' ') *c++ = *x++;
-		}
 		if ((strstr(line, "DEBUG"))) {
 			debug = 1;
+		}
+		fclose(f);
+	}
+
+	/*
+	 * Parse configuration file
+	 */
+	if ((f = fopen("/etc/finit.conf", "r")) != NULL) {
+		char *x;
+		while (!feof(f)) {
+			fgets(line, LINE_SIZE, f);
+
+			if (debug) {
+				printf("conf: %s", line);
+			}
+
+			if ((x = strstr(line, "check ")) == line) {
+				x += 6;
+				strcpy(cmd, "/sbin/e2fsck -C -p ");
+				c = cmd + strlen(cmd);
+				while (x && *x != ' ') *c++ = *x++;
+				system(cmd);
+				sync();
+				sync();
+				reboot(RB_AUTOBOOT);
+			}
+			if ((x = strstr(line, "user ")) == line) {
+				x += 5;
+				c = username;
+				while (x && *x != ' ') *c++ = *x++;
+				continue;
+			}
+			if ((x = strstr(line, "module ")) == line) {
+				x += 7;
+				strcpy(cmd, "/sbin/insmod ");
+				c = cmd + strlen(cmd);
+				while (x && *x != ' ') *c++ = *x++;
+				system(cmd);
+				continue;
+			}
 		}
 		fclose(f);
 	}
