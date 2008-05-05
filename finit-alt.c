@@ -162,7 +162,8 @@ int main()
 		while (!feof(f)) {
 			fgets(line, LINE_SIZE, f);
 
-			if (line[i = strlen(line)] == '\n')
+			i = strlen(line);
+			if (i && line[i - 1] == '\n')
 				line[i] = 0;
 
 			if (debug)
