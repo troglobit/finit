@@ -164,7 +164,7 @@ int main()
 
 			i = strlen(line);
 			if (i && line[i - 1] == '\n')
-				line[i] = 0;
+				line[i - 1] = 0;
 
 			if (debug)
 				printf("conf: %s\n", line);
@@ -173,20 +173,21 @@ int main()
 				x += 6;
 				strcpy(cmd, "/sbin/e2fsck -C -p ");
 				c = cmd + strlen(cmd);
-				while (x && *x != ' ') *c++ = *x++;
+				while (x && *x && *x != ' ') *c++ = *x++;
 				system(cmd);
+				continue;
 			}
 			if ((x = strstr(line, "user ")) == line) {
 				x += 5;
 				c = username;
-				while (x && *x != ' ') *c++ = *x++;
+				while (x && *x && *x != ' ') *c++ = *x++;
 				continue;
 			}
 			if ((x = strstr(line, "module ")) == line) {
 				x += 7;
-				strcpy(cmd, "/sbin/insmod ");
+				strcpy(cmd, "/sbin/modprobe ");
 				c = cmd + strlen(cmd);
-				while (x && *x != ' ') *c++ = *x++;
+				while (x && *x && *x != ' ') *c++ = *x++;
 				system(cmd);
 				continue;
 			}
