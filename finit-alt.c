@@ -162,9 +162,11 @@ int main()
 		while (!feof(f)) {
 			fgets(line, LINE_SIZE, f);
 
-			if (debug) {
-				printf("conf: %s", line);
-			}
+			if (line[i = strlen(line)] == '\n')
+				line[i] = 0;
+
+			if (debug)
+				printf("conf: %s\n", line);
 
 			if ((x = strstr(line, "check ")) == line) {
 				x += 6;
