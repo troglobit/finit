@@ -174,6 +174,7 @@ int main()
 				strcpy(cmd, "/sbin/e2fsck -C -p ");
 				c = cmd + strlen(cmd);
 				while (x && *x && *x != ' ') *c++ = *x++;
+				*c = 0;
 				system(cmd);
 				continue;
 			}
@@ -181,6 +182,7 @@ int main()
 				x += 5;
 				c = username;
 				while (x && *x && *x != ' ') *c++ = *x++;
+				*c = 0;
 				continue;
 			}
 			if ((x = strstr(line, "module ")) == line) {
@@ -188,6 +190,7 @@ int main()
 				strcpy(cmd, "/sbin/modprobe ");
 				c = cmd + strlen(cmd);
 				while (x && *x && *x != ' ') *c++ = *x++;
+				*c = 0;
 				system(cmd);
 				continue;
 			}
