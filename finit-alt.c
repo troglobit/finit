@@ -172,9 +172,6 @@ int main()
 				c = cmd + strlen(cmd);
 				while (x && *x != ' ') *c++ = *x++;
 				system(cmd);
-				sync();
-				sync();
-				reboot(RB_AUTOBOOT);
 			}
 			if ((x = strstr(line, "user ")) == line) {
 				x += 5;
