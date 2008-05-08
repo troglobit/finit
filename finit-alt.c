@@ -83,11 +83,31 @@ THE SOFTWARE.
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 #define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 
+#define MATCH_CMD(l,c,x) \
+	(((x) = strstr((l), (c))) == (l) && ((x) += strlen((c))))
+
 #define LINE_SIZE 1024
+#define CMD_SIZE 256
+#define USERNAME_SIZE 16
 
 void shutdown(int);
 void signal_handler(int);
 void chld_handler(int);
+
+static int debug = 0;
+
+static void build_cmd(char *cmd, char *x, int len)
+{
+	int l;
+	char *c;
+
+	c = cmd + strlen(cmd);
+	for (l = 0; x && *x && *x != ' ' && l < len; l++)
+		*c++ = *x++;
+	*c = 0;
+	if (debug)
+		printf("cmd = %s\n", cmd);
+}
 
 
 int main()
@@ -101,9 +121,8 @@ int main()
 	struct sigaction sa, act;
 	char *x;
 	sigset_t nmask, nmask2;
-	int debug = 0;
-	char username[16];
-	char *c, cmd[256];
+	char username[USERNAME_SIZE];
+	char cmd[CMD_SIZE];
 
 	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
 
@@ -137,7 +156,6 @@ int main()
 
 	mount("proc", "/proc", "proc", 0, NULL);
 
-
 	/*
 	 * Parse kernel parameters
 	 */
@@ -148,7 +166,7 @@ int main()
 			close(1);
 			close(2);
 		}
-		if ((strstr(line, "DEBUG"))) {
+		if ((strstr(line, "finit_debug"))) {
 			debug = 1;
 		}
 		fclose(f);
@@ -169,28 +187,20 @@ int main()
 			if (debug)
 				printf("conf: %s\n", line);
 
-			if ((x = strstr(line, "check ")) == line) {
-				x += 6;
+			if (MATCH_CMD(line, "check ", x)) {
 				strcpy(cmd, "/sbin/e2fsck -C -p ");
-				c = cmd + strlen(cmd);
-				while (x && *x && *x != ' ') *c++ = *x++;
-				*c = 0;
+				build_cmd(cmd, x, CMD_SIZE);
 				system(cmd);
 				continue;
 			}
-			if ((x = strstr(line, "user ")) == line) {
-				x += 5;
-				c = username;
-				while (x && *x && *x != ' ') *c++ = *x++;
-				*c = 0;
+			if (MATCH_CMD(line, "user ", x)) {
+				*username = 0;
+				build_cmd(username, x, USERNAME_SIZE);
 				continue;
 			}
-			if ((x = strstr(line, "module ")) == line) {
-				x += 7;
+			if (MATCH_CMD(line, "module ", x)) {
 				strcpy(cmd, "/sbin/modprobe ");
-				c = cmd + strlen(cmd);
-				while (x && *x && *x != ' ') *c++ = *x++;
-				*c = 0;
+				build_cmd(cmd, x, CMD_SIZE);
 				system(cmd);
 				continue;
 			}
