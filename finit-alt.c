@@ -188,7 +188,7 @@ int main()
 				printf("conf: %s\n", line);
 
 			if (MATCH_CMD(line, "check ", x)) {
-				strcpy(cmd, "/sbin/e2fsck -C -p ");
+				strcpy(cmd, "/sbin/fsck -C -a ");
 				build_cmd(cmd, x, CMD_SIZE);
 				system(cmd);
 				continue;
