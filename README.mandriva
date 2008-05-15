@@ -17,12 +17,11 @@ Mandriva 2008
 
     If you use KDE or need more services, see examples in contrib/
 
-3 - Provide /etc/hostname if you don't have it already
+3 - Create /etc/finit.conf with user, module, filesystems to check and
+    hostname parameters. See the included finit.conf for more information.
+    If no user is specified, user "user" will be used as default.
 
 4 - Set the pointer device in the X server configuration to /dev/input/mice
-
-5 - Have a user named "user", change the default in Makefile or configure
-    in /etc/finit.conf
 
 
 
