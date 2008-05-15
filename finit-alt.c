@@ -154,7 +154,7 @@ int main()
 
 	reboot(RB_DISABLE_CAD);
 
-	mount("proc", "/proc", "proc", 0, NULL);
+	mount("none", "/proc", "proc", 0, NULL);
 
 	/*
 	 * Parse kernel parameters
@@ -229,13 +229,13 @@ int main()
 	mkdir("/dev/pts", 0755);
 #endif
 
-	mount("sysfs", "/sys", "sysfs", 0, NULL);
-	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
-	mount("tmpfs", "/dev/shm", "tmpfs", 0, NULL);
-	mount("tmpfs", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
-	mount("tmpfs", "/var/run", "tmpfs", 0, "mode=0755");
-	mount("tmpfs", "/var/lock", "tmpfs", 0, "mode=1777");
-	mount("usbfs", "/proc/bus/usb", "usbfs", 0, NULL);
+	mount("none", "/sys", "sysfs", 0, NULL);
+	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
+	mount("none", "/dev/shm", "tmpfs", 0, NULL);
+	mount("none", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
+	mount("none", "/var/run", "tmpfs", 0, "mode=0755");
+	mount("none", "/var/lock", "tmpfs", 0, "mode=1777");
+	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
 #ifdef MAKE_DEVICES
