@@ -14,5 +14,7 @@ mkdir /var/run/dbus
 /etc/init.d/crond start
 /etc/init.d/network-up start
 /etc/init.d/network start
+#/etc/init.d/sshd start
 /etc/init.d/syslog start
-kbuildsycoca --noincremental
+/sbin/pam_console_apply
+#kbuildsycoca --noincremental
