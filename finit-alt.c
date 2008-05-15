@@ -84,7 +84,7 @@ THE SOFTWARE.
 #define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 
 #define MATCH_CMD(l,c,x) \
-	(((x) = strstr((l), (c))) == (l) && ((x) += strlen((c))))
+	((!strncmp((l), (c), strlen((c)))) && ((x) = (l) + strlen((c))))
 
 #define LINE_SIZE 1024
 #define CMD_SIZE 256
