@@ -204,6 +204,12 @@ int main()
 				system(cmd);
 				continue;
 			}
+			if (MATCH_CMD(line, "host ", x)) {
+				*cmd = 0;
+				build_cmd(cmd, x, CMD_SIZE);
+				sethostname(cmd, strlen(cmd)); 
+				continue;
+			}
 		}
 		fclose(f);
 	}
