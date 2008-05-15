@@ -49,7 +49,7 @@ THE SOFTWARE.
 #ifdef DIST_MDV		/* Mandriva */
 #define RANDOMSEED	"/var/lib/random-seed"
 #define SYSROOT		"/sysroot"
-#define GETTY		"/sbin/mingetty tty3"
+#define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
 #define RUNPARTS	"/usr/bin/run-parts"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
@@ -57,7 +57,7 @@ THE SOFTWARE.
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
-#define GETTY		"/sbin/getty 38400 tty3"
+#define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
 #define RUNPARTS	"/bin/run-parts"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #endif
@@ -240,8 +240,6 @@ int main()
 	chardev("/dev/mem",  0640, 1, 1);
 	chmod("/dev/null", 0667);
 	chmod("/dev/mem", 0640);
-	chardev("/dev/tty",  0666, 5, 0);
-	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);
@@ -339,6 +337,8 @@ int main()
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
+	system(GETTY "&");
+
 	if (!fork()) {
 		/* child process */
 
@@ -392,7 +392,6 @@ int main()
 	
 	/* parent process */
 
-	system(GETTY "&");
 	sleep(1);
 	system("/usr/sbin/services.sh &>/dev/null&");
 

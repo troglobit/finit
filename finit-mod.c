@@ -44,6 +44,7 @@ Changelog from the original Eeepc fastinit:
 - Use SIG_IGN instead of empty signal handler (by Metalshark)
 - Add built-in run-parts option to be used instead of system("run-parts")
 - Reuse cmdline buffer as hostname and filename buffers
+- Open terminal in vt2 using openvt
 
 */
 
@@ -229,6 +230,8 @@ int main()
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
+	system("/usr/bin/openvt /sbin/getty 38400 tty2&");
+
 	if (!fork()) {
 		/* child process */
 
@@ -265,7 +268,6 @@ int main()
 	
 	/* parent process */
 
-	system("/sbin/getty 38400 tty3&");
 	sleep(1);
 	system("/usr/sbin/services.sh &>/dev/null&");
 
