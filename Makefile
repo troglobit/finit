@@ -3,7 +3,7 @@ CFLAGS	= -Os -Wall -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 LD	= gcc
 LDFLAGS	=
 LIBS	=
-VERSION	= 0.4-pre
+VERSION	= 0.4
 PKG	= finit-$(VERSION)
 DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h \
 	  patches/*patch contrib/services.sh*
