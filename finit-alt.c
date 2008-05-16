@@ -89,6 +89,7 @@ THE SOFTWARE.
 #define LINE_SIZE 1024
 #define CMD_SIZE 256
 #define USERNAME_SIZE 16
+#define HOSTNAME_SIZE 32
 
 void shutdown(int);
 void signal_handler(int);
@@ -102,7 +103,8 @@ static void build_cmd(char *cmd, char *x, int len)
 	char *c;
 
 	c = cmd + strlen(cmd);
-	for (l = 0; x && *x && *x != ' ' && l < len; l++)
+	for (; *x && (*x == ' ' || *x == '\t'); x++); 
+	for (l = 0; *x && *x != ' ' && *x != '\t' && l < len; l++)
 		*c++ = *x++;
 	*c = 0;
 	if (debug)
@@ -119,14 +121,12 @@ int main()
 	DIR *dir;
 	struct dirent *d;
 	struct sigaction sa, act;
-	char *x;
 	sigset_t nmask, nmask2;
-	char username[USERNAME_SIZE];
+	char username[USERNAME_SIZE] = DEFUSER;
+	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
 
 	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
-
-	strncpy(username, DEFUSER, 16);
 
 	chdir("/");
 	umask(022);
@@ -179,10 +179,7 @@ int main()
 		char *x;
 		while (!feof(f)) {
 			fgets(line, LINE_SIZE, f);
-
-			i = strlen(line);
-			if (i && line[i - 1] == '\n')
-				line[i - 1] = 0;
+			chomp(line);
 
 			if (debug)
 				printf("conf: %s\n", line);
@@ -198,16 +195,15 @@ int main()
 				build_cmd(username, x, USERNAME_SIZE);
 				continue;
 			}
+			if (MATCH_CMD(line, "host ", x)) {
+				*hostname = 0;
+				build_cmd(hostname, x, HOSTNAME_SIZE);
+				continue;
+			}
 			if (MATCH_CMD(line, "module ", x)) {
 				strcpy(cmd, "/sbin/modprobe ");
 				build_cmd(cmd, x, CMD_SIZE);
 				system(cmd);
-				continue;
-			}
-			if (MATCH_CMD(line, "host ", x)) {
-				*cmd = 0;
-				build_cmd(cmd, x, CMD_SIZE);
-				sethostname(cmd, strlen(cmd)); 
 				continue;
 			}
 		}
@@ -302,13 +298,12 @@ int main()
 #endif
 
 	if ((f = fopen("/etc/hostname", "r")) != NULL) {
-		fgets(line, LINE_SIZE, f);	
-		if ((x = strchr(line, 0x0a)) != NULL)
-			*x = 0;
-
-		sethostname(line, strlen(line)); 
+		fgets(hostname, HOSTNAME_SIZE, f);	
+		chomp(hostname);
 		fclose(f);
 	}
+
+	sethostname(hostname, strlen(hostname)); 
 
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 

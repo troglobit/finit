@@ -157,4 +157,16 @@ int run_parts(char *dir, ...)
 	return 0;
 }
 
+/*
+ * Other convenience functions
+ */
+
+void chomp(char *s)
+{
+	char *x;
+
+	if ((x = strchr((s), 0x0a)) != NULL)
+		*x = 0;
+}
+
 #endif
