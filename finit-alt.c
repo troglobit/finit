@@ -242,6 +242,7 @@ int main()
 	chardev("/dev/mem",  0640, 1, 1);
 	chmod("/dev/null", 0667);
 	chmod("/dev/mem", 0640);
+	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);

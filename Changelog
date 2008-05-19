@@ -1,4 +1,7 @@
-O.4 ()
+0.5 ()
+	-
+
+O.4 (20080516)
 	- default username for finit-alt configurable in Makefile
 	- create loopback device node in finit-alt (for squashfs)
 	- add option to use built-in run-parts instead of /bin/run-parts
