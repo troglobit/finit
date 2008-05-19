@@ -81,7 +81,7 @@ Changelog from the original Eeepc fastinit:
 			sa.sa_flags = flags; \
 			sigemptyset(&sa.sa_mask); \
 			sigaction(sig, &sa, NULL); \
-		} while(0)
+		} while (0)
 
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 
