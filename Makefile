@@ -7,7 +7,7 @@ VERSION	= 0.5-pre
 PKG	= finit-$(VERSION)
 DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h \
 	  patches/*patch contrib/services.sh*
-BINS	= finit finit-mod finit-mdv
+BINS	= finit finit-mod finit-alt finit-mdv
 
 
 
@@ -48,6 +48,10 @@ finit: finit.o
 	strip $@
 
 finit-mod: finit-mod.o helpers.o
+	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
+	strip $@
+
+finit-alt: finit-alt.o helpers.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
