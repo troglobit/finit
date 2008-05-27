@@ -79,6 +79,20 @@ THE SOFTWARE.
 			sigaction(sig, &sa, NULL); \
 		} while (0)
 
+#ifdef LISTEN_INITCTL
+
+#define INIT_MAGIC		0x03091969
+#define INIT_CMD_RUNLVL		1
+
+struct init_request {
+	int	magic;			/* Magic number                 */
+	int	cmd;			/* What kind of request         */
+	int	runlevel;		/* Runlevel to change to        */
+	int	sleeptime;		/* Time between TERM and KILL   */
+	char	data[368];
+};
+#endif
+
 #define touch(x) mknod((x), S_IFREG|0644, 0)
 #define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 #define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
@@ -125,6 +139,12 @@ int main()
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
+#ifdef LISTEN_INITCTL
+	fd_set rfds;
+	int ctl;
+	struct init_request req;
+	struct timespec timeout;
+#endif
 
 	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
 
@@ -397,9 +417,44 @@ int main()
 	sleep(1);
 	system("/usr/sbin/services.sh &>/dev/null&");
 
+#ifdef LISTEN_INITCTL
+	mkfifo("/dev/initctl", 0600);
+	ctl = open("/dev/initctl", O_RDONLY);
+	timeout.tv_sec = 0;
+	timeout.tv_nsec = 100000000;
+#endif
+
 	while (1) {
 		sigemptyset(&nmask);
+#ifdef LISTEN_INITCTL
+		FD_ZERO(&rfds);
+		FD_SET(ctl, &rfds);
+
+		if (ctl < 0) {
+			pselect(0, NULL, NULL, NULL, NULL, &nmask);
+			continue;
+		}
+
+		if (pselect(ctl + 1, &rfds, NULL, NULL, NULL, &nmask) < 0)
+			continue;
+
+		read(ctl, &req, sizeof (req));
+
+		if (req.magic == INIT_MAGIC) {
+			switch (req.cmd) {
+			case INIT_CMD_RUNLVL:
+				switch (req.runlevel) {
+				case '0':
+					raise(SIGUSR2);
+					break;
+				case '6':
+					raise(SIGUSR1);
+				}
+			}
+		}
+#else
 		pselect(0, NULL, NULL, NULL, NULL, &nmask);
+#endif
 	}
 }
 
