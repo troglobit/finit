@@ -34,12 +34,10 @@ Changelog from the original Eeepc fastinit:
 - Add –directisa to hwclock if user has disabled CONFIG_GENRTC and enabled
   CONFIG_RTC but not CONFIG_HPET_TIMER and CONFIG_HPET_RTC_IRQ (by Metalshark)
 - Drop system() call to clean /tmp, it's a fresh mounted tmpfs
-- Change /proc/acpi/sleep to /sys/power/state (by Metalshark)
 - Set loopback interface using direct calls instead of system("ifconfig")
 - Copy 4096 data block in C instead of system("cat") or system("dd")
 - Draw shutdown splash screen using C calls instead of system("echo;cat")
-- Change poweroff method from writing 5 to /sys/power/state to
-  reboot(RB_POWER_OFF) (by Metalshark)
+- Change poweroff method to reboot(RB_POWER_OFF) (by Metalshark)
 - Mount /var/run and /var/lock as tmpfs
 - Use SIG_IGN instead of empty signal handler (by Metalshark)
 - Add built-in run-parts option to be used instead of system("run-parts")
