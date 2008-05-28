@@ -1,5 +1,6 @@
 0.5 ()
 	- finit-alt listens to /dev/initctl to work with reboot(8)
+	- write runlevel to utmp, needed by Printerdrake (by Pascal Terjan)
 
 O.4 (20080516)
 	- default username for finit-alt configurable in Makefile

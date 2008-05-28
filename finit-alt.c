@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include <sys/reboot.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
+#include <utmp.h>
 
 #include "helpers.h"
 
@@ -54,6 +55,8 @@ THE SOFTWARE.
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
 #define PAM_CONSOLE
+#define LISTEN_INITCTL
+#define RUNLEVEL	5
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -144,6 +147,9 @@ int main()
 	int ctl;
 	struct init_request req;
 	struct timespec timeout;
+#endif
+#ifdef RUNLEVEL
+	struct utmp entry;
 #endif
 
 	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
@@ -304,6 +310,15 @@ int main()
 	}
 
 	touch("/var/run/utmp");
+#ifdef RUNLEVEL
+	memset(&entry, 0, sizeof(struct utmp));
+	entry.ut_type = RUN_LVL;
+	entry.ut_pid = '0' + RUNLEVEL;
+	setutent();
+	pututline(&entry);
+	endutent();
+#endif
+
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");

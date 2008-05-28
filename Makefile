@@ -30,9 +30,6 @@ CFLAGS += -march=pentium-m
 # Use built-in run-parts instead of /bin/run-parts
 CFLAGS += -DBUILTIN_RUNPARTS
 
-# Listen to /dev/initctl to handle reboot requests
-CFLAGS += -DLISTEN_INITCTL
-
 #### End of configurable parameters
 
 
