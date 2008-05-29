@@ -146,7 +146,6 @@ int main()
 	fd_set rfds;
 	int ctl;
 	struct init_request req;
-	struct timespec timeout;
 #endif
 #ifdef RUNLEVEL
 	struct utmp entry;
@@ -435,8 +434,6 @@ int main()
 #ifdef LISTEN_INITCTL
 	mkfifo("/dev/initctl", 0600);
 	ctl = open("/dev/initctl", O_RDONLY);
-	timeout.tv_sec = 0;
-	timeout.tv_nsec = 100000000;
 #endif
 
 	while (1) {
@@ -450,7 +447,7 @@ int main()
 			continue;
 		}
 
-		if (pselect(ctl + 1, &rfds, NULL, NULL, NULL, &nmask) < 0)
+		if (pselect(ctl + 1, &rfds, NULL, NULL, NULL, &nmask) <= 0)
 			continue;
 
 		read(ctl, &req, sizeof (req));
