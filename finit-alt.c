@@ -64,6 +64,7 @@ THE SOFTWARE.
 #define RUNPARTS	"/bin/run-parts"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #define LISTEN_INITCTL
+#define USE_USPLASH
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -160,6 +161,11 @@ int main()
 
 	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
 						" by " WHOAMI ")");
+
+#ifdef USE_USPLASH
+	system("usplash_write \"TEXT-URGENT finit " VERSION " (build "__DATE__ " " __TIME__ ") \"");
+	system("usplash_write \"PROGRESS 80\"");
+#endif
 
 	chdir("/");
 	umask(022);
@@ -380,6 +386,10 @@ int main()
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
+
+#ifdef USE_USPLASH
+	system("usplash_write \"PROGRESS 90\"");
+#endif
 
 	system(GETTY "&");
 
