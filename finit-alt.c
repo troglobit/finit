@@ -47,7 +47,7 @@ THE SOFTWARE.
 
 /* Distribution configuration */
 
-#if defined DIST_MDV		/* Mandriva */
+#if defined DIST_MDV	/* Mandriva */
 #define RANDOMSEED	"/var/lib/random-seed"
 #define SYSROOT		"/sysroot"
 #define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
@@ -62,6 +62,8 @@ THE SOFTWARE.
 #define SYSROOT		"/sysroot"
 #define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
 #define RUNPARTS	"/bin/run-parts"
+#define REMOUNT_ROOTFS_RW
+#define MAKE_DEVICES
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #define LISTEN_INITCTL
 #define USE_USPLASH
