@@ -7,7 +7,7 @@ VERSION	= 0.5-pre
 PKG	= finit-$(VERSION)
 DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h \
 	  patches/*patch contrib/services.sh*
-BINS	= finit finit-mod finit-alt finit-mdv
+BINS	= finit finit-mod finit-alt finit-mdv finit-exb
 
 
 
@@ -61,6 +61,13 @@ finit-mdv: finit-mdv.o helpers.o
 
 finit-mdv.o: finit-alt.c Makefile
 	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ finit-alt.c
+
+finit-exb: finit-exb.o helpers.o
+	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
+	strip $@
+
+finit-exb.o: finit-alt.c Makefile
+	$(CC) -c $(CFLAGS) -DDIST_EEEXUBUNTU -o $@ finit-alt.c
 
 clean:
 	rm -f *.o core *~ $(BINS)

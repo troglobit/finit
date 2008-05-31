@@ -47,7 +47,7 @@ THE SOFTWARE.
 
 /* Distribution configuration */
 
-#ifdef DIST_MDV		/* Mandriva */
+#if defined DIST_MDV		/* Mandriva */
 #define RANDOMSEED	"/var/lib/random-seed"
 #define SYSROOT		"/sysroot"
 #define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
@@ -57,6 +57,13 @@ THE SOFTWARE.
 #define PAM_CONSOLE
 #define LISTEN_INITCTL
 #define RUNLEVEL	5
+#elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
+#define RANDOMSEED	"/var/lib/urandom/random-seed"
+#define SYSROOT		"/sysroot"
+#define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
+#define RUNPARTS	"/bin/run-parts"
+#define TOUCH_ETC_NETWORK_RUN_IFSTATE
+#define LISTEN_INITCTL
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -151,7 +158,8 @@ int main()
 	struct utmp entry;
 #endif
 
-	puts("finit-alt " VERSION " (built " __DATE__ " by " WHOAMI ")");
+	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
+						" by " WHOAMI ")");
 
 	chdir("/");
 	umask(022);
