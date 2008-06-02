@@ -325,6 +325,8 @@ int main()
 	}
 
 	touch("/var/run/utmp");
+	chown("/var/run/utmp", 0, getgroup("utmp"));
+
 #ifdef RUNLEVEL
 	memset(&entry, 0, sizeof(struct utmp));
 	entry.ut_type = RUN_LVL;

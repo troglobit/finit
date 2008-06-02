@@ -17,6 +17,8 @@
 #include <sys/wait.h>
 #endif
 
+#include <grp.h>
+
 #include "helpers.h"
 
 /*
@@ -155,6 +157,16 @@ int run_parts(char *dir, ...)
 	}
 
 	return 0;
+}
+
+int getgroup(char *s)
+{
+	struct group *grp;
+
+	if ((grp = getgrnam(s)) == NULL)
+		return -1;
+
+	return grp->gr_gid;
 }
 
 /*
