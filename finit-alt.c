@@ -281,8 +281,6 @@ int main()
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
 	chardev("/dev/mem",  0640, 1, 1);
-	chmod("/dev/null", 0667);
-	chmod("/dev/mem", 0640);
 	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
@@ -326,6 +324,7 @@ int main()
 
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
+	chmod("/var/run/utmp", 0664);
 
 #ifdef RUNLEVEL
 	memset(&entry, 0, sizeof(struct utmp));
