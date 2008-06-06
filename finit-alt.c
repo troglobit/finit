@@ -305,18 +305,6 @@ int main()
 	/*
 	 * Network stuff
 	 */
-	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
-		while ((d = readdir(dir)) != NULL) {
-			if (isalnum(d->d_name[0]))
-				continue;
-			snprintf(line, LINE_SIZE,
-				"/etc/resolvconf/run/interface/%s", d->d_name);
-			unlink(line);
-		}
-
-		closedir(dir);
-	}
-
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
 	chmod("/var/run/utmp", 0664);
