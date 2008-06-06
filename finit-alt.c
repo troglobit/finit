@@ -278,6 +278,7 @@ int main()
 	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
+	chmod("/dev/null", 0666);
 	chardev("/dev/mem",  0640, 1, 1);
 	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
