@@ -305,6 +305,8 @@ int main()
 	/*
 	 * Network stuff
 	 */
+	makepath("/var/run/resolvconf/interface");
+
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
 	chmod("/var/run/utmp", 0664);
