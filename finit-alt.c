@@ -145,8 +145,6 @@ int main()
 	FILE *f;
 	char line[LINE_SIZE];
 	int fd;
-	DIR *dir;
-	struct dirent *d;
 	struct sigaction sa, act;
 	sigset_t nmask, nmask2;
 	char username[USERNAME_SIZE] = DEFUSER;
@@ -307,9 +305,6 @@ int main()
 	/*
 	 * Network stuff
 	 */
-	makepath("/dev/shm/network");
-	makepath("/dev/shm/resolvconf/interface");
-
 	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
 		while ((d = readdir(dir)) != NULL) {
 			if (isalnum(d->d_name[0]))
