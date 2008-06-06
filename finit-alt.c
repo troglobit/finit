@@ -306,6 +306,7 @@ int main()
 	 * Network stuff
 	 */
 	makepath("/var/run/resolvconf/interface");
+	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
 
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
