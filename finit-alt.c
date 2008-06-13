@@ -182,8 +182,6 @@ int main()
 	FILE *f;
 	char line[LINE_SIZE];
 	int fd;
-	DIR *dir;
-	struct dirent *d;
 	struct sigaction sa, act;
 	sigset_t nmask, nmask2;
 	char username[USERNAME_SIZE] = DEFUSER;
@@ -312,6 +310,7 @@ int main()
 	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
+	chmod("/dev/null", 0666);
 	chardev("/dev/mem",  0640, 1, 1);
 	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
@@ -339,20 +338,8 @@ int main()
 	/*
 	 * Network stuff
 	 */
-	makepath("/dev/shm/network");
-	makepath("/dev/shm/resolvconf/interface");
-
-	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
-		while ((d = readdir(dir)) != NULL) {
-			if (isalnum(d->d_name[0]))
-				continue;
-			snprintf(line, LINE_SIZE,
-				"/etc/resolvconf/run/interface/%s", d->d_name);
-			unlink(line);
-		}
-
-		closedir(dir);
-	}
+	makepath("/var/run/resolvconf/interface");
+	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
 
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
