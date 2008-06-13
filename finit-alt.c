@@ -57,6 +57,7 @@ THE SOFTWARE.
 #define PAM_CONSOLE
 #define LISTEN_INITCTL
 #define RUNLEVEL	5
+#define USE_VAR_RUN_RESOLVCONF
 #elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/sysroot"
@@ -310,7 +311,7 @@ int main()
 	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
-	chmod("/dev/null", 0666);
+	chmod("/dev/null", 0666);	/* blino's sanity check */
 	chardev("/dev/mem",  0640, 1, 1);
 	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
@@ -338,8 +339,29 @@ int main()
 	/*
 	 * Network stuff
 	 */
+#if 0
+	/* CM: not sure if anyone actually needs this, check Xandros in Eeepc */
+
+	makepath("/dev/shm/network");
+	makepath("/dev/shm/resolvconf/interface");
+
+	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
+		while ((d = readdir(dir)) != NULL) {
+			if (isalnum(d->d_name[0]))
+				continue;
+			snprintf(line, LINE_SIZE,
+				"/etc/resolvconf/run/interface/%s", d->d_name);
+			unlink(line);
+		}
+
+		closedir(dir);
+	}
+#endif
+
+#ifdef USE_VAR_RUN_RESOLVCONF
 	makepath("/var/run/resolvconf/interface");
 	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
+#endif
 
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
