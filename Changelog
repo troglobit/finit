@@ -1,7 +1,8 @@
 0.5 ()
-	- finit-alt listens to /dev/initctl to work with reboot(8)
-	- write runlevel to utmp, needed by Printerdrake (by Pascal Terjan)
+	- finit-alt listens to /dev/initctl to work with reboot(8) (smurfy)
+	- write runlevel to utmp, needed by Printerdrake (Pascal Terjan)
 	- fix ownership of /var/run/utmp (reported by Pascal Terjan)
+	- remove obsolete code to load AGP drivers
 
 O.4 (20080516)
 	- default username for finit-alt configurable in Makefile

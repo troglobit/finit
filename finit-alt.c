@@ -460,11 +460,6 @@ int main()
 		listen_initctl();
 #endif
 
-#ifdef AGPDRV
-		system("/sbin/modprobe agpgart");
-		system("/sbin/modprobe " AGPDRV);
-#endif
-		
 		while (access("/tmp/shutdown", F_OK) < 0) {
 			if (debug) {
 				printf("Starting X as %s\n", username);
