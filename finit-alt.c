@@ -139,6 +139,43 @@ static void build_cmd(char *cmd, char *x, int len)
 }
 
 
+#ifdef LISTEN_INITCTL
+static void listen_initctl()
+{
+	if (!fork()) {	
+		int ctl;	
+		fd_set fds;	
+		struct init_request request;
+
+		mkfifo("/dev/initctl", 0600);
+		ctl = open("/dev/initctl", O_RDONLY);
+
+		while (1) {
+			FD_ZERO(&fds);
+			FD_SET(ctl, &fds);
+			if (select(ctl + 1, &fds, NULL, NULL, NULL) <= 0)
+				continue;
+
+			read(ctl, &request, sizeof(request));
+
+			if (request.magic != INIT_MAGIC)
+				continue;
+
+			if (request.cmd == INIT_CMD_RUNLVL) {
+				switch (request.runlevel) {
+				case '0':
+					raise(SIGUSR2);
+					break;
+				case '6':
+					raise(SIGUSR1);
+				}
+			}
+		}
+	}
+}
+#endif
+
+
 int main()
 {
 	int i;
@@ -152,11 +189,6 @@ int main()
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
-#ifdef LISTEN_INITCTL
-	fd_set rfds;
-	int ctl;
-	struct init_request req;
-#endif
 #ifdef RUNLEVEL
 	struct utmp entry;
 #endif
@@ -424,6 +456,10 @@ int main()
 
 		touch("/tmp/nologin");
 
+#ifdef LISTEN_INITCTL
+		listen_initctl();
+#endif
+
 #ifdef AGPDRV
 		system("/sbin/modprobe agpgart");
 		system("/sbin/modprobe " AGPDRV);
@@ -449,45 +485,13 @@ int main()
 	
 	/* parent process */
 
+	
 	sleep(1);
 	system("/usr/sbin/services.sh &>/dev/null&");
 
-#ifdef LISTEN_INITCTL
-	mkfifo("/dev/initctl", 0600);
-	ctl = open("/dev/initctl", O_RDONLY);
-#endif
-
 	while (1) {
 		sigemptyset(&nmask);
-#ifdef LISTEN_INITCTL
-		FD_ZERO(&rfds);
-		FD_SET(ctl, &rfds);
-
-		if (ctl < 0) {
-			pselect(0, NULL, NULL, NULL, NULL, &nmask);
-			continue;
-		}
-
-		if (pselect(ctl + 1, &rfds, NULL, NULL, NULL, &nmask) <= 0)
-			continue;
-
-		read(ctl, &req, sizeof (req));
-
-		if (req.magic == INIT_MAGIC) {
-			switch (req.cmd) {
-			case INIT_CMD_RUNLVL:
-				switch (req.runlevel) {
-				case '0':
-					raise(SIGUSR2);
-					break;
-				case '6':
-					raise(SIGUSR1);
-				}
-			}
-		}
-#else
 		pselect(0, NULL, NULL, NULL, NULL, &nmask);
-#endif
 	}
 }
 
