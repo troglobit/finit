@@ -74,6 +74,7 @@ THE SOFTWARE.
 #define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
 #define RUNPARTS	"/bin/run-parts"
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
+#define USE_ETC_RESOLVCONF_RUN
 #endif
 
 #ifdef DIRECTISA
@@ -188,6 +189,10 @@ int main()
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
+#ifdef USE_ETC_RESOLVCONF_RUN
+	DIR *dir;
+	struct dirent *d;
+#endif
 #ifdef RUNLEVEL
 	struct utmp entry;
 #endif
@@ -339,9 +344,8 @@ int main()
 	/*
 	 * Network stuff
 	 */
-#if 0
-	/* CM: not sure if anyone actually needs this, check Xandros in Eeepc */
 
+#ifdef USE_ETC_RESOLVCONF_RUN
 	makepath("/dev/shm/network");
 	makepath("/dev/shm/resolvconf/interface");
 
