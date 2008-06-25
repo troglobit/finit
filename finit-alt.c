@@ -189,6 +189,7 @@ int main()
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
+	int mountdev = 0;
 #ifdef USE_ETC_RESOLVCONF_RUN
 	DIR *dir;
 	struct dirent *d;
@@ -283,6 +284,10 @@ int main()
 				system(cmd);
 				continue;
 			}
+			if (MATCH_CMD(line, "mountdev", x)) {
+				mountdev = 1;
+				continue;
+			}
 		}
 		fclose(f);
 	}
@@ -311,12 +316,14 @@ int main()
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
+	if (mountdev)
+		mount("none", "/dev", "tmpfs", 0, "mode=0755");
+
 #ifdef MAKE_DEVICES
 	mkdir("/dev/input", 0755);
 	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
-	//chmod("/dev/null", 0666);	/* blino's sanity check */
 	chardev("/dev/mem",  0640, 1, 1);
 	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
