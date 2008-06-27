@@ -302,6 +302,9 @@ int main()
 #endif
 	umask(0);
 
+	if (mountdev)
+		mount("none", "/dev", "tmpfs", 0, "mode=0755");
+
 #ifdef MAKE_DEVICES
 	mkdir("/dev/shm", 0755);
 	mkdir("/dev/pts", 0755);
@@ -315,9 +318,6 @@ int main()
 	mount("none", "/var/lock", "tmpfs", 0, "mode=1777");
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
-
-	if (mountdev)
-		mount("none", "/dev", "tmpfs", 0, "mode=0755");
 
 #ifdef MAKE_DEVICES
 	mkdir("/dev/input", 0755);
