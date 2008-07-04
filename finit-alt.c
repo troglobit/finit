@@ -166,10 +166,10 @@ static void listen_initctl()
 			if (request.cmd == INIT_CMD_RUNLVL) {
 				switch (request.runlevel) {
 				case '0':
-					raise(SIGUSR2);
+					shutdown(SIGUSR2);
 					break;
 				case '6':
-					raise(SIGUSR1);
+					shutdown(SIGUSR1);
 				}
 			}
 		}
@@ -324,6 +324,7 @@ int main()
 	chardev("/dev/urandom", 0666, 1, 9);
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
+	chmod("/dev/null", 0666);
 	chardev("/dev/mem",  0640, 1, 1);
 	chardev("/dev/tty0",  0660, 4, 0);
 	chardev("/dev/input/mice",  0660, 13, 63);
