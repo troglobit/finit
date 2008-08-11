@@ -189,7 +189,6 @@ int main()
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
-	int mountdev = 0;
 #ifdef USE_ETC_RESOLVCONF_RUN
 	DIR *dir;
 	struct dirent *d;
@@ -250,6 +249,17 @@ int main()
 		fclose(f);
 	}
 
+	setsid();
+
+	/*
+	 * Mount filesystems
+	 */
+#ifdef REMOUNT_ROOTFS_RW
+	system("/bin/mount -n -o remount,rw /");
+#endif
+	umask(0);
+
+
 	/*
 	 * Parse configuration file
 	 */
@@ -285,25 +295,18 @@ int main()
 				continue;
 			}
 			if (MATCH_CMD(line, "mountdev", x)) {
-				mountdev = 1;
+				mount("none", "/dev", "tmpfs", 0, "mode=0755");
+				continue;
+			}
+			if (MATCH_CMD(line, "mknod ", x)) {
+				strcpy(cmd, "/bin/mknod ");
+				build_cmd(cmd, x, CMD_SIZE);
+				system(cmd);
 				continue;
 			}
 		}
 		fclose(f);
 	}
-
-	setsid();
-
-	/*
-	 * Mount filesystems
-	 */
-#ifdef REMOUNT_ROOTFS_RW
-	system("/bin/mount -n -o remount,rw /");
-#endif
-	umask(0);
-
-	if (mountdev)
-		mount("none", "/dev", "tmpfs", 0, "mode=0755");
 
 #ifdef MAKE_DEVICES
 	mkdir("/dev/shm", 0755);
