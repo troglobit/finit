@@ -132,8 +132,12 @@ static void build_cmd(char *cmd, char *x, int len)
 	char *c;
 
 	c = cmd + strlen(cmd);
+
+	/* skip spaces */
 	for (; *x && (*x == ' ' || *x == '\t'); x++); 
-	for (l = 0; *x && *x != ' ' && *x != '\t' && l < len; l++)
+
+	/* copy next arg */
+	for (l = 0; *x && *x != '#' && *x != '\t' && l < len; l++)
 		*c++ = *x++;
 	*c = 0;
 	if (debug)
