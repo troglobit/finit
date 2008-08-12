@@ -298,8 +298,21 @@ int main()
 				system(cmd);
 				continue;
 			}
+#ifdef MAKE_DEVICES
+			/* This is used if the system uses udev and doesn't
+			 * mount /dev as tmpfs in the initrd, or if it doesn't
+			 * use an initrd. Mount /dev as tmpfs and create basic
+			 * device nodes.
+			 */
 			if (MATCH_CMD(line, "mountdev", x)) {
 				mount("none", "/dev", "tmpfs", 0, "mode=0755");
+				blkdev("/dev/sda", 0660, 8, 0);
+				blkdev("/dev/sda1", 0660, 8, 1);
+				blkdev("/dev/sda2", 0660, 8, 2);
+				blkdev("/dev/sda3", 0660, 8, 3);
+				blkdev("/dev/sda4", 0660, 8, 4);
+				blkdev("/dev/sda5", 0660, 8, 5);
+				blkdev("/dev/sda6", 0660, 8, 6);
 				continue;
 			}
 			if (MATCH_CMD(line, "mknod ", x)) {
@@ -308,6 +321,7 @@ int main()
 				system(cmd);
 				continue;
 			}
+#endif
 		}
 		fclose(f);
 	}
@@ -334,6 +348,9 @@ int main()
 	chmod("/dev/null", 0666);
 	chardev("/dev/mem",  0640, 1, 1);
 	chardev("/dev/tty0",  0660, 4, 0);
+	chardev("/dev/tty1",  0660, 4, 1);
+	chardev("/dev/tty2",  0660, 4, 2);
+	chardev("/dev/tty3",  0660, 4, 3);
 	chardev("/dev/input/mice",  0660, 13, 63);
 	chardev("/dev/input/event0",  0660, 13, 64);
 	chardev("/dev/agpgart",  0660, 10, 175);
