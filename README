@@ -1,68 +1,42 @@
 
-Eeepc "fastinit" reimplementations
-----------------------------------
+Finit is a reimplementation of the Eeepc "fastinit" program based on its
+system calls with gaps filled with frog DNA.
 
-finit.c is a reimplementation of the Asus Eeepc fastinit program based
-on its library calls. It tries to be an accurate re-creation and keeps
-the original bugs and unoptimized calls.
+Finit's purpose is to build upon the general workings of fastinit and
+improve/optimize it for Xandros or alternative distributions running on
+the Eeepc. Finit comes in three flavors: finit is a replica of the Asus
+fastinit, finit-mod is an improved drop-in replacement for fastinit,
+and finit-alt is a generic replacement for other systems. Finit-mod
+and finit-alt were much improved with patches from Metalshark. 
 
-finit-mod.c is a fixed/improved version of finit.c intended to be a drop-in
-replacement for the original Eeepc OS.
-
-finit-alt.c is a fixed/improved version of finit.c for alternative Linux
-distributions running on the Eeepc (previously ffinit.c). It's currently
-able to boot Mandriva Linux 2008.0/2008.1.
-
-See Makefile for configurable parameters to better suit your system.
+See more information at http://helllabs.org/finit/
 
 
-* Eeepc boot process
+Usage scenarios
+---------------
 
-The essential steps in the boot process carried out in initramfs are:
+1. Replace the original Eeepc 702 fastinit (finit-mod)
 
- ROOT=`sed 's!.*root=\([^ ]*\).*!\1!' < /proc/cmdline`
- mount -t proc proc /proc
- mount -t ext2 -o ro $ROOT /mnt-system
- mount -t ext3 -o rw /dev/sda2 /mnt-user
- mount -t unionfs -o dirs=/mnt-user=rw:/mnt-system=ro unionfs /mnt
- mount --move /mnt-system /mnt/mnt
- umount -l /mnt-user
- umount /proc
- exec switch_root /mnt /sbin/fastinit "$@" </mnt/dev/console >/mnt/dev/console
-
-If mounting the root filesystem fails, execute a maintenance shell. If
-mounting the user filesystem fails, fsck and reboot.
+2. Allow fast booting in alternative Linux distributions running on the
+   Eeepc and other netbooks (finit-alt)
 
 
-* Utilities available in the Eeepc initramfs busybox:
-
-[		cat		cp		cut		dd
-dmesg		echo		env		expr		false
-grep		insmod		ln		losetup		ls
-mdev		mkdir		mknod		mount		mv
-pivot_root	realpath	rm		rmmod		sed
-sh		sleep		switch_root	test		true
-umount		vi
+Finit-alt is distribution-specific. Currently it generates a finit-mdv
+executable for Mandriva 2008/2008.1 systems. Smurfy ported it to
+eeeXubuntu, and parts of his port have been merged to finit-alt.
 
 
-* Devices in the Eeepc initramfs /dev:
+Finit-alt features
+------------------
 
-console  fb  null  ram0  sda1  sda2  sda3  sr0  tty0
-
-
-Reboot and poweroff
--------------------
-
-Stock reboot and poweroff utilities of a modern Linux distribution may not
-work correctly with finit. You can replace them with simple scripts that
-send SIGUSR1 to finit for reboot, SIGUSR2 for poweroff.
+Finit-alt reads configuration information from /etc/finit.conf. See
+the source code for available options.
 
 
-Using finit with KDE
---------------------
+Rebooting and halting
+---------------------
 
-If you use finit to start KDE with auto-login enabled, hal-based device
-automounting may not work correctly. That happens because the session
-is started before the system message bus, so add a "dcop kded mediamanager
-reloadBackends" call in the user AutoStart to restart the client.
+Finit handles SIGUSR1 and SIGUSR2 for reboot and halt, and listens to
+/dev/initctl so standard Linux reboot and halt commands should also
+work.
 
