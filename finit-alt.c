@@ -146,6 +146,10 @@ static void build_cmd(char *cmd, char *x, int len)
 
 
 #ifdef LISTEN_INITCTL
+
+/* Standard reboot/shutdown utilities talk to init using /dev/initctl.
+ * We should check if the fifo was recreated and reopen it.
+ */
 static void listen_initctl()
 {
 	if (!fork()) {	
@@ -256,15 +260,6 @@ int main()
 	setsid();
 
 	/*
-	 * Mount filesystems
-	 */
-#ifdef REMOUNT_ROOTFS_RW
-	system("/bin/mount -n -o remount,rw /");
-#endif
-	umask(0);
-
-
-	/*
 	 * Parse configuration file
 	 */
 	if ((f = fopen("/etc/finit.conf", "r")) != NULL) {
@@ -276,6 +271,7 @@ int main()
 			if (debug)
 				printf("conf: %s\n", line);
 
+			/* Do this before mounting / read-write */
 			if (MATCH_CMD(line, "check ", x)) {
 				strcpy(cmd, "/sbin/fsck -C -a ");
 				build_cmd(cmd, x, CMD_SIZE);
@@ -315,6 +311,9 @@ int main()
 				blkdev("/dev/sda6", 0660, 8, 6);
 				continue;
 			}
+			/* This works only if /dev is tmpfs! If not, create
+			 * devices statically on the filesystem
+			 */
 			if (MATCH_CMD(line, "mknod ", x)) {
 				strcpy(cmd, "/bin/mknod ");
 				build_cmd(cmd, x, CMD_SIZE);
@@ -325,6 +324,14 @@ int main()
 		}
 		fclose(f);
 	}
+
+	/*
+	 * Mount filesystems
+	 */
+#ifdef REMOUNT_ROOTFS_RW
+	system("/bin/mount -n -o remount,rw /");
+#endif
+	umask(0);
 
 #ifdef MAKE_DEVICES
 	mkdir("/dev/shm", 0755);
