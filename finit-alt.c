@@ -58,6 +58,9 @@ THE SOFTWARE.
 #define LISTEN_INITCTL
 #define RUNLEVEL	5
 #define USE_VAR_RUN_RESOLVCONF
+#define USE_MESSAGE_BUS
+#define USE_CONSOLEKIT
+#define MESSAGE_BUS_START "/etc/init.d/messagebus start"
 #elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/sysroot"
@@ -507,6 +510,15 @@ int main()
 		dup2(0, 2);
 
 		touch("/tmp/nologin");
+
+#ifdef USE_MESSAGE_BUS
+		mkdir("/var/run/dbus", 0755);
+		mkdir("/var/lock/subsys/messagebus", 0755);
+		system(MESSAGE_BUS_START);
+#endif
+#ifdef USE_CONSOLEKIT
+		system("/usr/sbin/console-kit-daemon");
+#endif
 
 #ifdef LISTEN_INITCTL
 		listen_initctl();
