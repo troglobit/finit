@@ -1,4 +1,5 @@
 0.5 ()
+	- add option to start dbus and consolekit before the X server
 	- finit-alt listens to /dev/initctl to work with reboot(8) (smurfy)
 	- write runlevel to utmp, needed by Printerdrake (Pascal Terjan)
 	- fix ownership of /var/run/utmp (reported by Pascal Terjan)
