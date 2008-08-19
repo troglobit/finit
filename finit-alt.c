@@ -146,6 +146,8 @@ void _d(char *fmt, ...)
 
         va_start(ap, fmt);
 
+	gettimeofday(&t, NULL);
+
 	s = t.tv_sec - t0.tv_sec;
 	ms = (t.tv_usec - t0.tv_usec) / 1000;
 	if (ms < 0) {
@@ -153,8 +155,7 @@ void _d(char *fmt, ...)
 		s -= 1;
 	}
 
-	gettimeofday(&t, NULL);
-        printf("[%ld.%03ld] ", s, ms);
+        printf("[%d.%03d] ", s, ms);
         vprintf(fmt, ap);
         printf("\n");
         va_end(ap);
