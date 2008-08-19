@@ -131,7 +131,9 @@ static int debug = 0;
 
 #ifdef DEBUG_TIMESTAMP
 #include <time.h>
-int _d(char *fmt, ...)
+#include <stdarg.h>
+
+void _d(char *fmt, ...)
 {
         va_list ap;
 	struct timeval t;
@@ -141,13 +143,11 @@ int _d(char *fmt, ...)
 
         va_start(ap, fmt);
 
-	gettimeofday(&t);
-        printf("[%d.%03d] ", t.tv_sec, t.tv_usec / 1000);
+	gettimeofday(&t, NULL);
+        printf("[%ld.%03ld] ", t.tv_sec, t.tv_usec / 1000);
         vprintf(fmt, ap);
         printf("\n");
         va_end(ap);
-
-        return 0;
 }
 #else
 #define _d(x...) do { if (debug) printf(x); printf("\n"); } while (0)
