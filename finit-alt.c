@@ -534,12 +534,14 @@ int main()
 
 		vhangup();
 
+#ifndef DEBUG_TIMESTAMP
 		close(2);
 		close(1);
 		close(0);
 
 		if (open("/dev/tty1", O_RDWR) != 0)
 			exit(1);
+#endif
 
 		sigemptyset(&act.sa_mask);
 		act.sa_handler = SIG_DFL;
@@ -551,9 +553,11 @@ int main()
 		for (i = 1; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
 
+#ifndef DEBUG_TIMESTAMP
 		dup2(0, 0);
 		dup2(0, 1);
 		dup2(0, 2);
+#endif
 
 		touch("/tmp/nologin");
 
