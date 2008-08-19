@@ -129,7 +129,7 @@ void chld_handler(int);
 
 static int debug = 0;
 
-#ifdef DEBUG_TIMESTAMP
+#ifdef DEBUG_TIMESTAMP		/* For profiling */
 #include <time.h>
 #include <stdarg.h>
 
@@ -161,7 +161,7 @@ void _d(char *fmt, ...)
         va_end(ap);
 }
 #else
-#define _d(x...) do { if (debug) printf(x); printf("\n"); } while (0)
+#define _d(x...) do { if (debug) { printf(x); printf("\n"); } } while (0)
 #endif
 
 
@@ -423,7 +423,9 @@ int main()
 	}
 	_d("adjust clock");
 #ifndef NO_HCTOSYS
+#ifndef DEBUG_TIMESTAMP
 	system("/sbin/hwclock --hctosys --localtime" HWCLOCK_DIRECTISA);
+#endif
 #endif
 
 	/*
@@ -526,6 +528,7 @@ int main()
 
 	system(GETTY "&");
 
+	_d("forking");
 	if (!fork()) {
 		/* child process */
 
@@ -571,6 +574,9 @@ int main()
 
 		while (access("/tmp/shutdown", F_OK) < 0) {
 			_d("start X as %s\n", username);
+#ifdef DEBUG_TIMESTAMP
+			sleep(10);
+#endif
 			if (debug) {
 				snprintf(line, LINE_SIZE,
 					"su -c startx -l %s\n", username);
