@@ -133,18 +133,28 @@ static int debug = 0;
 #include <time.h>
 #include <stdarg.h>
 
+static struct timeval t0;
+
 void _d(char *fmt, ...)
 {
         va_list ap;
 	struct timeval t;
+	int s, ms;
 
 	if (!debug)
 		return;
 
         va_start(ap, fmt);
 
+	s = t.tv_sec - t0.tv_sec;
+	ms = (t.tv_usec - t0.tv_usec) / 1000;
+	if (ms < 0) {
+		ms += 1000;
+		s -= 1;
+	}
+
 	gettimeofday(&t, NULL);
-        printf("[%ld.%03ld] ", t.tv_sec, t.tv_usec / 1000);
+        printf("[%ld.%03ld] ", s, ms);
         vprintf(fmt, ap);
         printf("\n");
         va_end(ap);
@@ -231,6 +241,10 @@ int main()
 #endif
 #ifdef RUNLEVEL
 	struct utmp entry;
+#endif
+
+#ifdef DEBUG_TIMESTAMP
+	gettimeofday(&t0, NULL);
 #endif
 
 	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
