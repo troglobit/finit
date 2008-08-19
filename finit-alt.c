@@ -129,6 +129,31 @@ void chld_handler(int);
 
 static int debug = 0;
 
+#ifdef DEBUG_TIMESTAMP
+#include <time.h>
+int _d(char *fmt, ...)
+{
+        va_list ap;
+	struct timeval t;
+
+	if (!debug)
+		return;
+
+        va_start(ap, fmt);
+
+	gettimeofday(&t);
+        printf("[%d.%03d] ", t.tv_sec, t.tv_usec / 1000);
+        vprintf(fmt, ap);
+        printf("\n");
+        va_end(ap);
+
+        return 0;
+}
+#else
+#define _d(x...) do { if (debug) printf(x); printf("\n"); } while (0)
+#endif
+
+
 static void build_cmd(char *cmd, char *x, int len)
 {
 	int l;
@@ -143,8 +168,8 @@ static void build_cmd(char *cmd, char *x, int len)
 	for (l = 0; *x && *x != '#' && *x != '\t' && l < len; l++)
 		*c++ = *x++;
 	*c = 0;
-	if (debug)
-		printf("cmd = %s\n", cmd);
+
+	_d("cmd = %s", cmd);
 }
 
 
@@ -271,8 +296,7 @@ int main()
 			fgets(line, LINE_SIZE, f);
 			chomp(line);
 
-			if (debug)
-				printf("conf: %s\n", line);
+			_d("conf: %s", line);
 
 			/* Do this before mounting / read-write */
 			if (MATCH_CMD(line, "check ", x)) {
@@ -331,6 +355,8 @@ int main()
 	/*
 	 * Mount filesystems
 	 */
+	_d("mount filesystems");
+
 #ifdef REMOUNT_ROOTFS_RW
 	system("/bin/mount -n -o remount,rw /");
 #endif
@@ -350,6 +376,7 @@ int main()
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 
+	_d("make devices");
 #ifdef MAKE_DEVICES
 	mkdir("/dev/input", 0755);
 	chardev("/dev/urandom", 0666, 1, 9);
@@ -379,6 +406,7 @@ int main()
 		write(fd, "0.0 0 0.0\n", 10);
 		close(fd);
 	}
+	_d("adjust clock");
 #ifndef NO_HCTOSYS
 	system("/sbin/hwclock --hctosys --localtime" HWCLOCK_DIRECTISA);
 #endif
@@ -512,11 +540,13 @@ int main()
 		touch("/tmp/nologin");
 
 #ifdef USE_MESSAGE_BUS
+		_d("dbus");
 		mkdir("/var/run/dbus", 0755);
 		mkdir("/var/lock/subsys/messagebus", 0755);
 		system(MESSAGE_BUS_START);
 #endif
 #ifdef USE_CONSOLEKIT
+		_d("consolekit");
 		system("/usr/sbin/console-kit-daemon");
 #endif
 
@@ -525,8 +555,8 @@ int main()
 #endif
 
 		while (access("/tmp/shutdown", F_OK) < 0) {
+			_d("start X as %s\n", username);
 			if (debug) {
-				printf("Starting X as %s\n", username);
 				snprintf(line, LINE_SIZE,
 					"su -c startx -l %s\n", username);
 				system(line);
