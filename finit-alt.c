@@ -60,7 +60,6 @@ THE SOFTWARE.
 #define USE_VAR_RUN_RESOLVCONF
 #define USE_MESSAGE_BUS
 #define USE_CONSOLEKIT
-#define MESSAGE_BUS_START "/etc/init.d/messagebus start"
 #elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/sysroot"
@@ -127,11 +126,11 @@ void shutdown(int);
 void signal_handler(int);
 void chld_handler(int);
 
-static int debug = 0;
-
 #ifdef DEBUG_TIMESTAMP		/* For profiling */
 #include <time.h>
 #include <stdarg.h>
+
+static int debug = 1;
 
 static struct timeval t0;
 
@@ -162,6 +161,7 @@ void _d(char *fmt, ...)
 }
 #else
 #define _d(x...) do { if (debug) { printf(x); printf("\n"); } } while (0)
+static int debug = 0;
 #endif
 
 
@@ -565,7 +565,10 @@ int main()
 		_d("dbus");
 		mkdir("/var/run/dbus", 0755);
 		mkdir("/var/lock/subsys/messagebus", 0755);
-		system(MESSAGE_BUS_START);
+		system("dbus-uuidgen --ensure;dbus-daemon --system");
+		/* dbus-daemon needs this delay, even after checking
+		 * availability of /var/run/dbus/system_bus_socket */
+		usleep(500000);
 #endif
 #ifdef USE_CONSOLEKIT
 		_d("consolekit");
