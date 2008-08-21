@@ -6,7 +6,7 @@ LIBS	=
 VERSION	= 0.5
 PKG	= finit-$(VERSION)
 DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h \
-	  patches/*patch contrib/services.sh* Makefile.gdium
+	  patches/*patch contrib/services.sh* contrib/Makefile.*
 BINS	= finit-mod finit-alt finit-mdv #finit-exb
 
 
