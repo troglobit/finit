@@ -40,3 +40,9 @@ Finit handles SIGUSR1 and SIGUSR2 for reboot and halt, and listens to
 /dev/initctl so standard Linux reboot and halt commands should also
 work.
 
+
+Debugging
+---------
+
+Add finit_debug to the kernel parameter line to enable trace messages
+and to run a shell after the X server.
