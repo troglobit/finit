@@ -565,13 +565,6 @@ int main()
 		mkdir("/var/run/dbus", 0755);
 		mkdir("/var/lock/subsys/messagebus", 0755);
 		system("dbus-uuidgen --ensure;dbus-daemon --system");
-		/* dbus-daemon needs this delay, even after checking
-		 * availability of /var/run/dbus/system_bus_socket */
-		usleep(500000);
-#endif
-#ifdef USE_CONSOLEKIT
-		_d("consolekit");
-		system("/usr/sbin/console-kit-daemon");
 #endif
 
 #ifdef LISTEN_INITCTL
