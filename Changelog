@@ -1,3 +1,6 @@
+0.6 ()
+	- don't start consolekit manually, dbus starts it (rtp)
+
 0.5 (20080821)
 	- add option to start dbus and consolekit before the X server
 	- finit-alt listens to /dev/initctl to work with reboot(8) (smurfy)
