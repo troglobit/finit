@@ -59,7 +59,6 @@ THE SOFTWARE.
 #define RUNLEVEL	5
 #define USE_VAR_RUN_RESOLVCONF
 #define USE_MESSAGE_BUS
-#define USE_CONSOLEKIT
 #elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/sysroot"
