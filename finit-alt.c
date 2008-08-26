@@ -578,12 +578,12 @@ int main()
 #endif
 			if (debug) {
 				snprintf(line, LINE_SIZE,
-					"su -c startx -l %s\n", username);
+					"su -c xinit -l %s\n", username);
 				system(line);
 				system("/bin/sh");
 			} else {
 				snprintf(line, LINE_SIZE,
-					"su -c startx -l %s\n &> /dev/null",
+					"su -c xinit -l %s\n &> /dev/null",
 					username);
 				system(line);
 			}
