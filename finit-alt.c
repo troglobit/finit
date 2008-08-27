@@ -625,8 +625,8 @@ void shutdown(int sig)
 
 	sync();
 	sync();
-	system("/bin/mount -n -o remount,ro /");
-	system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
+	system("/bin/umount -a;/bin/mount -n -o remount,ro /");
+	//system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
 
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
