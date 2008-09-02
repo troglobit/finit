@@ -57,7 +57,6 @@ THE SOFTWARE.
 #define PAM_CONSOLE
 #define LISTEN_INITCTL
 #define RUNLEVEL	5
-#define USE_VAR_RUN_RESOLVCONF
 #define USE_MESSAGE_BUS
 #elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
@@ -466,6 +465,7 @@ int main()
 	endutent();
 #endif
 
+#ifdef USE_ETC_RESOLVCONF_RUN
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
@@ -475,6 +475,7 @@ int main()
 	system(RUNPARTS " --arg=i /etc/resolvconf/update.d");
 #endif
 	chdir("/");
+#endif
 	
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");
@@ -570,6 +571,9 @@ int main()
 #ifdef LISTEN_INITCTL
 		listen_initctl();
 #endif
+
+		/* Prevents bash from running loadkeys */
+		unsetenv("TERM");
 
 		while (access("/tmp/shutdown", F_OK) < 0) {
 			_d("start X as %s\n", username);
