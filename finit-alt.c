@@ -599,7 +599,7 @@ int main()
 	/* parent process */
 
 	
-	sleep(1);
+	/* sleep(1); */
 	system("/usr/sbin/services.sh &>/dev/null&");
 
 	while (1) {

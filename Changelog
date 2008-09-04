@@ -3,6 +3,7 @@
 	- unmount all filesystems before rebooting
 	- disable USE_VAR_RUN_RESOLVCONF for Mandriva
 	- unset terminal type in Mandriva before running X
+	- remove extra sleep in finit-alt before calling services.sh (caio)
 
 0.5 (20080821)
 	- add option to start dbus and consolekit before the X server
