@@ -115,6 +115,8 @@ struct init_request {
 #define MATCH_CMD(l,c,x) \
 	((!strncmp((l), (c), strlen((c)))) && ((x) = (l) + strlen((c))))
 
+#define _d(x...) do { if (debug) { printf(x); printf("\n"); } } while (0)
+
 #define LINE_SIZE 1024
 #define CMD_SIZE 256
 #define USERNAME_SIZE 16
@@ -124,43 +126,7 @@ void shutdown(int);
 void signal_handler(int);
 void chld_handler(int);
 
-#ifdef DEBUG_TIMESTAMP		/* For profiling */
-#include <time.h>
-#include <stdarg.h>
-
-static int debug = 1;
-
-static struct timeval t0;
-
-void _d(char *fmt, ...)
-{
-        va_list ap;
-	struct timeval t;
-	int s, ms;
-
-	if (!debug)
-		return;
-
-        va_start(ap, fmt);
-
-	gettimeofday(&t, NULL);
-
-	s = t.tv_sec - t0.tv_sec;
-	ms = (t.tv_usec - t0.tv_usec) / 1000;
-	if (ms < 0) {
-		ms += 1000;
-		s -= 1;
-	}
-
-        printf("[%d.%03d] ", s, ms);
-        vprintf(fmt, ap);
-        printf("\n");
-        va_end(ap);
-}
-#else
-#define _d(x...) do { if (debug) { printf(x); printf("\n"); } } while (0)
 static int debug = 0;
-#endif
 
 
 static void build_cmd(char *cmd, char *x, int len)
@@ -240,10 +206,6 @@ int main()
 #endif
 #ifdef RUNLEVEL
 	struct utmp entry;
-#endif
-
-#ifdef DEBUG_TIMESTAMP
-	gettimeofday(&t0, NULL);
 #endif
 
 	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
@@ -421,9 +383,7 @@ int main()
 	}
 	_d("adjust clock");
 #ifndef NO_HCTOSYS
-#ifndef DEBUG_TIMESTAMP
 	system("/sbin/hwclock --hctosys --localtime" HWCLOCK_DIRECTISA);
-#endif
 #endif
 
 	/*
@@ -534,14 +494,12 @@ int main()
 
 		vhangup();
 
-#ifndef DEBUG_TIMESTAMP
 		close(2);
 		close(1);
 		close(0);
 
 		if (open("/dev/tty1", O_RDWR) != 0)
 			exit(1);
-#endif
 
 		sigemptyset(&act.sa_mask);
 		act.sa_handler = SIG_DFL;
@@ -553,11 +511,9 @@ int main()
 		for (i = 1; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
 
-#ifndef DEBUG_TIMESTAMP
 		dup2(0, 0);
 		dup2(0, 1);
 		dup2(0, 2);
-#endif
 
 		touch("/tmp/nologin");
 
@@ -577,9 +533,6 @@ int main()
 
 		while (access("/tmp/shutdown", F_OK) < 0) {
 			_d("start X as %s\n", username);
-#ifdef DEBUG_TIMESTAMP
-			sleep(10);
-#endif
 			if (debug) {
 				snprintf(line, LINE_SIZE,
 					"su -c xinit -l %s\n", username);
