@@ -200,6 +200,7 @@ int main()
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
+	char startx[CMD_SIZE] = "xinit";
 #ifdef USE_ETC_RESOLVCONF_RUN
 	DIR *dir;
 	struct dirent *d;
@@ -279,6 +280,11 @@ int main()
 				build_cmd(username, x, USERNAME_SIZE);
 				continue;
 			}
+			if (MATCH_CMD(line, "startx ", x)) {
+				*startx = 0;
+				build_cmd(startx, x, CMD_SIZE);
+				continue;
+			}
 			if (MATCH_CMD(line, "host ", x)) {
 				*hostname = 0;
 				build_cmd(hostname, x, HOSTNAME_SIZE);
@@ -298,7 +304,6 @@ int main()
 			 */
 			if (MATCH_CMD(line, "mountdev", x)) {
 				mount("none", "/dev", "tmpfs", 0, "mode=0755");
-				blkdev("/dev/sda", 0660, 8, 0);
 				blkdev("/dev/sda1", 0660, 8, 1);
 				blkdev("/dev/sda2", 0660, 8, 2);
 				blkdev("/dev/sda3", 0660, 8, 3);
@@ -529,13 +534,13 @@ int main()
 			_d("start X as %s\n", username);
 			if (debug) {
 				snprintf(line, LINE_SIZE,
-					"su -c xinit -l %s\n", username);
+					"su -l %s -c \"%s\"", username, startx);
 				system(line);
 				system("/bin/sh");
 			} else {
 				snprintf(line, LINE_SIZE,
-					"su -c xinit -l %s\n &> /dev/null",
-					username);
+					"su -l %s -c \"%s\" &> /dev/null",
+					username, startx);
 				system(line);
 			}
 		}

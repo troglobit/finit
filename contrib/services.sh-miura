@@ -1,0 +1,44 @@
+#!/bin/sh
+# precaution, if the hotplug tag exists in mkinitrd
+killall nash-hotplug &
+
+#give some priority to the user processes
+renice -5 -u gdium
+
+# Else oocalc will crash
+mknod /dev/random c 1 8 &
+mkdir /var/lock/subsys &
+chmod 1777  /var/lock/subsys
+mkdir /var/run/dbus &
+mkdir /var/run/netreport &
+mkdir /var/run/ConsoleKit &
+mkdir /var/log &
+/etc/init.d/haldaemon start &
+
+sleep 25
+# postpone udev and others startup, they are too slow
+# limit the amount of udev childs, should speed up a little
+export UDEV_MAX_CHILDS=2
+export UDEV_MAX_CHILDS_RUNNING=2
+/sbin/start_udev
+/sbin/swapon -a &
+
+chmod 0666 /dev/null
+chmod 0666 /dev/ptmx
+/etc/init.d/alsa start
+/etc/init.d/network start
+for module in `/bin/grep -hv '#' /etc/modprobe.preload /etc/modprobe.preload.d/*`; do
+	  /sbin/modprobe $module
+done
+
+# restore (hopefully) the priority to the user processes
+renice 0 -u gdium
+
+# fuse status always say 0
+/sbin/service fuse start
+for i in /etc/rc5.d/S*; do
+	$i status > /dev/null 2>&1 || $i start
+done
+
+# enable this to stop bootchart when testing
+(sleep 30; /sbin/bootchartd stop)&
