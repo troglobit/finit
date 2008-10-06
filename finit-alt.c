@@ -529,6 +529,7 @@ int main()
 
 		/* Prevents bash from running loadkeys */
 		unsetenv("TERM");
+		setenv("DISPLAY", ":0", 1);
 
 		while (access("/tmp/shutdown", F_OK) < 0) {
 			_d("start X as %s\n", username);
