@@ -529,6 +529,8 @@ int main()
 
 		/* Prevents bash from running loadkeys */
 		unsetenv("TERM");
+
+		/* ConsoleKit needs this */
 		setenv("DISPLAY", ":0", 1);
 
 		while (access("/tmp/shutdown", F_OK) < 0) {
