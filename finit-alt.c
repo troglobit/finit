@@ -67,7 +67,6 @@ THE SOFTWARE.
 #define MAKE_DEVICES
 #define TOUCH_ETC_NETWORK_RUN_IFSTATE
 #define LISTEN_INITCTL
-#define USE_USPLASH
 #else			/* original Eeepc distribution */
 #define RANDOMSEED	"/var/lib/urandom/random-seed"
 #define SYSROOT		"/mnt"
@@ -212,11 +211,6 @@ int main()
 	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
 						" by " WHOAMI ")");
 
-#ifdef USE_USPLASH
-	system("usplash_write \"TEXT-URGENT finit " VERSION " (build "__DATE__ " " __TIME__ ") \"");
-	system("usplash_write \"PROGRESS 80\"");
-#endif
-
 	chdir("/");
 	umask(022);
 	
@@ -304,6 +298,7 @@ int main()
 			 */
 			if (MATCH_CMD(line, "mountdev", x)) {
 				mount("none", "/dev", "tmpfs", 0, "mode=0755");
+				chardev("/dev/null", 0666, 1, 3);
 				blkdev("/dev/sda1", 0660, 8, 1);
 				blkdev("/dev/sda2", 0660, 8, 2);
 				blkdev("/dev/sda3", 0660, 8, 3);
@@ -481,10 +476,6 @@ int main()
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
-#ifdef USE_USPLASH
-	system("usplash_write \"PROGRESS 90\"");
-#endif
-
 	system(GETTY "&");
 
 	_d("forking");
@@ -513,8 +504,6 @@ int main()
 		dup2(0, 0);
 		dup2(0, 1);
 		dup2(0, 2);
-
-		touch("/tmp/nologin");
 
 #ifdef USE_MESSAGE_BUS
 		_d("dbus");

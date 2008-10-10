@@ -20,7 +20,7 @@ BINS	= finit-mod finit-alt finit-mdv #finit-exb
 CFLAGS += -march=pentium-m
 
 # Omit the first /sbin/hwclock if CONFIG_RTC_HCTOSYS is enabled in the kernel 
-CFLAGS += -DNO_HCTOSYS
+#CFLAGS += -DNO_HCTOSYS
 
 # Append -directisa to /sbin/hwclock lines if the user has disabled
 # CONFIG_GENRTC and enabled CONFIG_RTC but not enabled CONFIG_HPET_TIMER
