@@ -208,9 +208,6 @@ int main()
 	struct utmp entry;
 #endif
 
-	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
-						" by " WHOAMI ")");
-
 	chdir("/");
 	umask(022);
 	
@@ -247,15 +244,16 @@ int main()
 		if ((strstr(line, "finit_debug"))) {
 			debug = 1;
 		}
-#if 0
 		if (strstr(line, "quiet")) {
 			close(0);
 			close(1);
 			close(2);
 		}
-#endif
 		fclose(f);
 	}
+
+	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
+						" by " WHOAMI ")");
 
 	setsid();
 
