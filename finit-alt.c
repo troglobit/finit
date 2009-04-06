@@ -252,8 +252,7 @@ int main()
 		fclose(f);
 	}
 
-	puts("finit-alt " VERSION " (built " __DATE__ " " __TIME__
-						" by " WHOAMI ")");
+	_d("finit-alt " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
 
 	setsid();
 
