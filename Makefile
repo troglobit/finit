@@ -16,6 +16,9 @@ BINS	= finit-mod finit-alt finit-mdv #finit-exb
 # Default user for finit-alt if not "user"
 #DEFUSER = fred
 
+# Disable annoying gcc warning
+CFLAGS += -U_FORTIFY_SOURCE
+
 # Use -march=pentium-m to build for Eeepc
 CFLAGS += -march=pentium-m
 
