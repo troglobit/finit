@@ -54,6 +54,7 @@ THE SOFTWARE.
 #define RUNPARTS	"/usr/bin/run-parts"
 #define REMOUNT_ROOTFS_RW
 #define MAKE_DEVICES
+#define MAKE_DEV_VCS
 #define PAM_CONSOLE
 #define LISTEN_INITCTL
 #define RUNLEVEL	5
@@ -310,6 +311,17 @@ int main()
 				blkdev("/dev/sda4", 0660, 8, 4);
 				blkdev("/dev/sda5", 0660, 8, 5);
 				blkdev("/dev/sda6", 0660, 8, 6);
+#ifdef MAKE_DEV_VCS
+			/* Caio reports that newer X.org needs these */
+				blkdev("/dev/vcs1", 0660, 7, 1);
+				blkdev("/dev/vcs2", 0660, 7, 2);
+				blkdev("/dev/vcs3", 0660, 7, 3);
+				blkdev("/dev/vcs4", 0660, 7, 4);
+				blkdev("/dev/vcsa1", 0660, 7, 129);
+				blkdev("/dev/vcsa2", 0660, 7, 130);
+				blkdev("/dev/vcsa3", 0660, 7, 131);
+				blkdev("/dev/vcsa4", 0660, 7, 132);
+#endif
 				continue;
 			}
 			/* This works only if /dev is tmpfs! If not, create
