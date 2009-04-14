@@ -194,7 +194,6 @@ int main()
 	int i;
 	FILE *f;
 	char line[LINE_SIZE];
-	int fd;
 	struct sigaction sa, act;
 	sigset_t nmask, nmask2;
 	char username[USERNAME_SIZE] = DEFUSER;
@@ -207,6 +206,9 @@ int main()
 #endif
 #ifdef RUNLEVEL
 	struct utmp entry;
+#endif
+#ifdef PAM_CONSOLE
+	int fd;
 #endif
 
 	chdir("/");

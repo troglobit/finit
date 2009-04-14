@@ -20,7 +20,7 @@ BINS	= finit-mod finit-alt finit-mdv #finit-exb
 CFLAGS += -U_FORTIFY_SOURCE
 
 # Use -march=pentium-m to build for Eeepc
-CFLAGS += -march=pentium-m
+#CFLAGS += -march=pentium-m
 
 # Omit the first /sbin/hwclock if CONFIG_RTC_HCTOSYS is enabled in the kernel 
 #CFLAGS += -DNO_HCTOSYS
