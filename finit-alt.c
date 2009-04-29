@@ -238,6 +238,7 @@ int main()
 	reboot(RB_DISABLE_CAD);
 
 	mount("none", "/proc", "proc", 0, NULL);
+	mount("none", "/sys", "sysfs", 0, NULL);
 
 	/*
 	 * Parse kernel parameters
@@ -355,7 +356,6 @@ int main()
 	mkdir("/dev/pts", 0755);
 #endif
 
-	mount("none", "/sys", "sysfs", 0, NULL);
 	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("none", "/dev/shm", "tmpfs", 0, NULL);
 	mount("none", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
