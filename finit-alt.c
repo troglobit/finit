@@ -127,7 +127,7 @@ void signal_handler(int);
 void chld_handler(int);
 
 static int debug = 0;
-
+static char sdown[CMD_SIZE];
 
 static void build_cmd(char *cmd, char *x, int len)
 {
@@ -291,6 +291,11 @@ int main()
 			if (MATCH_CMD(line, "host ", x)) {
 				*hostname = 0;
 				build_cmd(hostname, x, HOSTNAME_SIZE);
+				continue;
+			}
+			if (MATCH_CMD(line, "shutdown ", x)) {
+				*sdown = 0;
+				build_cmd(sdown, x, CMD_SIZE);
 				continue;
 			}
 			if (MATCH_CMD(line, "module ", x)) {
@@ -574,6 +579,9 @@ int main()
 void shutdown(int sig)
 {
 	touch("/tmp/shutdown");
+	if (sdown) {
+		system(sdown);
+	}
 
 	kill(-1, SIGTERM);
 
