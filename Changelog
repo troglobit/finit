@@ -1,4 +1,11 @@
-0.6 ()
+1.0 (UNRELEASED)
+	- New maintainer at GitHub http://github.com/troglobit/finit
+	- Make the unused finit.c finit-org.c for archival purposes
+	- Make finit-alt.c the new default finit.c
+	- Add standard LICENSE and AUTHORS files
+	- New focus: embedded systems and small headless servers
+
+0.6 (20100614)
 	- don't start consolekit manually, dbus starts it (rtp)
 	- unmount all filesystems before rebooting
 	- disable USE_VAR_RUN_RESOLVCONF for Mandriva
@@ -43,5 +50,5 @@ O.4 (20080516)
 	- moved finit-mod and finit-alt helpers to helpers.c
 	- replace system("echo;cat") to draw shutdown splash with C calls
 
-0.1 (20081214)
+0.1 (20080214)
 	- initial release

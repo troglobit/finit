@@ -3,17 +3,17 @@ CFLAGS	= -Os -Wall -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 LD	= gcc
 LDFLAGS	=
 LIBS	=
-VERSION	= 0.6-pre
+VERSION	= 0.7-pre
 PKG	= finit-$(VERSION)
-DFILES	= Makefile README finit.c finit-mod.c finit-alt.c helpers.c helpers.h \
+DFILES	= Makefile README finit-org.c finit-mod.c finit.c helpers.c helpers.h \
 	  patches/*patch contrib/services.sh*
-BINS	= finit-mod finit-alt finit-mdv #finit-exb
+BINS	= finit-mod finit finit-mdv #finit-exb
 
 
 
 #### Configurable parameters
 
-# Default user for finit-alt if not "user"
+# Default user for finit if not "user"
 #DEFUSER = fred
 
 # Use -march=pentium-m to build for Eeepc
@@ -51,7 +51,7 @@ finit-mod: finit-mod.o helpers.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
-finit-alt: finit-alt.o helpers.o
+finit: finit.o helpers.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
@@ -59,20 +59,20 @@ finit-mdv: finit-mdv.o helpers.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
-finit-mdv.o: finit-alt.c Makefile
-	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ finit-alt.c
+finit-mdv.o: finit.c Makefile
+	$(CC) -c $(CFLAGS) -DDIST_MDV -o $@ finit.c
 
 finit-exb: finit-exb.o helpers.o
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	strip $@
 
-finit-exb.o: finit-alt.c Makefile
-	$(CC) -c $(CFLAGS) -DDIST_EEEXUBUNTU -o $@ finit-alt.c
+finit-exb.o: finit.c Makefile
+	$(CC) -c $(CFLAGS) -DDIST_EEEXUBUNTU -o $@ finit.c
 
 clean:
 	rm -f *.o core *~ $(BINS)
 
-finit.o: finit.c Makefile
+finit.o: finit-org.c Makefile
 
 finit-mod.o: finit-mod.c Makefile
 
