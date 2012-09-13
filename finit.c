@@ -77,12 +77,6 @@ THE SOFTWARE.
 #define USE_ETC_RESOLVCONF_RUN
 #endif
 
-#ifdef DIRECTISA
-#define HWCLOCK_DIRECTISA " --directisa"
-#else
-#define HWCLOCK_DIRECTISA
-#endif
-
 
 /* From sysvinit */
 /* Set a signal handler. */
@@ -397,7 +391,7 @@ int main()
 	 */
 	_d("adjust clock");
 #ifndef NO_HCTOSYS
-	system("/sbin/hwclock --hctosys" HWCLOCK_DIRECTISA);
+	system("/sbin/hwclock --hctosys");
 #endif
 
 	/*
@@ -590,7 +584,7 @@ void shutdown(int sig)
 	sleep(2);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
-	system("/sbin/hwclock --systohc" HWCLOCK_DIRECTISA);
+	system("/sbin/hwclock --systohc");
 
 	kill(-1, SIGKILL);
 

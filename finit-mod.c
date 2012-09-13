@@ -64,12 +64,6 @@ Changelog from the original Eeepc fastinit:
 
 #include "helpers.h"
 
-#ifdef DIRECTISA
-#define HWCLOCK_DIRECTISA " --directisa"
-#else
-#define HWCLOCK_DIRECTISA
-#endif
-
 
 /* From sysvinit */
 /* Set a signal handler. */
@@ -160,12 +154,8 @@ int main()
 	/*
 	 * Time adjustments
 	 */
-	if ((fd = open("/etc/adjtime", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-		write(fd, "0.0 0 0.0\n", 10);
-		close(fd);
-	}
 #ifndef NO_HCTOSYS
-	system("/sbin/hwclock --hctosys --localtime" HWCLOCK_DIRECTISA);
+	system("/sbin/hwclock --hctosys");
 #endif
 
 	/*
@@ -291,7 +281,7 @@ void shutdown(int sig)
 	sleep(2);
 
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
-	system("/sbin/hwclock --systohc --localtime" HWCLOCK_DIRECTISA);
+	system("/sbin/hwclock --systohc");
 
 	kill(-1, SIGKILL);
 
