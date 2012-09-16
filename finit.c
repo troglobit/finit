@@ -1,25 +1,25 @@
 /*
-Improved fast init
+  Improved fast init
 
-Copyright (c) 2008 Claudio Matsuoka
+  Copyright (c) 2008 Claudio Matsuoka
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
 */
 
 #include <stdio.h>
@@ -39,89 +39,15 @@ THE SOFTWARE.
 #include <linux/fs.h>
 #include <utmp.h>
 
+#include "finit.h"
 #include "helpers.h"
 
-#ifndef DEFUSER
-#define DEFUSER "user"
-#endif
-
-/* Distribution configuration */
-
-#if defined DIST_MDV	/* Mandriva */
-#define RANDOMSEED	"/var/lib/random-seed"
-#define SYSROOT		"/sysroot"
-#define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
-#define RUNPARTS	"/usr/bin/run-parts"
-#define REMOUNT_ROOTFS_RW
-#define MAKE_DEVICES
-#define MAKE_DEV_VCS
-#define PAM_CONSOLE
-#define LISTEN_INITCTL
-#define RUNLEVEL	5
-#define USE_MESSAGE_BUS
-#elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
-#define RANDOMSEED	"/var/lib/urandom/random-seed"
-#define SYSROOT		"/sysroot"
-#define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
-#define RUNPARTS	"/bin/run-parts"
-#define REMOUNT_ROOTFS_RW
-#define MAKE_DEVICES
-#define TOUCH_ETC_NETWORK_RUN_IFSTATE
-#define LISTEN_INITCTL
-#else			/* original Eeepc distribution */
-#define RANDOMSEED	"/var/lib/urandom/random-seed"
-#define SYSROOT		"/mnt"
-#define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
-#define RUNPARTS	"/bin/run-parts"
-#define TOUCH_ETC_NETWORK_RUN_IFSTATE
-#define USE_ETC_RESOLVCONF_RUN
-#endif
-
-
-/* From sysvinit */
-/* Set a signal handler. */
-#define SETSIG(sa, sig, fun, flags) \
-		do { \
-			sa.sa_handler = fun; \
-			sa.sa_flags = flags; \
-			sigemptyset(&sa.sa_mask); \
-			sigaction(sig, &sa, NULL); \
-		} while (0)
-
-#ifdef LISTEN_INITCTL
-
-#define INIT_MAGIC		0x03091969
-#define INIT_CMD_RUNLVL		1
-
-struct init_request {
-	int	magic;			/* Magic number                 */
-	int	cmd;			/* What kind of request         */
-	int	runlevel;		/* Runlevel to change to        */
-	int	sleeptime;		/* Time between TERM and KILL   */
-	char	data[368];
-};
-#endif
-
-#define touch(x) mknod((x), S_IFREG|0644, 0)
-#define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
-#define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
-
-#define MATCH_CMD(l,c,x) \
-	((!strncmp((l), (c), strlen((c)))) && ((x) = (l) + strlen((c))))
-
-#define _d(x...) do { if (debug) { printf(x); printf("\n"); } } while (0)
-
-#define LINE_SIZE 1024
-#define CMD_SIZE 256
-#define USERNAME_SIZE 16
-#define HOSTNAME_SIZE 32
-
-void shutdown(int);
-void signal_handler(int);
-void chld_handler(int);
+static void chld_handler(int sig __attribute__ ((unused)));
+static void sig_init(void);
 
 static int debug = 0;
-static char sdown[CMD_SIZE];
+static char sdown[CMD_SIZE] = "";
+
 
 static void build_cmd(char *cmd, char *x, int len)
 {
@@ -131,7 +57,7 @@ static void build_cmd(char *cmd, char *x, int len)
 	c = cmd + strlen(cmd);
 
 	/* skip spaces */
-	for (; *x && (*x == ' ' || *x == '\t'); x++); 
+	for (; *x && (*x == ' ' || *x == '\t'); x++) ;
 
 	/* copy next arg */
 	for (l = 0; *x && *x != '#' && *x != '\t' && l < len; l++)
@@ -141,55 +67,10 @@ static void build_cmd(char *cmd, char *x, int len)
 	_d("cmd = %s", cmd);
 }
 
-
-#ifdef LISTEN_INITCTL
-
-/* Standard reboot/shutdown utilities talk to init using /dev/initctl.
- * We should check if the fifo was recreated and reopen it.
- */
-static void listen_initctl()
+int main(void)
 {
-	if (!fork()) {	
-		int ctl;	
-		fd_set fds;	
-		struct init_request request;
-
-		mkfifo("/dev/initctl", 0600);
-		ctl = open("/dev/initctl", O_RDONLY);
-
-		while (1) {
-			FD_ZERO(&fds);
-			FD_SET(ctl, &fds);
-			if (select(ctl + 1, &fds, NULL, NULL, NULL) <= 0)
-				continue;
-
-			read(ctl, &request, sizeof(request));
-
-			if (request.magic != INIT_MAGIC)
-				continue;
-
-			if (request.cmd == INIT_CMD_RUNLVL) {
-				switch (request.runlevel) {
-				case '0':
-					shutdown(SIGUSR2);
-					break;
-				case '6':
-					shutdown(SIGUSR1);
-				}
-			}
-		}
-	}
-}
-#endif
-
-
-int main()
-{
-	int i;
 	FILE *f;
 	char line[LINE_SIZE];
-	struct sigaction sa, act;
-	sigset_t nmask, nmask2;
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = "eviltwin";
 	char cmd[CMD_SIZE];
@@ -207,32 +88,12 @@ int main()
 
 	chdir("/");
 	umask(022);
-	
-	/*
-	 * Signal management
-	 */
-	for (i = 1; i < NSIG; i++)
-		SETSIG(sa, i, SIG_IGN, SA_RESTART);
-
-	SETSIG(sa, SIGINT,  shutdown, 0);
-	SETSIG(sa, SIGPWR,  SIG_IGN, 0);
-	SETSIG(sa, SIGUSR1, shutdown, 0);
-	SETSIG(sa, SIGUSR2, shutdown, 0);
-	SETSIG(sa, SIGTERM, SIG_IGN, 0);
-	SETSIG(sa, SIGALRM, SIG_IGN, 0);
-	SETSIG(sa, SIGHUP,  SIG_IGN, 0);
-	SETSIG(sa, SIGCONT, SIG_IGN, SA_RESTART);
-	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
-	
-	/* Block sigchild while forking */
-	sigemptyset(&nmask);
-	sigaddset(&nmask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &nmask, NULL);
-
-	reboot(RB_DISABLE_CAD);
 
 	mount("none", "/proc", "proc", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
+
+	/* Setup signals */
+	sig_init();
 
 	/*
 	 * Parse kernel parameters
@@ -251,8 +112,6 @@ int main()
 	}
 
 	_d("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
-
-	setsid();
 
 	/*
 	 * Parse configuration file
@@ -314,7 +173,7 @@ int main()
 				blkdev("/dev/sda5", 0660, 8, 5);
 				blkdev("/dev/sda6", 0660, 8, 6);
 #ifdef MAKE_DEV_VCS
-			/* Caio reports that newer X.org needs these */
+				/* Caio reports that newer X.org needs these */
 				blkdev("/dev/vcs1", 0660, 7, 1);
 				blkdev("/dev/vcs2", 0660, 7, 2);
 				blkdev("/dev/vcs3", 0660, 7, 3);
@@ -370,15 +229,15 @@ int main()
 	chardev("/dev/ptmx", 0666, 5, 2);
 	chardev("/dev/null", 0666, 1, 3);
 	chmod("/dev/null", 0666);
-	chardev("/dev/mem",  0640, 1, 1);
-	chardev("/dev/tty0",  0660, 4, 0);
-	chardev("/dev/tty1",  0660, 4, 1);
-	chardev("/dev/tty2",  0660, 4, 2);
-	chardev("/dev/tty3",  0660, 4, 3);
-	chardev("/dev/input/mice",  0660, 13, 63);
-	chardev("/dev/input/event0",  0660, 13, 64);
-	chardev("/dev/agpgart",  0660, 10, 175);
-	blkdev("/dev/loop0",  0600, 7, 0);
+	chardev("/dev/mem", 0640, 1, 1);
+	chardev("/dev/tty0", 0660, 4, 0);
+	chardev("/dev/tty1", 0660, 4, 1);
+	chardev("/dev/tty2", 0660, 4, 2);
+	chardev("/dev/tty3", 0660, 4, 3);
+	chardev("/dev/input/mice", 0660, 13, 63);
+	chardev("/dev/input/event0", 0660, 13, 64);
+	chardev("/dev/agpgart", 0660, 10, 175);
+	blkdev("/dev/loop0", 0600, 7, 0);
 #endif
 
 	unlink("/etc/mtab");
@@ -407,7 +266,7 @@ int main()
 			if (isalnum(d->d_name[0]))
 				continue;
 			snprintf(line, LINE_SIZE,
-				"/etc/resolvconf/run/interface/%s", d->d_name);
+				 "/etc/resolvconf/run/interface/%s", d->d_name);
 			unlink(line);
 		}
 
@@ -444,29 +303,31 @@ int main()
 #endif
 	chdir("/");
 #endif
-	
+
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");
 #endif
 
 	if ((f = fopen("/etc/hostname", "r")) != NULL) {
-		fgets(hostname, HOSTNAME_SIZE, f);	
+		fgets(hostname, HOSTNAME_SIZE, f);
 		chomp(hostname);
 		fclose(f);
 	}
 
-	sethostname(hostname, strlen(hostname)); 
+	sethostname(hostname, strlen(hostname));
 
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 
 	/*
 	 * Set random seed
 	 */
+#ifdef RANDOMSEED
 	copyfile(RANDOMSEED, "/dev/urandom", 0);
 	unlink(RANDOMSEED);
 	umask(077);
 	copyfile("/dev/urandom", RANDOMSEED, 4096);
 	umask(0);
+#endif
 
 	/*
 	 * Console setup (for X)
@@ -490,11 +351,15 @@ int main()
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
+	/* Start console login. */
 	system(GETTY "&");
 
 	_d("forking");
 	if (!fork()) {
 		/* child process */
+		int i;
+		sigset_t nmask;
+		struct sigaction sa;
 
 		vhangup();
 
@@ -502,15 +367,15 @@ int main()
 		close(1);
 		close(0);
 
-		if (open("/dev/tty1", O_RDWR) != 0)
+		if (open(CONSOLE, O_RDWR) != 0)
 			exit(1);
 
-		sigemptyset(&act.sa_mask);
-		act.sa_handler = SIG_DFL;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_handler = SIG_DFL;
 
-		sigemptyset(&nmask2);
-		sigaddset(&nmask2, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, &nmask2, NULL);
+		sigemptyset(&nmask);
+		sigaddset(&nmask, SIGCHLD);
+		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
 		for (i = 1; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
@@ -536,7 +401,7 @@ int main()
 		/* ConsoleKit needs this */
 		setenv("DISPLAY", ":0", 1);
 
-		while (access("/tmp/shutdown", F_OK) < 0) {
+		while (!fexist("/tmp/shutdown")) {
 			_d("start X as %s\n", username);
 			if (debug) {
 				snprintf(line, LINE_SIZE,
@@ -553,27 +418,29 @@ int main()
 
 		exit(0);
 	}
-	
+
 	/* parent process */
 
-	
 	/* sleep(1); */
 	system("/usr/sbin/services.sh &>/dev/null&");
 
 	while (1) {
+		sigset_t nmask;
+
 		sigemptyset(&nmask);
 		pselect(0, NULL, NULL, NULL, NULL, &nmask);
 	}
-}
 
+	return 0;
+}
 
 /*
  * Shut down on INT USR1 USR2
  */
-void shutdown(int sig)
+void shutdown_handler(int sig)
 {
 	touch("/tmp/shutdown");
-	if (sdown) {
+	if (sdown[0] != 0) {
 		system(sdown);
 	}
 
@@ -599,11 +466,10 @@ void shutdown(int sig)
 	reboot(RB_POWER_OFF);
 }
 
-
 /*
  * SIGCHLD: one of our children has died
  */
-void chld_handler(int sig)
+static void chld_handler(int sig __attribute__ ((unused)))
 {
 	int status;
 
@@ -613,3 +479,58 @@ void chld_handler(int sig)
 	}
 }
 
+/*
+ * Signal management - Be conservative with what finit responds to!
+ *
+ * The standard SysV init only responds to the following signals:
+ *	 SIGHUP
+ *	      Has the same effect as telinit q.
+ *
+ *	 SIGUSR1
+ *	      On receipt of this signals, init closes and re-opens  its	 control
+ *	      fifo, /dev/initctl. Useful for bootscripts when /dev is remounted.
+ *
+ *	 SIGINT
+ *	      Normally the kernel sends this signal to init when CTRL-ALT-DEL is
+ *	      pressed. It activates the ctrlaltdel action.
+ *
+ *	 SIGWINCH
+ *	      The kernel sends this signal when the KeyboardSignal key	is  hit.
+ *	      It activates the kbrequest action.
+ */
+static void sig_init(void)
+{
+	int i;
+	sigset_t nmask;
+	struct sigaction sa;
+
+	for (i = 1; i < NSIG; i++)
+		SETSIG(sa, i, SIG_IGN, SA_RESTART);
+
+	SETSIG(sa, SIGINT, shutdown_handler, 0);
+	SETSIG(sa, SIGPWR, SIG_IGN, 0);
+	SETSIG(sa, SIGUSR1, shutdown_handler, 0);
+	SETSIG(sa, SIGUSR2, shutdown_handler, 0);
+	SETSIG(sa, SIGTERM, SIG_IGN, 0);
+	SETSIG(sa, SIGALRM, SIG_IGN, 0);
+	SETSIG(sa, SIGHUP, SIG_IGN, 0);
+	SETSIG(sa, SIGCONT, SIG_IGN, SA_RESTART);
+	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
+
+	/* Block sigchild while forking */
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nmask, NULL);
+
+	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT */
+	reboot(RB_DISABLE_CAD);
+	setsid();
+}
+
+/**
+ * Local Variables:
+ *  version-control: t
+ *  indent-tabs-mode: t
+ *  c-file-style: "linux"
+ * End:
+ */
