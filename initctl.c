@@ -72,10 +72,10 @@ void listen_initctl(void)
 			if (request.cmd == INIT_CMD_RUNLVL) {
 				switch (request.runlevel) {
 				case '0':
-					shutdown_handler(SIGUSR2);
+					do_shutdown(SIGUSR2);
 					break;
 				case '6':
-					shutdown_handler(SIGUSR1);
+					do_shutdown(SIGUSR1);
 				}
 			}
 		}

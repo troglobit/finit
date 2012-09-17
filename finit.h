@@ -25,6 +25,15 @@
 #ifndef FINIT_H__
 #define FINIT_H__
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include <syslog.h>
 #define DO_LOG(level, fmt, args...)				\
 {								\
@@ -71,25 +80,20 @@
 #define USE_ETC_RESOLVCONF_RUN
 #endif
 
+#define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
+#define SYNC_STOPPED    "/var/lock/finit.stopped"
+
 #ifndef DEFUSER
 #define DEFUSER "user"
+#endif
+#ifndef DEFHOST
+#define DEFHOST "noname"
 #endif
 
 #define LINE_SIZE 1024
 #define CMD_SIZE 256
 #define USERNAME_SIZE 16
 #define HOSTNAME_SIZE 32
-
-/* From sysvinit */
-/* Set a signal handler. */
-#define SETSIG(sa, sig, fun, flags)		\
-	do {					\
-		sa.sa_handler = fun;		\
-		sa.sa_flags = flags;		\
-		sigemptyset(&sa.sa_mask);	\
-		sigaction(sig, &sa, NULL);	\
-	} while (0)
-
 
 #ifndef touch
 #define touch(x) mknod((x), S_IFREG|0644, 0)
@@ -110,7 +114,10 @@
 
 #define _d(fmt, args...) do { if (debug) { fprintf(stderr, "%s(): " fmt "\n", __func__, ##args); } } while (0)
 
-void shutdown_handler(int sig);
+extern int debug;
+
+void do_shutdown(int sig);
+void sig_init(void);
 void listen_initctl(void);
 
 #endif /* FINIT_H__ */

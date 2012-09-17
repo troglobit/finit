@@ -22,31 +22,18 @@
   THE SOFTWARE.
 */
 
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <sys/mount.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <dirent.h>
-#include <errno.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/reboot.h>
-#include <sys/wait.h>
 #include <linux/fs.h>
 #include <utmp.h>
 
 #include "finit.h"
 #include "helpers.h"
 
-static void chld_handler(int sig __attribute__ ((unused)));
-static void sig_init(void);
-
-static int debug = 0;
-static char sdown[CMD_SIZE] = "";
+int debug = 0;
+char sdown[CMD_SIZE] = "";
 
 
 static void build_cmd(char *cmd, char *x, int len)
@@ -57,7 +44,7 @@ static void build_cmd(char *cmd, char *x, int len)
 	c = cmd + strlen(cmd);
 
 	/* skip spaces */
-	for (; *x && (*x == ' ' || *x == '\t'); x++) ;
+	for (; *x && (*x == ' ' || *x == '\t'); x++);
 
 	/* copy next arg */
 	for (l = 0; *x && *x != '#' && *x != '\t' && l < len; l++)
@@ -72,7 +59,7 @@ int main(void)
 	FILE *f;
 	char line[LINE_SIZE];
 	char username[USERNAME_SIZE] = DEFUSER;
-	char hostname[HOSTNAME_SIZE] = "eviltwin";
+	char hostname[HOSTNAME_SIZE] = DEFHOST;
 	char cmd[CMD_SIZE];
 	char startx[CMD_SIZE] = "xinit";
 #ifdef USE_ETC_RESOLVCONF_RUN
@@ -86,14 +73,14 @@ int main(void)
 	int fd;
 #endif
 
+	/* Setup signals */
+	sig_init();
+
 	chdir("/");
 	umask(022);
 
 	mount("none", "/proc", "proc", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
-
-	/* Setup signals */
-	sig_init();
 
 	/*
 	 * Parse kernel parameters
@@ -119,7 +106,8 @@ int main(void)
 	if ((f = fopen("/etc/finit.conf", "r")) != NULL) {
 		char *x;
 		while (!feof(f)) {
-			fgets(line, LINE_SIZE, f);
+			if (!fgets(line, LINE_SIZE, f))
+				continue;
 			chomp(line);
 
 			_d("conf: %s", line);
@@ -308,6 +296,7 @@ int main(void)
 	touch("/etc/network/run/ifstate");
 #endif
 
+	/* Set initial hostname. */
 	if ((f = fopen("/etc/hostname", "r")) != NULL) {
 		fgets(hostname, HOSTNAME_SIZE, f);
 		chomp(hostname);
@@ -401,7 +390,12 @@ int main(void)
 		/* ConsoleKit needs this */
 		setenv("DISPLAY", ":0", 1);
 
-		while (!fexist("/tmp/shutdown")) {
+		while (!fexist(SYNC_SHUTDOWN)) {
+			if (fexist(SYNC_STOPPED)) {
+				sleep(2);
+				continue;
+			}
+
 			_d("start X as %s\n", username);
 			if (debug) {
 				snprintf(line, LINE_SIZE,
@@ -432,99 +426,6 @@ int main(void)
 	}
 
 	return 0;
-}
-
-/*
- * Shut down on INT USR1 USR2
- */
-void shutdown_handler(int sig)
-{
-	touch("/tmp/shutdown");
-	if (sdown[0] != 0) {
-		system(sdown);
-	}
-
-	kill(-1, SIGTERM);
-
-	write(1, "\033[?25l\033[30;40m", 14);
-	copyfile("/boot/shutdown.fb", "/dev/fb/0", 0);
-	sleep(2);
-
-	system("/usr/sbin/alsactl store > /dev/null 2>&1");
-	system("/sbin/hwclock --systohc");
-
-	kill(-1, SIGKILL);
-
-	sync();
-	sync();
-	system("/bin/umount -a;/bin/mount -n -o remount,ro /");
-	//system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
-
-	if (sig == SIGINT || sig == SIGUSR1)
-		reboot(RB_AUTOBOOT);
-
-	reboot(RB_POWER_OFF);
-}
-
-/*
- * SIGCHLD: one of our children has died
- */
-static void chld_handler(int sig __attribute__ ((unused)))
-{
-	int status;
-
-	while (waitpid(-1, &status, WNOHANG) != 0) {
-		if (errno == ECHILD)
-			break;
-	}
-}
-
-/*
- * Signal management - Be conservative with what finit responds to!
- *
- * The standard SysV init only responds to the following signals:
- *	 SIGHUP
- *	      Has the same effect as telinit q.
- *
- *	 SIGUSR1
- *	      On receipt of this signals, init closes and re-opens  its	 control
- *	      fifo, /dev/initctl. Useful for bootscripts when /dev is remounted.
- *
- *	 SIGINT
- *	      Normally the kernel sends this signal to init when CTRL-ALT-DEL is
- *	      pressed. It activates the ctrlaltdel action.
- *
- *	 SIGWINCH
- *	      The kernel sends this signal when the KeyboardSignal key	is  hit.
- *	      It activates the kbrequest action.
- */
-static void sig_init(void)
-{
-	int i;
-	sigset_t nmask;
-	struct sigaction sa;
-
-	for (i = 1; i < NSIG; i++)
-		SETSIG(sa, i, SIG_IGN, SA_RESTART);
-
-	SETSIG(sa, SIGINT, shutdown_handler, 0);
-	SETSIG(sa, SIGPWR, SIG_IGN, 0);
-	SETSIG(sa, SIGUSR1, shutdown_handler, 0);
-	SETSIG(sa, SIGUSR2, shutdown_handler, 0);
-	SETSIG(sa, SIGTERM, SIG_IGN, 0);
-	SETSIG(sa, SIGALRM, SIG_IGN, 0);
-	SETSIG(sa, SIGHUP, SIG_IGN, 0);
-	SETSIG(sa, SIGCONT, SIG_IGN, SA_RESTART);
-	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
-
-	/* Block sigchild while forking */
-	sigemptyset(&nmask);
-	sigaddset(&nmask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &nmask, NULL);
-
-	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT */
-	reboot(RB_DISABLE_CAD);
-	setsid();
 }
 
 /**
