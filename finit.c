@@ -112,6 +112,10 @@ int main(void)
 
 			_d("conf: %s", line);
 
+			/* Skip comments. */
+			if (MATCH_CMD(line, "#", x)) {
+				continue;
+			}
 			/* Do this before mounting / read-write */
 			if (MATCH_CMD(line, "check ", x)) {
 				strcpy(cmd, "/sbin/fsck -C -a ");
