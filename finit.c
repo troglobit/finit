@@ -87,14 +87,18 @@ int main(void)
 	 */
 	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
 		fgets(line, LINE_SIZE, f);
-		if ((strstr(line, "finit_debug"))) {
+
+		if (strstr(line, "finit_debug") ||
+		    strstr(line, "--verbose")) {
 			debug = 1;
 		}
+
 		if (strstr(line, "quiet")) {
 			close(0);
 			close(1);
 			close(2);
 		}
+
 		fclose(f);
 	}
 
