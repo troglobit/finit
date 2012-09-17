@@ -47,47 +47,57 @@
 
 /* Distribution configuration */
 
-#if defined DIST_MDV	/* Mandriva */
-#define RANDOMSEED	"/var/lib/random-seed"
-#define SYSROOT		"/sysroot"
-#define CONSOLE         "/dev/console"
-#define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
-#define RUNPARTS	"/usr/bin/run-parts"
-#define REMOUNT_ROOTFS_RW
-#define MAKE_DEVICES
-#define MAKE_DEV_VCS
-#define PAM_CONSOLE
-#define LISTEN_INITCTL
-#define RUNLEVEL	5
-#define USE_MESSAGE_BUS
+#if defined EMBEDDED_SYSTEM
+# define CONSOLE        "/dev/console"
+# define MDEV           "/sbin/mdev"
+# define GETTY          "/sbin/getty -L 115200 ttyS0 vt100"
+# define LISTEN_INITCTL
+#elif defined DIST_MDV	/* Mandriva */
+# define RANDOMSEED	"/var/lib/random-seed"
+# define SYSROOT	"/sysroot"
+# define CONSOLE        "/dev/console"
+# define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
+# define RUNPARTS	"/usr/bin/run-parts"
+# define REMOUNT_ROOTFS_RW
+# define PAM_CONSOLE
+# define LISTEN_INITCTL
+# define RUNLEVEL	5
+# define USE_MESSAGE_BUS
 #elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
-#define RANDOMSEED	"/var/lib/urandom/random-seed"
-#define SYSROOT		"/sysroot"
-#define CONSOLE         "/dev/console"
-#define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
-#define RUNPARTS	"/bin/run-parts"
-#define REMOUNT_ROOTFS_RW
-#define MAKE_DEVICES
-#define TOUCH_ETC_NETWORK_RUN_IFSTATE
-#define LISTEN_INITCTL
-#else			/* original Eeepc distribution */
-#define RANDOMSEED	"/var/lib/urandom/random-seed"
-#define SYSROOT		"/mnt"
-#define CONSOLE         "/dev/console"
-#define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
-#define RUNPARTS	"/bin/run-parts"
-#define TOUCH_ETC_NETWORK_RUN_IFSTATE
-#define USE_ETC_RESOLVCONF_RUN
+# define RANDOMSEED	"/var/lib/urandom/random-seed"
+# define SYSROOT	"/sysroot"
+# define CONSOLE        "/dev/console"
+# define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
+# define RUNPARTS	"/bin/run-parts"
+# define REMOUNT_ROOTFS_RW
+# define TOUCH_ETC_NETWORK_RUN_IFSTATE
+# define LISTEN_INITCTL
+#elif defined DIST_ORIGEEE	/* original EeePC distribution */
+# define RANDOMSEED	"/var/lib/urandom/random-seed"
+# define SYSROOT	"/mnt"
+# define CONSOLE        "/dev/console"
+# define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
+# define RUNPARTS	"/bin/run-parts"
+# define TOUCH_ETC_NETWORK_RUN_IFSTATE
+# define USE_ETC_RESOLVCONF_RUN
+#else                           /* Ubuntu */
+# define RANDOMSEED	"/var/lib/urandom/random-seed"
+# define CONSOLE        "/dev/console"
+# define MDEV           "\"/bin/busybox mdev\""
+# define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
+# define REMOUNT_ROOTFS_RW
+# define TOUCH_ETC_NETWORK_RUN_IFSTATE
+# define LISTEN_INITCTL
 #endif
 
 #define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
 #define SYNC_STOPPED    "/var/lock/finit.stopped"
 
 #ifndef DEFUSER
-#define DEFUSER "user"
+# define DEFUSER "user"
 #endif
 #ifndef DEFHOST
-#define DEFHOST "noname"
+# define DEFHOST "noname"
 #endif
 
 #define LINE_SIZE 1024
@@ -96,16 +106,16 @@
 #define HOSTNAME_SIZE 32
 
 #ifndef touch
-#define touch(x) mknod((x), S_IFREG|0644, 0)
+# define touch(x) mknod((x), S_IFREG|0644, 0)
 #endif
 #ifndef chardev
-#define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
+# define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 #endif
 #ifndef blkdev
-#define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
+# define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 #endif
 #ifndef fexist
-#define fexist(x) (access(x, F_OK) != -1)
+# define fexist(x) (access(x, F_OK) != -1)
 #endif
 
 /* Match one command. */

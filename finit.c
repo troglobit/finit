@@ -79,8 +79,24 @@ int main(void)
 	chdir("/");
 	umask(022);
 
+	/*
+	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
+	 */
 	mount("none", "/proc", "proc", 0, NULL);
+	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
+	mkdir("/dev/pts", 0755);
+	mkdir("/dev/shm", 0755);
+	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
+	mount("none", "/dev/shm", "tmpfs", 0, NULL);
+
+	/*
+	 * Populate /dev and prepare for runtime events from kernel.
+	 */
+#ifdef MDEV
+	system("sysctl -w kernel.hotplug=" MDEV);
+	system(MDEV " -s");
+#endif
 
 	/*
 	 * Parse kernel parameters
@@ -153,44 +169,12 @@ int main(void)
 				system(cmd);
 				continue;
 			}
-#ifdef MAKE_DEVICES
-			/* This is used if the system uses udev and doesn't
-			 * mount /dev as tmpfs in the initrd, or if it doesn't
-			 * use an initrd. Mount /dev as tmpfs and create basic
-			 * device nodes.
-			 */
-			if (MATCH_CMD(line, "mountdev", x)) {
-				mount("none", "/dev", "tmpfs", 0, "mode=0755");
-				chardev("/dev/null", 0666, 1, 3);
-				blkdev("/dev/sda1", 0660, 8, 1);
-				blkdev("/dev/sda2", 0660, 8, 2);
-				blkdev("/dev/sda3", 0660, 8, 3);
-				blkdev("/dev/sda4", 0660, 8, 4);
-				blkdev("/dev/sda5", 0660, 8, 5);
-				blkdev("/dev/sda6", 0660, 8, 6);
-#ifdef MAKE_DEV_VCS
-				/* Caio reports that newer X.org needs these */
-				blkdev("/dev/vcs1", 0660, 7, 1);
-				blkdev("/dev/vcs2", 0660, 7, 2);
-				blkdev("/dev/vcs3", 0660, 7, 3);
-				blkdev("/dev/vcs4", 0660, 7, 4);
-				blkdev("/dev/vcsa1", 0660, 7, 129);
-				blkdev("/dev/vcsa2", 0660, 7, 130);
-				blkdev("/dev/vcsa3", 0660, 7, 131);
-				blkdev("/dev/vcsa4", 0660, 7, 132);
-#endif
-				continue;
-			}
-			/* This works only if /dev is tmpfs! If not, create
-			 * devices statically on the filesystem
-			 */
 			if (MATCH_CMD(line, "mknod ", x)) {
 				strcpy(cmd, "/bin/mknod ");
 				build_cmd(cmd, x, CMD_SIZE);
 				system(cmd);
 				continue;
 			}
-#endif
 		}
 		fclose(f);
 	}
@@ -203,42 +187,12 @@ int main(void)
 #ifdef REMOUNT_ROOTFS_RW
 	system("/bin/mount -n -o remount,rw /");
 #endif
-	umask(0);
-
-#ifdef MAKE_DEVICES
-	mkdir("/dev/shm", 0755);
-	mkdir("/dev/pts", 0755);
-#endif
-
-	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
-	mount("none", "/dev/shm", "tmpfs", 0, NULL);
-	mount("none", "/tmp", "tmpfs", 0, "mode=1777,size=128m");
-	mount("none", "/var/run", "tmpfs", 0, "mode=0755");
-	mount("none", "/var/lock", "tmpfs", 0, "mode=1777");
-	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
+#ifdef SYSROOT
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
-
-	_d("make devices");
-#ifdef MAKE_DEVICES
-	mkdir("/dev/input", 0755);
-	chardev("/dev/urandom", 0666, 1, 9);
-	chardev("/dev/ptmx", 0666, 5, 2);
-	chardev("/dev/null", 0666, 1, 3);
-	chmod("/dev/null", 0666);
-	chardev("/dev/mem", 0640, 1, 1);
-	chardev("/dev/tty0", 0660, 4, 0);
-	chardev("/dev/tty1", 0660, 4, 1);
-	chardev("/dev/tty2", 0660, 4, 2);
-	chardev("/dev/tty3", 0660, 4, 3);
-	chardev("/dev/input/mice", 0660, 13, 63);
-	chardev("/dev/input/event0", 0660, 13, 64);
-	chardev("/dev/agpgart", 0660, 10, 175);
-	blkdev("/dev/loop0", 0600, 7, 0);
 #endif
-
+	umask(0);
 	unlink("/etc/mtab");
 	system("mount -a");
-
 	umask(0022);
 
 	/*
@@ -296,9 +250,9 @@ int main(void)
 	run_parts("/etc/resolvconf/update.d", "-i", NULL);
 #else
 	system(RUNPARTS " --arg=i /etc/resolvconf/update.d");
-#endif
+#endif /* BUILTIN_RUNPARTS */
 	chdir("/");
-#endif
+#endif /* USE_ETC_RESOLVCONF_RUN */
 
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");

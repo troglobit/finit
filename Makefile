@@ -31,13 +31,14 @@ EXEC        = finit
 OBJS        = finit.o helpers.o initctl.o signal.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
-CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
-CPPFLAGS   += -DLISTEN_INITCTL -DBUILTIN_RUNPARTS
-CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
+CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(ROOTDIR)/$(CONFIG_LINUXDIR)/include/
-CFLAGS     += -W -Wall -Werror -Os
+# Build for embedded systems, not notebook by default, see finit.h
+CPPFLAGS   += -DEMBEDDED_SYSTEM -DBUILTIN_RUNPARTS
+CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
+CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 
 prefix     ?= /usr/local
 sysconfdir ?= /etc
@@ -52,21 +53,22 @@ $(OBJS): Makefile
 
 finit: $(OBJS)
 
+#	@ln -sf /sbin/finit /sbin/init
 install: all
 	@install -d $(DESTDIR)$(prefix)/sbin
 	@install -d $(DESTDIR)$(sysconfdir)
 	@install -d $(DESTDIR)$(datadir)
 	@install -d $(DESTDIR)$(mandir)
-	@for file in $(EXEC); do \
+	@for file in $(EXEC); do                                        \
+		printf "  INSTALL $(DESTDIR)$(prefix)/sbin/$$file\n";   \
 		install -m 0755 $$file $(DESTDIR)$(prefix)/sbin/$$file; \
 	done
-	@ln -sf /sbin/finit /sbin/init
 
 uninstall:
 	-@for file in $(EXEC); do \
+		printf "  REMOVE  $(DESTDIR)$(prefix)/sbin/$$file\n";   \
 		$(RM) $(DESTDIR)$(prefix)/sbin/$$file; \
 	done
-	-@$(RM) /sbin/finit /sbin/init
 
 clean:
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)

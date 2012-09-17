@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifdef LISTEN_INITCTL
 #include <features.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -45,6 +44,7 @@ struct init_request {
 	char	data[368];
 };
 
+#ifdef LISTEN_INITCTL
 /* Standard reboot/shutdown utilities talk to init using /dev/initctl.
  * We should check if the fifo was recreated and reopen it.
  */
