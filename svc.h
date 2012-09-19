@@ -1,4 +1,4 @@
-/* Misc. utility functions and C-library extensions to simplify finit system setup.
+/* Generic API for managing svc_t structures
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
@@ -22,29 +22,17 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_HELPERS_H_
-#define FINIT_HELPERS_H_
+#ifndef FINIT_SVC_H__
+#define FINIT_SVC_H__
 
-int	makepath	(char *);
-void	ifconfig	(char *, char *, char *, int);
-void	copyfile	(char *, char *, int);
-void    print_descr     (char *action, char *descr);
-int     print_result    (int fail);
-int     start_process   (char *cmd, char *args[], int console);
-void    cls             (void);
-void	chomp		(char *);
-int     getuser         (char *);
-int	getgroup	(char *);
-void    set_procname    (char *args[], char *name);
-char   *get_pidname     (pid_t pid, char *name, size_t len);
-int     kill_procname   (const char *name, int signo);
-void    set_hostname    (char *hostname);
+#include "service.h"
 
-#ifdef BUILTIN_RUNPARTS
-int	run_parts	(char *dir, ...);
-#endif
+svc_t *svc_new_service  (void);
+svc_t *svc_find_by_id   (int id);
+svc_t *svc_find_by_name (char *name);
+svc_t *svc_iterator     (int restart);
 
-#endif /* FINIT_HELPERS_H_ */
+#endif	/* FINIT_SVC_H__ */
 
 /**
  * Local Variables:

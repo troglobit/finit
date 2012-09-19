@@ -31,6 +31,7 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "service.h"
 
 int   debug   = 0;
 char *sdown   = NULL;
@@ -49,7 +50,7 @@ static char *build_cmd(char *cmd, char *line, int len)
 	if (!cmd) {
 		cmd = malloc (strlen(line) + 1);
 		if (!cmd) {
-			fprintf (stderr, "finit: No memory left for '%s'", line);
+			_e("No memory left for '%s'", line);
 			return NULL;
 		}
 		*cmd = 0;
@@ -130,7 +131,7 @@ int main(int UNUSED(args), char *argv[])
 	}
 
 	cls();
-	_d("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
+	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
 
 	/*
 	 * Parse configuration file
@@ -192,6 +193,11 @@ int main(int UNUSED(args), char *argv[])
 			if (MATCH_CMD(line, "startx ", x)) {
 				if (startx) free(startx);
 				startx = build_cmd(NULL, x, CMD_SIZE);
+				continue;
+			}
+			if (MATCH_CMD(line, "service ", x)) {
+				if (service_register (x))
+					_e("Failed, too many services to monitor.\n");
 				continue;
 			}
 		}
@@ -283,6 +289,8 @@ int main(int UNUSED(args), char *argv[])
 
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");
+#else
+	remove("/etc/network/run/ifstate");
 #endif
 
 	/* Set initial hostname. */
@@ -325,7 +333,19 @@ int main(int UNUSED(args), char *argv[])
 	 */
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
+	mkdir("/var/run/sshd", 01755);
 	umask(022);
+
+#ifdef USE_MESSAGE_BUS
+	_d("Starting D-Bus ...");
+	mkdir("/var/run/dbus", 0755);
+	mkdir("/var/lock/subsys/messagebus", 0755);
+	system("dbus-uuidgen --ensure");
+	system("su -c \"dbus-daemon --system\" messagebus");
+#endif
+
+	_d("Starting services from %s", FINIT_CONF);
+	service_startup();
 
 #ifdef LISTEN_INITCTL
 	listen_initctl();
@@ -366,14 +386,6 @@ int main(int UNUSED(args), char *argv[])
 		/* ConsoleKit needs this */
 		setenv("DISPLAY", ":0", 1);
 
-#ifdef USE_MESSAGE_BUS
-		_d("Starting D-Bus ...");
-		mkdir("/var/run/dbus", 0755);
-		mkdir("/var/lock/subsys/messagebus", 0755);
-		system("dbus-uuidgen --ensure");
-		system("su -c \"dbus-daemon --system\" messagebus");
-#endif
-
 		/* Run startup scripts in /etc/finit.d/, if any. */
 		run_parts(FINIT_RCSD);
 
@@ -403,13 +415,7 @@ int main(int UNUSED(args), char *argv[])
 		exit(0);
 	}
 
-	/* We're the grim reaper of innocent orphaned children ... */
-	while (1) {
-		sigset_t nmask;
-
-		sigemptyset(&nmask);
-		pselect(0, NULL, NULL, NULL, NULL, &nmask);
-	}
+	service_monitor();
 
 	return 0;
 }

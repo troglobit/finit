@@ -1,6 +1,5 @@
-/* Misc. utility functions and C-library extensions to simplify finit system setup.
+/* Generic IPC class based on TIPC as message bus
  *
- * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,29 +21,35 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_HELPERS_H_
-#define FINIT_HELPERS_H_
+#ifndef FINIT_IPC_H_
+#define FINIT_IPC_H_
 
-int	makepath	(char *);
-void	ifconfig	(char *, char *, char *, int);
-void	copyfile	(char *, char *, int);
-void    print_descr     (char *action, char *descr);
-int     print_result    (int fail);
-int     start_process   (char *cmd, char *args[], int console);
-void    cls             (void);
-void	chomp		(char *);
-int     getuser         (char *);
-int	getgroup	(char *);
-void    set_procname    (char *args[], char *name);
-char   *get_pidname     (pid_t pid, char *name, size_t len);
-int     kill_procname   (const char *name, int signo);
-void    set_hostname    (char *hostname);
+#define SINGLE_TIPC_NODE         64
+#define PRIMARY_MESSAGE_BUS      100
+#define HWSETUP_MESSAGE_BUS      101
+#define FINIT_MESSAGE_BUS        102
 
-#ifdef BUILTIN_RUNPARTS
-int	run_parts	(char *dir, ...);
-#endif
+#define SERVER_CONNECTION 1
+#define CLIENT_CONNECTION 0
 
-#endif /* FINIT_HELPERS_H_ */
+/**
+ * generic_event_t - Generic message type.
+ * @mtype: Message type.
+ *
+ * This is the base message type that is used on the system primary message bus.  All
+ * messages must start with a long @mtype that describes the type, any extended
+ * messages must add its extra fields after @mtype.
+ */
+typedef struct {
+   long mtype;
+   long arg;                    /* Optional argument, free use. */
+} generic_event_t;
+
+int     ipc_init          (int type, int port, int conn_type);
+int     ipc_receive_event (int sd, void *event, size_t sz, int timeout);
+int     ipc_wait_event    (int sd, int event, int timeout);
+
+#endif /* FINIT_IPC_H_ */
 
 /**
  * Local Variables:

@@ -28,7 +28,8 @@ ROOTDIR    ?= $(shell pwd)
 VERSION     = 1.0-pre
 PKG	    = finit-$(VERSION)
 EXEC        = finit
-OBJS        = finit.o helpers.o initctl.o signal.o
+OBJS        = finit.o helpers.o initctl.o signal.o svc.o ipc.o service.o \
+              strlcpy.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 CFLAGS     += -W -Wall -Werror -Os

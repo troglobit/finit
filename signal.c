@@ -98,7 +98,8 @@ void do_shutdown (int sig)
  */
 static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("Rebooting on signal %d from pid %d with code %d", sig, info->si_pid, info->si_code);
+	_d("Rebooting on signal %d from %s (PID %d) with code %d",
+	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid, info->si_code);
 
 	do_shutdown(sig);
 }
@@ -110,8 +111,8 @@ static void chld_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
 	int status;
 
-	/* XXX: Add (procname) to debug output, add get_procname(pid) to helpers.c */
-	_d("Child died, harvesting. Signal %d from pid %d code %d", sig, info->si_pid, info->si_code);
+	_d("Child %s died, harvesting. Signal %d from pid %d code %d",
+	   get_pidname(info->si_pid, NULL, 0), sig, info->si_pid, info->si_code);
 	while (waitpid(-1, &status, WNOHANG) != 0) {
 		if (errno == ECHILD)
 			break;
@@ -123,15 +124,25 @@ static void chld_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
  */
 static void sigstop_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("Received SIGSTOP(%d) from pid %d code %d", sig, info->si_pid, info->si_code);
+	_d("Received SIGSTOP(%d) from %s (PID %d) code %d",
+	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid, info->si_code);
 	touch(SYNC_STOPPED);
 	stopped ++;
 }
 static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("Received SIGCONT(%d) from pid %d code %d", sig, info->si_pid, info->si_code);
+	_d("Received SIGCONT(%d) from %s (PID %d) code %d",
+	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid, info->si_code);
 	stopped = 0;
 	remove(SYNC_STOPPED);
+}
+
+/*
+ * Is SIGSTOP asserted?
+ */
+int sig_stopped(void)
+{
+	return stopped;
 }
 
 /*

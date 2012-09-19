@@ -131,18 +131,25 @@
 #define MATCH_CMD(l, c, x)					\
 	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
-#define _d(fmt, args...) do { if (debug) { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
+#define echo(fmt, args...) do { fprintf(stderr, fmt "\n",  ##args); } while (0)
+#define _d(fmt, args...)   do { if (debug) { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
+#define _e(fmt, args...)   do { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
+#define _pe(fmt, args...)  do { fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
 
 extern int   debug;
 extern char *sdown;
 
 /* signal.c */
 void do_shutdown    (int sig);
+int  sig_stopped    (void);
 void sig_init       (void);
 void sig_setup      (void);
 
 /* initctl.c */
 void listen_initctl (void);
+
+/* strlcpy.c */
+size_t strlcpy(char *dst, const char *src, size_t siz);
 
 #endif /* FINIT_H_ */
 
