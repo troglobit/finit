@@ -1,3 +1,26 @@
+/* Misc. utility functions and C-library extensions to simplify finit system setup.
+ *
+ * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
+ * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #include <string.h>
 #include <limits.h>
@@ -7,6 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -19,7 +43,9 @@
 #endif
 
 #include <grp.h>
+#include <pwd.h>
 
+#include "finit.h"
 #include "helpers.h"
 
 /*
@@ -115,16 +141,21 @@ int run_parts(char *dir, ...)
 	DIR *d;
 	struct dirent *e;
 	struct stat st;
+	char *oldpwd = NULL;
 	char *ent[NUM_SCRIPTS];
 	int i, num = 0, argnum = 1;
 	char *args[NUM_ARGS];
 	va_list ap;
 
-	if (chdir(dir))
+	oldpwd = getcwd (NULL, 0);
+	if (chdir(dir)) {
+		if (oldpwd) free(oldpwd);
 		return -1;
-
-	if ((d = opendir(dir)) == NULL)
+	}
+	if ((d = opendir(dir)) == NULL) {
+		if (oldpwd) free(oldpwd);
 		return -1;
+	}
 
 	va_start(ap, dir);
 	while (argnum < NUM_ARGS && (args[argnum++] = va_arg(ap, char *)));
@@ -132,6 +163,7 @@ int run_parts(char *dir, ...)
 
 	while ((e = readdir(d))) {
 		if (e->d_type == DT_REG && stat(e->d_name, &st) == 0) {
+			_d("Found %s/%s ...", dir, e->d_name);
 			if (st.st_mode & S_IXUSR) {
 				ent[num++] = strdup(e->d_name);
 				if (num >= NUM_SCRIPTS)
@@ -142,22 +174,45 @@ int run_parts(char *dir, ...)
 
 	closedir(d);
 
-	if (num == 0)
+	if (num == 0) {
+		if (oldpwd) free(oldpwd);
 		return 0;
+	}
 
 	qsort(ent, num, sizeof(char *), cmp);
 
 	for (i = 0; i < num; i++) {
+		pid_t pid = 0;
+		int status;
+
 		args[0] = ent[i];
-		if (!fork()) {
+		args[1] = NULL;
+
+		pid = fork();
+		if (!pid) {
+			_d("Calling %s ...", ent[i]);
 			execv(ent[i], args);
 			exit(0);
 		}
-		wait(NULL);
+		waitpid(pid, &status, 0);
 		free(ent[i]);
 	}
 
+	chdir(oldpwd);
+	free(oldpwd);
+
 	return 0;
+}
+#endif /* BUILTIN_RUNPARTS */
+
+int getuser(char *s)
+{
+	struct passwd *usr;
+
+	if ((usr = getpwnam(s)) == NULL)
+		return -1;
+
+	return usr->pw_uid;
 }
 
 int getgroup(char *s)
@@ -174,6 +229,14 @@ int getgroup(char *s)
  * Other convenience functions
  */
 
+void cls(void)
+{
+	static const char cls[] = "\e[2J\e[1;1H";
+
+	if (!debug)
+		fprintf (stderr, "%s", cls);
+}
+
 void chomp(char *s)
 {
 	char *x;
@@ -182,4 +245,33 @@ void chomp(char *s)
 		*x = 0;
 }
 
-#endif
+void set_procname(char *args[], char *name)
+{
+	size_t len = strlen(args[0]) + 1; /* Include terminating '\0' */
+
+	prctl(PR_SET_NAME, name, 0, 0, 0);
+	memset(args[0], 0, len);
+	strncpy(args[0], name, len);
+}
+
+void set_hostname(char *hostname)
+{
+	FILE *fp;
+
+	_d("Set hostname: %s", hostname);
+	if ((fp = fopen("/etc/hostname", "r")) != NULL) {
+		fgets(hostname, HOSTNAME_SIZE, fp);
+		chomp(hostname);
+		fclose(fp);
+	}
+
+	sethostname(hostname, strlen(hostname));
+}
+
+/**
+ * Local Variables:
+ *  version-control: t
+ *  indent-tabs-mode: t
+ *  c-file-style: "linux"
+ * End:
+ */

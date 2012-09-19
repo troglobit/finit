@@ -1,26 +1,42 @@
-/*
-  Improved fast init
-
-  Copyright (c) 2008 Claudio Matsuoka
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-*/
+/* Signal management - Be conservative with what finit responds to!
+ *
+ * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
+ * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * The standard SysV init only responds to the following signals:
+ *	 SIGHUP
+ *	      Has the same effect as telinit q.
+ *
+ *	 SIGUSR1
+ *	      On receipt of this signals, init closes and re-opens  its	 control
+ *	      fifo, /dev/initctl. Useful for bootscripts when /dev is remounted.
+ *
+ *	 SIGINT
+ *	      Normally the kernel sends this signal to init when CTRL-ALT-DEL is
+ *	      pressed. It activates the ctrlaltdel action.
+ *
+ *	 SIGWINCH
+ *	      The kernel sends this signal when the KeyboardSignal key	is  hit.
+ *	      It activates the kbrequest action.
+ */
 
 #include <signal.h>
 #include <sys/reboot.h>
@@ -45,31 +61,32 @@
 	} while (0)
 
 static int stopped = 0;
-extern char *sdown;
 
 void do_shutdown (int sig)
 {
 	touch(SYNC_SHUTDOWN);
-	if (sdown[0] != 0) {
+
+	if (sdown) {
+		_d("Calling shutdown hook: %s", sdown);
 		system(sdown);
 	}
 
+	_d("Sending SIGTERM to all processes.");
 	kill(-1, SIGTERM);
-
-	write(1, "\033[?25l\033[30;40m", 14);
-	copyfile("/boot/shutdown.fb", "/dev/fb/0", 0);
 	sleep(2);
-
 	system("/usr/sbin/alsactl store > /dev/null 2>&1");
+	_d("Saving the system clock.");
 	system("/sbin/hwclock --systohc");
-
+	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);
 
 	sync();
 	sync();
-	system("/bin/umount -a;/bin/mount -n -o remount,ro /");
-	//system("/sbin/unionctl.static / --remove / > /dev/null 2>&1");
+	_d("Unmounting file systems, remounting / read-only.");
+	system("/bin/umount -fa 2>/dev/null");
+	system("/bin/mount -n -o remount,ro / 2>/dev/null");
 
+	_d("%s.", sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
@@ -79,9 +96,9 @@ void do_shutdown (int sig)
 /*
  * Shut down on INT USR1 USR2
  */
-static void shutdown_handler(int sig, siginfo_t *info, void *ctx __attribute__ ((unused)))
+static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("finit: Rebooting on signal %d from pid %d with code %d", sig, info->si_pid, info->si_code);
+	_d("Rebooting on signal %d from pid %d with code %d", sig, info->si_pid, info->si_code);
 
 	do_shutdown(sig);
 }
@@ -89,11 +106,12 @@ static void shutdown_handler(int sig, siginfo_t *info, void *ctx __attribute__ (
 /*
  * SIGCHLD: one of our children has died
  */
-static void chld_handler(int sig, siginfo_t *info, void *ctx __attribute__ ((unused)))
+static void chld_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
 	int status;
 
-	_d("finit: Child died, harvesting... signal %d from pid %d with code %d", sig, info->si_pid, info->si_code);
+	/* XXX: Add (procname) to debug output, add get_procname(pid) to helpers.c */
+	_d("Child died, harvesting. Signal %d from pid %d code %d", sig, info->si_pid, info->si_code);
 	while (waitpid(-1, &status, WNOHANG) != 0) {
 		if (errno == ECHILD)
 			break;
@@ -103,48 +121,47 @@ static void chld_handler(int sig, siginfo_t *info, void *ctx __attribute__ ((unu
 /*
  * SIGSTOP: Paused by user or netflash
  */
-static void sigstop_handler(int sig, siginfo_t *info, void *ctx __attribute__ ((unused)))
+static void sigstop_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("finit: Received SIGSTOP(%d) from pid %d with code %d", sig, info->si_pid, info->si_code);
+	_d("Received SIGSTOP(%d) from pid %d code %d", sig, info->si_pid, info->si_code);
 	touch(SYNC_STOPPED);
 	stopped ++;
 }
-static void sigcont_handler(int sig, siginfo_t *info, void *ctx __attribute__ ((unused)))
+static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("finit: Received SIGCONT(%d) from pid %d with code %d", sig, info->si_pid, info->si_code);
+	_d("Received SIGCONT(%d) from pid %d code %d", sig, info->si_pid, info->si_code);
 	stopped = 0;
 	remove(SYNC_STOPPED);
 }
 
 /*
- * Signal management - Be conservative with what finit responds to!
- *
- * The standard SysV init only responds to the following signals:
- *	 SIGHUP
- *	      Has the same effect as telinit q.
- *
- *	 SIGUSR1
- *	      On receipt of this signals, init closes and re-opens  its	 control
- *	      fifo, /dev/initctl. Useful for bootscripts when /dev is remounted.
- *
- *	 SIGINT
- *	      Normally the kernel sends this signal to init when CTRL-ALT-DEL is
- *	      pressed. It activates the ctrlaltdel action.
- *
- *	 SIGWINCH
- *	      The kernel sends this signal when the KeyboardSignal key	is  hit.
- *	      It activates the kbrequest action.
+ * Inital signal setup - ignore everything until we're capable of responding
  */
 void sig_init(void)
 {
 	int i;
-	sigset_t nmask;
 	struct sigaction sa;
 
 	for (i = 1; i < NSIG; i++)
 		IGNSIG(sa, i, SA_RESTART);
+}
 
-	SETSIG(sa, SIGINT,  shutdown_handler, 0); /* Standard SysV init calls ctrl-alt-delete handler */
+/*
+ * Setup limited set of SysV compatible signals to respond to
+ */
+void sig_setup(void)
+{
+	sigset_t nmask;
+	struct sigaction sa;
+
+	_d("Setup signals");
+
+	/* Cleanup any stale finit control files */
+	remove(SYNC_SHUTDOWN);
+	remove(SYNC_STOPPED);
+
+	/* Standard SysV init calls ctrl-alt-delete handler */
+	SETSIG(sa, SIGINT,  shutdown_handler, 0);
 	SETSIG(sa, SIGPWR,  shutdown_handler, 0);
 
 	/* Ignore SIGUSR1/2 for now, only BusyBox init implements them as reboot+halt. */
@@ -171,7 +188,7 @@ void sig_init(void)
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, NULL);
 
-	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT */
+	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT, above */
 	reboot(RB_DISABLE_CAD);
 	setsid();
 }
@@ -179,6 +196,7 @@ void sig_init(void)
 /**
  * Local Variables:
  *  version-control: t
- *  c-file-style: "ellemtel"
+ *  indent-tabs-mode: t
+ *  c-file-style: "linux"
  * End:
  */

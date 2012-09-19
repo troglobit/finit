@@ -1,0 +1,6 @@
+#!/bin/sh
+run-parts /etc/rcS.d --arg=start
+run-parts /etc/rc2.d --arg=start
+#service acpid start
+#service networking start
+#service ssh start

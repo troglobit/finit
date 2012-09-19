@@ -1,26 +1,26 @@
-/*
-  Improved fast init
-
-  Copyright (c) 2008 Claudio Matsuoka
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-*/
+/* Improved fast init
+ *
+ * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
+ * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #include <string.h>
 #include <ctype.h>
@@ -32,36 +32,44 @@
 #include "finit.h"
 #include "helpers.h"
 
-int debug = 0;
-char sdown[CMD_SIZE] = "";
+int   debug   = 0;
+char *sdown   = NULL;
+char *network = NULL;
+char *startx  = NULL;
 
-
-static void build_cmd(char *cmd, char *x, int len)
+static char *build_cmd(char *cmd, char *line, int len)
 {
 	int l;
 	char *c;
 
+	/* Trim leading whitespace */
+	while (*line && (*line == ' ' || *line == '\t'))
+		line++;
+
+	if (!cmd) {
+		cmd = malloc (strlen(line) + 1);
+		if (!cmd) {
+			fprintf (stderr, "finit: No memory left for '%s'", line);
+			return NULL;
+		}
+		*cmd = 0;
+	}
 	c = cmd + strlen(cmd);
-
-	/* skip spaces */
-	for (; *x && (*x == ' ' || *x == '\t'); x++);
-
-	/* copy next arg */
-	for (l = 0; *x && *x != '#' && *x != '\t' && l < len; l++)
-		*c++ = *x++;
+	for (l = 0; *line && *line != '#' && *line != '\t' && l < len; l++)
+		*c++ = *line++;
 	*c = 0;
 
 	_d("cmd = %s", cmd);
+	return cmd;
 }
 
-int main(void)
+int main(int UNUSED(args), char *argv[])
 {
-	FILE *f;
+	FILE *fp;
 	char line[LINE_SIZE];
 	char username[USERNAME_SIZE] = DEFUSER;
 	char hostname[HOSTNAME_SIZE] = DEFHOST;
 	char cmd[CMD_SIZE];
-	char startx[CMD_SIZE] = "xinit";
 #ifdef USE_ETC_RESOLVCONF_RUN
 	DIR *dir;
 	struct dirent *d;
@@ -73,15 +81,16 @@ int main(void)
 	int fd;
 #endif
 
-	/* Setup signals */
+	/*
+	 * Initial setup of signals, ignore all until we're up.
+	 */
 	sig_init();
-
-	chdir("/");
-	umask(022);
 
 	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
 	 */
+	chdir("/");
+	umask(0);
 	mount("none", "/proc", "proc", 0, NULL);
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
@@ -89,44 +98,49 @@ int main(void)
 	mkdir("/dev/shm", 0755);
 	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("none", "/dev/shm", "tmpfs", 0, NULL);
+	umask(022);
 
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
-#ifdef MDEV
-	system("sysctl -w kernel.hotplug=" MDEV);
-	system(MDEV " -s");
+#if defined(USE_UDEV)
+	system("udevd --daemon");
+#elif defined (MDEV)
+	system(MDEV "-s");
 #endif
 
 	/*
 	 * Parse kernel parameters
 	 */
-	if ((f = fopen("/proc/cmdline", "r")) != NULL) {
-		fgets(line, LINE_SIZE, f);
+	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
+		fgets(line, LINE_SIZE, fp);
 
 		if (strstr(line, "finit_debug") ||
-		    strstr(line, "--verbose")) {
+		    strstr(line, "--verbose")   ||
+		    strstr(line, "--debug"))
 			debug = 1;
-		}
 
-		if (strstr(line, "quiet")) {
+		if (!debug && strstr(line, "quiet")) {
 			close(0);
 			close(1);
 			close(2);
 		}
 
-		fclose(f);
+		fclose(fp);
 	}
 
+	cls();
 	_d("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
 
 	/*
 	 * Parse configuration file
 	 */
-	if ((f = fopen("/etc/finit.conf", "r")) != NULL) {
+	if ((fp = fopen(FINIT_CONF, "r")) != NULL) {
 		char *x;
-		while (!feof(f)) {
-			if (!fgets(line, LINE_SIZE, f))
+
+		_d("Parse %s ...", FINIT_CONF);
+		while (!feof(fp)) {
+			if (!fgets(line, LINE_SIZE, fp))
 				continue;
 			chomp(line);
 
@@ -148,19 +162,14 @@ int main(void)
 				build_cmd(username, x, USERNAME_SIZE);
 				continue;
 			}
-			if (MATCH_CMD(line, "startx ", x)) {
-				*startx = 0;
-				build_cmd(startx, x, CMD_SIZE);
-				continue;
-			}
 			if (MATCH_CMD(line, "host ", x)) {
 				*hostname = 0;
 				build_cmd(hostname, x, HOSTNAME_SIZE);
 				continue;
 			}
 			if (MATCH_CMD(line, "shutdown ", x)) {
-				*sdown = 0;
-				build_cmd(sdown, x, CMD_SIZE);
+				if (sdown) free(sdown);
+				sdown = build_cmd(NULL, x, CMD_SIZE);
 				continue;
 			}
 			if (MATCH_CMD(line, "module ", x)) {
@@ -175,14 +184,24 @@ int main(void)
 				system(cmd);
 				continue;
 			}
+			if (MATCH_CMD(line, "network ", x)) {
+				if (network) free(network);
+				network = build_cmd(NULL, x, CMD_SIZE);
+				continue;
+			}
+			if (MATCH_CMD(line, "startx ", x)) {
+				if (startx) free(startx);
+				startx = build_cmd(NULL, x, CMD_SIZE);
+				continue;
+			}
 		}
-		fclose(f);
+		fclose(fp);
 	}
 
 	/*
 	 * Mount filesystems
 	 */
-	_d("mount filesystems");
+	_d("Mount filesystems in /etc/fstab ...");
 
 #ifdef REMOUNT_ROOTFS_RW
 	system("/bin/mount -n -o remount,rw /");
@@ -191,15 +210,23 @@ int main(void)
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 	umask(0);
-	unlink("/etc/mtab");
-	system("mount -a");
+	system("mount -na");
+	system("swapon -ea");
 	umask(0022);
+
+	/* Cleanup stale files, if any still linger on. */
+	system("rm -rf /tmp/* /var/run/* /var/lock/*");
+
+	/*
+	 * Base FS up, enable standard SysV init signals
+	 */
+	sig_setup();
 
 	/*
 	 * Time adjustments
 	 */
-	_d("adjust clock");
 #ifndef NO_HCTOSYS
+	_d("Adjust system clock ...");
 	system("/sbin/hwclock --hctosys");
 #endif
 
@@ -229,11 +256,11 @@ int main(void)
 	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
 #endif
 
+#ifdef RUNLEVEL
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
 	chmod("/var/run/utmp", 0664);
 
-#ifdef RUNLEVEL
 	memset(&entry, 0, sizeof(struct utmp));
 	entry.ut_type = RUN_LVL;
 	entry.ut_pid = '0' + RUNLEVEL;
@@ -259,15 +286,13 @@ int main(void)
 #endif
 
 	/* Set initial hostname. */
-	if ((f = fopen("/etc/hostname", "r")) != NULL) {
-		fgets(hostname, HOSTNAME_SIZE, f);
-		chomp(hostname);
-		fclose(f);
-	}
-
-	sethostname(hostname, strlen(hostname));
+	set_hostname(hostname);
 
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
+	if (network) {
+		_d("Starting networking: %s", network);
+		system(network);
+	}
 
 	/*
 	 * Set random seed
@@ -302,13 +327,14 @@ int main(void)
 	mkdir("/tmp/.ICE-unix", 01777);
 	umask(022);
 
-	/* Start console login. */
-	system(GETTY "&");
+#ifdef LISTEN_INITCTL
+	listen_initctl();
+#endif
 
-	_d("forking");
 	if (!fork()) {
 		/* child process */
 		int i;
+		char c;
 		sigset_t nmask;
 		struct sigaction sa;
 
@@ -331,55 +357,53 @@ int main(void)
 		for (i = 1; i < NSIG; i++)
 			sigaction(i, &sa, NULL);
 
-		dup2(0, 0);
-		dup2(0, 1);
-		dup2(0, 2);
+		dup2(0, STDIN_FILENO);
+		dup2(0, STDOUT_FILENO);
+		dup2(0, STDERR_FILENO);
 
-#ifdef USE_MESSAGE_BUS
-		_d("dbus");
-		mkdir("/var/run/dbus", 0755);
-		mkdir("/var/lock/subsys/messagebus", 0755);
-		system("dbus-uuidgen --ensure;dbus-daemon --system");
-#endif
-
-#ifdef LISTEN_INITCTL
-		listen_initctl();
-#endif
-
-		/* Prevents bash from running loadkeys */
-		unsetenv("TERM");
+		set_procname(argv, "console");
 
 		/* ConsoleKit needs this */
 		setenv("DISPLAY", ":0", 1);
 
+#ifdef USE_MESSAGE_BUS
+		_d("Starting D-Bus ...");
+		mkdir("/var/run/dbus", 0755);
+		mkdir("/var/lock/subsys/messagebus", 0755);
+		system("dbus-uuidgen --ensure");
+		system("su -c \"dbus-daemon --system\" messagebus");
+#endif
+
+		/* Run startup scripts in /etc/finit.d/, if any. */
+		run_parts(FINIT_RCSD);
+
 		while (!fexist(SYNC_SHUTDOWN)) {
 			if (fexist(SYNC_STOPPED)) {
-				sleep(2);
+				sleep(1);
 				continue;
 			}
 
-			_d("start X as %s\n", username);
-			if (debug) {
-				snprintf(line, LINE_SIZE,
-					"su -l %s -c \"%s\"", username, startx);
+			if (startx && !debug) {
+				snprintf(line, sizeof(line), "su -c \"%s\" -l %s", startx, username);
 				system(line);
-				system("/bin/sh");
 			} else {
-				snprintf(line, LINE_SIZE,
-					"su -l %s -c \"%s\" &> /dev/null",
-					username, startx);
-				system(line);
+				static const char msg[] = "\nPlease press Enter to activate this console. ";
+
+				i = write(STDERR_FILENO, msg, sizeof(msg) - 1);
+				while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+				continue;
+
+				if (fexist(SYNC_STOPPED))
+					continue;
+
+				system(GETTY);
 			}
 		}
 
 		exit(0);
 	}
 
-	/* parent process */
-
-	/* sleep(1); */
-	system("/usr/sbin/services.sh &>/dev/null&");
-
+	/* We're the grim reaper of innocent orphaned children ... */
 	while (1) {
 		sigset_t nmask;
 

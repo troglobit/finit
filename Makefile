@@ -35,8 +35,7 @@ CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(ROOTDIR)/$(CONFIG_LINUXDIR)/include/
-# Build for embedded systems, not notebook by default, see finit.h
-CPPFLAGS   += -DEMBEDDED_SYSTEM -DBUILTIN_RUNPARTS
+CPPFLAGS   += -DBUILTIN_RUNPARTS
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 
