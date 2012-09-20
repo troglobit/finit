@@ -37,17 +37,19 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef BUILTIN_RUNPARTS
 #include <dirent.h>
 #include <stdarg.h>
 #include <sys/wait.h>
-#endif
 
 #include <grp.h>
 #include <pwd.h>
 
 #include "finit.h"
 #include "helpers.h"
+#include "signal.h"
+
+#define NUM_ARGS    16
+#define NUM_SCRIPTS 128		/* ought to be enough for anyone */
 
 /*
  * Helpers to replace system() calls
@@ -101,7 +103,6 @@ void ifconfig(char *name, char *inet, char *mask, int up)
 	close(sock);
 }
 
-#define BUF_SIZE 4096
 
 void copyfile(char *src, char *dst, int size)
 {
@@ -175,31 +176,18 @@ int print_result(int fail)
 int start_process(char *cmd, char *args[], int console)
 {
 	pid_t pid;
-	sigset_t nmask, omask;
 
 	if (sig_stopped())
 		return 0;
 
-	/* Block SIGCHLD while forking.  */
-	sigemptyset(&nmask);
-	sigaddset(&nmask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &nmask, &omask);
 	pid = fork();
-	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (!pid) {
 		int i;
-		struct sigaction act;
+		struct sigaction sa;
 
 		/* Reset signal handlers that were set by the parent process */
-		sigemptyset(&act.sa_mask);
-		act.sa_handler = SIG_DFL;
-
-		sigemptyset(&nmask);
-		sigaddset(&nmask, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
-
-		for (i = 1; i < NSIG; i++)
-			sigaction(i, &act, NULL);
+                for (i = 1; i < NSIG; i++)
+			DFLSIG(sa, i, 0);
 
 		if (console) {
 			int fd = open (CONSOLE, O_WRONLY | O_APPEND);
@@ -209,17 +197,150 @@ int start_process(char *cmd, char *args[], int console)
 			}
 		}
 
-		execv(cmd, args);
+		execvp(cmd, args);
 		exit(!console ? print_result(0) : 0);
 	}
 
 	return pid;
 }
 
-#ifdef BUILTIN_RUNPARTS
+int run(char *cmd)
+{
+	int status, result, i = 0;
+	FILE *fp;
+	char *args[NUM_ARGS + 1], *arg, *backup;
+	pid_t pid;
 
-#define NUM_SCRIPTS 128		/* ought to be enough for anyone */
-#define NUM_ARGS 16
+	/* We must create a copy that is possible to modify. */
+	backup = arg = strdup(cmd);
+	if (!arg)
+		return 1; /* Failed allocating a string to be modified. */
+
+	/* Split command line into tokens of an argv[] array. */
+	args[i++] = strsep(&arg, "\t ");
+	do {
+		/* Handle run("su -c \"dbus-daemon --system\" messagebus");
+		 *   => "su", "-c", "\"dbus-daemon --system\"", "messagebus" */
+		if (*arg == '\'' || *arg == '"') {
+			char *p, delim[2] = " ";
+
+			delim[0]  = arg[0];
+			args[i++] = arg++;
+			strsep(&arg, delim);
+			 p     = arg - 1;
+			*p     = *delim;
+			*arg++ = 0;
+		} else {
+			args[i++] = strsep(&arg, "\t ");
+		}
+	} while (arg && i < NUM_ARGS);
+	args[i] = NULL;
+#if 0
+	_e("Splitting: '%s' =>", cmd);
+	for (i = 0; args[i]; i++)
+		_e("\t%s", args[i]);
+#endif
+	if (i == NUM_ARGS && args[i]) {
+		_e("Command too long: %s", cmd);
+		free(backup);
+		errno = EOVERFLOW;
+		return 1;
+	}
+
+	fp = fopen("/dev/null", "w");
+	pid = fork();
+	if (0 == pid) {
+		int i;
+		struct sigaction sa;
+
+		/* Reset signal handlers that were set by the parent process */
+                for (i = 1; i < NSIG; i++)
+			DFLSIG(sa, i, 0);
+
+		/* Redirect stdio if the caller requested so. */
+		if (fp) {
+			int fd = fileno(fp);
+
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+		}
+
+		execvp(args[0], args);
+		_exit(1); /* Only if execv() fails. */
+	} else if (-1 == pid) {
+		_pe("%s", args[0]);
+		return -1;
+	}
+
+	if (waitpid(pid, &status, 0) == -1) {
+		if (errno == EINTR)
+			_e("Caught unblocked signal waiting for %s, aborting.", args[0]);
+		else if (errno == ECHILD)
+			_e("Caught SIGCHLD waiting for %s, aborting.", args[0]);
+		else
+			_e("Failed starting %s, error %d: %s", args[0], errno, strerror (errno));
+
+		if (fp) fclose(fp);
+		free(backup);
+
+		return 1;
+	}
+
+	result = WEXITSTATUS(status);
+	if (WIFEXITED(status)) {
+		_d("Started %s and ended OK: %d", args[0], result);
+	} else if (WIFSIGNALED(status)) {
+		_d("Process %s terminated by signal %d", args[0], WTERMSIG(status));
+		if (!result)
+			result = 1; /* Must alert callee that the command did complete successfully.
+				     * This is necessary since not all programs trap signals and
+				     * change their return code accordingly. --Jocke */
+	}
+
+	if (fp) fclose(fp);
+	free(backup);
+
+	return result;
+}
+
+int run_interactive(char *cmd, char *fmt, ...)
+{
+	int status, oldout = 1, olderr = 2;
+	char line[LINE_SIZE];
+	va_list ap;
+	FILE *fp = tmpfile();
+
+	va_start(ap, fmt);
+	vsnprintf(line, sizeof(line), fmt, ap);
+	va_end(ap);
+
+	print_descr("", line);
+	if (fp && !debug) {
+		oldout = dup(STDOUT_FILENO);
+		olderr = dup(STDERR_FILENO);
+		dup2(fileno(fp), STDOUT_FILENO);
+		dup2(fileno(fp), STDERR_FILENO);
+	}
+	status = run(cmd);
+	if (fp && !debug) {
+		dup2(oldout, STDOUT_FILENO);
+		dup2(olderr, STDERR_FILENO);
+	}
+	print_result(status);
+	if (fp && !debug) {
+		size_t len, written;
+
+		rewind(fp);
+		do {
+			len     = fread(line, 1, sizeof(line), fp);
+			written = fwrite(line, len, sizeof(char), stderr);
+		} while (len > 0 && written == len);
+		fclose(fp);
+	}
+
+	return status;
+}
 
 static int cmp(const void *s1, const void *s2)
 {
@@ -293,7 +414,6 @@ int run_parts(char *dir, ...)
 
 	return 0;
 }
-#endif /* BUILTIN_RUNPARTS */
 
 int getuser(char *s)
 {

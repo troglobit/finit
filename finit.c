@@ -32,8 +32,10 @@
 #include "finit.h"
 #include "helpers.h"
 #include "service.h"
+#include "signal.h"
 
 int   debug   = 0;
+int   verbose = 1;
 char *sdown   = NULL;
 char *network = NULL;
 char *startx  = NULL;
@@ -105,27 +107,22 @@ int main(int UNUSED(args), char *argv[])
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
 #if defined(USE_UDEV)
-	system("udevd --daemon");
+	run_interactive("udevd --daemon", "Populating device tree");
 #elif defined (MDEV)
-	system(MDEV "-s");
+	run_interactive(MDEV "-s", "Populating device tree");
 #endif
 
 	/*
 	 * Parse kernel parameters
 	 */
 	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
-		fgets(line, LINE_SIZE, fp);
+		fgets(line, sizeof(line), fp);
 
-		if (strstr(line, "finit_debug") ||
-		    strstr(line, "--verbose")   ||
-		    strstr(line, "--debug"))
+		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
 			debug = 1;
 
-		if (!debug && strstr(line, "quiet")) {
-			close(0);
-			close(1);
-			close(2);
-		}
+		if (!debug && strstr(line, "quiet"))
+			verbose = 0;
 
 		fclose(fp);
 	}
@@ -141,7 +138,7 @@ int main(int UNUSED(args), char *argv[])
 
 		_d("Parse %s ...", FINIT_CONF);
 		while (!feof(fp)) {
-			if (!fgets(line, LINE_SIZE, fp))
+			if (!fgets(line, sizeof(line), fp))
 				continue;
 			chomp(line);
 
@@ -155,7 +152,7 @@ int main(int UNUSED(args), char *argv[])
 			if (MATCH_CMD(line, "check ", x)) {
 				strcpy(cmd, "/sbin/fsck -C -a ");
 				build_cmd(cmd, x, CMD_SIZE);
-				system(cmd);
+				run_interactive(cmd, "Checking file system integrity on %s", x);
 				continue;
 			}
 			if (MATCH_CMD(line, "user ", x)) {
@@ -176,13 +173,13 @@ int main(int UNUSED(args), char *argv[])
 			if (MATCH_CMD(line, "module ", x)) {
 				strcpy(cmd, "/sbin/modprobe ");
 				build_cmd(cmd, x, CMD_SIZE);
-				system(cmd);
+				run_interactive(cmd, "   Loading module %s", x);
 				continue;
 			}
 			if (MATCH_CMD(line, "mknod ", x)) {
 				strcpy(cmd, "/bin/mknod ");
 				build_cmd(cmd, x, CMD_SIZE);
-				system(cmd);
+				run_interactive(cmd, "   Creating device node %s", x);
 				continue;
 			}
 			if (MATCH_CMD(line, "network ", x)) {
@@ -210,18 +207,18 @@ int main(int UNUSED(args), char *argv[])
 	_d("Mount filesystems in /etc/fstab ...");
 
 #ifdef REMOUNT_ROOTFS_RW
-	system("/bin/mount -n -o remount,rw /");
+	run("/bin/mount -n -o remount,rw /");
 #endif
 #ifdef SYSROOT
-	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+	run(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 	umask(0);
-	system("mount -na");
-	system("swapon -ea");
+	run("mount -na");
+	run("swapon -ea");
 	umask(0022);
 
 	/* Cleanup stale files, if any still linger on. */
-	system("rm -rf /tmp/* /var/run/* /var/lock/*");
+	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleanup temporary directories");
 
 	/*
 	 * Base FS up, enable standard SysV init signals
@@ -233,7 +230,7 @@ int main(int UNUSED(args), char *argv[])
 	 */
 #ifndef NO_HCTOSYS
 	_d("Adjust system clock ...");
-	system("/sbin/hwclock --hctosys");
+	run_interactive("/sbin/hwclock --hctosys", "Restoring system clock (UTC) from RTC");
 #endif
 
 	/*
@@ -248,7 +245,7 @@ int main(int UNUSED(args), char *argv[])
 		while ((d = readdir(dir)) != NULL) {
 			if (isalnum(d->d_name[0]))
 				continue;
-			snprintf(line, LINE_SIZE,
+			snprintf(line, sizeof(line),
 				 "/etc/resolvconf/run/interface/%s", d->d_name);
 			unlink(line);
 		}
@@ -279,11 +276,7 @@ int main(int UNUSED(args), char *argv[])
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
-#ifdef BUILTIN_RUNPARTS
 	run_parts("/etc/resolvconf/update.d", "-i", NULL);
-#else
-	system(RUNPARTS " --arg=i /etc/resolvconf/update.d");
-#endif /* BUILTIN_RUNPARTS */
 	chdir("/");
 #endif /* USE_ETC_RESOLVCONF_RUN */
 
@@ -293,14 +286,15 @@ int main(int UNUSED(args), char *argv[])
 	remove("/etc/network/run/ifstate");
 #endif
 
+	/* Setup kernel specific settings, e.g. allow broadcast ping, etc. */
+	run("/sbin/sysctl -e -p /etc/sysctl.conf >/dev/null");
+
 	/* Set initial hostname. */
 	set_hostname(hostname);
 
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
-	if (network) {
-		_d("Starting networking: %s", network);
-		system(network);
-	}
+	if (network)
+		run_interactive(network, "Starting networking: %s", network);
 
 	/*
 	 * Set random seed
@@ -317,14 +311,14 @@ int main(int UNUSED(args), char *argv[])
 	 * Console setup (for X)
 	 */
 	makepath("/var/run/console");
-	snprintf(line, LINE_SIZE, "/var/run/console/%s", username);
+	snprintf(line, sizeof(line), "/var/run/console/%s", username);
 	touch(line);
 
 #ifdef PAM_CONSOLE
 	if ((fd = open("/var/run/console/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
 		write(fd, username, strlen(username));
 		close(fd);
-		system("/sbin/pam_console_apply");
+		run("/sbin/pam_console_apply");
 	}
 #endif
 
@@ -333,15 +327,18 @@ int main(int UNUSED(args), char *argv[])
 	 */
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
-	mkdir("/var/run/sshd", 01755);
+	mkdir("/var/run/sshd", 01755); /* OpenSSH  */
+	mkfifo("/dev/xconsole", 0640); /* sysklogd */
+	chown("/dev/xconsole", 0, getgroup("tty"));
 	umask(022);
 
 #ifdef USE_MESSAGE_BUS
 	_d("Starting D-Bus ...");
 	mkdir("/var/run/dbus", 0755);
 	mkdir("/var/lock/subsys/messagebus", 0755);
-	system("dbus-uuidgen --ensure");
-	system("su -c \"dbus-daemon --system\" messagebus");
+	run("dbus-uuidgen --ensure");
+	remove("/var/run/dbus/pid");
+	run_interactive("dbus-daemon --system", "Starting D-Bus");
 #endif
 
 	_d("Starting services from %s", FINIT_CONF);
@@ -396,7 +393,8 @@ int main(int UNUSED(args), char *argv[])
 			}
 
 			if (startx && !debug) {
-				snprintf(line, sizeof(line), "su -c \"%s\" -l %s", startx, username);
+				echo("Starting X ...");
+				snprintf(line, sizeof(line), "su -c '%s' -l %s", startx, username);
 				system(line);
 			} else {
 				static const char msg[] = "\nPlease press Enter to activate this console. ";
@@ -408,7 +406,7 @@ int main(int UNUSED(args), char *argv[])
 				if (fexist(SYNC_STOPPED))
 					continue;
 
-				system(GETTY);
+				run(GETTY);
 			}
 		}
 

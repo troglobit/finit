@@ -95,9 +95,6 @@
 # define USE_MESSAGE_BUS
 #endif
 
-#define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
-#define SYNC_STOPPED    "/var/lock/finit.stopped"
-
 #ifndef DEFUSER
 # define DEFUSER "root"
 #endif
@@ -105,8 +102,9 @@
 # define DEFHOST "noname"
 #endif
 
+#define CMD_SIZE  256
 #define LINE_SIZE 1024
-#define CMD_SIZE 256
+#define BUF_SIZE  4096
 #define USERNAME_SIZE 16
 #define HOSTNAME_SIZE 32
 
@@ -131,19 +129,14 @@
 #define MATCH_CMD(l, c, x)					\
 	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
-#define echo(fmt, args...) do { fprintf(stderr, fmt "\n",  ##args); } while (0)
-#define _d(fmt, args...)   do { if (debug) { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
+#define echo(fmt, args...) do { if (1) { fprintf(stderr, fmt "\n",  ##args); } } while (0)
+#define _d(fmt, args...)   do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
 #define _e(fmt, args...)   do { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
 #define _pe(fmt, args...)  do { fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
 
 extern int   debug;
+extern int   verbose;
 extern char *sdown;
-
-/* signal.c */
-void do_shutdown    (int sig);
-int  sig_stopped    (void);
-void sig_init       (void);
-void sig_setup      (void);
 
 /* initctl.c */
 void listen_initctl (void);

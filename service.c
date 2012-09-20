@@ -35,10 +35,11 @@
 #include <sys/wait.h>		/* wait() */
 
 #include "finit.h"
+#include "helpers.h"
 #include "ipc.h"
 #include "svc.h"
 #include "service.h"
-#include "helpers.h"
+#include "signal.h"
 
 static int dynamic_event_arg = 0;	/* XXX: Fragile construct, refactor! --Jocke */
 static int sd = -1;

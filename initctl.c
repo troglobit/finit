@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include "finit.h"
+#include "signal.h"		/* do_shutdown() */
 
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1

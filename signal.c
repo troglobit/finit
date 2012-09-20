@@ -43,48 +43,32 @@
 
 #include "finit.h"
 #include "helpers.h"
-
-#define SETSIG(sa, sig, fun, flags)			\
-	do {						\
-		sa.sa_sigaction = fun;			\
-		sa.sa_flags = SA_SIGINFO | flags;	\
-		sigemptyset(&sa.sa_mask);		\
-		sigaction(sig, &sa, NULL);		\
-	} while (0)
-
-#define IGNSIG(sa, sig, flags)			\
-	do {					\
-		sa.sa_handler = SIG_IGN;	\
-		sa.sa_flags = flags;		\
-		sigemptyset(&sa.sa_mask);	\
-		sigaction(sig, &sa, NULL);	\
-	} while (0)
+#include "signal.h"
 
 static int stopped = 0;
+
 
 void do_shutdown (int sig)
 {
 	touch(SYNC_SHUTDOWN);
 
-	if (sdown) {
-		_d("Calling shutdown hook: %s", sdown);
-		system(sdown);
-	}
+	if (sdown)
+		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
 
 	_d("Sending SIGTERM to all processes.");
 	kill(-1, SIGTERM);
 	sleep(2);
-	system("/usr/sbin/alsactl store > /dev/null 2>&1");
+	run_interactive("/usr/sbin/alsactl store > /dev/null 2>&1", "Saving sound settings");
 	_d("Saving the system clock.");
-	system("/sbin/hwclock --systohc");
+	run_interactive("/sbin/hwclock --utc --systohc", "Saving system time (UTC) to RTC");
 	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);
 
 	sync();
 	sync();
 	_d("Unmounting file systems, remounting / read-only.");
-	system("/bin/umount -fa 2>/dev/null");
-	system("/bin/mount -n -o remount,ro / 2>/dev/null");
+	run("/bin/umount -fa 2>/dev/null");
+	run("/bin/mount -n -o remount,ro / 2>/dev/null");
 
 	_d("%s.", sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
 	if (sig == SIGINT || sig == SIGUSR1)
@@ -146,7 +130,7 @@ int sig_stopped(void)
 }
 
 /*
- * Inital signal setup - ignore everything until we're capable of responding
+ * Inital signal setup - ignore everything but SIGCHLD until we're capable of responding
  */
 void sig_init(void)
 {
@@ -155,6 +139,8 @@ void sig_init(void)
 
 	for (i = 1; i < NSIG; i++)
 		IGNSIG(sa, i, SA_RESTART);
+
+	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
 }
 
 /*
@@ -162,7 +148,6 @@ void sig_init(void)
  */
 void sig_setup(void)
 {
-	sigset_t nmask;
 	struct sigaction sa;
 
 	_d("Setup signals");
@@ -192,12 +177,6 @@ void sig_setup(void)
 	SETSIG(sa, SIGSTOP, sigstop_handler, 0);
 	SETSIG(sa, SIGTSTP, sigstop_handler, 0);
 	SETSIG(sa, SIGCONT, sigcont_handler, 0);
-	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
-
-	/* Block SIGCHLD while forking */
-	sigemptyset(&nmask);
-	sigaddset(&nmask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &nmask, NULL);
 
 	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT, above */
 	reboot(RB_DISABLE_CAD);

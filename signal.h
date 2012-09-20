@@ -1,4 +1,4 @@
-/* Misc. utility functions and C-library extensions to simplify finit system setup.
+/* Signal management - Be conservative with what finit responds to!
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
@@ -22,29 +22,42 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_HELPERS_H_
-#define FINIT_HELPERS_H_
+#ifndef FINIT_SIGNAL_H_
+#define FINIT_SIGNAL_H_
 
-int	makepath	(char *);
-void	ifconfig	(char *, char *, char *, int);
-void	copyfile	(char *, char *, int);
-void    print_descr     (char *action, char *descr);
-int     print_result    (int fail);
-int     start_process   (char *cmd, char *args[], int console);
-void    cls             (void);
-void	chomp		(char *);
-int     getuser         (char *);
-int	getgroup	(char *);
-void    set_procname    (char *args[], char *name);
-char   *get_pidname     (pid_t pid, char *name, size_t len);
-int     kill_procname   (const char *name, int signo);
-void    set_hostname    (char *hostname);
+#define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
+#define SYNC_STOPPED    "/var/lock/finit.stopped"
 
-int     run             (char *cmd);
-int     run_interactive (char *cmd, char *fmt, ...);
-int	run_parts	(char *dir, ...);
+#define SETSIG(sa, sig, fun, flags)			\
+	do {						\
+		sa.sa_sigaction = fun;			\
+		sa.sa_flags = SA_SIGINFO | flags;	\
+		sigemptyset(&sa.sa_mask);		\
+		sigaction(sig, &sa, NULL);		\
+	} while (0)
 
-#endif /* FINIT_HELPERS_H_ */
+#define IGNSIG(sa, sig, flags)			\
+	do {					\
+		sa.sa_handler = SIG_IGN;	\
+		sa.sa_flags = flags;		\
+		sigemptyset(&sa.sa_mask);	\
+		sigaction(sig, &sa, NULL);	\
+	} while (0)
+
+#define DFLSIG(sa, sig, flags)                  \
+        do {                                    \
+                sa.sa_handler = SIG_DFL;        \
+                sa.sa_flags = flags;            \
+                sigemptyset(&sa.sa_mask);       \
+                sigaction(sig, &sa, NULL);      \
+        } while (0)
+
+void do_shutdown    (int sig);
+int  sig_stopped    (void);
+void sig_init       (void);
+void sig_setup      (void);
+
+#endif /* FINIT_SIGNAL_H_ */
 
 /**
  * Local Variables:
