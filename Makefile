@@ -24,20 +24,25 @@
 
 # Top directory for building complete system, fall back to this directory
 ROOTDIR    ?= $(shell pwd)
+# Plugin directory, fall back to this directory if unset in environment
+PLUGIN_DIR ?= /lib/finit/plugins
 
 VERSION     = 1.0-pre
 PKG	    = finit-$(VERSION)
 EXEC        = finit
 OBJS        = finit.o helpers.o initctl.o signal.o svc.o ipc.o service.o \
-              strlcpy.o
+              strlcpy.o plugin.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(ROOTDIR)/$(CONFIG_LINUXDIR)/include/
-CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
+CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
+CPPFLAGS   += -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
+LDFLAGS    += -rdynamic
+LDLIBS     += -ldl
 
 prefix     ?= /usr/local
 sysconfdir ?= /etc
@@ -45,12 +50,14 @@ datadir     = $(prefix)/share/doc/finit
 mandir      = $(prefix)/share/man/man8
 
 include common.mk
+export PLUGIN_DIR ROOTDIR
 
 all: Makefile $(EXEC)
+	$(MAKE) -C plugins $@
 
 $(OBJS): Makefile
 
-finit: $(OBJS)
+$(EXEC): $(OBJS)
 
 #	@ln -sf /sbin/finit /sbin/init
 install: all
@@ -71,9 +78,11 @@ uninstall:
 
 clean:
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
+	$(MAKE) -C plugins $@
 
 distclean: clean
 	-@$(RM) $(JUNK)  unittest *.o
+	$(MAKE) -C plugins $@
 
 # Include automatically generated rules, such as:
 # uncgi.o: .../some/dir/uncgi.c /usr/include/stdio.h
