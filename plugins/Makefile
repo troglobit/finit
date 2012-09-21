@@ -2,7 +2,8 @@
 CFLAGS      = -fPIC -g -Os -I..
 CPPFLAGS    = -W -Wall
 LDFLAGS     = -shared 
-PLUGINS     = foo.so
+PLUGINS     = alsa-utils.so bootmisc.so dbus.so hwclock.so resolvconf.so \
+	      urandom.so x11-common.so
 DEPS        = $(addprefix .,$(PLUGINS:.so=.d))
 
 include ../common.mk

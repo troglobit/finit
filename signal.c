@@ -43,6 +43,7 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "plugin.h"
 #include "signal.h"
 
 static int stopped = 0;
@@ -57,10 +58,11 @@ void do_shutdown (int sig)
 
 	_d("Sending SIGTERM to all processes.");
 	kill(-1, SIGTERM);
-	sleep(2);
-	run_interactive("/usr/sbin/alsactl store > /dev/null 2>&1", "Saving sound settings");
-	_d("Saving the system clock.");
-	run_interactive("/sbin/hwclock --utc --systohc", "Saving system time (UTC) to RTC");
+
+	sleep(1);
+	/* Call all shutdown hooks, this is the last call before rebooting... */
+	run_hooks(HOOK_SHUTDOWN);
+
 	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);
 
@@ -69,6 +71,7 @@ void do_shutdown (int sig)
 	_d("Unmounting file systems, remounting / read-only.");
 	run("/bin/umount -fa 2>/dev/null");
 	run("/bin/mount -n -o remount,ro / 2>/dev/null");
+	run("/sbin/swapoff -ea");
 
 	_d("%s.", sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
 	if (sig == SIGINT || sig == SIGUSR1)

@@ -27,18 +27,39 @@
 #include <sys/mount.h>
 #include <dirent.h>
 #include <linux/fs.h>
-#include <utmp.h>
 
 #include "finit.h"
 #include "helpers.h"
+#include "plugin.h"
 #include "service.h"
 #include "signal.h"
 
-int   debug   = 0;
-int   verbose = 1;
-char *sdown   = NULL;
-char *network = NULL;
-char *startx  = NULL;
+int   debug    = 0;
+int   verbose  = 1;
+char *sdown    = NULL;
+char *network  = NULL;
+char *startx   = NULL;
+char *username = NULL;
+char *hostname = NULL;
+
+
+static void parse_kernel_cmdline(void)
+{
+	FILE *fp;
+	char line[LINE_SIZE];
+
+	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
+		fgets(line, sizeof(line), fp);
+
+		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
+			debug = 1;
+
+		if (!debug && strstr(line, "quiet"))
+			verbose = 0;
+
+		fclose(fp);
+	}
+}
 
 static char *build_cmd(char *cmd, char *line, int len)
 {
@@ -66,77 +87,20 @@ static char *build_cmd(char *cmd, char *line, int len)
 	return cmd;
 }
 
-int main(int UNUSED(args), char *argv[])
+static void parse_finit_conf(char *file)
 {
 	FILE *fp;
 	char line[LINE_SIZE];
-	char username[USERNAME_SIZE] = DEFUSER;
-	char hostname[HOSTNAME_SIZE] = DEFHOST;
 	char cmd[CMD_SIZE];
-#ifdef USE_ETC_RESOLVCONF_RUN
-	DIR *dir;
-	struct dirent *d;
-#endif
-#ifdef RUNLEVEL
-	struct utmp entry;
-#endif
-#ifdef PAM_CONSOLE
-	int fd;
-#endif
 
-	/*
-	 * Initial setup of signals, ignore all until we're up.
-	 */
-	sig_init();
+	/* Default username and hostname */
+	username = strdup(DEFUSER);
+	hostname = strdup(DEFHOST);
 
-	/*
-	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
-	 */
-	chdir("/");
-	umask(0);
-	mount("none", "/proc", "proc", 0, NULL);
-	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
-	mount("none", "/sys", "sysfs", 0, NULL);
-	mkdir("/dev/pts", 0755);
-	mkdir("/dev/shm", 0755);
-	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
-	mount("none", "/dev/shm", "tmpfs", 0, NULL);
-	umask(022);
-
-	/*
-	 * Populate /dev and prepare for runtime events from kernel.
-	 */
-#if defined(USE_UDEV)
-	run_interactive("udevd --daemon", "Populating device tree");
-#elif defined (MDEV)
-	run_interactive(MDEV "-s", "Populating device tree");
-#endif
-
-	/*
-	 * Parse kernel parameters
-	 */
-	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
-		fgets(line, sizeof(line), fp);
-
-		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
-			debug = 1;
-
-		if (!debug && strstr(line, "quiet"))
-			verbose = 0;
-
-		fclose(fp);
-	}
-
-	cls();
-	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
-
-	/*
-	 * Parse configuration file
-	 */
-	if ((fp = fopen(FINIT_CONF, "r")) != NULL) {
+	if ((fp = fopen(file, "r")) != NULL) {
 		char *x;
 
-		_d("Parse %s ...", FINIT_CONF);
+		_d("Parse %s ...", file);
 		while (!feof(fp)) {
 			if (!fgets(line, sizeof(line), fp))
 				continue;
@@ -156,13 +120,13 @@ int main(int UNUSED(args), char *argv[])
 				continue;
 			}
 			if (MATCH_CMD(line, "user ", x)) {
-				*username = 0;
-				build_cmd(username, x, USERNAME_SIZE);
+				if (username) free(username);
+				username = build_cmd(NULL, x, USERNAME_SIZE);
 				continue;
 			}
 			if (MATCH_CMD(line, "host ", x)) {
-				*hostname = 0;
-				build_cmd(hostname, x, HOSTNAME_SIZE);
+				if (hostname) free(hostname);
+				hostname = build_cmd(NULL, x, HOSTNAME_SIZE);
 				continue;
 			}
 			if (MATCH_CMD(line, "shutdown ", x)) {
@@ -200,6 +164,53 @@ int main(int UNUSED(args), char *argv[])
 		}
 		fclose(fp);
 	}
+}
+
+int main(int UNUSED(args), char *argv[])
+{
+	/*
+	 * Initial setup of signals, ignore all until we're up.
+	 */
+	sig_init();
+
+	/*
+	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
+	 */
+	chdir("/");
+	umask(0);
+	mount("none", "/proc", "proc", 0, NULL);
+	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
+	mount("none", "/sys", "sysfs", 0, NULL);
+	mkdir("/dev/pts", 0755);
+	mkdir("/dev/shm", 0755);
+	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
+	mount("none", "/dev/shm", "tmpfs", 0, NULL);
+	umask(022);
+
+	/*
+	 * Populate /dev and prepare for runtime events from kernel.
+	 */
+#if defined(USE_UDEV)
+	run_interactive("udevd --daemon", "Populating device tree");
+#elif defined (MDEV)
+	run_interactive(MDEV "-s", "Populating device tree");
+#endif
+
+	/*
+	 * Parse kernel parameters
+	 */
+	parse_kernel_cmdline();
+
+	cls();
+	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
+
+	_d("Loading plugins ...");
+	load_plugins(PLUGIN_PATH);
+
+	/*
+	 * Parse configuration file
+	 */
+	parse_finit_conf(FINIT_CONF);
 
 	/*
 	 * Mount filesystems
@@ -213,8 +224,8 @@ int main(int UNUSED(args), char *argv[])
 	run(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 	umask(0);
-	run("mount -na");
-	run("swapon -ea");
+	run("/bin/mount -na");
+	run("/sbin/swapon -ea");
 	umask(0022);
 
 	/* Cleanup stale files, if any still linger on. */
@@ -226,65 +237,13 @@ int main(int UNUSED(args), char *argv[])
 	sig_setup();
 
 	/*
-	 * Time adjustments
+	 * Most user-level hooks run here, unless they are service hooks
 	 */
-#ifndef NO_HCTOSYS
-	_d("Adjust system clock ...");
-	run_interactive("/sbin/hwclock --hctosys", "Restoring system clock (UTC) from RTC");
-#endif
+	run_hooks(HOOK_POST_SIGSETUP);
 
 	/*
 	 * Network stuff
 	 */
-
-#ifdef USE_ETC_RESOLVCONF_RUN
-	makepath("/dev/shm/network");
-	makepath("/dev/shm/resolvconf/interface");
-
-	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
-		while ((d = readdir(dir)) != NULL) {
-			if (isalnum(d->d_name[0]))
-				continue;
-			snprintf(line, sizeof(line),
-				 "/etc/resolvconf/run/interface/%s", d->d_name);
-			unlink(line);
-		}
-
-		closedir(dir);
-	}
-#endif
-
-#ifdef USE_VAR_RUN_RESOLVCONF
-	makepath("/var/run/resolvconf/interface");
-	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
-#endif
-
-#ifdef RUNLEVEL
-	touch("/var/run/utmp");
-	chown("/var/run/utmp", 0, getgroup("utmp"));
-	chmod("/var/run/utmp", 0664);
-
-	memset(&entry, 0, sizeof(struct utmp));
-	entry.ut_type = RUN_LVL;
-	entry.ut_pid = '0' + RUNLEVEL;
-	setutent();
-	pututline(&entry);
-	endutent();
-#endif
-
-#ifdef USE_ETC_RESOLVCONF_RUN
-	touch("/etc/resolvconf/run/enable-updates");
-
-	chdir("/etc/resolvconf/run/interface");
-	run_parts("/etc/resolvconf/update.d", "-i", NULL);
-	chdir("/");
-#endif /* USE_ETC_RESOLVCONF_RUN */
-
-#ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
-	touch("/etc/network/run/ifstate");
-#else
-	remove("/etc/network/run/ifstate");
-#endif
 
 	/* Setup kernel specific settings, e.g. allow broadcast ping, etc. */
 	run("/sbin/sysctl -e -p /etc/sysctl.conf >/dev/null");
@@ -295,54 +254,21 @@ int main(int UNUSED(args), char *argv[])
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 	if (network)
 		run_interactive(network, "Starting networking: %s", network);
-
-	/*
-	 * Set random seed
-	 */
-#ifdef RANDOMSEED
-	copyfile(RANDOMSEED, "/dev/urandom", 0);
-	unlink(RANDOMSEED);
-	umask(077);
-	copyfile("/dev/urandom", RANDOMSEED, 4096);
-	umask(0);
-#endif
-
-	/*
-	 * Console setup (for X)
-	 */
-	makepath("/var/run/console");
-	snprintf(line, sizeof(line), "/var/run/console/%s", username);
-	touch(line);
-
-#ifdef PAM_CONSOLE
-	if ((fd = open("/var/run/console/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-		write(fd, username, strlen(username));
-		close(fd);
-		run("/sbin/pam_console_apply");
-	}
-#endif
-
-	/*
-	 * Misc setup
-	 */
-	mkdir("/tmp/.X11-unix", 01777);
-	mkdir("/tmp/.ICE-unix", 01777);
-	mkdir("/var/run/sshd", 01755); /* OpenSSH  */
-	mkfifo("/dev/xconsole", 0640); /* sysklogd */
-	chown("/dev/xconsole", 0, getgroup("tty"));
 	umask(022);
 
-#ifdef USE_MESSAGE_BUS
-	_d("Starting D-Bus ...");
-	mkdir("/var/run/dbus", 0755);
-	mkdir("/var/lock/subsys/messagebus", 0755);
-	run("dbus-uuidgen --ensure");
-	remove("/var/run/dbus/pid");
-	run_interactive("dbus-daemon --system", "Starting D-Bus");
-#endif
+	/*
+	 * Hooks that rely on loopback, or basic networking being up.
+	 */
+	run_hooks(HOOK_POST_NETWORK);
 
+	/*
+	 * Start service monitor framework
+	 */
 	_d("Starting services from %s", FINIT_CONF);
 	service_startup();
+
+	/* Run startup scripts in /etc/finit.d/, if any. */
+	run_parts(FINIT_RCSD);
 
 #ifdef LISTEN_INITCTL
 	listen_initctl();
@@ -383,10 +309,9 @@ int main(int UNUSED(args), char *argv[])
 		/* ConsoleKit needs this */
 		setenv("DISPLAY", ":0", 1);
 
-		/* Run startup scripts in /etc/finit.d/, if any. */
-		run_parts(FINIT_RCSD);
-
 		while (!fexist(SYNC_SHUTDOWN)) {
+			char line[LINE_SIZE];
+
 			if (fexist(SYNC_STOPPED)) {
 				sleep(1);
 				continue;
@@ -413,6 +338,14 @@ int main(int UNUSED(args), char *argv[])
 		exit(0);
 	}
 
+	/*
+	 * Hooks that should run at the very end
+	 */
+	run_hooks(HOOK_PRE_RUNLOOP);
+
+	/*
+	 * Enter main service monitor loop -- restarts services that dies.
+	 */
 	service_monitor();
 
 	return 0;
