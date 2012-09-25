@@ -110,6 +110,10 @@ extern char *username;
 /* strlcpy.c */
 size_t strlcpy(char *dst, const char *src, size_t siz);
 
+/* conf.c */
+void parse_finit_conf(char *file);
+
+
 #endif /* FINIT_H_ */
 
 /**

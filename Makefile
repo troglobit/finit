@@ -31,7 +31,7 @@ PLUGIN_DIR ?= /lib/finit/plugins
 VERSION     = 1.0-pre
 PKG	    = finit-$(VERSION)
 EXEC        = finit
-OBJS        = finit.o helpers.o signal.o svc.o plugin.o
+OBJS        = finit.o conf.o helpers.o signal.o svc.o plugin.o
 OBJS       += strlcpy.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))

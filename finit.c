@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 
-#include <string.h>
 #include <ctype.h>
 #include <sys/mount.h>
 #include <dirent.h>
@@ -34,10 +33,6 @@
 #include "plugin.h"
 #include "svc.h"
 #include "signal.h"
-
-/* Match one command. */
-#define MATCH_CMD(l, c, x)					\
-	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
 int   debug    = 0;
 int   verbose  = 1;
@@ -62,111 +57,6 @@ static void parse_kernel_cmdline(void)
 		if (!debug && strstr(line, "quiet"))
 			verbose = 0;
 
-		fclose(fp);
-	}
-}
-
-static char *build_cmd(char *cmd, char *line, int len)
-{
-	int l;
-	char *c;
-
-	/* Trim leading whitespace */
-	while (*line && (*line == ' ' || *line == '\t'))
-		line++;
-
-	if (!cmd) {
-		cmd = malloc (strlen(line) + 1);
-		if (!cmd) {
-			_e("No memory left for '%s'", line);
-			return NULL;
-		}
-		*cmd = 0;
-	}
-	c = cmd + strlen(cmd);
-	for (l = 0; *line && *line != '#' && *line != '\t' && l < len; l++)
-		*c++ = *line++;
-	*c = 0;
-
-	_d("cmd = %s", cmd);
-	return cmd;
-}
-
-static void parse_finit_conf(char *file)
-{
-	FILE *fp;
-	char line[LINE_SIZE];
-	char cmd[CMD_SIZE];
-
-	/* Default username and hostname */
-	username = strdup(DEFUSER);
-	hostname = strdup(DEFHOST);
-
-	if ((fp = fopen(file, "r")) != NULL) {
-		char *x;
-
-		_d("Parse %s ...", file);
-		while (!feof(fp)) {
-			if (!fgets(line, sizeof(line), fp))
-				continue;
-			chomp(line);
-
-			_d("conf: %s", line);
-
-			/* Skip comments. */
-			if (MATCH_CMD(line, "#", x)) {
-				continue;
-			}
-			/* Do this before mounting / read-write */
-			if (MATCH_CMD(line, "check ", x)) {
-				strcpy(cmd, "/sbin/fsck -C -a ");
-				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "Checking file system integrity on %s", x);
-				continue;
-			}
-			if (MATCH_CMD(line, "user ", x)) {
-				if (username) free(username);
-				username = build_cmd(NULL, x, USERNAME_SIZE);
-				continue;
-			}
-			if (MATCH_CMD(line, "host ", x)) {
-				if (hostname) free(hostname);
-				hostname = build_cmd(NULL, x, HOSTNAME_SIZE);
-				continue;
-			}
-			if (MATCH_CMD(line, "shutdown ", x)) {
-				if (sdown) free(sdown);
-				sdown = build_cmd(NULL, x, CMD_SIZE);
-				continue;
-			}
-			if (MATCH_CMD(line, "module ", x)) {
-				strcpy(cmd, "/sbin/modprobe ");
-				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "   Loading module %s", x);
-				continue;
-			}
-			if (MATCH_CMD(line, "mknod ", x)) {
-				strcpy(cmd, "/bin/mknod ");
-				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "   Creating device node %s", x);
-				continue;
-			}
-			if (MATCH_CMD(line, "network ", x)) {
-				if (network) free(network);
-				network = build_cmd(NULL, x, CMD_SIZE);
-				continue;
-			}
-			if (MATCH_CMD(line, "startx ", x)) {
-				if (startx) free(startx);
-				startx = build_cmd(NULL, x, CMD_SIZE);
-				continue;
-			}
-			if (MATCH_CMD(line, "service ", x)) {
-				if (svc_register(x))
-					_e("Failed, too many services to monitor.\n");
-				continue;
-			}
-		}
 		fclose(fp);
 	}
 }
