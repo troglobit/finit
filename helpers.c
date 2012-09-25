@@ -343,6 +343,65 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
+pid_t run_getty(char *cmd, char *argv[])
+{
+	pid_t pid = fork();
+
+	if (!pid) {
+		int i;
+		char c;
+		sigset_t nmask;
+		struct sigaction sa;
+
+		vhangup();
+
+		close(2);
+		close(1);
+		close(0);
+
+		if (open(CONSOLE, O_RDWR) != 0)
+			exit(1);
+
+		sigemptyset(&sa.sa_mask);
+		sa.sa_handler = SIG_DFL;
+
+		sigemptyset(&nmask);
+		sigaddset(&nmask, SIGCHLD);
+		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
+
+		for (i = 1; i < NSIG; i++)
+			sigaction(i, &sa, NULL);
+
+		dup2(0, STDIN_FILENO);
+		dup2(0, STDOUT_FILENO);
+		dup2(0, STDERR_FILENO);
+
+		set_procname(argv, "console");
+
+		while (!fexist(SYNC_SHUTDOWN)) {
+			static const char msg[] = "\nPlease press Enter to activate this console. ";
+
+			if (fexist(SYNC_STOPPED)) {
+				sleep(1);
+				continue;
+			}
+
+			i = write(STDERR_FILENO, msg, sizeof(msg) - 1);
+			while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+				continue;
+
+			if (fexist(SYNC_STOPPED))
+				continue;
+
+			run(cmd);
+		}
+
+		exit(0);
+	}
+
+	return pid;
+}
+
 static int cmp(const void *s1, const void *s2)
 {
 	return strcmp(*(char **)s1, *(char **)s2);

@@ -38,7 +38,6 @@ int   debug    = 0;
 int   verbose  = 1;
 char *sdown    = NULL;
 char *network  = NULL;
-char *startx   = NULL;
 char *username = NULL;
 char *hostname = NULL;
 
@@ -165,81 +164,25 @@ int main(int UNUSED(args), char *argv[])
 	_d("Starting all static services from %s", FINIT_CONF);
 	svc_start_all();
 
-	/* Run startup scripts in /etc/finit.d/, if any. */
+	/*
+	 * Run startup scripts in /etc/finit.d/, if any.
+	 */
+	_d("Running startup scripts in /etc/finit.d/ ...");
 	run_parts(FINIT_RCSD);
-
-	if (!fork()) {
-		/* child process */
-		int i;
-		char c;
-		sigset_t nmask;
-		struct sigaction sa;
-
-		vhangup();
-
-		close(2);
-		close(1);
-		close(0);
-
-		if (open(CONSOLE, O_RDWR) != 0)
-			exit(1);
-
-		sigemptyset(&sa.sa_mask);
-		sa.sa_handler = SIG_DFL;
-
-		sigemptyset(&nmask);
-		sigaddset(&nmask, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
-
-		for (i = 1; i < NSIG; i++)
-			sigaction(i, &sa, NULL);
-
-		dup2(0, STDIN_FILENO);
-		dup2(0, STDOUT_FILENO);
-		dup2(0, STDERR_FILENO);
-
-		set_procname(argv, "console");
-
-		/* ConsoleKit needs this */
-		setenv("DISPLAY", ":0", 1);
-
-		while (!fexist(SYNC_SHUTDOWN)) {
-			char line[LINE_SIZE];
-
-			if (fexist(SYNC_STOPPED)) {
-				sleep(1);
-				continue;
-			}
-
-			if (startx && !debug) {
-				echo("Starting X ...");
-				snprintf(line, sizeof(line), "su -c '%s' -l %s", startx, username);
-				system(line);
-			} else {
-				static const char msg[] = "\nPlease press Enter to activate this console. ";
-
-				i = write(STDERR_FILENO, msg, sizeof(msg) - 1);
-				while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
-				continue;
-
-				if (fexist(SYNC_STOPPED))
-					continue;
-
-				run(GETTY);
-			}
-		}
-
-		exit(0);
-	}
 
 	/*
 	 * Hooks that should run at the very end
 	 */
 	run_hooks(HOOK_SYSTEM_UP);
 
+	/* Start GETTY on console */
+	_d("Starting getty on console ...");
+	run_getty(GETTY, argv);
+
 	/*
 	 * Enter main loop to monior /dev/initctl and services
 	 */
+	_d("Entering main loop ...");
 	ev_run(loop, 0);
 
 	return 0;

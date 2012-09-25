@@ -103,7 +103,6 @@ extern int   debug;
 extern int   verbose;
 extern char *sdown;
 extern char *network;
-extern char *startx;
 extern char *hostname;
 extern char *username;
 
