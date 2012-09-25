@@ -24,11 +24,14 @@
 #include <errno.h>
 #include <dlfcn.h>		/* dlopen() et al */
 #include <dirent.h>		/* readdir() et al */
-#include <stdio.h>
 #include <string.h>
 #include <sys/queue.h>		/* BSD sys/queue.h API */
 
+#include "finit.h"
+#include "private.h"
+#include "helpers.h"
 #include "plugin.h"
+#include "svc.h"
 
 static LIST_HEAD(, plugin) plugins = LIST_HEAD_INITIALIZER();
 
@@ -45,8 +48,20 @@ int plugin_register(plugin_t *plugin)
 		if (!dladdr(plugin, &info) || !info.dli_fname)
 			plugin->name = "unknown";
 		else
-			plugin->name = info.dli_fname;
+			plugin->name = (char *)info.dli_fname;
 	}
+
+	if (plugin->svc.cb) {
+		svc_t *svc = svc_find_by_name(plugin->name);
+
+		if (!svc) {
+			_e("No service \"%s\" loaded, skipping plugin.", basename(plugin->name));
+			return 1;
+		}
+		plugin->svc.id = svc_id(svc);
+		svc->plugin    = &plugin->svc;
+	}
+
 	LIST_INSERT_HEAD(&plugins, plugin, link);
 
 	return 0;
@@ -59,13 +74,14 @@ int plugin_unregister(plugin_t *plugin)
 	return 0;
 }
 
+/* Private daemon API *******************************************************/
 void run_hooks(hook_point_t no)
 {
 	plugin_t *p;
 
 	PLUGIN_ITERATOR(p) {
 		if (p->hook[no].cb) {
-			printf("Calling %s hook n:o %d from runloop...\n", p->name, no);
+			_d("Calling %s hook n:o %d from runloop...", basename(p->name), no);
 			p->hook[no].cb(p->hook[no].arg);
 		}
 	}
@@ -77,20 +93,57 @@ void run_services(void)
 
 	PLUGIN_ITERATOR(p) {
 		if (p->svc.cb) {
-			printf("Calling svc %s from runloop...\n", p->name);
-			p->svc.cb(p->svc.arg);
+			_d("Calling svc %s from runloop...", basename(p->name));
+			p->svc.cb(p->svc.arg, 0);
 		}
 	}
 }
 
-int load_plugins(char *path)
+/* Generic libev I/O callback, looks up correct plugin and calls its callback */
+static void generic_io_cb(struct ev_loop *loop, ev_io *w, int revents)
+{
+	plugin_t *p;
+
+	ev_io_stop(loop, w);
+
+	/* Find matching plugin, pick first matching fd */
+	PLUGIN_ITERATOR(p) {
+		if (p->io.cb && p->io.fd == w->fd) {
+			p->io.cb(p->io.arg, w->fd, revents);
+			break;
+		}
+	}
+
+	ev_io_start(loop, w);
+}
+
+/* Setup any I/O callbacks for plugins that use them */
+static void init_plugins(struct ev_loop *loop)
+{
+	plugin_t *p;
+
+	PLUGIN_ITERATOR(p) {
+		if (p->io.cb && p->io.fd >= 0) {
+			ev_io *w = calloc(1, sizeof(ev_io));
+
+			_d("Initializing plugin %s for I/O", basename(p->name));
+			if (!w) {
+				_e("Failed setting up plugin %s: Out of memory", basename(p->name));
+				continue;
+			}
+			ev_io_init(w, generic_io_cb, p->io.fd, p->io.flags);
+			ev_io_start(loop, w);
+		}
+	}
+}
+
+int load_plugins(struct ev_loop *loop, char *path)
 {
 	DIR *dp = opendir(path);
 	struct dirent *entry;
 
 	if (!dp) {
-		fprintf(stderr, "Failed, cannot open plugin directory %s: %s\n",
-			path, strerror(errno));
+		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
 		return 1;
 	}
 
@@ -102,17 +155,19 @@ int load_plugins(char *path)
 			char filename[1024];
 
 			snprintf(filename, sizeof(filename), "%s/%s", path, entry->d_name);
-			printf("Loading plugin %s ...\n", filename);
+			print_descr("   Loading plugin ", basename(filename));
 			handle = dlopen(filename, RTLD_LAZY);
 			if (!handle) {
-				fprintf(stderr,
-					"Failed loading plugin %s: %s\n", filename, dlerror());
+				_d("Failed loading plugin %s: %s", filename, dlerror());
+				print_result(1);
 				return 1;
 			}
+			print_result(0);
 		}
 	}
 
 	closedir(dp);
+	init_plugins(loop);
 
 	return 0;
 }

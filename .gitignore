@@ -1,2 +1,6 @@
 *.o
+.*.d
+*.so
 *.gz
+*.map
+finit

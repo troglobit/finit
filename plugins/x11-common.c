@@ -50,29 +50,23 @@ static void setup(void *UNUSED(arg))
 
 	mkdir("/tmp/.X11-unix", 01777);
 	mkdir("/tmp/.ICE-unix", 01777);
-	mkdir("/var/run/sshd", 01755); /* OpenSSH  */
-	mkfifo("/dev/xconsole", 0640); /* sysklogd */
-	chown("/dev/xconsole", 0, getgroup("tty"));
 }
 
 static plugin_t plugin = {
-	.hook[HOOK_POST_NETWORK] = {
+	.hook[HOOK_NETWORK_UP] = {
 		.cb  = setup
 	},
 };
 
-static void init_plugin(void)
+PLUGIN_INIT(plugin_init)
 {
 	plugin_register(&plugin);
 }
 
-static void exit_plugin(void)
+PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
 }
-
-PLUGIN_INIT(init_plugin)
-PLUGIN_EXIT(exit_plugin)
 
 /**
  * Local Variables:

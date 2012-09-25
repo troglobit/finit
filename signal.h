@@ -25,6 +25,8 @@
 #ifndef FINIT_SIGNAL_H_
 #define FINIT_SIGNAL_H_
 
+#include_next <signal.h>
+
 #define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
 #define SYNC_STOPPED    "/var/lock/finit.stopped"
 

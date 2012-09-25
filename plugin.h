@@ -21,13 +21,17 @@
  * THE SOFTWARE.
  */
 
-#ifndef PLUGIN_H_
-#define PLUGIN_H_
+#ifndef FINIT_PLUGIN_H_
+#define FINIT_PLUGIN_H_
 
+#include <ev.h>
 #include <sys/queue.h>		/* BSD sys/queue.h API */
 
-#define PLUGIN_INIT(x) void x(void) __attribute__ ((constructor));
-#define PLUGIN_EXIT(x) void x(void) __attribute__ ((destructor));
+#define PLUGIN_IO_READ  EV_READ
+#define PLUGIN_IO_WRITE EV_READ
+
+#define PLUGIN_INIT(x) static void __attribute__ ((constructor)) x(void)
+#define PLUGIN_EXIT(x) static void __attribute__ ((destructor))  x(void)
 
 #define PLUGIN_ITERATOR(x)  LIST_FOREACH(x, &plugins, link)
 
@@ -35,45 +39,78 @@
  * Predefined hook points for easier plugin debugging 
  */
 typedef enum {
-	HOOK_POST_LOAD = 0,
-	HOOK_PRE_SETUP,
-	HOOK_POST_SIGSETUP,
-	HOOK_POST_NETWORK,
-	HOOK_PRE_RUNLOOP,
+	HOOK_BASEFS_UP = 0,
+	HOOK_NETWORK_UP,
+	HOOK_SYSTEM_UP,
 	HOOK_SHUTDOWN,
 	HOOK_MAX_NUM
 } hook_point_t;
 
+/**
+ * plugin_t - Finit &plugin_t object
+ * @link: BSD sys/queue.h linked list node
+ * @name: Plugin name, or identifier to match against a &svc_t object
+ * @svc:  Service callback for a loaded &svc_t object
+ * @hook: Hook callback definitions
+ * @io:   I/O hook callback
+ *
+ * To setup an &svc_t object callback for a service monitor the @name
+ * must match the @svc_t @cmd exactly for them to "pair".
+ *
+ * A &plugin_t object may contain a service callback, several hooks
+ * and/or an I/O callback as well. This way all critical extensions
+ * to finit can fit in one single plugin, if needed.
+ *
+ * The "dynamic events" discussed in the svc callback is for external
+ * service plugins to implement.  However, it can be anything that 
+ * can cause a service to need to SIGHUP at runtime.  E.g., acquiring
+ * a DHCP lease, or an interface going UP/DOWN.
+ *
+ * It is up to the external service plugin to track these events and
+ * relay them to each @dynamic service plugins' callback.  I.e., to
+ * all those with the dynamic flag set.
+ */
 typedef struct plugin {
 	/* BSD sys/queue.h linked list node. */
 	LIST_ENTRY(plugin) link;
 
-	/* Optional plugin name, defaults to plugin path if unset. */
-	const char *name;
+	/* Plugin name, defaults to plugin path if unset.
+	 * NOTE: Must be same as @cmd for service plugins! */
+	char *name;
 
 	/* Service callback to be called once per lap of runloop. */
-	struct {
-		void *arg;	/* Optional argument to callback func. */
-		void (*cb) (void *);
+	struct plugin_svc {
+		/* Private */
+		int    id;       /* Service ID# to match this service plugin against, set on installation. */
+		/* Public */
+		void  *arg;	 /* Optional argument to callback func, set by plugin. */
+		int    dynamic;	 /* Reload (SIGHUP) on dynamic event?  Set by plugin. */
+		int    private;  /* For callbacks to use freely, possibly to store "states", set by plugin. */
+		int  (*cb)(void *arg, int event);
 	} svc;
 
 	/* List of hook callbacks. */
 	struct {
-		void *arg;     /* Optional argument to callback func. */
-		void (*cb) (void *);
+		void  *arg;      /* Optional argument to callback func. */
+		void (*cb)(void *arg);
 	} hook[HOOK_MAX_NUM];
+
+	/* I/O Plugin */
+	struct {
+		int    fd, flags; /* 1:READ, 2:WRITE */
+		void  *arg;
+		void (*cb)(void *arg, int fd, int events);
+	} io;
 } plugin_t;
+
+/* Used by svc.h */
+typedef struct plugin_svc plugin_svc_t;
 
 /* Public plugin API */
 int plugin_register   (plugin_t *plugin);
 int plugin_unregister (plugin_t *plugin);
 
-/* Private daemon API */
-void run_hooks        (hook_point_t no);
-void run_services     (void);
-int  load_plugins     (char *path);
-
-#endif	/* PLUGIN_H_ */
+#endif	/* FINIT_PLUGIN_H_ */
 
 /**
  * Local Variables:

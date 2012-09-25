@@ -38,7 +38,7 @@ static void restore(void *UNUSED(arg))
 }
 
 static plugin_t plugin = {
-	.hook[HOOK_POST_SIGSETUP] = {
+	.hook[HOOK_BASEFS_UP] = {
 		.cb  = restore
 	},
 	.hook[HOOK_SHUTDOWN] = {
@@ -46,18 +46,16 @@ static plugin_t plugin = {
 	}
 };
 
-static void init_plugin(void)
+PLUGIN_INIT(plugin_init)
 {
 	plugin_register(&plugin);
 }
 
-static void exit_plugin(void)
+PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
 }
 
-PLUGIN_INIT(init_plugin)
-PLUGIN_EXIT(exit_plugin)
 
 /**
  * Local Variables:

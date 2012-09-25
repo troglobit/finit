@@ -30,9 +30,14 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "private.h"
 #include "plugin.h"
-#include "service.h"
+#include "svc.h"
 #include "signal.h"
+
+/* Match one command. */
+#define MATCH_CMD(l, c, x)					\
+	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
 int   debug    = 0;
 int   verbose  = 1;
@@ -157,7 +162,7 @@ static void parse_finit_conf(char *file)
 				continue;
 			}
 			if (MATCH_CMD(line, "service ", x)) {
-				if (service_register (x))
+				if (svc_register(x))
 					_e("Failed, too many services to monitor.\n");
 				continue;
 			}
@@ -168,6 +173,8 @@ static void parse_finit_conf(char *file)
 
 int main(int UNUSED(args), char *argv[])
 {
+	struct ev_loop *loop = ev_default_loop(0);
+
 	/*
 	 * Initial setup of signals, ignore all until we're up.
 	 */
@@ -204,9 +211,6 @@ int main(int UNUSED(args), char *argv[])
 	cls();
 	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
 
-	_d("Loading plugins ...");
-	load_plugins(PLUGIN_PATH);
-
 	/*
 	 * Parse configuration file
 	 */
@@ -237,9 +241,13 @@ int main(int UNUSED(args), char *argv[])
 	sig_setup();
 
 	/*
-	 * Most user-level hooks run here, unless they are service hooks
+	 * Load plugins and run first level hooks.
 	 */
-	run_hooks(HOOK_POST_SIGSETUP);
+	_d("Loading plugins ...");
+	load_plugins(loop, PLUGIN_PATH);
+
+	_d("Running first level hooks ...");
+	run_hooks(HOOK_BASEFS_UP);
 
 	/*
 	 * Network stuff
@@ -259,20 +267,16 @@ int main(int UNUSED(args), char *argv[])
 	/*
 	 * Hooks that rely on loopback, or basic networking being up.
 	 */
-	run_hooks(HOOK_POST_NETWORK);
+	run_hooks(HOOK_NETWORK_UP);
 
 	/*
 	 * Start service monitor framework
 	 */
-	_d("Starting services from %s", FINIT_CONF);
-	service_startup();
+	_d("Starting all static services from %s", FINIT_CONF);
+	svc_start_all();
 
 	/* Run startup scripts in /etc/finit.d/, if any. */
 	run_parts(FINIT_RCSD);
-
-#ifdef LISTEN_INITCTL
-	listen_initctl();
-#endif
 
 	if (!fork()) {
 		/* child process */
@@ -341,12 +345,12 @@ int main(int UNUSED(args), char *argv[])
 	/*
 	 * Hooks that should run at the very end
 	 */
-	run_hooks(HOOK_PRE_RUNLOOP);
+	run_hooks(HOOK_SYSTEM_UP);
 
 	/*
-	 * Enter main service monitor loop -- restarts services that dies.
+	 * Enter main loop to monior /dev/initctl and services
 	 */
-	service_monitor();
+	ev_run(loop, 0);
 
 	return 0;
 }

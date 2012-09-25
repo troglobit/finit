@@ -22,17 +22,12 @@
  * THE SOFTWARE.
  */
 
-#include <features.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <sys/select.h>         /* According to POSIX.1-2001 */
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #include "finit.h"
-#include "signal.h"		/* do_shutdown() */
+#include "plugin.h"
+#include "signal.h"
 
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1
@@ -49,51 +44,67 @@ struct init_request {
 /* Standard reboot/shutdown utilities talk to init using /dev/initctl.
  * We should check if the fifo was recreated and reopen it.
  */
-void listen_initctl(void)
+static void read_initctl(void *UNUSED(arg), int fd, int UNUSED(events))
 {
-        _d("Forking %s watcher...", FINIT_FIFO);
-	if (!fork()) {
-		int ctl;
-		fd_set fds;
-		struct init_request request;
+	struct init_request request;
 
-                _d("Setting up %s", FINIT_FIFO);
-		mkfifo(FINIT_FIFO, 0600);
-		ctl = open(FINIT_FIFO, O_RDONLY);
+	_d("Receiving request on %s...", FINIT_FIFO);
+	while (1) {
+		ssize_t len = read(fd, &request, sizeof(request));
 
-		while (1) {
-			FD_ZERO(&fds);
-			FD_SET(ctl, &fds);
-                        _d("Pending %s activity...", FINIT_FIFO);
-			if (select(ctl + 1, &fds, NULL, NULL, NULL) <= 0)
-				continue;
+		if (-1 == len) {
+			_d("Error %d", errno);
+			break;	/* Probably EAGAIN */
+		}
 
-                        _d("Receiving request on %s...", FINIT_FIFO);
-			read(ctl, &request, sizeof(request));
+		if (request.magic != INIT_MAGIC)
+			continue;
 
-			if (request.magic != INIT_MAGIC)
-				continue;
+		_d("Magic OK...");
+		if (request.cmd == INIT_CMD_RUNLVL) {
+			switch (request.runlevel) {
+			case '0':
+				_d("Halting system (SIGUSR2)");
+				do_shutdown(SIGUSR2);
+				break;
 
-                        _d("Magic OK...");
-			if (request.cmd == INIT_CMD_RUNLVL) {
-				switch (request.runlevel) {
-				case '0':
-                                        _d("Halting system (SIGUSR2)");
-					do_shutdown(SIGUSR2);
-					break;
+			case '6':
+				_d("Rebooting system (SIGUSR1)");
+				do_shutdown(SIGUSR1);
+				break;
 
-				case '6':
-                                        _d("Rebooting system (SIGUSR1)");
-					do_shutdown(SIGUSR1);
-                                        break;
-
-                                default:
-                                        _d("Unsupported runlevel: %d", request.runlevel);
-                                        break;
-				}
+			default:
+				_d("Unsupported runlevel: %d", request.runlevel);
+				break;
 			}
 		}
 	}
+}
+
+static plugin_t plugin = {
+	.io = {
+		.cb    = read_initctl,
+		.flags = PLUGIN_IO_READ,
+	},
+};
+
+PLUGIN_INIT(plugin_init)
+{
+	_d("Setting up %s", FINIT_FIFO);
+	mkfifo(FINIT_FIFO, 0600);
+
+	plugin.io.fd = open(FINIT_FIFO, O_RDONLY | O_NONBLOCK);
+	if (-1 == plugin.io.fd) {
+		_e("Failed opening %s FIFO, error %d: %s", FINIT_FIFO, errno, strerror(errno));
+		return;
+	}
+
+	plugin_register(&plugin);
+}
+
+PLUGIN_EXIT(plugin_exit)
+{
+	plugin_unregister(&plugin);
 }
 
 #endif  /* LISTEN_INITCTL */

@@ -1,6 +1,5 @@
 # Some junk files we always want to be removed when doing a make clean.
 JUNK       = *~ *.bak *.aux *.dvi *.idx *.ind *.log *.ps *.map .*.d DEADJOE semantic.cache *.gdb *.elf core core.*
-RM        := -@$(RM)
 MAKE      := @$(MAKE)
 MAKEFLAGS  = --no-print-directory
 

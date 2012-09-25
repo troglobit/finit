@@ -1,5 +1,6 @@
-/* Generic IPC class based on TIPC as message bus
+/* Private header file for main finit daemon, not for plugins
  *
+ * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,35 +22,17 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_IPC_H_
-#define FINIT_IPC_H_
+#ifndef FINIT_PRIVATE_H_
+#define FINIT_PRIVATE_H_
 
-#define SINGLE_TIPC_NODE         64
-#define PRIMARY_MESSAGE_BUS      100
-#define HWSETUP_MESSAGE_BUS      101
-#define FINIT_MESSAGE_BUS        102
+#include "plugin.h"
 
-#define SERVER_CONNECTION 1
-#define CLIENT_CONNECTION 0
+/* plugin.c */
+void run_hooks        (hook_point_t no);
+void run_services     (void);
+int  load_plugins     (struct ev_loop *loop, char *path);
 
-/**
- * generic_event_t - Generic message type.
- * @mtype: Message type.
- *
- * This is the base message type that is used on the system primary message bus.  All
- * messages must start with a long @mtype that describes the type, any extended
- * messages must add its extra fields after @mtype.
- */
-typedef struct {
-   long mtype;
-   long arg;                    /* Optional argument, free use. */
-} generic_event_t;
-
-int     ipc_init          (int type, int port, int conn_type);
-int     ipc_receive_event (int sd, void *event, size_t sz, int timeout);
-int     ipc_wait_event    (int sd, int event, int timeout);
-
-#endif /* FINIT_IPC_H_ */
+#endif /* FINIT_PRIVATE_H_ */
 
 /**
  * Local Variables:

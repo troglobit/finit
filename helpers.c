@@ -46,6 +46,7 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "private.h"
 #include "signal.h"
 
 #define NUM_ARGS    16

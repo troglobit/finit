@@ -41,23 +41,20 @@ static void setup(void *UNUSED(arg))
 }
 
 static plugin_t plugin = {
-	.hook[HOOK_POST_SIGSETUP] = {
+	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
 };
 
-static void init_plugin(void)
+PLUGIN_INIT(plugin_init)
 {
 	plugin_register(&plugin);
 }
 
-static void exit_plugin(void)
+PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
 }
-
-PLUGIN_INIT(init_plugin)
-PLUGIN_EXIT(exit_plugin)
 
 /**
  * Local Variables:

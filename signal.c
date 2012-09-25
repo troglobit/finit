@@ -40,10 +40,12 @@
 
 #include <signal.h>
 #include <sys/reboot.h>
+#include <sys/wait.h>
 
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "private.h"
 #include "signal.h"
 
 static int stopped = 0;
@@ -85,8 +87,8 @@ void do_shutdown (int sig)
  */
 static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("Rebooting on signal %d from %s (PID %d) with code %d",
-	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid, info->si_code);
+	_d("Rebooting on signal %d from %s (PID %d)",
+	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid);
 
 	do_shutdown(sig);
 }
@@ -94,12 +96,11 @@ static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 /*
  * SIGCHLD: one of our children has died
  */
-static void chld_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
+static void chld_handler(int UNUSED(sig), siginfo_t *UNUSED(info), void *UNUSED(ctx))
 {
 	int status;
 
-	_d("Child %s died, harvesting. Signal %d from pid %d code %d",
-	   get_pidname(info->si_pid, NULL, 0), sig, info->si_pid, info->si_code);
+//	_d("Child %d died due to signal %d, harvesting.", info->si_pid, sig);
 	while (waitpid(-1, &status, WNOHANG) != 0) {
 		if (errno == ECHILD)
 			break;
@@ -111,15 +112,15 @@ static void chld_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
  */
 static void sigstop_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("Received SIGSTOP(%d) from %s (PID %d) code %d",
-	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid, info->si_code);
+	_d("Received SIGSTOP(%d) from %s (PID %d)",
+	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid);
 	touch(SYNC_STOPPED);
 	stopped ++;
 }
 static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
-	_d("Received SIGCONT(%d) from %s (PID %d) code %d",
-	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid, info->si_code);
+	_d("Received SIGCONT(%d) from %s (PID %d)",
+	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid);
 	stopped = 0;
 	remove(SYNC_STOPPED);
 }

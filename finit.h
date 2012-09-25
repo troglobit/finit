@@ -30,9 +30,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
 #include <syslog.h>
 #define DO_LOG(level, fmt, args...)				\
@@ -56,35 +53,7 @@
 # define MDEV           "/sbin/mdev"
 # define GETTY          "/sbin/getty -L 115200 ttyS0 vt100"
 # define LISTEN_INITCTL
-#elif defined DIST_MDV	/* Mandriva */
-# define RANDOMSEED	"/var/lib/random-seed"
-# define SYSROOT	"/sysroot"
-# define CONSOLE        "/dev/console"
-# define GETTY		"/usr/bin/openvt /sbin/mingetty tty2"
-# define RUNPARTS	"/usr/bin/run-parts"
-# define REMOUNT_ROOTFS_RW
-# define PAM_CONSOLE
-# define LISTEN_INITCTL
-# define RUNLEVEL	5
-# define USE_MESSAGE_BUS
-#elif defined DIST_EEEXUBUNTU	/* eeeXubuntu */
-# define RANDOMSEED	"/var/lib/urandom/random-seed"
-# define SYSROOT	"/sysroot"
-# define CONSOLE        "/dev/console"
-# define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
-# define RUNPARTS	"/bin/run-parts"
-# define REMOUNT_ROOTFS_RW
-# define TOUCH_ETC_NETWORK_RUN_IFSTATE
-# define LISTEN_INITCTL
-#elif defined DIST_ORIGEEE	/* original EeePC distribution */
-# define RANDOMSEED	"/var/lib/urandom/random-seed"
-# define SYSROOT	"/mnt"
-# define CONSOLE        "/dev/console"
-# define GETTY		"/usr/bin/openvt /sbin/getty 38400 tty2"
-# define RUNPARTS	"/bin/run-parts"
-# define TOUCH_ETC_NETWORK_RUN_IFSTATE
-# define USE_ETC_RESOLVCONF_RUN
-#else                           /* Ubuntu */
+#else /* Debian/Ubuntu based distributions */
 # define RANDOMSEED	"/var/lib/urandom/random-seed"
 # define CONSOLE        "/dev/tty1"
 # define GETTY		"/sbin/getty -8 38400 tty1"
@@ -125,10 +94,6 @@
 #define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
 #endif
 
-/* Match one command. */
-#define MATCH_CMD(l, c, x)					\
-	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
-
 #define echo(fmt, args...) do { if (1) { fprintf(stderr, fmt "\n",  ##args); } } while (0)
 #define _d(fmt, args...)   do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
 #define _e(fmt, args...)   do { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
@@ -141,9 +106,6 @@ extern char *network;
 extern char *startx;
 extern char *hostname;
 extern char *username;
-
-/* initctl.c */
-void listen_initctl (void);
 
 /* strlcpy.c */
 size_t strlcpy(char *dst, const char *src, size_t siz);

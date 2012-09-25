@@ -1,6 +1,7 @@
 # finit - The Improved fast init
 #
-# Copyright (c) 2008 Claudio Matsuoka
+# Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
+# Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,19 +31,18 @@ PLUGIN_DIR ?= /lib/finit/plugins
 VERSION     = 1.0-pre
 PKG	    = finit-$(VERSION)
 EXEC        = finit
-OBJS        = finit.o helpers.o initctl.o signal.o svc.o ipc.o service.o \
-              strlcpy.o plugin.o
+OBJS        = finit.o helpers.o signal.o svc.o plugin.o
+OBJS       += strlcpy.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
-CPPFLAGS   += -I$(ROOTDIR)/$(CONFIG_LINUXDIR)/include/
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
 LDFLAGS    += -rdynamic
-LDLIBS     += -ldl
+LDLIBS     += -ldl -lev
 
 prefix     ?= /usr/local
 sysconfdir ?= /etc
@@ -50,7 +50,7 @@ datadir     = $(prefix)/share/doc/finit
 mandir      = $(prefix)/share/man/man8
 
 include common.mk
-export PLUGIN_DIR ROOTDIR
+export PLUGIN_DIR ROOTDIR CPPFLAGS
 
 all: Makefile $(EXEC)
 	$(MAKE) -C plugins $@
@@ -69,12 +69,14 @@ install: all
 		printf "  INSTALL $(DESTDIR)$(prefix)/sbin/$$file\n";   \
 		install -m 0755 $$file $(DESTDIR)$(prefix)/sbin/$$file; \
 	done
+	$(MAKE) -C plugins $@
 
 uninstall:
 	-@for file in $(EXEC); do \
 		printf "  REMOVE  $(DESTDIR)$(prefix)/sbin/$$file\n";   \
-		$(RM) $(DESTDIR)$(prefix)/sbin/$$file; \
+		rm $(DESTDIR)$(prefix)/sbin/$$file 2>/dev/null; \
 	done
+	$(MAKE) -C plugins $@
 
 clean:
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
