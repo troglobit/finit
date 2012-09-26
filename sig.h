@@ -22,10 +22,10 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_SIGNAL_H_
-#define FINIT_SIGNAL_H_
+#ifndef FINIT_SIG_H_
+#define FINIT_SIG_H_
 
-#include_next <signal.h>
+#include <signal.h>
 
 #define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
 #define SYNC_STOPPED    "/var/lock/finit.stopped"
@@ -59,7 +59,7 @@ int  sig_stopped    (void);
 void sig_init       (void);
 void sig_setup      (void);
 
-#endif /* FINIT_SIGNAL_H_ */
+#endif /* FINIT_SIG_H_ */
 
 /**
  * Local Variables:

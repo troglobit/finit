@@ -29,11 +29,11 @@ ROOTDIR    ?= $(shell pwd)
 PLUGIN_DIR ?= /lib/finit/plugins
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.0
+VERSION    ?= 1.1-pre
 EXEC        = finit
 PKG         = $(EXEC)-$(VERSION)
 ARCHIVE     = $(PKG).tar.xz
-OBJS        = finit.o conf.o helpers.o signal.o svc.o plugin.o
+OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
 OBJS       += strlcpy.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))

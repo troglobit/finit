@@ -47,7 +47,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
-#include "signal.h"
+#include "sig.h"
 
 #define NUM_ARGS    16
 #define NUM_SCRIPTS 128		/* ought to be enough for anyone */

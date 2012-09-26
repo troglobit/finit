@@ -28,7 +28,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
-#include "signal.h"
+#include "sig.h"
 #include "svc.h"
 
 /* The registered services are kept in shared memory for easy read-only access

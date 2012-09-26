@@ -33,7 +33,7 @@
 #include "private.h"
 #include "plugin.h"
 #include "svc.h"
-#include "signal.h"
+#include "sig.h"
 
 int   debug    = 0;
 int   verbose  = 1;

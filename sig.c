@@ -38,7 +38,6 @@
  *	      It activates the kbrequest action.
  */
 
-#include <signal.h>
 #include <sys/reboot.h>
 #include <sys/wait.h>
 
@@ -46,7 +45,7 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "private.h"
-#include "signal.h"
+#include "sig.h"
 
 static int stopped = 0;
 

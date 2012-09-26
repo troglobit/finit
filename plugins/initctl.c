@@ -23,11 +23,11 @@
  */
 
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 
 #include "finit.h"
 #include "plugin.h"
-#include "signal.h"
 
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1
