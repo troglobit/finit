@@ -28,9 +28,11 @@ ROOTDIR    ?= $(shell pwd)
 # Plugin directory, fall back to this directory if unset in environment
 PLUGIN_DIR ?= /lib/finit/plugins
 
-VERSION     = 1.0-pre
-PKG	    = finit-$(VERSION)
+#VERSION    ?= $(shell git tag -l | tail -1)
+VERSION    ?= 1.0
 EXEC        = finit
+PKG         = $(EXEC)-$(VERSION)
+ARCHIVE     = $(PKG).tar.xz
 OBJS        = finit.o conf.o helpers.o signal.o svc.o plugin.o
 OBJS       += strlcpy.o
 SRCS        = $(OBJS:.o=.c)
@@ -85,6 +87,11 @@ clean:
 distclean: clean
 	-@$(RM) $(JUNK)  unittest *.o
 	$(MAKE) -C plugins $@
+
+dist:
+	@echo "Building xz tarball of $(PKG) in parent dir..."
+	git archive --format=tar --prefix=$(PKG)/ $(VERSION) | xz >../$(ARCHIVE)
+	@(cd ..; md5sum $(ARCHIVE) | tee $(ARCHIVE).md5)
 
 # Include automatically generated rules, such as:
 # uncgi.o: .../some/dir/uncgi.c /usr/include/stdio.h

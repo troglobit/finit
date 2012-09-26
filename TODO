@@ -1,0 +1,5 @@
+* FHS changes, see http://askubuntu.com/questions/57297/why-has-var-run-been-migrated-to-run
+* Look at Erik Troan's nash linuxrc parser for more inspiration
+* Look at how to support a standard SysV init runlevel mechanism
+* Arguments to finit, like to SysV init "init q" to reload finit.conf at runtime, etc.
+* Implement initctl stop|start|reload <SVC> and service <SVC> stop|start|reload on top
