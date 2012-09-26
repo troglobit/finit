@@ -24,11 +24,11 @@
 #ifndef FINIT_PLUGIN_H_
 #define FINIT_PLUGIN_H_
 
-#include <ev.h>
+#include <poll.h>
 #include <sys/queue.h>		/* BSD sys/queue.h API */
 
-#define PLUGIN_IO_READ  EV_READ
-#define PLUGIN_IO_WRITE EV_READ
+#define PLUGIN_IO_READ  POLLIN
+#define PLUGIN_IO_WRITE POLLOUT
 
 #define PLUGIN_INIT(x) static void __attribute__ ((constructor)) x(void)
 #define PLUGIN_EXIT(x) static void __attribute__ ((destructor))  x(void)

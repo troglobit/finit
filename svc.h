@@ -42,6 +42,8 @@ typedef enum {
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64
+#define MAX_USER_LEN     16
+#define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
 #define MAX_NUM_SVC      64	     /* Enough? */
 #define MAX_NUM_SVC_ARGS 16
 
@@ -55,6 +57,7 @@ typedef struct svc {
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       descr[MAX_STR_LEN];
+	char           username[MAX_USER_LEN];
 	/* Public */
 	int	       delayed_reload; /* For external service plugin. */
 	plugin_svc_t  *plugin;
@@ -94,7 +97,7 @@ svc_t    *svc_find_by_id    (int id);
 svc_t    *svc_find_by_name  (char *name);
 svc_t    *svc_iterator      (int restart);
 
-int       svc_register      (char *line);
+int       svc_register      (char *line, char *username);
 int       svc_id_by_name    (char *name);
 svc_cmd_t svc_enabled	    (svc_t *svc, int dynamic);
 int       svc_start         (svc_t *svc);
@@ -102,6 +105,7 @@ int       svc_start_by_name (char *name);
 int       svc_stop          (svc_t *svc);
 int       svc_reload        (svc_t *svc);
 void      svc_start_all     (void);
+void      svc_monitor       (void);
 
 #endif	/* FINIT_SVC_H_ */
 

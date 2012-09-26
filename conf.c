@@ -122,9 +122,12 @@ void parse_finit_conf(char *file)
 				network = build_cmd(NULL, x, CMD_SIZE);
 				continue;
 			}
+			if (MATCH_CMD(line, "startx ", x)) {
+				svc_register(x, username);
+				continue;
+			}
 			if (MATCH_CMD(line, "service ", x)) {
-				if (svc_register(x))
-					_e("Failed, too many services to monitor.\n");
+				svc_register(x, NULL);
 				continue;
 			}
 		}

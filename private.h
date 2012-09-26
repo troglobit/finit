@@ -30,7 +30,8 @@
 /* plugin.c */
 void run_hooks        (hook_point_t no);
 void run_services     (void);
-int  load_plugins     (struct ev_loop *loop, char *path);
+int  load_plugins     (char *path);
+void io_monitor       (void);
 
 #endif /* FINIT_PRIVATE_H_ */
 

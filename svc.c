@@ -23,6 +23,7 @@
  */
 
 #include <string.h>
+#include <sys/wait.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -35,7 +36,7 @@
  * liveness state of all daemons that should run. */
 static int svc_counter = 0;		/* Number of registered services to monitor. */
 static svc_t *services = NULL;          /* List of registered services, in shared memory. */
-static ev_child watchers[MAX_NUM_SVC];
+
 
 /* Connect to/create shared memory area of registered servies */
 static void __connect_shm(void)
@@ -138,28 +139,61 @@ svc_t *svc_iterator(int restart)
 
 /**
  * svc_register - Register a non-backgrounding service to be monitored
- * @line: A complete command line with -- separated description text
+ * @line:     A complete command line with -- separated description text
+ * @username: Optional username to run service as, or %NULL to run as root
+ *
+ * Actually, the @line can optionally start with a username, denoted by
+ * an @ character. Like this:
+ *
+ *   "service [@username] /path/to/daemon -- Description text"
+ *
+ * The [] brackets means the argument is optional. If the username is
+ * left out the daemon is started as root.
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int svc_register(char *line)
+int svc_register(char *line, char *username)
 {
 	int i = 0;
 	char *cmd, *descr;
-	svc_t *svc = svc_new();
+	svc_t *svc;
 
-	if (!svc || !line) {
-		return -EINVAL;
+	if (!line) {
+		_e("Invalid input argument.");
+		return errno = EINVAL;
 	}
 
 	descr = strstr(line, "-- ");
-	if (descr) {
+	if (descr)
 		*descr = 0;
-		strlcpy(svc->descr, descr + 3, sizeof(svc->descr));
-	}
 
 	cmd = strtok(line, " ");
+	if (!cmd) {
+	incomplete:
+		_e("Incomplete service, cannot register.");
+		return errno = ENOENT;
+	}
+
+	if (cmd[0] == '@') {	/* @username */
+		username = &cmd[1];
+
+		/* Check if valid command follows... */
+		cmd = strtok(NULL, " ");
+		if (!cmd)
+			goto incomplete;
+	}
+
+	svc = svc_new();
+	if (!svc) {
+		_e("Out of memorym, cannot register service %s", cmd);
+		return errno = ENOMEM;
+	}
+
+	if (descr)
+		strlcpy(svc->descr, descr + 3, sizeof(svc->descr));
+	if (username)
+		strlcpy(svc->username, username, sizeof(svc->username));
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 	strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 
@@ -206,27 +240,14 @@ static int is_norespawn(void)
 		fexist("/tmp/norespawn");
 }
 
-/* Used to cleanup any lingering or semi-restarting tasks before respawning. */
-static int kill_service(svc_t *svc, int signo)
+void svc_monitor(void)
 {
-	char *name = basename(svc->cmd);
-
-	_d("Sending signal %d to all processes named %s", signo, name);
-	kill_procname(name, signo);
-
-	/* Don't restart immediately, some throttling necessary.
-	 * Also it's good form to let the application terminate properly. */
-	sleep(1);
-
-	return 0;
-}
-
-static void svc_monitor(EV_P_ ev_child *w, int UNUSED(revents))
-{
-	pid_t lost = w->rpid;
+	pid_t lost;
 	svc_t *svc;
 
-	ev_child_stop(EV_A_ w);
+	lost = waitpid(-1, NULL, WNOHANG);
+	if (lost < 1)
+		return;
 
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;
@@ -236,16 +257,20 @@ static void svc_monitor(EV_P_ ev_child *w, int UNUSED(revents))
 		return;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		char *name = basename(svc->cmd);
+
 		if (lost != svc->pid)
 			continue;
 
+		_d("Ouch, lost pid %d - %s(%d)", lost, name, svc->pid);
 		if (sig_stopped()) {
 			_e("Stopped, not respawning killed processes.");
 			break;
 		}
 
-		_d("Ouch, lost pid %d - %s(%d)", lost, svc->cmd, svc->pid);
-		kill_service(svc, SIGTERM);
+		/* Cleanup any lingering or semi-restarting tasks before respawning */
+		_d("Sending SIGTERM to service group %s", name);
+		kill_procname(name, SIGTERM);
 
 		/* Restarting lost service. */
 		if (svc_enabled(svc, 0))
@@ -257,36 +282,56 @@ static void svc_monitor(EV_P_ ev_child *w, int UNUSED(revents))
 
 int svc_start(svc_t *svc)
 {
+	int respawn = svc->pid != 0;
+	pid_t pid;
 	char *args[MAX_NUM_SVC_ARGS];
-	int i = 0, restart = 0;
-	ev_child *cw = &watchers[svc->id];
 
 	/* Ignore if finit is SIGSTOP'ed */
 	if (is_norespawn())
 		return 0;
 
-	restart = svc->pid != 0;
-	if (!restart) print_descr("Starting ", svc->descr);
+	if (!respawn)
+		print_descr("Starting ", svc->descr);
 
-	/* Serve copy of args to process in case it modifies them. */
-	while (svc->args[i][0] != 0 && i < MAX_NUM_SVC_ARGS) {
-		args[i] = svc->args[i];
-		i++;
+	pid = fork();
+	if (pid == 0) {
+		int i = 0;
+		int uid = getuser(svc->username);
+		struct sigaction sa;
+
+		/* Reset signal handlers that were set by the parent process */
+                for (i = 1; i < NSIG; i++)
+			DFLSIG(sa, i, 0);
+
+		/* Set desired user */
+		if (uid >= 0)
+			setuid(uid);
+
+		/* Serve copy of args to process in case it modifies them. */
+		for (i = 0; svc->args[i][0] != 0 && i < MAX_NUM_SVC_ARGS; i++)
+			args[i] = svc->args[i];
+		args[i] = NULL;
+
+		if (debug) {
+			int fd = open (CONSOLE, O_WRONLY | O_APPEND);
+			if (-1 != fd) {
+				dup2(STDOUT_FILENO, fd);
+				dup2(STDERR_FILENO, fd);
+			}
+
+			_e("%starting %s ", respawn ? "Res" : "S", svc->cmd);
+			for (i = 0; args[i] && i < MAX_NUM_SVC_ARGS; i++)
+				_e("%s ", args[i]);
+			_e("");
+		}
+
+		execvp(svc->cmd, args);
+		exit(0);
 	}
-	args[i] = NULL;
+	svc->pid = pid;
 
-	if (debug) {
-		_e("(re)starting %s ", svc->cmd);
-		for (i = 0; args[i] && i < MAX_NUM_SVC_ARGS; i++)
-			_e("%s ", args[i]);
-		_e("");
-	}
-
-	svc->pid = start_process(svc->cmd, args, debug);
-	ev_child_init (cw, svc_monitor, svc->pid, 0);
-	ev_child_start (EV_DEFAULT_ cw);
-
-	if (!restart) print_result(0);
+	if (!respawn)
+		print_result(svc->pid > 1 ? 0 : 1);
 
 	return 0;
 }
@@ -304,7 +349,6 @@ int svc_start_by_name(char *name)
 int svc_stop(svc_t *svc)
 {
 	int res = 1;
-	ev_child *cw = &watchers[svc->id];
 
 	if (!svc) {
 		_e("Failed, no svc pointer.");
@@ -319,7 +363,6 @@ int svc_stop(svc_t *svc)
 
 	print_descr("Stopping ", svc->descr);
 	_d("Sending SIGTERM to pid:%d name:'%s'", svc->pid, get_pidname(svc->pid, NULL, 0));
-	ev_child_stop(ev_default_loop(0), cw);
 	res = kill(svc->pid, SIGTERM);
 	print_result(res);
 	svc->pid = 0;

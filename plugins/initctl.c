@@ -77,6 +77,8 @@ static void read_initctl(void *UNUSED(arg), int fd, int UNUSED(events))
 				_d("Unsupported runlevel: %d", request.runlevel);
 				break;
 			}
+		} else {
+			_d("Unsupported cmd: %d", request.cmd);
 		}
 	}
 }

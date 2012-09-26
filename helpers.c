@@ -174,37 +174,6 @@ int print_result(int fail)
 	return fail;
 }
 
-int start_process(char *cmd, char *args[], int console)
-{
-	pid_t pid;
-
-	if (sig_stopped())
-		return 0;
-
-	pid = fork();
-	if (!pid) {
-		int i;
-		struct sigaction sa;
-
-		/* Reset signal handlers that were set by the parent process */
-                for (i = 1; i < NSIG; i++)
-			DFLSIG(sa, i, 0);
-
-		if (console) {
-			int fd = open (CONSOLE, O_WRONLY | O_APPEND);
-			if (-1 != fd) {
-				dup2(STDOUT_FILENO, fd);
-				dup2(STDERR_FILENO, fd);
-			}
-		}
-
-		execvp(cmd, args);
-		exit(!console ? print_result(0) : 0);
-	}
-
-	return pid;
-}
-
 int run(char *cmd)
 {
 	int status, result, i = 0;
@@ -353,12 +322,14 @@ pid_t run_getty(char *cmd, char *argv[])
 		sigset_t nmask;
 		struct sigaction sa;
 
+		/* Detach from initial controlling TTY */
 		vhangup();
 
 		close(2);
 		close(1);
 		close(0);
 
+		/* Attach TTY to console */
 		if (open(CONSOLE, O_RDWR) != 0)
 			exit(1);
 
@@ -479,7 +450,7 @@ int getuser(char *s)
 {
 	struct passwd *usr;
 
-	if ((usr = getpwnam(s)) == NULL)
+	if (!s || (usr = getpwnam(s)) == NULL)
 		return -1;
 
 	return usr->pw_uid;

@@ -22,10 +22,11 @@
  * THE SOFTWARE.
  */
 
-#include <ctype.h>
 #include <sys/mount.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <linux/fs.h>
+#include <sys/stat.h>		/* umask(), mkdir() */
 
 #include "finit.h"
 #include "helpers.h"
@@ -60,10 +61,18 @@ static void parse_kernel_cmdline(void)
 	}
 }
 
+static int run_loop(void)
+{
+	while (1) {
+		svc_monitor();
+		io_monitor();
+	}
+
+	return 0;
+}
+
 int main(int UNUSED(args), char *argv[])
 {
-	struct ev_loop *loop = ev_default_loop(0);
-
 	/*
 	 * Initial setup of signals, ignore all until we're up.
 	 */
@@ -133,7 +142,7 @@ int main(int UNUSED(args), char *argv[])
 	 * Load plugins and run first level hooks.
 	 */
 	_d("Loading plugins ...");
-	load_plugins(loop, PLUGIN_PATH);
+	load_plugins(PLUGIN_PATH);
 
 	_d("Running first level hooks ...");
 	run_hooks(HOOK_BASEFS_UP);
@@ -183,9 +192,7 @@ int main(int UNUSED(args), char *argv[])
 	 * Enter main loop to monior /dev/initctl and services
 	 */
 	_d("Entering main loop ...");
-	ev_run(loop, 0);
-
-	return 0;
+	return run_loop();
 }
 
 /**

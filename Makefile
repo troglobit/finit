@@ -42,7 +42,7 @@ CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
 LDFLAGS    += -rdynamic
-LDLIBS     += -ldl -lev
+LDLIBS     += -ldl
 
 prefix     ?= /usr/local
 sysconfdir ?= /etc

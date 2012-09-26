@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <dlfcn.h>		/* dlopen() et al */
 #include <dirent.h>		/* readdir() et al */
+#include <poll.h>
 #include <string.h>
 #include <sys/queue.h>		/* BSD sys/queue.h API */
 
@@ -33,10 +34,16 @@
 #include "plugin.h"
 #include "svc.h"
 
+#define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
+
+static size_t        num_fds = 0;
+static struct pollfd fds[MAX_NUM_FDS];
 static LIST_HEAD(, plugin) plugins = LIST_HEAD_INITIALIZER();
 
 int plugin_register(plugin_t *plugin)
 {
+	int inuse = 0;
+
 	if (!plugin) {
 		errno = EINVAL;
 		return 1;
@@ -51,15 +58,29 @@ int plugin_register(plugin_t *plugin)
 			plugin->name = (char *)info.dli_fname;
 	}
 
+	if (is_io_plugin(plugin)) {
+		if (num_fds + 1 >= MAX_NUM_FDS) {
+			num_fds = MAX_NUM_SVC;
+			errno = ENOMEM;
+			return 1;
+		}
+		num_fds++;
+		inuse++;
+	}
+
 	if (plugin->svc.cb) {
 		svc_t *svc = svc_find_by_name(plugin->name);
 
-		if (!svc) {
-			_e("No service \"%s\" loaded, skipping plugin.", basename(plugin->name));
-			return 1;
+		if (svc) {
+			plugin->svc.id = svc_id(svc);
+			svc->plugin    = &plugin->svc;
+			inuse++;
 		}
-		plugin->svc.id = svc_id(svc);
-		svc->plugin    = &plugin->svc;
+	}
+
+	if (!inuse) {
+		_e("No service \"%s\" loaded, skipping plugin.", basename(plugin->name));
+		return 1;
 	}
 
 	LIST_INSERT_HEAD(&plugins, plugin, link);
@@ -70,6 +91,8 @@ int plugin_register(plugin_t *plugin)
 int plugin_unregister(plugin_t *plugin)
 {
 	LIST_REMOVE(plugin, link);
+
+	/* XXX: Unfinished, add cleanup code here! */
 
 	return 0;
 }
@@ -100,44 +123,62 @@ void run_services(void)
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
-static void generic_io_cb(struct ev_loop *loop, ev_io *w, int revents)
+static void generic_io_cb(int fd, int events)
 {
 	plugin_t *p;
-
-	ev_io_stop(loop, w);
 
 	/* Find matching plugin, pick first matching fd */
 	PLUGIN_ITERATOR(p) {
-		if (p->io.cb && p->io.fd == w->fd) {
-			p->io.cb(p->io.arg, w->fd, revents);
+		if (is_io_plugin(p) && p->io.fd == fd) {
+			_d("Calling I/O %s from runloop...", basename(p->name));
+			p->io.cb(p->io.arg, fd, events);
 			break;
 		}
 	}
+}
 
-	ev_io_start(loop, w);
+void io_monitor(void)
+{
+	int ret;
+	size_t i;
+
+	while ((ret = poll(fds, num_fds, 500))) {
+		if (-1 == ret) {
+			if (EINTR == errno)
+				continue;
+
+			_e("Failed polling I/O plugin descriptors, error %d: %s",
+			   errno, strerror(errno));
+			break;
+		}
+
+		/* Traverse all I/O fds and run callbacks */
+		for (i = 0; i < num_fds; i++) {
+			if (fds[i].revents)
+				generic_io_cb(fds[i].fd, fds[i].revents);
+		}
+
+		break;
+	}
 }
 
 /* Setup any I/O callbacks for plugins that use them */
-static void init_plugins(struct ev_loop *loop)
+static void init_plugins(void)
 {
+	int i = 0;
 	plugin_t *p;
 
 	PLUGIN_ITERATOR(p) {
-		if (p->io.cb && p->io.fd >= 0) {
-			ev_io *w = calloc(1, sizeof(ev_io));
-
+		if (is_io_plugin(p)) {
 			_d("Initializing plugin %s for I/O", basename(p->name));
-			if (!w) {
-				_e("Failed setting up plugin %s: Out of memory", basename(p->name));
-				continue;
-			}
-			ev_io_init(w, generic_io_cb, p->io.fd, p->io.flags);
-			ev_io_start(loop, w);
+			fds[i].revents    = 0;
+			fds[i].events     = p->io.flags;
+			fds[num_fds++].fd = p->io.fd;
 		}
 	}
 }
 
-int load_plugins(struct ev_loop *loop, char *path)
+int load_plugins(char *path)
 {
 	DIR *dp = opendir(path);
 	struct dirent *entry;
@@ -167,7 +208,7 @@ int load_plugins(struct ev_loop *loop, char *path)
 	}
 
 	closedir(dp);
-	init_plugins(loop);
+	init_plugins();
 
 	return 0;
 }

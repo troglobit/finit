@@ -98,13 +98,7 @@ static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
  */
 static void chld_handler(int UNUSED(sig), siginfo_t *UNUSED(info), void *UNUSED(ctx))
 {
-	int status;
-
-//	_d("Child %d died due to signal %d, harvesting.", info->si_pid, sig);
-	while (waitpid(-1, &status, WNOHANG) != 0) {
-		if (errno == ECHILD)
-			break;
-	}
+	/* Do nothing, the svc_monitor() is the designated child reaper. */
 }
 
 /*
