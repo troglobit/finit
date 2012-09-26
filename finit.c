@@ -25,7 +25,6 @@
 #include <sys/mount.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <linux/fs.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
 
 #include "finit.h"
