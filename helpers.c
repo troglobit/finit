@@ -83,7 +83,7 @@ void ifconfig(char *name, char *inet, char *mask, int up)
 
 	memset(&ifr, 0, sizeof (ifr));
 	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
-	a->sin_family = AF_INET;
+	ifr.ifr_addr.sa_family = AF_INET;
 
 	if (up) {
 		inet_aton(inet, &a->sin_addr);
