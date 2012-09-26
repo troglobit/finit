@@ -24,9 +24,10 @@ Features
 
 :Service monitoring:
    Restarting a service when it exits
+
 :Plugins:
    Extend and modify finit behavior. See examples in plugins/ directory
-
+   
    * Service callbacks — should the service run/restart/stop?
    * Hooks — hook into the boot at predefined points to extend finit
    * I/O — listen to external events and control finit behaviour/services
