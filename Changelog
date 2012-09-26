@@ -1,7 +1,11 @@
-1.0 (UNRELEASED)
+1.1 (20120927)
+	- Build fixes for ARM eabi/uClibc
+	- Rename signal.[ch]-->sig.[ch] to avoid name clash w/ system headers
+
+1.0 (20120926)
+	- New plugin based system for all odd extensions
+	- New service monitor that restarts services if they die
 	- New maintainer at GitHub http://github.com/troglobit/finit
-	- Make the unused finit.c finit-org.c for archival purposes
-	- Make finit-alt.c the new default finit.c
 	- Add standard LICENSE and AUTHORS files
 	- New focus: embedded systems and small headless servers
 

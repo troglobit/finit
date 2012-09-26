@@ -29,7 +29,7 @@ ROOTDIR    ?= $(shell pwd)
 PLUGIN_DIR ?= /lib/finit/plugins
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.1-pre
+VERSION    ?= 1.1
 EXEC        = finit
 PKG         = $(EXEC)-$(VERSION)
 ARCHIVE     = $(PKG).tar.xz
