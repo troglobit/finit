@@ -22,11 +22,12 @@ If you chose finit you know what you want, a fast boot with no hassle.
 Features
 --------
 
-:Service monitoring:
+**Service monitoring**
    Restarting a service when it exits
 
-:Plugins:
-   Extend and modify finit behavior. See examples in plugins/ directory
+**Plugins**
+   Extend and modify finit behavior. See examples in plugins/ directory.
+   Plugin capabilities:
    
    * Service callbacks — should the service run/restart/stop?
    * Hooks — hook into the boot at predefined points to extend finit
