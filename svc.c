@@ -270,7 +270,7 @@ void svc_monitor(void)
 
 		/* Cleanup any lingering or semi-restarting tasks before respawning */
 		_d("Sending SIGTERM to service group %s", name);
-		kill_procname(name, SIGTERM);
+		procname_kill(name, SIGTERM);
 
 		/* Restarting lost service. */
 		if (svc_enabled(svc, 0))
@@ -280,6 +280,7 @@ void svc_monitor(void)
 	}
 }
 
+/* Remember: svc_enabled() must be called before calling svc_start() */
 int svc_start(svc_t *svc)
 {
 	int respawn = svc->pid != 0;
@@ -362,7 +363,7 @@ int svc_stop(svc_t *svc)
 	}
 
 	print_descr("Stopping ", svc->descr);
-	_d("Sending SIGTERM to pid:%d name:'%s'", svc->pid, get_pidname(svc->pid, NULL, 0));
+	_d("Sending SIGTERM to pid:%d name:'%s'", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
 	print_result(res);
 	svc->pid = 0;

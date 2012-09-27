@@ -87,7 +87,7 @@ void do_shutdown (int sig)
 static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
 	_d("Rebooting on signal %d from %s (PID %d)",
-	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid);
+	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 
 	do_shutdown(sig);
 }
@@ -106,14 +106,14 @@ static void chld_handler(int UNUSED(sig), siginfo_t *UNUSED(info), void *UNUSED(
 static void sigstop_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
 	_d("Received SIGSTOP(%d) from %s (PID %d)",
-	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid);
+	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 	touch(SYNC_STOPPED);
 	stopped ++;
 }
 static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
 	_d("Received SIGCONT(%d) from %s (PID %d)",
-	   sig, get_pidname(info->si_pid, NULL, 0), info->si_pid);
+	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 	stopped = 0;
 	remove(SYNC_STOPPED);
 }

@@ -25,19 +25,26 @@
 #ifndef FINIT_HELPERS_H_
 #define FINIT_HELPERS_H_
 
-int	makepath	(char *);
-void	ifconfig	(char *, char *, char *, int);
-void	copyfile	(char *, char *, int);
+int	makepath	(char *path);
+void    ifconfig        (char *ifname, char *addr, char *mask, int up);
+void	copyfile	(char *src, char *dst, int size);
+
+pid_t   pidfile_read    (const char *pidfile);
+pid_t   pidfile_poll    (char *cmd, const char *path);
+
+int     pid_alive       (pid_t pid);
+char   *pid_get_name    (pid_t pid, char *name, size_t len);
+
+void    procname_set    (const char *name, char *args[]);
+int     procname_kill   (const char *name, int signo);
+
 void    print_descr     (char *action, char *descr);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);
 void    cls             (void);
-void	chomp		(char *);
-int     getuser         (char *);
-int	getgroup	(char *);
-void    set_procname    (char *args[], char *name);
-char   *get_pidname     (pid_t pid, char *name, size_t len);
-int     kill_procname   (const char *name, int signo);
+void	chomp		(char *str);
+int     getuser         (char *username);
+int	getgroup	(char *group);
 void    set_hostname    (char *hostname);
 
 int     run             (char *cmd);

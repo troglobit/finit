@@ -56,23 +56,30 @@
  * Helpers to replace system() calls
  */
 
-int makepath(char *p)
+int makepath(char *path)
 {
-	char *x, path[PATH_MAX];
+	char buf[PATH_MAX];
+	char *x = buf;
 	int ret;
-	
-	x = path;
+
+	if (!path) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	do {
-		do { *x++ = *p++; } while (*p && *p != '/');
+		do {
+			*x++ = *path++;
+		} while (*path && *path != '/');
+
 		*x = 0;
-		ret = mkdir(path, 0777);
-	} while (*p && (*p != '/' || *(p + 1))); /* ignore trailing slash */
+		ret = mkdir(buf, 0777);
+	} while (*path && (*path != '/' || *(path + 1))); /* ignore trailing slash */
 
 	return ret;
 }
 
-void ifconfig(char *name, char *inet, char *mask, int up)
+void ifconfig(char *ifname, char *addr, char *mask, int up)
 {
 	struct ifreq ifr;
 	struct sockaddr_in *a = (struct sockaddr_in *)&ifr.ifr_addr;
@@ -82,11 +89,11 @@ void ifconfig(char *name, char *inet, char *mask, int up)
 		return;
 
 	memset(&ifr, 0, sizeof (ifr));
-	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
 	ifr.ifr_addr.sa_family = AF_INET;
 
 	if (up) {
-		inet_aton(inet, &a->sin_addr);
+		inet_aton(addr, &a->sin_addr);
 		ioctl(sock, SIOCSIFADDR, &ifr);
 		inet_aton(mask, &a->sin_addr);
 		ioctl(sock, SIOCSIFNETMASK, &ifr);
@@ -128,6 +135,213 @@ void copyfile(char *src, char *dst, int size)
 		close(s);
 	}
 }
+
+/**
+ * pidfile_read - Reads a PID value from a pidfile.
+ * @pidfile: File containing PID, usually in /var/run/<PROC>.pid
+ *
+ * This function takes a @pidfile and returns the PID found therein.
+ *
+ * Returns:
+ * On invalid @pidfile -1 and @errno set to %EINVAL, when @pidfile does not exist -1
+ * and errno set to %ENOENT.  When the pidfile is empty or when its contents cannot
+ * be translated this function returns zero (0), on success this function returns
+ * a PID value greater than one. PID 1 is reserved for the system init process.
+ */
+pid_t pidfile_read(const char *pidfile)
+{
+   pid_t pid = 0;
+   char buf[16];
+   FILE *fp;
+
+   if (!pidfile) {
+      errno = EINVAL;
+      return -1;
+   }
+
+   if (!fexist(pidfile))
+      return -1;
+
+   fp = fopen(pidfile, "r");
+   if (!fp)
+      return -1;
+
+   if (fgets(buf, sizeof(buf), fp)) {
+      errno = 0;
+      pid = strtoul(buf, NULL, 0);
+      if (errno)
+         pid = 0;               /* Failed conversion. */
+   }
+   fclose(fp);
+
+   return pid;
+}
+
+/**
+ * pidfile_poll - Poll for the existence of a pidfile and return PID
+ * @cmd:  Process name, or command, called to expect a pidfile
+ * @path: Path to pidfile to poll for
+ *
+ * This function polls for the pidfile at @path for at most 5 seconds
+ * before timing out. If the file is created within that time span the
+ * file is read and its PID contents returned.
+ *
+ * Returns:
+ * The PID read from @path, or zero on timeout.
+ */
+pid_t pidfile_poll(char *cmd, const char *path)
+{
+	pid_t pid = 0;
+	int tries = 0;
+
+	/* Timeout = 100 * 50ms = 5s */
+	while (!fexist(path) && tries++ < 100) {
+		/* Wait 50ms between retries */
+		usleep(50000);
+	}
+
+	if (!fexist(path)) {
+		_e("Timeout! No PID found for %s, pidfile %s does not exist?", cmd, path);
+		pid = 0;
+	} else {
+		pid = pidfile_read(path);
+	}
+
+	return pid;
+}
+
+
+/**
+ * pid_alive - Check if a given process ID is running
+ * @pid: Process ID to check for.
+ *
+ * Returns:
+ * %TRUE(1) if pid is alive (/proc/pid exists), otherwise %FALSE(0)
+ */
+int pid_alive(pid_t pid)
+{
+	char name[24]; /* Enough for max pid_t */
+
+	snprintf(name, sizeof(name), "/proc/%d", pid);
+
+	return fexist(name);
+}
+
+
+/**
+ * pid_get_name - Find name of a process
+ * @pid:  PID of process to find.
+ * @name: Pointer to buffer where to return process name, may be %NULL
+ * @len:  Length in bytes of @name buffer.
+ *
+ * If @name is %NULL, or @len is zero the function will return
+ * a static string.  This may be useful to one-off calls.
+ *
+ * Returns:
+ * %NULL on error, otherwise a va
+ */
+char *pid_get_name(pid_t pid, char *name, size_t len)
+{
+	int ret = 1;
+	FILE *fp;
+	char path[32];
+	static char line[64];
+
+	if (!name || len == 0)
+		name = line;
+
+	snprintf(path, sizeof(path), "/proc/%d/status", pid);
+	if ((fp = fopen(path, "r")) != NULL) {
+		if (fgets(line, sizeof (line), fp)) {
+			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
+
+			chomp(pname);
+			strlcpy(name, pname, len);
+			ret = 0;		 /* Found it! */
+		}
+
+		fclose(fp);
+	}
+
+	if (ret)
+		return NULL;
+
+	return name;
+}
+
+
+/**
+ * procname_set - Change process name, as seen in process listnings
+ * @name: New name of process
+ * @args: The process' argv[] vector.
+ */
+void procname_set(const char *name, char *args[])
+{
+	size_t len = strlen(args[0]) + 1; /* Include terminating '\0' */
+
+	prctl(PR_SET_NAME, name, 0, 0, 0);
+	memset(args[0], 0, len);
+	strlcpy(args[0], name, len);
+}
+
+/**
+ * procname_kill - Send a signal to a process group by name.
+ * @name: Name of process to send signal to.
+ * @signo: Signal to send.
+ *
+ * Send a signal to a running process (group). This function searches
+ * for a given process @name and sends a signal, @signo, to each
+ * process ID matching that @name.
+ *
+ * Returns:
+ * Number of signals sent, i.e. number of processes who have received the signal.
+ */
+int procname_kill (const char *name, int signo)
+{
+	int result = 0;
+	char path[32], line[64];
+	FILE *fp;
+	DIR *dir;
+	struct dirent *entry;
+
+	dir = opendir("/proc");
+	if (!dir || !name) {
+		errno = EINVAL;
+		return 0;
+	}
+
+	while ((entry = readdir (dir)) != NULL) {
+		/* Skip non-process entries in /proc */
+		if (!isdigit (*entry->d_name))
+			continue;
+
+		snprintf (path, sizeof(path), "/proc/%s/status", entry->d_name);
+		/* Skip non-readable files (protected?) */
+		if ((fp = fopen (path, "r")) == NULL)
+			continue;
+
+		if (fgets (line, sizeof (line), fp)) {
+			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
+
+			if (strncmp(pname, name, strlen(pname) - 1) == 0) {
+				int error = errno;
+
+				if (kill(atoi(entry->d_name), signo)) {
+					ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
+				} else {
+					result++; /* Track number of processes we deliver the signal to. */
+				}
+			}
+		}
+
+		fclose(fp);
+	}
+
+	closedir(dir);
+
+	return result;
+}
+
 
 static int print_uptime(void)
 {
@@ -347,7 +561,7 @@ pid_t run_getty(char *cmd, char *argv[])
 		dup2(0, STDOUT_FILENO);
 		dup2(0, STDERR_FILENO);
 
-		set_procname(argv, "console");
+		procname_set("console", argv);
 
 		while (!fexist(SYNC_SHUTDOWN)) {
 			static const char msg[] = "\nPlease press Enter to activate this console. ";
@@ -446,21 +660,21 @@ int run_parts(char *dir, ...)
 	return 0;
 }
 
-int getuser(char *s)
+int getuser(char *username)
 {
 	struct passwd *usr;
 
-	if (!s || (usr = getpwnam(s)) == NULL)
+	if (!username || (usr = getpwnam(username)) == NULL)
 		return -1;
 
 	return usr->pw_uid;
 }
 
-int getgroup(char *s)
+int getgroup(char *group)
 {
 	struct group *grp;
 
-	if ((grp = getgrnam(s)) == NULL)
+	if ((grp = getgrnam(group)) == NULL)
 		return -1;
 
 	return grp->gr_gid;
@@ -478,120 +692,12 @@ void cls(void)
 		fprintf (stderr, "%s", cls);
 }
 
-void chomp(char *s)
+void chomp(char *str)
 {
 	char *x;
 
-	if ((x = strchr((s), 0x0a)) != NULL)
+	if ((x = strchr((str), 0x0a)) != NULL)
 		*x = 0;
-}
-
-void set_procname(char *args[], char *name)
-{
-	size_t len = strlen(args[0]) + 1; /* Include terminating '\0' */
-
-	prctl(PR_SET_NAME, name, 0, 0, 0);
-	memset(args[0], 0, len);
-	strlcpy(args[0], name, len);
-}
-
-/**
- * get_pidname - Find name of a process
- * @pid:  PID of process to find.
- * @name: Pointer to buffer where to return process name, may be %NULL
- * @len:  Length in bytes of @name buffer.
- *
- * If @name is %NULL, or @len is zero the function will return
- * a static string.  This may be useful to one-off calls.
- *
- * Returns:
- * %NULL on error, otherwise a va
- */
-char *get_pidname(pid_t pid, char *name, size_t len)
-{
-	int ret = 1;
-	FILE *fp;
-	char path[32];
-	static char line[64];
-
-	if (!name || len == 0)
-		name = line;
-
-	snprintf(path, sizeof(path), "/proc/%d/status", pid);
-	if ((fp = fopen(path, "r")) != NULL) {
-		if (fgets(line, sizeof (line), fp)) {
-			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
-
-			chomp(pname);
-			strlcpy(name, pname, len);
-			ret = 0;		 /* Found it! */
-		}
-
-		fclose(fp);
-	}
-
-	if (ret)
-		return NULL;
-
-	return name;
-}
-
-/**
- * kill_procname - Send a signal to a process group by name.
- * @name: Name of process to send signal to.
- * @signo: Signal to send.
- *
- * Send a signal to a running process (group). This function searches
- * for a given process @name and sends a signal, @signo, to each
- * process ID matching that @name.
- *
- * Returns:
- * Number of signals sent, i.e. number of processes who have received the signal.
- */
-int kill_procname (const char *name, int signo)
-{
-	int result = 0;
-	char path[32], line[64];
-	FILE *fp;
-	DIR *dir;
-	struct dirent *entry;
-
-	dir = opendir("/proc");
-	if (!dir || !name) {
-		errno = EINVAL;
-		return 0;
-	}
-
-	while ((entry = readdir (dir)) != NULL) {
-		/* Skip non-process entries in /proc */
-		if (!isdigit (*entry->d_name))
-			continue;
-
-		snprintf (path, sizeof(path), "/proc/%s/status", entry->d_name);
-		/* Skip non-readable files (protected?) */
-		if ((fp = fopen (path, "r")) == NULL)
-			continue;
-
-		if (fgets (line, sizeof (line), fp)) {
-			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
-
-			if (strncmp(pname, name, strlen(pname) - 1) == 0) {
-				int error = errno;
-
-				if (kill(atoi(entry->d_name), signo)) {
-					ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
-				} else {
-					result++; /* Track number of processes we deliver the signal to. */
-				}
-			}
-		}
-
-		fclose(fp);
-	}
-
-	closedir(dir);
-
-	return result;
 }
 
 void set_hostname(char *hostname)
