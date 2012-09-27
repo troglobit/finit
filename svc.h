@@ -30,7 +30,6 @@
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 
-#include "finit.h"
 #include "plugin.h"
 
 typedef enum {
