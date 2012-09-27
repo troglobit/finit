@@ -72,33 +72,45 @@ $(OBJS): Makefile
 $(EXEC): $(OBJS)
 
 #	@ln -sf /sbin/finit /sbin/init
-install: all
+install-exec: all
 	@install -d $(DESTDIR)$(prefix)/sbin
 	@install -d $(DESTDIR)$(sysconfdir)
 	@install -d $(DESTDIR)$(sbindir)
-	@install -d $(DESTDIR)$(incdir)
-	@install -d $(DESTDIR)$(datadir)
-	@install -d $(DESTDIR)$(mandir)
 	@for file in $(EXEC); do                                        \
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
 		install -m 0755 $$file $(DESTDIR)$(sbindir)/$$file; 	\
 	done
+	$(MAKE) -C plugins all
+
+install-data:
+	@install -d $(DESTDIR)$(datadir)
+	@install -d $(DESTDIR)$(mandir)
+
+install-dev:
+	@install -d $(DESTDIR)$(incdir)
 	@for file in $(HEADERS); do	                                \
 		printf "  INSTALL $(DESTDIR)$(incdir)/$$file\n";	\
 		install -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
-	$(MAKE) -C plugins $@
 
-uninstall:
+install: install-exec install-data install-dev
+
+uninstall-exec:
 	-@for file in $(EXEC); do 					\
 		printf "  REMOVE  $(DESTDIR)$(sbindir)/$$file\n";   	\
 		rm $(DESTDIR)$(sbindir)/$$file 2>/dev/null; 		\
 	done
+	$(MAKE) -C plugins uninstall
+
+uninstall-data:
+
+uninstall-dev:
 	-@for file in $(HEADERS); do 					\
 		printf "  REMOVE  $(DESTDIR)$(incdir)/$$file\n";	\
 		rm $(DESTDIR)$(incdir)/$$file 2>/dev/null; 		\
 	done
-	$(MAKE) -C plugins $@
+
+uninstall: uninstall-exec uninstall-data uninstall-dev
 
 clean:
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
@@ -112,6 +124,10 @@ dist:
 	@echo "Building xz tarball of $(PKG) in parent dir..."
 	git archive --format=tar --prefix=$(PKG)/ $(VERSION) | xz >../$(ARCHIVE)
 	@(cd ..; md5sum $(ARCHIVE) | tee $(ARCHIVE).md5)
+
+.PHONY: all install clean distclean dist		\
+	install-exec install-data install-dev		\
+	uninstall-exec uninstall-data uninstall-dev
 
 # Include automatically generated rules, such as:
 # uncgi.o: .../some/dir/uncgi.c /usr/include/stdio.h
