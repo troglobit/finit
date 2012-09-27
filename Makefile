@@ -29,6 +29,8 @@ ROOTDIR    ?= $(shell pwd)
 # Installation paths, always prepended with DESTDIR if set
 prefix     ?= /usr/local
 sysconfdir ?= /etc
+incdir      = $(prefix)/include/finit
+sbindir     = $(prefix)/sbin
 datadir     = $(prefix)/share/doc/finit
 mandir      = $(prefix)/share/man/man8
 
@@ -44,6 +46,7 @@ VERSION    ?= 1.2
 EXEC        = finit
 PKG         = $(EXEC)-$(VERSION)
 ARCHIVE     = $(PKG).tar.xz
+HEADERS     = plugin.h svc.h helpers.h
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
 OBJS       += strlcpy.o
 SRCS        = $(OBJS:.o=.c)
@@ -72,18 +75,28 @@ $(EXEC): $(OBJS)
 install: all
 	@install -d $(DESTDIR)$(prefix)/sbin
 	@install -d $(DESTDIR)$(sysconfdir)
+	@install -d $(DESTDIR)$(sbindir)
+	@install -d $(DESTDIR)$(incdir)
 	@install -d $(DESTDIR)$(datadir)
 	@install -d $(DESTDIR)$(mandir)
 	@for file in $(EXEC); do                                        \
-		printf "  INSTALL $(DESTDIR)$(prefix)/sbin/$$file\n";   \
-		install -m 0755 $$file $(DESTDIR)$(prefix)/sbin/$$file; \
+		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
+		install -m 0755 $$file $(DESTDIR)$(sbindir)/$$file; 	\
+	done
+	@for file in $(HEADERS); do	                                \
+		printf "  INSTALL $(DESTDIR)$(incdir)/$$file\n";	\
+		install -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
 	$(MAKE) -C plugins $@
 
 uninstall:
-	-@for file in $(EXEC); do \
-		printf "  REMOVE  $(DESTDIR)$(prefix)/sbin/$$file\n";   \
-		rm $(DESTDIR)$(prefix)/sbin/$$file 2>/dev/null; \
+	-@for file in $(EXEC); do 					\
+		printf "  REMOVE  $(DESTDIR)$(sbindir)/$$file\n";   	\
+		rm $(DESTDIR)$(sbindir)/$$file 2>/dev/null; 		\
+	done
+	-@for file in $(HEADERS); do 					\
+		printf "  REMOVE  $(DESTDIR)$(incdir)/$$file\n";	\
+		rm $(DESTDIR)$(incdir)/$$file 2>/dev/null; 		\
 	done
 	$(MAKE) -C plugins $@
 

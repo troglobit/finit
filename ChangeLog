@@ -1,3 +1,12 @@
+1.3 (20120928)
+	- Cleanup public plugin API a bit and add new pid/pidfile funcs
+	- Add plugin hook to end of service startup
+	- Remove finit.h from svc.h, plugins should not need this.
+	- Move utility macros etc. to helpers.h
+	- Make finit.h daemon internal, only
+	- Move defines of FIFO, conf and rcS.d to Makefile => correct paths
+	- Add support for installing required headers in system include dir
+
 1.2 (20120927)
 	- Fix installation paths encoded in finit binary
 	- Update README with section on building and enviroment variables
