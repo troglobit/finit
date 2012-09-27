@@ -400,7 +400,8 @@ void svc_start_all(void)
 			svc_reload(svc);
 	}
 
-	/* XXX: Hook point for plugins. */
+	_d("Running svc up hooks ...");
+	run_hooks(HOOK_SVC_UP);
 }
 
 
