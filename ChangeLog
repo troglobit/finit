@@ -1,3 +1,7 @@
+1.2 (20120927)
+	- Fix installation paths encoded in finit binary
+	- Update README with section on building and enviroment variables
+
 1.1 (20120927)
 	- Build fixes for ARM eabi/uClibc
 	- Rename signal.[ch]-->sig.[ch] to avoid name clash w/ system headers

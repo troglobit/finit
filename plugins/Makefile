@@ -2,7 +2,7 @@
 CFLAGS      = -fPIC -g -Os
 CPPFLAGS   += -I..
 LDFLAGS     = -shared 
-PLUGINS     = initctl.so alsa-utils.so bootmisc.so dbus.so hwclock.so \
+PLUGINS    ?= initctl.so alsa-utils.so bootmisc.so dbus.so hwclock.so \
 	      resolvconf.so urandom.so x11-common.so
 DEPS        = $(addprefix .,$(PLUGINS:.so=.d))
 

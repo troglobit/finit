@@ -66,6 +66,84 @@ Finit handles SIGUSR1 and SIGUSR2 for reboot and halt, and listens to
 /dev/initctl so standard Linux reboot and halt commands should also
 work.
 
+Building
+--------
+
+The finit build system does not employ the GNU Configure and Build System,
+instead standard makefiles are used. The user is encouraged to make source
+code changes, using defines and conditionally building plugins instead to
+alter the behavior of finit.
+
+The following environment variables are checked by the makefiles and control
+what is built and where resulting binaries are installed.
+
+**ROOTDIR=**
+   Top directory for building complete system, used in pretty printing
+
+**PLUGINS=**
+   List of stock finit plugins to build and install.
+
+**PLUGIN_DIR=**
+   Absolute path to where finit should look for dynamically loadable plugins
+   at runtime. At installation prepended by ''DESTDIR'' and ''prefix''-
+
+**VERSION=**
+   Defaults to the currently released version of finit, e.g., 1.2 but can
+   be overridden by packages to add a suffix or completely alter the version.
+
+**CFLAGS=**
+   Standard CFLAGS are inherited from the build enviornmant.
+
+**CPPFLAGS=**
+   Standard CPPFLAGS are inherited from the build enviornmant.
+
+**LDFLAGS=**
+   Standard LDFLAGS are inherited from the build enviornmant.
+
+**LDLIBS=**
+   Standard LIBLIBS are inherited from the build enviornmant.
+
+**prefix=**
+   Path to where resulting binaries should install to. Used in concert
+   with the ''DESTDIR'' variable. Defaults to /usr/local
+
+**sysconfdir=**
+   Used after ''prefix'' to create the path to finit.conf configuration
+   file. Defaults to /etc
+
+**DESTDIR=**
+   Used by packagers and distributions when building a relocatable
+   bundle of files. Alwawys prepended to the ''prefix'' destination
+   directory.
+
+**Example**::
+
+  $ tar xfJ finit-1.2.tar.xz
+  $ PLUGINS="initctl.so hwclock.so" prefix= DESTDIR=/tmp/finit/dst \
+    make -C finit-1.2/ clean install
+  make: Entering directory `/home/troglobit/finit-1.2'
+    CC      finit.o
+    CC      conf.o
+    CC      helpers.o
+    CC      sig.o
+    CC      svc.o
+    CC      plugin.o
+    CC      strlcpy.o
+    LINK    finit
+    CC      plugins/initctl.o
+    PLUGIN  plugins/initctl.so
+    CC      plugins/hwclock.o
+    PLUGIN  plugins/hwclock.so
+    INSTALL /tmp/finit/dst/sbin/finit
+    INSTALL /tmp/finit/dst/lib/finit/plugins/initctl.so
+    INSTALL /tmp/finit/dst/lib/finit/plugins/hwclock.so
+  make: Leaving directory `/home/troglobit/finit-1.2'
+
+In this example the finit-1.2.tar.xz archive is unpacked to the user's
+home directory, built and installed to a temporary staging directory.
+The enviroment variables ''prefix'', ''DESTDIR'' and ''PLUGINS'' are all
+changed to suit this particular build.
+
 
 Debugging
 ---------

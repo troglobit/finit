@@ -25,11 +25,18 @@
 
 # Top directory for building complete system, fall back to this directory
 ROOTDIR    ?= $(shell pwd)
+
+# Installation paths, always prepended with DESTDIR if set
+prefix     ?= /usr/local
+sysconfdir ?= /etc
+datadir     = $(prefix)/share/doc/finit
+mandir      = $(prefix)/share/man/man8
+
 # Plugin directory, fall back to this directory if unset in environment
-PLUGIN_DIR ?= /lib/finit/plugins
+PLUGIN_DIR ?= $(prefix)/lib/finit/plugins
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.1
+VERSION    ?= 1.2
 EXEC        = finit
 PKG         = $(EXEC)-$(VERSION)
 ARCHIVE     = $(PKG).tar.xz
@@ -45,11 +52,6 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
 LDFLAGS    += -rdynamic
 LDLIBS     += -ldl
-
-prefix     ?= /usr/local
-sysconfdir ?= /etc
-datadir     = $(prefix)/share/doc/finit
-mandir      = $(prefix)/share/man/man8
 
 include common.mk
 export PLUGIN_DIR ROOTDIR CPPFLAGS
