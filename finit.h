@@ -33,21 +33,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <syslog.h>
-#define DO_LOG(level, fmt, args...)				\
-{								\
-	openlog("finit", LOG_CONS | LOG_PID, LOG_DAEMON);	\
-	syslog(LOG_DEBUG, fmt, ##args);				\
-	closelog();						\
-}
-
-#define DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
-#define ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
-
-#define FINIT_FIFO "/dev/initctl"
-#define FINIT_CONF "/etc/finit.conf"
-#define FINIT_RCSD "/etc/finit.d"
-
 /* Distribution configuration */
 
 #if defined EMBEDDED_SYSTEM
@@ -79,41 +64,13 @@
 #define USERNAME_SIZE 16
 #define HOSTNAME_SIZE 32
 
-#ifndef touch
-# define touch(x) mknod((x), S_IFREG|0644, 0)
-#endif
-#ifndef chardev
-# define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
-#endif
-#ifndef blkdev
-# define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
-#endif
-#ifndef fexist
-# define fexist(x) (access(x, F_OK) != -1)
-#endif
-
-#ifndef UNUSED
-#define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
-#endif
-
-#define echo(fmt, args...) do { if (1) { fprintf(stderr, fmt "\n",  ##args); } } while (0)
-#define _d(fmt, args...)   do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
-#define _e(fmt, args...)   do { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
-#define _pe(fmt, args...)  do { fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
-
-extern int   debug;
-extern int   verbose;
 extern char *sdown;
 extern char *network;
 extern char *hostname;
 extern char *username;
 
-/* strlcpy.c */
-size_t strlcpy(char *dst, const char *src, size_t siz);
-
 /* conf.c */
 void parse_finit_conf(char *file);
-
 
 #endif /* FINIT_H_ */
 

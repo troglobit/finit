@@ -23,10 +23,11 @@
  */
 
 #include <errno.h>
+#include <fcntl.h>		/* O_RDONLY et al */
 #include <signal.h>
 #include <string.h>
 
-#include "finit.h"
+#include "helpers.h"
 #include "plugin.h"
 
 #define INIT_MAGIC		0x03091969
@@ -40,7 +41,6 @@ struct init_request {
 	char	data[368];
 };
 
-#ifdef LISTEN_INITCTL
 /* Standard reboot/shutdown utilities talk to init using /dev/initctl.
  * We should check if the fifo was recreated and reopen it.
  */
@@ -108,8 +108,6 @@ PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
 }
-
-#endif  /* LISTEN_INITCTL */
 
 /**
  * Local Variables:

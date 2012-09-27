@@ -46,7 +46,7 @@ static void __connect_shm(void)
 		if (!services) {
 			/* This should never happen, but if it does we're probably
 			 * knee-deep in more serious problems already... */
-			_e("Failed setting up shared memory for service monitor.\n");
+			_e("Failed allocating shared memory, error %d: %s", errno, strerror (errno));
 			abort();
 		}
 	}

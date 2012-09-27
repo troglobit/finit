@@ -25,6 +25,44 @@
 #ifndef FINIT_HELPERS_H_
 #define FINIT_HELPERS_H_
 
+#include <stdio.h>
+#include <syslog.h>
+
+#define DO_LOG(level, fmt, args...)				\
+{								\
+	openlog("finit", LOG_CONS | LOG_PID, LOG_DAEMON);	\
+	syslog(LOG_DEBUG, fmt, ##args);				\
+	closelog();						\
+}
+
+#define DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
+#define ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
+
+#ifndef touch
+# define touch(x) mknod((x), S_IFREG|0644, 0)
+#endif
+#ifndef chardev
+# define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
+#endif
+#ifndef blkdev
+# define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
+#endif
+#ifndef fexist
+# define fexist(x) (access(x, F_OK) != -1)
+#endif
+
+#ifndef UNUSED
+#define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
+#endif
+
+#define echo(fmt, args...) do { if (1) { fprintf(stderr, fmt "\n",  ##args); } } while (0)
+#define _d(fmt, args...)   do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
+#define _e(fmt, args...)   do { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
+#define _pe(fmt, args...)  do { fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
+
+extern int   debug;
+extern int   verbose;
+
 int	makepath	(char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
 void	copyfile	(char *src, char *dst, int size);
@@ -51,6 +89,9 @@ int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
 pid_t   run_getty       (char *cmd, char *argv[]);
 int	run_parts	(char *dir, ...);
+
+/* strlcpy.c */
+size_t strlcpy(char *dst, const char *src, size_t siz);
 
 #endif /* FINIT_HELPERS_H_ */
 

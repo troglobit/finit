@@ -72,10 +72,8 @@ static inline svc_t *finit_svc_connect(void)
 
 	if ((void *)-1 == ptr) {
 		ptr = shmat (shmget (ID, sizeof(svc_t) * MAX_NUM_SVC, 0600 | IPC_CREAT), NULL, 0);
-		if ((void *)-1 == ptr) {
-			_d("Failed allocating shared memory, error %d: %s", errno, strerror (errno));
+		if ((void *)-1 == ptr)
 			return NULL;
-		}
 	}
 
 	return (svc_t *)ptr;

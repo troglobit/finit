@@ -34,6 +34,10 @@ mandir      = $(prefix)/share/man/man8
 
 # Plugin directory, fall back to this directory if unset in environment
 PLUGIN_DIR ?= $(prefix)/lib/finit/plugins
+# The initctl FIFO, should probably be in /run, not /dev
+FINIT_FIFO ?= /dev/initctl
+FINIT_CONF ?= $(sysconfdir)/finit.conf
+FINIT_RCSD ?= $(sysconfdir)/finit.d
 
 #VERSION    ?= $(shell git tag -l | tail -1)
 VERSION    ?= 1.2
@@ -49,7 +53,8 @@ CFLAGS     += -W -Wall -Werror -Os
 CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
-CPPFLAGS   += -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
+CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
+CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
 LDFLAGS    += -rdynamic
 LDLIBS     += -ldl
 
