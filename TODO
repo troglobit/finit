@@ -3,3 +3,4 @@
 * Look at how to support a standard SysV init runlevel mechanism
 * Arguments to finit, like to SysV init "init q" to reload finit.conf at runtime, etc.
 * Implement initctl stop|start|reload <SVC> and service <SVC> stop|start|reload on top
+* Write man pages for finit and finit.conf, steal from pimd man pages...

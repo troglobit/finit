@@ -6,6 +6,13 @@
 	- Make finit.h daemon internal, only
 	- Move defines of FIFO, conf and rcS.d to Makefile => correct paths
 	- Add support for installing required headers in system include dir
+	- Better support for distributions and packagers with install-exec,
+	  install-data, and install-dev targets in Makefile.  Useful if you
+	  want to call targets with different $DESTDIR!
+	- Makefile fixes for installation, paths encoded wrong
+	- Strip binaries + .so files, support for $(CROSS) toolchain strip
+	- Default install is now to /sbin/finit and /usr/
+	- Note change in $PLUGIN_DIR environemnt variable to $plugindir
 
 1.2 (20120927)
 	- Fix installation paths encoded in finit binary

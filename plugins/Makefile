@@ -17,18 +17,18 @@ distclean: clean
 	-@$(RM) $(JUNK) $(DEPS)
 
 install: all
-	@install -d $(DESTDIR)$(prefix)$(PLUGIN_DIR)
+	@install -d $(DESTDIR)$(plugindir)
 	@for plugin in $(PLUGINS); do \
-		echo "  INSTALL $(DESTDIR)$(prefix)$(PLUGIN_DIR)/$$plugin"; \
-		cp $$plugin $(DESTDIR)$(prefix)$(PLUGIN_DIR); \
+		echo "  INSTALL $(DESTDIR)$(plugindir)/$$plugin";	\
+		$(STRIPINST) $$plugin $(DESTDIR)$(plugindir)/$$plugin;	\
 	done
 
 uninstall:
 	-@for plugin in $(PLUGINS); do \
-		echo "  RM      $(PLUGIN_DIR)/$$plugin"; \
-		rm $(DESTDIR)$(prefix)$(PLUGIN_DIR)/$$plugin 2>/dev/null; \
+		echo "  RM      $(DESTDIR)$(plugindir)/$$plugin";	\
+		rm $(DESTDIR)$(plugindir)/$$plugin 2>/dev/null; 	\
 	done
-	-@rmdir $(DESTDIR)$(prefix)$(PLUGIN_DIR) 2>/dev/null
+	-@rmdir $(DESTDIR)$(plugindir) 2>/dev/null
 
 ifneq ($(MAKECMDGOALS),clean)
  -include $(DEPS)

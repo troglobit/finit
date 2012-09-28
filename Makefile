@@ -34,21 +34,21 @@ EXEC        = finit
 PKG         = $(EXEC)-$(VERSION)
 ARCHIVE     = $(PKG).tar.xz
 HEADERS     = plugin.h svc.h helpers.h
+DISTFILES   = LICENSE README ChangeLog finit.conf services
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
 OBJS       += strlcpy.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 
 # Installation paths, always prepended with DESTDIR if set
-prefix     ?= /usr/local
+prefix     ?= /usr
 sysconfdir ?= /etc
+sbindir    ?= /sbin
+plugindir  ?= /lib/finit/plugins
 incdir      = $(prefix)/include/finit
-sbindir     = $(prefix)/sbin
 datadir     = $(prefix)/share/doc/finit
 mandir      = $(prefix)/share/man/man8
 
-# Plugin directory, fall back to this directory if unset in environment
-PLUGIN_DIR ?= $(prefix)/lib/finit/plugins
 # The initctl FIFO, should probably be in /run, not /dev
 FINIT_FIFO ?= /dev/initctl
 FINIT_CONF ?= $(sysconfdir)/finit.conf
@@ -60,12 +60,12 @@ CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
-CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(PLUGIN_DIR)\"
+CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(plugindir)\"
 LDFLAGS    += -rdynamic
 LDLIBS     += -ldl
 
 include common.mk
-export PLUGIN_DIR ROOTDIR CPPFLAGS
+export plugindir ROOTDIR CPPFLAGS
 
 all: Makefile $(EXEC)
 	$(MAKE) -C plugins $@
@@ -74,26 +74,28 @@ $(OBJS): Makefile
 
 $(EXEC): $(OBJS)
 
-#	@ln -sf /sbin/finit /sbin/init
 install-exec: all
-	@install -d $(DESTDIR)$(prefix)/sbin
-	@install -d $(DESTDIR)$(sysconfdir)
-	@install -d $(DESTDIR)$(sbindir)
+	@$(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	@$(INSTALL) -d $(DESTDIR)$(sbindir)
 	@for file in $(EXEC); do                                        \
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
-		install -m 0755 $$file $(DESTDIR)$(sbindir)/$$file; 	\
+		$(STRIPINST) $$file $(DESTDIR)$(sbindir)/$$file; 	\
 	done
-	$(MAKE) -C plugins all
+	$(MAKE) -C plugins install
 
 install-data:
-	@install -d $(DESTDIR)$(datadir)
-	@install -d $(DESTDIR)$(mandir)
+	@$(INSTALL) -d $(DESTDIR)$(datadir)
+	@$(INSTALL) -d $(DESTDIR)$(mandir)
+	@for file in $(DISTFILES); do	                                \
+		printf "  INSTALL $(DESTDIR)$(datadir)/$$file\n";	\
+		$(INSTALL) -m 0644 $$file $(DESTDIR)$(datadir)/$$file;	\
+	done
 
 install-dev:
-	@install -d $(DESTDIR)$(incdir)
+	@$(INSTALL) -d $(DESTDIR)$(incdir)
 	@for file in $(HEADERS); do	                                \
 		printf "  INSTALL $(DESTDIR)$(incdir)/$$file\n";	\
-		install -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
+		$(INSTALL) -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
 
 install: install-exec install-data install-dev
@@ -103,15 +105,24 @@ uninstall-exec:
 		printf "  REMOVE  $(DESTDIR)$(sbindir)/$$file\n";   	\
 		rm $(DESTDIR)$(sbindir)/$$file 2>/dev/null; 		\
 	done
+	-@rmdir $(DESTDIR)$(sbindir) 2>/dev/null
+	-@rmdir $(DESTDIR)$(sysconfdir) 2>/dev/null
 	$(MAKE) -C plugins uninstall
 
 uninstall-data:
+	@for file in $(DISTFILES); do	                                \
+		printf "  REMOVE  $(DESTDIR)$(datadir)/$$file\n";	\
+		rm $(DESTDIR)$(datadir)/$$file 2>/dev/null;		\
+	done
+	-@rmdir $(DESTDIR)$(mandir)
+	-@rmdir $(DESTDIR)$(datadir)
 
 uninstall-dev:
 	-@for file in $(HEADERS); do 					\
 		printf "  REMOVE  $(DESTDIR)$(incdir)/$$file\n";	\
 		rm $(DESTDIR)$(incdir)/$$file 2>/dev/null; 		\
 	done
+	-@rmdir $(DESTDIR)$(incdir)
 
 uninstall: uninstall-exec uninstall-data uninstall-dev
 
