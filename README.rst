@@ -147,9 +147,9 @@ what is built and where resulting binaries are installed.
     INSTALL /tmp/finit/dst/lib/finit/plugins/hwclock.so
   make: Leaving directory `/home/troglobit/finit-1.3'
 
-In this example the `finit-1.3.tar.xz`_ archive is unpacked to the user's
-home directory, built and installed to a temporary staging directory.
-The enviroment variables ``prefix``, ``DESTDIR`` and ``PLUGINS`` are all
+In this example the `finit-1.3.tar.xz`_ archive is unpacked to the
+user's home directory, built and installed to a temporary staging
+directory.  The enviroment variables ``DESTDIR`` and ``PLUGINS`` are
 changed to suit this particular build.
 
 
