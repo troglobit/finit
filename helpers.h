@@ -1,4 +1,4 @@
-/* Misc. utility functions and C-library extensions to simplify finit system setup.
+/* Misc. utility functions and C-library extensions for finit and its plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>

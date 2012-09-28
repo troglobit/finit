@@ -1,4 +1,4 @@
-/* Improved fast init
+/* Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>

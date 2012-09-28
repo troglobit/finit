@@ -1,4 +1,4 @@
-# finit - The Improved fast init
+# Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
 #
 # Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
 # Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
@@ -21,10 +21,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-.PHONY: all romfs clean
+.PHONY: all install clean distclean dist		\
+	install-exec install-data install-dev		\
+	uninstall-exec uninstall-data uninstall-dev
 
 # Top directory for building complete system, fall back to this directory
 ROOTDIR    ?= $(shell pwd)
+
+#VERSION    ?= $(shell git tag -l | tail -1)
+VERSION    ?= 1.3
+EXEC        = finit
+PKG         = $(EXEC)-$(VERSION)
+ARCHIVE     = $(PKG).tar.xz
+HEADERS     = plugin.h svc.h helpers.h
+OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
+OBJS       += strlcpy.o
+SRCS        = $(OBJS:.o=.c)
+DEPS        = $(addprefix .,$(SRCS:.c=.d))
 
 # Installation paths, always prepended with DESTDIR if set
 prefix     ?= /usr/local
@@ -41,16 +54,6 @@ FINIT_FIFO ?= /dev/initctl
 FINIT_CONF ?= $(sysconfdir)/finit.conf
 FINIT_RCSD ?= $(sysconfdir)/finit.d
 
-#VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.2
-EXEC        = finit
-PKG         = $(EXEC)-$(VERSION)
-ARCHIVE     = $(PKG).tar.xz
-HEADERS     = plugin.h svc.h helpers.h
-OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
-OBJS       += strlcpy.o
-SRCS        = $(OBJS:.o=.c)
-DEPS        = $(addprefix .,$(SRCS:.c=.d))
 CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
@@ -124,10 +127,6 @@ dist:
 	@echo "Building xz tarball of $(PKG) in parent dir..."
 	git archive --format=tar --prefix=$(PKG)/ $(VERSION) | xz >../$(ARCHIVE)
 	@(cd ..; md5sum $(ARCHIVE) | tee $(ARCHIVE).md5)
-
-.PHONY: all install clean distclean dist		\
-	install-exec install-data install-dev		\
-	uninstall-exec uninstall-data uninstall-dev
 
 # Include automatically generated rules, such as:
 # uncgi.o: .../some/dir/uncgi.c /usr/include/stdio.h
