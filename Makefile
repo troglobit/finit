@@ -75,7 +75,7 @@ $(OBJS): Makefile
 $(EXEC): $(OBJS)
 
 install-exec: all
-	@$(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	@$(INSTALL) -d $(DESTDIR)$(FINIT_RCSD)
 	@$(INSTALL) -d $(DESTDIR)$(sbindir)
 	@for file in $(EXEC); do                                        \
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
@@ -106,7 +106,7 @@ uninstall-exec:
 		rm $(DESTDIR)$(sbindir)/$$file 2>/dev/null; 		\
 	done
 	-@rmdir $(DESTDIR)$(sbindir) 2>/dev/null
-	-@rmdir $(DESTDIR)$(sysconfdir) 2>/dev/null
+	-@rmdir $(DESTDIR)$(FINIT_RCSD) 2>/dev/null
 	$(MAKE) -C plugins uninstall
 
 uninstall-data:

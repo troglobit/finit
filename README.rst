@@ -45,7 +45,9 @@ Contrary to most script based init alternatives (SysV init_, upstart_, OpenRC_
 and the likes) finit reads its configuration from /etc/finit.conf, see the
 source code for available options.
 
-Try out the examples/finit.conf for a Debian 6.0 example configuration
+When running ''make install'' no default ''/etc/finit.conf'' will be
+provided since the system requirements differ too much.  Try out the
+Debian 6.0 example /usr/share/doc/finit/finit.conf configuration that is
 capable of service monitoring SSH, sysklogd, gdm and a console getty!
 
 
@@ -80,15 +82,8 @@ what is built and where resulting binaries are installed.
 **ROOTDIR=**
    Top directory for building complete system, used in pretty printing
 
-**PLUGINS=**
-   List of stock finit plugins to build and install.
-
-**PLUGIN_DIR=**
-   Absolute path to where finit should look for dynamically loadable plugins
-   at runtime. At installation prepended by ''DESTDIR'' and ''prefix''-
-
 **VERSION=**
-   Defaults to the currently released version of finit, e.g., 1.2 but can
+   Defaults to the currently released version of finit, e.g., 1.3 but can
    be overridden by packages to add a suffix or completely alter the version.
 
 **CFLAGS=**
@@ -104,12 +99,25 @@ what is built and where resulting binaries are installed.
    Standard LIBLIBS are inherited from the build enviornmant.
 
 **prefix=**
+   Base prefix path for all files, except ''sbinbdir'' and ''sysconfdir''.
+   Used in concert with the ''DESTDIR'' variable. Defaults to /usr
+
+**sbindir=**
    Path to where resulting binaries should install to. Used in concert
-   with the ''DESTDIR'' variable. Defaults to /usr/local
+   with the ''DESTDIR'' variable. Defaults to /sbin
 
 **sysconfdir=**
-   Used after ''prefix'' to create the path to finit.conf configuration
-   file. Defaults to /etc
+   Path to where finit configuration files should install to. Used in
+   concert with the ''DESTDIR'' variable.  Defaults to /etc, but is
+   currently unused.
+
+**PLUGINS=**
+   List of stock finit plugins to build and install.
+
+**plugindir=**
+   Absolute path to where finit should look for dynamically loadable plugins
+   at runtime. At installation prepended by ''DESTDIR'' and ''prefix''.
+   Defaults to /lib/finit/plugins
 
 **DESTDIR=**
    Used by packagers and distributions when building a relocatable
@@ -118,10 +126,10 @@ what is built and where resulting binaries are installed.
 
 **Example**::
 
-  $ tar xfJ finit-1.2.tar.xz
-  $ PLUGINS="initctl.so hwclock.so" prefix= DESTDIR=/tmp/finit/dst \
-    make -C finit-1.2/ clean install
-  make: Entering directory `/home/troglobit/finit-1.2'
+  $ tar xfJ finit-1.3.tar.xz
+  $ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit/dst \
+    make -C finit-1.3/ clean install
+  make: Entering directory `/home/troglobit/finit-1.3'
     CC      finit.o
     CC      conf.o
     CC      helpers.o
@@ -137,9 +145,9 @@ what is built and where resulting binaries are installed.
     INSTALL /tmp/finit/dst/sbin/finit
     INSTALL /tmp/finit/dst/lib/finit/plugins/initctl.so
     INSTALL /tmp/finit/dst/lib/finit/plugins/hwclock.so
-  make: Leaving directory `/home/troglobit/finit-1.2'
+  make: Leaving directory `/home/troglobit/finit-1.3'
 
-In this example the finit-1.2.tar.xz archive is unpacked to the user's
+In this example the finit-1.3.tar.xz archive is unpacked to the user's
 home directory, built and installed to a temporary staging directory.
 The enviroment variables ''prefix'', ''DESTDIR'' and ''PLUGINS'' are all
 changed to suit this particular build.
