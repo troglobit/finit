@@ -55,10 +55,10 @@ typedef struct svc {
 	pid_t	       pid;
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
-	char	       descr[MAX_STR_LEN];
+	char	       desc[MAX_STR_LEN];
 	char           username[MAX_USER_LEN];
 	/* Public */
-	int	       delayed_reload; /* For external service plugin. */
+	int	       reload; /* For external plugins. */
 	plugin_svc_t  *plugin;
 } svc_t;
 

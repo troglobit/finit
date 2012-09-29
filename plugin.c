@@ -196,7 +196,7 @@ int load_plugins(char *path)
 			char filename[1024];
 
 			snprintf(filename, sizeof(filename), "%s/%s", path, entry->d_name);
-			print_descr("   Loading plugin ", basename(filename));
+			print_desc("   Loading plugin ", basename(filename));
 			handle = dlopen(filename, RTLD_LAZY);
 			if (!handle) {
 				_d("Failed loading plugin %s: %s", filename, dlerror());

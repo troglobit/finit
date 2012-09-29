@@ -156,7 +156,7 @@ svc_t *svc_iterator(int restart)
 int svc_register(char *line, char *username)
 {
 	int i = 0;
-	char *cmd, *descr;
+	char *cmd, *desc;
 	svc_t *svc;
 
 	if (!line) {
@@ -164,9 +164,9 @@ int svc_register(char *line, char *username)
 		return errno = EINVAL;
 	}
 
-	descr = strstr(line, "-- ");
-	if (descr)
-		*descr = 0;
+	desc = strstr(line, "-- ");
+	if (desc)
+		*desc = 0;
 
 	cmd = strtok(line, " ");
 	if (!cmd) {
@@ -190,8 +190,8 @@ int svc_register(char *line, char *username)
 		return errno = ENOMEM;
 	}
 
-	if (descr)
-		strlcpy(svc->descr, descr + 3, sizeof(svc->descr));
+	if (desc)
+		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
 	if (username)
 		strlcpy(svc->username, username, sizeof(svc->username));
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
@@ -292,7 +292,7 @@ int svc_start(svc_t *svc)
 		return 0;
 
 	if (!respawn)
-		print_descr("Starting ", svc->descr);
+		print_desc("Starting ", svc->desc);
 
 	pid = fork();
 	if (pid == 0) {
@@ -357,12 +357,12 @@ int svc_stop(svc_t *svc)
 	}
 
 	if (svc->pid <= 1) {
-		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->descr);
+		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->desc);
 		svc->pid = 0;
 		return 1;
 	}
 
-	print_descr("Stopping ", svc->descr);
+	print_desc("Stopping ", svc->desc);
 	_d("Sending SIGTERM to pid:%d name:'%s'", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
 	print_result(res);

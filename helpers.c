@@ -364,7 +364,7 @@ static int print_uptime(void)
 	return 0;
 }
 
-void print_descr(char *action, char *descr)
+void print_desc(char *action, char *desc)
 {
 	const char home[] = "\r\e[K";
 	const char dots[] = " .....................................................................";
@@ -374,8 +374,8 @@ void print_descr(char *action, char *descr)
 	print_uptime();
 
 	write(STDERR_FILENO, action, strlen(action));
-	write(STDERR_FILENO, descr, strlen(descr));
-	write(STDERR_FILENO, dots, 60 - strlen(descr) - strlen(action)); /* pad with dots. */
+	write(STDERR_FILENO, desc, strlen(desc));
+	write(STDERR_FILENO, dots, 60 - strlen(desc) - strlen(action)); /* pad with dots. */
 }
 
 int print_result(int fail)
@@ -499,7 +499,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	vsnprintf(line, sizeof(line), fmt, ap);
 	va_end(ap);
 
-	print_descr("", line);
+	print_desc("", line);
 	if (fp && !debug) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);
