@@ -41,7 +41,7 @@ static LIST_HEAD(, plugin) plugins = LIST_HEAD_INITIALIZER();
 
 int plugin_register(plugin_t *plugin)
 {
-	int inuse = 0;
+	int i, inuse = 0;
 
 	if (!plugin) {
 		errno = EINVAL;
@@ -78,8 +78,13 @@ int plugin_register(plugin_t *plugin)
 		}
 	}
 
+	for (i = 0; i < HOOK_MAX_NUM; i++) {
+		if (plugin->hook[i].cb)
+			inuse++;
+	}
+
 	if (!inuse) {
-		_e("No service \"%s\" loaded, skipping plugin.", basename(plugin->name));
+		_e("No service \"%s\" loaded, and no I/O or finit hooks, skipping plugin.", basename(plugin->name));
 		return 1;
 	}
 
@@ -190,13 +195,13 @@ int plugin_load_all(char *path)
 
 		if (!strcmp(ext, ".so")) {
 			void *handle;
-			char filename[1024];
+			char plugin[1024];
 
-			snprintf(filename, sizeof(filename), "%s/%s", path, entry->d_name);
-			print_desc("   Loading plugin ", basename(filename));
-			handle = dlopen(filename, RTLD_LAZY);
+			snprintf(plugin, sizeof(plugin), "%s/%s", path, entry->d_name);
+			print_desc("   Loading plugin ", basename(plugin));
+			handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
 			if (!handle) {
-				_d("Failed loading plugin %s: %s", filename, dlerror());
+				_d("Failed loading plugin %s: %s", plugin, dlerror());
 				print_result(1);
 				return 1;
 			}
