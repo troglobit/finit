@@ -66,7 +66,6 @@ svc_t *svc_new(void)
 	if (svc_counter < MAX_NUM_SVC) {
 		svc = &services[svc_counter++];
 		memset(svc, 0, sizeof(*svc));
-		svc->id = svc_counter; /* Array pos + 1 to avoid zero ID */
 	} else {
 		errno = ENOMEM;
 		return NULL;
@@ -76,29 +75,13 @@ svc_t *svc_new(void)
 }
 
 /**
- * svc_find_by_id - Find a service object by its logical ID#
- * @id: Logical ID#
- *
- * Returns:
- * A pointer to an &svc_t object, or %NULL if not found.
- */
-svc_t *svc_find_by_id(int id)
-{
-	__connect_shm();
-	if (id < 1 || id > svc_counter)
-		return NULL;
-
-	return &services[id - 1];
-}
-
-/**
- * svc_find_by_name - Find a service object by its full path name
+ * svc_find - Find a service object by its full path name
  * @name: Full path name, e.g., /sbin/syslogd
  *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find_by_name(char *name)
+svc_t *svc_find(char *name)
 {
 	int i;
 
@@ -226,7 +209,12 @@ svc_cmd_t svc_enabled(svc_t *svc, int event, void *arg)
 		return SVC_STOP;
 	}
 
-	return plugin_svc_enabled(svc, event, arg);
+	/* Is there a service plugin registered? */
+	if (svc->cb)
+		return svc->cb(svc, event, arg);
+
+	/* No service plugin, default to start, since listed in finit.conf */
+	return SVC_START;
 }
 
 static int is_norespawn(void)
@@ -335,7 +323,7 @@ int svc_start(svc_t *svc)
 
 int svc_start_by_name(char *name)
 {
-	svc_t *svc = svc_find_by_name(name);
+	svc_t *svc = svc_find(name);
 
 	if (svc && svc_enabled(svc, 0, NULL))
 		return svc_start(svc);
@@ -369,6 +357,10 @@ int svc_stop(svc_t *svc)
 
 int svc_reload(svc_t *svc)
 {
+	/* Ignore if finit is SIGSTOP'ed */
+	if (is_norespawn())
+		return 0;
+
 	if (!svc) {
 		_e("Failed, no svc pointer.");
 		return 1;

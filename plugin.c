@@ -32,7 +32,6 @@
 #include "private.h"
 #include "helpers.h"
 #include "plugin.h"
-#include "svc.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 
@@ -69,11 +68,13 @@ int plugin_register(plugin_t *plugin)
 	}
 
 	if (plugin->svc.cb) {
-		svc_t *svc = svc_find_by_name(plugin->name);
+		svc_t *svc = svc_find(plugin->name);
 
 		if (svc) {
-			plugin->svc.id = svc_id(svc);
 			inuse++;
+			svc->cb           = plugin->svc.cb;
+			svc->dynamic      = plugin->svc.dynamic;
+			svc->dynamic_stop = plugin->svc.dynamic_stop;
 		}
 	}
 
@@ -91,6 +92,15 @@ int plugin_unregister(plugin_t *plugin)
 {
 	LIST_REMOVE(plugin, link);
 
+	if (plugin->svc.cb) {
+		svc_t *svc = svc_find(plugin->name);
+
+		if (svc) {
+			svc->cb      = NULL;
+			svc->dynamic = 0;
+		}
+	}
+
 	/* XXX: Unfinished, add cleanup code here! */
 
 	return 0;
@@ -107,21 +117,6 @@ void plugin_run_hooks(hook_point_t no)
 			p->hook[no].cb(p->hook[no].arg);
 		}
 	}
-}
-
-/* Run registered plugin service callback for the given svc ID */
-svc_cmd_t plugin_svc_enabled(svc_t *svc, int event, void *arg)
-{
-	plugin_t *p;
-
-	/* Find matching plugin, pick first matching fd */
-	PLUGIN_ITERATOR(p) {
-		if (p->svc.id == svc_id(svc))
-			return p->svc.cb(svc, event, arg);
-	}
-
-	/* Unknown service, default to start (since it's in finit.conf) */
-	return SVC_START;
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */

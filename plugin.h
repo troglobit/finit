@@ -83,11 +83,8 @@ typedef struct plugin {
 
 	/* Service callback to be called once per lap of runloop. */
 	struct {
-		/* Private */
-		int         id;       /* Service ID# to match this service plugin against, set on installation. */
-
-		/* Public */
-		int         dynamic;  /* Reload (SIGHUP) on dynamic event?  Set by plugin. */
+		int dynamic;      /* Callback wants external events as well. */
+		int dynamic_stop; /* Callback allows dynamic events to stop. */
 		svc_cmd_t (*cb)(svc_t *svc, int event, void *event_arg);
 	} svc;
 

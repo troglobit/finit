@@ -28,13 +28,12 @@
 #include "svc.h"
 #include "plugin.h"
 
-void      svc_start_all      (void);
-void      svc_monitor        (void);
+void      svc_start_all    (void);
+void      svc_monitor      (void);
 
-void      plugin_run_hooks   (hook_point_t no);
-svc_cmd_t plugin_svc_enabled (svc_t *svc, int event, void *arg);
-int       plugin_load_all    (char *path);
-void      plugin_monitor     (void);
+void      plugin_run_hooks (hook_point_t no);
+int       plugin_load_all  (char *path);
+void      plugin_monitor   (void);
 
 #endif /* FINIT_PRIVATE_H_ */
 

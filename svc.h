@@ -48,17 +48,22 @@ typedef enum {
  * of issuing an initctl call. E.g.
  *   initctl <stop|start|restart> service */
 typedef struct svc {
-	/* Private */
-	int            id;	/* Service ID#, set by svc_new() */
 	pid_t	       pid;
+	int	       reload;
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
 	char           username[MAX_USER_LEN];
 
-	/* Public */
-	int	       reload;   /* For external plugins. */
-	int            private;  /* For callbacks to use freely, possibly to store "states", set by plugin. */
+	/* For external plugins. If @cb is set a plugin is loaded.
+	 * @dynamic:      Set by plugins that want dynamic events.
+	 * @dynamic_stop: Set by plugins that allow dyn. events to stop it as well.
+	 * @private:      Can be used freely by plugin, e.g., to store "states".
+	 */
+	int            dynamic;
+	int            dynamic_stop;
+	int            private;
+	svc_cmd_t    (*cb)(struct svc *svc, int event, void *event_arg);
 } svc_t;
 
 typedef struct svc_map svc_map_t;
@@ -78,19 +83,8 @@ static inline svc_t *finit_svc_connect(void)
 	return (svc_t *)ptr;
 }
 
-static inline int svc_id(svc_t *svc)
-{
-	if (!svc) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	return svc->id;
-}
-
 svc_t    *svc_new           (void);
-svc_t    *svc_find_by_id    (int id);
-svc_t    *svc_find_by_name  (char *name);
+svc_t    *svc_find          (char *name);
 svc_t    *svc_iterator      (int restart);
 
 int       svc_register      (char *line, char *username);
