@@ -62,7 +62,7 @@ void do_shutdown (int sig)
 
 	sleep(1);
 	/* Call all shutdown hooks, this is the last call before rebooting... */
-	run_hooks(HOOK_SHUTDOWN);
+	plugin_run_hooks(HOOK_SHUTDOWN);
 
 	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);

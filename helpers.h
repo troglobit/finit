@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <syslog.h>
+#include <unistd.h>		/* access() */
 
 #define DO_LOG(level, fmt, args...)				\
 {								\
@@ -55,10 +56,10 @@
 #define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
 #endif
 
-#define echo(fmt, args...) do { if (1) { fprintf(stderr, fmt "\n",  ##args); } } while (0)
-#define _d(fmt, args...)   do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
-#define _e(fmt, args...)   do { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
-#define _pe(fmt, args...)  do { fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
+#define echo(fmt, args...) do { if (verbose) { fprintf(stderr,                 fmt "\n", ##args); } } while (0)
+#define   _d(fmt, args...) do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
+#define   _e(fmt, args...) do {                fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
+#define  _pe(fmt, args...) do {                fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
 
 extern int   debug;
 extern int   verbose;

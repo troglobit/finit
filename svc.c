@@ -64,9 +64,9 @@ svc_t *svc_new(void)
 
 	__connect_shm();
 	if (svc_counter < MAX_NUM_SVC) {
-		svc = &services[svc_counter];
+		svc = &services[svc_counter++];
 		memset(svc, 0, sizeof(*svc));
-		svc->id = svc_counter++;
+		svc->id = svc_counter; /* Array pos + 1 to avoid zero ID */
 	} else {
 		errno = ENOMEM;
 		return NULL;
@@ -85,10 +85,10 @@ svc_t *svc_new(void)
 svc_t *svc_find_by_id(int id)
 {
 	__connect_shm();
-	if (id >= svc_counter)
+	if (id < 1 || id > svc_counter)
 		return NULL;
 
-	return &services[id];
+	return &services[id - 1];
 }
 
 /**
@@ -125,16 +125,16 @@ svc_t *svc_find_by_name(char *name)
  */
 svc_t *svc_iterator(int restart)
 {
-	static int id = 0;
+	static int i = 0;
 
 	__connect_shm();
 	if (restart)
-		id = 0;
+		i = 0;
 
-	if (id >= svc_counter)
+	if (i >= svc_counter)
 		return NULL;
 
-	return &services[id++];
+	return &services[i++];
 }
 
 /**
@@ -207,8 +207,9 @@ int svc_register(char *line, char *username)
 
 /**
  * svc_enabled - Should the service run?
- * @svc: Pointer to &svc_t object
- * @dynamic: Dynamic event, opaque flag passed to callback
+ * @svc:   Pointer to &svc_t object
+ * @event: Dynamic event, opaque flag passed to callback
+ * @arg:   Event argument, used only by external service plugins.
  *
  * This method calls an associated service callback, if registered by a
  * plugin, and returns the &svc_cmd_t status. If no plugin is registered
@@ -218,19 +219,14 @@ int svc_register(char *line, char *username)
  * Returns:
  * Either one of %SVC_START, %SVC_STOP, %SVC_RELOAD.
  */
-svc_cmd_t svc_enabled(svc_t *svc, int dynamic)
+svc_cmd_t svc_enabled(svc_t *svc, int event, void *arg)
 {
 	if (!svc) {
 		errno = EINVAL;
 		return SVC_STOP;
 	}
 
-	if (!svc->plugin) {
-		/* Unknown service, default to enabled. */
-		return SVC_START;
-	}
-
-	return svc->plugin->cb(svc, dynamic);
+	return plugin_svc_enabled(svc, event, arg);
 }
 
 static int is_norespawn(void)
@@ -273,7 +269,7 @@ void svc_monitor(void)
 		procname_kill(name, SIGTERM);
 
 		/* Restarting lost service. */
-		if (svc_enabled(svc, 0))
+		if (svc_enabled(svc, 0, NULL))
 			svc_start(svc);
 
 		break;
@@ -341,7 +337,7 @@ int svc_start_by_name(char *name)
 {
 	svc_t *svc = svc_find_by_name(name);
 
-	if (svc && svc_enabled(svc, 0))
+	if (svc && svc_enabled(svc, 0, NULL))
 		return svc_start(svc);
 
 	return 1;
@@ -394,7 +390,7 @@ void svc_start_all(void)
 	svc_cmd_t cmd;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		cmd = svc_enabled(svc, 0);
+		cmd = svc_enabled(svc, 0, NULL);
 		if (cmd == SVC_START || (cmd == SVC_RELOAD && svc->pid == 0))
 			svc_start(svc);
 		else if (cmd == SVC_RELOAD)
@@ -402,7 +398,7 @@ void svc_start_all(void)
 	}
 
 	_d("Running svc up hooks ...");
-	run_hooks(HOOK_SVC_UP);
+	plugin_run_hooks(HOOK_SVC_UP);
 }
 
 

@@ -64,7 +64,7 @@ static int run_loop(void)
 {
 	while (1) {
 		svc_monitor();
-		io_monitor();
+		plugin_monitor();
 	}
 
 	return 0;
@@ -141,10 +141,10 @@ int main(int UNUSED(args), char *argv[])
 	 * Load plugins and run first level hooks.
 	 */
 	_d("Loading plugins ...");
-	load_plugins(PLUGIN_PATH);
+	plugin_load_all(PLUGIN_PATH);
 
 	_d("Running first level hooks ...");
-	run_hooks(HOOK_BASEFS_UP);
+	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
 	 * Network stuff
@@ -164,7 +164,7 @@ int main(int UNUSED(args), char *argv[])
 	/*
 	 * Hooks that rely on loopback, or basic networking being up.
 	 */
-	run_hooks(HOOK_NETWORK_UP);
+	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/*
 	 * Start service monitor framework
@@ -181,7 +181,7 @@ int main(int UNUSED(args), char *argv[])
 	/*
 	 * Hooks that should run at the very end
 	 */
-	run_hooks(HOOK_SYSTEM_UP);
+	plugin_run_hooks(HOOK_SYSTEM_UP);
 
 	/* Start GETTY on console */
 	_d("Starting getty on console ...");

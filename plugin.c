@@ -73,7 +73,6 @@ int plugin_register(plugin_t *plugin)
 
 		if (svc) {
 			plugin->svc.id = svc_id(svc);
-			svc->plugin    = &plugin->svc;
 			inuse++;
 		}
 	}
@@ -98,7 +97,7 @@ int plugin_unregister(plugin_t *plugin)
 }
 
 /* Private daemon API *******************************************************/
-void run_hooks(hook_point_t no)
+void plugin_run_hooks(hook_point_t no)
 {
 	plugin_t *p;
 
@@ -110,16 +109,19 @@ void run_hooks(hook_point_t no)
 	}
 }
 
-void run_services(void)
+/* Run registered plugin service callback for the given svc ID */
+svc_cmd_t plugin_svc_enabled(svc_t *svc, int event, void *arg)
 {
 	plugin_t *p;
 
+	/* Find matching plugin, pick first matching fd */
 	PLUGIN_ITERATOR(p) {
-		if (p->svc.cb) {
-			_d("Calling svc %s from runloop...", basename(p->name));
-			p->svc.cb(p->svc.arg, 0);
-		}
+		if (p->svc.id == svc_id(svc))
+			return p->svc.cb(svc, event, arg);
 	}
+
+	/* Unknown service, default to start (since it's in finit.conf) */
+	return SVC_START;
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
@@ -137,7 +139,7 @@ static void generic_io_cb(int fd, int events)
 	}
 }
 
-void io_monitor(void)
+void plugin_monitor(void)
 {
 	int ret;
 	size_t i;
@@ -178,7 +180,7 @@ static void init_plugins(void)
 	}
 }
 
-int load_plugins(char *path)
+int plugin_load_all(char *path)
 {
 	DIR *dp = opendir(path);
 	struct dirent *entry;

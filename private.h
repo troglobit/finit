@@ -25,13 +25,16 @@
 #ifndef FINIT_PRIVATE_H_
 #define FINIT_PRIVATE_H_
 
+#include "svc.h"
 #include "plugin.h"
 
-/* plugin.c */
-void run_hooks        (hook_point_t no);
-void run_services     (void);
-int  load_plugins     (char *path);
-void io_monitor       (void);
+void      svc_start_all      (void);
+void      svc_monitor        (void);
+
+void      plugin_run_hooks   (hook_point_t no);
+svc_cmd_t plugin_svc_enabled (svc_t *svc, int event, void *arg);
+int       plugin_load_all    (char *path);
+void      plugin_monitor     (void);
 
 #endif /* FINIT_PRIVATE_H_ */
 

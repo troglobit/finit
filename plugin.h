@@ -26,6 +26,7 @@
 
 #include <poll.h>
 #include <sys/queue.h>		/* BSD sys/queue.h API */
+#include "svc.h"
 
 #define PLUGIN_IO_READ  POLLIN
 #define PLUGIN_IO_WRITE POLLOUT
@@ -65,7 +66,8 @@ typedef enum {
  * The "dynamic events" discussed in the svc callback is for external
  * service plugins to implement.  However, it can be anything that 
  * can cause a service to need to SIGHUP at runtime.  E.g., acquiring
- * a DHCP lease, or an interface going UP/DOWN.
+ * a DHCP lease, or an interface going UP/DOWN. The event itself can
+ * be passed as an integer @event and any optional argument @event_arg
  *
  * It is up to the external service plugin to track these events and
  * relay them to each @dynamic service plugins' callback.  I.e., to
@@ -80,14 +82,13 @@ typedef struct plugin {
 	char *name;
 
 	/* Service callback to be called once per lap of runloop. */
-	struct plugin_svc {
+	struct {
 		/* Private */
-		int    id;       /* Service ID# to match this service plugin against, set on installation. */
+		int         id;       /* Service ID# to match this service plugin against, set on installation. */
+
 		/* Public */
-		void  *arg;	 /* Optional argument to callback func, set by plugin. */
-		int    dynamic;	 /* Reload (SIGHUP) on dynamic event?  Set by plugin. */
-		int    private;  /* For callbacks to use freely, possibly to store "states", set by plugin. */
-		int  (*cb)(void *arg, int event);
+		int         dynamic;  /* Reload (SIGHUP) on dynamic event?  Set by plugin. */
+		svc_cmd_t (*cb)(svc_t *svc, int event, void *event_arg);
 	} svc;
 
 	/* List of hook callbacks. */
@@ -103,9 +104,6 @@ typedef struct plugin {
 		void (*cb)(void *arg, int fd, int events);
 	} io;
 } plugin_t;
-
-/* Used by svc.h */
-typedef struct plugin_svc plugin_svc_t;
 
 /* Public plugin API */
 int plugin_register   (plugin_t *plugin);

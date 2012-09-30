@@ -29,9 +29,10 @@
 ROOTDIR    ?= $(shell pwd)
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.3
+VERSION    ?= 1.4
 EXEC        = finit
 PKG         = $(EXEC)-$(VERSION)
+DEV         = $(EXEC)-dev
 ARCHIVE     = $(PKG).tar.xz
 HEADERS     = plugin.h svc.h helpers.h
 DISTFILES   = LICENSE README ChangeLog finit.conf services
@@ -138,6 +139,15 @@ dist:
 	@echo "Building xz tarball of $(PKG) in parent dir..."
 	git archive --format=tar --prefix=$(PKG)/ $(VERSION) | xz >../$(ARCHIVE)
 	@(cd ..; md5sum $(ARCHIVE) | tee $(ARCHIVE).md5)
+
+dev: distclean
+	@echo "Building unstable xz $(DEV) in parent dir..."
+	-@$(RM) -f ../$(DEV).tar.xz*
+	@(dir=`mktemp -d`; mkdir $$dir/$(DEV); cp -a . $$dir/$(DEV); \
+	  cd $$dir; tar --exclude=.git --exclude=contrib             \
+                        -c -J -f $(DEV).tar.xz $(DEV);               \
+	  cd - >/dev/null; mv $$dir/$(DEV).tar.xz ../; cd ..;        \
+	  rm -rf $$dir; md5sum $(DEV).tar.xz | tee $(DEV).tar.xz.md5)
 
 # Include automatically generated rules, such as:
 # uncgi.o: .../some/dir/uncgi.c /usr/include/stdio.h

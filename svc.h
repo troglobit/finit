@@ -30,8 +30,6 @@
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 
-#include "plugin.h"
-
 typedef enum {
 	SVC_STOP = 0,		/* Disabled */
 	SVC_START,		/* Enabled */
@@ -57,9 +55,10 @@ typedef struct svc {
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
 	char           username[MAX_USER_LEN];
+
 	/* Public */
-	int	       reload; /* For external plugins. */
-	plugin_svc_t  *plugin;
+	int	       reload;   /* For external plugins. */
+	int            private;  /* For callbacks to use freely, possibly to store "states", set by plugin. */
 } svc_t;
 
 typedef struct svc_map svc_map_t;
@@ -96,13 +95,11 @@ svc_t    *svc_iterator      (int restart);
 
 int       svc_register      (char *line, char *username);
 int       svc_id_by_name    (char *name);
-svc_cmd_t svc_enabled	    (svc_t *svc, int dynamic);
+svc_cmd_t svc_enabled	    (svc_t *svc, int event, void *arg);
 int       svc_start         (svc_t *svc);
 int       svc_start_by_name (char *name);
 int       svc_stop          (svc_t *svc);
 int       svc_reload        (svc_t *svc);
-void      svc_start_all     (void);
-void      svc_monitor       (void);
 
 #endif	/* FINIT_SVC_H_ */
 
