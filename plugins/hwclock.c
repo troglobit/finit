@@ -28,13 +28,15 @@
 static void save(void *UNUSED(arg))
 {
 	_d("Saving system clock to RTC ...");
-	run_interactive("/sbin/hwclock --systohc --utc", "Saving system time (UTC) to RTC");
+	/* -w,--systohc, -u,--utc */
+	run_interactive("/sbin/hwclock -w -u", "Saving system time (UTC) to RTC");
 }
 
 static void restore(void *UNUSED(arg))
 {
 	_d("Restoring system clock from RTC ...");
-	run_interactive("/sbin/hwclock --hctosys --utc", "Restoring system clock (UTC) from RTC");
+	/* -s,--hctosys, -u,--utc */
+	run_interactive("/sbin/hwclock -s -u", "Restoring system clock (UTC) from RTC");
 }
 
 static plugin_t plugin = {
