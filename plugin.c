@@ -84,7 +84,7 @@ int plugin_register(plugin_t *plugin)
 	}
 
 	if (!inuse) {
-		_e("No service \"%s\" loaded, and no I/O or finit hooks, skipping plugin.", basename(plugin->name));
+		_d("No service \"%s\" loaded, and no I/O or finit hooks, skipping plugin.", basename(plugin->name));
 		return 1;
 	}
 
@@ -173,15 +173,16 @@ static void init_plugins(void)
 	PLUGIN_ITERATOR(p) {
 		if (is_io_plugin(p)) {
 			_d("Initializing plugin %s for I/O", basename(p->name));
-			fds[i].revents    = 0;
-			fds[i].events     = p->io.flags;
-			fds[num_fds++].fd = p->io.fd;
+			fds[i].revents = 0;
+			fds[i].events  = p->io.flags;
+			fds[i++].fd    = p->io.fd;
 		}
 	}
 }
 
 int plugin_load_all(char *path)
 {
+	int fail = 0;
 	DIR *dp = opendir(path);
 	struct dirent *entry;
 
@@ -194,25 +195,28 @@ int plugin_load_all(char *path)
 		char *ext = entry->d_name + strlen(entry->d_name) - 3;
 
 		if (!strcmp(ext, ".so")) {
+			int result = 0;
 			void *handle;
 			char plugin[1024];
 
 			snprintf(plugin, sizeof(plugin), "%s/%s", path, entry->d_name);
-			print_desc("   Loading plugin ", basename(plugin));
+//			print_desc("   Loading plugin ", basename(plugin));
 			handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
 			if (!handle) {
 				_d("Failed loading plugin %s: %s", plugin, dlerror());
-				print_result(1);
-				return 1;
+				result = 1;
 			}
-			print_result(0);
+			if (result)
+				fail++;
+
+//			print_result(result);
 		}
 	}
 
 	closedir(dp);
 	init_plugins();
 
-	return 0;
+	return fail;
 }
 
 /**

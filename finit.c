@@ -49,6 +49,7 @@ static void parse_kernel_cmdline(void)
 
 	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
 		fgets(line, sizeof(line), fp);
+		_d("Kernel command line: %s", line);
 
 		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
 			debug = 1;
@@ -92,15 +93,6 @@ int main(int UNUSED(args), char *argv[])
 	umask(022);
 
 	/*
-	 * Populate /dev and prepare for runtime events from kernel.
-	 */
-#if defined(USE_UDEV)
-	run_interactive("udevd --daemon", "Populating device tree");
-#elif defined (MDEV)
-	run_interactive(MDEV "-s", "Populating device tree");
-#endif
-
-	/*
 	 * Parse kernel parameters
 	 */
 	parse_kernel_cmdline();
@@ -109,9 +101,26 @@ int main(int UNUSED(args), char *argv[])
 	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
 
 	/*
+	 * Populate /dev and prepare for runtime events from kernel.
+	 */
+#if defined(USE_UDEV)
+	run_interactive("udevd --daemon", "Populating device tree");
+#elif defined (MDEV)
+	run_interactive(MDEV " -s", "Populating device tree");
+#endif
+
+	/*
 	 * Parse configuration file
 	 */
 	parse_finit_conf(FINIT_CONF);
+
+	/*
+	 * Load plugins.  Must run after finit.conf has registered
+	 * all services, or service plugins won't have anything to
+	 * hook on to.
+	 */
+	print_desc("", "Loading plugins");
+	print_result(plugin_load_all(PLUGIN_PATH));
 
 	/*
 	 * Mount filesystems
@@ -124,6 +133,9 @@ int main(int UNUSED(args), char *argv[])
 #ifdef SYSROOT
 	run(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
+	_d("Root FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_ROOTFS_UP);
+
 	umask(0);
 	run("/bin/mount -na");
 	run("/sbin/swapon -ea");
@@ -137,13 +149,7 @@ int main(int UNUSED(args), char *argv[])
 	 */
 	sig_setup();
 
-	/*
-	 * Load plugins and run first level hooks.
-	 */
-	_d("Loading plugins ...");
-	plugin_load_all(PLUGIN_PATH);
-
-	_d("Running first level hooks ...");
+	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*

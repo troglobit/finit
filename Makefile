@@ -26,14 +26,15 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 # Top directory for building complete system, fall back to this directory
-ROOTDIR    ?= $(shell pwd)
+ROOTDIR     = $(shell pwd)
 
 #VERSION    ?= $(shell git tag -l | tail -1)
 VERSION    ?= 1.4
-EXEC        = finit
-PKG         = $(EXEC)-$(VERSION)
-DEV         = $(EXEC)-dev
+NAME        = finit
+PKG         = $(NAME)-$(VERSION)
+DEV         = $(NAME)-dev
 ARCHIVE     = $(PKG).tar.xz
+EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h
 DISTFILES   = LICENSE README ChangeLog finit.conf services
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
@@ -45,7 +46,8 @@ DEPS        = $(addprefix .,$(SRCS:.c=.d))
 prefix     ?= /usr
 sysconfdir ?= /etc
 sbindir    ?= /sbin
-plugindir  ?= /lib/finit/plugins
+libdir     ?= /lib
+plugindir  ?= $(libdir)/finit/plugins
 incdir      = $(prefix)/include/finit
 datadir     = $(prefix)/share/doc/finit
 mandir      = $(prefix)/share/man/man8
@@ -58,22 +60,28 @@ FINIT_RCSD ?= $(sysconfdir)/finit.d
 CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
-CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
+CPPFLAGS   += -Ilibite -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
 CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(plugindir)\"
-LDFLAGS    += -rdynamic
-LDLIBS     += -ldl
+LDFLAGS    += -rdynamic -L$(ROOTDIR)/libite
+DEPLIBS     = libite/libite.so
+LDLIBS     += -ldl -lite
 
 include common.mk
-export plugindir ROOTDIR CPPFLAGS
+export libdir plugindir incdir ROOTDIR CPPFLAGS LDFLAGS LDLIBS
 
-all: Makefile $(EXEC)
+all: $(DEPLIBS) $(EXEC)
 	$(MAKE) -C plugins $@
+
+$(DEPLIBS): Makefile
+	$(MAKE) -C libite all
 
 $(OBJS): Makefile
 
-$(EXEC): $(OBJS)
+finit: $(OBJS) $(DEPLIBS)
+
+reboot: reboot.o $(DEPLIBS)
 
 install-exec: all
 	@$(INSTALL) -d $(DESTDIR)$(FINIT_RCSD)
@@ -82,6 +90,7 @@ install-exec: all
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
 		$(STRIPINST) $$file $(DESTDIR)$(sbindir)/$$file; 	\
 	done
+	$(MAKE) -C libite  install-exec
 	$(MAKE) -C plugins install
 
 install-data:
@@ -98,6 +107,7 @@ install-dev:
 		printf "  INSTALL $(DESTDIR)$(incdir)/$$file\n";	\
 		$(INSTALL) -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
+	$(MAKE) -C libite install-dev install-exec
 
 install: install-exec install-data install-dev
 
@@ -108,6 +118,7 @@ uninstall-exec:
 	done
 	-@rmdir $(DESTDIR)$(sbindir) 2>/dev/null
 	-@rmdir $(DESTDIR)$(FINIT_RCSD) 2>/dev/null
+	$(MAKE) -C libite  uninstall
 	$(MAKE) -C plugins uninstall
 
 uninstall-data:
@@ -119,20 +130,18 @@ uninstall-data:
 	-@rmdir $(DESTDIR)$(datadir)
 
 uninstall-dev:
-	-@for file in $(HEADERS); do 					\
-		printf "  REMOVE  $(DESTDIR)$(incdir)/$$file\n";	\
-		rm $(DESTDIR)$(incdir)/$$file 2>/dev/null; 		\
-	done
-	-@rmdir $(DESTDIR)$(incdir)
+	-@$(RM) -rf $(DESTDIR)$(incdir)
 
 uninstall: uninstall-exec uninstall-data uninstall-dev
 
 clean:
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
+	$(MAKE) -C libite  $@
 	$(MAKE) -C plugins $@
 
 distclean: clean
-	-@$(RM) $(JUNK)  unittest *.o
+	-@$(RM) $(JUNK) unittest *.o .*.d
+	$(MAKE) -C libite  $@
 	$(MAKE) -C plugins $@
 
 dist:

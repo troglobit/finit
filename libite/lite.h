@@ -1,4 +1,4 @@
-/* Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
+/* Collection of utility funcs and C library extensions for finit & its plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
@@ -22,55 +22,34 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_H_
-#define FINIT_H_
+#ifndef FINIT_LITE_H_
+#define FINIT_LITE_H_
 
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-/* Distribution configuration */
+int     fexist     (char *file);
+int     fisdir     (char *file);
+mode_t  fmode      (char *file);
 
-#if defined EMBEDDED_SYSTEM
-# define CONSOLE        "/dev/console"
-# define MDEV           "/sbin/mdev"
-# define GETTY          "/sbin/getty -L 115200 ttyS0 vt100"
-#else /* Debian/Ubuntu based distributions */
-# define RANDOMSEED	"/var/lib/urandom/random-seed"
-# define CONSOLE        "/dev/tty1"
-# define GETTY		"/sbin/getty -8 38400 tty1"
-# define REMOUNT_ROOTFS_RW
-# define RUNLEVEL	2
-# define USE_UDEV
-# define USE_MESSAGE_BUS
-#endif
+ssize_t copyfile   (char *src, char *dst, int len);
+int     movefile   (char *src, char *dst);
+int     copy_filep (FILE *src, FILE *dst);
 
-#ifndef DEFUSER
-# define DEFUSER "root"
-#endif
-#ifndef DEFHOST
-# define DEFHOST "noname"
-#endif
+int     dir        (const char *dir, const char *type, int (*filter) (const char *file), char ***list, int strip);
+int     rsync      (char *src, char *dst, int delete, int (*filter) (const char *file));
 
-#define CMD_SIZE  256
-#define LINE_SIZE 1024
-#define BUF_SIZE  4096
-#define USERNAME_SIZE 16
-#define HOSTNAME_SIZE 32
+static inline int fisslashdir(char *dir)
+{
+   if (!dir)             return 0;
+   if (strlen (dir) > 0) return dir[strlen (dir) - 1] == '/';
+                         return 0;
+}
 
-extern char *sdown;
-extern char *network;
-extern char *hostname;
-extern char *username;
-
-/* conf.c */
-void parse_finit_conf(char *file);
-
-#endif /* FINIT_H_ */
+#endif /* FINIT_LITE_H_ */
 
 /**
  * Local Variables:
@@ -79,3 +58,4 @@ void parse_finit_conf(char *file);
  *  c-file-style: "linux"
  * End:
  */
+

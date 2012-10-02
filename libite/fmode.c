@@ -1,7 +1,6 @@
-/* Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
+/* File mode bit operations
  *
- * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008 Claudio Matsuoka <http://helllabs.org/finit/>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,55 +21,32 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_H_
-#define FINIT_H_
-
 #include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* Distribution configuration */
+/**
+ * fmode - Return a file's mode bits.
+ * @file: File to look for, with full path.
+ *
+ * Returns:
+ * The mode bits or zero when @file does not exist and errno set to %ENOENT.
+ */
+mode_t fmode(char *file)
+{
+	struct stat sb;
 
-#if defined EMBEDDED_SYSTEM
-# define CONSOLE        "/dev/console"
-# define MDEV           "/sbin/mdev"
-# define GETTY          "/sbin/getty -L 115200 ttyS0 vt100"
-#else /* Debian/Ubuntu based distributions */
-# define RANDOMSEED	"/var/lib/urandom/random-seed"
-# define CONSOLE        "/dev/tty1"
-# define GETTY		"/sbin/getty -8 38400 tty1"
-# define REMOUNT_ROOTFS_RW
-# define RUNLEVEL	2
-# define USE_UDEV
-# define USE_MESSAGE_BUS
-#endif
+	if (!file) {
+		errno = EINVAL;
+		return 0;	/* Doesn't exist ... */
+	}
 
-#ifndef DEFUSER
-# define DEFUSER "root"
-#endif
-#ifndef DEFHOST
-# define DEFHOST "noname"
-#endif
+	if (!stat(file, &sb))
+		return sb.st_mode;
 
-#define CMD_SIZE  256
-#define LINE_SIZE 1024
-#define BUF_SIZE  4096
-#define USERNAME_SIZE 16
-#define HOSTNAME_SIZE 32
-
-extern char *sdown;
-extern char *network;
-extern char *hostname;
-extern char *username;
-
-/* conf.c */
-void parse_finit_conf(char *file);
-
-#endif /* FINIT_H_ */
+	return 0;
+}
 
 /**
  * Local Variables:

@@ -29,6 +29,7 @@
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"
+#include "lite.h"
 #include "svc.h"
 
 /* The registered services are kept in shared memory for easy read-only access
@@ -269,6 +270,7 @@ int svc_start(svc_t *svc)
 {
 	int respawn = svc->pid != 0;
 	pid_t pid;
+        sigset_t nmask, omask;
 	char *args[MAX_NUM_SVC_ARGS];
 
 	/* Ignore if finit is SIGSTOP'ed */
@@ -278,11 +280,21 @@ int svc_start(svc_t *svc)
 	if (!respawn)
 		print_desc("Starting ", svc->desc);
 
+        /* Block sigchild while forking.  */
+        sigemptyset(&nmask);
+        sigaddset(&nmask, SIGCHLD);
+        sigprocmask(SIG_BLOCK, &nmask, &omask);
+
 	pid = fork();
+        sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (pid == 0) {
 		int i = 0;
 		int uid = getuser(svc->username);
 		struct sigaction sa;
+
+                sigemptyset(&nmask);
+                sigaddset(&nmask, SIGCHLD);
+                sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
 		/* Reset signal handlers that were set by the parent process */
                 for (i = 1; i < NSIG; i++)
@@ -298,16 +310,23 @@ int svc_start(svc_t *svc)
 		args[i] = NULL;
 
 		if (debug) {
-			int fd = open (CONSOLE, O_WRONLY | O_APPEND);
+			int fd;
+			char buf[256] = "";
+
+			fd = open (CONSOLE, O_WRONLY | O_APPEND);
 			if (-1 != fd) {
 				dup2(STDOUT_FILENO, fd);
 				dup2(STDERR_FILENO, fd);
 			}
 
-			_e("%starting %s ", respawn ? "Res" : "S", svc->cmd);
-			for (i = 0; args[i] && i < MAX_NUM_SVC_ARGS; i++)
-				_e("%s ", args[i]);
-			_e("");
+			for (i = 0; args[i] && i < MAX_NUM_SVC_ARGS; i++) {
+				char arg[MAX_ARG_LEN];
+
+				snprintf(arg, sizeof(arg), "%s ", args[i]);
+				if ((sizeof(buf) - strlen(buf)) < strlen(arg))
+					strcat(buf, arg);
+			}
+			_e("%starting %s: %s", respawn ? "Res" : "S", svc->cmd, buf);
 		}
 
 		execvp(svc->cmd, args);
@@ -383,9 +402,9 @@ void svc_start_all(void)
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		cmd = svc_enabled(svc, 0, NULL);
-		if (cmd == SVC_START || (cmd == SVC_RELOAD && svc->pid == 0))
+		if (SVC_START == cmd  || (SVC_RELOAD == cmd && svc->pid == 0))
 			svc_start(svc);
-		else if (cmd == SVC_RELOAD)
+		else if (SVC_RELOAD == cmd)
 			svc_reload(svc);
 	}
 

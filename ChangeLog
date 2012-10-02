@@ -1,3 +1,15 @@
+1.4 (20121002)
+	- Fix I/O plugin watcher and load plugins earlier for a new hook
+	- Start refactoring helpers.c into a libite.so (-lite).  This
+	  means other user space applications/daemons can make use of
+	  the neat toolbox available in finit
+	- Use short-form -s/-w -u to work with BusyBox hwclock as well
+	- Use RTLD_GLOBAL flag to tell dynamic loader to load dependent
+	  .so files as well.  Lets other plugins use global symbols.
+	- Greatly simplify svc hook for external plugins and cleanup
+	  the plugin API.
+	- And more... see the GIT log for more details.
+
 1.3 (20120928)
 	- Cleanup public plugin API a bit and add new pid/pidfile funcs
 	- Add plugin hook to end of service startup

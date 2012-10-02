@@ -27,17 +27,18 @@
 
 #include <stdio.h>
 #include <syslog.h>
-#include <unistd.h>		/* access() */
 
 #define DO_LOG(level, fmt, args...)				\
 {								\
 	openlog("finit", LOG_CONS | LOG_PID, LOG_DAEMON);	\
-	syslog(LOG_DEBUG, fmt, ##args);				\
+	syslog(level, fmt, ##args);				\
 	closelog();						\
 }
 
-#define DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
-#define ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
+#define FLOG_DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
+#define FLOG_ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
+#define FLOG_PERROR(fmt, args...) DO_LOG(LOG_CRIT, fmt ". Error %d: %s", ##args, errno, strerror(errno))
+
 
 #ifndef touch
 # define touch(x) mknod((x), S_IFREG|0644, 0)
@@ -48,34 +49,30 @@
 #ifndef blkdev
 # define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 #endif
-#ifndef fexist
-# define fexist(x) (access(x, F_OK) != -1)
-#endif
 
 #ifndef UNUSED
 #define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
 #endif
 
-#define echo(fmt, args...) do { if (verbose) { fprintf(stderr,                 fmt "\n", ##args); } } while (0)
-#define   _d(fmt, args...) do { if (debug)   { fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } } while (0)
-#define   _e(fmt, args...) do {                fprintf(stderr, "finit:%s() - " fmt "\n", __func__, ##args); } while (0)
-#define  _pe(fmt, args...) do {                fprintf(stderr, "finit:%s() - " fmt ". Error %d: %s\n", __func__, ##args, errno, strerror(errno)); } while (0)
+#define echo(fmt, args...) do { if (verbose) { fprintf(stderr,                    fmt "\n", ##args); } } while (0)
+#define   _d(fmt, args...) do { if (debug)   { fprintf(stderr, "finit:%s() - "    fmt "\n", __func__, ##args); } } while (0)
+#define   _e(fmt, args...) do {                fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
+#define  _pe(fmt, args...) do {                fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
 
-extern int   debug;
-extern int   verbose;
+extern int debug;
+extern int verbose;
 
 int	makepath	(char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
-void	copyfile	(char *src, char *dst, int size);
 
-pid_t   pidfile_read    (const char *pidfile);
-pid_t   pidfile_poll    (char *cmd, const char *path);
+pid_t   pidfile_read    (char *pidfile);
+pid_t   pidfile_poll    (char *cmd, char *path);
 
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);
 
-void    procname_set    (const char *name, char *args[]);
-int     procname_kill   (const char *name, int signo);
+void    procname_set    (char *name, char *args[]);
+int     procname_kill   (char *name, int signo);
 
 void    print_desc     (char *action, char *desc);
 int     print_result    (int fail);

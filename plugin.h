@@ -40,7 +40,8 @@
  * Predefined hook points for easier plugin debugging 
  */
 typedef enum {
-	HOOK_BASEFS_UP = 0,
+	HOOK_ROOTFS_UP = 0,
+	HOOK_BASEFS_UP,
 	HOOK_NETWORK_UP,
 	HOOK_SYSTEM_UP,
 	HOOK_SVC_UP,

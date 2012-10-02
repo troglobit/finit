@@ -48,6 +48,7 @@
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"
+#include "lite.h"
 
 #define NUM_ARGS    16
 #define NUM_SCRIPTS 128		/* ought to be enough for anyone */
@@ -93,10 +94,14 @@ void ifconfig(char *ifname, char *addr, char *mask, int up)
 	ifr.ifr_addr.sa_family = AF_INET;
 
 	if (up) {
-		inet_aton(addr, &a->sin_addr);
-		ioctl(sock, SIOCSIFADDR, &ifr);
-		inet_aton(mask, &a->sin_addr);
-		ioctl(sock, SIOCSIFNETMASK, &ifr);
+		if (addr) {
+			inet_aton(addr, &a->sin_addr);
+			ioctl(sock, SIOCSIFADDR, &ifr);
+		}
+		if (mask) {
+			inet_aton(mask, &a->sin_addr);
+			ioctl(sock, SIOCSIFNETMASK, &ifr);
+		}
 	}
 
 	ioctl(sock, SIOCGIFFLAGS, &ifr);
@@ -112,30 +117,6 @@ void ifconfig(char *ifname, char *addr, char *mask, int up)
 }
 
 
-void copyfile(char *src, char *dst, int size)
-{
-	char buffer[BUF_SIZE];
-	int s, d, n;
-
-	/* Size == 0 means copy entire file */
-	if (size == 0)
-		size = INT_MAX;
-
-	if ((s = open(src, O_RDONLY)) >= 0) {
-		if ((d = open(dst, O_WRONLY | O_CREAT, 0644)) >= 0) {
-			do {
-				int csize = size > BUF_SIZE ?  BUF_SIZE : size;
-		
-				if ((n = read(s, buffer, csize)) > 0)
-					write(d, buffer, n);
-				size -= csize;
-			} while (size > 0 && n == BUF_SIZE);
-			close(d);
-		}
-		close(s);
-	}
-}
-
 /**
  * pidfile_read - Reads a PID value from a pidfile.
  * @pidfile: File containing PID, usually in /var/run/<PROC>.pid
@@ -148,7 +129,7 @@ void copyfile(char *src, char *dst, int size)
  * be translated this function returns zero (0), on success this function returns
  * a PID value greater than one. PID 1 is reserved for the system init process.
  */
-pid_t pidfile_read(const char *pidfile)
+pid_t pidfile_read(char *pidfile)
 {
    pid_t pid = 0;
    char buf[16];
@@ -189,7 +170,7 @@ pid_t pidfile_read(const char *pidfile)
  * Returns:
  * The PID read from @path, or zero on timeout.
  */
-pid_t pidfile_poll(char *cmd, const char *path)
+pid_t pidfile_poll(char *cmd, char *path)
 {
 	pid_t pid = 0;
 	int tries = 0;
@@ -275,7 +256,7 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
  * @name: New name of process
  * @args: The process' argv[] vector.
  */
-void procname_set(const char *name, char *args[])
+void procname_set(char *name, char *args[])
 {
 	size_t len = strlen(args[0]) + 1; /* Include terminating '\0' */
 
@@ -296,7 +277,7 @@ void procname_set(const char *name, char *args[])
  * Returns:
  * Number of signals sent, i.e. number of processes who have received the signal.
  */
-int procname_kill (const char *name, int signo)
+int procname_kill (char *name, int signo)
 {
 	int result = 0;
 	char path[32], line[64];
@@ -327,7 +308,7 @@ int procname_kill (const char *name, int signo)
 				int error = errno;
 
 				if (kill(atoi(entry->d_name), signo)) {
-					ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
+					FLOG_ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
 				} else {
 					result++; /* Track number of processes we deliver the signal to. */
 				}
@@ -547,15 +528,13 @@ pid_t run_getty(char *cmd, char *argv[])
 		if (open(CONSOLE, O_RDWR) != 0)
 			exit(1);
 
-		sigemptyset(&sa.sa_mask);
-		sa.sa_handler = SIG_DFL;
-
 		sigemptyset(&nmask);
 		sigaddset(&nmask, SIGCHLD);
 		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
-		for (i = 1; i < NSIG; i++)
-			sigaction(i, &sa, NULL);
+		/* Reset signal handlers that were set by the parent process */
+                for (i = 1; i < NSIG; i++)
+			DFLSIG(sa, i, 0);
 
 		dup2(0, STDIN_FILENO);
 		dup2(0, STDOUT_FILENO);

@@ -1,7 +1,8 @@
 # Plugin based services architecture for finit -*-Makefile-*-
-CFLAGS      = -fPIC -g -Os
+CFLAGS     += -fPIC -Os
 CPPFLAGS   += -I..
-LDFLAGS     = -shared 
+LDFLAGS    := $(filter-out -rdynamic, $(LDFLAGS))
+LDFLAGS    += -shared
 PLUGINS    ?= initctl.so alsa-utils.so bootmisc.so dbus.so hwclock.so \
 	      resolvconf.so urandom.so x11-common.so
 DEPS        = $(addprefix .,$(PLUGINS:.so=.d))

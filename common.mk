@@ -2,7 +2,7 @@
 JUNK       = *~ *.bak *.aux *.dvi *.idx *.ind *.log *.ps *.map .*.d DEADJOE semantic.cache *.gdb *.elf core core.*
 MAKE      := @$(MAKE)
 MAKEFLAGS  = --no-print-directory --silent
-INSTALL   := install -b
+INSTALL   := install --backup=off
 STRIPINST := $(INSTALL) -s --strip-program=$(CROSS)strip -m 0755
 
 # Smart autodependecy generation via GCC -M.

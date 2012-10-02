@@ -26,9 +26,11 @@
 #include <fcntl.h>		/* O_RDONLY et al */
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>		/* read() */
 
 #include "helpers.h"
 #include "plugin.h"
+#include "sig.h"
 
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1
