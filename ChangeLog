@@ -1,6 +1,7 @@
-1.5 (UNRELEASED)
+1.5 (20121003)
 	- Use bootmisc plugin to setup standard FHS 2.3 structure in /var
 	- Added FLOG_WARN() syslog macro, for plugins
+	- Add plugin dependency resolver. Checks plugin_t for .depends
 
 1.4 (20121002)
 	- Fix I/O plugin watcher and load plugins earlier for a new hook

@@ -29,7 +29,7 @@
 ROOTDIR     = $(shell pwd)
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.4
+VERSION    ?= 1.5
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
