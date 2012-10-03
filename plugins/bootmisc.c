@@ -28,11 +28,31 @@
 #include "helpers.h"
 #include "plugin.h"
 
+/*
+ * Setup standard FHS 2.3 structure in /var, and
+ * write runlevel to UTMP, needed by, e.g., printerdrake.
+ */
 static void setup(void *UNUSED(arg))
 {
 #ifdef RUNLEVEL
 	struct utmp entry;
 #endif
+
+	_d("Setting up FHS structure in /var ...");
+	mkdir("/var/cache",      0755);
+	mkdir("/var/games",      0755);
+	mkdir("/var/lib",        0755);
+	mkdir("/var/lib/misc",   0755);
+	mkdir("/var/lib/alarm",  0755);
+	mkdir("/var/lock",       0755);
+	mkdir("/var/log",        0755);
+	mkdir("/var/mail",       0755);
+	mkdir("/var/opt",        0755);
+	mkdir("/var/run",        0755);
+	mkdir("/var/spool",      0755);
+	mkdir("/var/spool/cron", 0755);
+	mkdir("/var/tmp",        0755);
+	mkdir("/var/empty",      0755);
 
 	_d("Setting up necessary UTMP files ...");
 	touch("/var/run/utmp");
@@ -55,6 +75,10 @@ static void setup(void *UNUSED(arg))
 #endif
 
 	_d("Setting up misc files ...");
+	mkdir("/var/run/lldpd",  0755); /* Needed by lldpd */
+	mkdir("/var/run/pluto",  0755); /* Needed by Openswan */
+	mkdir("/var/run/quagga", 0755); /* Needed by Quagga */
+	mkdir("/var/log/quagga", 0755); /* Needed by Quagga */
 	mkdir("/var/run/sshd", 01755); /* OpenSSH  */
 	mkfifo("/dev/xconsole", 0640); /* sysklogd */
 	chown("/dev/xconsole", 0, getgroup("tty"));
