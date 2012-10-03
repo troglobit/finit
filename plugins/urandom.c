@@ -44,6 +44,7 @@ static plugin_t plugin = {
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
+	.depends = { "bootmisc", }
 };
 
 PLUGIN_INIT(plugin_init)

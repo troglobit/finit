@@ -26,18 +26,22 @@
 #include <dirent.h>		/* readdir() et al */
 #include <poll.h>
 #include <string.h>
-#include <sys/queue.h>		/* BSD sys/queue.h API */
 
 #include "finit.h"
 #include "private.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "queue.h"		/* BSD sys/queue.h API */
+#include "lite.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 
-static size_t        num_fds = 0;
+static char         *plugpath = NULL; /* Set by first load. */
+static size_t        num_fds  = 0;
 static struct pollfd fds[MAX_NUM_FDS];
-static LIST_HEAD(, plugin) plugins = LIST_HEAD_INITIALIZER();
+static TAILQ_HEAD(, plugin) plugins = TAILQ_HEAD_INITIALIZER(plugins);
+
+static void check_plugin_depends(plugin_t *plugin);
 
 int plugin_register(plugin_t *plugin)
 {
@@ -56,6 +60,14 @@ int plugin_register(plugin_t *plugin)
 		else
 			plugin->name = (char *)info.dli_fname;
 	}
+
+	/* Already registered? */
+	if (plugin_find(plugin->name)) {
+		_d("... %s already loaded.", plugin->name);
+		return 0;
+	}
+
+	check_plugin_depends(plugin);
 
 	if (is_io_plugin(plugin)) {
 		if (num_fds + 1 >= MAX_NUM_FDS) {
@@ -88,14 +100,14 @@ int plugin_register(plugin_t *plugin)
 		return 1;
 	}
 
-	LIST_INSERT_HEAD(&plugins, plugin, link);
+	TAILQ_INSERT_TAIL(&plugins, plugin, link);
 
 	return 0;
 }
 
 int plugin_unregister(plugin_t *plugin)
 {
-	LIST_REMOVE(plugin, link);
+	TAILQ_REMOVE(&plugins, plugin, link);
 
 	if (plugin->svc.cb) {
 		svc_t *svc = svc_find(plugin->name);
@@ -111,12 +123,64 @@ int plugin_unregister(plugin_t *plugin)
 	return 0;
 }
 
+
+#define SEARCH_PLUGIN(str)						\
+	PLUGIN_ITERATOR(p, tmp) {					\
+		_d("Comparing %s against plugin %s", str, p->name);	\
+		if (!strcmp(p->name, str))				\
+			return p;					\
+	}
+
+/**
+ * plugin_find - Find a plugin by name
+ * @name: With or without path, or .so extension
+ *
+ * This function uses an opporunistic search for a suitable plugin and
+ * returns the first match.  Albeit with at least some measure of
+ * heuristics.
+ *
+ * First it checks for an exact match.  If no match is found and @name
+ * starts with a slash the search ends.  Otherwise a new search with the
+ * plugin path prepended to @name is made.  Also, if @name does not end
+ * with .so it too is added to @name before searching.
+ *
+ * Returns:
+ * On success the pointer to the matching &plugin_t is returned,
+ * otherwise %NULL is returned.
+ */
+plugin_t *plugin_find(char *name)
+{
+	plugin_t *p, *tmp;
+
+	if (!name) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	SEARCH_PLUGIN(name);
+
+	if (name[0] != '/') {
+		int noext;
+		char path[256];
+
+		noext = strcmp(name + strlen(name) - 3, ".so");
+		snprintf (path, sizeof(path), "%s%s%s%s", plugpath,
+			  fisslashdir(plugpath) ? "" : "/",
+			  name, noext ? ".so" : "");
+
+		SEARCH_PLUGIN(path);
+	}
+
+	errno = ENOENT;
+	return NULL;
+}
+
 /* Private daemon API *******************************************************/
 void plugin_run_hooks(hook_point_t no)
 {
-	plugin_t *p;
+	plugin_t *p, *tmp;
 
-	PLUGIN_ITERATOR(p) {
+	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
 			_d("Calling %s hook n:o %d from runloop...", basename(p->name), no);
 			p->hook[no].cb(p->hook[no].arg);
@@ -127,10 +191,10 @@ void plugin_run_hooks(hook_point_t no)
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
 static void generic_io_cb(int fd, int events)
 {
-	plugin_t *p;
+	plugin_t *p, *tmp;
 
 	/* Find matching plugin, pick first matching fd */
-	PLUGIN_ITERATOR(p) {
+	PLUGIN_ITERATOR(p, tmp) {
 		if (is_io_plugin(p) && p->io.fd == fd) {
 			_d("Calling I/O %s from runloop...", basename(p->name));
 			p->io.cb(p->io.arg, fd, events);
@@ -168,15 +232,79 @@ void plugin_monitor(void)
 static void init_plugins(void)
 {
 	int i = 0;
-	plugin_t *p;
+	plugin_t *p, *tmp;
 
-	PLUGIN_ITERATOR(p) {
+	PLUGIN_ITERATOR(p, tmp) {
 		if (is_io_plugin(p)) {
 			_d("Initializing plugin %s for I/O", basename(p->name));
 			fds[i].revents = 0;
 			fds[i].events  = p->io.flags;
 			fds[i++].fd    = p->io.fd;
 		}
+	}
+}
+
+
+/**
+ * load_one - Load one plugin
+ * @path: Path to finit plugins, usually %PLUGIN_PATH
+ * @name: Name of plugin, optionally ending in ".so"
+ *
+ * Loads a plugin from @path/@name[.so].  Note, if ".so" is missing from
+ * the plugin @name it is added before attempting to load.
+ *
+ * It is up to the plugin itself ot register itself as a "ctor" with the
+ * %PLUGIN_INIT macro so that plugin_register() is called automatically.
+ *
+ * Returns:
+ * POSIX OK(0) on success, non-zero otherwise.
+ */
+static int load_one(char *path, char *name)
+{
+	int noext;
+	char plugin[256];
+	void *handle;
+
+	if (!path || !fisdir(path)) {
+		errno = EINVAL;
+		return 1;
+	}
+
+	noext = strcmp(name + strlen(name) - 3, ".so");
+	snprintf(plugin, sizeof(plugin), "%s/%s%s", path, name, noext ? ".so" : "");
+	_d("Loading plugin %s ...", basename(plugin));
+	handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
+	if (!handle) {
+		_d("Failed loading plugin %s: %s", plugin, dlerror());
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * check_plugin_depends - Check and load any plugins this one depends on.
+ * @plugin: Plugin with possible depends to check
+ *
+ * Very simple dependency resolver, should actually load the plugin of
+ * the correct .name, but currently loads a matching filename.
+ *
+ * Works, but only for now.  A better way might be to have a try_load()
+ * that actually loads all plugins and checks their &plugin_t for the
+ * correct .name.
+ */
+static void check_plugin_depends(plugin_t *plugin)
+{
+	int i;
+
+	for (i = 0; i < PLUGIN_DEP_MAX && plugin->depends[i]; i++) {
+		_d("Plugin %s depends on %s ...", plugin->name, plugin->depends[i]);
+		if (plugin_find(plugin->depends[i])) {
+			_d("OK plugin %s was already loaded.", plugin->depends[i]);
+			continue;
+		}
+
+		load_one(plugpath, plugin->depends[i]);
 	}
 }
 
@@ -190,27 +318,13 @@ int plugin_load_all(char *path)
 		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
 		return 1;
 	}
+	plugpath = path;
 
 	while ((entry = readdir(dp))) {
-		char *ext = entry->d_name + strlen(entry->d_name) - 3;
-
-		if (!strcmp(ext, ".so")) {
-			int result = 0;
-			void *handle;
-			char plugin[1024];
-
-			snprintf(plugin, sizeof(plugin), "%s/%s", path, entry->d_name);
-//			print_desc("   Loading plugin ", basename(plugin));
-			handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
-			if (!handle) {
-				_d("Failed loading plugin %s: %s", plugin, dlerror());
-				result = 1;
-			}
-			if (result)
-				fail++;
-
-//			print_result(result);
-		}
+//		print_desc("   Loading plugin ", basename(plugin));
+		if (load_one(path, entry->d_name))
+			fail++;
+//		print_result(result);
 	}
 
 	closedir(dp);

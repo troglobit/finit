@@ -25,16 +25,17 @@
 #define FINIT_PLUGIN_H_
 
 #include <poll.h>
-#include <sys/queue.h>		/* BSD sys/queue.h API */
+#include "queue.h"		/* BSD sys/queue.h API */
 #include "svc.h"
 
+#define PLUGIN_DEP_MAX  10
 #define PLUGIN_IO_READ  POLLIN
 #define PLUGIN_IO_WRITE POLLOUT
 
 #define PLUGIN_INIT(x) static void __attribute__ ((constructor)) x(void)
 #define PLUGIN_EXIT(x) static void __attribute__ ((destructor))  x(void)
 
-#define PLUGIN_ITERATOR(x)  LIST_FOREACH(x, &plugins, link)
+#define PLUGIN_ITERATOR(x, tmp) TAILQ_FOREACH_SAFE(x, &plugins, link, tmp)
 
 /*
  * Predefined hook points for easier plugin debugging 
@@ -76,9 +77,9 @@ typedef enum {
  */
 typedef struct plugin {
 	/* BSD sys/queue.h linked list node. */
-	LIST_ENTRY(plugin) link;
+	TAILQ_ENTRY(plugin) link;
 
-	/* Plugin name, defaults to plugin path if unset.
+	/* Plugin name, defaults to basename of plugin path if unset.
 	 * NOTE: Must be same as @cmd for service plugins! */
 	char *name;
 
@@ -101,11 +102,16 @@ typedef struct plugin {
 		void  *arg;
 		void (*cb)(void *arg, int fd, int events);
 	} io;
+
+	char *depends[PLUGIN_DEP_MAX]; /* List of other .name's this depends on. */
 } plugin_t;
 
 /* Public plugin API */
 int plugin_register   (plugin_t *plugin);
 int plugin_unregister (plugin_t *plugin);
+
+/* Helper API */
+plugin_t *plugin_find (char *name);
 
 #endif	/* FINIT_PLUGIN_H_ */
 
