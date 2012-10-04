@@ -265,17 +265,19 @@ static int load_one(char *path, char *name)
 	char plugin[256];
 	void *handle;
 
-	if (!path || !fisdir(path)) {
+	if (!path || !fisdir(path) || !name) {
 		errno = EINVAL;
 		return 1;
 	}
 
+	/* Compose full path, with optional .so extension, to plugin */
 	noext = strcmp(name + strlen(name) - 3, ".so");
 	snprintf(plugin, sizeof(plugin), "%s/%s%s", path, name, noext ? ".so" : "");
+
 	_d("Loading plugin %s ...", basename(plugin));
 	handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
 	if (!handle) {
-		_d("Failed loading plugin %s: %s", plugin, dlerror());
+		_e("Failed loading plugin %s: %s", plugin, dlerror());
 		return 1;
 	}
 
@@ -321,6 +323,9 @@ int plugin_load_all(char *path)
 	plugpath = path;
 
 	while ((entry = readdir(dp))) {
+		if (entry->d_name[0] == '.')
+			continue; /* Skip . and .. directories */
+
 //		print_desc("   Loading plugin ", basename(plugin));
 		if (load_one(path, entry->d_name))
 			fail++;
