@@ -122,6 +122,11 @@ void parse_finit_conf(char *file)
 				network = build_cmd(NULL, x, CMD_SIZE);
 				continue;
 			}
+			if (MATCH_CMD(line, "runparts ", x)) {
+				if (rcsd) free(rcsd);
+				hostname = build_cmd(NULL, x, CMD_SIZE);
+				continue;
+			}
 			if (MATCH_CMD(line, "startx ", x)) {
 				svc_register(x, username);
 				continue;

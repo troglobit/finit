@@ -33,6 +33,7 @@
 #include "plugin.h"
 #include "svc.h"
 #include "sig.h"
+#include "lite.h"
 
 int   debug    = 0;
 int   verbose  = 1;
@@ -40,6 +41,7 @@ char *sdown    = NULL;
 char *network  = NULL;
 char *username = NULL;
 char *hostname = NULL;
+char *rcsd     = FINIT_RCSD;
 
 
 static void parse_kernel_cmdline(void)
@@ -181,8 +183,10 @@ int main(int UNUSED(args), char *argv[])
 	/*
 	 * Run startup scripts in /etc/finit.d/, if any.
 	 */
-	_d("Running startup scripts in /etc/finit.d/ ...");
-	run_parts(FINIT_RCSD);
+	if (rcsd && fisdir(rcsd)) {
+		_d("Running startup scripts in %s ...", rcsd);
+		run_parts(rcsd);
+	}
 
 	/*
 	 * Hooks that should run at the very end

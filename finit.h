@@ -66,6 +66,7 @@ extern char *sdown;
 extern char *network;
 extern char *hostname;
 extern char *username;
+extern char *rcsd;
 
 /* conf.c */
 void parse_finit_conf(char *file);
