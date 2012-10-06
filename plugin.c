@@ -161,7 +161,7 @@ plugin_t *plugin_find(char *name)
 
 	if (name[0] != '/') {
 		int noext;
-		char path[256];
+		char path[CMD_SIZE];
 
 		noext = strcmp(name + strlen(name) - 3, ".so");
 		snprintf (path, sizeof(path), "%s%s%s%s", plugpath,
@@ -262,7 +262,7 @@ static void init_plugins(void)
 static int load_one(char *path, char *name)
 {
 	int noext;
-	char plugin[256];
+	char plugin[CMD_SIZE];
 	void *handle;
 
 	if (!path || !fisdir(path) || !name) {

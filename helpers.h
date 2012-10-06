@@ -50,7 +50,9 @@
 #ifndef blkdev
 # define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
 #endif
-
+#ifndef S_ISEXEC
+# define S_ISEXEC(m) (((m) & S_IXUSR) == S_IXUSR)
+#endif
 #ifndef UNUSED
 #define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
 #endif
@@ -87,7 +89,7 @@ void    set_hostname    (char *hostname);
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
 pid_t   run_getty       (char *cmd, char *argv[]);
-int	run_parts	(char *dir, ...);
+int	run_parts	(char *dir, char *cmd);
 
 /* strlcpy.c */
 size_t strlcpy(char *dst, const char *src, size_t siz);

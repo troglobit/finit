@@ -39,7 +39,7 @@ mode_t fmode(char *file)
 
 	if (!file) {
 		errno = EINVAL;
-		return 0;	/* Doesn't exist ... */
+		return 0;
 	}
 
 	if (!stat(file, &sb))

@@ -59,7 +59,7 @@ static void setup(void *UNUSED(arg))
 	touch("/etc/resolvconf/run/enable-updates");
 
 	chdir("/etc/resolvconf/run/interface");
-	run_parts("/etc/resolvconf/update.d", "-i", NULL);
+	run_parts("/etc/resolvconf/update.d", "-i");
 	chdir("/");
 #endif /* USE_ETC_RESOLVCONF_RUN */
 }

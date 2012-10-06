@@ -185,7 +185,7 @@ int main(int UNUSED(args), char *argv[])
 	 */
 	if (rcsd && fisdir(rcsd)) {
 		_d("Running startup scripts in %s ...", rcsd);
-		run_parts(rcsd);
+		run_parts(rcsd, NULL);
 	}
 
 	/*

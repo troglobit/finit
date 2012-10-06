@@ -325,7 +325,7 @@ int svc_start(svc_t *svc)
 
 		if (debug) {
 			int fd;
-			char buf[256] = "";
+			char buf[CMD_SIZE] = "";
 
 			fd = open (CONSOLE, O_WRONLY | O_APPEND);
 			if (-1 != fd) {

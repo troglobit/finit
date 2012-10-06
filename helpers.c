@@ -566,81 +566,61 @@ pid_t run_getty(char *cmd, char *argv[])
 	return pid;
 }
 
-static int cmp(const void *s1, const void *s2)
+int run_parts(char *dir, char *cmd)
 {
-	return strcmp(*(char **)s1, *(char **)s2);
-}
+	struct dirent **e;
+	int i, num;
 
-int run_parts(char *dir, ...)
-{
-	DIR *d;
-	struct dirent *e;
-	struct stat st;
-	char *oldpwd = NULL;
-	char *ent[NUM_SCRIPTS];
-	int i, num = 0, argnum = 1;
-	char *args[NUM_ARGS];
-	va_list ap;
-
-	oldpwd = getcwd (NULL, 0);
-	if (chdir(dir)) {
-		if (oldpwd) free(oldpwd);
+	num = scandir(dir, &e, NULL, alphasort);
+	if (num < 0) {
+		_d("No files found in %s, skipping ...", dir);
 		return -1;
 	}
-	if ((d = opendir(dir)) == NULL) {
-		if (oldpwd) free(oldpwd);
-		return -1;
-	}
-
-	va_start(ap, dir);
-	while (argnum < NUM_ARGS && (args[argnum++] = va_arg(ap, char *)));
-	va_end(ap);
-
-	while ((e = readdir(d))) {
-		if (e->d_type == DT_REG && stat(e->d_name, &st) == 0) {
-			_d("Found %s/%s ...", dir, e->d_name);
-			if (st.st_mode & S_IXUSR) {
-				ent[num++] = strdup(e->d_name);
-				if (num >= NUM_SCRIPTS)
-					break;
-			}
-		}
-	}
-
-	closedir(d);
-
-	if (num == 0) {
-		if (oldpwd) free(oldpwd);
-		return 0;
-	}
-
-	qsort(ent, num, sizeof(char *), cmp);
 
 	for (i = 0; i < num; i++) {
 		int j = 0, status;
 		pid_t pid = 0;
+		mode_t mode;
+		char *args[NUM_ARGS];
+		char *name = e[i]->d_name;
+		char path[CMD_SIZE];
 
-		args[j++] = ent[i];
-		/* Check if S<NUM>service or K<NUM>service notation is used */
-		if (ent[i][0] == 'S' && isdigit(ent[i][1])) {
-			args[j++] = "start";
-		} else if (ent[i][0] == 'K' && isdigit(ent[i][1])) {
-			args[j++] = "stop";
+		snprintf(path, sizeof(path), "%s/%s", dir, name);
+		mode = fmode(path);
+		if (!S_ISEXEC(mode) || S_ISDIR(mode)) {
+			_d("Skipping %s ...", path);
+			continue;
+		}
+
+		/* Fill in args[], starting with full path to executable */
+		args[j++] = path;
+
+		/* If the callee didn't supply a run_parts() argument */
+		if (!cmd) {
+			/* Check if S<NUM>service or K<NUM>service notation is used */
+			_d("Checking if %s is a sysvinit startstop script ...", name);
+			if (name[0] == 'S' && isdigit(name[1])) {
+				args[j++] = "start";
+			} else if (name[0] == 'K' && isdigit(name[1])) {
+				args[j++] = "stop";
+			}
+		} else {
+			args[j++] = cmd;
 		}
 		args[j++] = NULL;
 
 		pid = fork();
 		if (!pid) {
-			_d("Calling %s ...", ent[i]);
-			execv(ent[i], args);
+			_d("Calling %s ...", path);
+			execv(path, args);
 			exit(0);
 		}
 		waitpid(pid, &status, 0);
-		free(ent[i]);
 	}
 
-	chdir(oldpwd);
-	free(oldpwd);
+	while (num--)
+		free(e[num]);
+	free(e);
 
 	return 0;
 }
