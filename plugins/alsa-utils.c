@@ -27,14 +27,14 @@
 
 static void save(void *UNUSED(arg))
 {
-	_d("Saving system clock to RTC ...");
-	run_interactive("/usr/sbin/alsactl store > /dev/null 2>&1", "Saving sound settings");
+	_d("Saving sound settings ...");
+	run_interactive("/usr/sbin/alsactl -g store", "Saving sound settings");
 }
 
 static void restore(void *UNUSED(arg))
 {
-	_d("Restoring system clock from RTC ...");
-	run_interactive("/usr/sbin/alsactl restore > /dev/null 2>&1", "Restoring sound settings");
+	_d("Restoring sound settings ...");
+	run_interactive("/usr/sbin/alsactl -g restore", "Restoring sound settings");
 }
 
 static plugin_t plugin = {

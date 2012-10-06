@@ -273,6 +273,20 @@ int svc_start(svc_t *svc)
         sigset_t nmask, omask;
 	char *args[MAX_NUM_SVC_ARGS];
 
+	if (!svc)
+		return 0;
+
+	/* Don't try and start service if it doesn't exist. */
+	if (!fexist(svc->cmd)) {
+		char msg[80];
+
+		snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
+		print_desc("", msg);
+		print_result(1);
+
+		return 0;
+	}
+
 	/* Ignore if finit is SIGSTOP'ed */
 	if (is_norespawn())
 		return 0;
@@ -329,7 +343,10 @@ int svc_start(svc_t *svc)
 			_e("%starting %s: %s", respawn ? "Res" : "S", svc->cmd, buf);
 		}
 
-		execvp(svc->cmd, args);
+		/* XXX: Maybe change to use execve() to be able to launch scripts? */
+		execv(svc->cmd, args);
+
+		/* Only reach this point if exec() fails. */
 		exit(0);
 	}
 	svc->pid = pid;

@@ -617,11 +617,17 @@ int run_parts(char *dir, ...)
 	qsort(ent, num, sizeof(char *), cmp);
 
 	for (i = 0; i < num; i++) {
+		int j = 0, status;
 		pid_t pid = 0;
-		int status;
 
-		args[0] = ent[i];
-		args[1] = NULL;
+		args[j++] = ent[i];
+		/* Check if S<NUM>service or K<NUM>service notation is used */
+		if (ent[i][0] == 'S' && isdigit(ent[i][1])) {
+			args[j++] = "start";
+		} else if (ent[i][0] == 'K' && isdigit(ent[i][1])) {
+			args[j++] = "stop";
+		}
+		args[j++] = NULL;
 
 		pid = fork();
 		if (!pid) {
