@@ -248,6 +248,10 @@ void svc_monitor(void)
 			continue;
 
 		_d("Ouch, lost pid %d - %s(%d)", lost, name, svc->pid);
+
+		/* No longer running, update books. */
+		svc->pid = 0;
+
 		if (sig_stopped()) {
 			_e("Stopped, not respawning killed processes.");
 			break;
@@ -337,7 +341,7 @@ int svc_start(svc_t *svc)
 				char arg[MAX_ARG_LEN];
 
 				snprintf(arg, sizeof(arg), "%s ", args[i]);
-				if ((sizeof(buf) - strlen(buf)) < strlen(arg))
+				if (strlen(arg) < (sizeof(buf) - strlen(buf)))
 					strcat(buf, arg);
 			}
 			_e("%starting %s: %s", respawn ? "Res" : "S", svc->cmd, buf);
