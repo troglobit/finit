@@ -1,3 +1,12 @@
+1.7 (20121008)
+	- Show __FILE__ in _d() debug messages, useful for plugins with
+	  similarily named callbacks. Also, only in debug mode anyway
+	- Make sure to cleanup recorded PID when a service is lost.
+	  Required by service plugins for their callbacks to work.
+	- Bugfix: Do not free() static string in finit.conf parser
+	- Only clear screen when in verbose mode. Maybe this should
+	  be removed altogether?
+
 1.6 (20121006)
 	- Skip . and .. in plugin loader and display error on failed plugins
 	- Support for overriding /etc/finit.d with "runparts DIR" in finit.conf
