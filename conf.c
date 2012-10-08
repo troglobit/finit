@@ -64,9 +64,9 @@ void parse_finit_conf(char *file)
 	char line[LINE_SIZE];
 	char cmd[CMD_SIZE];
 
-	/* Default username and hostname */
 	username = strdup(DEFUSER);
 	hostname = strdup(DEFHOST);
+	rcsd     = strdup(FINIT_RCSD);
 
 	if ((fp = fopen(file, "r")) != NULL) {
 		char *x;
@@ -124,7 +124,7 @@ void parse_finit_conf(char *file)
 			}
 			if (MATCH_CMD(line, "runparts ", x)) {
 				if (rcsd) free(rcsd);
-				hostname = build_cmd(NULL, x, CMD_SIZE);
+				rcsd = build_cmd(NULL, x, CMD_SIZE);
 				continue;
 			}
 			if (MATCH_CMD(line, "startx ", x)) {

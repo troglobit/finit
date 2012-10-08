@@ -41,7 +41,7 @@ char *sdown    = NULL;
 char *network  = NULL;
 char *username = NULL;
 char *hostname = NULL;
-char *rcsd     = FINIT_RCSD;
+char *rcsd     = NULL;
 
 
 static void parse_kernel_cmdline(void)
