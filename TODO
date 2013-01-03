@@ -1,6 +1,10 @@
+* Add, console/tty/getty option to finit.conf, e.g. "tty /dev/ttyUSB0" 
 * FHS changes, see http://askubuntu.com/questions/57297/why-has-var-run-been-migrated-to-run
 * Look at Erik Troan's nash linuxrc parser for more inspiration
 * Look at how to support a standard SysV init runlevel mechanism
-* Arguments to finit, like to SysV init "init q" to reload finit.conf at runtime, etc.
+* Arguments to finit, like SysV init's "init q" to reload finit.conf at runtime, etc.
 * Implement initctl stop|start|reload <SVC> and service <SVC> stop|start|reload on top
 * Write man pages for finit and finit.conf, steal from pimd man pages...
+* Add support for basic runlevels: startup, running (services from finit.conf), and shutdown
+
+
