@@ -250,21 +250,6 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 	return name;
 }
 
-
-/**
- * procname_set - Change process name, as seen in process listnings
- * @name: New name of process
- * @args: The process' argv[] vector.
- */
-void procname_set(char *name, char *args[])
-{
-	size_t len = strlen(args[0]) + 1; /* Include terminating '\0' */
-
-	prctl(PR_SET_NAME, name, 0, 0, 0);
-	memset(args[0], 0, len);
-	strlcpy(args[0], name, len);
-}
-
 /**
  * procname_kill - Send a signal to a process group by name.
  * @name: Name of process to send signal to.
@@ -507,7 +492,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
-pid_t run_getty(char *cmd, char *argv[])
+pid_t run_getty(char *cmd, int console)
 {
 	pid_t pid = fork();
 
@@ -517,30 +502,31 @@ pid_t run_getty(char *cmd, char *argv[])
 		sigset_t nmask;
 		struct sigaction sa;
 
-		/* Detach from initial controlling TTY */
-		vhangup();
+		if (console) {
+			/* Detach from initial controlling TTY */
+			vhangup();
 
-		close(2);
-		close(1);
-		close(0);
+			close(2);
+			close(1);
+			close(0);
 
-		/* Attach TTY to console */
-		if (open(CONSOLE, O_RDWR) != 0)
-			exit(1);
+			/* Attach TTY to console */
+			if (open(CONSOLE, O_RDWR) != 0)
+				exit(1);
 
+			dup2(0, STDIN_FILENO);
+			dup2(0, STDOUT_FILENO);
+			dup2(0, STDERR_FILENO);
+
+			prctl(PR_SET_NAME, "console", 0, 0, 0);
+		}
 		sigemptyset(&nmask);
 		sigaddset(&nmask, SIGCHLD);
 		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
 		/* Reset signal handlers that were set by the parent process */
-                for (i = 1; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			DFLSIG(sa, i, 0);
-
-		dup2(0, STDIN_FILENO);
-		dup2(0, STDOUT_FILENO);
-		dup2(0, STDERR_FILENO);
-
-		procname_set("console", argv);
 
 		while (!fexist(SYNC_SHUTDOWN)) {
 			static const char msg[] = "\nPlease press Enter to activate this console. ";
@@ -550,10 +536,11 @@ pid_t run_getty(char *cmd, char *argv[])
 				continue;
 			}
 
-			i = write(STDERR_FILENO, msg, sizeof(msg) - 1);
-			while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
-				continue;
-
+			if (console) {
+				i = write(STDERR_FILENO, msg, sizeof(msg) - 1);
+				while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+					continue;
+			}
 			if (fexist(SYNC_STOPPED))
 				continue;
 

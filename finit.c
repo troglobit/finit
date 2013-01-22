@@ -35,14 +35,14 @@
 #include "sig.h"
 #include "lite.h"
 
-int   debug    = 0;
-int   verbose  = 1;
-char *sdown    = NULL;
-char *network  = NULL;
-char *username = NULL;
-char *hostname = NULL;
-char *rcsd     = NULL;
-
+int   debug      = 0;
+int   verbose    = 1;
+char *sdown      = NULL;
+char *network    = NULL;
+char *username   = NULL;
+char *hostname   = NULL;
+char *rcsd       = NULL;
+char *console    = NULL;
 
 static void parse_kernel_cmdline(void)
 {
@@ -73,7 +73,7 @@ static int run_loop(void)
 	return 0;
 }
 
-int main(int UNUSED(args), char *argv[])
+int main(int UNUSED(args), char* UNUSED(argv[]))
 {
 	/*
 	 * Initial setup of signals, ignore all until we're up.
@@ -135,6 +135,7 @@ int main(int UNUSED(args), char *argv[])
 #ifdef SYSROOT
 	run(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
+
 	_d("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);
 
@@ -193,9 +194,8 @@ int main(int UNUSED(args), char *argv[])
 	 */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 
-	/* Start GETTY on console */
-	_d("Starting getty on console ...");
-	run_getty(GETTY, argv);
+	/* Start GETTY on console(s) */
+	tty_start();
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services

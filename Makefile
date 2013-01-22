@@ -38,7 +38,7 @@ EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
 DISTFILES   = LICENSE README ChangeLog finit.conf services
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o
-OBJS       += strlcpy.o
+OBJS       += strlcpy.o tty.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 

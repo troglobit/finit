@@ -31,7 +31,6 @@
 #define MATCH_CMD(l, c, x)					\
 	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
-
 static char *build_cmd(char *cmd, char *line, int len)
 {
 	int l;
@@ -133,6 +132,20 @@ void parse_finit_conf(char *file)
 			}
 			if (MATCH_CMD(line, "service ", x)) {
 				svc_register(x, NULL);
+				continue;
+			}
+
+			if (MATCH_CMD(line, "console ", x)) {
+				if (console) free(console);
+				console = build_cmd(NULL, x, CMD_SIZE);
+				continue;
+			}
+
+			if (MATCH_CMD(line, "tty ", x)) {
+				char *tty = build_cmd(NULL, x, CMD_SIZE);
+				int baud = 115200; /* TODO: Read from config file. */
+
+				tty_add(tty, baud);
 				continue;
 			}
 		}
