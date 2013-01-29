@@ -42,6 +42,12 @@ int     copy_filep (FILE *src, FILE *dst);
 int     dir        (const char *dir, const char *type, int (*filter) (const char *file), char ***list, int strip);
 int     rsync      (char *src, char *dst, int delete, int (*filter) (const char *file));
 
+#ifndef strlcpy
+size_t  strlcpy    (char *dst, const char *src, size_t siz);
+#endif
+#ifndef strlcat
+size_t  strlcat    (char *dst, const char *src, size_t siz);
+#endif
 static inline int fisslashdir(char *dir)
 {
    if (!dir)             return 0;
