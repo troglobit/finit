@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>		/* read() */
+#include <sys/stat.h>
 
 #include "helpers.h"
 #include "plugin.h"

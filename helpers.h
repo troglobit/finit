@@ -91,9 +91,6 @@ int     run_interactive (char *cmd, char *fmt, ...);
 pid_t   run_getty       (char *cmd, int console);
 int	run_parts	(char *dir, char *cmd);
 
-/* strlcpy.c */
-size_t strlcpy(char *dst, const char *src, size_t siz);
-
 #endif /* FINIT_HELPERS_H_ */
 
 /**

@@ -27,7 +27,7 @@ include  ../common.mk
 
 CFLAGS     += -fPIC
 HEADERS     = lite.h
-OBJS       := copyfile.o dir.o fexist.o fisdir.o fmode.o rsync.o
+OBJS       := copyfile.o dir.o fexist.o fisdir.o fmode.o rsync.o strlcpy.o strlcat.o
 DEPS       := $(addprefix ., $(OBJS:.o=.d))
 
 VER         = 0
