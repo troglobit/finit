@@ -88,7 +88,7 @@ void    set_hostname    (char *hostname);
 
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
-pid_t   run_getty       (char *cmd, char *argv[]);
+pid_t   run_getty       (char *cmd, int console);
 int	run_parts	(char *dir, char *cmd);
 
 /* strlcpy.c */

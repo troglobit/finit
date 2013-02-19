@@ -38,11 +38,11 @@
 #if defined EMBEDDED_SYSTEM
 # define CONSOLE        "/dev/console"
 # define MDEV           "/sbin/mdev"
-# define GETTY          "/sbin/getty -L 115200 ttyS0 vt100"
+# define GETTY          "/sbin/getty -L 115200 %s vt100"
 #else /* Debian/Ubuntu based distributions */
 # define RANDOMSEED	"/var/lib/urandom/random-seed"
 # define CONSOLE        "/dev/tty1"
-# define GETTY		"/sbin/getty -8 38400 tty1"
+# define GETTY		"/sbin/getty -8 38400 %s"
 # define REMOUNT_ROOTFS_RW
 # define RUNLEVEL	2
 # define USE_UDEV
@@ -62,14 +62,19 @@
 #define USERNAME_SIZE 16
 #define HOSTNAME_SIZE 32
 
-extern char *sdown;
-extern char *network;
-extern char *hostname;
-extern char *username;
-extern char *rcsd;
+extern char  *sdown;
+extern char  *network;
+extern char  *hostname;
+extern char  *username;
+extern char  *rcsd;
+extern char  *console;
 
 /* conf.c */
 void parse_finit_conf(char *file);
+
+/* tty.c */
+void tty_start(void);
+int  tty_add(char *tty, int baud);
 
 #endif /* FINIT_H_ */
 
