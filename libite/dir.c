@@ -94,7 +94,7 @@ int dir(const char *dir, const char *type, int (*filter) (const char *file), cha
 	n = scandir(dir, &namelist, matcher, alphasort);
 	if (n < 0) {
 		perror("scandir");
-	} else {
+	} else if (n > 0) {
 		files = (char **)malloc(n * sizeof(char *));
 		for (i = 0; i < n; i++) {
 			if (files) {
@@ -109,11 +109,12 @@ int dir(const char *dir, const char *type, int (*filter) (const char *file), cha
 			}
 			free(namelist[i]);
 		}
-		free(namelist);
+		if (num)
+			*list = files;
 	}
 
-	if (num)
-		*list = files;
+	if (namelist)
+		free(namelist);
 
 	return num;
 }
