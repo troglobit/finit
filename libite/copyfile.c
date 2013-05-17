@@ -179,6 +179,7 @@ int copy_filep(FILE *src, FILE *dst)
 		return errno;
 
 	while (1) {
+      errno = 0;
 		if (!fgets(buf, BUFSIZ, src)) {
 			if (errno == EINTR) {
 				clearerr(src);

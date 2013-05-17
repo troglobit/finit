@@ -62,7 +62,12 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 	{
 		errno = 0;
 		copyfile(src, dst, 0);
-		if (errno) result++;
+		if (errno) {
+			if (errno == EEXIST)
+				errno = 0;
+			else
+				result++;
+		}
 	}
 
 	if (!fisdir(dst))
@@ -127,8 +132,12 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 static int makedir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode)
 {
 	snprintf(buf, buf_len, "%s%s%s/", dir, fisslashdir(dir) ? "" : "/", name);
-	if (mkdir(buf, mode))
-		return 1;
+	if (mkdir(buf, mode)) {
+		if (EEXIST != errno)
+			return 1;
+
+		errno = 0;
+	}
 
 	return 0;
 }
