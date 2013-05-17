@@ -62,6 +62,19 @@
 #define USERNAME_SIZE 16
 #define HOSTNAME_SIZE 32
 
+#define INIT_MAGIC		0x03091969
+#define INIT_CMD_RUNLVL		1
+
+struct init_request {
+	int	magic;		/* Magic number			*/
+	int	cmd;		/* What kind of request		*/
+	int	runlevel;	/* Runlevel to change to	*/
+	int	sleeptime;	/* Time between TERM and KILL	*/
+	char	data[368];
+};
+
+extern int    runlevel;
+extern int    prevlevel;
 extern char  *sdown;
 extern char  *network;
 extern char  *hostname;

@@ -32,6 +32,10 @@
 #include "lite.h"
 #include "svc.h"
 
+#define ISSET(a,i)   ((a & (1 << (i)) ? 1 : 0))
+#define SETBIT(a,i)  (a |= (1 << (i)))
+#define CLRBIT(a,i)  (a &= ~(1 << (i)))
+
 /* The registered services are kept in shared memory for easy read-only access
  * by 3rd party APIs.  Mostly because of the ability to, from the outside, query
  * liveness state of all daemons that should run. */
@@ -122,6 +126,44 @@ svc_t *svc_iterator(int restart)
 }
 
 /**
+ * svc_runlevel - Change to a new runlevel
+ * @newlevel: New runlevel to activate
+ *
+ * Stops all services not in @newlevel and starts, or lets continue to run,
+ * those in @newlevel.  Also updates @prevlevel and active @runlevel.
+ */
+void svc_runlevel (int newlevel)
+{
+	svc_t *svc;
+
+	if (runlevel == newlevel)
+		return;
+
+	if (newlevel > 5 || newlevel < 1)
+		return;
+
+	prevlevel = runlevel;
+	runlevel = newlevel;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		int run = svc_enabled(svc, 0, NULL);
+
+		if (svc->pid) {
+			if (run == SVC_STOP)
+				svc_stop(svc);
+		} else {
+			if (run == SVC_START)
+				svc_start(svc);
+		}
+	}
+
+	if (runlevel == 1)
+		touch("/etc/nologin");	/* Disable login in single-user mode */
+	else
+		remove("/etc/nologin");
+}
+
+/**
  * svc_register - Register a non-backgrounding service to be monitored
  * @line:     A complete command line with -- separated description text
  * @username: Optional username to run service as, or %NULL to run as root
@@ -129,18 +171,18 @@ svc_t *svc_iterator(int restart)
  * Actually, the @line can optionally start with a username, denoted by
  * an @ character. Like this:
  *
- *   "service [@username] /path/to/daemon -- Description text"
+ *   "service @username [!0-6] /path/to/daemon -- Description text"
  *
- * The [] brackets means the argument is optional. If the username is
- * left out the daemon is started as root.
+ * If the username is left out the daemon is started as root. The []
+ * brackets are there to denote the allowed runlevels.
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
 int svc_register(char *line, char *username)
 {
-	int i = 0;
-	char *cmd, *desc;
+	int i = 0, not = 0;
+	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
 
 	if (!line) {
@@ -159,8 +201,13 @@ int svc_register(char *line, char *username)
 		return errno = ENOENT;
 	}
 
-	if (cmd[0] == '@') {	/* @username */
-		username = &cmd[1];
+	while (cmd) {
+		if (cmd[0] == '@')	/* @username */
+			username = &cmd[1];
+		else if (cmd[0] == '[')	/* [runlevels] */
+			runlevels = &cmd[0];
+		else
+			break;
 
 		/* Check if valid command follows... */
 		cmd = strtok(NULL, " ");
@@ -170,7 +217,7 @@ int svc_register(char *line, char *username)
 
 	svc = svc_new();
 	if (!svc) {
-		_e("Out of memorym, cannot register service %s", cmd);
+		_e("Out of memory, cannot register service %s", cmd);
 		return errno = ENOMEM;
 	}
 
@@ -184,6 +231,34 @@ int svc_register(char *line, char *username)
 	while ((cmd = strtok(NULL, " ")))
 		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 	svc->args[i][0] = 0;
+
+	if (!runlevels)
+		runlevels = "[234]";
+	i = 1;
+	while (i) {
+		int level;
+		char lvl = runlevels[i++];
+
+		if (']' == lvl || 0 == lvl)
+			break;
+		if ('!' == lvl) {
+			not = 1;
+			svc->runlevels = 0x7E;
+			continue;
+		}
+		if ('s' == lvl || 'S' == lvl)
+			lvl = '1';
+
+		level = lvl - '0';
+		if (level > 6 || level < 0)
+			continue;
+
+		if (not)
+			CLRBIT(svc->runlevels, level);
+		else
+			SETBIT(svc->runlevels, level);
+	}
+	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	return 0;
 }
@@ -209,6 +284,9 @@ svc_cmd_t svc_enabled(svc_t *svc, int event, void *arg)
 		errno = EINVAL;
 		return SVC_STOP;
 	}
+
+	if (!ISSET(svc->runlevels, runlevel))
+		return SVC_STOP;
 
 	/* Is there a service plugin registered? */
 	if (svc->cb)
@@ -333,7 +411,7 @@ int svc_start(svc_t *svc)
 			int fd;
 			char buf[CMD_SIZE] = "";
 
-			fd = open (CONSOLE, O_WRONLY | O_APPEND);
+			fd = open(CONSOLE, O_WRONLY | O_APPEND);
 			if (-1 != fd) {
 				dup2(STDOUT_FILENO, fd);
 				dup2(STDERR_FILENO, fd);
@@ -389,10 +467,12 @@ int svc_stop(svc_t *svc)
 		return 1;
 	}
 
-	print_desc("Stopping ", svc->desc);
+	if (runlevel != 1)
+		print_desc("Stopping ", svc->desc);
 	_d("Sending SIGTERM to pid:%d name:'%s'", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
-	print_result(res);
+	if (runlevel != 1)
+		print_result(res);
 	svc->pid = 0;
 	svc->stat_restart_counter = 0;
 

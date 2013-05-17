@@ -50,6 +50,7 @@ typedef enum {
 typedef struct svc {
 	pid_t	       pid;
 	int	       reload;
+	int            runlevels;
 	unsigned int   stat_restart_counter; /* Incremented for each restart by service monitor. */
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
@@ -87,6 +88,7 @@ static inline svc_t *finit_svc_connect(void)
 svc_t    *svc_new           (void);
 svc_t    *svc_find          (char *name);
 svc_t    *svc_iterator      (int restart);
+void      svc_runlevel      (int newlevel);
 
 int       svc_register      (char *line, char *username);
 int       svc_id_by_name    (char *name);

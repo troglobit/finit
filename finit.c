@@ -35,14 +35,16 @@
 #include "sig.h"
 #include "lite.h"
 
-int   debug    = 0;
-int   verbose  = 1;
-char *sdown    = NULL;
-char *network  = NULL;
-char *username = NULL;
-char *hostname = NULL;
-char *rcsd     = NULL;
-char *console  = NULL;
+int   debug     = 0;
+int   verbose   = 1;
+int   runlevel  = 3;
+int   prevlevel = 1;
+char *sdown     = NULL;
+char *network   = NULL;
+char *username  = NULL;
+char *hostname  = NULL;
+char *rcsd      = NULL;
+char *console   = NULL;
 
 static void parse_kernel_cmdline(void)
 {
@@ -61,6 +63,37 @@ static void parse_kernel_cmdline(void)
 
 		fclose(fp);
 	}
+}
+
+static int client(int argc, char *argv[])
+{
+	int fd;
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd   = INIT_CMD_RUNLVL,
+	};
+
+	if (!fexist(FINIT_FIFO)) {
+		fprintf(stderr, "/sbin/init does not support %s!\n", FINIT_FIFO);
+		return 1;
+	}
+
+	if (argc < 2) {
+		fprintf(stderr, "Missing argument.\n");
+		return 1;
+	}
+
+	fd = open(FINIT_FIFO, O_WRONLY);
+	if (-1 == fd) {
+		perror("Failed opening " FINIT_FIFO);
+		return 1;
+	}
+
+	rq.runlevel = (int)argv[1][0];
+	write(fd, &rq, sizeof(rq));
+	close(fd);
+
+	return 0;
 }
 
 static int run_loop(void)
@@ -82,8 +115,11 @@ static void banner(void)
 #endif
 }
 
-int main(int UNUSED(args), char* UNUSED(argv[]))
+int main(int argc, char* argv[])
 {
+	if (getpid() != 1)
+		return client(argc, argv);
+
 	/*
 	 * Initial setup of signals, ignore all until we're up.
 	 */

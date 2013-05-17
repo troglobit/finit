@@ -32,43 +32,70 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "sig.h"
+#include "finit.h"
 
-#define INIT_MAGIC		0x03091969
-#define INIT_CMD_RUNLVL		1
+static void parse(void *arg, int fd, int events);
 
-struct init_request {
-	int	magic;		/* Magic number			*/
-	int	cmd;		/* What kind of request		*/
-	int	runlevel;	/* Runlevel to change to	*/
-	int	sleeptime;	/* Time between TERM and KILL	*/
-	char	data[368];
+static plugin_t plugin = {
+	.io = {
+		.cb    = parse,
+		.flags = PLUGIN_IO_READ,
+	},
 };
+
+static void fifo_open(void)
+{
+	plugin.io.fd = open(FINIT_FIFO, O_RDONLY | O_NONBLOCK);
+	if (-1 == plugin.io.fd) {
+		_e("Failed opening %s FIFO, error %d: %s", FINIT_FIFO, errno, strerror(errno));
+		return;
+	}
+}
 
 /* Standard reboot/shutdown utilities talk to init using /dev/initctl.
  * We should check if the fifo was recreated and reopen it.
  */
-static void read_initctl(void *UNUSED(arg), int fd, int UNUSED(events))
+static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 {
-	struct init_request request;
+	struct init_request rq;
 
 	_d("Receiving request on %s...", FINIT_FIFO);
 	while (1) {
-		ssize_t len = read(fd, &request, sizeof(request));
+		ssize_t len = read(fd, &rq, sizeof(rq));
 
-		if (-1 == len) {
-			_d("Error %d", errno);
-			break;	/* Probably EAGAIN */
+		if (len <= 0) {
+			if (-1 == len) {
+				if (EINTR == errno)
+					continue;
+
+				if (EAGAIN == errno)
+					break;
+
+				_e("Failed reading initctl request, error %d: %s", errno, strerror(errno));
+			}
+			break;
 		}
 
-		if (request.magic != INIT_MAGIC)
-			continue;
+		if (rq.magic != INIT_MAGIC || len != sizeof(rq)) {
+			_e("Invalid initctl request.");
+			break;
+		}
 
 		_d("Magic OK...");
-		if (request.cmd == INIT_CMD_RUNLVL) {
-			switch (request.runlevel) {
+		if (rq.cmd == INIT_CMD_RUNLVL) {
+			switch (rq.runlevel) {
 			case '0':
 				_d("Halting system (SIGUSR2)");
 				do_shutdown(SIGUSR2);
+				break;
+
+			case 's':
+			case 'S':
+				rq.runlevel = '1';
+				/* Fall through to regular processing */
+			case '1'...'5':
+				_d("Setting new runlevel %c ...", rq.runlevel);
+				svc_runlevel(rq.runlevel - '0');
 				break;
 
 			case '6':
@@ -77,33 +104,24 @@ static void read_initctl(void *UNUSED(arg), int fd, int UNUSED(events))
 				break;
 
 			default:
-				_d("Unsupported runlevel: %d", request.runlevel);
+				_d("Unsupported runlevel: %d", rq.runlevel);
 				break;
 			}
 		} else {
-			_d("Unsupported cmd: %d", request.cmd);
+			_d("Unsupported cmd: %d", rq.cmd);
 		}
 	}
-}
 
-static plugin_t plugin = {
-	.io = {
-		.cb    = read_initctl,
-		.flags = PLUGIN_IO_READ,
-	},
-};
+	close(fd);
+	fifo_open();
+}
 
 PLUGIN_INIT(plugin_init)
 {
 	_d("Setting up %s", FINIT_FIFO);
 	mkfifo(FINIT_FIFO, 0600);
 
-	plugin.io.fd = open(FINIT_FIFO, O_RDONLY | O_NONBLOCK);
-	if (-1 == plugin.io.fd) {
-		_e("Failed opening %s FIFO, error %d: %s", FINIT_FIFO, errno, strerror(errno));
-		return;
-	}
-
+	fifo_open();
 	plugin_register(&plugin);
 }
 

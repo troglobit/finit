@@ -60,6 +60,31 @@ runs a directory of scripts.  This replaces the earlier
 ``/usr/sbin/services.sh`` support of the original finit_.
 
 
+Runlevels
+---------
+
+Very simple support for runlevels_ exist.  Currently the system will
+always start in runlevel 3 and all services belonging to that runlevel
+will be started at boot.
+
+To specify an allowed set of runlevels for a service, add [NNN] to its
+service stanza in finit.conf, like this:
+
+        service [345] /sbin/klogd -n -x -- Kernel log daemon
+
+Meaning that klogd is allowed to run in runlevels 3, 4 and 5, only.
+
+        service [!06] /sbin/klogd -n -x -- Kernel log daemon
+
+Meaning all runlevels *but* 0 and 6.
+
+Existing finit.conf files that lack runlevel setting will get a default
+runlevel assigned, [345].
+
+Switching between runlevels can be done by calling init with a single
+argument, e.g., 'init 5' switches to runlevel 5.
+
+
 Rebooting and Halting
 ---------------------
 
@@ -191,5 +216,6 @@ Regards
 .. _fastinit: http://wiki.eeeuser.com/boot_process:the_boot_process
 .. _`SysV init`: http://savannah.nongnu.org/projects/sysvinit
 .. _upstart: http://upstart.ubuntu.com/
+.. _runlevels: http://en.wikipedia.org/wiki/Runlevel
 .. _openrc: http://www.gentoo.org/proj/en/base/openrc/
 .. _`finit-1.3.tar.xz`: http://github.com/downloads/troglobit/finit/finit-1.3.tar.xz

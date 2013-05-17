@@ -189,15 +189,20 @@ void plugin_run_hooks(hook_point_t no)
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
-static void generic_io_cb(int fd, int events)
+static void generic_io_cb(struct pollfd *io)
 {
 	plugin_t *p, *tmp;
 
 	/* Find matching plugin, pick first matching fd */
 	PLUGIN_ITERATOR(p, tmp) {
-		if (is_io_plugin(p) && p->io.fd == fd) {
+		if (is_io_plugin(p) && p->io.fd == io->fd) {
 			_d("Calling I/O %s from runloop...", basename(p->name));
-			p->io.cb(p->io.arg, fd, events);
+			p->io.cb(p->io.arg, io->fd, io->events);
+
+			/* Update fd, may be changed by plugin callback, e.g., if FIFO */
+			io->fd      = p->io.fd;
+			io->events  = p->io.flags;
+			io->revents = 0;
 			break;
 		}
 	}
@@ -221,7 +226,7 @@ void plugin_monitor(void)
 		/* Traverse all I/O fds and run callbacks */
 		for (i = 0; i < num_fds; i++) {
 			if (fds[i].revents)
-				generic_io_cb(fds[i].fd, fds[i].revents);
+				generic_io_cb(&fds[i]);
 		}
 
 		break;
