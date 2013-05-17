@@ -49,6 +49,12 @@
 
 static int stopped = 0;
 
+/* Signal safe sleep ... we get a lot of SIGCHLD at reboot */
+void do_sleep(unsigned int sec)
+{
+	while ((sec = sleep(sec)))
+		;
+}
 
 void do_shutdown (int sig)
 {
@@ -57,12 +63,15 @@ void do_shutdown (int sig)
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
 
+	/* Call all shutdown hooks before rebooting... */
+	plugin_run_hooks(HOOK_SHUTDOWN);
+
+	/* Here is where we signal watchdogd to do a forced reset for us */
 	_d("Sending SIGTERM to all processes.");
 	kill(-1, SIGTERM);
 
-	sleep(1);
-	/* Call all shutdown hooks, this is the last call before rebooting... */
-	plugin_run_hooks(HOOK_SHUTDOWN);
+	/* Wait for WDT to timeout, should be no more than ~1 sec. */
+	do_sleep(2);
 
 	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);
