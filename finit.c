@@ -73,6 +73,15 @@ static int run_loop(void)
 	return 0;
 }
 
+static void banner(void)
+{
+#ifdef BANNER
+	echo(BANNER);
+#else
+	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
+#endif
+}
+
 int main(int UNUSED(args), char* UNUSED(argv[]))
 {
 	/*
@@ -100,7 +109,7 @@ int main(int UNUSED(args), char* UNUSED(argv[]))
 	parse_kernel_cmdline();
 
 	cls();
-	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
+	banner();
 
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
