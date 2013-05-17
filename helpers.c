@@ -465,7 +465,8 @@ int run_interactive(char *cmd, char *fmt, ...)
 	vsnprintf(line, sizeof(line), fmt, ap);
 	va_end(ap);
 
-	print_desc("", line);
+	if (fmt)
+		print_desc("", line);
 	if (fp && !debug) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);
@@ -477,7 +478,8 @@ int run_interactive(char *cmd, char *fmt, ...)
 		dup2(oldout, STDOUT_FILENO);
 		dup2(olderr, STDERR_FILENO);
 	}
-	print_result(status);
+	if (fmt)
+		print_result(status);
 	if (fp && !debug) {
 		size_t len, written;
 
