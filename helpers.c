@@ -368,7 +368,7 @@ int run(char *cmd)
 
 	/* Split command line into tokens of an argv[] array. */
 	args[i++] = strsep(&arg, "\t ");
-	do {
+	while (arg && i < NUM_ARGS) {
 		/* Handle run("su -c \"dbus-daemon --system\" messagebus");
 		 *   => "su", "-c", "\"dbus-daemon --system\"", "messagebus" */
 		if (*arg == '\'' || *arg == '"') {
@@ -383,7 +383,7 @@ int run(char *cmd)
 		} else {
 			args[i++] = strsep(&arg, "\t ");
 		}
-	} while (arg && i < NUM_ARGS);
+	}
 	args[i] = NULL;
 #if 0
 	_e("Splitting: '%s' =>", cmd);
