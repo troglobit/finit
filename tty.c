@@ -21,7 +21,6 @@
  * THE SOFTWARE.
  */
 
-
 #include <sys/inotify.h>
 #include <signal.h>
 #include <sys/prctl.h>
@@ -77,6 +76,7 @@ static void tty_startstop_one(finit_tty_t *tty, uint32_t mask)
 	/* Kill the spawned child, and recollect it. */
 	if ((mask & IN_DELETE) && tty->pid) {
 		int status = 0;
+
 		_d("Stopping %s", tty->name);
 		kill(tty->pid, SIGKILL);
 		waitpid(tty->pid, &status, 0);
@@ -84,49 +84,50 @@ static void tty_startstop_one(finit_tty_t *tty, uint32_t mask)
 	}
 }
 
+static void tty_watcher(node_t *entry)
+{
+	int fd = inotify_init();
+
+	prctl(PR_SET_NAME, "tty-watcher", 0, 0, 0);
+
+	if (-1 == fd || inotify_add_watch(fd, "/dev", IN_CREATE | IN_DELETE) < 0) {
+		fprintf(stderr, "finit: Failed starting TTY watcher: %s\n", strerror(errno));
+		exit(1);
+	}
+
+	while (1) {
+		int len = 0;
+		char buf[EVENT_SIZE];
+		struct inotify_event *notified = (struct inotify_event *)buf;
+
+		while ((len = read(fd, buf, EVENT_SIZE))) {
+			if (len == -1) {
+				if (errno == EAGAIN || errno == EINTR)
+					continue;
+			}
+
+			LIST_FOREACH(entry, &node_list, link) {
+				if (strcmp(notified->name, entry->data.name) == 0)
+					tty_startstop_one(&entry->data, notified->mask);
+			}
+		}
+	}
+}
+
 void tty_start(void)
 {
-	int   fd = -1;
 	node_t *entry;
 
-	/* Start all TTYs that already exist in the system. */
+	/* Start all TTYs that already exist in the system */
 	LIST_FOREACH(entry, &node_list, link) {
 		chdir("/dev");
 		if (fexist (entry->data.name))
 			tty_startstop_one(&entry->data, IN_CREATE);
 	}
 
-	/* Start a inotify watcher to catch new TTYs that is discovered (USB for example) */
-	if (!fork()) {
-		fd = inotify_init();
-
-		prctl(PR_SET_NAME, "tty_watcher", 0, 0, 0);
-		if (inotify_add_watch(fd, "/dev", IN_CREATE | IN_DELETE) < 0) {
-			fprintf(stderr, "Failed to add watcher, errno %s\n", strerror(errno));
-			return;
-		}
-
-		while (1) {
-			int len = 0;;
-			char buf[EVENT_SIZE];
-			struct inotify_event *notified;
-
-			while ((len = read(fd, buf, EVENT_SIZE))) {
-				if (len == -1) {
-					if (errno == EAGAIN || errno == EINTR)
-						continue;
-				}
-				notified = (struct inotify_event *) &buf[0];
-				LIST_FOREACH(entry, &node_list, link) {
-					if (strcmp(notified->name, entry->data.name) == 0) {
-						tty_startstop_one(&entry->data, notified->mask);
-					}
-				}
-			}
-		}
-		exit(0);
-	}
-
+	/* Start a watcher to catch new TTYs that is discovered, e.g., USB */
+	if (!fork())
+		tty_watcher(entry);
 }
 
 /**

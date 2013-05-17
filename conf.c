@@ -143,8 +143,7 @@ void parse_finit_conf(char *file)
 
 			if (MATCH_CMD(line, "tty ", x)) {
 				char *tty = build_cmd(NULL, x, CMD_SIZE);
-				int baud = 115200; /* TODO: Read from config file. */
-
+				int baud  = 115200; /* XXX - Read from config file */
 				tty_add(tty, baud);
 				continue;
 			}

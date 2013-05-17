@@ -35,14 +35,14 @@
 #include "sig.h"
 #include "lite.h"
 
-int   debug      = 0;
-int   verbose    = 1;
-char *sdown      = NULL;
-char *network    = NULL;
-char *username   = NULL;
-char *hostname   = NULL;
-char *rcsd       = NULL;
-char *console    = NULL;
+int   debug    = 0;
+int   verbose  = 1;
+char *sdown    = NULL;
+char *network  = NULL;
+char *username = NULL;
+char *hostname = NULL;
+char *rcsd     = NULL;
+char *console  = NULL;
 
 static void parse_kernel_cmdline(void)
 {
