@@ -262,8 +262,10 @@ void svc_monitor(void)
 		procname_kill(name, SIGTERM);
 
 		/* Restarting lost service. */
-		if (svc_enabled(svc, 0, NULL))
+		if (svc_enabled(svc, 0, NULL)) {
+			svc->stat_restart_counter++;
 			svc_start(svc);
+		}
 
 		break;
 	}
@@ -383,6 +385,7 @@ int svc_stop(svc_t *svc)
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->desc);
 		svc->pid = 0;
+		svc->stat_restart_counter = 0;
 		return 1;
 	}
 
@@ -391,6 +394,7 @@ int svc_stop(svc_t *svc)
 	res = kill(svc->pid, SIGTERM);
 	print_result(res);
 	svc->pid = 0;
+	svc->stat_restart_counter = 0;
 
 	return res;
 }
