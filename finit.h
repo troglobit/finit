@@ -64,6 +64,7 @@
 
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1
+#define INIT_CMD_DEBUG		2
 
 struct init_request {
 	int	magic;		/* Magic number			*/
@@ -81,6 +82,7 @@ extern char  *hostname;
 extern char  *username;
 extern char  *rcsd;
 extern char  *console;
+extern char  *__progname;
 
 /* conf.c */
 void parse_finit_conf(char *file);

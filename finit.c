@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
+#include <getopt.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -65,21 +66,55 @@ static void parse_kernel_cmdline(void)
 	}
 }
 
+static int usage(int rc)
+{
+	fprintf(stderr, "Usage: %s [OPTIONS] [RUNLEVEL]\n\n"
+		"  -d, --debug          Enable/Disable debug\n"
+		"  -h, --help           This help text\n\n", __progname);
+
+	return rc;
+}
+
 static int client(int argc, char *argv[])
 {
 	int fd;
+	int c;
+	struct option long_options[] = {
+		{"debug", 0, NULL, 'd'},
+		{"help", 0, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
-		.cmd   = INIT_CMD_RUNLVL,
+		.cmd = 0
 	};
+
+	while ((c = getopt_long (argc, argv, "h?d", long_options, NULL)) != EOF) {
+		switch(c) {
+		case 'd':
+			rq.cmd = INIT_CMD_DEBUG;
+			break;
+
+		case 'h':
+		case '?':
+			return usage(0);
+		default:
+			return usage(1);
+		}
+	}
+
+	if (!rq.cmd) {
+		if (argc < 2) {
+			fprintf(stderr, "Missing runlevel.\n");
+			return 1;
+		}
+
+		rq.cmd = INIT_CMD_RUNLVL;
+		rq.runlevel = (int)argv[1][0];
+	}
 
 	if (!fexist(FINIT_FIFO)) {
 		fprintf(stderr, "/sbin/init does not support %s!\n", FINIT_FIFO);
-		return 1;
-	}
-
-	if (argc < 2) {
-		fprintf(stderr, "Missing argument.\n");
 		return 1;
 	}
 
@@ -88,8 +123,6 @@ static int client(int argc, char *argv[])
 		perror("Failed opening " FINIT_FIFO);
 		return 1;
 	}
-
-	rq.runlevel = (int)argv[1][0];
 	write(fd, &rq, sizeof(rq));
 	close(fd);
 

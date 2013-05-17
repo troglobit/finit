@@ -107,6 +107,8 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 				_d("Unsupported runlevel: %d", rq.runlevel);
 				break;
 			}
+		} else if (rq.cmd == INIT_CMD_DEBUG) {
+			debug = !debug;
 		} else {
 			_d("Unsupported cmd: %d", rq.cmd);
 		}
