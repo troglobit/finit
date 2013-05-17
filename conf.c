@@ -60,6 +60,7 @@ static char *build_cmd(char *cmd, char *line, int len)
 void parse_finit_conf(char *file)
 {
 	FILE *fp;
+	int modfirst = 1;
 	char line[LINE_SIZE];
 	char cmd[CMD_SIZE];
 
@@ -105,6 +106,10 @@ void parse_finit_conf(char *file)
 				continue;
 			}
 			if (MATCH_CMD(line, "module ", x)) {
+				if (modfirst) {
+					echo("Loading kernel modules ...");
+					modfirst = 0;
+				}
 				strcpy(cmd, "/sbin/modprobe ");
 				build_cmd(cmd, x, CMD_SIZE);
 				run_interactive(cmd, "   Loading module %s", x);
