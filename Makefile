@@ -26,7 +26,7 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 # Top directory for building complete system, fall back to this directory
-ROOTDIR     = $(shell pwd)
+ROOTDIR    ?= $(shell pwd)
 
 #VERSION    ?= $(shell git tag -l | tail -1)
 VERSION    ?= 1.7
@@ -158,9 +158,6 @@ dev: distclean
 	  cd - >/dev/null; mv $$dir/$(DEV).tar.xz ../; cd ..;        \
 	  rm -rf $$dir; md5sum $(DEV).tar.xz | tee $(DEV).tar.xz.md5)
 
-# Include automatically generated rules, such as:
-# uncgi.o: .../some/dir/uncgi.c /usr/include/stdio.h
-# but don't bother during clean!
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)
 -include $(DEPS)
