@@ -65,21 +65,23 @@ int tty_add(char *tty, int baud)
 
 static void tty_startstop_one(finit_tty_t *tty, uint32_t mask)
 {
-	char cmd[strlen(GETTY)+FILENAME_MAX];
+	int is_console = 0;
+	char cmd[strlen(GETTY) + FILENAME_MAX];
+
+	if (console && !strcmp(tty->name, console))
+		is_console = 1;
 
 	if (mask & IN_CREATE) {
-		_d("Starting %s as %s", tty->name, (strcmp(tty->name, console) == 0) ? "console" : "TTY");
+		_d("Starting %s as %s", tty->name, is_console ? "console" : "TTY");
 		snprintf(cmd, sizeof(cmd), GETTY, tty->name);
-		tty->pid = run_getty(cmd, strcmp(tty->name, console) == 0);
+		tty->pid = run_getty(cmd, is_console);
 	}
 
 	/* Kill the spawned child, and recollect it. */
 	if ((mask & IN_DELETE) && tty->pid) {
-		int status = 0;
-
 		_d("Stopping %s", tty->name);
 		kill(tty->pid, SIGKILL);
-		waitpid(tty->pid, &status, 0);
+		waitpid(tty->pid, NULL, 0);
 		tty->pid = 0;
 	}
 }
@@ -107,7 +109,7 @@ static void tty_watcher(node_t *entry)
 			}
 
 			LIST_FOREACH(entry, &node_list, link) {
-				if (strcmp(notified->name, entry->data.name) == 0)
+				if (!strcmp(notified->name, entry->data.name))
 					tty_startstop_one(&entry->data, notified->mask);
 			}
 		}
