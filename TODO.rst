@@ -31,21 +31,26 @@ processes that declare themselves to be finit compliant.
      restarting it is imposible, as well as when system load gets
      too high.
 
+Configuration
+-------------
+   * Add support for "init <q | reload-configuration>" and SIGHUP to
+     reload finit.conf, but also
+   * Add support for inotify to automatically reload finit.conf
 
 Runlevels
 ---------
+   * Add support for "runlevel N" to finit.conf
    * Improve support for runlevels: startup, running (services from
      finit.conf), and shutdown as well as hooks when switching RL,
      startup at RL 1 and a default run level.
    * Implement initctl stop|start|restart|reload|status <SVC> and
      service <SVC> stop|start|restart|reload|status on top
    * Add PRE and POST hooks for when changing runlevels
-
-Configuration
--------------
-   * Add support for "init <q | reload-configuration>" and SIGHUP to
-     reload finit.conf, but also
-   * Add support for inotify to automatically reload finit.conf
+   * SysV init in Debian uses an rcS.d/ for scripts that should run once
+     at boot. These scripts are run before the actual runlevel set in
+     inittab. In finit we could use "task [S]" and "boot [S]" for this.
+   * Add support for a new runlevel 'S' that is started before all other
+     services in the selected runlevel.
 
 Services and Tasks
 ------------------
