@@ -21,15 +21,15 @@ Features
 --------
 
 **Service monitoring**
-   Restarting a service when it exits
+Restarting a service when it exits
 
 **Plugins**
-   Extend and modify finit behavior. See examples in plugins/ directory.
-   Plugin capabilities:
+Extend and modify finit behavior. See examples in plugins/ directory.
+Plugin capabilities:
    
-   * Service callbacks — should the service run/restart/stop?
-   * Hooks — hook into the boot at predefined points to extend finit
-   * I/O — listen to external events and control finit behaviour/services
+* Service callbacks — should the service run/restart/stop?
+* Hooks — hook into the boot at predefined points to extend finit
+* I/O — listen to external events and control finit behaviour/services
 
 Most extensions and functionality not purely related to what an /sbin/init
 needs to start a system from the original finit_ has been reactored into
