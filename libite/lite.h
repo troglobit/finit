@@ -48,6 +48,10 @@ size_t  strlcpy    (char *dst, const char *src, size_t siz);
 #ifndef strlcat
 size_t  strlcat    (char *dst, const char *src, size_t siz);
 #endif
+#ifndef strtonum
+long long strtonum (const char *numstr, long long minval, long long maxval, const char **errstrp);
+#endif
+
 static inline int fisslashdir(char *dir)
 {
    if (!dir)             return 0;
