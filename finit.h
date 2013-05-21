@@ -44,7 +44,6 @@
 # define CONSOLE        "/dev/tty1"
 # define GETTY		"/sbin/getty -8 38400 %s"
 # define REMOUNT_ROOTFS_RW
-# define RUNLEVEL	2
 # define USE_UDEV
 # define USE_MESSAGE_BUS
 #endif

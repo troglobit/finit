@@ -56,8 +56,20 @@
 #ifndef UNUSED
 #define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
 #endif
+/* Esc[2JEsc[1;1H          Clear screen and move cursor to 1,1 (upper left) pos. */
+#define clrscr()           fputs("\e[2J\e[1;1H", stderr)
+/* Esc[K                   Erases from the current cursor position to the end of the current line. */
+#define clreol()           fputs("\e[K", stderr)
+/* Esc[2K                  Erases the entire current line. */
+#define delline()          fputs("\e[2K", stderr)
+/* Esc[Line;ColumnH        Moves the cursor to the specified position (coordinates) */
+#define gotoxy(x,y)        fprintf(stderr, "\e[%d;%dH", y, x)
+/* Esc[?25l (lower case L) Hide Cursor */
+#define hidecursor()       fputs("\e[?25l", stderr)
+/* Esc[?25h (lower case H) Show Cursor */
+#define showcursor()       fputs("\e[?25h", stderr)
 
-#define echo(fmt, args...) do { if (verbose) { fprintf(stderr,                    fmt "\n", ##args); } } while (0)
+#define echo(fmt, args...) do {                fprintf(stderr,                    fmt "\n", ##args); } while (0)
 #define   _d(fmt, args...) do { if (debug)   { fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } } while (0)
 #define   _e(fmt, args...) do {                fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
 #define  _pe(fmt, args...) do {                fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
@@ -65,7 +77,7 @@
 extern int debug;
 extern int verbose;
 
-int	makepath	(char *path);
+int     makepath        (char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
 
 pid_t   pidfile_read    (char *pidfile);
@@ -80,16 +92,15 @@ int     procname_kill   (char *name, int signo);
 void    print_desc     (char *action, char *desc);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);
-void    cls             (void);
-void	chomp		(char *str);
+void    chomp           (char *str);
 int     getuser         (char *username);
-int	getgroup	(char *group);
+int     getgroup        (char *group);
 void    set_hostname    (char *hostname);
 
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
 pid_t   run_getty       (char *cmd, int console);
-int	run_parts	(char *dir, char *cmd);
+int     run_parts       (char *dir, char *cmd);
 
 #endif /* FINIT_HELPERS_H_ */
 

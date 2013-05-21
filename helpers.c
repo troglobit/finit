@@ -638,14 +638,6 @@ int getgroup(char *group)
  * Other convenience functions
  */
 
-void cls(void)
-{
-	static const char cls[] = "\e[2J\e[1;1H";
-
-	if (verbose)
-		fprintf (stderr, "%s", cls);
-}
-
 void chomp(char *str)
 {
 	char *x;

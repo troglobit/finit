@@ -60,7 +60,6 @@ static char *build_cmd(char *cmd, char *line, int len)
 void parse_finit_conf(char *file)
 {
 	FILE *fp;
-	int modfirst = 1;
 	char line[LINE_SIZE];
 	char cmd[CMD_SIZE];
 
@@ -87,7 +86,7 @@ void parse_finit_conf(char *file)
 			if (MATCH_CMD(line, "check ", x)) {
 				strcpy(cmd, "/sbin/fsck -C -a ");
 				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "Checking file system integrity on %s", x);
+				run_interactive(cmd, "Checking file system %s", x);
 				continue;
 			}
 			if (MATCH_CMD(line, "user ", x)) {
@@ -106,19 +105,15 @@ void parse_finit_conf(char *file)
 				continue;
 			}
 			if (MATCH_CMD(line, "module ", x)) {
-				if (modfirst) {
-					echo("Loading kernel modules ...");
-					modfirst = 0;
-				}
 				strcpy(cmd, "/sbin/modprobe ");
 				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "   Loading module %s", x);
+				run_interactive(cmd, "Loading kernel module %s", x);
 				continue;
 			}
 			if (MATCH_CMD(line, "mknod ", x)) {
 				strcpy(cmd, "/bin/mknod ");
 				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "   Creating device node %s", x);
+				run_interactive(cmd, "Creating device node %s", x);
 				continue;
 			}
 			if (MATCH_CMD(line, "network ", x)) {

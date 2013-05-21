@@ -141,10 +141,11 @@ static int run_loop(void)
 
 static void banner(void)
 {
+	delline();
 #ifdef BANNER
 	echo(BANNER);
 #else
-	echo("finit " VERSION " (built " __DATE__ " " __TIME__ " by " WHOAMI ")");
+	echo("Finit version " VERSION " (" WHOAMI ") " __DATE__ " " __TIME__);
 #endif
 }
 
@@ -152,6 +153,11 @@ int main(int argc, char* argv[])
 {
 	if (getpid() != 1)
 		return client(argc, argv);
+
+	/*
+	 * Hello world.
+	 */
+	banner();
 
 	/*
 	 * Initial setup of signals, ignore all until we're up.
@@ -177,9 +183,6 @@ int main(int argc, char* argv[])
 	 */
 	parse_kernel_cmdline();
 
-	cls();
-	banner();
-
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
@@ -199,7 +202,7 @@ int main(int argc, char* argv[])
 	 * all services, or service plugins won't have anything to
 	 * hook on to.
 	 */
-	print_desc("", "Loading plugins");
+	print_desc("", "Loading Finit plugins");
 	print_result(plugin_load_all(PLUGIN_PATH));
 
 	/*
