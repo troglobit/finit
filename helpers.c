@@ -640,9 +640,9 @@ int getgroup(char *group)
 
 void chomp(char *str)
 {
-	char *x;
+	char *x = strrchr(str, 0x0a);
 
-	if ((x = strchr((str), 0x0a)) != NULL)
+	if (x)
 		*x = 0;
 }
 
@@ -652,12 +652,20 @@ void set_hostname(char *hostname)
 
 	_d("Set hostname: %s", hostname);
 	if ((fp = fopen("/etc/hostname", "r")) != NULL) {
-		fgets(hostname, HOSTNAME_SIZE, fp);
+		struct stat st;
+
+		fstat(fileno(fp), &st);
+		hostname = realloc(hostname, st.st_size);
+		if (!hostname)
+			return;
+
+		fgets(hostname, st.st_size, fp);
 		chomp(hostname);
 		fclose(fp);
 	}
 
-	sethostname(hostname, strlen(hostname));
+	if (hostname)
+		sethostname(hostname, strlen(hostname));
 }
 
 /**
