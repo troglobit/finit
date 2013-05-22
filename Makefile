@@ -25,9 +25,6 @@
 	install-exec install-data install-dev		\
 	uninstall-exec uninstall-data uninstall-dev
 
-# Top directory for building complete system, fall back to this directory
-ROOTDIR    ?= $(shell pwd)
-
 #VERSION    ?= $(shell git tag -l | tail -1)
 VERSION    ?= 1.7
 NAME        = finit

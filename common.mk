@@ -1,9 +1,12 @@
+# Top directory for building complete system, fall back to this directory
+ROOTDIR    ?= $(shell pwd)
+
 # Some junk files we always want to be removed when doing a make clean.
-JUNK       = *~ *.bak *.aux *.dvi *.idx *.ind *.log *.ps *.map .*.d DEADJOE semantic.cache *.gdb *.elf core core.*
-MAKE      := @$(MAKE)
-MAKEFLAGS  = --no-print-directory --silent
-INSTALL   := install --backup=off
-STRIPINST := $(INSTALL) -s --strip-program=$(CROSS)strip -m 0755
+JUNK        = *~ *.bak *.aux *.dvi *.idx *.ind *.log *.ps *.map .*.d DEADJOE semantic.cache *.gdb *.elf core core.*
+MAKE       := @$(MAKE)
+MAKEFLAGS   = --no-print-directory --silent
+INSTALL    := install --backup=off
+STRIPINST  := $(INSTALL) -s --strip-program=$(CROSS)strip -m 0755
 
 # Smart autodependecy generation via GCC -M.
 .%.d: %.c
