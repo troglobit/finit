@@ -50,8 +50,12 @@ typedef struct node {
 LIST_HEAD(, node) node_list = LIST_HEAD_INITIALIZER();
 int tty_add(char *tty, int baud)
 {
-	node_t *entry = malloc(sizeof(*entry));
+	node_t *entry;
 
+	if (!tty)
+		return errno = EINVAL;
+
+	entry = malloc(sizeof(*entry));
 	if (!entry)
 		return errno = ENOMEM;
 
