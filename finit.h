@@ -33,17 +33,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* Distribution configuration */
-
+/* Distribution specific configuration */
 #if defined EMBEDDED_SYSTEM
 # define CONSOLE        "/dev/console"
 # define MDEV           "/sbin/mdev"
 # define GETTY          "/sbin/getty -L 115200 %s vt100"
+# define RUNLEVEL       3
 #else /* Debian/Ubuntu based distributions */
 # define RANDOMSEED	"/var/lib/urandom/random-seed"
 # define CONSOLE        "/dev/tty1"
 # define GETTY		"/sbin/getty -8 38400 %s"
 # define REMOUNT_ROOTFS_RW
+# define RUNLEVEL       2
 # define USE_UDEV
 # define USE_MESSAGE_BUS
 #endif
@@ -58,8 +59,6 @@
 #define CMD_SIZE  256
 #define LINE_SIZE 1024
 #define BUF_SIZE  4096
-#define USERNAME_SIZE 16
-#define HOSTNAME_SIZE 32
 
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1

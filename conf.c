@@ -21,40 +21,32 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>
 #include <string.h>
 
 #include "finit.h"
 #include "svc.h"
+#include "lite.h"
 #include "helpers.h"
 
-/* Match one command. */
-#define MATCH_CMD(l, c, x)					\
+#define MATCH_CMD(l, c, x) \
 	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
-static char *build_cmd(char *cmd, char *line, int len)
+static char *strip_line(char *line)
 {
-	int l;
-	char *c;
+	char *ptr;
 
 	/* Trim leading whitespace */
-	while (*line && (*line == ' ' || *line == '\t'))
+	while (*line && isblank(*line))
 		line++;
 
-	if (!cmd) {
-		cmd = malloc (strlen(line) + 1);
-		if (!cmd) {
-			_e("No memory left for '%s'", line);
-			return NULL;
-		}
-		*cmd = 0;
-	}
-	c = cmd + strlen(cmd);
-	for (l = 0; *line && *line != '#' && *line != '\t' && l < len; l++)
-		*c++ = *line++;
-	*c = 0;
+	/* Strip any comment at end of line */
+	ptr = line;
+	while (*ptr && *ptr != '#')
+		ptr++;
+	*ptr = 0;
 
-	_d("cmd = %s", cmd);
-	return cmd;
+	return line;
 }
 
 void parse_finit_conf(char *file)
@@ -84,50 +76,73 @@ void parse_finit_conf(char *file)
 			}
 			/* Do this before mounting / read-write */
 			if (MATCH_CMD(line, "check ", x)) {
+				char *dev = strip_line(x);
+
 				strcpy(cmd, "/sbin/fsck -C -a ");
-				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "Checking file system %s", x);
+				strlcat(cmd, dev, sizeof(cmd));
+				run_interactive(cmd, "Checking file system %s", dev);
+
 				continue;
 			}
+
 			if (MATCH_CMD(line, "user ", x)) {
 				if (username) free(username);
-				username = build_cmd(NULL, x, USERNAME_SIZE);
+				username = strdup(strip_line(x));
 				continue;
 			}
 			if (MATCH_CMD(line, "host ", x)) {
 				if (hostname) free(hostname);
-				hostname = build_cmd(NULL, x, HOSTNAME_SIZE);
+				hostname = strdup(strip_line(x));
 				continue;
 			}
-			if (MATCH_CMD(line, "shutdown ", x)) {
-				if (sdown) free(sdown);
-				sdown = build_cmd(NULL, x, CMD_SIZE);
-				continue;
-			}
+
 			if (MATCH_CMD(line, "module ", x)) {
+				char *mod = strip_line(x);
+
 				strcpy(cmd, "/sbin/modprobe ");
-				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "Loading kernel module %s", x);
+				strlcat(cmd, mod, sizeof(cmd));
+				run_interactive(cmd, "Loading kernel module %s", mod);
+
 				continue;
 			}
 			if (MATCH_CMD(line, "mknod ", x)) {
+				char *dev = strip_line(x);
+
 				strcpy(cmd, "/bin/mknod ");
-				build_cmd(cmd, x, CMD_SIZE);
-				run_interactive(cmd, "Creating device node %s", x);
+				strlcat(cmd, dev, sizeof(cmd));
+				run_interactive(cmd, "Creating device node %s", dev);
+
 				continue;
 			}
+
 			if (MATCH_CMD(line, "network ", x)) {
 				if (network) free(network);
-				network = build_cmd(NULL, x, CMD_SIZE);
+				network = strdup(strip_line(x));
 				continue;
 			}
 			if (MATCH_CMD(line, "runparts ", x)) {
 				if (rcsd) free(rcsd);
-				rcsd = build_cmd(NULL, x, CMD_SIZE);
+				rcsd = strdup(strip_line(x));
 				continue;
 			}
 			if (MATCH_CMD(line, "startx ", x)) {
-				svc_register(x, username);
+				svc_register(strip_line(x), username);
+				continue;
+			}
+			if (MATCH_CMD(line, "shutdown ", x)) {
+				if (sdown) free(sdown);
+				sdown = strdup(strip_line(x));
+				continue;
+			}
+
+			if (MATCH_CMD(line, "runlevel ", x)) {
+				char *token = strip_line(x);
+
+				runlevel = strtonum(token, 1, 5, NULL);
+				if (!runlevel)
+					runlevel = RUNLEVEL;
+				if (runlevel < 1 || runlevel > 5)
+					runlevel = 3; /* Fallback */
 				continue;
 			}
 			if (MATCH_CMD(line, "service ", x)) {
@@ -137,12 +152,11 @@ void parse_finit_conf(char *file)
 
 			if (MATCH_CMD(line, "console ", x)) {
 				if (console) free(console);
-				console = build_cmd(NULL, x, CMD_SIZE);
+				console = strdup(strip_line(x));
 				continue;
 			}
-
 			if (MATCH_CMD(line, "tty ", x)) {
-				char *tty = build_cmd(NULL, x, CMD_SIZE);
+				char *tty = strdup(strip_line(x));
 				int baud  = 115200; /* XXX - Read from config file */
 				tty_add(tty, baud);
 				continue;
