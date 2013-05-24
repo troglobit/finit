@@ -186,11 +186,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
-#if defined(USE_UDEV)
-	run_interactive("udevd --daemon", "Populating device tree");
-#elif defined (MDEV)
-	run_interactive(MDEV " -s", "Populating device tree");
-#endif
+	run_interactive(SETUP_DEVFS, "Populating device tree");
 
 	/*
 	 * Parse configuration file

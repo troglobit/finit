@@ -1,7 +1,7 @@
 /* Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,17 +36,17 @@
 /* Distribution specific configuration */
 #if defined EMBEDDED_SYSTEM
 # define CONSOLE        "/dev/console"
-# define MDEV           "/sbin/mdev"
+# define SETUP_DEVFS    "/sbin/mdev -s"
 # define GETTY          "/sbin/getty -L 115200 %s vt100"
-# define RUNLEVEL       3
-#else /* Debian/Ubuntu based distributions */
-# define RANDOMSEED	"/var/lib/urandom/random-seed"
-# define CONSOLE        "/dev/tty1"
-# define GETTY		"/sbin/getty -8 38400 %s"
-# define REMOUNT_ROOTFS_RW
 # define RUNLEVEL       2
-# define USE_UDEV
-# define USE_MESSAGE_BUS
+#else /* Debian/Ubuntu based distributions */
+# define CONSOLE        "/dev/tty1"
+# define SETUP_DEVFS    "/sbin/udevd --daemon"
+# define GETTY		"/sbin/getty -8 38400 %s"
+# define RUNLEVEL       2
+# define RANDOMSEED	"/var/lib/urandom/random-seed"
+# define REMOUNT_ROOTFS_RW
+# define HAVE_DBUS
 #endif
 
 #ifndef DEFUSER

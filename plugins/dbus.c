@@ -27,7 +27,7 @@
 
 static void setup(void *UNUSED(arg))
 {
-#ifdef USE_MESSAGE_BUS
+#ifdef HAVE_DBUS
 	_d("Starting D-Bus ...");
 	mkdir("/var/run/dbus", 0755);
 	mkdir("/var/lock/subsys/messagebus", 0755);
