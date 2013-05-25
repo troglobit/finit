@@ -309,7 +309,7 @@ int procname_kill (char *name, int signo)
 }
 
 
-static int print_uptime(void)
+static int print_timestamp(void)
 {
 #if defined(CONFIG_PRINTK_TIME)
 	FILE * uptimefile;
@@ -332,12 +332,10 @@ static int print_uptime(void)
 
 void print_desc(char *action, char *desc)
 {
-	const char home[] = "\r\e[K";
 	const char dots[] = " .....................................................................";
 
-	write(STDERR_FILENO, home, strlen(home));
-
-	print_uptime();
+	delline();
+	print_timestamp();
 
 	write(STDERR_FILENO, action, strlen(action));
 	write(STDERR_FILENO, desc, strlen(desc));
@@ -352,6 +350,25 @@ int print_result(int fail)
 		fprintf(stderr, " \e[1m[ OK ]\e[0m\n");
 
 	return fail;
+}
+
+/* Wait for process completion, returns status of waitpid(2) syscall */
+int complete(char *cmd, int pid)
+{
+	int status = 0;
+
+	if (waitpid(pid, &status, 0) == -1) {
+		if (errno == EINTR)
+			_e("Caught unblocked signal waiting for %s, aborting.", cmd);
+		else if (errno == ECHILD)
+			_e("Caught SIGCHLD waiting for %s, aborting.", cmd);
+		else
+			_e("Failed starting %s, error %d: %s", cmd, errno, strerror (errno));
+
+		return -1;
+	}
+
+	return status;
 }
 
 int run(char *cmd)
@@ -423,14 +440,8 @@ int run(char *cmd)
 		return -1;
 	}
 
-	if (waitpid(pid, &status, 0) == -1) {
-		if (errno == EINTR)
-			_e("Caught unblocked signal waiting for %s, aborting.", args[0]);
-		else if (errno == ECHILD)
-			_e("Caught SIGCHLD waiting for %s, aborting.", args[0]);
-		else
-			_e("Failed starting %s, error %d: %s", args[0], errno, strerror (errno));
-
+	status = complete(args[0], pid);
+	if (-1 == status) {
 		if (fp) fclose(fp);
 		free(backup);
 

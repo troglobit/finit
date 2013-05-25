@@ -91,10 +91,13 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 
 			case 's':
 			case 'S':
+				_d("Cannot enter bootstrap after boot ...");
 				rq.runlevel = '1';
 				/* Fall through to regular processing */
+
 			case '1'...'5':
-				_d("Setting new runlevel %c ...", rq.runlevel);
+			case '7'...'9':
+				_d("Setting new runlevel %c", rq.runlevel);
 				svc_runlevel(rq.runlevel - '0');
 				break;
 

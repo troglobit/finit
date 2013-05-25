@@ -38,8 +38,9 @@
 
 int   debug     = 0;
 int   verbose   = 1;
-int   runlevel  = 3;
-int   prevlevel = 1;
+int   runlevel  = RUNLEVEL_BOOT; /* Bootstrap */
+int   cfglevel  = RUNLEVEL;	 /* Fallback if no configured runlevel */
+int   prevlevel = 0;		 /* HALT */
 char *sdown     = NULL;
 char *network   = NULL;
 char *username  = NULL;
@@ -131,6 +132,7 @@ static int client(int argc, char *argv[])
 
 static int run_loop(void)
 {
+	_d("Entering main loop ...");
 	while (1) {
 		svc_monitor();
 		plugin_monitor();
@@ -204,8 +206,6 @@ int main(int argc, char* argv[])
 	/*
 	 * Mount filesystems
 	 */
-	_d("Mount filesystems in /etc/fstab ...");
-
 #ifdef REMOUNT_ROOTFS_RW
 	run("/bin/mount -n -o remount,rw /");
 #endif
@@ -224,13 +224,16 @@ int main(int argc, char* argv[])
 	/* Cleanup stale files, if any still linger on. */
 	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleanup temporary directories");
 
-	/*
-	 * Base FS up, enable standard SysV init signals
-	 */
+	/* Base FS up, enable standard SysV init signals */
 	sig_setup();
 
 	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
+
+	/*
+	 * Start all bootstrap tasks, no network available!
+	 */
+	svc_bootstrap();
 
 	/*
 	 * Network stuff
@@ -247,16 +250,16 @@ int main(int argc, char* argv[])
 		run_interactive(network, "Starting networking: %s", network);
 	umask(022);
 
-	/*
-	 * Hooks that rely on loopback, or basic networking being up.
-	 */
+	/* Hooks that rely on loopback, or basic networking being up. */
 	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/*
-	 * Start service monitor framework
+	 * Start all tasks/services in the configured runlevel
 	 */
-	_d("Starting all static services from %s", FINIT_CONF);
-	svc_start_all();
+	svc_runlevel(cfglevel);
+
+	_d("Running svc up hooks ...");
+	plugin_run_hooks(HOOK_SVC_UP);
 
 	/*
 	 * Run startup scripts in /etc/finit.d/, if any.
@@ -266,9 +269,7 @@ int main(int argc, char* argv[])
 		run_parts(rcsd, NULL);
 	}
 
-	/*
-	 * Hooks that should run at the very end
-	 */
+	/* Hooks that should run at the very end */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 
 	/* Start GETTY on console(s) */
@@ -277,7 +278,6 @@ int main(int argc, char* argv[])
 	/*
 	 * Enter main loop to monior /dev/initctl and services
 	 */
-	_d("Entering main loop ...");
 	return run_loop();
 }
 

@@ -97,6 +97,7 @@ int     getuser         (char *username);
 int     getgroup        (char *group);
 void    set_hostname    (char *hostname);
 
+int     complete        (char *cmd, int pid);
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
 pid_t   run_getty       (char *cmd, int console);

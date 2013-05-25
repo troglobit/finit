@@ -73,6 +73,7 @@ struct init_request {
 };
 
 extern int    runlevel;
+extern int    cfglevel;
 extern int    prevlevel;
 extern char  *sdown;
 extern char  *network;

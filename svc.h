@@ -1,4 +1,4 @@
-/* Finit service monitor and heneric API for managing svc_t structures
+/* Finit service monitor and generic API for managing svc_t structures
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
@@ -36,6 +36,13 @@ typedef enum {
 	SVC_RELOAD		/* Enabled, needs restart */
 } svc_cmd_t;
 
+typedef enum {
+	SVC_CMD_SERVICE = 0,	/* Monitored, will be respawned */
+	SVC_CMD_TASK,		/* One-shot, runs in parallell */
+	SVC_CMD_RUN		/* Like task, but wait for completion */
+} svc_type_t;
+
+#define RUNLEVEL_BOOT    10
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64
@@ -49,6 +56,7 @@ typedef enum {
  *   initctl <stop|start|restart> service */
 typedef struct svc {
 	pid_t	       pid;
+	svc_type_t     type;
 	int	       reload;
 	int            runlevels;
 	unsigned int   stat_restart_counter; /* Incremented for each restart by service monitor. */
@@ -90,7 +98,7 @@ svc_t    *svc_find          (char *name);
 svc_t    *svc_iterator      (int restart);
 void      svc_runlevel      (int newlevel);
 
-int       svc_register      (char *line, char *username);
+int       svc_register      (int type, char *line, char *username);
 int       svc_id_by_name    (char *name);
 svc_cmd_t svc_enabled	    (svc_t *svc, int event, void *arg);
 int       svc_start         (svc_t *svc);

@@ -61,20 +61,22 @@ void parse_finit_conf(char *file)
 
 	if ((fp = fopen(file, "r")) != NULL) {
 		char *x;
+		const char *err = NULL;
 
 		_d("Parse %s ...", file);
 		while (!feof(fp)) {
 			if (!fgets(line, sizeof(line), fp))
 				continue;
-			chomp(line);
 
 			_d("conf: %s", line);
+			chomp(line);
 
 			/* Skip comments. */
-			if (MATCH_CMD(line, "#", x)) {
+			if (MATCH_CMD(line, "#", x))
 				continue;
-			}
-			/* Do this before mounting / read-write */
+
+			/* Do this before mounting / read-write
+			 * XXX: Move to plugin which checks /etc/fstab instead */
 			if (MATCH_CMD(line, "check ", x)) {
 				char *dev = strip_line(x);
 
@@ -126,7 +128,7 @@ void parse_finit_conf(char *file)
 				continue;
 			}
 			if (MATCH_CMD(line, "startx ", x)) {
-				svc_register(strip_line(x), username);
+				svc_register(SVC_CMD_SERVICE, strip_line(x), username);
 				continue;
 			}
 			if (MATCH_CMD(line, "shutdown ", x)) {
@@ -135,18 +137,39 @@ void parse_finit_conf(char *file)
 				continue;
 			}
 
+			/* The desired runlevel to start when leaving
+			 * bootstrap (S).  Finit supports 1-9, but most
+			 * systems only use 1-6, where 6 is reserved for
+			 * reboot */
 			if (MATCH_CMD(line, "runlevel ", x)) {
 				char *token = strip_line(x);
 
-				runlevel = strtonum(token, 1, 5, NULL);
-				if (!runlevel)
-					runlevel = RUNLEVEL;
-				if (runlevel < 1 || runlevel > 5)
-					runlevel = 3; /* Fallback */
+				cfglevel = strtonum(token, 1, 9, &err);
+				if (err)
+					cfglevel = RUNLEVEL;
+				if (cfglevel < 1 || cfglevel > 9 || cfglevel == 6)
+					cfglevel = 2; /* Fallback */
 				continue;
 			}
+
+			/* Monitored daemon, will be respawned on exit, as
+			 * long as the (optional) service callback returns
+			 * non-zero */
 			if (MATCH_CMD(line, "service ", x)) {
-				svc_register(x, NULL);
+				svc_register(SVC_CMD_SERVICE, x, NULL);
+				continue;
+			}
+
+			/* One-shot task, will not be respawned. Only runs if
+			 * the (optional) service callback returns true */
+			if (MATCH_CMD(line, "task ", x)) {
+				svc_register(SVC_CMD_TASK, x, NULL);
+				continue;
+			}
+
+			/* Like task but waits for completion, useful w/ [S] */
+			if (MATCH_CMD(line, "run ", x)) {
+				svc_register(SVC_CMD_RUN, x, NULL);
 				continue;
 			}
 

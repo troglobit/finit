@@ -1,7 +1,7 @@
-/* Finit service monitor and heneric API for managing svc_t structures
+/* Finit service monitor, task starter and generic API for managing svc_t
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -126,6 +126,25 @@ svc_t *svc_iterator(int restart)
 }
 
 /**
+ * svc_bootstrap - Start bootstrap services and tasks
+ *
+ * System startup, runlevel S, where only services, tasks and
+ * run commands absolutely essential to bootstrap are located.
+ */
+void svc_bootstrap(void)
+{
+	svc_t *svc;
+	svc_cmd_t cmd;
+
+	_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		cmd = svc_enabled(svc, 0, NULL);
+		if (SVC_START == cmd  || (SVC_RELOAD == cmd))
+			svc_start(svc);
+	}
+}
+
+/**
  * svc_runlevel - Change to a new runlevel
  * @newlevel: New runlevel to activate
  *
@@ -164,22 +183,36 @@ void svc_runlevel (int newlevel)
 }
 
 /**
- * svc_register - Register a non-backgrounding service to be monitored
+ * svc_register - Register service, task or run commands
+ * @type:     %SVC_CMD_SERVICE(0), %SVC_CMD_TASK(1), %SVC_CMD_RUN(2)
  * @line:     A complete command line with -- separated description text
  * @username: Optional username to run service as, or %NULL to run as root
  *
- * Actually, the @line can optionally start with a username, denoted by
- * an @ character. Like this:
+ * This function is used to register commands to be run on different
+ * system runlevels with optional username.  The @type argument details
+ * if it's service to bo monitored/respawned (daemon), a one-shot task
+ * or a command that must run in sequence and not in parallell, like
+ * service and task commands do.
  *
- *   "service @username [!0-6] /path/to/daemon -- Description text"
+ * The @line can optionally start with a username, denoted by an @
+ * character. Like this:
  *
- * If the username is left out the daemon is started as root. The []
- * brackets are there to denote the allowed runlevels.
+ *   "service @username [!0-6,S] /path/to/daemon arg -- Description text"
+ *   "task @username [!0-6,S] /path/to/task arg -- Description text"
+ *   "run  @username [!0-6,S] /path/to/cmd arg -- Description text"
+ *
+ * If the username is left out the command is started as root.
+
+ * The [] brackets are there to denote the allowed runlevels. Allowed
+ * runlevels mimic that of SysV init with the addition of the 'S'
+ * runlevel, which is only run once at startup. It can be seen as the
+ * system bootstrap. If a task or run command is listed in more than the
+ * [S] runlevel they will be called when changing runlevel.
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int svc_register(char *line, char *username)
+int svc_register(int type, char *line, char *username)
 {
 	int i = 0, not = 0;
 	char *cmd, *desc, *runlevels = NULL;
@@ -221,13 +254,17 @@ int svc_register(char *line, char *username)
 		return errno = ENOMEM;
 	}
 
+	svc->type = type;
+
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
+
 	if (username)
 		strlcpy(svc->username, username, sizeof(svc->username));
-	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
-	strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 
+	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
+
+	strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 	while ((cmd = strtok(NULL, " ")))
 		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 	svc->args[i][0] = 0;
@@ -243,14 +280,15 @@ int svc_register(char *line, char *username)
 			break;
 		if ('!' == lvl) {
 			not = 1;
-			svc->runlevels = 0x7E;
+			svc->runlevels = 0x3FE;
 			continue;
 		}
+
 		if ('s' == lvl || 'S' == lvl)
-			lvl = '1';
+			lvl = ':'; /* RUNLEVEL_BOOT */
 
 		level = lvl - '0';
-		if (level > 6 || level < 0)
+		if (level > RUNLEVEL_BOOT || level < 0)
 			continue;
 
 		if (not)
@@ -258,6 +296,7 @@ int svc_register(char *line, char *username)
 		else
 			SETBIT(svc->runlevels, level);
 	}
+
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	return 0;
@@ -320,12 +359,15 @@ void svc_monitor(void)
 		return;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		char *name = basename(svc->cmd);
-
 		if (lost != svc->pid)
 			continue;
 
-		_d("Ouch, lost pid %d - %s(%d)", lost, name, svc->pid);
+		if (SVC_CMD_SERVICE != svc->type) {
+			svc->pid = 0;
+			continue;
+		}
+
+		_d("Ouch, lost pid %d - %s(%d)", lost, basename(svc->cmd), svc->pid);
 
 		/* No longer running, update books. */
 		svc->pid = 0;
@@ -336,8 +378,8 @@ void svc_monitor(void)
 		}
 
 		/* Cleanup any lingering or semi-restarting tasks before respawning */
-		_d("Sending SIGTERM to service group %s", name);
-		procname_kill(name, SIGTERM);
+		_d("Sending SIGTERM to service group %s", basename(svc->cmd));
+		procname_kill(basename(svc->cmd), SIGTERM);
 
 		/* Restarting lost service. */
 		if (svc_enabled(svc, 0, NULL)) {
@@ -375,7 +417,9 @@ int svc_start(svc_t *svc)
 	if (is_norespawn())
 		return 0;
 
-	if (!respawn)
+	if (SVC_CMD_SERVICE != svc->type)
+		print_desc("", svc->desc);
+	else if (!respawn)
 		print_desc("Starting ", svc->desc);
 
         /* Block sigchild while forking.  */
@@ -435,7 +479,9 @@ int svc_start(svc_t *svc)
 	}
 	svc->pid = pid;
 
-	if (!respawn)
+	if (SVC_CMD_RUN == svc->type)
+		print_result(WEXITSTATUS(complete(svc->cmd, pid)));
+	else if (!respawn)
 		print_result(svc->pid > 1 ? 0 : 1);
 
 	return 0;
@@ -466,6 +512,9 @@ int svc_stop(svc_t *svc)
 		svc->stat_restart_counter = 0;
 		return 1;
 	}
+
+	if (SVC_CMD_SERVICE != svc->type)
+		return 0;
 
 	if (runlevel != 1)
 		print_desc("Stopping ", svc->desc);
@@ -499,24 +548,6 @@ int svc_reload(svc_t *svc)
 	_d("Sending SIGHUP to PID %d", svc->pid);
 	return kill(svc->pid, SIGHUP);
 }
-
-void svc_start_all(void)
-{
-	svc_t *svc;
-	svc_cmd_t cmd;
-
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		cmd = svc_enabled(svc, 0, NULL);
-		if (SVC_START == cmd  || (SVC_RELOAD == cmd && svc->pid == 0))
-			svc_start(svc);
-		else if (SVC_RELOAD == cmd)
-			svc_reload(svc);
-	}
-
-	_d("Running svc up hooks ...");
-	plugin_run_hooks(HOOK_SVC_UP);
-}
-
 
 /**
  * Local Variables:

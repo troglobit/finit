@@ -1,7 +1,7 @@
 /* Private header file for main finit daemon, not for plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@
 #include "svc.h"
 #include "plugin.h"
 
-void      svc_start_all    (void);
+void      svc_bootstrap    (void);
 void      svc_monitor      (void);
 
 void      plugin_run_hooks (hook_point_t no);
