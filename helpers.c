@@ -262,7 +262,7 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
  * Returns:
  * Number of signals sent, i.e. number of processes who have received the signal.
  */
-int procname_kill (char *name, int signo)
+int procname_kill(char *name, int signo)
 {
 	int result = 0;
 	char path[32], line[64];
@@ -276,17 +276,17 @@ int procname_kill (char *name, int signo)
 		return 0;
 	}
 
-	while ((entry = readdir (dir)) != NULL) {
+	while ((entry = readdir(dir)) != NULL) {
 		/* Skip non-process entries in /proc */
-		if (!isdigit (*entry->d_name))
+		if (!isdigit(*entry->d_name))
 			continue;
 
-		snprintf (path, sizeof(path), "/proc/%s/status", entry->d_name);
+		snprintf(path, sizeof(path), "/proc/%s/status", entry->d_name);
 		/* Skip non-readable files (protected?) */
-		if ((fp = fopen (path, "r")) == NULL)
+		if ((fp = fopen(path, "r")) == NULL)
 			continue;
 
-		if (fgets (line, sizeof (line), fp)) {
+		if (fgets(line, sizeof (line), fp)) {
 			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
 
 			if (strncmp(pname, name, strlen(pname) - 1) == 0) {

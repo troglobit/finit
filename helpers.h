@@ -69,10 +69,10 @@
 /* Esc[?25h (lower case H) Show Cursor */
 #define showcursor()       fputs("\e[?25h", stderr)
 
-#define echo(fmt, args...) do {                fprintf(stderr,                    fmt "\n", ##args); } while (0)
-#define   _d(fmt, args...) do { if (debug)   { fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } } while (0)
-#define   _e(fmt, args...) do {                fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
-#define  _pe(fmt, args...) do {                fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
+#define echo(fmt, args...) do {              fprintf(stderr,                    fmt "\n", ##args); } while (0)
+#define   _d(fmt, args...) do { if (debug) { fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } } while (0)
+#define   _e(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
+#define  _pe(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
 
 extern int debug;
 extern int verbose;
@@ -89,7 +89,7 @@ char   *pid_get_name    (pid_t pid, char *name, size_t len);
 void    procname_set    (char *name, char *args[]);
 int     procname_kill   (char *name, int signo);
 
-void    print_desc     (char *action, char *desc);
+void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);
 void    chomp           (char *str);
