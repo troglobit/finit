@@ -37,12 +37,16 @@
 #if defined EMBEDDED_SYSTEM
 # define CONSOLE                "/dev/console"
 # define SETUP_DEVFS            "/sbin/mdev -s"
-# define GETTY                  "/sbin/getty -L 115200 %s vt100"
+# define GETTY                  "/sbin/getty -L"
+# define GETTY_BUSYBOX
+# define BAUDRATE               115200
 # define RUNLEVEL               2
 #else /* Debian/Ubuntu based distributions */
 # define CONSOLE                "/dev/tty1"
 # define SETUP_DEVFS            "/sbin/udevd --daemon"
-# define GETTY                  "/sbin/getty -8 38400 %s"
+# define GETTY                  "/sbin/getty -8"
+# define GETTY_AGETTY
+# define BAUDRATE               38400
 # define RUNLEVEL               2
 # define RANDOMSEED             "/var/lib/urandom/random-seed"
 # define REMOUNT_ROOTFS_RW
@@ -84,11 +88,8 @@ extern char  *console;
 extern char  *__progname;
 
 /* conf.c */
-void parse_finit_conf(char *file);
-
-/* tty.c */
-void tty_start(void);
-int  tty_add(char *tty, int baud);
+int  parse_runlevels  (char *runlevels);
+void parse_finit_conf (char *file);
 
 #endif /* FINIT_H_ */
 

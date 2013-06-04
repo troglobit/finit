@@ -26,6 +26,7 @@
 
 #include "finit.h"
 #include "svc.h"
+#include "tty.h"
 #include "lite.h"
 #include "helpers.h"
 
@@ -49,6 +50,42 @@ static char *strip_line(char *line)
 	return line;
 }
 
+/* Convert optional "[!123456789S]" string into a bitmask */
+int parse_runlevels(char *runlevels)
+{
+	int i, not = 0, bitmask = 0;
+
+	if (!runlevels)
+		runlevels = "[234]";
+	i = 1;
+	while (i) {
+		int level;
+		char lvl = runlevels[i++];
+
+		if (']' == lvl || 0 == lvl)
+			break;
+		if ('!' == lvl) {
+			not = 1;
+			bitmask = 0x3FE;
+			continue;
+		}
+
+		if ('s' == lvl || 'S' == lvl)
+			lvl = ':'; /* RUNLEVEL_BOOT */
+
+		level = lvl - '0';
+		if (level > RUNLEVEL_BOOT || level < 0)
+			continue;
+
+		if (not)
+			CLRBIT(bitmask, level);
+		else
+			SETBIT(bitmask, level);
+	}
+
+	return bitmask;
+}
+
 void parse_finit_conf(char *file)
 {
 	FILE *fp;
@@ -67,9 +104,8 @@ void parse_finit_conf(char *file)
 		while (!feof(fp)) {
 			if (!fgets(line, sizeof(line), fp))
 				continue;
-
-			_d("conf: %s", line);
 			chomp(line);
+			_d("conf: %s", line);
 
 			/* Skip comments. */
 			if (MATCH_CMD(line, "#", x))
@@ -179,9 +215,7 @@ void parse_finit_conf(char *file)
 				continue;
 			}
 			if (MATCH_CMD(line, "tty ", x)) {
-				char *tty = strdup(strip_line(x));
-				int baud  = 115200; /* XXX - Read from config file */
-				tty_add(tty, baud);
+				tty_register(strip_line(x));
 				continue;
 			}
 		}

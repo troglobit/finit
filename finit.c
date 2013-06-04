@@ -34,6 +34,7 @@
 #include "plugin.h"
 #include "svc.h"
 #include "sig.h"
+#include "tty.h"
 #include "lite.h"
 
 int   debug     = 0;
@@ -273,7 +274,7 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 
 	/* Start GETTY on console(s) */
-	tty_start();
+	tty_runlevel(runlevel);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services

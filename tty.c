@@ -1,6 +1,7 @@
-/* TTY handling in finit
+/* Finit TTY handling
  *
- * Copyright (c) 2013 Mattias Walström <lazzer@gmail.com>
+ * Copyright (c) 2013  Mattias Walström <lazzer@gmail.com>
+ * Copyright (c) 2013  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,119 +22,181 @@
  * THE SOFTWARE.
  */
 
-#include <sys/inotify.h>
 #include <signal.h>
-#include <sys/prctl.h>
 #include <sys/wait.h>
 
-#include "queue.h"
 #include "finit.h"
 #include "helpers.h"
 #include "lite.h"
+#include "tty.h"
 
-typedef struct finit_tty_t {
-	char *name;
-	int baud;
-
-	int pid; /* Runtime information*/
-} finit_tty_t;
-
-typedef struct node {
-	LIST_ENTRY(node) link;
-	finit_tty_t data;
-} node_t;
+LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
 
-/* We need to make room for the filename also, which is sent after inotify_event. */
-#define EVENT_SIZE ((sizeof(struct inotify_event) + FILENAME_MAX))
-
-LIST_HEAD(, node) node_list = LIST_HEAD_INITIALIZER();
-int tty_add(char *tty, int baud)
+/* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] */
+int tty_register(char *line)
 {
-	node_t *entry;
+	tty_node_t *entry;
+	int         insert = 0, baud = 0;
+	char       *cmd, *dev;
+	char       *runlevels = NULL, *term = NULL;
 
-	if (!tty)
+	if (!line) {
+		_e("Invalid input argument.");
 		return errno = EINVAL;
+	}
 
-	entry = malloc(sizeof(*entry));
-	if (!entry)
-		return errno = ENOMEM;
+	cmd = strtok(line, " ");
+	if (!cmd) {
+	incomplete:
+		_e("Incomplete tty, cannot register.");
+		return errno = EINVAL;
+	}
 
-	entry->data.name = tty;
+	if (cmd[0] == '[') {	/* [runlevels] */
+		runlevels = &cmd[0];
+		dev = strtok(NULL, " ");
+		if (!dev)
+			goto incomplete;
+	} else {
+		dev = cmd;
+	}
+
+	cmd = strtok(NULL, " ");
+	if (cmd) {
+		baud = strtonum(cmd, 50, 4000000, NULL);
+		term = strtok(NULL, " ");
+	}
+
+	entry = tty_find(dev);
+	if (!entry) {
+		insert = 1;
+		entry = malloc(sizeof(*entry));
+		if (!entry)
+			return errno = ENOMEM;
+	}
+
+	entry->data.name = strdup(dev);
+	if (!baud)
+		baud = BAUDRATE;
 	entry->data.baud = baud;
+	entry->data.term = term ? strdup(term) : NULL;
+	entry->data.runlevels = parse_runlevels(runlevels);
+	_d("Registering tty %s at %d baud with term=%s on runlevels %s", dev, baud, term ?: "N/A", runlevels);
 
-	LIST_INSERT_HEAD(&node_list, entry, link);
+	if (insert)
+		LIST_INSERT_HEAD(&tty_list, entry, link);
 
 	return 0;
 }
 
-static void tty_startstop_one(finit_tty_t *tty, uint32_t mask)
+tty_node_t *tty_find(char *dev)
 {
-	int is_console = 0;
-	char cmd[strlen(GETTY) + FILENAME_MAX];
+	tty_node_t *entry;
+
+	LIST_FOREACH(entry, &tty_list, link) {
+		if (!strcmp(dev, entry->data.name))
+			return entry;
+	}
+
+	return NULL;
+}
+
+tty_node_t *tty_find_by_pid(pid_t pid)
+{
+	tty_node_t *entry;
+
+	LIST_FOREACH(entry, &tty_list, link) {
+		if (entry->data.pid == pid)
+			return entry;
+	}
+
+	return NULL;
+}
+
+void tty_start(finit_tty_t *tty)
+{
+	int i = 0, is_console = 0;
+	char *cmd, *arg;
+	char  line[FILENAME_MAX];
+	char *args[42];
+
+	if (tty->pid)
+		return;
 
 	if (console && !strcmp(tty->name, console))
 		is_console = 1;
 
-	if (mask & IN_CREATE) {
-		_d("Starting %s as %s", tty->name, is_console ? "console" : "TTY");
-		snprintf(cmd, sizeof(cmd), GETTY, tty->name);
-		tty->pid = run_getty(cmd, is_console);
-	}
+#if   defined(GETTY_AGETTY)
+	snprintf(line, sizeof(line), "%s %s %d %s", GETTY, tty->name, tty->baud, tty->term ?: "");
+#elif defined(GETTY_BUSYBOX)
+	snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
+#else
+#error No GETTY defined!
+#endif
+	cmd = strtok(line, " ");
+	args[i++] = basename(cmd);
+	while ((arg = strtok(NULL, " ")))
+		args[i++] = arg;
+	args[i] = NULL;
 
-	/* Kill the spawned child, and recollect it. */
-	if ((mask & IN_DELETE) && tty->pid) {
-		_d("Stopping %s", tty->name);
-		kill(tty->pid, SIGKILL);
-		waitpid(tty->pid, NULL, 0);
-		tty->pid = 0;
-	}
+	_d("Starting %s: %s on %s", is_console ? "console" : "TTY", cmd, tty->name);
+	tty->pid = run_getty(cmd, args, is_console);
 }
 
-static void tty_watcher(node_t *entry)
+void tty_stop(finit_tty_t *tty)
 {
-	int fd = inotify_init();
+	if (!tty->pid)
+		return;
 
-	prctl(PR_SET_NAME, "tty-watcher", 0, 0, 0);
-
-	if (-1 == fd || inotify_add_watch(fd, "/dev", IN_CREATE | IN_DELETE) < 0) {
-		fprintf(stderr, "finit: Failed starting TTY watcher: %s\n", strerror(errno));
-		exit(1);
-	}
-
-	while (1) {
-		int len = 0;
-		char buf[EVENT_SIZE];
-		struct inotify_event *notified = (struct inotify_event *)buf;
-
-		while ((len = read(fd, buf, EVENT_SIZE))) {
-			if (len == -1) {
-				if (errno == EAGAIN || errno == EINTR)
-					continue;
-			}
-
-			LIST_FOREACH(entry, &node_list, link) {
-				if (!strcmp(notified->name, entry->data.name))
-					tty_startstop_one(&entry->data, notified->mask);
-			}
-		}
-	}
+	_d("Stopping TTY %s", tty->name);
+	kill(tty->pid, SIGTERM);
+	do_sleep(2);
+	kill(tty->pid, SIGKILL);
+	waitpid(tty->pid, NULL, 0);
+	tty->pid = 0;
 }
 
-void tty_start(void)
+int tty_enabled(finit_tty_t *tty, int runlevel)
 {
-	node_t *entry;
+	if (!tty)
+		return 0;
 
-	/* Start all TTYs that already exist in the system */
-	LIST_FOREACH(entry, &node_list, link) {
-		chdir("/dev");
-		if (fexist (entry->data.name))
-			tty_startstop_one(&entry->data, IN_CREATE);
+	if (!ISSET(tty->runlevels, runlevel))
+		return 0;
+	else if (fexist(tty->name))
+		return 1;
+
+	return 0;
+}
+
+/* TTY monitor, called by svc_monitor() */
+int tty_respawn(pid_t pid)
+{
+	tty_node_t *entry = tty_find_by_pid(pid);
+
+	if (!entry)
+		return 0;
+
+	if (!tty_enabled(&entry->data, runlevel))
+		tty_stop(&entry->data);
+	else
+		tty_start(&entry->data);
+
+	return 1;
+}
+
+/* Start all TTYs that exist in the system and are allowed at this runlevel */
+void tty_runlevel(int runlevel)
+{
+	tty_node_t *entry;
+
+	LIST_FOREACH(entry, &tty_list, link) {
+		if (!tty_enabled(&entry->data, runlevel))
+			tty_stop(&entry->data);
+		else
+			tty_start(&entry->data);
 	}
-
-	/* Start a watcher to catch new TTYs that is discovered, e.g., USB */
-	if (!fork())
-		tty_watcher(entry);
 }
 
 /**

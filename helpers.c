@@ -505,7 +505,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
-pid_t run_getty(char *cmd, int console)
+pid_t run_getty(char *cmd, char *args[], int console)
 {
 	pid_t pid = fork();
 
@@ -557,7 +557,7 @@ pid_t run_getty(char *cmd, int console)
 			if (fexist(SYNC_STOPPED))
 				continue;
 
-			run(cmd);
+			execv(cmd, args);
 		}
 
 		exit(0);
@@ -655,6 +655,13 @@ void chomp(char *str)
 
 	if (x)
 		*x = 0;
+}
+
+/* Signal safe sleep ... we get a lot of SIGCHLD at reboot */
+void do_sleep(unsigned int sec)
+{
+	while ((sec = sleep(sec)))
+		;
 }
 
 void set_hostname(char *hostname)

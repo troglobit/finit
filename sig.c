@@ -49,13 +49,6 @@
 
 static int stopped = 0;
 
-/* Signal safe sleep ... we get a lot of SIGCHLD at reboot */
-void do_sleep(unsigned int sec)
-{
-	while ((sec = sleep(sec)))
-		;
-}
-
 void do_shutdown (int sig)
 {
 	touch(SYNC_SHUTDOWN);

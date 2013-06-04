@@ -124,9 +124,9 @@ int plugin_unregister(plugin_t *plugin)
 }
 
 
+//		_d("Comparing %s against plugin %s", str, p->name);
 #define SEARCH_PLUGIN(str)						\
 	PLUGIN_ITERATOR(p, tmp) {					\
-		_d("Comparing %s against plugin %s", str, p->name);	\
 		if (!strcmp(p->name, str))				\
 			return p;					\
 	}
@@ -305,9 +305,9 @@ static void check_plugin_depends(plugin_t *plugin)
 	int i;
 
 	for (i = 0; i < PLUGIN_DEP_MAX && plugin->depends[i]; i++) {
-		_d("Plugin %s depends on %s ...", plugin->name, plugin->depends[i]);
+//		_d("Plugin %s depends on %s ...", plugin->name, plugin->depends[i]);
 		if (plugin_find(plugin->depends[i])) {
-			_d("OK plugin %s was already loaded.", plugin->depends[i]);
+//			_d("OK plugin %s was already loaded.", plugin->depends[i]);
 			continue;
 		}
 

@@ -29,12 +29,9 @@
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"
+#include "tty.h"
 #include "lite.h"
 #include "svc.h"
-
-#define ISSET(a,i)   ((a & (1 << (i)) ? 1 : 0))
-#define SETBIT(a,i)  (a |= (1 << (i)))
-#define CLRBIT(a,i)  (a &= ~(1 << (i)))
 
 /* The registered services are kept in shared memory for easy read-only access
  * by 3rd party APIs.  Mostly because of the ability to, from the outside, query
@@ -151,14 +148,14 @@ void svc_bootstrap(void)
  * Stops all services not in @newlevel and starts, or lets continue to run,
  * those in @newlevel.  Also updates @prevlevel and active @runlevel.
  */
-void svc_runlevel (int newlevel)
+void svc_runlevel(int newlevel)
 {
 	svc_t *svc;
 
 	if (runlevel == newlevel)
 		return;
 
-	if (newlevel > 5 || newlevel < 1)
+	if (newlevel < 0 || newlevel > 9)
 		return;
 
 	prevlevel = runlevel;
@@ -176,10 +173,22 @@ void svc_runlevel (int newlevel)
 		}
 	}
 
+	if (0 == runlevel) {
+		do_shutdown(SIGUSR2);
+		return;
+	}
+	if (6 == runlevel) {
+		do_shutdown(SIGUSR1);
+		return;
+	}
+
 	if (runlevel == 1)
 		touch("/etc/nologin");	/* Disable login in single-user mode */
 	else
 		remove("/etc/nologin");
+
+	if (RUNLEVEL_BOOT != prevlevel)
+		tty_runlevel(runlevel);
 }
 
 /**
@@ -214,7 +223,7 @@ void svc_runlevel (int newlevel)
  */
 int svc_register(int type, char *line, char *username)
 {
-	int i = 0, not = 0;
+	int i = 0;
 	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
 
@@ -269,34 +278,7 @@ int svc_register(int type, char *line, char *username)
 		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 	svc->args[i][0] = 0;
 
-	if (!runlevels)
-		runlevels = "[234]";
-	i = 1;
-	while (i) {
-		int level;
-		char lvl = runlevels[i++];
-
-		if (']' == lvl || 0 == lvl)
-			break;
-		if ('!' == lvl) {
-			not = 1;
-			svc->runlevels = 0x3FE;
-			continue;
-		}
-
-		if ('s' == lvl || 'S' == lvl)
-			lvl = ':'; /* RUNLEVEL_BOOT */
-
-		level = lvl - '0';
-		if (level > RUNLEVEL_BOOT || level < 0)
-			continue;
-
-		if (not)
-			CLRBIT(svc->runlevels, level);
-		else
-			SETBIT(svc->runlevels, level);
-	}
-
+	svc->runlevels = parse_runlevels(runlevels);
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	return 0;
@@ -356,6 +338,9 @@ void svc_monitor(void)
 
 	/* Power user at the console, don't respawn tasks. */
 	if (is_norespawn())
+		return;
+
+	if (tty_respawn(lost))
 		return;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {

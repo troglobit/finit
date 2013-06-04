@@ -74,6 +74,10 @@
 #define   _e(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
 #define  _pe(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
 
+#define ISSET(a,i)   ((a & (1 << (i)) ? 1 : 0))
+#define SETBIT(a,i)  (a |= (1 << (i)))
+#define CLRBIT(a,i)  (a &= ~(1 << (i)))
+
 extern int debug;
 extern int verbose;
 
@@ -93,6 +97,7 @@ void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);
 void    chomp           (char *str);
+void    do_sleep        (unsigned int sec);
 int     getuser         (char *username);
 int     getgroup        (char *group);
 void    set_hostname    (char *hostname);
@@ -100,7 +105,7 @@ void    set_hostname    (char *hostname);
 int     complete        (char *cmd, int pid);
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
-pid_t   run_getty       (char *cmd, int console);
+pid_t   run_getty       (char *cmd, char *args[], int console);
 int     run_parts       (char *dir, char *cmd);
 
 #endif /* FINIT_HELPERS_H_ */
