@@ -71,10 +71,10 @@ int parse_runlevels(char *runlevels)
 		}
 
 		if ('s' == lvl || 'S' == lvl)
-			lvl = ':'; /* RUNLEVEL_BOOT */
+			lvl = '0';
 
 		level = lvl - '0';
-		if (level > RUNLEVEL_BOOT || level < 0)
+		if (level > 9 || level < 0)
 			continue;
 
 		if (not)

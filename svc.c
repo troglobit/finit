@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <sys/wait.h>
+#include <utmp.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -141,6 +142,25 @@ void svc_bootstrap(void)
 	}
 }
 
+static void utmp_save(int pre, int now)
+{
+   struct utmp utent;
+
+   int encode(int lvl)
+   {
+	   if (!lvl) return 0;
+	   return lvl + '0';
+   }
+
+   utent.ut_type  = RUN_LVL;
+   utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
+   strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
+
+   setutent();
+   pututline(&utent);
+   endutent();
+}
+
 /**
  * svc_runlevel - Change to a new runlevel
  * @newlevel: New runlevel to activate
@@ -159,7 +179,8 @@ void svc_runlevel(int newlevel)
 		return;
 
 	prevlevel = runlevel;
-	runlevel = newlevel;
+	runlevel  = newlevel;
+	utmp_save(prevlevel, newlevel);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		int run = svc_enabled(svc, 0, NULL);
@@ -187,7 +208,7 @@ void svc_runlevel(int newlevel)
 	else
 		remove("/etc/nologin");
 
-	if (RUNLEVEL_BOOT != prevlevel)
+	if (0 != prevlevel)
 		tty_runlevel(runlevel);
 }
 

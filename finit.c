@@ -39,9 +39,9 @@
 
 int   debug     = 0;
 int   verbose   = 1;
-int   runlevel  = RUNLEVEL_BOOT; /* Bootstrap */
-int   cfglevel  = RUNLEVEL;	 /* Fallback if no configured runlevel */
-int   prevlevel = 0;		 /* HALT */
+int   runlevel  = 0;		/* Bootstrap */
+int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
+int   prevlevel = 0;		/* HALT */
 char *sdown     = NULL;
 char *network   = NULL;
 char *username  = NULL;

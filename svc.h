@@ -42,7 +42,6 @@ typedef enum {
 	SVC_CMD_RUN		/* Like task, but wait for completion */
 } svc_type_t;
 
-#define RUNLEVEL_BOOT    10
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64

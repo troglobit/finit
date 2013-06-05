@@ -110,7 +110,7 @@ static void sigstop_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 	_d("Received SIGSTOP(%d) from %s (PID %d)",
 	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 	touch(SYNC_STOPPED);
-	stopped ++;
+	stopped++;
 }
 static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 {
