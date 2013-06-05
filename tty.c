@@ -71,7 +71,7 @@ int tty_register(char *line)
 	entry = tty_find(dev);
 	if (!entry) {
 		insert = 1;
-		entry = malloc(sizeof(*entry));
+		entry = calloc(1, sizeof(*entry));
 		if (!entry)
 			return errno = ENOMEM;
 	}
