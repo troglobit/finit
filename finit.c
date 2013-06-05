@@ -145,11 +145,7 @@ static int run_loop(void)
 static void banner(void)
 {
 	delline();
-#ifdef BANNER
-	echo(BANNER);
-#else
 	echo("Finit version " VERSION " (" WHOAMI ") " __DATE__ " " __TIME__);
-#endif
 }
 
 int main(int argc, char* argv[])
