@@ -59,7 +59,7 @@ typedef struct svc {
 	svc_type_t     type;
 	int	       reload;
 	int            runlevels;
-	unsigned int   stat_restart_counter; /* Incremented for each restart by service monitor. */
+	unsigned int   restart_counter; /* Incremented for each restart by service monitor. */
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
