@@ -6,6 +6,7 @@ LDFLAGS    += -shared
 PLUGINS    ?= initctl.so alsa-utils.so bootmisc.so dbus.so hwclock.so \
 	      resolvconf.so urandom.so x11-common.so tty.so
 DEPS        = $(addprefix .,$(PLUGINS:.so=.d))
+TOPDIR     ?= $(shell pwd)
 
 include ../common.mk
 

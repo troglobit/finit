@@ -39,6 +39,7 @@ SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 
 # Installation paths, always prepended with DESTDIR if set
+TOPDIR      = $(shell pwd)
 prefix     ?= /usr
 sysconfdir ?= /etc
 sbindir    ?= /sbin
@@ -60,7 +61,7 @@ CPPFLAGS   += -Ilibite -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
 CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(plugindir)\"
-LDFLAGS    += -rdynamic -L$(ROOTDIR)/libite
+LDFLAGS    += -rdynamic -L$(TOPDIR)/libite
 DEPLIBS     = libite/libite.so
 LDLIBS     += -ldl -lite
 
