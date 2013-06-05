@@ -178,6 +178,9 @@ int tty_respawn(pid_t pid)
 	if (!entry)
 		return 0;
 
+	/* Clear PID to be able to respawn it. */
+	entry->data.pid = 0;
+
 	if (!tty_enabled(&entry->data, runlevel))
 		tty_stop(&entry->data);
 	else
