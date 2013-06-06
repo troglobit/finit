@@ -542,7 +542,7 @@ pid_t run_getty(char *cmd, char *args[], int console)
 			DFLSIG(sa, i, 0);
 
 		while (!fexist(SYNC_SHUTDOWN)) {
-			static const char msg[] = "\nPlease press Enter to activate this console. ";
+			static const char msg[] = "\nPlease press Enter to activate this console.";
 
 			if (fexist(SYNC_STOPPED)) {
 				sleep(1);
@@ -550,7 +550,7 @@ pid_t run_getty(char *cmd, char *args[], int console)
 			}
 
 			if (console) {
-				i = write(STDERR_FILENO, msg, sizeof(msg) - 1);
+				i = write(STDERR_FILENO, msg, sizeof(msg));
 				while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
 					continue;
 			}
