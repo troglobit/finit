@@ -133,10 +133,20 @@ static int client(int argc, char *argv[])
 
 static int run_loop(void)
 {
+	int delay = DELAY_TTY ?: 1;
+
 	_d("Entering main loop ...");
 	while (1) {
 		svc_monitor();
 		plugin_monitor();
+
+		/* Delayed start of TTYs to let the system stabilize
+		 * after switching runlevels. */
+		if (delay) {
+			if (--delay == 0)
+				tty_runlevel(runlevel);
+			continue;
+		}
 	}
 
 	return 0;
@@ -268,9 +278,6 @@ int main(int argc, char* argv[])
 
 	/* Hooks that should run at the very end */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
-
-	/* Start GETTY on console(s) */
-	tty_runlevel(runlevel);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services
