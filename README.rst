@@ -1,5 +1,5 @@
 ==============================================================================
-        Finit — A fast plugin-based /sbin/init with service monitoring
+       Finit — A fast plugin-based /sbin/init with service monitoring
 ==============================================================================
 
 Welcome to finit!
@@ -7,8 +7,8 @@ Welcome to finit!
 This is an extremely fast /sbin/init replacement with focus on small
 embedded GNU/Linux systems.  Based on Claudio Matsuoka's original finit_
 with I/O, service and hook plugin extensions.  The original was a
-reimplementation of the EeePC fastinit_ daemon based on its system
-calls with gaps filled with frog DNA.
+reimplementation of the EeePC fastinit_ daemon based on its system calls
+with gaps filled with frog DNA.
 
 In the world of finit we write C plugins that hook into and extend the
 ``main()`` loop of ``/sbin/init``, this is what gives the system its raw
@@ -42,7 +42,46 @@ plugins with either hooks or I/O demands.
 
 Contrary to most script based init alternatives (`SysV init`_, upstart_,
 OpenRC_ and the likes) finit instead reads its configuration from
-``/etc/finit.conf``, see the source code for available options.
+``/etc/finit.conf``.  Below is a brief list, see the source code for the
+full list:
+
+check
+    Run fsck on a file system before mounting it
+
+module
+    Load a kernel module, with optional arguments
+
+network
+    Script or program to bringup networking, with optional arguments
+
+runlevel N
+    N is the runlevel number 1-9, where 6 is reserved for reboot
+
+run [RUN_LVLS] /path/to/cmd ARGS -- Optional description
+    One-shot command to run in sequence when entering a runlevel, with
+    optional arguments and description.  This command is guaranteed to
+    be completed before running the next command.
+
+task [RUN_LVLS] /path/to/cmd ARGS -- Optional description
+    One-shot like 'run', but starts in parallel with the next command
+
+service [RUN_LVLS] /path/to/daemon ARGS -- Optional description
+    Service, or daemon, to be monitored and automatically restarted if
+    it exits prematurely.  Please note that you often need to provide
+    a --foreground or --no-background argument to most daemons to
+    prevent them from forking off to the background.
+
+runparts
+    Call run-parts(8) on a directory other than the default /etc/finit.d
+
+tty [RUN_LVLS] DEV
+    Run getty on the listed TTY device, in the given runlevels
+
+console DEV
+    Some embedded systems have a dedicated console port. This command
+    tells finit to not start getty, but instead print a friendly message
+    and wait for the user to activate the console with a keypress before
+    starting getty.
 
 When running ``make install`` no default ``/etc/finit.conf`` will be
 provided since the system requirements differ too much.  Try out the
@@ -55,32 +94,43 @@ getty!
 ------------
 
 At the end of the boot, when networking and all services are up, finit
-calls its built-in run-parts(8) on the ``/etc/finit.d/`` directory, akin
-to how the ``/ec/rc.local`` file works in most other inits, only finit
-runs a directory of scripts.  This replaces the earlier
-``/usr/sbin/services.sh`` support of the original finit_.
+calls its built-in run-parts(8) on the ``/etc/finit.d/`` directory, if
+it exists.  Similar to how the ``/ec/rc.local`` file works in most other
+inits, only finit runs a directory of scripts.  This replaces the
+earlier support for a ``/usr/sbin/services.sh`` script in the original
+finit_.
 
 
 Runlevels
 ---------
 
-Rudimentary support for runlevels_ exist.  Currently the system will
-always start in runlevel 3 and all services belonging to that runlevel
-will be started at boot.
+Support for runlevels_ is included in Finit from v1.8.  By default all
+services, tasks, run commands and TTYs listed without a set of runlevels
+get a default set [234] assigned.  The default runlevel after boot is 2.
 
-To specify an allowed set of runlevels for a service, add [NNN] to its
-service stanza in finit.conf, like this:
+To specify an allowed set of runlevels for a service, run command, task,
+or tty, add [NNN] to it in finit.conf, like this:
 
-        service [345] /sbin/klogd -n -x -- Kernel log daemon
+        run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
+        task    [S]      /etc/init.d/kbd start -- Preparing console
+        service [S12345] /sbin/klogd -n -x -- Kernel log daemon
+        tty     [12345]  /dev/tty1
+        tty     [2]      /dev/tty2
+        tty     [2]      /dev/tty3
+        tty     [2]      /dev/tty4
+        tty     [2]      /dev/tty5
+        tty     [2]      /dev/tty6
 
-Meaning that klogd is allowed to run in runlevels 3, 4 and 5, only.
+In this example acpid is started once at bootstrap using a conventional
+SysV init script. Here the run command was used, meaning the following
+task command is not run until the init script has fully completed.
 
-        service [!06] /sbin/klogd -n -x -- Kernel log daemon
-
-Meaning all runlevels *but* 0 and 6.
+Tasks and services are started in parallell, while run commands are run
+in the order listed and subsequent commands are not started until a run
+command has completed.
 
 Existing finit.conf files that lack runlevel setting will get a default
-runlevel assigned, [345].
+runlevel assigned, [234].
 
 Switching between runlevels can be done by calling init with a single
 argument, e.g., 'init 5' switches to runlevel 5.
