@@ -1,6 +1,7 @@
 ==============================================================================
                                     TODO
 ==============================================================================
+
 Unsorted TODO list of features and points of investigation that could be
 useful for improving finit.  But what is an improvement to finit?  Well,
 similiar to launchd, the goal of finit is to be a FAST replacement for:
@@ -11,7 +12,8 @@ similiar to launchd, the goal of finit is to be a FAST replacement for:
 * watchdogd
 
 The main goal is to be FAST. Secondary goals are to be: small, simple
-and with a very low dependency to external packages.
+and with a very low dependency on external packages.
+
 
 Priority
 --------
@@ -30,11 +32,13 @@ processes that declare themselves to be finit compliant.
   restarting it is imposible, as well as when system load gets
   too high.
 
+
 Configuration
 -------------
 * Add support for "init <q | reload-configuration>" and SIGHUP to
   reload finit.conf, but also
 * Add support for inotify to automatically reload finit.conf
+
 
 Runlevels
 ---------
@@ -50,6 +54,7 @@ Runlevels
   in inittab.  We could use "task [S]" and "run [S]" (below) for this.
 * Add support for a new runlevel 'S' that is started before all other
   services in the selected runlevel.
+
 
 Services and Tasks
 ------------------
@@ -69,6 +74,7 @@ call on-shot tasks in parallell with something else, even at boot. Hence
 the differentiation between "task" and "run", which are essentially the
 same, except for the "pause and wait for completion" that "run" has.
 
+
 Miscellaneous
 -------------
 * Add support for "init -v,--version | version"
@@ -78,11 +84,13 @@ Miscellaneous
   instead. This is the de-facto practise.  But keep the check command
   for really low-end systems w/o /etc/fstab.
 
+
 Documentation
 -------------
 * Write man pages for finit and finit.conf, steal from pimd man pages...
 * Update Debian finit.conf example with runlevels, tty/console and
   dependency handling
+
 
 Investigation
 -------------

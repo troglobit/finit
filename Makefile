@@ -26,14 +26,14 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.7
+VERSION    ?= 1.8
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
 ARCHIVE     = $(PKG).tar.xz
 EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
-DISTFILES   = LICENSE README ChangeLog finit.conf services
+DISTFILES   = LICENSE README NEWS finit.conf services
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o tty.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))

@@ -28,6 +28,7 @@ Extend and modify finit behavior. See examples in plugins/ directory.
 Plugin capabilities:
    
 * Service callbacks — should the service run/restart/stop?
+* Task/Run callbacks — a one-shot command, should it run in sequence?
 * Hooks — hook into the boot at predefined points to extend finit
 * I/O — listen to external events and control finit behaviour/services
 
@@ -63,7 +64,7 @@ runs a directory of scripts.  This replaces the earlier
 Runlevels
 ---------
 
-Very simple support for runlevels_ exist.  Currently the system will
+Rudimentary support for runlevels_ exist.  Currently the system will
 always start in runlevel 3 and all services belonging to that runlevel
 will be started at boot.
 
