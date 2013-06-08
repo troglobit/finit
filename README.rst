@@ -267,4 +267,4 @@ Regards
 .. _upstart: http://upstart.ubuntu.com/
 .. _runlevels: http://en.wikipedia.org/wiki/Runlevel
 .. _openrc: http://www.gentoo.org/proj/en/base/openrc/
-.. _`finit-1.3.tar.xz`: http://github.com/downloads/troglobit/finit/finit-1.3.tar.xz
+.. _`finit-1.3.tar.xz`: ftp://troglobit.com/finit/finit-1.3.tar.xz
