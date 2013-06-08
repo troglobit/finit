@@ -1,20 +1,18 @@
 ==============================================================================
-       Finit — A fast plugin-based /sbin/init with service monitoring
+                      Finit | Fast Init Replacement
 ==============================================================================
 
-Welcome to finit!
+Finit is an extremely fast /sbin/init replacement focusing on small and
+embedded GNU/Linux systems.  It is the continuation of the original
+finit by `Claudio Matsuoka`_ which was reverse engineered from syscalls
+of the EeePC fastinit_ daemon -- gaps filled with frog DNA ...
 
-This is an extremely fast /sbin/init replacement with focus on small
-embedded GNU/Linux systems.  Based on Claudio Matsuoka's original finit_
-with I/O, service and hook plugin extensions.  The original was a
-reimplementation of the EeePC fastinit_ daemon based on its system calls
-with gaps filled with frog DNA.
+This modern finit has extensions for service monitoring, multiple TTYs,
+one-shot tasks, runlevels and plugins for I/O monitoring, service
+callbacks and various hooks to extend and adapt it to your needs.
 
-In the world of finit we write C plugins that hook into and extend the
-``main()`` loop of ``/sbin/init``, this is what gives the system its raw
-performance and the user full control.
-
-If you chose finit you know what you want, a fast no hassles boot!
+Finit restores the raw performance of your system and gives you full
+control of the ``main()`` loop of ``/sbin/init``!
 
 
 Features
@@ -263,7 +261,7 @@ proposed extensions, or become a co-maintainer by contacting the main author.
 Regards
  /Joachim Nilsson <troglobit@gmail.com>
 
-.. _finit: http://helllabs.org/finit/
+.. _`Claudio Matsuoka`: http://helllabs.org/finit/
 .. _fastinit: http://wiki.eeeuser.com/boot_process:the_boot_process
 .. _`SysV init`: http://savannah.nongnu.org/projects/sysvinit
 .. _upstart: http://upstart.ubuntu.com/
