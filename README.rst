@@ -109,17 +109,17 @@ services, tasks, run commands and TTYs listed without a set of runlevels
 get a default set [234] assigned.  The default runlevel after boot is 2.
 
 To specify an allowed set of runlevels for a service, run command, task,
-or tty, add [NNN] to it in finit.conf, like this:
+or tty, add [NNN] to it in finit.conf, like this::
 
-        run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
-        task    [S]      /etc/init.d/kbd start -- Preparing console
-        service [S12345] /sbin/klogd -n -x -- Kernel log daemon
-        tty     [12345]  /dev/tty1
-        tty     [2]      /dev/tty2
-        tty     [2]      /dev/tty3
-        tty     [2]      /dev/tty4
-        tty     [2]      /dev/tty5
-        tty     [2]      /dev/tty6
+  run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
+  task    [S]      /etc/init.d/kbd start -- Preparing console
+  service [S12345] /sbin/klogd -n -x -- Kernel log daemon
+  tty     [12345]  /dev/tty1
+  tty     [2]      /dev/tty2
+  tty     [2]      /dev/tty3
+  tty     [2]      /dev/tty4
+  tty     [2]      /dev/tty5
+  tty     [2]      /dev/tty6
 
 In this example acpid is started once at bootstrap using a conventional
 SysV init script. Here the run command was used, meaning the following
