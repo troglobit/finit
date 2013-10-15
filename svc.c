@@ -188,6 +188,8 @@ void svc_runlevel(int newlevel)
 		if (svc->pid) {
 			if (run == SVC_STOP)
 				svc_stop(svc);
+			else if (run == SVC_RELOAD)
+				svc_reload(svc);
 		} else {
 			if (run == SVC_START)
 				svc_start(svc);
