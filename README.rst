@@ -1,6 +1,7 @@
 ==============================================================================
-                      Finit | Fast Init Replacement  .. image:: https://travis-ci.org/troglobit/finit.png?branch=master   :target: https://travis-ci.org/troglobit/finit
+                      Finit | Fast Init Replacement
 ==============================================================================
+|cistatus|
 
 Finit is an extremely fast /sbin/init replacement focusing on small and
 embedded GNU/Linux systems.  It is the continuation of the original
@@ -30,18 +31,18 @@ Plugin capabilities:
 * Hooks — hook into the boot at predefined points to extend finit
 * I/O — listen to external events and control finit behaviour/services
 
-Most extensions and functionality not purely related to what an /sbin/init
-needs to start a system from the original finit_ has been reactored into
-plugins with either hooks or I/O demands.
+Most extensions and functionality not purely related to what an
+/sbin/init needs to start a system from the original finit has been
+reactored into plugins with either hooks or I/O demands.
 
 
 /etc/finit.conf
 ---------------
 
 Contrary to most script based init alternatives (`SysV init`_, upstart_,
-OpenRC_ and the likes) finit instead reads its configuration from
-``/etc/finit.conf``.  Below is a brief list, see the source code for the
-full list:
+systemd_, OpenRC_ and the likes) finit instead reads its configuration
+from ``/etc/finit.conf``.  Below is a brief list, see the source code
+for the full list:
 
 check
     Run fsck on a file system before mounting it
@@ -254,7 +255,7 @@ enable trace messages.  A console getty is always started, see the file
 Contact
 -------
 
-Finit is maintained collaborativly at http://github.com/troglobit/finit —
+Finit is maintained collaborativly at http://github.com/troglobit/finit --
 please file a bug report, clone it, or send pull requests for bug fixes and
 proposed extensions, or become a co-maintainer by contacting the main author.
 
@@ -266,5 +267,9 @@ Regards
 .. _`SysV init`: http://savannah.nongnu.org/projects/sysvinit
 .. _upstart: http://upstart.ubuntu.com/
 .. _runlevels: http://en.wikipedia.org/wiki/Runlevel
+.. _systemd: http://www.freedesktop.org/wiki/Software/systemd/
 .. _openrc: http://www.gentoo.org/proj/en/base/openrc/
 .. _`finit-1.3.tar.xz`: ftp://troglobit.com/finit/finit-1.3.tar.xz
+.. |cistatus| image:: https://travis-ci.org/troglobit/finit.png?branch=master
+                      :target: https://travis-ci.org/troglobit/finit
+
