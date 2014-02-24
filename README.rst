@@ -1,5 +1,5 @@
 ==============================================================================
-                      Finit | Fast Init Replacement
+                      Finit | Fast Init Replacement  .. image:: https://travis-ci.org/troglobit/finit.png?branch=master   :target: https://travis-ci.org/troglobit/finit
 ==============================================================================
 
 Finit is an extremely fast /sbin/init replacement focusing on small and
