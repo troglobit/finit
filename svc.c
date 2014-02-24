@@ -37,6 +37,7 @@
 /* The registered services are kept in shared memory for easy read-only access
  * by 3rd party APIs.  Mostly because of the ability to, from the outside, query
  * liveness state of all daemons that should run. */
+static int was_stopped = 0;
 static int svc_counter = 0;		/* Number of registered services to monitor. */
 static svc_t *services = NULL;          /* List of registered services, in shared memory. */
 
@@ -347,10 +348,28 @@ static int is_norespawn(void)
 		fexist("/tmp/norespawn");
 }
 
+static void restart_any_lost_procs(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->pid > 0 && pid_alive(svc->pid))
+			continue;
+
+		svc_start(svc);
+	}
+}
+
 void svc_monitor(void)
 {
 	pid_t lost;
 	svc_t *svc;
+
+	if (was_stopped && !is_norespawn()) {
+		was_stopped = 0;
+		restart_any_lost_procs();
+		return;
+	}
 
 	lost = waitpid(-1, NULL, WNOHANG);
 	if (lost < 1)
@@ -360,8 +379,10 @@ void svc_monitor(void)
 		return;
 
 	/* Power user at the console, don't respawn tasks. */
-	if (is_norespawn())
+	if (is_norespawn()) {
+		was_stopped = 1;
 		return;
+	}
 
 	if (tty_respawn(lost))
 		return;
