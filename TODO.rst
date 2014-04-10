@@ -14,6 +14,28 @@ similiar to launchd, the goal of finit is to be a FAST replacement for:
 The main goal is to be FAST. Secondary goals are to be: small, simple
 and with a very low dependency on external packages.
 
+Inetd
+-----
+Simple way of running Interne services on demand, like the old inetd.
+
+   inetd [RUNLVL] SVC tcp/udp wait/nowait @user /path/to/daemon args -- descr
+or
+   inetd [RUNLVL] SVC tcp/udp wait/nowait @user /etc/finit.d/script.inetd args -- descr
+
+Where the latter is simply a script file with the following contents:
+
+    exec  = /path/to/daemon
+    iface = IFNAME[:PORT], IFNAME[:PORT], ...
+
+Example:
+
+    /etc/finit.conf:
+        inetd [2345] ssh tcp nowait @root ssh.inetd -- SSH Daemon
+
+    /etc/finit.d/ssh.inetd:
+        exec  = /sbin/dropbear
+        iface = vlan1:222, vlan2, vlan3, vlan4
+
 
 Priority
 --------

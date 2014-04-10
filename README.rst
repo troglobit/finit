@@ -12,9 +12,6 @@ This modern finit has extensions for service monitoring, multiple TTYs,
 one-shot tasks, runlevels and plugins for I/O monitoring, service
 callbacks and various hooks to extend and adapt it to your needs.
 
-Finit restores the raw performance of your system and gives you full
-control of the ``main()`` loop of ``/sbin/init``!
-
 
 Features
 --------
@@ -97,7 +94,7 @@ calls its built-in run-parts(8) on the ``/etc/finit.d/`` directory, if
 it exists.  Similar to how the ``/ec/rc.local`` file works in most other
 inits, only finit runs a directory of scripts.  This replaces the
 earlier support for a ``/usr/sbin/services.sh`` script in the original
-finit_.
+finit.
 
 
 Runlevels
