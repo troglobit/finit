@@ -18,9 +18,9 @@ Inetd
 -----
 Simple way of running Interne services on demand, like the old inetd.
 
-   inetd [RUNLVL] SVC tcp/udp wait/nowait @user /path/to/daemon args -- descr
+    inetd [RUNLVL] SVC tcp/udp wait/nowait @user /path/to/daemon args -- descr
 or
-   inetd [RUNLVL] SVC tcp/udp wait/nowait @user /etc/finit.d/script.inetd args -- descr
+    inetd [RUNLVL] SVC tcp/udp wait/nowait @user /etc/finit.d/script.inetd args -- descr
 
 Where the latter is simply a script file with the following contents:
 
