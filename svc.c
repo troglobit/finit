@@ -133,11 +133,11 @@ svc_t *svc_iterator(int restart)
 void svc_bootstrap(void)
 {
 	svc_t *svc;
-	svc_cmd_t cmd;
 
 	_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		cmd = svc_enabled(svc, 0, NULL);
+		svc_cmd_t cmd = svc_enabled(svc, 0, NULL);
+
 		if (SVC_START == cmd  || (SVC_RELOAD == cmd))
 			svc_start(svc);
 	}
@@ -423,13 +423,13 @@ void svc_monitor(void)
 /* Remember: svc_enabled() must be called before calling svc_start() */
 int svc_start(svc_t *svc)
 {
-	int respawn = svc->pid != 0;
+	int respawn;
 	pid_t pid;
-        sigset_t nmask, omask;
-	char *args[MAX_NUM_SVC_ARGS];
+	sigset_t nmask, omask;
 
 	if (!svc)
 		return 0;
+	respawn = svc->pid != 0;
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!fexist(svc->cmd)) {
@@ -451,24 +451,25 @@ int svc_start(svc_t *svc)
 	else if (!respawn)
 		print_desc("Starting ", svc->desc);
 
-        /* Block sigchild while forking.  */
-        sigemptyset(&nmask);
-        sigaddset(&nmask, SIGCHLD);
-        sigprocmask(SIG_BLOCK, &nmask, &omask);
+	/* Block sigchild while forking.  */
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
-        sigprocmask(SIG_SETMASK, &omask, NULL);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (pid == 0) {
 		int i = 0;
 		int uid = getuser(svc->username);
 		struct sigaction sa;
+		char *args[MAX_NUM_SVC_ARGS];
 
-                sigemptyset(&nmask);
-                sigaddset(&nmask, SIGCHLD);
-                sigprocmask(SIG_UNBLOCK, &nmask, NULL);
+		sigemptyset(&nmask);
+		sigaddset(&nmask, SIGCHLD);
+		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
 		/* Reset signal handlers that were set by the parent process */
-                for (i = 1; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			DFLSIG(sa, i, 0);
 
 		/* Set desired user */
@@ -476,7 +477,7 @@ int svc_start(svc_t *svc)
 			setuid(uid);
 
 		/* Serve copy of args to process in case it modifies them. */
-		for (i = 0; svc->args[i][0] != 0 && i < MAX_NUM_SVC_ARGS; i++)
+		for (i = 0; i < MAX_NUM_SVC_ARGS && svc->args[i][0] != 0; i++)
 			args[i] = svc->args[i];
 		args[i] = NULL;
 
@@ -490,7 +491,7 @@ int svc_start(svc_t *svc)
 				dup2(STDERR_FILENO, fd);
 			}
 
-			for (i = 0; args[i] && i < MAX_NUM_SVC_ARGS; i++) {
+			for (i = 0; i < MAX_NUM_SVC_ARGS && args[i]; i++) {
 				char arg[MAX_ARG_LEN];
 
 				snprintf(arg, sizeof(arg), "%s ", args[i]);

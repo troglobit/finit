@@ -81,11 +81,11 @@ typedef struct svc_map svc_map_t;
 /* Put services array in shm */
 static inline svc_t *finit_svc_connect(void)
 {
-	const long ID = FINIT_SHM_ID;
 	static void *ptr = (void *)-1;
 
 	if ((void *)-1 == ptr) {
-		ptr = shmat (shmget (ID, sizeof(svc_t) * MAX_NUM_SVC, 0600 | IPC_CREAT), NULL, 0);
+		ptr = shmat (shmget (FINIT_SHM_ID, sizeof(svc_t) * MAX_NUM_SVC,
+				     0600 | IPC_CREAT), NULL, 0);
 		if ((void *)-1 == ptr)
 			return NULL;
 	}
