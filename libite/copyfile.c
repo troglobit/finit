@@ -34,7 +34,7 @@
 
 #include "lite.h"
 
-static int __isdir_and_append_filename(char *src, char **dst);
+static int adjust_target(char *src, char **dst);
 
 /**
  * copyfile - Copy a file to another.
@@ -58,71 +58,67 @@ static int __isdir_and_append_filename(char *src, char **dst);
 ssize_t copyfile(char *src, char *dst, int len, int sym)
 {
 	char *buffer;
-	int s, d, n, result, isdir = 0, saved_errno = 0;
-	ssize_t size = 0;
+	int in, out, isdir = 0, saved_errno = 0;
+	ssize_t num, size = 0;
 
-	errno = 0;		/* Reset before leaving this function. */
-//   fprintf (stderr, "%s() src: %s, dst: %s, len: %d\n", __func__, src, dst, len);
+	errno = 0;
 
 	buffer = malloc(BUFSIZ);
 	if (!buffer)
 		return 0;
 
 	if (fisdir(src)) {
-		errno = EISDIR;	/* Error: source is a directory */
-		return 0;
+		saved_errno = EISDIR;	/* Error: source is a directory */
+		goto exit;
 	}
 
-	/* Check if target is a directory, then append the src base filename. */
-	isdir = __isdir_and_append_filename(src, &dst);
+	/* Check if target is a directory, then append src filename. */
+	isdir = adjust_target(src, &dst);
 
 	if (sym) {
-		if ((size = readlink(src, buffer, BUFSIZ)) > 0) {
+		size = readlink(src, buffer, BUFSIZ);
+		if (size > 0) {
 			if (size >= (ssize_t) BUFSIZ) {
-				free(buffer);
-				if (isdir)
-					free(dst);
-				errno = ENOBUFS;
-				return 0;
+				saved_errno = ENOBUFS;
+				goto exit;
 			}
 
 			buffer[size] = 0;
-			result = !symlink(buffer, dst);
-			free(buffer);
-			if (isdir)
-				free(dst);
-
-			return result;
+			size = !symlink(buffer, dst);
+			goto exit;
 		}
 	}
 
-	/* Len == 0 means copy entire file */
-	if (len == 0) {
-		/* XXX: This feels a bit unsafe, but 2047 MiB may be sufficient for us.
-		 *       --Jocke 2008-08-11 */
-		len = INT_MAX;
-	}
+	/* 0: copy entire file */
+	if (len == 0)
+		len = INT_MAX; /* XXX: 2047 MiB should sufficient ... */
 
-	if ((s = open(src, O_RDONLY)) >= 0) {
-		if ((d = open(dst, O_WRONLY | O_CREAT | O_TRUNC, fmode(src))) >= 0) {
-			do {
-				int clen = len > BUFSIZ ? BUFSIZ : len;
-
-				if ((n = read(s, buffer, clen)) > 0)
-					size += write(d, buffer, n);
-				len -= clen;
-			} while (len > 0 && n == BUFSIZ);
-
-			close(d);
-		} else {
-			saved_errno = errno;
-		}
-
-		close(s);
-	} else {
+	in = open(src, O_RDONLY);
+	if (in < 0) {
 		saved_errno = errno;
+		goto exit;
 	}
 
+	out = open(dst, O_WRONLY | O_CREAT | O_TRUNC, fmode(src));
+	if (out < 0) {
+		close(in);
+		saved_errno = errno;
+		goto exit;
+	}
+
+	do {
+		int clen = len > BUFSIZ ? BUFSIZ : len;
+
+		num = read(in, buffer, clen);
+		if (num > 0)
+			size += write(out, buffer, num);
+		len -= clen;
+	} while (len > 0 && num == BUFSIZ);
+
+	close(out);
+	close(in);
+
+exit:
 	free(buffer);
 	if (isdir)
 		free(dst);
@@ -152,7 +148,7 @@ int movefile(char *src, char *dst)
 	int isdir, result = 0;
 
 	/* Check if target is a directory, then append the src base filename. */
-	isdir = __isdir_and_append_filename(src, &dst);
+	isdir = adjust_target(src, &dst);
 
 	if (rename(src, dst)) {
 		if (errno == EXDEV) {
@@ -274,7 +270,7 @@ size_t fsendfile (FILE *out, FILE *in, size_t sz)
 }
 
 /* Tests if dst is a directory, if so, reallocates dst and appends src filename returning 1 */
-static int __isdir_and_append_filename(char *src, char **dst)
+static int adjust_target(char *src, char **dst)
 {
 	int isdir = 0;
 
@@ -287,7 +283,6 @@ static int __isdir_and_append_filename(char *src, char **dst)
 		else
 			ptr++;
 
-//      fprintf (stderr, "Yes %s is a dir --> add %s\n", *dst, ptr);
 		tmp = malloc(strlen(*dst) + strlen(ptr) + 2);
 		if (!tmp) {
 			errno = EISDIR;
@@ -299,7 +294,6 @@ static int __isdir_and_append_filename(char *src, char **dst)
 
 		sprintf(tmp, "%s%s%s", *dst, slash ? "" : "/", ptr);
 		*dst = tmp;
-//      fprintf (stderr, "NEW DST:%s\n", *dst);
 	}
 
 	return isdir;
