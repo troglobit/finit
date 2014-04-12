@@ -142,26 +142,31 @@ static int makedir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode
 	return 0;
 }
 
+
+static int find(char *file, char **files, int num)
+{
+	int n;
+
+	for (n = 0; n < num; n++)
+		if (!strncmp (files[n], file, MAX(strlen(files[n]), strlen(file))))
+			return 1;
+
+	return 0;
+}
+
+
 /* Prune old files, no longer existing on source, from destination directory. */
 static int prune(char *dst, char **new_files, int new_num)
 {
-	int i, num, result = 0;
+	int num, result = 0;
 	char **files;
-
-	int find(char *file) {
-		int n;
-
-		for (n = 0; n < new_num; n++)
-			if (!strncmp (new_files[n], file, MAX(strlen(new_files[n]), strlen(file))))
-				return 1;
-
-		return 0;
-	}
 
 	num = dir(dst, "", NULL, &files, 0);
 	if (num) {
+		int i;
+
 		for (i = 0; i < num; i++) {
-			if (!find(files[i])) {
+			if (!find(files[i], new_files, new_num)) {
 				char *name;
 				size_t len = strlen(files[i]) + 2 + strlen(dst);
 
