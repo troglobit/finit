@@ -35,9 +35,10 @@ int     fexist     (char *file);
 int     fisdir     (char *file);
 mode_t  fmode      (char *file);
 
-ssize_t copyfile   (char *src, char *dst, int len);
+ssize_t copyfile   (char *src, char *dst, int len, int sym);
 int     movefile   (char *src, char *dst);
 int     copy_filep (FILE *src, FILE *dst);
+size_t  fsendfile  (FILE *out, FILE *in, size_t sz);
 
 int     dir        (const char *dir, const char *type, int (*filter) (const char *file), char ***list, int strip);
 int     rsync      (char *src, char *dst, int delete, int (*filter) (const char *file));

@@ -61,7 +61,7 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 	void copy(char *src, char *dst)
 	{
 		errno = 0;
-		copyfile(src, dst, 0);
+		copyfile(src, dst, 0, 1);
 		if (errno) {
 			if (errno == EEXIST)
 				errno = 0;

@@ -41,6 +41,7 @@ static int __isdir_and_append_filename(char *src, char **dst);
  * @src: Source file.
  * @dst: Target file.
  * @len: Number of bytes to copy, zero (0) for entire file.
+ * @sym: Should symlinks be recreated (1) or followed (0)
  *
  * This is a C implementation of the command line cp(1) utility.  It is one
  * of the classic missing links in the UNIX C library.  This version is from
@@ -54,10 +55,10 @@ static int __isdir_and_append_filename(char *src, char **dst);
  * may also indicate that @src was empty. If @src is a directory errno
  * will be set to %EISDIR since copyfile() is not recursive.
  */
-ssize_t copyfile(char *src, char *dst, int len)
+ssize_t copyfile(char *src, char *dst, int len, int sym)
 {
 	char *buffer;
-	int s, d, n, isdir = 0, saved_errno = 0;
+	int s, d, n, result, isdir = 0, saved_errno = 0;
 	ssize_t size = 0;
 
 	errno = 0;		/* Reset before leaving this function. */
@@ -75,6 +76,26 @@ ssize_t copyfile(char *src, char *dst, int len)
 	/* Check if target is a directory, then append the src base filename. */
 	isdir = __isdir_and_append_filename(src, &dst);
 
+	if (sym) {
+		if ((size = readlink(src, buffer, BUFSIZ)) > 0) {
+			if (size >= (ssize_t) BUFSIZ) {
+				free(buffer);
+				if (isdir)
+					free(dst);
+				errno = ENOBUFS;
+				return 0;
+			}
+
+			buffer[size] = 0;
+			result = !symlink(buffer, dst);
+			free(buffer);
+			if (isdir)
+				free(dst);
+
+			return result;
+		}
+	}
+
 	/* Len == 0 means copy entire file */
 	if (len == 0) {
 		/* XXX: This feels a bit unsafe, but 2047 MiB may be sufficient for us.
@@ -83,18 +104,14 @@ ssize_t copyfile(char *src, char *dst, int len)
 	}
 
 	if ((s = open(src, O_RDONLY)) >= 0) {
-		if ((d =
-		     open(dst, O_WRONLY | O_CREAT | O_TRUNC,
-			  fmode(src))) >= 0) {
+		if ((d = open(dst, O_WRONLY | O_CREAT | O_TRUNC, fmode(src))) >= 0) {
 			do {
 				int clen = len > BUFSIZ ? BUFSIZ : len;
 
-				if ((n = read(s, buffer, clen)) > 0) {
+				if ((n = read(s, buffer, clen)) > 0)
 					size += write(d, buffer, n);
-				}
 				len -= clen;
-			}
-			while (len > 0 && n == BUFSIZ);
+			} while (len > 0 && n == BUFSIZ);
 
 			close(d);
 		} else {
@@ -140,7 +157,7 @@ int movefile(char *src, char *dst)
 	if (rename(src, dst)) {
 		if (errno == EXDEV) {
 			errno = 0;
-			copyfile(src, dst, 0);
+			copyfile(src, dst, 0, 0);
 			if (errno)
 				result = 1;
 			else
@@ -170,27 +187,30 @@ int movefile(char *src, char *dst)
 int copy_filep(FILE *src, FILE *dst)
 {
 	int result = 0;
-	char *buf = (char *)malloc(BUFSIZ);
+	char *buf;
 
 	if (!src || !dst)
 		return EINVAL;
 
+	buf = (char *)malloc(BUFSIZ);
 	if (!buf)
 		return errno;
 
 	while (1) {
-      errno = 0;
+		errno = 0;
 		if (!fgets(buf, BUFSIZ, src)) {
 			if (errno == EINTR) {
 				clearerr(src);
 				continue;
 			}
+
 			if (feof(src))
 				break;
 
 			result = errno;
 			goto exit;
 		}
+
 		while (EOF == fputs(buf, dst)) {
 			if (errno == EINTR) {
 				clearerr(dst);
@@ -202,9 +222,55 @@ int copy_filep(FILE *src, FILE *dst)
 		}
 	}
 
- exit:
+exit:
 	free(buf);
 	return errno = result;
+}
+
+/**
+ * fsendfile - copy data between file streams
+ * @out: Destination stream
+ * @in:  Source stream
+ * @sz:  Size in bytes to copy.
+ *
+ * @out may be NULL, in which case @sz bytes are read and discarded
+ * from @in. This is useful for streams where seeks are not
+ * permitted. Additionally @sz may be the special value zero (0) in
+ * which case fsendfile will copy until EOF is seen on @src.
+ *
+ * Returns:
+ * The number of bytes copied. If there was an error, -1 is returned
+ * and errno will be set accordingly.
+ */
+size_t fsendfile (FILE *out, FILE *in, size_t sz)
+{
+	char *buf = malloc(BUFSIZ);
+	size_t blk = BUFSIZ, ret = 0, tot = 0;
+
+	if (!buf)
+		return -1;
+
+	while (!sz || tot < sz)
+	{
+		if (sz && ((sz - tot) < BUFSIZ))
+			blk = sz - tot;
+
+		ret = fread(buf, 1, blk, in);
+		if (ret <= 0)
+			break;
+
+		if (out && (fwrite(buf, ret, 1, out) != 1))
+		{
+			ret = -1;
+			break;
+		}
+
+		tot += ret;
+	}
+
+	free(buf);
+
+	return (ret == (size_t)-1)? (size_t)-1 : tot;
 }
 
 /* Tests if dst is a directory, if so, reallocates dst and appends src filename returning 1 */
@@ -254,7 +320,7 @@ int main(int argc, char *argv[])
 
 	printf("Copying file %s to %s\n", argv[1], argv[2]);
 
-	return copyfile(argv[1], argv[2], 0);
+	return copyfile(argv[1], argv[2], 0, 0);
 }
 #else
 int main(void)
@@ -293,7 +359,7 @@ int main(void)
 	i = 0;
 	while (files[i]) {
 		fprintf(stderr, "copyfile(%s, %s)\t", files[i], files[i + 1]);
-		if (!copyfile(files[i], files[i + 1], 0))
+		if (!copyfile(files[i], files[i + 1], 0, 0))
 			perror("Failed");
 
 		if (fexist(files[i + 2]))
@@ -312,7 +378,7 @@ int main(void)
  * Local Variables:
  *  compile-command: "gcc -g -I../include -o unittest -DUNITTEST copyfile.c && ./unittest"
  *  version-control: t
- *  kept-new-versions: 2
- *  c-file-style: "ellemtel"
+ *  indent-tabs-mode: t
+ *  c-file-style: "linux"
  * End:
  */
