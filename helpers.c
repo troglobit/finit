@@ -511,7 +511,7 @@ pid_t run_getty(char *cmd, char *args[], int console)
 	pid_t pid = fork();
 
 	if (!pid) {
-		int i;
+		int i, fd;
 		char c;
 		sigset_t nmask;
 		struct sigaction sa;
@@ -520,12 +520,13 @@ pid_t run_getty(char *cmd, char *args[], int console)
 			/* Detach from initial controlling TTY */
 			vhangup();
 
-			close(2);
-			close(1);
-			close(0);
+			close(STDERR_FILENO);
+			close(STDOUT_FILENO);
+			close(STDIN_FILENO);
 
 			/* Attach TTY to console */
-			if (open(CONSOLE, O_RDWR) != 0)
+			fd = open(CONSOLE, O_RDWR);
+			if (fd != STDIN_FILENO)
 				exit(1);
 
 			dup2(0, STDIN_FILENO);
@@ -560,6 +561,9 @@ pid_t run_getty(char *cmd, char *args[], int console)
 
 			execv(cmd, args);
 		}
+
+		if (console)
+			close(fd);
 
 		exit(0);
 	}
