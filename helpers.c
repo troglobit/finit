@@ -337,6 +337,7 @@ void print_desc(char *action, char *desc)
 	delline();
 	print_timestamp();
 
+	write(STDERR_FILENO, "\r", 1);
 	write(STDERR_FILENO, action, strlen(action));
 	write(STDERR_FILENO, desc, strlen(desc));
 	write(STDERR_FILENO, dots, 60 - strlen(desc) - strlen(action)); /* pad with dots. */
