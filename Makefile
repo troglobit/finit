@@ -141,6 +141,9 @@ distclean: clean
 	$(MAKE) -C libite  $@
 	$(MAKE) -C plugins $@
 
+check:
+	$(CHECK) *.c plugins/*.c libite/*.c
+
 dist:
 	@echo "Building xz tarball of $(PKG) in parent dir..."
 	git archive --format=tar --prefix=$(PKG)/ $(VERSION) | xz >../$(ARCHIVE)

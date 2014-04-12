@@ -5,6 +5,7 @@ ROOTDIR    ?= $(TOPDIR)
 JUNK        = *~ *.bak *.aux *.dvi *.idx *.ind *.log *.ps *.map .*.d DEADJOE semantic.cache *.gdb *.elf core core.*
 MAKE       := @$(MAKE)
 MAKEFLAGS   = --no-print-directory --silent
+CHECK      := cppcheck $(CPPFLAGS) --quiet --enable=all
 INSTALL    := install --backup=off
 STRIPINST  := $(INSTALL) -s --strip-program=$(CROSS)strip -m 0755
 
