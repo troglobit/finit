@@ -240,33 +240,32 @@ exit:
  */
 size_t fsendfile (FILE *out, FILE *in, size_t sz)
 {
-	char *buf = malloc(BUFSIZ);
-	size_t blk = BUFSIZ, ret = 0, tot = 0;
+	char *buf;
+	size_t blk = BUFSIZ, num = 0, tot = 0;
 
+	buf = (char *)malloc(BUFSIZ);
 	if (!buf)
 		return -1;
 
-	while (!sz || tot < sz)
-	{
+	while (!sz || tot < sz) {
 		if (sz && ((sz - tot) < BUFSIZ))
 			blk = sz - tot;
 
-		ret = fread(buf, 1, blk, in);
-		if (ret <= 0)
+		num = fread(buf, 1, blk, in);
+		if (num == 0)
 			break;
 
-		if (out && (fwrite(buf, ret, 1, out) != 1))
-		{
-			ret = -1;
+		if (out && (fwrite(buf, num, 1, out) != 1)) {
+			num = -1;
 			break;
 		}
 
-		tot += ret;
+		tot += num;
 	}
 
 	free(buf);
 
-	return (ret == (size_t)-1)? (size_t)-1 : tot;
+	return (num == (size_t)-1) ? (size_t)-1 : tot;
 }
 
 /* Tests if dst is a directory, if so, reallocates dst and appends src filename returning 1 */
