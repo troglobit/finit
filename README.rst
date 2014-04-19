@@ -18,10 +18,6 @@ Finit is not only fast, it's arguably one of the easiest to get started
 with.  A complete system can be booted with one simple configuration
 file, ``/etc/finit.conf``, see below for syntax.
 
-This is the continuation of the `original finit`_ by Claudio Matsuoka,
-which in turn was reverse engineered from syscalls of the `EeePC
-fastinit`_ -- "gaps filled with frog DNA ..."
-
 
 Features
 --------
@@ -106,7 +102,7 @@ getty!
 At the end of the boot, when networking and all services are up, finit
 calls its built-in run-parts(8) on the ``/etc/finit.d/`` directory, if
 it exists.  Similar to how the ``/ec/rc.local`` file works in most other
-inits, only finit runs a directory of scripts.  This replaces the
+init daemons, only finit runs a directory of scripts.  This replaces the
 earlier support for a ``/usr/sbin/services.sh`` script in the original
 finit.
 
@@ -266,20 +262,21 @@ enable trace messages.  A console getty is always started, see the file
 Contact
 -------
 
-Finit is maintained collaboratively at http://github.com/troglobit/finit --
-please file a bug report, clone it, or send pull requests for bug fixes and
+This is the continuation of the `original finit`_ by Claudio Matsuoka,
+which in turn was reverse engineered from syscalls of the `EeePC
+fastinit`_ -- "gaps filled with frog DNA ...".  It is currently being
+developed and maintained by `Joachim Nilsson`_ at `GitHub`_.  Please
+file bug reports, clone it, or send pull requests for bug fixes and
 proposed extensions.
 
-Regards
- /Joachim Nilsson <troglobit@gmail.com>
-
 .. _`SysV init`: https://en.wikipedia.org/wiki/Init
+.. _`Joachim Nilsson`: http://troglobit.com
+.. _GitHub: http://github.com/troglobit/finit
 .. _`process supervision`: https://en.wikipedia.org/wiki/Process_supervision
 .. _`daemontools`: http://cr.yp.to/daemontools.html
 .. _`runit`: http://smarden.org/runit/
 .. _`original finit`: http://helllabs.org/finit/
 .. _`EeePC fastinit`: http://wiki.eeeuser.com/boot_process:the_boot_process
-.. _`SysV init`: http://savannah.nongnu.org/projects/sysvinit
 .. _upstart: http://upstart.ubuntu.com/
 .. _runlevels: http://en.wikipedia.org/wiki/Runlevel
 .. _systemd: http://www.freedesktop.org/wiki/Software/systemd/
