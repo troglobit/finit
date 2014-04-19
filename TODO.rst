@@ -16,24 +16,19 @@ and with a very low dependency on external packages.
 
 Inetd
 -----
-Simple way of running Interne services on demand, like the old inetd.
+Simple way of running Internet services on demand, like the old inetd::
 
-    inetd [RUNLVL] SVC tcp/udp wait/nowait @user /path/to/daemon args -- descr
-    inetd [RUNLVL] SVC tcp/udp wait/nowait @user /etc/finit.d/script.inetd args -- descr
+    inetd SVC [RUNLVL] /path/to/daemon args -- description
 
-Where the latter is simply a script file with the following contents:
+Example::
 
-    exec  = /path/to/daemon
-    iface = IFNAME[:PORT], IFNAME[:PORT], ...
+    # Inetd services, launched on demand
+    inetd ssh [2345] /usr/sbin/sshd -i -- SSH Daemon
 
-Example:
-
-    /etc/finit.conf:
-        inetd [2345] ssh tcp nowait @root ssh.inetd -- SSH Daemon
-
-    /etc/finit.d/ssh.inetd:
-        exec  = /sbin/dropbear
-        iface = vlan1:222, vlan2, vlan3, vlan4
+In keeping with the finit tradition, an optional callback can be setup
+to each inetd service.  When a client connects the finit will call the
+callback with a `struct in_pktinfo` argument which the callback then can
+allowed or deny.
 
 
 Priority
@@ -45,13 +40,10 @@ processes that declare themselves to be finit compliant.
 * Integrate the ingenious libev to handle all events: signals, polling
   fd's, etc.  Because "Event driven software improves concurrency" --
   Dave Zarzycki, Apple.  See the `launchd video`_ for more info!
-* Add support for process and system supervision.  Which could
-  be an API wrapping, e.g., TIPC and loadavg.
 * Add support for a /dev/watchdog plugin to replace watchdogd
-* Integrate watchdog plugin with process/system supervisor to
-  reboot the system when a process stops responding, or when
-  restarting it is imposible, as well as when system load gets
-  too high.
+* Integrate watchdog plugin with process/system supervisor to optionally
+  reboot the system when a process stops responding, or when a respawn
+  limit has been reached, as well as when system load gets too high.
 
 
 Configuration

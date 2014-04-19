@@ -3,34 +3,48 @@
 ==============================================================================
 |cistatus|
 
-Finit is an extremely fast /sbin/init replacement focusing on small and
-embedded GNU/Linux systems.  It is the continuation of the original
-finit by `Claudio Matsuoka`_ which was reverse engineered from syscalls
-of the EeePC fastinit_ daemon -- gaps filled with frog DNA ...
+Finit is a small `SysV init`_ replacement with `process supervision`_
+similar to that of `daemontools`_ and `runit`_.  Its focus is on small
+and embedded GNU/Linux systems, although fully functional on standard
+server and desktop installations.  It should also work on other UNIX
+systems, but this has yet to be proven.
 
-This modern finit has extensions for service monitoring, multiple TTYs,
-one-shot tasks, runlevels and plugins for I/O monitoring, service
-callbacks and various hooks to extend and adapt it to your needs.
+Finit is fast because it starts services in parallel, it then supervises
+and automatically restarts them if they fail.  This can be extended upon
+with custom callbacks for all services, hooks into the boot process, or
+plugins to extend the functionality and adapt Finit to your needs.
+
+Finit is not only fast, it's arguably one of the easiest to get started
+with.  A complete system can be booted with one simple configuration
+file, ``/etc/finit.conf``, see below for syntax.
+
+This is the continuation of the `original finit`_ by Claudio Matsuoka,
+which in turn was reverse engineered from syscalls of the `EeePC
+fastinit`_ -- "gaps filled with frog DNA ..."
 
 
 Features
 --------
 
-**Service monitoring**
-Restarting a service when it exits
+**Process Supervision**
+Start, monitor and restarting services if they fail.
+
+**Runlevels**
+Finit supports standard runlevels if you want, but you don't need them
+for simple installations.
 
 **Plugins**
-Extend and modify finit behavior. See examples in plugins/ directory.
+Extend and modify finit behavior.  See examples in plugins/ directory.
 Plugin capabilities:
    
-* Service callbacks — should the service run/restart/stop?
-* Task/Run callbacks — a one-shot command, should it run in sequence?
+* Service callbacks — modify service arguments, run/restart/stop
+* Task/Run callbacks — a one-shot commands, executed in sequence
 * Hooks — hook into the boot at predefined points to extend finit
-* I/O — listen to external events and control finit behaviour/services
+* I/O — listen to external events and control finit behavior/services
 
-Most extensions and functionality not purely related to what an
-/sbin/init needs to start a system from the original finit has been
-reactored into plugins with either hooks or I/O demands.
+Extensions and functionality not purely related to what an /sbin/init
+needs to start a system are available as a set of plugins that either
+hook into the boot process or respond to various I/O.
 
 
 /etc/finit.conf
@@ -41,16 +55,16 @@ systemd_, OpenRC_ and the likes) finit instead reads its configuration
 from ``/etc/finit.conf``.  Below is a brief list, see the source code
 for the full list:
 
-check
+check <DEV>
     Run fsck on a file system before mounting it
 
-module
+module <MODULE>
     Load a kernel module, with optional arguments
 
-network
-    Script or program to bringup networking, with optional arguments
+network <PATH>
+    Script or program to bring up networking, with optional arguments
 
-runlevel N
+runlevel <N>
     N is the runlevel number 1-9, where 6 is reserved for reboot
 
 run [RUN_LVLS] /path/to/cmd ARGS -- Optional description
@@ -67,16 +81,16 @@ service [RUN_LVLS] /path/to/daemon ARGS -- Optional description
     a --foreground or --no-background argument to most daemons to
     prevent them from forking off to the background.
 
-runparts
+runparts <PATH>
     Call run-parts(8) on a directory other than the default /etc/finit.d
 
-tty [RUN_LVLS] DEV
+tty [RUN_LVLS] <DEV>
     Run getty on the listed TTY device, in the given runlevels
 
-console DEV
+console <DEV>
     Some embedded systems have a dedicated console port. This command
     tells finit to not start getty, but instead print a friendly message
-    and wait for the user to activate the console with a keypress before
+    and wait for the user to activate the console with a key press before
     starting getty.
 
 When running ``make install`` no default ``/etc/finit.conf`` will be
@@ -118,10 +132,10 @@ or tty, add [NNN] to it in finit.conf, like this::
   tty     [2]      /dev/tty6
 
 In this example acpid is started once at bootstrap using a conventional
-SysV init script. Here the run command was used, meaning the following
+SysV init script.  Here the run command was used, meaning the following
 task command is not run until the init script has fully completed.
 
-Tasks and services are started in parallell, while run commands are run
+Tasks and services are started in parallel, while run commands are run
 in the order listed and subsequent commands are not started until a run
 command has completed.
 
@@ -159,16 +173,16 @@ what is built and where resulting binaries are installed.
    be overridden by packages to add a suffix or completely alter the version.
 
 **CFLAGS=**
-   Standard CFLAGS are inherited from the build enviornmant.
+   Standard CFLAGS are inherited from the build environment.
 
 **CPPFLAGS=**
-   Standard CPPFLAGS are inherited from the build enviornmant.
+   Standard CPPFLAGS are inherited from the build environment.
 
 **LDFLAGS=**
-   Standard LDFLAGS are inherited from the build enviornmant.
+   Standard LDFLAGS are inherited from the build environment.
 
 **LDLIBS=**
-   Standard LIBLIBS are inherited from the build enviornmant.
+   Standard LIBLIBS are inherited from the build environment.
 
 **prefix=**
    Base prefix path for all files, except ``sbinbdir`` and ``sysconfdir``.
@@ -193,7 +207,7 @@ what is built and where resulting binaries are installed.
 
 **DESTDIR=**
    Used by packagers and distributions when building a relocatable
-   bundle of files. Alwawys prepended to the ``prefix`` destination
+   bundle of files. Always prepended to the ``prefix`` destination
    directory.
 
 **Example**::
@@ -221,7 +235,7 @@ what is built and where resulting binaries are installed.
 
 In this example the `finit-1.3.tar.xz`_ archive is unpacked to the
 user's home directory, built and installed to a temporary staging
-directory.  The enviroment variables ``DESTDIR`` and ``PLUGINS`` are
+directory.  The environment variables ``DESTDIR`` and ``PLUGINS`` are
 changed to suit this particular build.
 
 
@@ -244,7 +258,7 @@ Debugging
 
 Add ``finit_debug``, or ``--debug``, to the kernel command line to
 enable trace messages.  A console getty is always started, see the file
-``finit.h`` for more useful comile-time tweaks::
+``finit.h`` for more useful compile-time tweaks::
 
   init=/sbin/finit --debug
 
@@ -252,15 +266,19 @@ enable trace messages.  A console getty is always started, see the file
 Contact
 -------
 
-Finit is maintained collaborativly at http://github.com/troglobit/finit --
+Finit is maintained collaboratively at http://github.com/troglobit/finit --
 please file a bug report, clone it, or send pull requests for bug fixes and
-proposed extensions, or become a co-maintainer by contacting the main author.
+proposed extensions.
 
 Regards
  /Joachim Nilsson <troglobit@gmail.com>
 
-.. _`Claudio Matsuoka`: http://helllabs.org/finit/
-.. _fastinit: http://wiki.eeeuser.com/boot_process:the_boot_process
+.. _`SysV init`: https://en.wikipedia.org/wiki/Init
+.. _`process supervision`: https://en.wikipedia.org/wiki/Process_supervision
+.. _`daemontools`: http://cr.yp.to/daemontools.html
+.. _`runit`: http://smarden.org/runit/
+.. _`original finit`: http://helllabs.org/finit/
+.. _`EeePC fastinit`: http://wiki.eeeuser.com/boot_process:the_boot_process
 .. _`SysV init`: http://savannah.nongnu.org/projects/sysvinit
 .. _upstart: http://upstart.ubuntu.com/
 .. _runlevels: http://en.wikipedia.org/wiki/Runlevel
