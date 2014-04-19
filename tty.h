@@ -32,7 +32,7 @@
 typedef struct {
 	char  *name;
 	int    baud;
-        char  *term;
+	char  *term;
 	int    runlevels;
 
 	int    pid;
@@ -45,14 +45,15 @@ typedef struct tty_node {
 
 //extern LIST_HEAD(, tty_node) tty_list;
 
-int         tty_register    (char *line);
-tty_node_t *tty_find        (char *dev);
+int	    tty_register    (char *line);
+tty_node_t *tty_find	    (char *dev);
+size_t	    tty_num	    (void);
 tty_node_t *tty_find_by_pid (pid_t pid);
-void        tty_start       (finit_tty_t *tty);
-void        tty_stop        (finit_tty_t *tty);
-int         tty_enabled     (finit_tty_t *tty, int runlevel);
-int         tty_respawn     (pid_t pid);
-void        tty_runlevel    (int runlevel);
+void	    tty_start	    (finit_tty_t *tty);
+void	    tty_stop	    (finit_tty_t *tty);
+int	    tty_enabled	    (finit_tty_t *tty, int runlevel);
+int	    tty_respawn	    (pid_t pid);
+void	    tty_runlevel    (int runlevel);
 
 #endif /* FINIT_TTY_H_ */
 

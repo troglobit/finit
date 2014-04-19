@@ -243,11 +243,17 @@ static int parse_conf(char *file)
 
 int parse_finit_conf(char *file)
 {
+	int result;
+
 	username = strdup(DEFUSER);
 	hostname = strdup(DEFHOST);
 	rcsd     = strdup(FINIT_RCSD);
 
-	return parse_conf(file);
+	result = parse_conf(file);
+	if (!tty_num())
+		tty_register(FALLBACK_SHELL);
+
+	return result;
 }
 
 

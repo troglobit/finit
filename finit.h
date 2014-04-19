@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -35,41 +36,45 @@
 
 /* Distribution specific configuration */
 #if defined EMBEDDED_SYSTEM
-# define CONSOLE                "/dev/console"
-# define SETUP_DEVFS            "/sbin/mdev -s"
-# define GETTY                  "/sbin/getty -L"
+# define CONSOLE		_PATH_CONSOLE
+# define SETUP_DEVFS		"/sbin/mdev -s"
+# define GETTY			"/sbin/getty -L"
 # define GETTY_BUSYBOX
-# define BAUDRATE               115200
-# define RUNLEVEL               2
+# define BAUDRATE		115200
+# define RUNLEVEL		2
 #else /* Debian/Ubuntu based distributions */
-# define CONSOLE                "/dev/tty1"
-# define SETUP_DEVFS            "/sbin/udevd --daemon"
-# define GETTY                  "/sbin/getty -8"
+# define CONSOLE		"/dev/tty1"
+# define SETUP_DEVFS		"/sbin/udevd --daemon"
+# define GETTY			"/sbin/getty -8"
 # define GETTY_AGETTY
-# define BAUDRATE               38400
-# define RUNLEVEL               2
-# define RANDOMSEED             "/var/lib/urandom/random-seed"
+# define BAUDRATE		38400
+# define RUNLEVEL		2
+# define RANDOMSEED		"/var/lib/urandom/random-seed"
 # define REMOUNT_ROOTFS_RW
 # define HAVE_DBUS
 #endif
 
+#ifndef FALLBACK_SHELL
+# define FALLBACK_SHELL		_PATH_BSHELL
+#endif
+
 #ifndef DEFUSER
-# define DEFUSER                "root"
+# define DEFUSER		"root"
 #endif
 #ifndef DEFHOST
-# define DEFHOST                "noname"
+# define DEFHOST		"noname"
 #endif
 
 /* Delay start of GETTY at boot. Must be > 0 */
-#define DELAY_TTY               2
+#define DELAY_TTY		2
 
-#define CMD_SIZE                256
-#define LINE_SIZE               1024
-#define BUF_SIZE                4096
+#define CMD_SIZE		256
+#define LINE_SIZE		1024
+#define BUF_SIZE		4096
 
-#define INIT_MAGIC              0x03091969
-#define INIT_CMD_RUNLVL         1
-#define INIT_CMD_DEBUG          2
+#define INIT_MAGIC		0x03091969
+#define INIT_CMD_RUNLVL		1
+#define INIT_CMD_DEBUG		2
 
 struct init_request {
 	int	magic;		/* Magic number			*/

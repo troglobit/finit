@@ -58,21 +58,21 @@ typedef struct svc {
 	pid_t	       pid;
 	svc_type_t     type;
 	int	       reload;
-	int            runlevels;
+	int	       runlevels;
 	unsigned int   restart_counter; /* Incremented for each restart by service monitor. */
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
-	char           username[MAX_USER_LEN];
+	char	       username[MAX_USER_LEN];
 
 	/* For external plugins. If @cb is set a plugin is loaded.
-	 * @dynamic:      Set by plugins that want dynamic events.
+	 * @dynamic:	  Set by plugins that want dynamic events.
 	 * @dynamic_stop: Set by plugins that allow dyn. events to stop it as well.
-	 * @private:      Can be used freely by plugin, e.g., to store "states".
+	 * @private:	  Can be used freely by plugin, e.g., to store "states".
 	 */
-	int            dynamic;
-	int            dynamic_stop;
-	int            private;
+	int	       dynamic;
+	int	       dynamic_stop;
+	int	       private;
 	svc_cmd_t    (*cb)(struct svc *svc, int event, void *event_arg);
 } svc_t;
 
@@ -93,18 +93,18 @@ static inline svc_t *finit_svc_connect(void)
 	return (svc_t *)ptr;
 }
 
-svc_t    *svc_new           (void);
-svc_t    *svc_find          (char *name);
-svc_t    *svc_iterator      (int restart);
-void      svc_runlevel      (int newlevel);
+svc_t	 *svc_new	    (void);
+svc_t	 *svc_find	    (char *name);
+svc_t	 *svc_iterator	    (int restart);
+void	  svc_runlevel	    (int newlevel);
 
-int       svc_register      (int type, char *line, char *username);
-int       svc_id_by_name    (char *name);
+int	  svc_register	    (int type, char *line, char *username);
+int	  svc_id_by_name    (char *name);
 svc_cmd_t svc_enabled	    (svc_t *svc, int event, void *arg);
-int       svc_start         (svc_t *svc);
-int       svc_start_by_name (char *name);
-int       svc_stop          (svc_t *svc);
-int       svc_reload        (svc_t *svc);
+int	  svc_start	    (svc_t *svc);
+int	  svc_start_by_name (char *name);
+int	  svc_stop	    (svc_t *svc);
+int	  svc_reload	    (svc_t *svc);
 
 #endif	/* FINIT_SVC_H_ */
 

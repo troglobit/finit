@@ -102,6 +102,17 @@ tty_node_t *tty_find(char *dev)
 	return NULL;
 }
 
+size_t tty_num(void)
+{
+	size_t num = 0;
+	tty_node_t *entry;
+
+	LIST_FOREACH(entry, &tty_list, link)
+		num++;
+
+	return num;
+}
+
 tty_node_t *tty_find_by_pid(pid_t pid)
 {
 	tty_node_t *entry;
@@ -127,13 +138,17 @@ void tty_start(finit_tty_t *tty)
 	if (console && !strcmp(tty->name, console))
 		is_console = 1;
 
+	if (!strcmp(tty->name, _PATH_DEV)) {
 #if   defined(GETTY_AGETTY)
-	snprintf(line, sizeof(line), "%s %s %d %s", GETTY, tty->name, tty->baud, tty->term ?: "");
+		snprintf(line, sizeof(line), "%s %s %d %s", GETTY, tty->name, tty->baud, tty->term ?: "");
 #elif defined(GETTY_BUSYBOX)
-	snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
+		snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
 #else
-#error No GETTY defined!
+		strlcpy(line, FALLBACK_CONSOLE, sizeof(line));
 #endif
+	} else {
+		strlcpy(line, tty->name, sizeof(line));
+	}
 	cmd = strtok(line, " ");
 	args[i++] = basename(cmd);
 	while ((arg = strtok(NULL, " ")))
