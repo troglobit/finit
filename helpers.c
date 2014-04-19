@@ -112,7 +112,7 @@ void ifconfig(char *ifname, char *addr, char *mask, int up)
 		ifr.ifr_flags &= ~IFF_UP;
 
 	ioctl(sock, SIOCSIFFLAGS, &ifr);
-	
+
 	close(sock);
 }
 
@@ -151,7 +151,7 @@ pid_t pidfile_read(char *pidfile)
       errno = 0;
       pid = strtoul(buf, NULL, 0);
       if (errno)
-         pid = 0;               /* Failed conversion. */
+	      pid = 0;		/* Failed conversion. */
    }
    fclose(fp);
 
@@ -338,7 +338,11 @@ void print_desc(char *action, char *desc)
 	print_timestamp();
 
 	write(STDERR_FILENO, "\r", 1);
+	if (!action)
+		action = "";
 	write(STDERR_FILENO, action, strlen(action));
+	if (!desc)
+		desc = "";
 	write(STDERR_FILENO, desc, strlen(desc));
 	write(STDERR_FILENO, dots, 60 - strlen(desc) - strlen(action)); /* pad with dots. */
 }
@@ -422,7 +426,7 @@ int run(char *cmd)
 		struct sigaction sa;
 
 		/* Reset signal handlers that were set by the parent process */
-                for (i = 1; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			DFLSIG(sa, i, 0);
 
 		/* Redirect stdio if the caller requested so. */
