@@ -160,6 +160,8 @@ static void banner(void)
 
 int main(int argc, char* argv[])
 {
+	int result;
+
 	if (getpid() != 1)
 		return client(argc, argv);
 
@@ -200,14 +202,16 @@ int main(int argc, char* argv[])
 	/*
 	 * Parse configuration file
 	 */
-	parse_finit_conf(FINIT_CONF);
+	result = parse_finit_conf(FINIT_CONF);
+	print_desc("Loading " FINIT_CONF, NULL);
+	print_result(result);
 
 	/*
 	 * Load plugins.  Must run after finit.conf has registered
 	 * all services, or service plugins won't have anything to
 	 * hook on to.
 	 */
-	print_desc("", "Loading Finit plugins");
+	print_desc("Loading Finit plugins", NULL);
 	print_result(plugin_load_all(PLUGIN_PATH));
 
 	/*

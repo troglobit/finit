@@ -86,141 +86,168 @@ int parse_runlevels(char *runlevels)
 	return bitmask;
 }
 
-void parse_finit_conf(char *file)
+static int parse_conf(char *file)
 {
 	FILE *fp;
 	char line[LINE_SIZE];
 	char cmd[CMD_SIZE];
+	char *x;
+	const char *err = NULL;
 
+	/* Assume absolute path is given ... */
+	fp = fopen(file, "r");
+	if (!fp) {
+		/* ... if it fails, try /etc/finit.d/ as prefix */
+		snprintf(line, sizeof(line), "%s/%s", rcsd, file);
+		fp = fopen(file, "r");
+		if (!fp)
+			return 1;
+	}
+
+	_d("Parse %s ...", file);
+	while (!feof(fp)) {
+		if (!fgets(line, sizeof(line), fp))
+			continue;
+		chomp(line);
+		_d("conf: %s", line);
+
+		/* Skip comments. */
+		if (MATCH_CMD(line, "#", x))
+			continue;
+
+		/* Do this before mounting / read-write
+		 * XXX: Move to plugin which checks /etc/fstab instead */
+		if (MATCH_CMD(line, "check ", x)) {
+			char *dev = strip_line(x);
+
+			strcpy(cmd, "/sbin/fsck -C -a ");
+			strlcat(cmd, dev, sizeof(cmd));
+			run_interactive(cmd, "Checking file system %s", dev);
+
+			continue;
+		}
+
+		if (MATCH_CMD(line, "user ", x)) {
+			if (username) free(username);
+			username = strdup(strip_line(x));
+			continue;
+		}
+		if (MATCH_CMD(line, "host ", x)) {
+			if (hostname) free(hostname);
+			hostname = strdup(strip_line(x));
+			continue;
+		}
+
+		if (MATCH_CMD(line, "module ", x)) {
+			char *mod = strip_line(x);
+
+			strcpy(cmd, "/sbin/modprobe ");
+			strlcat(cmd, mod, sizeof(cmd));
+			run_interactive(cmd, "Loading kernel module %s", mod);
+
+			continue;
+		}
+		if (MATCH_CMD(line, "mknod ", x)) {
+			char *dev = strip_line(x);
+
+			strcpy(cmd, "/bin/mknod ");
+			strlcat(cmd, dev, sizeof(cmd));
+			run_interactive(cmd, "Creating device node %s", dev);
+
+			continue;
+		}
+
+		if (MATCH_CMD(line, "network ", x)) {
+			if (network) free(network);
+			network = strdup(strip_line(x));
+			continue;
+		}
+		/* This is the directory from which executable scripts and
+		 * any finit include files are read, default /etc/finit.d/ */
+		if (MATCH_CMD(line, "runparts ", x)) {
+			if (rcsd) free(rcsd);
+			rcsd = strdup(strip_line(x));
+			continue;
+		}
+		/* Parse any include file, use rcsd if absolute path not given. */
+		if (MATCH_CMD(line, "include ", x)) {
+			char *file = strip_line(x);
+			char buf[60];
+
+			snprintf(buf, sizeof(buf), "Loading include file %s", file);
+			print_desc("", buf);
+			print_result(parse_conf(file));
+			continue;
+		}
+		if (MATCH_CMD(line, "startx ", x)) {
+			svc_register(SVC_CMD_SERVICE, strip_line(x), username);
+			continue;
+		}
+		if (MATCH_CMD(line, "shutdown ", x)) {
+			if (sdown) free(sdown);
+			sdown = strdup(strip_line(x));
+			continue;
+		}
+
+		/* The desired runlevel to start when leaving
+		 * bootstrap (S).  Finit supports 1-9, but most
+		 * systems only use 1-6, where 6 is reserved for
+		 * reboot */
+		if (MATCH_CMD(line, "runlevel ", x)) {
+			char *token = strip_line(x);
+
+			cfglevel = strtonum(token, 1, 9, &err);
+			if (err)
+				cfglevel = RUNLEVEL;
+			if (cfglevel < 1 || cfglevel > 9 || cfglevel == 6)
+				cfglevel = 2; /* Fallback */
+			continue;
+		}
+
+		/* Monitored daemon, will be respawned on exit, as
+		 * long as the (optional) service callback returns
+		 * non-zero */
+		if (MATCH_CMD(line, "service ", x)) {
+			svc_register(SVC_CMD_SERVICE, x, NULL);
+			continue;
+		}
+
+		/* One-shot task, will not be respawned. Only runs if
+		 * the (optional) service callback returns true */
+		if (MATCH_CMD(line, "task ", x)) {
+			svc_register(SVC_CMD_TASK, x, NULL);
+			continue;
+		}
+
+		/* Like task but waits for completion, useful w/ [S] */
+		if (MATCH_CMD(line, "run ", x)) {
+			svc_register(SVC_CMD_RUN, x, NULL);
+			continue;
+		}
+
+		if (MATCH_CMD(line, "console ", x)) {
+			if (console) free(console);
+			console = strdup(strip_line(x));
+			continue;
+		}
+		if (MATCH_CMD(line, "tty ", x)) {
+			tty_register(strip_line(x));
+			continue;
+		}
+	}
+
+	fclose(fp);
+
+	return 0;
+}
+
+int parse_finit_conf(char *file)
+{
 	username = strdup(DEFUSER);
 	hostname = strdup(DEFHOST);
 	rcsd     = strdup(FINIT_RCSD);
 
-	if ((fp = fopen(file, "r")) != NULL) {
-		char *x;
-		const char *err = NULL;
-
-		_d("Parse %s ...", file);
-		while (!feof(fp)) {
-			if (!fgets(line, sizeof(line), fp))
-				continue;
-			chomp(line);
-			_d("conf: %s", line);
-
-			/* Skip comments. */
-			if (MATCH_CMD(line, "#", x))
-				continue;
-
-			/* Do this before mounting / read-write
-			 * XXX: Move to plugin which checks /etc/fstab instead */
-			if (MATCH_CMD(line, "check ", x)) {
-				char *dev = strip_line(x);
-
-				strcpy(cmd, "/sbin/fsck -C -a ");
-				strlcat(cmd, dev, sizeof(cmd));
-				run_interactive(cmd, "Checking file system %s", dev);
-
-				continue;
-			}
-
-			if (MATCH_CMD(line, "user ", x)) {
-				if (username) free(username);
-				username = strdup(strip_line(x));
-				continue;
-			}
-			if (MATCH_CMD(line, "host ", x)) {
-				if (hostname) free(hostname);
-				hostname = strdup(strip_line(x));
-				continue;
-			}
-
-			if (MATCH_CMD(line, "module ", x)) {
-				char *mod = strip_line(x);
-
-				strcpy(cmd, "/sbin/modprobe ");
-				strlcat(cmd, mod, sizeof(cmd));
-				run_interactive(cmd, "Loading kernel module %s", mod);
-
-				continue;
-			}
-			if (MATCH_CMD(line, "mknod ", x)) {
-				char *dev = strip_line(x);
-
-				strcpy(cmd, "/bin/mknod ");
-				strlcat(cmd, dev, sizeof(cmd));
-				run_interactive(cmd, "Creating device node %s", dev);
-
-				continue;
-			}
-
-			if (MATCH_CMD(line, "network ", x)) {
-				if (network) free(network);
-				network = strdup(strip_line(x));
-				continue;
-			}
-			if (MATCH_CMD(line, "runparts ", x)) {
-				if (rcsd) free(rcsd);
-				rcsd = strdup(strip_line(x));
-				continue;
-			}
-			if (MATCH_CMD(line, "startx ", x)) {
-				svc_register(SVC_CMD_SERVICE, strip_line(x), username);
-				continue;
-			}
-			if (MATCH_CMD(line, "shutdown ", x)) {
-				if (sdown) free(sdown);
-				sdown = strdup(strip_line(x));
-				continue;
-			}
-
-			/* The desired runlevel to start when leaving
-			 * bootstrap (S).  Finit supports 1-9, but most
-			 * systems only use 1-6, where 6 is reserved for
-			 * reboot */
-			if (MATCH_CMD(line, "runlevel ", x)) {
-				char *token = strip_line(x);
-
-				cfglevel = strtonum(token, 1, 9, &err);
-				if (err)
-					cfglevel = RUNLEVEL;
-				if (cfglevel < 1 || cfglevel > 9 || cfglevel == 6)
-					cfglevel = 2; /* Fallback */
-				continue;
-			}
-
-			/* Monitored daemon, will be respawned on exit, as
-			 * long as the (optional) service callback returns
-			 * non-zero */
-			if (MATCH_CMD(line, "service ", x)) {
-				svc_register(SVC_CMD_SERVICE, x, NULL);
-				continue;
-			}
-
-			/* One-shot task, will not be respawned. Only runs if
-			 * the (optional) service callback returns true */
-			if (MATCH_CMD(line, "task ", x)) {
-				svc_register(SVC_CMD_TASK, x, NULL);
-				continue;
-			}
-
-			/* Like task but waits for completion, useful w/ [S] */
-			if (MATCH_CMD(line, "run ", x)) {
-				svc_register(SVC_CMD_RUN, x, NULL);
-				continue;
-			}
-
-			if (MATCH_CMD(line, "console ", x)) {
-				if (console) free(console);
-				console = strdup(strip_line(x));
-				continue;
-			}
-			if (MATCH_CMD(line, "tty ", x)) {
-				tty_register(strip_line(x));
-				continue;
-			}
-		}
-		fclose(fp);
-	}
+	return parse_conf(file);
 }
 
 

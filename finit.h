@@ -91,8 +91,8 @@ extern char  *console;
 extern char  *__progname;
 
 /* conf.c */
-int  parse_runlevels  (char *runlevels);
-void parse_finit_conf (char *file);
+int parse_runlevels  (char *runlevels);
+int parse_finit_conf (char *file);
 
 #endif /* FINIT_H_ */
 
