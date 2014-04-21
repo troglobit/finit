@@ -178,7 +178,7 @@ static int parse_conf(char *file)
 			}
 
 			snprintf(buf, sizeof(buf), "Loading include file %s", cmd);
-			result = parse_conf(file);
+			result = parse_conf(cmd);
 			print_desc("", buf);
 			print_result(result);
 			continue;
