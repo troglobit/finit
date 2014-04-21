@@ -138,7 +138,7 @@ void tty_start(finit_tty_t *tty)
 	if (console && !strcmp(tty->name, console))
 		is_console = 1;
 
-	if (!strcmp(tty->name, _PATH_DEV)) {
+	if (!strncmp(tty->name, _PATH_DEV, strlen(_PATH_DEV))) {
 #if   defined(GETTY_AGETTY)
 		snprintf(line, sizeof(line), "%s %s %d %s", GETTY, tty->name, tty->baud, tty->term ?: "");
 #elif defined(GETTY_BUSYBOX)
