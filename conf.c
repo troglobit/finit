@@ -89,7 +89,7 @@ int parse_runlevels(char *runlevels)
 static int parse_conf(char *file)
 {
 	FILE *fp;
-	char line[LINE_SIZE];
+	char line[LINE_SIZE] = "";
 	char cmd[CMD_SIZE];
 	char *x;
 	const char *err = NULL;
@@ -98,7 +98,21 @@ static int parse_conf(char *file)
 	if (!fp)
 		return 1;
 
-	print(2, "Loading %s", file);
+	/*
+	 * If not standard finit.conf, then we want to show just the base name
+	 * Loading configuration ............. vs
+	 * Loading services configuration ....
+	 */
+	if (!string_match (file, FINIT_CONF)) {
+		x = strrchr(file, '/');
+		if (!x) x = file;
+		else    x++;
+		strlcpy(line, x, sizeof(line));
+		x = strstr(line, ".conf");
+		if (x) *x = 0;
+	}
+
+	print(0, "Loading %sconfiguration", line);
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))
 			continue;
