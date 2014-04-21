@@ -78,7 +78,12 @@ service [RUN_LVLS] /path/to/daemon ARGS -- Optional description
     prevent them from forking off to the background.
 
 runparts <PATH>
-    Call run-parts(8) on a directory other than the default /etc/finit.d
+    Call run-parts(8) on a directory other than the default ``/etc/finit.d``
+
+include <CONF>
+    Include another configuration file, ``/etc/finit.d``, or runparts
+    path is prepended to file if the file is not found or an absolute
+    path is not given
 
 tty [RUN_LVLS] <DEV | /bin/sh>
     Start a getty on the given TTY device, in the given runlevels.  When

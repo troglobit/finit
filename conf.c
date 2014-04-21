@@ -94,15 +94,9 @@ static int parse_conf(char *file)
 	char *x;
 	const char *err = NULL;
 
-	/* Assume absolute path is given ... */
 	fp = fopen(file, "r");
-	if (!fp) {
-		/* ... if it fails, try /etc/finit.d/ as prefix */
-		snprintf(line, sizeof(line), "%s/%s", rcsd, file);
-		fp = fopen(file, "r");
-		if (!fp)
-			return 1;
-	}
+	if (!fp)
+		return 1;
 
 	_d("Parse %s ...", file);
 	while (!feof(fp)) {
@@ -169,14 +163,24 @@ static int parse_conf(char *file)
 			rcsd = strdup(strip_line(x));
 			continue;
 		}
-		/* Parse any include file, use rcsd if absolute path not given. */
+		/* Parse any include file, use rcsd if absolute path not given */
 		if (MATCH_CMD(line, "include ", x)) {
+			int result;
 			char *file = strip_line(x);
 			char buf[60];
 
-			snprintf(buf, sizeof(buf), "Loading include file %s", file);
+			strlcpy(cmd, file, sizeof(cmd));
+			if (!fexist(cmd)) {
+				/* ... try /etc/finit.d/ as prefix */
+				snprintf(cmd, sizeof(cmd), "%s/%s", rcsd, file);
+				if (!fexist(cmd))
+					continue;
+			}
+
+			snprintf(buf, sizeof(buf), "Loading include file %s", cmd);
+			result = parse_conf(file);
 			print_desc("", buf);
-			print_result(parse_conf(file));
+			print_result(result);
 			continue;
 		}
 		if (MATCH_CMD(line, "startx ", x)) {
