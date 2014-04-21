@@ -93,6 +93,7 @@ char   *pid_get_name    (pid_t pid, char *name, size_t len);
 void    procname_set    (char *name, char *args[]);
 int     procname_kill   (char *name, int signo);
 
+void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);

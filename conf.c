@@ -98,7 +98,7 @@ static int parse_conf(char *file)
 	if (!fp)
 		return 1;
 
-	_d("Parse %s ...", file);
+	print(2, "Loading %s", file);
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))
 			continue;
@@ -165,9 +165,7 @@ static int parse_conf(char *file)
 		}
 		/* Parse any include file, use rcsd if absolute path not given */
 		if (MATCH_CMD(line, "include ", x)) {
-			int result;
 			char *file = strip_line(x);
-			char buf[60];
 
 			strlcpy(cmd, file, sizeof(cmd));
 			if (!fexist(cmd)) {
@@ -177,10 +175,7 @@ static int parse_conf(char *file)
 					continue;
 			}
 
-			snprintf(buf, sizeof(buf), "Loading include file %s", cmd);
-			result = parse_conf(cmd);
-			print_desc("", buf);
-			print_result(result);
+			parse_conf(cmd);
 			continue;
 		}
 		if (MATCH_CMD(line, "startx ", x)) {

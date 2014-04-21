@@ -330,30 +330,55 @@ static int print_timestamp(void)
 	return 0;
 }
 
-void print_desc(char *action, char *desc)
+void print(int action, const char *fmt, ...)
 {
+	char buf[80];
+	size_t len;
+	va_list ap;
+	const char failure[] = " \e[7m[FAIL]\e[0m\n";
+	const char success[] = " \e[1m[ OK ]\e[0m\n";
+	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
 	const char dots[] = " .....................................................................";
 
-	delline();
-	print_timestamp();
+	if (fmt) {
+		va_start(ap, fmt);
+		len = vsnprintf(buf, sizeof(buf), fmt, ap);
+		va_end(ap);
 
-	write(STDERR_FILENO, "\r", 1);
-	if (!action)
-		action = "";
-	write(STDERR_FILENO, action, strlen(action));
-	if (!desc)
-		desc = "";
-	write(STDERR_FILENO, desc, strlen(desc));
-	write(STDERR_FILENO, dots, 60 - strlen(desc) - strlen(action)); /* pad with dots. */
+		delline();
+		print_timestamp();
+
+		write(STDERR_FILENO, "\r", 1);
+		write(STDERR_FILENO, buf, len);
+		write(STDERR_FILENO, dots, 60 - len); /* pad with dots. */
+	}
+
+	switch (action) {
+	case -1:
+		break;
+
+	case 0:
+		write(STDERR_FILENO, success, 15);
+		break;
+
+	case 1:
+		write(STDERR_FILENO, failure, 15);
+		break;
+
+	default:
+		write(STDERR_FILENO, pending, 15);
+		break;
+	}
+}
+
+void print_desc(char *action, char *desc)
+{
+	print(-1, "%s %s", action ?: "", desc ?: "");
 }
 
 int print_result(int fail)
 {
-	if (fail)
-		fprintf(stderr, " \e[7m[FAIL]\e[0m\n");
-	else
-		fprintf(stderr, " \e[1m[ OK ]\e[0m\n");
-
+	print(!!fail, NULL);
 	return fail;
 }
 
