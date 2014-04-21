@@ -2,6 +2,16 @@
                                     NEWS
 ==============================================================================
 
+1.9 (2014-04-21)
+----------------
+* Bug fixes, code cleanup
+* Add support for an include directive to .conf files
+* Fallback to ``/bin/sh`` if user forgets tty setting
+* Handle ``SIGHUP`` from service callback properly when switching runlevel
+* Initial support for restarting lost services during ``norespwan``
+* Misc. major (memleak) and minor fixes and additions to libite/lite.h
+
+
 1.8 (2013-06-07)
 ----------------
 * Support for runlevels, with a bootstrap runlevel 'S'

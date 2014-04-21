@@ -1,6 +1,6 @@
 # Finit libite -- Light-weight utility functions and C-library extensions
 # 
-# Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+# Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

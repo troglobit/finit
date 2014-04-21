@@ -1,7 +1,7 @@
 # Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
 #
 # Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
-# Copyright (c) 2008-2012  Joachim Nilsson <troglobit@gmail.com>
+# Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.8
+VERSION    ?= 1.9
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
