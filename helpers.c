@@ -335,8 +335,8 @@ void print(int action, const char *fmt, ...)
 	char buf[80];
 	size_t len;
 	va_list ap;
-	const char failure[] = " \e[7m[FAIL]\e[0m\n";
 	const char success[] = " \e[1m[ OK ]\e[0m\n";
+	const char failure[] = " \e[7m[FAIL]\e[0m\n";
 	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
 	const char dots[] = " .....................................................................";
 
@@ -358,22 +358,22 @@ void print(int action, const char *fmt, ...)
 		break;
 
 	case 0:
-		write(STDERR_FILENO, success, 15);
+		write(STDERR_FILENO, success, sizeof(success));
 		break;
 
 	case 1:
-		write(STDERR_FILENO, failure, 15);
+		write(STDERR_FILENO, failure, sizeof(failure));
 		break;
 
 	default:
-		write(STDERR_FILENO, pending, 15);
+		write(STDERR_FILENO, pending, sizeof(pending));
 		break;
 	}
 }
 
 void print_desc(char *action, char *desc)
 {
-	print(-1, "%s %s", action ?: "", desc ?: "");
+	print(-1, "%s%s", action ?: "", desc ?: "");
 }
 
 int print_result(int fail)
