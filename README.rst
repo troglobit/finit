@@ -80,8 +80,11 @@ service [RUN_LVLS] /path/to/daemon ARGS -- Optional description
 runparts <PATH>
     Call run-parts(8) on a directory other than the default /etc/finit.d
 
-tty [RUN_LVLS] <DEV>
-    Run getty on the listed TTY device, in the given runlevels
+tty [RUN_LVLS] <DEV | /bin/sh>
+    Start a getty on the given TTY device, in the given runlevels.  When
+    no tty setting is given in ``finit.conf``, or if /bin/sh is given as
+    argument instead of a device path, a single shell is started on the
+    default console.  Useful for really bare-bones systems
 
 console <DEV>
     Some embedded systems have a dedicated console port. This command
