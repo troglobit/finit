@@ -104,12 +104,18 @@ static int parse_conf(char *file)
 	 * Loading services configuration ....
 	 */
 	if (!string_match (file, FINIT_CONF)) {
+		/* Remove leading path */
 		x = strrchr(file, '/');
 		if (!x) x = file;
-		else    x++;
+		else	x++;
+
+		/* Remove ending .conf */
 		strlcpy(line, x, sizeof(line));
 		x = strstr(line, ".conf");
 		if (x) *x = 0;
+
+		/* Add empty space. */
+		strcat(line, " ");
 	}
 
 	print(0, "Loading %sconfiguration", line);
