@@ -159,7 +159,7 @@ plugin_t *plugin_find(char *name)
 
 	SEARCH_PLUGIN(name);
 
-	if (name[0] != '/') {
+	if (plugpath && name[0] != '/') {
 		int noext;
 		char path[CMD_SIZE];
 
