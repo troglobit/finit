@@ -27,6 +27,7 @@
 #include "lite.h"
 #include "../helpers.h"
 
+static int copy(char *src, char *dst);
 static int makedir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode);
 static int prune(char *dst, char **new_files, int new_num);
 
@@ -58,18 +59,6 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 	int i = 0, num = 0, result = 0;
 	char **files;		/* Array of file names. */
 
-	void copy(char *src, char *dst)
-	{
-		errno = 0;
-		copyfile(src, dst, 0, 1);
-		if (errno) {
-			if (errno == EEXIST)
-				errno = 0;
-			else
-				result++;
-		}
-	}
-
 	if (!fisdir(dst))
 		mkdir(dst, 0755);
 
@@ -77,7 +66,9 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 		if (!fexist(src))
 			return 1;
 
-		copy(src, dst);
+		if (copy(src, dst))
+			result++;
+
 		return errno;
 	}
 
@@ -111,7 +102,9 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 			rsync(source, dst2, delete, filter);
 			continue;	/* Next file/dir in @src to copy... */
 		}
-		copy(source, dst);
+
+		if (copy(source, dst))
+			result++;
 	}
 
 	/* We ignore any errors from the pruning, that phase albeit useful is only
@@ -126,6 +119,21 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 	}
 
 	return result;
+}
+
+static int copy(char *src, char *dst)
+{
+	errno = 0;
+
+	copyfile(src, dst, 0, 1);
+	if (errno) {
+		if (errno != EEXIST)
+			return 1;
+
+		errno = 0;
+	}
+
+	return 0;
 }
 
 /* Creates dir/name @mode ... skipping / if dir already ends so. */
