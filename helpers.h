@@ -101,7 +101,7 @@ void    chomp           (char *str);
 void    do_sleep        (unsigned int sec);
 int     getuser         (char *username);
 int     getgroup        (char *group);
-void    set_hostname    (char *hostname);
+void    set_hostname    (char **hostname);
 
 int     complete        (char *cmd, int pid);
 int     run             (char *cmd);

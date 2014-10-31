@@ -580,7 +580,7 @@ pid_t run_getty(char *cmd, char *args[], int console)
 			}
 
 			if (console) {
-				i = write(STDERR_FILENO, msg, sizeof(msg));
+				(void)write(STDERR_FILENO, msg, sizeof(msg));
 				while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
 					continue;
 			}
@@ -697,26 +697,29 @@ void do_sleep(unsigned int sec)
 		;
 }
 
-void set_hostname(char *hostname)
+void set_hostname(char **hostname)
 {
 	FILE *fp;
 
-	_d("Set hostname: %s", hostname);
-	if ((fp = fopen("/etc/hostname", "r")) != NULL) {
+	_d("Set hostname: %s", *hostname);
+	fp = fopen("/etc/hostname", "r");
+	if (fp) {
 		struct stat st;
 
 		fstat(fileno(fp), &st);
-		hostname = realloc(hostname, st.st_size);
-		if (!hostname)
+		*hostname = realloc(*hostname, st.st_size);
+		if (!*hostname) {
+			fclose(fp);
 			return;
+		}
 
-		fgets(hostname, st.st_size, fp);
-		chomp(hostname);
+		fgets(*hostname, st.st_size, fp);
+		chomp(*hostname);
 		fclose(fp);
 	}
 
-	if (hostname)
-		sethostname(hostname, strlen(hostname));
+	if (*hostname)
+		sethostname(*hostname, strlen(*hostname));
 }
 
 /**
