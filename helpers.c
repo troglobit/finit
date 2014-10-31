@@ -404,7 +404,6 @@ int complete(char *cmd, int pid)
 int run(char *cmd)
 {
 	int status, result, i = 0;
-	FILE *fp;
 	char *args[NUM_ARGS + 1], *arg, *backup;
 	pid_t pid;
 
@@ -444,17 +443,18 @@ int run(char *cmd)
 		return 1;
 	}
 
-	fp = fopen("/dev/null", "w");
 	pid = fork();
 	if (0 == pid) {
 		int i;
+		FILE *fp;
 		struct sigaction sa;
 
 		/* Reset signal handlers that were set by the parent process */
 		for (i = 1; i < NSIG; i++)
 			DFLSIG(sa, i, 0);
 
-		/* Redirect stdio if the caller requested so. */
+		/* Always redirect stdio for run() */
+		fp = fopen("/dev/null", "w");
 		if (fp) {
 			int fd = fileno(fp);
 
@@ -467,14 +467,14 @@ int run(char *cmd)
 		_exit(1); /* Only if execv() fails. */
 	} else if (-1 == pid) {
 		_pe("%s", args[0]);
+		free(backup);
+
 		return -1;
 	}
 
 	status = complete(args[0], pid);
 	if (-1 == status) {
-		if (fp) fclose(fp);
 		free(backup);
-
 		return 1;
 	}
 
@@ -489,7 +489,6 @@ int run(char *cmd)
 				     * change their return code accordingly. --Jocke */
 	}
 
-	if (fp) fclose(fp);
 	free(backup);
 
 	return result;
