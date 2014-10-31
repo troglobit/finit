@@ -143,15 +143,17 @@ void svc_bootstrap(void)
 	}
 }
 
+static int encode(int lvl)
+{
+	if (!lvl)
+		return 0;
+
+	return lvl + '0';
+}
+
 static void utmp_save(int pre, int now)
 {
    struct utmp utent;
-
-   int encode(int lvl)
-   {
-	   if (!lvl) return 0;
-	   return lvl + '0';
-   }
 
    utent.ut_type  = RUN_LVL;
    utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
