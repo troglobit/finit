@@ -1,6 +1,21 @@
-# Travis CI integration
+# Travis CI integration -- https://travis-ci.org/troglobit/finit
 language: c
 compiler:
   - gcc
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "eOiuHs02lG2Uv146K9dMqucGTWUJFEhpz1oAtwe+kPrRXsXWc20hYMO+DSpMgD05vSvNeQA6p7h7LdRFQ+/g/Obj27TsOE+RKkUvRAtdwzxnKVyii9C/nmML8cFw7rIA0VS8O9mAkVYeyDxNDupBp3e9DPCibhKPvqCvioTnyy4="
+
+addons:
+  coverity_scan:
+    project:
+      name: "troglobit/finit"
+      description: "finit | Fast Init Replacement"
+    notification_email: troglobit@gmail.com
+    build_command:      "make"
+    branch_pattern:     master
 
 script: make

@@ -2,6 +2,7 @@
                       Finit | Fast Init Replacement
 ==============================================================================
 |cistatus|
+|covstat|
 
 Finit is a small `SysV init`_ replacement with `process supervision`_
 similar to that of `daemontools`_ and `runit`_.  Its focus is on small
@@ -288,8 +289,10 @@ proposed extensions.
 .. _upstart: http://upstart.ubuntu.com/
 .. _runlevels: http://en.wikipedia.org/wiki/Runlevel
 .. _systemd: http://www.freedesktop.org/wiki/Software/systemd/
-.. _openrc: http://www.gentoo.org/proj/en/base/openrc/
+.. _OpenRC: http://www.gentoo.org/proj/en/base/openrc/
 .. _`finit-1.3.tar.xz`: ftp://troglobit.com/finit/finit-1.3.tar.xz
 .. |cistatus| image:: https://travis-ci.org/troglobit/finit.png?branch=master
                       :target: https://travis-ci.org/troglobit/finit
+.. |covstat| image:: https://scan.coverity.com/projects/3345/badge.svg
+                     :target: https://scan.coverity.com/projects/3345
 
