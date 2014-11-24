@@ -151,6 +151,53 @@ Switching between runlevels can be done by calling init with a single
 argument, e.g., 'init 5' switches to runlevel 5.
 
 
+Hooks, Callbacks & Plugins
+--------------------------
+
+Finit provides only the bare necessities for starting and supervising
+processes, with an emphasis on *bare* -- for your convenience it does
+however come with support for hooks, service callbacks and plugins that
+can used to extend finit with.  For your convenience a set of predefined
+plugins are available::
+
+alsa-utils.so (HOOK)
+    Restore and save ALSA sound settings on startup/shutdown.
+
+bootmisc.so (HOOK)
+    Setup necessary files for UTMP, tracking logins at boot.
+
+dbus.so (HOOK)
+    Setup and start system message bus, D-Bus, at boot.
+
+hwclock.so (HOOK)
+    Restore and save system clock from/to RTC on startup/shutdown.
+
+initctl.so (PLUGIN)
+    Extends finit with a traditional initctl functionality.
+
+resolvconf.so (HOOK)
+    Setup necessary files for resolvconf at startup.
+
+tty.so (I/O PLUGIN)
+    Watches /dev, using inotify, for new device nodes (TTY's) to
+    start/stop getty consoles on them on demand.
+
+urandom.so (HOOK)
+    Setup random seed at startup.
+
+x11-common.so (HOOK)
+    Setup necessary files for X-Window.
+
+These are only hooks and plugins to extend finit, but it is also
+possible to extend finit with a callback for each service.  Such a
+callback would be called right before the process is started, or
+restarted if it exits.  Callback gets a pointer to the ``svc_t``
+of the service, with all command line parameters free to modify
+if needed.   All the callback needs to do is repond with one of:
+``SVC_STOP(0)``, ``SVC_START(1)``, or ``SVC_RELOAD(2)`` -- the
+latter of which means finit will send SIGHUP to the process.
+
+
 Rebooting and Halting
 ---------------------
 
@@ -293,6 +340,6 @@ proposed extensions.
 .. _`finit-1.3.tar.xz`: ftp://troglobit.com/finit/finit-1.3.tar.xz
 .. |cistatus| image:: https://travis-ci.org/troglobit/finit.png?branch=master
                       :target: https://travis-ci.org/troglobit/finit
-.. |covstat| image:: https://scan.coverity.com/projects/3345/badge.svg
-                     :target: https://scan.coverity.com/projects/3345
+.. |covstat| image:: https://scan.coverity.com/projects/3545/badge.svg
+                     :target: https://scan.coverity.com/projects/3545
 
