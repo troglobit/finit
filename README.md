@@ -37,20 +37,23 @@ Features
 --------
 
 **Process Supervision**
+
 Start, monitor and restart services if they fail.
 
 **Runlevels**
+
 Finit supports standard runlevels if you want, but you don't need them
 for simple installations.
 
 **Plugins**
+
 Extend and modify finit behavior.  See examples in plugins/ directory.
 Plugin capabilities:
 
-* Service callbacks — modify service arguments, run/restart/stop
-* Task/Run callbacks — a one-shot commands, executed in sequence
-* Hooks — hook into the boot at predefined points to extend finit
-* I/O — listen to external events and control finit behavior/services
+  * Service callbacks — modify service arguments, run/restart/stop
+  * Task/Run callbacks — a one-shot commands, executed in sequence
+  * Hooks — hook into the boot at predefined points to extend finit
+  * I/O — listen to external events and control finit behavior/services
 
 Extensions and functionality not purely related to what an /sbin/init
 needs to start a system are available as a set of plugins that either
@@ -67,57 +70,57 @@ Contrary to most other script based init alternatives
 [OpenRC](http://www.gentoo.org/proj/en/base/openrc/) and the likes)
 finit reads its configuration from `/etc/finit.conf`.  Syntax:
 
-* `check <DEV>`
+  * `check <DEV>`
 
     Run fsck on a file system before mounting it
 
-* `module <MODULE>`
+  * `module <MODULE>`
 
     Load a kernel module, with optional arguments
 
-* `network <PATH>`
+  * `network <PATH>`
 
     Script or program to bring up networking, with optional arguments
 
-* `runlevel <N>`
+  * `runlevel <N>`
 
     N is the runlevel number 1-9, where 6 is reserved for reboot
 
-* `run [RUN_LVLS] /path/to/cmd ARGS -- Optional description`
+  * `run [RUN_LVLS] /path/to/cmd ARGS -- Optional description`
 
     One-shot command to run in sequence when entering a runlevel, with
     optional arguments and description.  This command is guaranteed to
     be completed before running the next command.
 
-* `task [RUN_LVLS] /path/to/cmd ARGS -- Optional description`
+  * `task [RUN_LVLS] /path/to/cmd ARGS -- Optional description`
 
     One-shot like 'run', but starts in parallel with the next command
 
-* `service [RUN_LVLS] /path/to/daemon ARGS -- Optional description`
+  * `service [RUN_LVLS] /path/to/daemon ARGS -- Optional description`
 
     Service, or daemon, to be monitored and automatically restarted if
     it exits prematurely.  Please note that you often need to provide
     a --foreground or --no-background argument to most daemons to
     prevent them from forking off to the background.
 
-* `runparts <PATH>`
+  * `runparts <PATH>`
 
     Call run-parts(8) on a directory other than default ``/etc/finit.d``
 
-* `include <CONF>`
+  * `include <CONF>`
 
     Include another configuration file, ``/etc/finit.d``, or runparts
     path is prepended to file if the file is not found or an absolute
     path is not given
 
-* `tty [RUN_LVLS] <DEV | /bin/sh>`
+  * `tty [RUN_LVLS] <DEV | /bin/sh>`
 
     Start a getty on the given TTY device, in the given runlevels.  When
     no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
     argument instead of a device path, a single shell is started on the
     default console.  Useful for really bare-bones systems
 
-* `console <DEV>`
+  * `console <DEV>`
 
     Some embedded systems have a dedicated console port. This command
     tells finit to not start getty, but instead print a friendly message
@@ -186,27 +189,27 @@ however come with support for hooks, service callbacks and plugins that
 can used to extend finit with.  For your convenience a set of predefined
 plugins are available:
 
-- *alsa-utils.so*: Restore and save ALSA sound settings on
- startup/shutdown.
+  * *alsa-utils.so*: Restore and save ALSA sound settings on
+    startup/shutdown.
 
-- *bootmisc.so*: Setup necessary files for UTMP, tracking logins
-  at boot.
+  * *bootmisc.so*: Setup necessary files for UTMP, tracking logins
+    at boot.
 
-- *dbus.so*: Setup and start system message bus, D-Bus, at boot.
+  * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
 
-- *hwclock.so*: Restore and save system clock from/to RTC on
-  startup/shutdown.
+  * *hwclock.so*: Restore and save system clock from/to RTC on
+    startup/shutdown.
 
-- *initctl.so*: Extends finit with a traditional initctl functionality.
+  * *initctl.so*: Extends finit with a traditional initctl functionality.
 
-- *resolvconf.so*: Setup necessary files for resolvconf at startup.
+  * *resolvconf.so*: Setup necessary files for resolvconf at startup.
 
-- *tty.so*: Watches /dev, using inotify, for new device nodes (TTY's) to
+  * *tty.so*: Watches /dev, using inotify, for new device nodes (TTY's) to
     start/stop getty consoles on them on demand.
 
-- *urandom.so*: Setup random seed at startup.
+  * *urandom.so*: Setup random seed at startup.
 
-- *x11-common.so*: Setup necessary files for X-Window.
+  * *x11-common.so*: Setup necessary files for X-Window.
 
 These are only hooks and plugins to extend finit, but it is also
 possible to extend finit with a callback for each service.  Such a
@@ -237,51 +240,51 @@ alter the behavior of finit.
 The following environment variables are checked by the makefiles and control
 what is built and where resulting binaries are installed.
 
-- `ROOTDIR=`: Top directory for building complete system, used in pretty
-  printing.
+  * `ROOTDIR=`: Top directory for building complete system, used in pretty
+    printing.
 
-- `VERSION=`: Defaults to the currently released version of finit,
-   e.g., 1.3 but can be overridden by packagers using this variable to
-   add a suffix or completely alter the version.
+  * `VERSION=`: Defaults to the currently released version of finit,
+    e.g., 1.3 but can be overridden by packagers using this variable to
+    add a suffix or completely alter the version.
 
-- `CFLAGS=`: Standard `CFLAGS` are inherited from the build environment.
+  * `CFLAGS=`: Standard `CFLAGS` are inherited from the build environment.
 
-- `CPPFLAGS=`: Standard `CPPFLAGS` are inherited from the build
-  environment.
+  * `CPPFLAGS=`: Standard `CPPFLAGS` are inherited from the build
+    environment.
 
-- `LDFLAGS=`: Standard `LDFLAGS` are inherited from the build
-  environment.
+  * `LDFLAGS=`: Standard `LDFLAGS` are inherited from the build
+    environment.
 
-- `LDLIBS=`: Standard `LIBLIBS` are inherited from the build environment.
+  * `LDLIBS=`: Standard `LIBLIBS` are inherited from the build environment.
 
-- `prefix=`: Base prefix path for all files, except `sbinbdir` and
-   `sysconfdir`.  Used in concert with the `DESTDIR` variable.
+  * `prefix=`: Base prefix path for all files, except `sbinbdir` and
+    `sysconfdir`.  Used in concert with the `DESTDIR` variable.
 
     Defaults to `/usr`.
 
-- `sbindir=`: Path to where resulting binaries should install to. Used
-   in concert with the `DESTDIR` variable.
+  * `sbindir=`: Path to where resulting binaries should install to. Used
+    in concert with the `DESTDIR` variable.
 
     Defaults to `/sbin`.
 
-- `sysconfdir=`: Path to where finit configuration files should install
-   to.  Used in concert with the `DESTDIR` variable.
+  * `sysconfdir=`: Path to where finit configuration files should install
+    to.  Used in concert with the `DESTDIR` variable.
 
     Defaults to `/etc`, but is currently unused.
 
-- `PLUGINS=`: List of stock finit plugins to build and install.
+  * `PLUGINS=`: List of stock finit plugins to build and install.
 
-- `plugindir=`: Absolute path to where finit should look for dynamically
-   loadable plugins at runtime.  At installation prepended by `DESTDIR`
-   and `prefix`.
+  * `plugindir=`: Absolute path to where finit should look for dynamically
+    loadable plugins at runtime.  At installation prepended by `DESTDIR`
+    and `prefix`.
 
     Defaults to `/lib/finit/plugins`.
 
-- `DESTDIR=`: Used by packagers and distributions when building a
-   relocatable bundle of files.  Always prepended to the `prefix`
-   destination directory.
+  * `DESTDIR=`: Used by packagers and distributions when building a
+    relocatable bundle of files.  Always prepended to the `prefix`
+    destination directory.
 
-**Example**:
+**Example**
 
     $ tar xfJ finit-1.3.tar.xz
     $ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit/dst \
