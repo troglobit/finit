@@ -149,7 +149,7 @@ pid_t pidfile_read(char *pidfile)
 
    if (fgets(buf, sizeof(buf), fp)) {
       errno = 0;
-      pid = strtoul(buf, NULL, 0);
+      pid = (pid_t)strtol(buf, NULL, 10);
       if (errno)
 	      pid = 0;		/* Failed conversion. */
    }
