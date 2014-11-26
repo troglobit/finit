@@ -479,7 +479,7 @@ int svc_start(svc_t *svc)
 			setuid(uid);
 
 		/* Serve copy of args to process in case it modifies them. */
-		for (i = 0; i < MAX_NUM_SVC_ARGS && svc->args[i][0] != 0; i++)
+		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
 			args[i] = svc->args[i];
 		args[i] = NULL;
 
