@@ -489,8 +489,9 @@ int svc_start(svc_t *svc)
 
 			fd = open(CONSOLE, O_WRONLY | O_APPEND);
 			if (-1 != fd) {
-				dup2(STDOUT_FILENO, fd);
-				dup2(STDERR_FILENO, fd);
+				dup2(fd, STDOUT_FILENO);
+				dup2(fd, STDERR_FILENO);
+				close(fd);
 			}
 
 			for (i = 0; i < MAX_NUM_SVC_ARGS && args[i]; i++) {
