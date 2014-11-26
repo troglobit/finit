@@ -502,7 +502,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	int status, oldout = 1, olderr = 2;
 	char line[LINE_SIZE];
 	va_list ap;
-	FILE *fp = tmpfile();
+	FILE *fp;
 
 	if (!cmd) {
 		errno = EINVAL;
@@ -518,6 +518,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	}
 
 	/* Redirect output from cmd to a tempfile */
+	fp = tmpfile();
 	if (fp && !debug) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);
