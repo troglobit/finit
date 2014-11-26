@@ -270,11 +270,14 @@ int procname_kill(char *name, int signo)
 	DIR *dir;
 	struct dirent *entry;
 
-	dir = opendir("/proc");
-	if (!dir || !name) {
+	if (!name) {
 		errno = EINVAL;
 		return 0;
 	}
+
+	dir = opendir("/proc");
+	if (!dir)
+		return 0;
 
 	while ((entry = readdir(dir)) != NULL) {
 		/* Skip non-process entries in /proc */
