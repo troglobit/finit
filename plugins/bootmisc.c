@@ -39,20 +39,20 @@ static void setup(void *UNUSED(arg))
 #endif
 
 	_d("Setting up FHS structure in /var ...");
-	mkdir("/var/cache",      0755);
-	mkdir("/var/games",      0755);
-	mkdir("/var/lib",        0755);
-	mkdir("/var/lib/misc",   0755);
-	mkdir("/var/lib/alarm",  0755);
-	mkdir("/var/lock",       0755);
-	mkdir("/var/log",        0755);
-	mkdir("/var/mail",       0755);
-	mkdir("/var/opt",        0755);
-	mkdir("/var/run",        0755);
-	mkdir("/var/spool",      0755);
-	mkdir("/var/spool/cron", 0755);
-	mkdir("/var/tmp",        0755);
-	mkdir("/var/empty",      0755);
+	makedir("/var/cache",      0755);
+	makedir("/var/games",      0755);
+	makedir("/var/lib",        0755);
+	makedir("/var/lib/misc",   0755);
+	makedir("/var/lib/alarm",  0755);
+	makedir("/var/lock",       0755);
+	makedir("/var/log",        0755);
+	makedir("/var/mail",       0755);
+	makedir("/var/opt",        0755);
+	makedir("/var/run",        0755);
+	makedir("/var/spool",      0755);
+	makedir("/var/spool/cron", 0755);
+	makedir("/var/tmp",        0755);
+	makedir("/var/empty",      0755);
 
 	_d("Setting up necessary UTMP files ...");
 	touch("/var/run/utmp");
@@ -75,11 +75,11 @@ static void setup(void *UNUSED(arg))
 #endif
 
 	_d("Setting up misc files ...");
-	mkdir("/var/run/lldpd",  0755); /* Needed by lldpd */
-	mkdir("/var/run/pluto",  0755); /* Needed by Openswan */
-	mkdir("/var/run/quagga", 0755); /* Needed by Quagga */
-	mkdir("/var/log/quagga", 0755); /* Needed by Quagga */
-	mkdir("/var/run/sshd", 01755); /* OpenSSH  */
+	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
+	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
+	makedir("/var/run/quagga", 0755); /* Needed by Quagga */
+	makedir("/var/log/quagga", 0755); /* Needed by Quagga */
+	makedir("/var/run/sshd", 01755); /* OpenSSH  */
 	mkfifo("/dev/xconsole", 0640); /* sysklogd */
 	chown("/dev/xconsole", 0, getgroup("tty"));
 }

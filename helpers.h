@@ -44,6 +44,9 @@
 #ifndef touch
 # define touch(x) do { if (mknod((x), S_IFREG|0644, 0) && errno != EEXIST) _pe("Failed creating %s", x); } while (0)
 #endif
+#ifndef makedir
+# define makedir(x, p) do { if (mkdir(x, p) && errno != EEXIST) _pe("Failed creating directory %s", x); } while (0)
+#endif
 #ifndef chardev
 # define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 #endif

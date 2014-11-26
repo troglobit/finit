@@ -48,8 +48,8 @@ static void setup(void *UNUSED(arg))
 	}
 #endif
 
-	mkdir("/tmp/.X11-unix", 01777);
-	mkdir("/tmp/.ICE-unix", 01777);
+	makedir("/tmp/.X11-unix", 01777);
+	makedir("/tmp/.ICE-unix", 01777);
 }
 
 static plugin_t plugin = {

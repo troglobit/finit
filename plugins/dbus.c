@@ -29,8 +29,8 @@ static void setup(void *UNUSED(arg))
 {
 #ifdef HAVE_DBUS
 	_d("Starting D-Bus ...");
-	mkdir("/var/run/dbus", 0755);
-	mkdir("/var/lock/subsys/messagebus", 0755);
+	makedir("/var/run/dbus", 0755);
+	makedir("/var/lock/subsys/messagebus", 0755);
 	run("dbus-uuidgen --ensure");
 	remove("/var/run/dbus/pid");
 	run_interactive("dbus-daemon --system", "Starting D-Bus");

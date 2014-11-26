@@ -181,8 +181,8 @@ int main(int argc, char* argv[])
 	mount("none", "/proc", "proc", 0, NULL);
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
-	mkdir("/dev/pts", 0755);
-	mkdir("/dev/shm", 0755);
+	makedir("/dev/pts", 0755);
+	makedir("/dev/shm", 0755);
 	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 	mount("none", "/dev/shm", "tmpfs", 0, NULL);
 	umask(022);

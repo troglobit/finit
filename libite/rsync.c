@@ -59,8 +59,8 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 	int i = 0, num = 0, result = 0;
 	char **files;		/* Array of file names. */
 
-	if (!fisdir(dst))
-		mkdir(dst, 0755);
+	if (!fisdir(dst)
+		makedir(dst, 0755);
 
 	if (!fisdir(src)) {
 		if (!fexist(src))
