@@ -517,23 +517,33 @@ int run_interactive(char *cmd, char *fmt, ...)
 		print_desc("", line);
 	}
 
+	/* Redirect output from cmd to a tempfile */
 	if (fp && !debug) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);
 		dup2(fileno(fp), STDOUT_FILENO);
 		dup2(fileno(fp), STDERR_FILENO);
 	}
+
+	/* Run cmd ... */
 	status = run(cmd);
+
+	/* Restore stderr/stdout */
 	if (fp && !debug) {
-		if (oldout >= 0)
+		if (oldout >= 0) {
 			dup2(oldout, STDOUT_FILENO);
-		if (olderr >= 0)
+			close(oldout);
+		}
+		if (olderr >= 0) {
 			dup2(olderr, STDERR_FILENO);
+			close(oldout);
+		}
 	}
 
 	if (fmt)
 		print_result(status);
 
+	/* Dump any results of cmd on stderr after we've printed [ OK ] or [FAIL]  */
 	if (fp && !debug) {
 		size_t len, written;
 
