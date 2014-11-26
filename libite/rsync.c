@@ -28,7 +28,7 @@
 #include "../helpers.h"
 
 static int copy(char *src, char *dst);
-static int makedir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode);
+static int mdir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode);
 static int prune(char *dst, char **new_files, int new_num);
 
 
@@ -59,7 +59,7 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 	int i = 0, num = 0, result = 0;
 	char **files;		/* Array of file names. */
 
-	if (!fisdir(dst)
+	if (!fisdir(dst))
 		makedir(dst, 0755);
 
 	if (!fisdir(src)) {
@@ -81,7 +81,7 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 		else
 			ptr++;
 
-		if (makedir(dest, sizeof(dest), dst, ptr, fmode(src)))
+		if (mdir(dest, sizeof(dest), dst, ptr, fmode(src)))
 			return 1;
 		dst = dest;
 	}
@@ -94,7 +94,7 @@ int rsync(char *src, char *dst, int delete, int (*filter) (const char *file))
 			char dst2[256];
 
 			strcat(source, "/");
-			if (makedir (dst2, sizeof(dst2), dst, files[i], fmode(source))) {
+			if (mdir (dst2, sizeof(dst2), dst, files[i], fmode(source))) {
 				result++;
 				continue;
 			}
@@ -137,7 +137,7 @@ static int copy(char *src, char *dst)
 }
 
 /* Creates dir/name @mode ... skipping / if dir already ends so. */
-static int makedir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode)
+static int mdir(char *buf, size_t buf_len, char *dir, char *name, mode_t mode)
 {
 	snprintf(buf, buf_len, "%s%s%s/", dir, fisslashdir(dir) ? "" : "/", name);
 	if (mkdir(buf, mode)) {
