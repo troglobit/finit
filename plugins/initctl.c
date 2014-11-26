@@ -124,7 +124,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 PLUGIN_INIT(plugin_init)
 {
 	_d("Setting up %s", FINIT_FIFO);
-	mkfifo(FINIT_FIFO, 0600);
+	makefifo(FINIT_FIFO, 0600);
 
 	fifo_open();
 	plugin_register(&plugin);

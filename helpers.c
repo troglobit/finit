@@ -733,7 +733,11 @@ void set_hostname(char **hostname)
 	if (fp) {
 		struct stat st;
 
-		fstat(fileno(fp), &st);
+		if (fstat(fileno(fp), &st)) {
+			fclose(fp);
+			return;
+		}
+
 		*hostname = realloc(*hostname, st.st_size);
 		if (!*hostname) {
 			fclose(fp);

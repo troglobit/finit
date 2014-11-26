@@ -36,7 +36,7 @@ static void setup(void *UNUSED(arg))
 #endif
 	char line[LINE_SIZE];
 
-	makepath("/var/run/console");
+	makedir("/var/run/console", 01777);
 	snprintf(line, sizeof(line), "/var/run/console/%s", username);
 	touch(line);
 

@@ -211,7 +211,7 @@ void svc_runlevel(int newlevel)
 	if (runlevel == 1)
 		touch("/etc/nologin");	/* Disable login in single-user mode */
 	else
-		remove("/etc/nologin");
+		erase("/etc/nologin");
 
 	if (0 != prevlevel)
 		tty_runlevel(runlevel);

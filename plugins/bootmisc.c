@@ -57,7 +57,6 @@ static void setup(void *UNUSED(arg))
 	_d("Setting up necessary UTMP files ...");
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
-	chmod("/var/run/utmp", 0664);
 
 #ifdef RUNLEVEL
 	memset(&entry, 0, sizeof(struct utmp));
@@ -71,7 +70,7 @@ static void setup(void *UNUSED(arg))
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");
 #else
-	remove("/etc/network/run/ifstate");
+	erase("/etc/network/run/ifstate");
 #endif
 
 	_d("Setting up misc files ...");
@@ -79,8 +78,8 @@ static void setup(void *UNUSED(arg))
 	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
 	makedir("/var/run/quagga", 0755); /* Needed by Quagga */
 	makedir("/var/log/quagga", 0755); /* Needed by Quagga */
-	makedir("/var/run/sshd", 01755); /* OpenSSH  */
-	mkfifo("/dev/xconsole", 0640); /* sysklogd */
+	makedir("/var/run/sshd", 01755);  /* OpenSSH  */
+	makefifo("/dev/xconsole", 0640);  /* sysklogd */
 	chown("/dev/xconsole", 0, getgroup("tty"));
 }
 

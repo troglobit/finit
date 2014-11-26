@@ -142,13 +142,13 @@ int simulate_files(int creat)
 		if (creat)
 			touch(files[i]);
 		else
-			remove(files[i]);
+			erase(files[i]);
 	}
 
 	if (creat)
 		symlink("config2.cfg", STARTUP_CONFIG);
 	else
-		remove(STARTUP_CONFIG);
+		erase(STARTUP_CONFIG);
 
 	return 0;
 }

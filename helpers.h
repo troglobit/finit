@@ -47,6 +47,12 @@
 #ifndef makedir
 # define makedir(x, p) do { if (mkdir(x, p) && errno != EEXIST) _pe("Failed creating directory %s", x); } while (0)
 #endif
+#ifndef makefifo
+# define makefifo(x, p) do { if (mkfifo(x, p) && errno != EEXIST) _pe("Failed creating FIFO %s", x); } while (0)
+#endif
+#ifndef erase
+# define erase(x) do { if (remove(x) && errno != ENOENT) _pe("Failed removing %s", x); } while (0)
+#endif
 #ifndef chardev
 # define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
 #endif

@@ -344,7 +344,7 @@ int main(void)
 		if (fexist(files[i + 2]))
 			fprintf(stderr, "OK => %s\n", files[i + 2]);
 
-		remove(files[i + 2]);
+		erase(files[i + 2]);
 		i += 3;
 	}
 
@@ -358,7 +358,7 @@ int main(void)
 		if (fexist(files[i + 2]))
 			fprintf(stderr, "OK => %s\n", files[i + 2]);
 
-		remove(files[i + 2]);
+		erase(files[i + 2]);
 		i += 3;
 	}
 

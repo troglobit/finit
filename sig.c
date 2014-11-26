@@ -117,7 +117,7 @@ static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
 	_d("Received SIGCONT(%d) from %s (PID %d)",
 	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 	stopped = 0;
-	remove(SYNC_STOPPED);
+	erase(SYNC_STOPPED);
 }
 
 /*
@@ -152,8 +152,8 @@ void sig_setup(void)
 	_d("Setup signals");
 
 	/* Cleanup any stale finit control files */
-	remove(SYNC_SHUTDOWN);
-	remove(SYNC_STOPPED);
+	erase(SYNC_SHUTDOWN);
+	erase(SYNC_STOPPED);
 
 	/* Standard SysV init calls ctrl-alt-delete handler */
 	SETSIG(sa, SIGINT,  shutdown_handler, 0);
