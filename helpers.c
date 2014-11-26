@@ -536,7 +536,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 		}
 		if (olderr >= 0) {
 			dup2(olderr, STDERR_FILENO);
-			close(oldout);
+			close(olderr);
 		}
 	}
 
