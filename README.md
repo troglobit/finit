@@ -84,19 +84,21 @@ finit reads its configuration from `/etc/finit.conf`.  Syntax:
 
   * `runlevel <N>`
 
-    N is the runlevel number 1-9, where 6 is reserved for reboot
+    N is the runlevel number 1-9, where 6 is reserved for reboot.
 
-  * `run [RUN_LVLS] /path/to/cmd ARGS -- Optional description`
+    Default is 2.
+
+  * `run [LVLS] /path/to/cmd ARGS -- Optional description`
 
     One-shot command to run in sequence when entering a runlevel, with
     optional arguments and description.  This command is guaranteed to
     be completed before running the next command.
 
-  * `task [RUN_LVLS] /path/to/cmd ARGS -- Optional description`
+  * `task LVLS] /path/to/cmd ARGS -- Optional description`
 
     One-shot like 'run', but starts in parallel with the next command
 
-  * `service [RUN_LVLS] /path/to/daemon ARGS -- Optional description`
+  * `service [LVLS] /path/to/daemon ARGS -- Optional description`
 
     Service, or daemon, to be monitored and automatically restarted if
     it exits prematurely.  Please note that you often need to provide
@@ -113,12 +115,15 @@ finit reads its configuration from `/etc/finit.conf`.  Syntax:
     path is prepended to file if the file is not found or an absolute
     path is not given
 
-  * `tty [RUN_LVLS] <DEV | /bin/sh>`
+  * `tty [LVLS] <DEV | /bin/sh>`
 
     Start a getty on the given TTY device, in the given runlevels.  When
     no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
     argument instead of a device path, a single shell is started on the
     default console.  Useful for really bare-bones systems
+
+    See `finit.h` for the `#define GETTY` that is called, along with the
+    default baud rate.
 
   * `console <DEV>`
 
@@ -156,8 +161,8 @@ To specify an allowed set of runlevels for a `service`, `run` command, `task`,
 or `tty`, add `[NNN]` to it in your `finit.conf`, like this:
 
     run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
-    task    [S]      /etc/init.d/kbd start -- Preparing console
-    service [S12345] /sbin/klogd -n -x -- Kernel log daemon
+    task    [S]      /etc/init.d/kbd start   -- Preparing console
+    service [S12345] /sbin/klogd -n -x       -- Kernel log daemon
     tty     [12345]  /dev/tty1
     tty     [2]      /dev/tty2
     tty     [2]      /dev/tty3
@@ -167,7 +172,9 @@ or `tty`, add `[NNN]` to it in your `finit.conf`, like this:
 
 In this example acpid is started once at bootstrap using a conventional
 SysV init script.  Here the run command was used, meaning the following
-task command is not run until the init script has fully completed.
+task command is not run until the init script has fully completed.  Then
+the keyboard setup script is called in parallel with spawning klogd as
+a monitored service.
 
 Tasks and services are started in parallel, while run commands are run
 in the order listed and subsequent commands are not started until a run
@@ -186,7 +193,7 @@ Hooks, Callbacks & Plugins
 Finit provides only the bare necessities for starting and supervising
 processes, with an emphasis on *bare* -- for your convenience it does
 however come with support for hooks, service callbacks and plugins that
-can used to extend finit with.  For your convenience a set of predefined
+can used to extend finit with.  For your convenience a set of *optional*
 plugins are available:
 
   * *alsa-utils.so*: Restore and save ALSA sound settings on
@@ -224,9 +231,10 @@ latter of which means finit will send SIGHUP to the process.
 Rebooting and Halting
 ---------------------
 
-Finit handles SIGUSR1 and SIGUSR2 for reboot and halt, and listens to
-`/dev/initctl` so standard Linux reboot and halt commands should also
-work.
+Finit handles `SIGUSR1` and `SIGUSR2` for reboot and halt, and listens
+to `/dev/initctl` so system reboot and halt commands should also work.
+This latter functionality is implemented in the optional `initctl.so`
+plugin.
 
 
 Building
@@ -247,15 +255,15 @@ what is built and where resulting binaries are installed.
     e.g., 1.3 but can be overridden by packagers using this variable to
     add a suffix or completely alter the version.
 
-  * `CFLAGS=`: Standard `CFLAGS` are inherited from the build environment.
+  * `CFLAGS=`: Default `CFLAGS` are inherited from the build environment.
 
-  * `CPPFLAGS=`: Standard `CPPFLAGS` are inherited from the build
+  * `CPPFLAGS=`: Default `CPPFLAGS` are inherited from the build
     environment.
 
-  * `LDFLAGS=`: Standard `LDFLAGS` are inherited from the build
+  * `LDFLAGS=`: Default `LDFLAGS` are inherited from the build
     environment.
 
-  * `LDLIBS=`: Standard `LIBLIBS` are inherited from the build environment.
+  * `LDLIBS=`: Default `LIBLIBS` are inherited from the build environment.
 
   * `prefix=`: Base prefix path for all files, except `sbinbdir` and
     `sysconfdir`.  Used in concert with the `DESTDIR` variable.
