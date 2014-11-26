@@ -218,14 +218,41 @@ plugins are available:
 
   * *x11-common.so*: Setup necessary files for X-Window.
 
-These are only hooks and plugins to extend finit, but it is also
-possible to extend finit with a callback for each service.  Such a
-callback would be called right before the process is started, or
-restarted if it exits.  Callback gets a pointer to the `svc_t`
-of the service, with all command line parameters free to modify
-if needed.   All the callback needs to do is repond with one of:
-`SVC_STOP(0)`, `SVC_START(1)`, or `SVC_RELOAD(2)` -- the
-latter of which means finit will send SIGHUP to the process.
+Usually you want to hook into the boot process once, simple hook plugins
+like `bootmisc.so` are great for that purpose.  They are called at each
+hook point in the boot process, useful to insert some pre-bootstrap
+mechanisms, like generating configuration files, restoring HW device
+state, etc.  Available hook points are:
+
+  * `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
+    mounted -- very early
+
+  * `HOOK_BASEFS_UP`: All of `/etc/fstab` is mounted, swap is available
+    and default init signals are setup
+
+  * `HOOK_NETWORK_UP`: System bootstrap, runlevel S, has completed and
+    networking is up (`lo` is up and the `network` script has run)
+
+  * `HOOK_SVC_UP`: All services in the active runlevel has been launched
+
+  * `HOOK_SYSTEM_UP`: All services *and* everything in `/etc/finit.d`
+    has been launched
+
+  * `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
+    services are sent `SIGTERM`
+
+Plugins like `initctl.so` and `tty.so` extend finit by acting on events,
+they are called I/O plugins and are called from the finit main loop when
+`poll()` detects an event.  See the source code for `plugins/*.c` for
+more help and ideas.
+
+Callback plugins are called by finit them right before a process is
+started, or restarted if it exits.  The callback receive a pointer to
+the `svc_t` (defined in `svc.h`) of the service, with all command line
+parameters free to modify if needed.  All the callback needs to do is
+respond with one of: `SVC_STOP (0)` tells finit to *not* start the
+service, `SVC_START (1)` to start the service, or `SVC_RELOAD (2)` to
+have finit signal the process with `SIGHUP`.
 
 
 Rebooting and Halting
