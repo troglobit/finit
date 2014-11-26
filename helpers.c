@@ -552,8 +552,10 @@ int run_interactive(char *cmd, char *fmt, ...)
 			len     = fread(line, 1, sizeof(line), fp);
 			written = fwrite(line, len, sizeof(char), stderr);
 		} while (len > 0 && written == len);
-		fclose(fp);
 	}
+
+	if (fp)
+		fclose(fp);
 
 	return status;
 }
