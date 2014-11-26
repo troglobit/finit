@@ -280,6 +280,9 @@ static int load_one(char *path, char *name)
 	snprintf(plugin, sizeof(plugin), "%s/%s%s", path, name, noext ? ".so" : "");
 
 	_d("Loading plugin %s ...", basename(plugin));
+	/* Ignore leak, we do not support unloading of plugins atm.
+	 * TODO: Add handle to list of loaded plugins, dlclose() on
+	 *       plugin_unregister() */
 	handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
 	if (!handle) {
 		_e("Failed loading plugin %s: %s", plugin, dlerror());
