@@ -501,12 +501,19 @@ int run_interactive(char *cmd, char *fmt, ...)
 	va_list ap;
 	FILE *fp = tmpfile();
 
-	va_start(ap, fmt);
-	vsnprintf(line, sizeof(line), fmt, ap);
-	va_end(ap);
+	if (!cmd) {
+		errno = EINVAL;
+		return 1;
+	}
 
-	if (fmt)
+	if (fmt) {
+		va_start(ap, fmt);
+		vsnprintf(line, sizeof(line), fmt, ap);
+		va_end(ap);
+
 		print_desc("", line);
+	}
+
 	if (fp && !debug) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);
@@ -515,11 +522,15 @@ int run_interactive(char *cmd, char *fmt, ...)
 	}
 	status = run(cmd);
 	if (fp && !debug) {
-		dup2(oldout, STDOUT_FILENO);
-		dup2(olderr, STDERR_FILENO);
+		if (oldout >= 0)
+			dup2(oldout, STDOUT_FILENO);
+		if (olderr >= 0)
+			dup2(olderr, STDERR_FILENO);
 	}
+
 	if (fmt)
 		print_result(status);
+
 	if (fp && !debug) {
 		size_t len, written;
 
