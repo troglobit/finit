@@ -131,31 +131,31 @@ void ifconfig(char *ifname, char *addr, char *mask, int up)
  */
 pid_t pidfile_read(char *pidfile)
 {
-   pid_t pid = 0;
-   char buf[16];
-   FILE *fp;
+	pid_t pid = 0;
+	char buf[16];
+	FILE *fp;
 
-   if (!pidfile) {
-      errno = EINVAL;
-      return -1;
-   }
+	if (!pidfile) {
+		errno = EINVAL;
+		return -1;
+	}
 
-   if (!fexist(pidfile))
-      return -1;
+	if (!fexist(pidfile))
+		return -1;
 
-   fp = fopen(pidfile, "r");
-   if (!fp)
-      return -1;
+	fp = fopen(pidfile, "r");
+	if (!fp)
+		return -1;
 
-   if (fgets(buf, sizeof(buf), fp)) {
-      errno = 0;
-      pid = (pid_t)strtol(buf, NULL, 10);
-      if (errno)
-	      pid = 0;		/* Failed conversion. */
-   }
-   fclose(fp);
+	if (fgets(buf, sizeof(buf), fp)) {
+		errno = 0;
+		pid = (pid_t)strtol(buf, NULL, 10);
+		if (errno)
+			pid = 0;		/* Failed conversion. */
+	}
+	fclose(fp);
 
-   return pid;
+	return pid;
 }
 
 /**
