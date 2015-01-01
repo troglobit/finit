@@ -43,6 +43,32 @@ easiest (and what we need for WeOS at Westermo) is allow/deny per iface.
     allow ssh eth0
 
 
+Crond
+-----
+
+Requirements are quite rudimentary, basic cron functionality, mainly
+system-level timed periodic tasks:
+
+  * Periodically run a task, in a matching runlevel
+  * Optionally run as non-root (`crontab -e` as operator)
+
+Proposed syntax:
+
+    # Crontab
+    cron @YY-mm-ddTHH:MM [LVLS] /path/to/cmd [ARGS] -- Optional descr
+    
+    # One-shot 'at' command
+    at @YY-mm-ddTHH:MM [LVLS] /path/to/cmd [ARGS] -- Optional descr
+
+Notice the ISO date similarity in notation.  The runlevels is extra
+filtering sugar.  E.g., if cron service is only allowed in runlevels two
+or three it will not start if system currently is in runlevel four.
+
+To run a command as another user the `.conf` file must have a that
+owner.  E.g., `/etc/finit.d/extra.conf` may be owned by operator and
+only hold `cron ...` lines.
+
+
 Priority
 --------
 
