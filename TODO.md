@@ -1,17 +1,31 @@
 TODO
 ====
 
-Unsorted TODO list of features and points of investigation that could be
-useful for improving finit.  But what is an improvement to finit?  Well,
-similiar to launchd, the goal of finit is to be a FAST replacement for:
+The intent of finit is to monitor not just processes, but to supervise
+an entire system and the behavior of certain processes that declare
+themselves to be finit compliant.  Similiar to launchd, the goal of
+finit is to be a replacement for:
 
   * init
   * inetd
   * crond
   * watchdogd
 
-The main goal is to be FAST. Secondary goals are to be: small, simple
-and with a very low dependency on external packages.
+A small and simple replacement, primarily for embedded systems, with a
+very low dependency on external packages.
+
+  * Integrate libev, or libuEv, to handle events: signals, I/O, etc.
+
+    "Event driven software improves concurrency" -- Dave Zarzycki, Apple
+
+    See the [launchd video](http://www.youtube.com/watch?v=cD_s6Fjdri8)
+    for more info!
+
+    See uftpd for how libuEv can be easily integrated as a submodule.
+  * Add support for a `/dev/watchdog` plugin to replace `watchdogd`
+  * Integrate watchdog plugin with process/system supervisor to optionally
+    reboot the system when a process stops responding, or when a respawn
+    limit has been reached, as well as when system load gets too high.
 
 
 Inetd
@@ -42,6 +56,28 @@ easiest (and what we need for WeOS at Westermo) is allow/deny per iface.
     # Allow SSH connections originating from eth0
     allow ssh eth0
 
+Another option, to further extend the Inetd capabilities, is a separate
+`finetd.conf` to list services.  This would be beneficial when running
+an SSH service on different ports on different interfaces:
+
+    # Run SSH on port 22 on all interfaces except upstream
+    tcp ssh {
+       listen = *, !wan0
+       exec   = dropbear -i
+    }
+    
+    # Run SSH on non-standard port 222 for upstream interface
+    tcp 222 {
+       listen = wan0
+       exec   = dropbear -i
+    }
+    
+    # Run TFTP service on all interfaces except upstream interface
+    udp tftp {
+       listen = *, !wan0
+       exec   = uftpd -i -t
+    }
+
 
 Crond
 -----
@@ -60,32 +96,18 @@ Proposed syntax:
     # One-shot 'at' command
     at @YY-mm-ddTHH:MM [LVLS] /path/to/cmd [ARGS] -- Optional descr
 
-Notice the ISO date similarity in notation.  The runlevels is extra
-filtering sugar.  E.g., if cron service is only allowed in runlevels two
-or three it will not start if system currently is in runlevel four.
+Notice the ISO date in notation.  The runlevels is extra filtering
+sugar.  E.g., if cron service is only allowed in runlevels two or three
+it will not start if system currently is in runlevel four.
 
 To run a command as another user the `.conf` file must have a that
 owner.  E.g., `/etc/finit.d/extra.conf` may be owned by operator and
 only hold `cron ...` lines.
 
-
-Priority
---------
-
-The intent of finit is to monitor not just processes, but to supervise
-an entire system and the behavior of certain processes that declare
-themselves to be finit compliant.
-
-  * Integrate libev, or libuev, to handle events: signals, I/O, etc.
-
-    "Event driven software improves concurrency" -- Dave Zarzycki, Apple
-
-    See the [launchd video](http://www.youtube.com/watch?v=cD_s6Fjdri8)
-    for more info!
-  * Add support for a `/dev/watchdog` plugin to replace `watchdogd`
-  * Integrate watchdog plugin with process/system supervisor to optionally
-    reboot the system when a process stops responding, or when a respawn
-    limit has been reached, as well as when system load gets too high.
+What would be extremely useful is if `initctl`, or a homegrown `at`,
+could support the basic functionality of the `at` command directly from
+the shell -- that way setting up one-time jobs would not entail
+re-reading `/etc/finit.conf`
 
 
 Configuration

@@ -94,7 +94,7 @@ finit reads its configuration from `/etc/finit.conf`.  Syntax:
     optional arguments and description.  This command is guaranteed to
     be completed before running the next command.
 
-  * `task LVLS] /path/to/cmd ARGS -- Optional description`
+  * `task [LVLS] /path/to/cmd ARGS -- Optional description`
 
     One-shot like 'run', but starts in parallel with the next command
 
