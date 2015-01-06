@@ -446,7 +446,7 @@ int run(char *cmd)
 		return 1;
 	}
 
-	pid = fork();
+	pid = vfork();
 	if (0 == pid) {
 		int i;
 		FILE *fp;
@@ -563,7 +563,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 
 pid_t run_getty(char *cmd, char *args[], int console)
 {
-	pid_t pid = fork();
+	pid_t pid = vfork();
 
 	if (!pid) {
 		int i, fd;
@@ -629,7 +629,7 @@ pid_t run_getty(char *cmd, char *args[], int console)
 int run_parts(char *dir, char *cmd)
 {
 	struct dirent **e;
-	int i, num;
+	volatile int i, num;
 
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {
@@ -669,7 +669,7 @@ int run_parts(char *dir, char *cmd)
 		}
 		args[j++] = NULL;
 
-		pid = fork();
+		pid = vfork();
 		if (!pid) {
 			_d("Calling %s ...", path);
 			execv(path, args);
