@@ -1,5 +1,5 @@
-TODO
-====
+Goals of Finit
+==============
 
 The intent of finit is to monitor not just processes, but to supervise
 an entire system and the behavior of certain processes that declare
@@ -14,6 +14,9 @@ finit is to be a replacement for:
 A small and simple replacement, primarily for embedded systems, with a
 very low dependency on external packages.
 
+General
+-------
+
   * Integrate libev, or libuEv, to handle events: signals, I/O, etc.
 
     "Event driven software improves concurrency" -- Dave Zarzycki, Apple
@@ -22,10 +25,27 @@ very low dependency on external packages.
     for more info!
 
     See uftpd for how libuEv can be easily integrated as a submodule.
-  * Add support for a `/dev/watchdog` plugin to replace `watchdogd`
-  * Integrate watchdog plugin with process/system supervisor to optionally
-    reboot the system when a process stops responding, or when a respawn
-    limit has been reached, as well as when system load gets too high.
+  * Add support for `init <q | reload-configuration>` and `SIGHUP` to
+    have finit reload its `finit.conf`, but also
+  * Add support for inotify to automatically reload `finit.conf`
+  * Implement `initctl stop|start|restart|reload|status <SVC>` and
+    `service <SVC> stop|start|restart|reload|status` on top
+  * Add PRE and POST hooks for when switching between runlevels
+  * Add support for `init -v,--version | version`
+  * Cleanup move sources from top-level directory to `src/` and `include/`
+  * Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
+  * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
+    instead.  This is the de-facto practice.  But keep the check command
+    for really low-end systems w/o `/etc/fstab`.
+
+
+Init
+----
+
+Finit in itself is not SysV Init compatible, it doesn't use `/etc/rc.d`
+and `/etc/inet.d` scripts to boot the system.  However, a plausible way
+to achieve compatibility would be to add a plugin to finit which reads
+`/etc/inittab` and starts standard Linux systems.
 
 
 Inetd
@@ -70,13 +90,17 @@ an SSH service on different ports on different interfaces:
     tcp 222 {
        listen = wan0
        exec   = dropbear -i
+       wait   = yes
     }
     
     # Run TFTP service on all interfaces except upstream interface
     udp tftp {
        listen = *, !wan0
        exec   = uftpd -i -t
+       user   = root
     }
+
+Syntax very similar to [xinetd](http://en.wikipedia.org/wiki/Xinetd)
 
 
 Crond
@@ -110,31 +134,26 @@ the shell -- that way setting up one-time jobs would not entail
 re-reading `/etc/finit.conf`
 
 
-Configuration
--------------
+Watchdog
+--------
 
-  * Add support for `init <q | reload-configuration>` and `SIGHUP` to
-    have finit reload its `finit.conf`, but also
-  * Add support for inotify to automatically reload `finit.conf`
+Support for monitoring the health of the system and its processes.
 
-
-Runlevels
----------
-
-  * Implement `initctl stop|start|restart|reload|status <SVC>` and
-    `service <SVC> stop|start|restart|reload|status` on top
-  * Add PRE and POST hooks for when switching between runlevels
-
-
-Miscellaneous
--------------
-
-  * Add support for `init -v,--version | version`
-  * Cleanup move sources from top-level directory to `src/` and `include/`
-  * Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
-  * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
-    instead.  This is the de-facto practice.  But keep the check command
-    for really low-end systems w/o `/etc/fstab`.
+  * Add support for a `/dev/watchdog` plugin to replace `watchdogd`
+  * Integrate system supervisor to optionally reboot the system when a
+    process stops responding, or when a respawn limit has been reached,
+    as well as when system load gets too high.
+  * API for processes to register with the watchdog.
+    - Deeper monitoring of a process main loop
+    - If a process is not heard from within its subscribed period time
+      reboot system or restart process.
+  * Separate `/etc/watchdog.conf` configuration file, or a perhaps
+    support for `/etc/finit.d/PLUGIN.conf`?
+  * Support enable/disable watchdog features:
+    - Supervise processes,
+    - CPU loadavg,
+    - Watch for file descriptor leaks,
+    - etc.
 
 
 Documentation
