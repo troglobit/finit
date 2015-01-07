@@ -1,0 +1,3 @@
+[submodule "libuev"]
+	path = libuev
+	url = https://github.com/troglobit/libuev.git
