@@ -29,11 +29,10 @@
 #include "plugin.h"
 
 void      svc_bootstrap    (void);
-void      svc_monitor      (void);
+void      svc_monitor      (pid_t lost);
 
 void      plugin_run_hooks (hook_point_t no);
-int       plugin_load_all  (char *path);
-void      plugin_monitor   (void);
+int       plugin_load_all  (uev_ctx_t *ctx, char *path);
 
 #endif /* FINIT_PRIVATE_H_ */
 

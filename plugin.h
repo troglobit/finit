@@ -24,13 +24,13 @@
 #ifndef FINIT_PLUGIN_H_
 #define FINIT_PLUGIN_H_
 
-#include <poll.h>
 #include "queue.h"		/* BSD sys/queue.h API */
 #include "svc.h"
+#include "libuev/uev.h"
 
 #define PLUGIN_DEP_MAX  10
-#define PLUGIN_IO_READ  POLLIN
-#define PLUGIN_IO_WRITE POLLOUT
+#define PLUGIN_IO_READ  UEV_READ
+#define PLUGIN_IO_WRITE UEV_WRITE
 
 #define PLUGIN_INIT(x) static void __attribute__ ((constructor)) x(void)
 #define PLUGIN_EXIT(x) static void __attribute__ ((destructor))  x(void)
@@ -78,6 +78,9 @@ typedef enum {
 typedef struct plugin {
 	/* BSD sys/queue.h linked list node. */
 	TAILQ_ENTRY(plugin) link;
+
+	/* Event loop handler, used internally by Finit */
+	uev_t watcher;
 
 	/* Plugin name, defaults to basename of plugin path if unset.
 	 * NOTE: Must be same as @cmd for service plugins! */

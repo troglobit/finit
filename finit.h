@@ -65,9 +65,6 @@
 # define DEFHOST		"noname"
 #endif
 
-/* Delay start of GETTY at boot. Must be > 0 */
-#define DELAY_TTY		2
-
 #define CMD_SIZE		256
 #define LINE_SIZE		1024
 #define BUF_SIZE		4096

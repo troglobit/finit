@@ -57,22 +57,24 @@ FINIT_RCSD ?= $(sysconfdir)/finit.d
 CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
-CPPFLAGS   += -Ilibite -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
+CPPFLAGS   += -Ilibite -Ilibuev
+CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
 CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(plugindir)\"
 LDFLAGS    += -rdynamic -L$(TOPDIR)/libite
-DEPLIBS     = libite/libite.so
+DEPLIBS     = libite/libite.so libuev/libuev.a
 LDLIBS     += -ldl -lite
 
 include common.mk
 export libdir plugindir incdir ROOTDIR CPPFLAGS LDFLAGS LDLIBS
 
 all: $(DEPLIBS) $(EXEC)
-	$(MAKE) -C plugins $@
+	+$(MAKE) -C plugins $@
 
 $(DEPLIBS): Makefile
-	$(MAKE) -C libite all
+	+$(MAKE) -C libite all
+	+$(MAKE) -C libuev all
 
 $(OBJS): Makefile
 
@@ -133,13 +135,15 @@ uninstall: uninstall-exec uninstall-data uninstall-dev
 
 clean:
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
-	$(MAKE) -C libite  $@
-	$(MAKE) -C plugins $@
+	+$(MAKE) -C plugins $@
+	+$(MAKE) -C libite  $@
+	+$(MAKE) -C libuev  $@
 
 distclean: clean
 	-@$(RM) $(JUNK) unittest *.o .*.d
-	$(MAKE) -C libite  $@
-	$(MAKE) -C plugins $@
+	+$(MAKE) -C plugins $@
+	+$(MAKE) -C libite  $@
+	+$(MAKE) -C libuev  $@
 
 check:
 	$(CHECK) *.c plugins/*.c libite/*.c

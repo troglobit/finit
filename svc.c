@@ -362,9 +362,8 @@ static void restart_any_lost_procs(void)
 	}
 }
 
-void svc_monitor(void)
+void svc_monitor(pid_t lost)
 {
-	pid_t lost;
 	svc_t *svc;
 
 	if (was_stopped && !is_norespawn()) {
@@ -372,10 +371,6 @@ void svc_monitor(void)
 		restart_any_lost_procs();
 		return;
 	}
-
-	lost = waitpid(-1, NULL, WNOHANG);
-	if (lost < 1)
-		return;
 
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;

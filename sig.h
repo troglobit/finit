@@ -26,6 +26,7 @@
 #define FINIT_SIG_H_
 
 #include <signal.h>
+#include "libuev/uev.h"
 
 #define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
 #define SYNC_STOPPED    "/var/lock/finit.stopped"
@@ -57,7 +58,7 @@
 void do_shutdown    (int sig);
 int  sig_stopped    (void);
 void sig_init       (void);
-void sig_setup      (void);
+void sig_setup      (uev_ctx_t *ctx);
 
 #endif /* FINIT_SIG_H_ */
 

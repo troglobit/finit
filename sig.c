@@ -47,9 +47,13 @@
 #include "private.h"
 #include "sig.h"
 
-static int stopped = 0;
+static int   stopped = 0;
+static uev_t sigint_watcher, sigpwr_watcher;
+static uev_t sigchld_watcher;
+static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
-void do_shutdown (int sig)
+
+void do_shutdown(int sig)
 {
 	touch(SYNC_SHUTDOWN);
 
@@ -84,38 +88,35 @@ void do_shutdown (int sig)
 }
 
 /*
- * Shut down on INT USR1 USR2
+ * Shut down on INT PWR
  */
-static void shutdown_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
+static void sigint_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *UNUSED(arg), int UNUSED(events))
 {
-	_d("Rebooting on signal %d from %s (PID %d)",
-	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
-
-	do_shutdown(sig);
+	do_shutdown(w->signo);
 }
 
 /*
  * SIGCHLD: one of our children has died
  */
-static void chld_handler(int UNUSED(sig), siginfo_t *UNUSED(info), void *UNUSED(ctx))
+static void sigchld_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	/* Do nothing, the svc_monitor() is the designated child reaper. */
+	svc_monitor(waitpid(-1, NULL, WNOHANG));
 }
 
 /*
- * SIGSTOP: Paused by user or netflash
+ * SIGSTOP/SIGTSTP: Paused by user or netflash
  */
-static void sigstop_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
+static void sigstop_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	_d("Received SIGSTOP(%d) from %s (PID %d)",
-	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 	touch(SYNC_STOPPED);
 	stopped++;
 }
-static void sigcont_handler(int sig, siginfo_t *info, void *UNUSED(ctx))
+
+/*
+ * SIGCONT: Restart service monitor
+ */
+static void sigcont_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	_d("Received SIGCONT(%d) from %s (PID %d)",
-	   sig, pid_get_name(info->si_pid, NULL, 0), info->si_pid);
 	stopped = 0;
 	erase(SYNC_STOPPED);
 }
@@ -131,6 +132,11 @@ int sig_stopped(void)
 /*
  * Inital signal setup - ignore everything but SIGCHLD until we're capable of responding
  */
+static void chld_handler(int UNUSED(sig), siginfo_t *UNUSED(info), void *UNUSED(ctx))
+{
+	/* NOP */
+}
+
 void sig_init(void)
 {
 	int i;
@@ -145,7 +151,7 @@ void sig_init(void)
 /*
  * Setup limited set of SysV compatible signals to respond to
  */
-void sig_setup(void)
+void sig_setup(uev_ctx_t *ctx)
 {
 	struct sigaction sa;
 
@@ -156,12 +162,12 @@ void sig_setup(void)
 	erase(SYNC_STOPPED);
 
 	/* Standard SysV init calls ctrl-alt-delete handler */
-	SETSIG(sa, SIGINT,  shutdown_handler, 0);
-	SETSIG(sa, SIGPWR,  shutdown_handler, 0);
+	uev_signal_init(ctx, &sigint_watcher, sigint_cb, NULL, SIGINT);
+	uev_signal_init(ctx, &sigpwr_watcher, sigint_cb, NULL, SIGPWR);
 
 	/* Ignore SIGUSR1/2 for now, only BusyBox init implements them as reboot+halt. */
-//	  SETSIG2(sa, SIGUSR1, reopen_initctl, 0);
-//	  SETSIG2(sa, SIGUSR2, pwrdwn_handler, 0);
+//	uev_signal_init(&ctx, &sigusr1_watcher, reopen_initctl_cb, NULL, SIGUSR1);
+//	uev_signal_init(&ctx, &sigusr2_watcher, pwrdwn_cb, NULL, SIGUSR2);
 
 	/* Init must ignore SIGTERM. May otherwise get false SIGTERM in forked children! */
 	IGNSIG(sa, SIGTERM, 0);
@@ -172,10 +178,13 @@ void sig_setup(void)
 	/* We don't have any /etc/inittab yet, reread finit.conf? */
 	IGNSIG(sa, SIGHUP, 0);
 
+	/* After initial bootstrap of Finit we call the service monitor to reap children */
+	uev_signal_init(ctx, &sigchld_watcher, sigchld_cb, NULL, SIGCHLD);
+
 	/* Stopping init is a bit tricky. */
-	SETSIG(sa, SIGSTOP, sigstop_handler, 0);
-	SETSIG(sa, SIGTSTP, sigstop_handler, 0);
-	SETSIG(sa, SIGCONT, sigcont_handler, 0);
+	uev_signal_init(ctx, &sigstop_watcher, sigstop_cb, NULL, SIGSTOP);
+	uev_signal_init(ctx, &sigtstp_watcher, sigstop_cb, NULL, SIGTSTP);
+	uev_signal_init(ctx, &sigcont_watcher, sigcont_cb, NULL, SIGCONT);
 
 	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT, above */
 	reboot(RB_DISABLE_CAD);

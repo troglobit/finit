@@ -36,10 +36,8 @@
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 
-static char         *plugpath = NULL; /* Set by first load. */
-static size_t        num_fds  = 0;
-static struct pollfd fds[MAX_NUM_FDS];
-static TAILQ_HEAD(, plugin) plugins = TAILQ_HEAD_INITIALIZER(plugins);
+static char                *plugpath = NULL; /* Set by first load. */
+static TAILQ_HEAD(, plugin) plugins  = TAILQ_HEAD_INITIALIZER(plugins);
 
 static void check_plugin_depends(plugin_t *plugin);
 
@@ -69,15 +67,8 @@ int plugin_register(plugin_t *plugin)
 
 	check_plugin_depends(plugin);
 
-	if (is_io_plugin(plugin)) {
-		if (num_fds + 1 >= MAX_NUM_FDS) {
-			num_fds = MAX_NUM_SVC;
-			errno = ENOMEM;
-			return 1;
-		}
-		num_fds++;
+	if (is_io_plugin(plugin))
 		inuse++;
-	}
 
 	if (plugin->svc.cb) {
 		svc_t *svc = svc_find(plugin->name);
@@ -189,62 +180,29 @@ void plugin_run_hooks(hook_point_t no)
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
-static void generic_io_cb(struct pollfd *io)
+static void generic_io_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int events)
 {
-	plugin_t *p, *tmp;
+	plugin_t *p = (plugin_t *)arg;
 
-	/* Find matching plugin, pick first matching fd */
-	PLUGIN_ITERATOR(p, tmp) {
-		if (is_io_plugin(p) && p->io.fd == io->fd) {
-			_d("Calling I/O %s from runloop...", basename(p->name));
-			p->io.cb(p->io.arg, io->fd, io->events);
+	if (is_io_plugin(p) && p->io.fd == w->fd) {
+		_d("Calling I/O %s from runloop...", basename(p->name));
+		p->io.cb(p->io.arg, w->fd, events);
 
-			/* Update fd, may be changed by plugin callback, e.g., if FIFO */
-			io->fd      = p->io.fd;
-			io->events  = p->io.flags;
-			io->revents = 0;
-			break;
-		}
-	}
-}
-
-void plugin_monitor(void)
-{
-	int ret;
-	size_t i;
-
-	while ((ret = poll(fds, num_fds, 500))) {
-		if (-1 == ret) {
-			if (EINTR == errno)
-				continue;
-
-			_e("Failed polling I/O plugin descriptors, error %d: %s",
-			   errno, strerror(errno));
-			break;
-		}
-
-		/* Traverse all I/O fds and run callbacks */
-		for (i = 0; i < num_fds; i++) {
-			if (fds[i].revents)
-				generic_io_cb(&fds[i]);
-		}
-
-		break;
+		/* Update fd, may be changed by plugin callback, e.g., if FIFO */
+		if (p->io.fd != w->fd)
+			uev_io_set (w, p->io.fd, p->io.flags);
 	}
 }
 
 /* Setup any I/O callbacks for plugins that use them */
-static void init_plugins(void)
+static void init_plugins(uev_ctx_t *ctx)
 {
-	int i = 0;
 	plugin_t *p, *tmp;
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (is_io_plugin(p)) {
 			_d("Initializing plugin %s for I/O", basename(p->name));
-			fds[i].revents = 0;
-			fds[i].events  = p->io.flags;
-			fds[i++].fd    = p->io.fd;
+			uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags);
 		}
 	}
 }
@@ -318,7 +276,7 @@ static void check_plugin_depends(plugin_t *plugin)
 	}
 }
 
-int plugin_load_all(char *path)
+int plugin_load_all(uev_ctx_t *ctx, char *path)
 {
 	int fail = 0;
 	DIR *dp = opendir(path);
@@ -341,7 +299,7 @@ int plugin_load_all(char *path)
 	}
 
 	closedir(dp);
-	init_plugins();
+	init_plugins(ctx);
 
 	return fail;
 }

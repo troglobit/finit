@@ -131,25 +131,12 @@ static int client(int argc, char *argv[])
 	return 0;
 }
 
-static int run_loop(void)
+/*
+ * Delayed start of TTYs to let the system stabilize at boot
+ */
+static void delayed_tty_start(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	int delay = DELAY_TTY ?: 1;
-
-	_d("Entering main loop ...");
-	while (1) {
-		svc_monitor();
-		plugin_monitor();
-
-		/* Delayed start of TTYs to let the system stabilize
-		 * after switching runlevels. */
-		if (delay) {
-			if (--delay == 0)
-				tty_runlevel(runlevel);
-			continue;
-		}
-	}
-
-	return 0;
+	tty_runlevel(runlevel);
 }
 
 static void banner(void)
@@ -160,6 +147,9 @@ static void banner(void)
 
 int main(int argc, char* argv[])
 {
+	uev_t w;
+	uev_ctx_t ctx;
+
 	if (getpid() != 1)
 		return client(argc, argv);
 
@@ -172,6 +162,11 @@ int main(int argc, char* argv[])
 	 * Initial setup of signals, ignore all until we're up.
 	 */
 	sig_init();
+
+	/*
+	 * Initalize event context.
+	 */
+	uev_init(&ctx);
 
 	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
@@ -208,7 +203,7 @@ int main(int argc, char* argv[])
 	 * hook on to.
 	 */
 	print_desc("Loading plugins", NULL);
-	print_result(plugin_load_all(PLUGIN_PATH));
+	print_result(plugin_load_all(&ctx, PLUGIN_PATH));
 
 	/*
 	 * Mount filesystems
@@ -232,7 +227,7 @@ int main(int argc, char* argv[])
 	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleanup temporary directories");
 
 	/* Base FS up, enable standard SysV init signals */
-	sig_setup();
+	sig_setup(&ctx);
 
 	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
@@ -279,10 +274,13 @@ int main(int argc, char* argv[])
 	/* Hooks that should run at the very end */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 
+	/* Delayed start of TTY's at boot (one-shot timer) */
+	uev_timer_init(&ctx, &w, delayed_tty_start, NULL, 2000, 0);
+
 	/*
 	 * Enter main loop to monior /dev/initctl and services
 	 */
-	return run_loop();
+	return uev_run(&ctx, 0);
 }
 
 /**
