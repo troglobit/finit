@@ -26,16 +26,17 @@
 #include <sys/stat.h>
 
 #include "finit.h"
+#include "libite/lite.h"
 #include "helpers.h"
 #include "plugin.h"
 
 static void setup(void *UNUSED(arg))
 {
 #ifdef RANDOMSEED
-	copyfile(RANDOMSEED, "/dev/urandom", 0);
+	copyfile(RANDOMSEED, "/dev/urandom", 0, 0);
 	unlink(RANDOMSEED);
 	umask(077);
-	copyfile("/dev/urandom", RANDOMSEED, 4096);
+	copyfile("/dev/urandom", RANDOMSEED, 4096, 0);
 	umask(0);
 #endif
 }
