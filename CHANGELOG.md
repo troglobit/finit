@@ -18,7 +18,7 @@ The [libuEv] release.
 ### Fixes
 * Fix bug with finit dying when no `tty` is defined in `finit.conf`, now
   even the fallback shell has control over its TTY, see fix in GIT
-  commit dea3ae8.
+  commit dea3ae8 for this.
 
 
 [1.10] - 2014-11-27
