@@ -144,7 +144,7 @@ void tty_start(finit_tty_t *tty)
 #elif defined(GETTY_BUSYBOX)
 		snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
 #else
-		strlcpy(line, FALLBACK_CONSOLE, sizeof(line));
+		strlcpy(line, FALLBACK_SHELL, sizeof(line));
 #endif
 	} else {
 		strlcpy(line, tty->name, sizeof(line));

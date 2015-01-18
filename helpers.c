@@ -593,6 +593,11 @@ pid_t run_getty(char *cmd, char *args[], int console)
 
 		sig_unblock();
 
+		setsid();
+
+		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
+			_pe("Failed TIOCSCTTY");
+
 		while (!fexist(SYNC_SHUTDOWN)) {
 			static const char msg[] = "\nPlease press Enter to activate this console.";
 
