@@ -251,6 +251,7 @@ Major bug fix release.
 * Initial release
 
 [libuEv]: https://github.com/troglobit/libuev
+[dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
 [1.11]: https://github.com/troglobit/finit/compare/1.10...HEAD
 [1.10]: https://github.com/troglobit/finit/compare/1.9...1.10
 [1.9]: https://github.com/troglobit/finit/compare/1.8...1.9
