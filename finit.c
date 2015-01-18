@@ -131,14 +131,6 @@ static int client(int argc, char *argv[])
 	return 0;
 }
 
-/*
- * Delayed start of TTYs to let the system stabilize at boot
- */
-static void delayed_tty_start(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
-{
-	tty_runlevel(runlevel);
-}
-
 static void banner(void)
 {
 	delline();
@@ -147,7 +139,6 @@ static void banner(void)
 
 int main(int argc, char* argv[])
 {
-	uev_t w;
 	uev_ctx_t ctx;
 
 	if (getpid() != 1)
@@ -274,8 +265,8 @@ int main(int argc, char* argv[])
 	/* Hooks that should run at the very end */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 
-	/* Delayed start of TTY's at boot (one-shot timer) */
-	uev_timer_init(&ctx, &w, delayed_tty_start, NULL, 2000, 0);
+	/* Start TTYs */
+	tty_runlevel(runlevel);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services
