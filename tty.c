@@ -179,7 +179,7 @@ int tty_enabled(finit_tty_t *tty, int runlevel)
 
 	if (!ISSET(tty->runlevels, runlevel))
 		return 0;
-	else if (fexist(tty->name))
+	if (fexist(tty->name))
 		return 1;
 
 	return 0;
