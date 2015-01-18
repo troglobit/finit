@@ -58,6 +58,7 @@
 void do_shutdown    (int sig);
 int  sig_stopped    (void);
 void sig_init       (void);
+void sig_unblock    (void);
 void sig_setup      (uev_ctx_t *ctx);
 
 #endif /* FINIT_SIG_H_ */

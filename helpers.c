@@ -466,7 +466,9 @@ int run(char *cmd)
 			dup2(fd, STDERR_FILENO);
 		}
 
+		sig_unblock();
 		execvp(args[0], args);
+
 		_exit(1); /* Only if execv() fails. */
 	} else if (-1 == pid) {
 		_pe("%s", args[0]);
@@ -566,10 +568,8 @@ pid_t run_getty(char *cmd, char *args[], int console)
 	pid_t pid = vfork();
 
 	if (!pid) {
-		int i, fd;
+		int fd;
 		char c;
-		sigset_t nmask;
-		struct sigaction sa;
 
 		if (console) {
 			/* Detach from initial controlling TTY */
@@ -590,13 +590,8 @@ pid_t run_getty(char *cmd, char *args[], int console)
 
 			prctl(PR_SET_NAME, "console", 0, 0, 0);
 		}
-		sigemptyset(&nmask);
-		sigaddset(&nmask, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
-		/* Reset signal handlers that were set by the parent process */
-		for (i = 1; i < NSIG; i++)
-			DFLSIG(sa, i, 0);
+		sig_unblock();
 
 		while (!fexist(SYNC_SHUTDOWN)) {
 			static const char msg[] = "\nPlease press Enter to activate this console.";
@@ -672,6 +667,7 @@ int run_parts(char *dir, char *cmd)
 		pid = vfork();
 		if (!pid) {
 			_d("Calling %s ...", path);
+			sig_unblock();
 			execv(path, args);
 			exit(0);
 		}

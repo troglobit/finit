@@ -149,6 +149,29 @@ void sig_init(void)
 }
 
 /*
+ * Unblock all signals blocked by finit when starting children
+ */
+void sig_unblock(void)
+{
+	int i;
+	sigset_t nmask;
+	struct sigaction sa;
+
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGCHLD);
+	sigaddset(&nmask, SIGINT);
+	sigaddset(&nmask, SIGPWR);
+	sigaddset(&nmask, SIGSTOP);
+	sigaddset(&nmask, SIGTSTP);
+	sigaddset(&nmask, SIGCONT);
+	sigprocmask(SIG_UNBLOCK, &nmask, NULL);
+
+	/* Reset signal handlers that were set by the parent process */
+	for (i = 1; i < NSIG; i++)
+		DFLSIG(sa, i, 0);
+}
+
+/*
  * Setup limited set of SysV compatible signals to respond to
  */
 void sig_setup(uev_ctx_t *ctx)
