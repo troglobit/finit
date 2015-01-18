@@ -26,14 +26,16 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.10
+VERSION    ?= 1.11
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
+ARCHTOOL    = `which git-archive-all`
 ARCHIVE     = $(PKG).tar.xz
+ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
-DISTFILES   = LICENSE README NEWS finit.conf services
+DISTFILES   = LICENSE README CHANGELOG finit.conf services
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o tty.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
@@ -149,9 +151,18 @@ check:
 	$(CHECK) *.c plugins/*.c libite/*.c
 
 dist:
+	@if [ x"$(ARCHTOOL)" = x"" ]; then \
+		echo "Missing git-archive-all from https://github.com/Kentzo/git-archive-all"; \
+		exit 1; \
+	fi
+	@if [ -e $(ARCHIVEZ) ]; then \
+		echo "Distribution already exists."; \
+		exit 1; \
+	fi
 	@echo "Building xz tarball of $(PKG) in parent dir..."
-	git archive --format=tar --prefix=$(PKG)/ $(VERSION) | xz >../$(ARCHIVE)
-	@(cd ..; md5sum $(ARCHIVE) | tee $(ARCHIVE).md5)
+	@$(ARCHTOOL) ../$(ARCHIVE)
+	@xz ../$(ARCHIVE)
+	@md5sum $(ARCHIVEZ) | tee $(ARCHIVEZ).md5
 
 dev: distclean
 	@echo "Building unstable xz $(DEV) in parent dir..."
