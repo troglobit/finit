@@ -3,13 +3,13 @@ Goals of Finit
 
 The intent of finit is to monitor not just processes, but to supervise
 an entire system and the behavior of certain processes that declare
-themselves to be finit compliant.  Similiar to launchd, the goal of
+themselves to be finit compliant.  Similar to launchd, the goal of
 finit is to be a replacement for:
 
-  * init
-  * inetd
-  * crond
-  * watchdogd
+* init
+* inetd
+* crond
+* watchdogd
 
 A small and simple replacement, primarily for embedded systems, with a
 very low dependency on external packages.
@@ -17,26 +17,18 @@ very low dependency on external packages.
 General
 -------
 
-  * Integrate libev, or libuEv, to handle events: signals, I/O, etc.
-
-    "Event driven software improves concurrency" -- Dave Zarzycki, Apple
-
-    See the [launchd video](http://www.youtube.com/watch?v=cD_s6Fjdri8)
-    for more info!
-
-    See uftpd for how libuEv can be easily integrated as a submodule.
-  * Add support for `init <q | reload-configuration>` and `SIGHUP` to
-    have finit reload its `finit.conf`, but also
-  * Add support for inotify to automatically reload `finit.conf`
-  * Implement `initctl stop|start|restart|reload|status <SVC>` and
-    `service <SVC> stop|start|restart|reload|status` on top
-  * Add PRE and POST hooks for when switching between runlevels
-  * Add support for `init -v,--version | version`
-  * Cleanup move sources from top-level directory to `src/` and `include/`
-  * Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
-  * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
-    instead.  This is the de-facto practice.  But keep the check command
-    for really low-end systems w/o `/etc/fstab`.
+* Add support for `init <q | reload-configuration>` and `SIGHUP` to
+  have finit reload its `finit.conf`, but also
+* Add support for inotify to automatically reload `finit.conf`
+* Implement `initctl stop|start|restart|reload|status <SVC>` and
+  `service <SVC> stop|start|restart|reload|status` on top
+* Add PRE and POST hooks for when switching between runlevels
+* Add support for `init -v,--version | version`
+* Cleanup move sources from top-level directory to `src/` and `include/`
+* Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
+* Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
+  instead.  This is the de-facto practice.  But keep the check command
+  for really low-end systems w/o `/etc/fstab`.
 
 
 Init
@@ -45,7 +37,7 @@ Init
 Finit in itself is not SysV Init compatible, it doesn't use `/etc/rc.d`
 and `/etc/inet.d` scripts to boot the system.  However, a plausible way
 to achieve compatibility would be to add a plugin to finit which reads
-`/etc/inittab` and starts standard Linux systems.
+`/etc/inittab` to be able to start standard Linux systems.
 
 
 Inetd
@@ -65,7 +57,7 @@ to each inetd service.  When a client connects the finit will call the
 callback with a `struct in_pktinfo` argument which the callback then can
 allowed or deny.
 
-Alternatively, borrowing from TCP wrappers by Wietse Wenema, a set of
+Alternatively, borrowing from TCP wrappers by Wietse Venema, a set of
 `allow` and `deny` directives can be added to `finit.conf` to control
 inetd services.  It could be what IP addreses, networks or interfaces
 are allowed to connect to the given inetd services.  To start with the
@@ -109,8 +101,8 @@ Crond
 Requirements are quite rudimentary, basic cron functionality, mainly
 system-level timed periodic tasks:
 
-  * Periodically run a task, in a matching runlevel
-  * Optionally run as non-root (`crontab -e` as operator)
+* Periodically run a task, in a matching runlevel
+* Optionally run as non-root (`crontab -e` as operator)
 
 Proposed syntax:
 
@@ -139,35 +131,35 @@ Watchdog
 
 Support for monitoring the health of the system and its processes.
 
-  * Add support for a `/dev/watchdog` plugin to replace `watchdogd`
-  * Integrate system supervisor to optionally reboot the system when a
-    process stops responding, or when a respawn limit has been reached,
-    as well as when system load gets too high.
-  * API for processes to register with the watchdog.
-    - Deeper monitoring of a process main loop
-    - If a process is not heard from within its subscribed period time
-      reboot system or restart process.
-  * Separate `/etc/watchdog.conf` configuration file, or a perhaps
-    support for `/etc/finit.d/PLUGIN.conf`?
-  * Support enable/disable watchdog features:
-    - Supervise processes,
-    - CPU loadavg,
-    - Watch for file descriptor leaks,
-    - etc.
+* Add support for a `/dev/watchdog` plugin to replace `watchdogd`
+* Integrate system supervisor to optionally reboot the system when a
+  process stops responding, or when a respawn limit has been reached,
+  as well as when system load gets too high.
+* API for processes to register with the watchdog.
+  - Deeper monitoring of a process main loop
+  - If a process is not heard from within its subscribed period time
+    reboot system or restart process.
+* Separate `/etc/watchdog.conf` configuration file, or a perhaps
+  support for `/etc/finit.d/PLUGIN.conf`?
+* Support enable/disable watchdog features:
+  - Supervise processes,
+  - CPU loadavg,
+  - Watch for file descriptor leaks,
+  - etc.
 
 
 Documentation
 -------------
 
-  * Write man pages for finit and `finit.conf`, steal from the excellent
-    `pimd` man pages ...
-  * Update Debian `finit.conf` example with runlevels, `tty/console` and
-    dependency handling for Debian 8 (the dreaded systemd release).
+* Write man pages for finit and `finit.conf`, steal from the excellent
+  `pimd` man pages ...
+* Update Debian `finit.conf` example with runlevels, `tty/console` and
+  dependency handling for Debian 8 (the dreaded systemd release).
 
 
 Investigation
 -------------
 
-  * [FHS changes](http://askubuntu.com/questions/57297/why-has-var-run-been-migrated-to-run)
-    affecting runtime status, plugins, etc.
+* [FHS changes](http://askubuntu.com/questions/57297/why-has-var-run-been-migrated-to-run)
+  affecting runtime status, plugins, etc.
 
