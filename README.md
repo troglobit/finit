@@ -50,10 +50,10 @@ for simple installations.
 Extend and modify finit behavior.  See examples in plugins/ directory.
 Plugin capabilities:
 
-  * Service callbacks — modify service arguments, run/restart/stop
-  * Task/Run callbacks — a one-shot commands, executed in sequence
-  * Hooks — hook into the boot at predefined points to extend finit
-  * I/O — listen to external events and control finit behavior/services
+* Service callbacks -- modify service arguments, run/restart/stop
+* Task/Run callbacks -- a one-shot commands, executed in sequence
+* Hooks -- hook into the boot at predefined points to extend finit
+* I/O -- listen to external events and control finit behavior/services
 
 Extensions and functionality not purely related to what an /sbin/init
 needs to start a system are available as a set of plugins that either
@@ -70,67 +70,67 @@ Contrary to most other script based init alternatives
 [OpenRC](http://www.gentoo.org/proj/en/base/openrc/) and the likes)
 finit reads its configuration from `/etc/finit.conf`.  Syntax:
 
-  * `check <DEV>`
+* `check <DEV>`
 
-    Run fsck on a file system before mounting it
+  Run fsck on a file system before mounting it
 
-  * `module <MODULE>`
+* `module <MODULE>`
 
-    Load a kernel module, with optional arguments
+  Load a kernel module, with optional arguments
 
-  * `network <PATH>`
+* `network <PATH>`
 
-    Script or program to bring up networking, with optional arguments
+  Script or program to bring up networking, with optional arguments
 
-  * `runlevel <N>`
+* `runlevel <N>`
 
-    N is the runlevel number 1-9, where 6 is reserved for reboot.
+  N is the runlevel number 1-9, where 6 is reserved for reboot.
 
-    Default is 2.
+  Default is 2.
 
-  * `run [LVLS] /path/to/cmd ARGS -- Optional description`
+* `run [LVLS] /path/to/cmd ARGS -- Optional description`
 
-    One-shot command to run in sequence when entering a runlevel, with
-    optional arguments and description.  This command is guaranteed to
-    be completed before running the next command.
+  One-shot command to run in sequence when entering a runlevel, with
+  optional arguments and description.  This command is guaranteed to be
+  completed before running the next command.
 
-  * `task [LVLS] /path/to/cmd ARGS -- Optional description`
+* `task [LVLS] /path/to/cmd ARGS -- Optional description`
 
-    One-shot like 'run', but starts in parallel with the next command
+  One-shot like 'run', but starts in parallel with the next command
 
-  * `service [LVLS] /path/to/daemon ARGS -- Optional description`
+* `service [LVLS] /path/to/daemon ARGS -- Optional description`
 
-    Service, or daemon, to be monitored and automatically restarted if
-    it exits prematurely.  Please note that you often need to provide
-    a --foreground or --no-background argument to most daemons to
-    prevent them from forking off to the background.
+  Service, or daemon, to be monitored and automatically restarted if it
+  exits prematurely.  Please note that you often need to provide a
+  --foreground or --no-background argument to most daemons to prevent
+  them from forking off to the background.
 
-  * `runparts <PATH>`
+* `runparts <PATH>`
 
-    Call run-parts(8) on a directory other than default ``/etc/finit.d``
+  Call run-parts(8) on a directory other than default ``/etc/finit.d``
 
-  * `include <CONF>`
+* `include <CONF>`
 
-    Include another configuration file, ``/etc/finit.d``, or runparts
-    path is prepended to file if the file is not found or an absolute
-    path is not given
+  Include another configuration file, ``/etc/finit.d``, or runparts path
+  is prepended to file if the file is not found or an absolute path is
+  not given
 
-  * `tty [LVLS] <DEV | /bin/sh>`
+* `tty [LVLS] <DEV | /bin/sh>`
 
-    Start a getty on the given TTY device, in the given runlevels.  When
-    no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
-    argument instead of a device path, a single shell is started on the
-    default console.  Useful for really bare-bones systems
+  Start a getty on the given TTY device, in the given runlevels.  When
+  no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
+  argument instead of a device path, a single shell is started on the
+  default console.  Useful for really bare-bones systems
 
-    See `finit.h` for the `#define GETTY` that is called, along with the
-    default baud rate.
+  See `finit.h` for the `#define GETTY` that is called, along with the
+  default baud rate.
 
-  * `console <DEV>`
+* `console <DEV>`
 
-    Some embedded systems have a dedicated console port. This command
-    tells finit to not start getty, but instead print a friendly message
-    and wait for the user to activate the console with a key press before
-    starting getty.
+  Some embedded systems have a dedicated console port.  This command
+  tells finit to not start getty, but instead print a friendly message
+  and wait for the user to activate the console with a key press before
+  starting getty.
 
 When running `make install` no default `/etc/finit.conf` will be
 provided since the system requirements differ too much.  Try out the
@@ -142,9 +142,9 @@ is capable of service monitoring SSH, sysklogd, gdm and a console getty!
 ------------
 
 At the end of the boot, when networking and all services are up, finit
-calls its built-in run-parts(8) on the `/etc/finit.d/` directory, if
-it exists.  Similar to how the `/ec/rc.local` file works in most other
-init daemons, only finit runs a directory of scripts.  This replaces the
+calls its built-in run-parts(8) on the `/etc/finit.d/` directory, if it
+exists.  Similar to how the `/ec/rc.local` file works in most other init
+daemons, only finit runs a directory of scripts.  This replaces the
 earlier support for a `/usr/sbin/services.sh` script in the original
 finit.
 
@@ -173,8 +173,8 @@ or `tty`, add `[NNN]` to it in your `finit.conf`, like this:
 In this example acpid is started once at bootstrap using a conventional
 SysV init script.  Here the run command was used, meaning the following
 task command is not run until the init script has fully completed.  Then
-the keyboard setup script is called in parallel with spawning klogd as
-a monitored service.
+the keyboard setup script is called in parallel with spawning klogd as a
+monitored service.
 
 Tasks and services are started in parallel, while run commands are run
 in the order listed and subsequent commands are not started until a run
@@ -196,27 +196,26 @@ however come with support for hooks, service callbacks and plugins that
 can used to extend finit with.  For your convenience a set of *optional*
 plugins are available:
 
-  * *alsa-utils.so*: Restore and save ALSA sound settings on
-    startup/shutdown.
+* *alsa-utils.so*: Restore and save ALSA sound settings on
+  startup/shutdown.
 
-  * *bootmisc.so*: Setup necessary files for UTMP, tracking logins
-    at boot.
+* *bootmisc.so*: Setup necessary files for UTMP, tracks logins at boot.
 
-  * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
+* *dbus.so*: Setup and start system message bus, D-Bus, at boot.
 
-  * *hwclock.so*: Restore and save system clock from/to RTC on
-    startup/shutdown.
+* *hwclock.so*: Restore and save system clock from/to RTC on
+  startup/shutdown.
 
-  * *initctl.so*: Extends finit with a traditional initctl functionality.
+* *initctl.so*: Extends finit with a traditional initctl functionality.
 
-  * *resolvconf.so*: Setup necessary files for resolvconf at startup.
+* *resolvconf.so*: Setup necessary files for resolvconf at startup.
 
-  * *tty.so*: Watches /dev, using inotify, for new device nodes (TTY's) to
-    start/stop getty consoles on them on demand.
+* *tty.so*: Watches /dev, using inotify, for new device nodes (TTY's) to
+  start/stop getty consoles on them on demand.
 
-  * *urandom.so*: Setup random seed at startup.
+* *urandom.so*: Setup random seed at startup.
 
-  * *x11-common.so*: Setup necessary files for X-Window.
+* *x11-common.so*: Setup necessary files for X-Window.
 
 Usually you want to hook into the boot process once, simple hook plugins
 like `bootmisc.so` are great for that purpose.  They are called at each
@@ -224,22 +223,22 @@ hook point in the boot process, useful to insert some pre-bootstrap
 mechanisms, like generating configuration files, restoring HW device
 state, etc.  Available hook points are:
 
-  * `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
-    mounted -- very early
+* `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
+  mounted -- very early
 
-  * `HOOK_BASEFS_UP`: All of `/etc/fstab` is mounted, swap is available
-    and default init signals are setup
+* `HOOK_BASEFS_UP`: All of `/etc/fstab` is mounted, swap is available
+  and default init signals are setup
 
-  * `HOOK_NETWORK_UP`: System bootstrap, runlevel S, has completed and
-    networking is up (`lo` is up and the `network` script has run)
+* `HOOK_NETWORK_UP`: System bootstrap, runlevel S, has completed and
+  networking is up (`lo` is up and the `network` script has run)
 
-  * `HOOK_SVC_UP`: All services in the active runlevel has been launched
+* `HOOK_SVC_UP`: All services in the active runlevel has been launched
 
-  * `HOOK_SYSTEM_UP`: All services *and* everything in `/etc/finit.d`
-    has been launched
+* `HOOK_SYSTEM_UP`: All services *and* everything in `/etc/finit.d`
+  has been launched
 
-  * `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
-    services are sent `SIGTERM`
+* `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
+  services are sent `SIGTERM`
 
 Plugins like `initctl.so` and `tty.so` extend finit by acting on events,
 they are called I/O plugins and are called from the finit main loop when
@@ -275,49 +274,47 @@ alter the behavior of finit.
 The following environment variables are checked by the makefiles and control
 what is built and where resulting binaries are installed.
 
-  * `ROOTDIR=`: Top directory for building complete system, used in pretty
-    printing.
+* `ROOTDIR=`: Top directory for building complete system, used in pretty
+  printing.
 
-  * `VERSION=`: Defaults to the currently released version of finit,
-    e.g., 1.3 but can be overridden by packagers using this variable to
-    add a suffix or completely alter the version.
+* `VERSION=`: Defaults to the currently released version of finit,
+  e.g., 1.3 but can be overridden by packagers using this variable to
+  add a suffix or completely alter the version.
 
-  * `CFLAGS=`: Default `CFLAGS` are inherited from the build environment.
+* `CFLAGS=`: Default `CFLAGS` are inherited from the environment.
 
-  * `CPPFLAGS=`: Default `CPPFLAGS` are inherited from the build
-    environment.
+* `CPPFLAGS=`: Default `CPPFLAGS` are inherited from the environment.
 
-  * `LDFLAGS=`: Default `LDFLAGS` are inherited from the build
-    environment.
+* `LDFLAGS=`: Default `LDFLAGS` are inherited from the environment.
 
-  * `LDLIBS=`: Default `LIBLIBS` are inherited from the build environment.
+* `LDLIBS=`: Default `LIBLIBS` are inherited from the environment.
 
-  * `prefix=`: Base prefix path for all files, except `sbinbdir` and
-    `sysconfdir`.  Used in concert with the `DESTDIR` variable.
+* `prefix=`: Base prefix path for all files, except `sbinbdir` and
+  `sysconfdir`.  Used in concert with the `DESTDIR` variable.
 
-    Defaults to `/usr`.
+  Defaults to `/usr`.
 
-  * `sbindir=`: Path to where resulting binaries should install to. Used
-    in concert with the `DESTDIR` variable.
+* `sbindir=`: Path to where resulting binaries should install to. Used
+  in concert with the `DESTDIR` variable.
 
-    Defaults to `/sbin`.
+  Defaults to `/sbin`.
 
-  * `sysconfdir=`: Path to where finit configuration files should install
-    to.  Used in concert with the `DESTDIR` variable.
+* `sysconfdir=`: Path to where finit configuration files should install
+  to.  Used in concert with the `DESTDIR` variable.
 
-    Defaults to `/etc`, but is currently unused.
+  Defaults to `/etc`, but is currently unused.
 
-  * `PLUGINS=`: List of stock finit plugins to build and install.
+* `PLUGINS=`: List of stock finit plugins to build and install.
 
-  * `plugindir=`: Absolute path to where finit should look for dynamically
-    loadable plugins at runtime.  At installation prepended by `DESTDIR`
-    and `prefix`.
+* `plugindir=`: Absolute path to where finit should look for dynamically
+  loadable plugins at runtime.  At installation prepended by `DESTDIR`
+  and `prefix`.
 
-    Defaults to `/lib/finit/plugins`.
+  Defaults to `/lib/finit/plugins`.
 
-  * `DESTDIR=`: Used by packagers and distributions when building a
-    relocatable bundle of files.  Always prepended to the `prefix`
-    destination directory.
+* `DESTDIR=`: Used by packagers and distributions when building a
+  relocatable bundle of files.  Always prepended to the `prefix`
+  destination directory.
 
 **Example**
 
