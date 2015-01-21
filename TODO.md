@@ -45,12 +45,12 @@ Inetd
 
 Simple way of running Internet services on demand, like the old inetd:
 
-    inetd SVC [RUNLVL] /path/to/daemon args -- description
+    inetd PROTO/SERVICE <wait|nowait> [@USER[:GROUP]] /path/to/daemon args
 
-Example:
+Examples:
 
     # Inetd services, launched on demand
-    inetd ssh [2345] /usr/sbin/sshd -i -- SSH Daemon
+    inetd tcp/ssh nowait [2345] @root:root /usr/sbin/sshd -i
 
 In keeping with the finit tradition, an optional callback can be setup
 to each inetd service.  When a client connects the finit will call the
