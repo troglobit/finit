@@ -1,7 +1,29 @@
-README
-======
+Finit | Small, fast and extensible /sbin/init for Linux systems
+===============================================================
 [![Build Status](https://travis-ci.org/troglobit/finit.png?branch=master)](https://travis-ci.org/troglobit/finit)
 [![Coverity Scan Status](https://scan.coverity.com/projects/3545/badge.svg)](https://scan.coverity.com/projects/3545)
+
+![Original Finit homepage image](images/finit.jpg "Finit in action!")
+
+Table of Contents
+-----------------
+
+* [Introduction](#introduction)
+* [Features](#features)
+* [/etc/finit.conf](#etcfinitconf)
+* [/etc/finit.d](#etcfinitd)
+* [Bootstrap](#bootstrap)
+* [Runlevels](#runlevels)
+* [Hooks, Callbacks & Plugins](#hooks-callbacks--plugins)
+* [Rebooting and Halting](#rebooting-and-halting)
+* [Building](#building)
+* [Running](#running)
+* [Debugging](#debugging)
+* [Origin & References](#origin--references)
+
+
+Introduction
+------------
 
 Init is the first process to run once a UNIX kernel has booted, it
 always has PID 1 and is responsible for starting up the rest of the
@@ -9,28 +31,32 @@ system.  Finit is a very small plugin based init with built in
 [process supervision](https://en.wikipedia.org/wiki/Process_supervision)
 similar to that of D.J. Bernstein's
 [daemontools](http://cr.yp.to/daemontools.html) and Gerrit Pape's
-[runit](http://smarden.org/runit/).  Its focus is on small and embedded
-GNU/Linux systems, although fully functional on standard server and
-desktop installations.
+[runit](http://smarden.org/runit/).  The focus of Finit is on small and
+embedded GNU/Linux systems, although it is fully functional for standard
+server and desktop installations as well.
 
-Finit is fast because it is "scripted" with C and starts services in
-parallel.  Services are supervised and automatically restarted if they
-fail.  Services can have callbacks that are called before a service is
+Finit has a low overhead because it is written entirely in C.  System
+setup, otherwise commonly done with scripts, is instead done using a
+slimmed down set of system calls directly to the C-library.  As soon as
+basic setup is done, Finit launches services in parllel and monitor them
+continouosuly, i.e. automatically restart them if they fail.
+
+Alls services can have callbacks that are called before a service is
 (re)started.  For instance, before attempting to start a heavily
 resource intensive service like IPsec or OpenVPN, a callback can check
 if the outbound interface is up and has an IP address, or just check if
 the service is disabled -- much like what a SysV init start script
 usually does.
 
-To extend finit with new functionality, hooks can be added at certain
-points in the boot process that execute in sequence, which is useful for
-certain satisfying preconditions or for synchronization purposes.  One
-can also create plugins to functionality to suit your own needs, the
-initctl compatibility plugin that comes with finit is one such plugin.
+To extend finit with new functionality, hooks in the bootstrap phase can
+be added that execute in sequence, useful for satisfying preconditions
+or for synchronization purposes.  Functionality can also be added with
+plugins, the initctl compatibility plugin that comes with finit is one
+such plugin.
 
 Finit is not only fast, it's arguably one of the easiest to get started
 with.  A complete system can be booted with one simple configuration
-file, `/etc/finit.conf`, see below for syntax.
+file, `/etc/finit.conf`, see below for syntax and examples.
 
 
 Features
@@ -149,6 +175,38 @@ earlier support for a `/usr/sbin/services.sh` script in the original
 finit.
 
 
+Bootstrap
+---------
+
+1. Setup `/dev`
+2. Parse `/etc/finit.conf`
+3. Load all `.so` plugins
+4. Remount/Pivot `/` to get R+W
+5. Call 1st level hooks, `HOOK_ROOTFS_UP`
+6. Mount `/etc/fstab` and swap, if available
+7. Cleanup stale files from `/tmp/*` et al
+8. Enable SysV init signals
+9. Call 2nd level hooks, `HOOK_BASEFS_UP`
+10. Start all 'S' runlevel tasks and services
+11. Setup `/etc/sysctl.conf`
+12. Setup hostname and loopback
+13. Call `network` script, if set in `/etc/finit.conf`
+14. Call 3rd level hooks, `HOOK_NETWORK_UP`
+15. Switch to active runlevel, as set in `/etc/finit.conf`, default 2.
+    Here is where the rest of all tasks and services are started.
+16. Call 4th level hooks, `HOOK_SVC_UP`
+17. Run-parts in `/etc/finit.d`, if any
+18. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
+19. Start TTYs defined in `/etc/finit.conf`, or rescue on `/dev/console`
+20. Enter main monitor loop
+
+In (10) and (15) tasks and services defined in `/etc/finit.conf` are
+started.  Remember, all `service` and `task` stanzas are started in
+parallel and `run` in sequence, and in the order listed.  Hence, to
+emulate a SysV `/etc/init.d/rcS` one could write a long file with only
+`run` statments.
+
+
 Runlevels
 ---------
 
@@ -160,6 +218,7 @@ commands and TTYs listed without a set of runlevels get a default set
 To specify an allowed set of runlevels for a `service`, `run` command, `task`,
 or `tty`, add `[NNN]` to it in your `finit.conf`, like this:
 
+    service [S12345] /sbin/syslogd -n -x     -- System log daemon
     run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
     task    [S]      /etc/init.d/kbd start   -- Preparing console
     service [S12345] /sbin/klogd -n -x       -- Kernel log daemon
@@ -170,18 +229,16 @@ or `tty`, add `[NNN]` to it in your `finit.conf`, like this:
     tty     [2]      /dev/tty5
     tty     [2]      /dev/tty6
 
-In this example acpid is started once at bootstrap using a conventional
-SysV init script.  Here the run command was used, meaning the following
-task command is not run until the init script has fully completed.  Then
-the keyboard setup script is called in parallel with spawning klogd as a
-monitored service.
+In this example syslogd is first started, in parallel, and then acpid is
+called using a conventional SysV init script.  It is called with the run
+command, meaning the following task command to start the kbd script is
+not called until the acpid init script has fully completed.  Then the
+keyboard setup script is called in parallel with klogd as a monitored
+service.
 
-Tasks and services are started in parallel, while run commands are run
-in the order listed and subsequent commands are not started until a run
-command has completed.
-
-Existing finit.conf files that lack runlevel setting will get a default
-runlevel assigned, `[234]`.
+Again, tasks and services are started in parallel, while run commands
+are called in the order listed and subsequent commands are not started
+until a run command has completed.
 
 Switching between runlevels can be done by calling init with a single
 argument, e.g., `init 5` switches to runlevel 5.
@@ -360,6 +417,8 @@ give the kernel the following extra command line:
 
     init=/sbin/finit
 
+![Finit starting Debian 6.0](images/finit-screenshot.jpg "Finit screenshot")
+
 
 Debugging
 ---------
@@ -371,8 +430,8 @@ enable trace messages.  A console getty is always started, see the file
     init=/sbin/finit --debug
 
 
-Credits & Contact
------------------
+Origin & References
+-------------------
 
 This is the continuation of the [original finit](http://helllabs.org/finit/)
 by [Claudio Matsuoka](https://github.com/cmatsuoka), which in turn was
