@@ -1,5 +1,5 @@
-Finit | Small, fast and extensible /sbin/init for Linux systems
-===============================================================
+Finit | Fast & Extensible init for Linux
+========================================
 [![Build Status](https://travis-ci.org/troglobit/finit.png?branch=master)](https://travis-ci.org/troglobit/finit)
 [![Coverity Scan Status](https://scan.coverity.com/projects/3545/badge.svg)](https://scan.coverity.com/projects/3545)
 
