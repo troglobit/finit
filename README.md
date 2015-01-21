@@ -206,6 +206,16 @@ parallel and `run` in sequence, and in the order listed.  Hence, to
 emulate a SysV `/etc/init.d/rcS` one could write a long file with only
 `run` statments.
 
+Notice the five hook points that are called at various point in the
+bootstrap process.  This is where plugins can extend the boot in any way
+they please.
+
+For instance, at `HOOK_BASEFS_UP` a plugin could read an XML file from a
+USB stick, convert/copy its contents to the system's `/etc/` directory,
+well before all 'S' runlevel tasks are started.  This could be used with
+system images that are created read-only and all configuration is stored
+on external media.
+
 
 Runlevels
 ---------
