@@ -4,7 +4,7 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
-[1.11] - UNRELEASED
+[1.11] - 2015-01-24
 -------------------
 
 The [libuEv] release.
@@ -14,6 +14,9 @@ The [libuEv] release.
   signals, timers and listening to sockets or file descriptors.
 * Rename NEWS.md --> CHANGELOG.md, with symlinks for `make install`
 * Attempt to align with http://keepachangelog.com/ for this file.
+* Travis CI now only invokes Coverity Scan from the 'dev' branch.  This
+  means that all development, except documentation updates, must go into
+  that branch.
 
 ### Fixes
 * Fix bug with finit dying when no `tty` is defined in `finit.conf`, now
