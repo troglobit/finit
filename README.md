@@ -27,36 +27,31 @@ Introduction
 
 Init is the first process to run once a UNIX kernel has booted, it
 always has PID 1 and is responsible for starting up the rest of the
-system.  Finit is a very small plugin based init with built in
-[process supervision](https://en.wikipedia.org/wiki/Process_supervision)
-similar to that of D.J. Bernstein's
-[daemontools](http://cr.yp.to/daemontools.html) and Gerrit Pape's
-[runit](http://smarden.org/runit/).  The focus of Finit is on small and
-embedded GNU/Linux systems, although it is fully functional for standard
-server and desktop installations as well.
+system.  Finit is plugin-based with built in [process supervision][1]
+similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
+[runit][3].  The main focus of Finit is on small and embedded GNU/Linux
+systems, yet fully functional on standard server and desktop
+installations as well.
 
-Finit has a low overhead because it is written entirely in C.  System
-setup, otherwise commonly done with scripts, is instead done using a
-slimmed down set of system calls directly to the C-library.  As soon as
-basic setup is done, Finit launches services in parllel and monitor them
-continouosuly, i.e. automatically restart them if they fail.
+Traditional [SysV init][4] style systems are scripted.  For low-resource
+embedded systems this can be quite resource intensive and cause longer
+boot times.  Finit is optimized to reduce context switches and forking
+of processes to provide a very basic bootstrap written entirely in C.
+Hence, there is no `/etc/init.d/rcS` script, or similar, but instead a
+human-readable `/etc/finit.conf`.  This file details what kernel modules
+to load, programs to run and daemons to supervise.
 
-Alls services can have callbacks that are called before a service is
-(re)started.  For instance, before attempting to start a heavily
-resource intensive service like IPsec or OpenVPN, a callback can check
-if the outbound interface is up and has an IP address, or just check if
-the service is disabled -- much like what a SysV init start script
-usually does.
+The command line arguments given in `/etc/finit.conf` to each service
+provide a default.  Each service can register callbacks, using plugins,
+to override and modify the behavior to suit the current runlevel and
+system configuration.  For instance, before starting a heavily resource
+intensive service like IPsec or OpenVPN, a callback can check if the
+outbound interface is up and has an IP address, or just check if the
+service is disabled -- much like what a SysV init start script usually
+does.
 
-To extend finit with new functionality, hooks in the bootstrap phase can
-be added that execute in sequence, useful for satisfying preconditions
-or for synchronization purposes.  Functionality can also be added with
-plugins, the initctl compatibility plugin that comes with finit is one
-such plugin.
-
-Finit is not only fast, it's arguably one of the easiest to get started
-with.  A complete system can be booted with one simple configuration
-file, `/etc/finit.conf`, see below for syntax and examples.
+See [TroglOS][9] for an example of how to boot a small embedded system
+with Finit.
 
 
 Features
@@ -68,12 +63,19 @@ Start, monitor and restart services if they fail.
 
 **Runlevels**
 
-Finit supports standard runlevels if you want, but you don't need them
-for simple installations.
+Runlevels is optional in Finit, but support for [SysV runlevels][5] is
+available if needed.  All services in runlevel S(1) are started first,
+followed by the desired run-time runlevel.  Runlevel S can be started in
+sequence by using `run [S] cmd`.  Changing runlevels at runtime is done
+like any other init, e.g. <kbd>init 4</kbd>.
 
 **Plugins**
 
-Extend and modify finit behavior.  See examples in plugins/ directory.
+Finit plugins can be either *boot hooks* into different stages of the
+boot process or *service callbacks*, or both.  A basic set of plugins
+that extend and modify the basic behavior are bundled.  See examples in
+the `plugins/` directory.
+
 Plugin capabilities:
 
 * Service callbacks -- modify service arguments, run/restart/stop
@@ -81,7 +83,7 @@ Plugin capabilities:
 * Hooks -- hook into the boot at predefined points to extend finit
 * I/O -- listen to external events and control finit behavior/services
 
-Extensions and functionality not purely related to what an /sbin/init
+Extensions and functionality not purely related to what an `/sbin/init`
 needs to start a system are available as a set of plugins that either
 hook into the boot process or respond to various I/O.
 
@@ -89,12 +91,11 @@ hook into the boot process or respond to various I/O.
 /etc/finit.conf
 ---------------
 
-Contrary to most other script based init alternatives
-([SysV init](https://en.wikipedia.org/wiki/Init),
-[upstart](http://upstart.ubuntu.com/),
-[systemd](http://www.freedesktop.org/wiki/Software/systemd/),
-[OpenRC](http://www.gentoo.org/proj/en/base/openrc/) and the likes)
-finit reads its configuration from `/etc/finit.conf`.  Syntax:
+Contrary to most other script based init alternatives ([SysV init][4],
+[upstart][6], [systemd][7], [OpenRC][8], etc.)  Finit reads its entire
+configuration from `/etc/finit.conf`.
+
+Syntax:
 
 * `check <DEV>`
 
@@ -158,8 +159,8 @@ finit reads its configuration from `/etc/finit.conf`.  Syntax:
   and wait for the user to activate the console with a key press before
   starting getty.
 
-When running `make install` no default `/etc/finit.conf` will be
-provided since the system requirements differ too much.  Try out the
+When running <kbd>make install</kbd> no default `/etc/finit.conf` will
+be installed since system requirements differ too much.  Try out the
 Debian 6.0 example `/usr/share/doc/finit/finit.conf` configuration that
 is capable of service monitoring SSH, sysklogd, gdm and a console getty!
 
@@ -226,7 +227,7 @@ commands and TTYs listed without a set of runlevels get a default set
 `[234]` assigned.  The default runlevel after boot is 2.
 
 To specify an allowed set of runlevels for a `service`, `run` command, `task`,
-or `tty`, add `[NNN]` to it in your `finit.conf`, like this:
+or `tty`, add `[NNN]` to it in your `/etc/finit.conf`, like this:
 
     service [S12345] /sbin/syslogd -n -x     -- System log daemon
     run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
@@ -251,7 +252,7 @@ are called in the order listed and subsequent commands are not started
 until a run command has completed.
 
 Switching between runlevels can be done by calling init with a single
-argument, e.g., `init 5` switches to runlevel 5.
+argument, e.g. <kbd>init 5</kbd> switches to runlevel 5.
 
 
 Hooks, Callbacks & Plugins
@@ -385,9 +386,15 @@ what is built and where resulting binaries are installed.
 
 **Example**
 
-    $ tar xfJ finit-1.3.tar.xz
-    $ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit/dst \
-      make -C finit-1.3/ clean install
+First, unpack the archive:
+
+<kbd>$ tar xfJ finit-1.3.tar.xz</kbd>
+
+Then build and install:
+
+<kbd>$ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit/dst \
+      make -C finit-1.3/ clean install</kbd>
+
     make: Entering directory `/home/troglobit/finit-1.3'
       CC      finit.o
       CC      conf.o
@@ -406,12 +413,10 @@ what is built and where resulting binaries are installed.
       INSTALL /tmp/finit/dst/lib/finit/plugins/hwclock.so
     make: Leaving directory `/home/troglobit/finit-1.3'
 
-In this example the
-[finit-1.3.tar.xz](ftp://troglobit.com/finit/finit-1.3.tar.xz)
-archive is unpacked to the user's home directory, built and
-installed to a temporary staging directory.  The environment
-variables `DESTDIR` and `PLUGINS` are changed to suit this
-particular build.
+In this example the [finit-1.3.tar.xz][10] archive is unpacked to the
+user's home directory, built and installed to a temporary staging
+directory.  The environment variables `DESTDIR` and `PLUGINS` are
+changed to suit this particular build.
 
 
 Running
@@ -454,3 +459,13 @@ Finit is currently being developed and maintained by
 [GitHub](http://github.com/troglobit/finit).  Please file bug reports, clone it,
 or send pull requests for bug fixes and proposed extensions.
 
+[1]:  https://en.wikipedia.org/wiki/Process_supervision
+[2]:  http://cr.yp.to/daemontools.html
+[3]:  http://smarden.org/runit/
+[4]:  http://en.wikipedia.org/wiki/Init
+[5]:  http://en.wikipedia.org/wiki/Runlevel
+[6]:  http://upstart.ubuntu.com/
+[7]:  http://www.freedesktop.org/wiki/Software/systemd/
+[8]:  http://www.gentoo.org/proj/en/base/openrc/
+[9]:  https://github.com/troglobit/troglos
+[10]: ftp://troglobit.com/finit/finit-1.3.tar.xz
