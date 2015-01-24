@@ -13,9 +13,9 @@ addons:
   coverity_scan:
     project:
       name: "troglobit/finit"
-      description: "finit | Fast Init Replacement"
+      description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
     build_command:      "make"
-    branch_pattern:     master
+    branch_pattern:     dev
 
 script: make
