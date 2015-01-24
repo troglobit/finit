@@ -26,7 +26,7 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.11
+VERSION    ?= 1.12-dev
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
