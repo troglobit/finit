@@ -388,14 +388,12 @@ what is built and where resulting binaries are installed.
 
 First, unpack the archive:
 
-<kbd>$ tar xfJ finit-1.3.tar.xz</kbd>
+<kbd>$ tar xfJ finit-1.3.tar.xz; cd finit-1.3/</kbd>
 
 Then build and install:
 
-<kbd>$ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit/dst \
-      make -C finit-1.3/ clean install</kbd>
+<kbd>$ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit make install</kbd>
 
-    make: Entering directory `/home/troglobit/finit-1.3'
       CC      finit.o
       CC      conf.o
       CC      helpers.o
@@ -408,10 +406,9 @@ Then build and install:
       PLUGIN  plugins/initctl.so
       CC      plugins/hwclock.o
       PLUGIN  plugins/hwclock.so
-      INSTALL /tmp/finit/dst/sbin/finit
-      INSTALL /tmp/finit/dst/lib/finit/plugins/initctl.so
-      INSTALL /tmp/finit/dst/lib/finit/plugins/hwclock.so
-    make: Leaving directory `/home/troglobit/finit-1.3'
+      INSTALL /tmp/finit/sbin/finit
+      INSTALL /tmp/finit/lib/finit/plugins/initctl.so
+      INSTALL /tmp/finit/lib/finit/plugins/hwclock.so
 
 In this example the [finit-1.3.tar.xz][10] archive is unpacked to the
 user's home directory, built and installed to a temporary staging
