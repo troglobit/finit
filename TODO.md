@@ -29,7 +29,8 @@ General
 * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
   instead.  This is the de-facto practice.  But keep the check command
   for really low-end systems w/o `/etc/fstab`.
-
+* Fix `restart_any_lost_procs()`, currently it restarts task/run when
+  called -- must check `SVC_CMD_SERVICE`, like `svc_monitor()` does.
 
 Init
 ----
@@ -45,12 +46,12 @@ Inetd
 
 Simple way of running Internet services on demand, like the old inetd:
 
-    inetd PROTO/SERVICE <wait|nowait> [@USER[:GROUP]] /path/to/daemon args
+    inetd PORT/PROTO <wait|nowait> [@USER[:GROUP]] /path/to/daemon args -- desc
 
 Examples:
 
     # Inetd services, launched on demand
-    inetd tcp/ssh nowait [2345] @root:root /usr/sbin/sshd -i
+    inetd ssh/tcp nowait [2345] @root:root /usr/sbin/sshd -i -- SSH daemon
 
 In keeping with the finit tradition, an optional callback can be setup
 to each inetd service.  When a client connects the finit will call the
