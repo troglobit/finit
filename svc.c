@@ -153,15 +153,15 @@ static int encode(int lvl)
 
 static void utmp_save(int pre, int now)
 {
-   struct utmp utent;
+	struct utmp utent;
 
-   utent.ut_type  = RUN_LVL;
-   utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
-   strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
+	utent.ut_type  = RUN_LVL;
+	utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
+	strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
 
-   setutent();
-   pututline(&utent);
-   endutent();
+	setutent();
+	pututline(&utent);
+	endutent();
 }
 
 /**

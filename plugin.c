@@ -190,7 +190,7 @@ static void generic_io_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int event
 
 		/* Update fd, may be changed by plugin callback, e.g., if FIFO */
 		if (p->io.fd != w->fd)
-			uev_io_set (w, p->io.fd, p->io.flags);
+			uev_io_set(w, p->io.fd, p->io.flags);
 	}
 }
 
