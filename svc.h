@@ -84,8 +84,8 @@ static inline svc_t *finit_svc_connect(void)
 	static void *ptr = (void *)-1;
 
 	if ((void *)-1 == ptr) {
-		ptr = shmat (shmget (FINIT_SHM_ID, sizeof(svc_t) * MAX_NUM_SVC,
-				     0600 | IPC_CREAT), NULL, 0);
+		ptr = shmat(shmget(FINIT_SHM_ID, sizeof(svc_t) * MAX_NUM_SVC,
+				   0600 | IPC_CREAT), NULL, 0);
 		if ((void *)-1 == ptr)
 			return NULL;
 	}
