@@ -31,7 +31,7 @@
 #include "helpers.h"
 
 #define MATCH_CMD(l, c, x) \
-	(!strncmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
+	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
 static char *strip_line(char *line)
 {
