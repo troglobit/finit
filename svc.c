@@ -1,7 +1,7 @@
 /* Finit service monitor, task starter and generic API for managing svc_t
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <utmp.h>
+#include <netdb.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -33,6 +34,7 @@
 #include "tty.h"
 #include "lite.h"
 #include "svc.h"
+#include "inetd.h"
 
 /* The registered services are kept in shared memory for easy read-only access
  * by 3rd party APIs.  Mostly because of the ability to, from the outside, query
@@ -136,8 +138,12 @@ void svc_bootstrap(void)
 
 	_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		svc_cmd_t cmd = svc_enabled(svc, 0, NULL);
+		svc_cmd_t cmd;
 
+		if (svc->type == SVC_CMD_INETD)
+			continue;
+
+		cmd = svc_enabled(svc, 0, NULL);
 		if (SVC_START == cmd  || (SVC_RELOAD == cmd))
 			svc_start(svc);
 	}
@@ -186,15 +192,19 @@ void svc_runlevel(int newlevel)
 	utmp_save(prevlevel, newlevel);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		int run = svc_enabled(svc, 0, NULL);
+		svc_cmd_t cmd;
 
+		if (svc->type == SVC_CMD_INETD)
+			continue;
+
+		cmd = svc_enabled(svc, 0, NULL);
 		if (svc->pid) {
-			if (run == SVC_STOP)
+			if (cmd == SVC_STOP)
 				svc_stop(svc);
-			else if (run == SVC_RELOAD)
+			else if (cmd == SVC_RELOAD)
 				svc_reload(svc);
 		} else {
-			if (run == SVC_START)
+			if (cmd == SVC_START)
 				svc_start(svc);
 		}
 	}
@@ -235,9 +245,10 @@ void svc_runlevel(int newlevel)
  *   "service @username [!0-6,S] /path/to/daemon arg -- Description text"
  *   "task @username [!0-6,S] /path/to/task arg -- Description text"
  *   "run  @username [!0-6,S] /path/to/cmd arg -- Description text"
+ *   "inetd tcp/ssh nowait [2345] @root:root /usr/sbin/sshd -i -- Description"
  *
  * If the username is left out the command is started as root.
-
+ * Inetd services, launched on demand (SVC_CMD_INETD)
  * The [] brackets are there to denote the allowed runlevels. Allowed
  * runlevels mimic that of SysV init with the addition of the 'S'
  * runlevel, which is only run once at startup. It can be seen as the
@@ -249,9 +260,12 @@ void svc_runlevel(int newlevel)
  */
 int svc_register(int type, char *line, char *username)
 {
-	int i = 0;
+	int i = 0, forking = 0;
+	char *service = NULL, *proto = NULL;
 	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
+	struct servent *sv = NULL;
+	struct protoent *pv = NULL;
 
 	if (!line) {
 		_e("Invalid input argument.");
@@ -270,7 +284,13 @@ int svc_register(int type, char *line, char *username)
 	}
 
 	while (cmd) {
-		if (cmd[0] == '@')	/* @username */
+		if (cmd[0] != '/' && strchr(cmd, '/'))
+			service = cmd;   /* inetd port/proto */
+		else if (!strncasecmp(cmd, "nowait", 6))
+			forking = 1;
+		else if (!strncasecmp(cmd, "wait", 4))
+			forking = 0;
+		else if (cmd[0] == '@')	/* @username[:group] */
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
@@ -281,6 +301,24 @@ int svc_register(int type, char *line, char *username)
 		cmd = strtok(NULL, " ");
 		if (!cmd)
 			goto incomplete;
+	}
+
+	if (service) {
+		proto = strchr(service, '/');
+		*proto++ = 0;
+		sv = getservbyname(service, proto);
+		if (!sv) {
+			_pe("Invalid inetd %s/%s (service/proto), skipping", service, proto);
+			return errno = EINVAL;
+		}
+
+		pv = getprotobyname(sv->s_proto);
+		if (!pv) {
+			_pe("Cannot find proto %s, skipping.", sv->s_proto);
+			return errno = EINVAL;
+		}
+
+		_d("Got service %s:%d proto %s:%d", service, ntohs(sv->s_port), sv->s_proto, pv->p_proto);
 	}
 
 	svc = svc_new();
@@ -294,8 +332,29 @@ int svc_register(int type, char *line, char *username)
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
 
-	if (username)
+	if (username) {
+		char *ptr = strchr(username, ':');
+
+		if (ptr) {
+			*ptr++ = 0;
+			strlcpy(svc->group, ptr, sizeof(svc->group));
+		}
 		strlcpy(svc->username, username, sizeof(svc->username));
+	}
+
+	if (sv) {
+		strlcpy(svc->service, service, sizeof(svc->service));
+		svc->port  = ntohs(sv->s_port);
+		svc->proto = pv->p_proto;
+
+		/* Naïve mapping tcp->stream, udp->dgram, other->dgram */
+		if (!strcasecmp(sv->s_proto, "tcp"))
+			svc->sock_type = SOCK_STREAM;
+		else
+			svc->sock_type = SOCK_DGRAM;
+
+		svc->forking = forking;
+	}
 
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
@@ -355,6 +414,9 @@ static void restart_any_lost_procs(void)
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->type == SVC_CMD_INETD)
+			continue;
+
 		if (svc->pid > 0 && pid_alive(svc->pid))
 			continue;
 
@@ -382,6 +444,9 @@ void svc_monitor(pid_t lost)
 	}
 
 	if (tty_respawn(lost))
+		return;
+
+	if (inetd_respawn(lost))
 		return;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
@@ -420,7 +485,7 @@ void svc_monitor(pid_t lost)
 /* Remember: svc_enabled() must be called before calling svc_start() */
 int svc_start(svc_t *svc)
 {
-	int respawn;
+	int respawn, sd = 0;
 	pid_t pid;
 	sigset_t nmask, omask;
 
@@ -442,6 +507,21 @@ int svc_start(svc_t *svc)
 	/* Ignore if finit is SIGSTOP'ed */
 	if (is_norespawn())
 		return 0;
+
+	if (SVC_CMD_INETD == svc->type) {
+		sd = svc->watcher.fd;
+
+		if (svc->sock_type == SOCK_STREAM) {
+			/* Open new client socket from server socket */
+			sd = accept(sd, NULL, NULL);
+			if (sd < 0) {
+				FLOG_PERROR("Failed accepting inetd service %d/tcp", svc->port);
+				return 0;
+			}
+
+			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->port);
+		}
+	}
 
 	if (SVC_CMD_SERVICE != svc->type)
 		print_desc("", svc->desc);
@@ -478,7 +558,14 @@ int svc_start(svc_t *svc)
 			args[i] = svc->args[i];
 		args[i] = NULL;
 
-		if (debug) {
+		/* Redirect inetd socket to stdin for service */
+		if (SVC_CMD_INETD == svc->type) {
+			/* sd set previously */
+			dup2(sd, STDIN_FILENO);
+			close(sd);
+			dup2(STDIN_FILENO, STDOUT_FILENO);
+			dup2(STDIN_FILENO, STDERR_FILENO);
+		} else if (debug) {
 			int fd;
 			char buf[CMD_SIZE] = "";
 
@@ -506,6 +593,9 @@ int svc_start(svc_t *svc)
 		exit(0);
 	}
 	svc->pid = pid;
+
+	if (SVC_CMD_INETD == svc->type && svc->sock_type == SOCK_STREAM)
+		close(sd);
 
 	if (SVC_CMD_RUN == svc->type)
 		print_result(WEXITSTATUS(complete(svc->cmd, pid)));

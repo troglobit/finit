@@ -36,6 +36,7 @@
 #include "sig.h"
 #include "tty.h"
 #include "lite.h"
+#include "inetd.h"
 
 int   debug     = 0;
 int   verbose   = 1;
@@ -250,6 +251,9 @@ int main(int argc, char* argv[])
 	 * Start all tasks/services in the configured runlevel
 	 */
 	svc_runlevel(cfglevel);
+
+	/* Start inetd services */
+	inetd_runlevel(&ctx, runlevel);
 
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);

@@ -1,7 +1,7 @@
 /* Finit service monitor and generic API for managing svc_t structures
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,9 @@
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 
+#include "queue.h"		/* BSD sys/queue.h API */
+#include "libuev/uev.h"
+
 typedef enum {
 	SVC_STOP = 0,		/* Disabled */
 	SVC_START,		/* Enabled */
@@ -40,7 +43,8 @@ typedef enum {
 typedef enum {
 	SVC_CMD_SERVICE = 0,	/* Monitored, will be respawned */
 	SVC_CMD_TASK,		/* One-shot, runs in parallell */
-	SVC_CMD_RUN		/* Like task, but wait for completion */
+	SVC_CMD_RUN,		/* Like task, but wait for completion */
+	SVC_CMD_INETD		/* Classic inetd service */
 } svc_type_t;
 
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
@@ -59,11 +63,28 @@ typedef struct svc {
 	svc_type_t     type;
 	int	       reload;
 	int	       runlevels;
-	unsigned int   restart_counter; /* Incremented for each restart by service monitor. */
+
+	/* Event loop handler, used for inetd services */
+	uev_t          watcher;
+
+	/* For inetd services */
+	int            sock_type;
+	int            port;
+	int            proto;
+	int            forking;
+	char           service[10];
+
+	/* Incremented for each restart by service monitor. */
+	unsigned int   restart_counter;
+
+	/* Identity */
+	char	       username[MAX_USER_LEN];
+	char	       group[MAX_USER_LEN];
+
+	/* Command, arguments and service description */
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
-	char	       username[MAX_USER_LEN];
 
 	/* For external plugins. If @cb is set a plugin is loaded.
 	 * @dynamic:	  Set by plugins that want dynamic events.

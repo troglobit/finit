@@ -244,6 +244,12 @@ static int parse_conf(char *file)
 			continue;
 		}
 
+		/* Classic inetd service */
+		if (MATCH_CMD(line, "inetd ", x)) {
+			svc_register(SVC_CMD_INETD, x, NULL);
+			continue;
+		}
+
 		if (MATCH_CMD(line, "console ", x)) {
 			if (console) free(console);
 			console = strdup(strip_line(x));

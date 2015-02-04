@@ -36,7 +36,7 @@ ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
-OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o tty.o
+OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o tty.o inetd.o
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(addprefix .,$(SRCS:.c=.d))
 
