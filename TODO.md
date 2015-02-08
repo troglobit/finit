@@ -14,6 +14,7 @@ finit is to be a replacement for:
 A small and simple replacement, primarily for embedded systems, with a
 very low dependency on external packages.
 
+
 General
 -------
 
@@ -31,6 +32,9 @@ General
   for really low-end systems w/o `/etc/fstab`.
 * Fix `restart_any_lost_procs()`, currently it restarts task/run when
   called -- must check `SVC_CMD_SERVICE`, like `svc_monitor()` does.
+* Use `/etc/hostname` with fallback to `hostname` from `/etc/finit.conf`
+* Set hostname early, so boostrap processes, e.g., syslog can use it.
+
 
 Init
 ----
