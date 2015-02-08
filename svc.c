@@ -533,7 +533,7 @@ int svc_start(svc_t *svc)
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
-	pid = vfork();
+	pid = fork();
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (pid == 0) {
 		int i = 0;
