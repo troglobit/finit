@@ -36,6 +36,7 @@
 }
 
 #define FLOG_DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
+#define FLOG_INFO(fmt, args...)   DO_LOG(LOG_INFO, fmt, ##args)
 #define FLOG_WARN(fmt, args...)   DO_LOG(LOG_WARNING, fmt, ##args)
 #define FLOG_ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
 #define FLOG_PERROR(fmt, args...) DO_LOG(LOG_CRIT, fmt ". Error %d: %s", ##args, errno, strerror(errno))

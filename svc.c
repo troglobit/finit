@@ -521,9 +521,10 @@ int svc_start(svc_t *svc)
 
 			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->port);
 		}
-	}
 
-	if (SVC_CMD_SERVICE != svc->type)
+		FLOG_INFO("Starting inetd service %s ...", svc->service);
+	}
+	else if (SVC_CMD_SERVICE != svc->type)
 		print_desc("", svc->desc);
 	else if (!respawn)
 		print_desc("Starting ", svc->desc);
@@ -594,10 +595,11 @@ int svc_start(svc_t *svc)
 	}
 	svc->pid = pid;
 
-	if (SVC_CMD_INETD == svc->type && svc->sock_type == SOCK_STREAM)
-		close(sd);
-
-	if (SVC_CMD_RUN == svc->type)
+	if (SVC_CMD_INETD == svc->type) {
+		if (svc->sock_type == SOCK_STREAM)
+			close(sd);
+	}
+	else if (SVC_CMD_RUN == svc->type)
 		print_result(WEXITSTATUS(complete(svc->cmd, pid)));
 	else if (!respawn)
 		print_result(svc->pid > 1 ? 0 : 1);
