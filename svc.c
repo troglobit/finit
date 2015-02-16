@@ -26,6 +26,7 @@
 #include <sys/wait.h>
 #include <utmp.h>
 #include <netdb.h>
+#include <net/if.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -517,6 +518,7 @@ void svc_monitor(pid_t lost)
 int svc_start(svc_t *svc)
 {
 	int respawn, sd = 0;
+	char ifname[IF_NAMESIZE] = "UNKNOWN";
 	pid_t pid;
 	sigset_t nmask, omask;
 
@@ -551,9 +553,17 @@ int svc_start(svc_t *svc)
 			}
 
 			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->port);
+
+			/* Find ifname by means of getsockname() and getifaddrs() */
+			inetd_stream_peek(sd, ifname);
+		} else {           /* SOCK_DGRAM */
+			/* Find ifname by means of IP_PKTINFO sockopt --> ifindex + if_indextoname() */
+			inetd_dgram_peek(sd, ifname);
 		}
 
-		FLOG_INFO("Starting inetd service %s ...", svc->service);
+		/* XXX: Add poor man's tcpwrappers here, we now know inbound ifname ... */
+
+		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->service, ifname);
 	}
 	else if (SVC_CMD_SERVICE != svc->type)
 		print_desc("", svc->desc);

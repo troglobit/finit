@@ -26,6 +26,9 @@
 
 #include "libuev/uev.h"
 
+int  inetd_dgram_peek  (int sd, char *ifname);
+int  inetd_stream_peek (int sd, char *ifname);
+
 int  inetd_respawn (pid_t pid);
 void inetd_runlevel(uev_ctx_t *ctx, int runlevel);
 

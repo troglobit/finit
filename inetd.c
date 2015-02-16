@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-//#include <unistd.h>
-//#include <sys/types.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
@@ -76,17 +76,82 @@ static void spawn_socket(uev_ctx_t *ctx, svc_t *svc)
 		return;
 	}
 
-	if (svc->port && svc->sock_type != SOCK_DGRAM) {
-		if (-1 == listen(sd, 20)) {
-			FLOG_PERROR("Failed listening to inetd service %s", svc->service);
-			close(sd);
-			return;
+	if (svc->port) {
+		if (svc->sock_type == SOCK_STREAM) {
+			if (-1 == listen(sd, 20)) {
+				FLOG_PERROR("Failed listening to inetd service %s", svc->service);
+				close(sd);
+				return;
+			}
+		} else {           /* SOCK_DGRAM */
+			int opt = 1;
+
+			/* Set extra sockopt to get ifindex from inbound packets */
+			setsockopt(sd, SOL_IP, IP_PKTINFO, &opt, sizeof(opt));
 		}
 	}
 
 	_d("Initializing inetd %s service %s type %d proto %d on socket %d ...",
 	   svc->service, basename(svc->cmd), svc->sock_type, svc->proto, sd);
 	uev_io_init(ctx, &svc->watcher, socket_cb, svc, sd, UEV_READ);
+}
+
+/* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
+int inetd_dgram_peek(int sd, char *ifname)
+{
+	struct msghdr msgh;
+	struct cmsghdr *cmsg;
+
+	if (recvmsg(sd, &msgh, MSG_PEEK) < 0)
+		return -1;
+
+	for (cmsg = CMSG_FIRSTHDR(&msgh); cmsg; cmsg = CMSG_NXTHDR(&msgh,cmsg)) {
+		struct in_pktinfo *ipi = (struct in_pktinfo *)CMSG_DATA(cmsg);
+
+		if (cmsg->cmsg_level != SOL_IP || cmsg->cmsg_type != IP_PKTINFO)
+			continue;
+
+		if_indextoname(ipi->ipi_ifindex, ifname);
+
+		return 0;
+	}
+
+	return -1;
+}
+
+/* Peek into SOCK_STREAM on accepted client socket to figure out inbound interface */
+int inetd_stream_peek(int sd, char *ifname)
+{
+	struct ifaddrs *ifaddr, *ifa;
+	struct sockaddr_in sin;
+	socklen_t len = sizeof(sin);
+
+	if (-1 == getsockname(sd, (struct sockaddr *)&sin, &len))
+		return -1;
+
+	if (-1 == getifaddrs(&ifaddr))
+		return -1;
+
+	for (ifa = ifaddr; ifa; ifa = ifa->ifa_next) {
+		size_t len = sizeof(struct in_addr);
+		struct sockaddr_in *iin;
+
+		if (!ifa->ifa_addr)
+			continue;
+
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+
+		iin = (struct sockaddr_in *)ifa->ifa_addr;
+		if (!memcmp(&sin.sin_addr, &iin->sin_addr, len)) {
+			strncpy(ifname, ifa->ifa_name, IF_NAMESIZE);
+			break;
+		}
+	}
+
+	freeifaddrs(ifaddr);
+
+	return 0;
 }
 
 /* Inetd monitor, called by svc_monitor() */
