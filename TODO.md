@@ -168,3 +168,8 @@ Investigation
 * [FHS changes](http://askubuntu.com/questions/57297/why-has-var-run-been-migrated-to-run)
   affecting runtime status, plugins, etc.
 
+<!--
+  -- Local Variables:
+  -- mode: markdown
+  -- End:
+  -->
