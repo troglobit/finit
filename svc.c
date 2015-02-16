@@ -395,8 +395,39 @@ svc_cmd_t svc_enabled(svc_t *svc, int event, void *arg)
 		return SVC_STOP;
 
 	/* Is there a service plugin registered? */
-	if (svc->cb)
-		return svc->cb(svc, event, arg);
+	if (svc->cb) {
+		int   status;
+		pid_t pid;
+
+		/* Let callback run in separate process so it doesn't crash PID 1 */
+		pid = fork();
+		if (-1 == pid) {
+			_pe("Failed in %s callback", svc->cmd);
+			return SVC_STOP;
+		}
+
+		if (!pid) {
+			status = svc->cb(svc, event, arg);
+			exit(status);
+		}
+
+		if (waitpid(pid, &status, 0) == -1) {
+			_pe("Failed reading status from %s callback", svc->cmd);
+			return SVC_STOP;
+		}
+
+		/* Callback normally exits here. */
+		if (WIFEXITED(status))
+			return WEXITSTATUS(status);
+
+		/* Check for SEGFAULT or other error ... */
+		if (WCOREDUMP(status))
+			_e("Callback to %s crashed!\n", svc->cmd);
+		else
+			_e("Callback to %s did not exit normally!\n", svc->cmd);
+
+		return SVC_STOP;
+	}
 
 	/* No service plugin, default to start, since listed in finit.conf */
 	return SVC_START;
