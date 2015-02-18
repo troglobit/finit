@@ -87,7 +87,8 @@ static void spawn_socket(uev_ctx_t *ctx, svc_t *svc)
 			int opt = 1;
 
 			/* Set extra sockopt to get ifindex from inbound packets */
-			setsockopt(sd, SOL_IP, IP_PKTINFO, &opt, sizeof(opt));
+			if (-1 == setsockopt(sd, SOL_IP, IP_PKTINFO, &opt, sizeof(opt)))
+				_pe("Failed enabling IP_PKTINFO on socket");
 		}
 	}
 
