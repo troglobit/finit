@@ -83,7 +83,7 @@ typedef struct plugin {
 	uev_t watcher;
 
 	/* Plugin name, defaults to basename of plugin path if unset.
-	 * NOTE: Must be same as @cmd for service plugins! */
+	 * NOTE: Must match cmd for services or inetd plugins! */
 	char *name;
 
 	/* Service callback to be called once per lap of runloop. */
@@ -105,6 +105,12 @@ typedef struct plugin {
 		void  *arg;
 		void (*cb)(void *arg, int fd, int events);
 	} io;
+
+	/* Inetd Plugin, stdio used as client socket.
+	 * @type argument will be either SOCK_DGRAM or SOCK_STREAM */
+	struct {
+		int (*cmd)(int type);
+	} inetd;
 
 	char *depends[PLUGIN_DEP_MAX]; /* List of other .name's this depends on. */
 } plugin_t;

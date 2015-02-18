@@ -73,6 +73,7 @@ typedef struct svc {
 	int            proto;
 	int            forking;
 	char           service[10];
+	int          (*internal_cmd)(int sock_type);
 
 	/* Incremented for each restart by service monitor. */
 	unsigned int   restart_counter;

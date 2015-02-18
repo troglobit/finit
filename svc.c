@@ -265,6 +265,7 @@ int svc_register(int type, char *line, char *username)
 	char *service = NULL, *proto = NULL;
 	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
+	plugin_t *plugin = NULL;
 	struct servent *sv = NULL;
 	struct protoent *pv = NULL;
 
@@ -322,6 +323,15 @@ int svc_register(int type, char *line, char *username)
 		_d("Got service %s:%d proto %s:%d", service, ntohs(sv->s_port), sv->s_proto, pv->p_proto);
 	}
 
+	/* Find plugin that provides a callback for this inetd service */
+	if (type == SVC_CMD_INETD && !strncasecmp(cmd, "internal", 8)) {
+		plugin = plugin_find(service);
+		if (!plugin || !plugin->inetd.cmd) {
+			_e("Inetd service %s has no internal plugin, skipping.", service);
+			return errno = ENOENT;
+		}
+	}
+
 	svc = svc_new();
 	if (!svc) {
 		_e("Out of memory, cannot register service %s", cmd);
@@ -357,12 +367,18 @@ int svc_register(int type, char *line, char *username)
 		svc->forking = forking;
 	}
 
-	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
+	if (plugin) {
+		/* Internal plugin provides this service */
+		svc->internal_cmd = plugin->inetd.cmd;
+	} else {
+		/* External program to call */
+		strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
-	strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
-	while ((cmd = strtok(NULL, " ")))
 		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
-	svc->args[i][0] = 0;
+		while ((cmd = strtok(NULL, " ")))
+			strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
+		svc->args[i][0] = 0;
+	}
 
 	svc->runlevels = parse_runlevels(runlevels);
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
@@ -527,7 +543,7 @@ int svc_start(svc_t *svc)
 	respawn = svc->pid != 0;
 
 	/* Don't try and start service if it doesn't exist. */
-	if (!fexist(svc->cmd)) {
+	if (!fexist(svc->cmd) && !svc->internal_cmd) {
 		char msg[80];
 
 		snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
@@ -579,6 +595,7 @@ int svc_start(svc_t *svc)
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (pid == 0) {
 		int i = 0;
+		int status;
 		int uid = getuser(svc->username);
 		struct sigaction sa;
 		char *args[MAX_NUM_SVC_ARGS];
@@ -628,11 +645,12 @@ int svc_start(svc_t *svc)
 			_e("%starting %s: %s", respawn ? "Res" : "S", svc->cmd, buf);
 		}
 
-		/* XXX: Maybe change to use execve() to be able to launch scripts? */
-		execv(svc->cmd, args);
+		if (svc->internal_cmd)
+			status = svc->internal_cmd(svc->sock_type);
+		else
+			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
 
-		/* Only reach this point if exec() fails. */
-		exit(0);
+		exit(status);
 	}
 	svc->pid = pid;
 

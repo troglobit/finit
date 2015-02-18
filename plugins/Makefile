@@ -4,7 +4,7 @@ CPPFLAGS   += -I..
 LDFLAGS    := $(filter-out -rdynamic, $(LDFLAGS))
 LDFLAGS    += -shared
 PLUGINS    ?= initctl.so alsa-utils.so bootmisc.so dbus.so hwclock.so \
-	      resolvconf.so urandom.so x11-common.so tty.so
+	      resolvconf.so urandom.so x11-common.so tty.so time.so
 DEPS        = $(addprefix .,$(PLUGINS:.so=.d))
 TOPDIR     ?= $(shell pwd)
 
