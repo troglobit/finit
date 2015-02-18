@@ -99,6 +99,24 @@ an SSH service on different ports on different interfaces:
 
 Syntax very similar to [xinetd](http://en.wikipedia.org/wiki/Xinetd)
 
+### Internal inetd services
+
+There are a few standard services that inetd usually had built-in:
+
+- time
+- echo
+- chargen
+- discard
+
+At least 'time' will be implemented in finit, as a plugin, to serve as a
+simple means of testing inetd functionality stand-alone, but also as a
+very rudimentary time server for rdate clients.
+
+Example:
+
+    # Built-in inetd time service, launched on demand
+    inetd time/udp wait [2345] @root:root internal
+
 
 Crond
 -----
@@ -141,7 +159,7 @@ Support for monitoring the health of the system and its processes.
   process stops responding, or when a respawn limit has been reached,
   as well as when system load gets too high.
 * API for processes to register with the watchdog.
-  - Deeper monitoring of a process main loop
+  - Deeper monitoring of a process' main loop
   - If a process is not heard from within its subscribed period time
     reboot system or restart process.
 * Separate `/etc/watchdog.conf` configuration file, or a perhaps
