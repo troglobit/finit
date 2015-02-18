@@ -230,12 +230,14 @@ static int load_one(char *path, char *name)
 		return 1;
 	}
 
-	/* Remember handle from dlopen() for plugin_unregister() */
 	plugin = TAILQ_LAST(&plugins, plugin_head);
 	if (!plugin) {
-		_e("Plugin %s failed to register.", sofile);
+		_e("Plugin %s failed to register, unloading from memory.", sofile);
+		dlclose(handle);
 		return 1;
 	}
+
+	/* Remember handle from dlopen() for plugin_unregister() */
 	plugin->handle = handle;
 
 	return 0;
