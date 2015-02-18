@@ -79,6 +79,9 @@ typedef struct plugin {
 	/* BSD sys/queue.h linked list node. */
 	TAILQ_ENTRY(plugin) link;
 
+	/* Handle to be sent to dlclose() when plugins is unloaded. */
+	void *handle;
+
 	/* Event loop handler, used internally by Finit */
 	uev_t watcher;
 

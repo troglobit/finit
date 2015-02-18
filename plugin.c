@@ -36,8 +36,8 @@
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 
-static char                *plugpath = NULL; /* Set by first load. */
-static TAILQ_HEAD(, plugin) plugins  = TAILQ_HEAD_INITIALIZER(plugins);
+static char *plugpath = NULL; /* Set by first load. */
+static TAILQ_HEAD(plugin_head, plugin) plugins  = TAILQ_HEAD_INITIALIZER(plugins);
 
 static void check_plugin_depends(plugin_t *plugin);
 
@@ -81,12 +81,17 @@ int plugin_unregister(plugin_t *plugin)
 		svc_t *svc = svc_find(plugin->name);
 
 		if (svc) {
-			svc->cb      = NULL;
-			svc->dynamic = 0;
+			svc->cb           = NULL;
+			svc->dynamic      = 0;
+			svc->dynamic_stop = 0;
 		}
 	}
 
-	/* XXX: Unfinished, add cleanup code here! */
+	/* Unload plugin */
+	if (dlclose(plugin->handle)) {
+		_e("Failed unloading %s ...", plugin->name);
+		return 1;
+	}
 
 	return 0;
 }
@@ -202,8 +207,9 @@ static void init_plugins(uev_ctx_t *ctx)
 static int load_one(char *path, char *name)
 {
 	int noext;
-	char plugin[CMD_SIZE];
+	char sofile[CMD_SIZE];
 	void *handle;
+	plugin_t *plugin;
 
 	if (!path || !fisdir(path) || !name) {
 		errno = EINVAL;
@@ -212,17 +218,25 @@ static int load_one(char *path, char *name)
 
 	/* Compose full path, with optional .so extension, to plugin */
 	noext = strcmp(name + strlen(name) - 3, ".so");
-	snprintf(plugin, sizeof(plugin), "%s/%s%s", path, name, noext ? ".so" : "");
+	snprintf(sofile, sizeof(sofile), "%s/%s%s", path, name, noext ? ".so" : "");
 
-	_d("Loading plugin %s ...", basename(plugin));
+	_d("Loading plugin %s ...", basename(sofile));
 	/* Ignore leak, we do not support unloading of plugins atm.
 	 * TODO: Add handle to list of loaded plugins, dlclose() on
 	 *       plugin_unregister() */
-	handle = dlopen(plugin, RTLD_LAZY | RTLD_GLOBAL);
+	handle = dlopen(sofile, RTLD_LAZY | RTLD_GLOBAL);
 	if (!handle) {
-		_e("Failed loading plugin %s: %s", plugin, dlerror());
+		_e("Failed loading plugin %s: %s", sofile, dlerror());
 		return 1;
 	}
+
+	/* Remember handle from dlopen() for plugin_unregister() */
+	plugin = TAILQ_LAST(&plugins, plugin_head);
+	if (!plugin) {
+		_e("Plugin %s failed to register.", sofile);
+		return 1;
+	}
+	plugin->handle = handle;
 
 	return 0;
 }
