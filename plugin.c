@@ -43,13 +43,12 @@ static void check_plugin_depends(plugin_t *plugin);
 
 int plugin_register(plugin_t *plugin)
 {
-	int i, inuse = 0;
-
 	if (!plugin) {
 		errno = EINVAL;
 		return 1;
 	}
 
+	/* Setup default name if none is provided */
 	if (!plugin->name) {
 		Dl_info info;
 
@@ -65,37 +64,15 @@ int plugin_register(plugin_t *plugin)
 		return 0;
 	}
 
+	/* Resolve plugin dependencies */
 	check_plugin_depends(plugin);
-
-	if (is_io_plugin(plugin))
-		inuse++;
-
-	if (plugin->svc.cb) {
-		svc_t *svc = svc_find(plugin->name);
-
-		if (svc) {
-			inuse++;
-			svc->cb           = plugin->svc.cb;
-			svc->dynamic      = plugin->svc.dynamic;
-			svc->dynamic_stop = plugin->svc.dynamic_stop;
-		}
-	}
-
-	for (i = 0; i < HOOK_MAX_NUM; i++) {
-		if (plugin->hook[i].cb)
-			inuse++;
-	}
-
-	if (!inuse) {
-		_d("No service \"%s\" loaded, and no I/O or finit hooks, skipping plugin.", basename(plugin->name));
-		return 1;
-	}
 
 	TAILQ_INSERT_TAIL(&plugins, plugin, link);
 
 	return 0;
 }
 
+/* Not called, at the moment plugins cannot be unloaded. */
 int plugin_unregister(plugin_t *plugin)
 {
 	TAILQ_REMOVE(&plugins, plugin, link);
@@ -282,6 +259,7 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 	DIR *dp = opendir(path);
 	struct dirent *entry;
 
+	print_desc("Loading plugins", NULL);
 	if (!dp) {
 		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
 		return 1;

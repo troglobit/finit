@@ -185,17 +185,15 @@ int main(int argc, char* argv[])
 	run_interactive(SETUP_DEVFS, "Populating device tree");
 
 	/*
+	 * Load plugins first, finit.conf may contain references to
+	 * features implemented by plugins.
+	 */
+	print_result(plugin_load_all(&ctx, PLUGIN_PATH));
+
+	/*
 	 * Parse configuration file
 	 */
 	parse_finit_conf(FINIT_CONF);
-
-	/*
-	 * Load plugins.  Must run after finit.conf has registered
-	 * all services, or service plugins won't have anything to
-	 * hook on to.
-	 */
-	print_desc("Loading plugins", NULL);
-	print_result(plugin_load_all(&ctx, PLUGIN_PATH));
 
 	/*
 	 * Mount filesystems

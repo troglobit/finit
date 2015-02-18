@@ -378,6 +378,13 @@ int svc_register(int type, char *line, char *username)
 		while ((cmd = strtok(NULL, " ")))
 			strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 		svc->args[i][0] = 0;
+
+		plugin = plugin_find(svc->cmd);
+		if (plugin && plugin->svc.cb) {
+			svc->cb           = plugin->svc.cb;
+			svc->dynamic      = plugin->svc.dynamic;
+			svc->dynamic_stop = plugin->svc.dynamic_stop;
+		}
 	}
 
 	svc->runlevels = parse_runlevels(runlevels);
