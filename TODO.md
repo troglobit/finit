@@ -18,6 +18,7 @@ very low dependency on external packages.
 General
 -------
 
+* Add compile-time supoprt for running `/bin/sh` instead of `getty`
 * Add support for `init <q | reload-configuration>` and `SIGHUP` to
   have finit reload its `finit.conf`, but also
 * Add support for inotify to automatically reload `finit.conf`
