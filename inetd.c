@@ -102,6 +102,7 @@ int inetd_dgram_peek(int sd, char *ifname)
 	struct msghdr msgh;
 	struct cmsghdr *cmsg;
 
+	memset(&msgh, 0, sizeof(msgh));
 	if (recvmsg(sd, &msgh, MSG_PEEK) < 0)
 		return -1;
 
