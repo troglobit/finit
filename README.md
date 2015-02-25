@@ -1,9 +1,9 @@
 Finit | Fast & Extensible init for Linux
 ========================================
-[![Build Status](https://travis-ci.org/troglobit/finit.png?branch=master)](https://travis-ci.org/troglobit/finit)
-[![Coverity Scan Status](https://scan.coverity.com/projects/3545/badge.svg)](https://scan.coverity.com/projects/3545)
+[![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 ![Original Finit homepage image](images/finit.jpg "Finit in action!")
+
 
 Table of Contents
 -----------------
@@ -221,10 +221,10 @@ on external media.
 Runlevels
 ---------
 
-Basic support for [runlevels](http://en.wikipedia.org/wiki/Runlevel) is
-included in Finit from v1.8.  By default all services, tasks, run
-commands and TTYs listed without a set of runlevels get a default set
-`[234]` assigned.  The default runlevel after boot is 2.
+Basic support for [runlevels][5] is included in Finit from v1.8.  By
+default all services, tasks, run commands and TTYs listed without a set
+of runlevels get a default set `[234]` assigned.  The default runlevel
+after boot is 2.
 
 To specify an allowed set of runlevels for a `service`, `run` command, `task`,
 or `tty`, add `[NNN]` to it in your `/etc/finit.conf`, like this:
@@ -445,16 +445,13 @@ enable trace messages.  A console getty is always started, see the file
 Origin & References
 -------------------
 
-This is the continuation of the [original finit](http://helllabs.org/finit/)
-by [Claudio Matsuoka](https://github.com/cmatsuoka), which in turn was
-reverse engineered from syscalls of the
-[EeePC fastinit](http://wiki.eeeuser.com/boot_process:the_boot_process)
--- "gaps filled with frog DNA ...".
+This is the continuation of the [original finit] by [Claudio Matsuoka],
+which in turn was reverse engineered from syscalls of the
+[EeePC fastinit] -- "gaps filled with frog DNA ..."
 
-Finit is currently being developed and maintained by
-[Joachim Nilsson](http://troglobit.com) at
-[GitHub](http://github.com/troglobit/finit).  Please file bug reports, clone it,
-or send pull requests for bug fixes and proposed extensions.
+Finit is currently being developed and maintained by [Joachim Nilsson]
+at [GitHub].  Please file bug reports, clone it, or send pull requests
+for bug fixes and proposed extensions.
 
 [1]:  https://en.wikipedia.org/wiki/Process_supervision
 [2]:  http://cr.yp.to/daemontools.html
@@ -466,3 +463,18 @@ or send pull requests for bug fixes and proposed extensions.
 [8]:  http://www.gentoo.org/proj/en/base/openrc/
 [9]:  https://github.com/troglobit/troglos
 [10]: ftp://troglobit.com/finit/finit-1.3.tar.xz
+[original finit]:   http://helllabs.org/finit/
+[EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
+[Claudio Matsuoka]: https://github.com/cmatsuoka
+[Joachim Nilsson]:  http://troglobit.com
+[GitHub]:           https://github.com/troglobit/finit
+[Travis]:           https://travis-ci.org/troglobit/finit
+[Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
+[Coverity Scan]:    https://scan.coverity.com/projects/3545
+[Coverity Status]:  https://scan.coverity.com/projects/3545/badge.svg
+
+<!--
+  -- Local Variables:
+  -- mode: markdown
+  -- End:
+  -->
