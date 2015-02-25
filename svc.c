@@ -25,7 +25,6 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <utmp.h>
-#include <netdb.h>
 #include <net/if.h>
 
 #include "finit.h"
@@ -82,30 +81,6 @@ svc_t *svc_new(void)
 }
 
 /**
- * svc_find - Find a service object by its full path name
- * @name: Full path name, e.g., /sbin/syslogd
- *
- * Returns:
- * A pointer to an &svc_t object, or %NULL if not found.
- */
-svc_t *svc_find(char *name)
-{
-	int i;
-
-	__connect_shm();
-	for (i = 0; i < svc_counter; i++) {
-		svc_t *svc = &services[i];
-
-		if (!strncmp(name, svc->cmd, strlen(svc->cmd))) {
-			_d("Found a matching svc for %s", name);
-			return svc;
-		}
-	}
-
-	return NULL;
-}
-
-/**
  * svc_iterator - Iterates over all registered services.
  * @restart: Get first &svc_t object by setting @restart
  *
@@ -125,6 +100,53 @@ svc_t *svc_iterator(int restart)
 		return NULL;
 
 	return &services[i++];
+}
+
+/**
+ * svc_find - Find a service object by its full path name
+ * @path: Full path name, e.g., /sbin/syslogd
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find(char *path)
+{
+	int first = 1;
+	svc_t *svc;
+
+	while ((svc = svc_iterator(first))) {
+		first = 0;
+
+		if (!strncmp(path, svc->cmd, strlen(svc->cmd))) {
+			_d("Found a matching svc for %s", path);
+			return svc;
+		}
+	}
+
+	return NULL;
+}
+
+svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
+{
+	int first = 1;
+	svc_t *svc;
+
+	while ((svc = svc_iterator(first))) {
+		first = 0;
+
+		if (svc->type != SVC_CMD_INETD)
+			continue;
+
+		if (strncmp(path, svc->cmd, strlen(svc->cmd)))
+			continue;
+
+		if (inetd_match(&svc->inetd, service, proto, port)) {
+			_d("Found a matching svc for %s", path);
+			return svc;
+		}
+	}
+
+	return NULL;
 }
 
 /**
@@ -262,12 +284,10 @@ void svc_runlevel(int newlevel)
 int svc_register(int type, char *line, char *username)
 {
 	int i = 0, forking = 0;
-	char *service = NULL, *proto = NULL;
+	char *service = NULL, *proto = NULL, *iface = NULL, *port = NULL;
 	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
-	struct servent *sv = NULL;
-	struct protoent *pv = NULL;
 
 	if (!line) {
 		_e("Invalid input argument.");
@@ -287,7 +307,7 @@ int svc_register(int type, char *line, char *username)
 
 	while (cmd) {
 		if (cmd[0] != '/' && strchr(cmd, '/'))
-			service = cmd;   /* inetd port/proto */
+			service = cmd;   /* inetd service/proto */
 		else if (!strncasecmp(cmd, "nowait", 6))
 			forking = 1;
 		else if (!strncasecmp(cmd, "wait", 4))
@@ -305,22 +325,18 @@ int svc_register(int type, char *line, char *username)
 			goto incomplete;
 	}
 
+	/* Example: inetd ssh@eth0:222/tcp */
 	if (service) {
 		proto = strchr(service, '/');
 		*proto++ = 0;
-		sv = getservbyname(service, proto);
-		if (!sv) {
-			_pe("Invalid inetd %s/%s (service/proto), skipping", service, proto);
-			return errno = EINVAL;
-		}
 
-		pv = getprotobyname(sv->s_proto);
-		if (!pv) {
-			_pe("Cannot find proto %s, skipping.", sv->s_proto);
-			return errno = EINVAL;
-		}
+		port = strchr(service, ':');
+		if (port)
+			*port++ = 0;
 
-		_d("Got service %s:%d proto %s:%d", service, ntohs(sv->s_port), sv->s_proto, pv->p_proto);
+		iface = strchr(service, '@');
+		if (iface)
+			*iface++ = 0;
 	}
 
 	/* Find plugin that provides a callback for this inetd service */
@@ -331,6 +347,11 @@ int svc_register(int type, char *line, char *username)
 			return errno = ENOENT;
 		}
 	}
+
+	/* Check if known inetd, then add ifname for filtering only. */
+	svc = svc_find_inetd(cmd, service, proto, port);
+	if (svc && type == SVC_CMD_INETD)
+		return inetd_allow_iface(&svc->inetd, iface);
 
 	svc = svc_new();
 	if (!svc) {
@@ -353,23 +374,12 @@ int svc_register(int type, char *line, char *username)
 		strlcpy(svc->username, username, sizeof(svc->username));
 	}
 
-	if (sv) {
-		strlcpy(svc->service, service, sizeof(svc->service));
-		svc->port  = ntohs(sv->s_port);
-		svc->proto = pv->p_proto;
-
-		/* Naïve mapping tcp->stream, udp->dgram, other->dgram */
-		if (!strcasecmp(sv->s_proto, "tcp"))
-			svc->sock_type = SOCK_STREAM;
-		else
-			svc->sock_type = SOCK_DGRAM;
-
-		svc->forking = forking;
-	}
+	if (svc->type == SVC_CMD_INETD)
+		inetd_add(&svc->inetd, service, proto, iface, port, forking);
 
 	if (plugin) {
 		/* Internal plugin provides this service */
-		svc->internal_cmd = plugin->inetd.cmd;
+		svc->inetd.cmd = plugin->inetd.cmd;
 	} else {
 		/* External program to call */
 		strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
@@ -550,7 +560,7 @@ int svc_start(svc_t *svc)
 	respawn = svc->pid != 0;
 
 	/* Don't try and start service if it doesn't exist. */
-	if (!fexist(svc->cmd) && !svc->internal_cmd) {
+	if (!fexist(svc->cmd) && !svc->inetd.cmd) {
 		char msg[80];
 
 		snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
@@ -565,17 +575,17 @@ int svc_start(svc_t *svc)
 		return 0;
 
 	if (SVC_CMD_INETD == svc->type) {
-		sd = svc->watcher.fd;
+		sd = svc->inetd.watcher.fd;
 
-		if (svc->sock_type == SOCK_STREAM) {
+		if (svc->inetd.type == SOCK_STREAM) {
 			/* Open new client socket from server socket */
 			sd = accept(sd, NULL, NULL);
 			if (sd < 0) {
-				FLOG_PERROR("Failed accepting inetd service %d/tcp", svc->port);
+				FLOG_PERROR("Failed accepting inetd service %d/tcp", svc->inetd.port);
 				return 0;
 			}
 
-			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->port);
+			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->inetd.port);
 
 			/* Find ifname by means of getsockname() and getifaddrs() */
 			inetd_stream_peek(sd, ifname);
@@ -584,9 +594,16 @@ int svc_start(svc_t *svc)
 			inetd_dgram_peek(sd, ifname);
 		}
 
-		/* XXX: Add poor man's tcpwrappers here, we now know inbound ifname ... */
+		if (!inetd_is_iface_allowed(&svc->inetd, ifname)) {
+			FLOG_INFO("Service %s on port %d not allowed from interface %s.",
+				  svc->inetd.name, svc->inetd.port, ifname);
+			if (svc->inetd.type == SOCK_STREAM)
+				close(sd);
 
-		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->service, ifname);
+			return 0;
+		}
+
+		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->inetd.name, ifname);
 	}
 	else if (SVC_CMD_SERVICE != svc->type)
 		print_desc("", svc->desc);
@@ -652,17 +669,22 @@ int svc_start(svc_t *svc)
 			_e("%starting %s: %s", respawn ? "Res" : "S", svc->cmd, buf);
 		}
 
-		if (svc->internal_cmd)
-			status = svc->internal_cmd(svc->sock_type);
+		if (svc->inetd.cmd)
+			status = svc->inetd.cmd(svc->inetd.type);
 		else
 			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
+
+		if (SVC_CMD_INETD == svc->type) {
+			if (svc->inetd.type == SOCK_STREAM)
+				close(sd);
+		}
 
 		exit(status);
 	}
 	svc->pid = pid;
 
 	if (SVC_CMD_INETD == svc->type) {
-		if (svc->sock_type == SOCK_STREAM)
+		if (svc->inetd.type == SOCK_STREAM)
 			close(sd);
 	}
 	else if (SVC_CMD_RUN == svc->type)

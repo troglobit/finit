@@ -31,6 +31,7 @@
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 
+#include "inetd.h"
 #include "queue.h"		/* BSD sys/queue.h API */
 #include "libuev/uev.h"
 
@@ -64,19 +65,11 @@ typedef struct svc {
 	int	       reload;
 	int	       runlevels;
 
-	/* Event loop handler, used for inetd services */
-	uev_t          watcher;
-
-	/* For inetd services */
-	int            sock_type;
-	int            port;
-	int            proto;
-	int            forking;
-	char           service[10];
-	int          (*internal_cmd)(int sock_type);
-
 	/* Incremented for each restart by service monitor. */
 	unsigned int   restart_counter;
+
+	/* For inetd services */
+	inetd_t        inetd;
 
 	/* Identity */
 	char	       username[MAX_USER_LEN];
@@ -116,7 +109,8 @@ static inline svc_t *finit_svc_connect(void)
 }
 
 svc_t	 *svc_new	    (void);
-svc_t	 *svc_find	    (char *name);
+svc_t	 *svc_find	    (char *path);
+svc_t    *svc_find_inetd    (char *path, char *service, char *proto, char *port);
 svc_t	 *svc_iterator	    (int restart);
 void	  svc_runlevel	    (int newlevel);
 

@@ -24,13 +24,45 @@
 #ifndef FINIT_INETD_H_
 #define FINIT_INETD_H_
 
+#include <netdb.h>
+#include <net/if.h>
+
+#include "queue.h"
 #include "libuev/uev.h"
+
+
+typedef struct inetd_filter {
+	LIST_ENTRY(inetd_filter) link;
+	int  deny;		/* 0:allow, 1:deny */
+	char ifname[IFNAMSIZ];	/* E.g., eth0 */
+} inetd_filter_t;
+
+typedef struct {
+	uev_t  watcher;
+
+	int    type;		/* Socket type: SOCK_STREAM/SOCK_DGRAM    */
+	int    std;		/* Standard proto/port from /etc/services */
+	int    proto;
+	int    port;
+	int    forking;
+	char   name[10];
+	int  (*cmd)(int type);	/* internal inetd service, like 'time' */
+
+	LIST_HEAD(, inetd_filter) filters;
+} inetd_t;
 
 int  inetd_dgram_peek  (int sd, char *ifname);
 int  inetd_stream_peek (int sd, char *ifname);
 
 int  inetd_respawn (pid_t pid);
 void inetd_runlevel(uev_ctx_t *ctx, int runlevel);
+
+int  inetd_match (inetd_t *inetd, char *service, char *proto, char *port);
+int  inetd_add   (inetd_t *inetd, char *service, char *proto, char *ifname, char *port, int forking);
+
+inetd_filter_t *inetd_filter_find      (inetd_t *inetd, char *ifname);
+int             inetd_allow_iface      (inetd_t *inetd, char *ifname);
+int             inetd_is_iface_allowed (inetd_t *inetd, char *ifname);
 
 #endif	/* FINIT_INETD_H_ */
 
