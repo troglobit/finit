@@ -29,11 +29,11 @@
 #include <syslog.h>
 
 #define DO_LOG(level, fmt, args...)				\
-{								\
+do {								\
 	openlog("finit", LOG_CONS | LOG_PID, LOG_DAEMON);	\
 	syslog(level, fmt, ##args);				\
 	closelog();						\
-}
+} while (0)
 
 #define FLOG_DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
 #define FLOG_INFO(fmt, args...)   DO_LOG(LOG_INFO, fmt, ##args)
@@ -93,6 +93,8 @@ extern int verbose;
 
 int     makepath        (char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
+
+int     atonum          (char *str);
 
 pid_t   pidfile_read    (char *pidfile);
 pid_t   pidfile_poll    (char *cmd, char *path);

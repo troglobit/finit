@@ -116,6 +116,26 @@ void ifconfig(char *ifname, char *addr, char *mask, int up)
 	close(sock);
 }
 
+/**
+ * atonum - Convert string to integer
+ * @str: String value to convert.
+ *
+ * Returns:
+ * The converted (positive) number, or -1 on error, with @errno set.
+ */
+int atonum(char *str)
+{
+	int val;
+	char *end;
+
+	errno = 0;
+	val = strtol(str, &end, 10);
+	if (errno || end == str)
+		return -1;
+
+	return val;
+}
+
 
 /**
  * pidfile_read - Reads a PID value from a pidfile.
@@ -294,11 +314,15 @@ int procname_kill(char *name, int signo)
 
 			if (strncmp(pname, name, strlen(pname) - 1) == 0) {
 				int error = errno;
+				int pid = atonum(entry->d_name);
 
-				if (kill(atoi(entry->d_name), signo)) {
-					FLOG_ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
+				if (-1 == pid) {
+					FLOG_ERROR("Failed converting %s to a PID: %s", entry->d_name, strerror(error));
 				} else {
-					result++; /* Track number of processes we deliver the signal to. */
+					if (kill(pid, signo))
+						FLOG_ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
+					else
+						result++; /* Track number of processes we deliver the signal to. */
 				}
 			}
 		}
