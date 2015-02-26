@@ -31,8 +31,6 @@ General
 * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
   instead.  This is the de-facto practice.  But keep the check command
   for really low-end systems w/o `/etc/fstab`.
-* Fix `restart_any_lost_procs()`, currently it restarts task/run when
-  called -- must check `SVC_CMD_SERVICE`, like `svc_monitor()` does.
 
 
 Init

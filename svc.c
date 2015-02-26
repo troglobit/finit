@@ -481,11 +481,14 @@ static void restart_any_lost_procs(void)
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->type == SVC_CMD_INETD)
-			continue;
-
 		if (svc->pid > 0 && pid_alive(svc->pid))
 			continue;
+
+		/* Only restart lost daemons, not task/run/inetd services */
+		if (SVC_CMD_SERVICE != svc->type) {
+			svc->pid = 0;
+			continue;
+		}
 
 		svc_start(svc);
 	}
