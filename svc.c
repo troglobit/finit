@@ -677,8 +677,11 @@ int svc_start(svc_t *svc)
 			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
 
 		if (SVC_CMD_INETD == svc->type) {
-			if (svc->inetd.type == SOCK_STREAM)
-				close(sd);
+			if (svc->inetd.type == SOCK_STREAM) {
+				close(STDIN_FILENO);
+				close(STDOUT_FILENO);
+				close(STDERR_FILENO);
+			}
 		}
 
 		exit(status);
