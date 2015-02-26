@@ -54,6 +54,8 @@
 # define HAVE_DBUS
 #endif
 
+/* If the user configures us to not know about any getty use the system
+ * defined /bin/sh (or similar) as fallback for TTYs. */
 #ifndef FALLBACK_SHELL
 # define FALLBACK_SHELL		_PATH_BSHELL
 #endif

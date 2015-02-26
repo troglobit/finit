@@ -275,8 +275,14 @@ int parse_finit_conf(char *file)
 	rcsd     = strdup(FINIT_RCSD);
 
 	result = parse_conf(file);
-	if (!tty_num())
-		tty_register(FALLBACK_SHELL);
+	if (!tty_num()) {
+		char *fallback = FALLBACK_SHELL;
+
+		if (console)
+			fallback = console;
+
+		tty_register(fallback);
+	}
 
 	return result;
 }
