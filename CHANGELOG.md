@@ -4,6 +4,42 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
+[1.12] - 2015-02-27
+-------------------
+
+The inetd release.
+
+### Changes
+* Add support for built-in inetd super server -- launch services on
+  demand.  Supports filtering per interface and custom Inet ports.
+* Upgrade to [libuEv] v1.0.4
+* Allow mixed case config directives in `finit.conf`
+* Add support for RFC 868 (rdate) time plugin, start as inetd service.
+* Load plugins before parsing `finit.conf`, this makes it possible to
+  extend finit even with configuration commands.  E.g., the `time.so`
+  plugin must be loaded for the `inetd time/tcp internal` service to be
+  accepted when parsing `finit.conf`.
+* Slight change in TTY fallback behavior, if no TTY is listed in the
+  system `finit.conf` first inspect the `console` setting and only if
+  that too is unset fall back to `/bin/sh`
+* When falling back to the `console` TTY or `/bin/sh`, finit now marks
+  this fallback as console.  Should improve usability in some use cases.
+
+### Fixes
+* Revert "Use vfork() instead of fork() before exec()" from v1.11.  It
+  turned out to not work so well after all.  For instance, launching
+  TTYs in a background process completely blocked inetd services from
+  even starting up listening sockets ... proper fork seems to work fine
+  though.
+* Trap segfaults caused by external plugins/callbacks in a sub-process.
+  This prevents a single programming mistake in by a 3rd party developer
+  from taking down the entire system.
+* Fix Coverity CID 56281: dlopen() resource leak by storing the pointer.
+  For the time being we do not support unloading plugins.
+* Set hostname early, so bootstrap processes like syslog can use it.
+* Only restart *lost daemons* when recovering from a SIGSTOP/norespawn.
+
+
 [1.11] - 2015-01-24
 -------------------
 
@@ -255,7 +291,9 @@ Major bug fix release.
 
 [libuEv]: https://github.com/troglobit/libuev
 [dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
-[1.11]: https://github.com/troglobit/finit/compare/1.10...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/1.12...HEAD
+[1.12]: https://github.com/troglobit/finit/compare/1.11...1.12
+[1.11]: https://github.com/troglobit/finit/compare/1.10...1.11
 [1.10]: https://github.com/troglobit/finit/compare/1.9...1.10
 [1.9]: https://github.com/troglobit/finit/compare/1.8...1.9
 [1.8]: https://github.com/troglobit/finit/compare/1.7...1.8
