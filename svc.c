@@ -328,6 +328,8 @@ int svc_register(int type, char *line, char *username)
 	/* Example: inetd ssh@eth0:222/tcp */
 	if (service) {
 		proto = strchr(service, '/');
+		if (!proto)
+			goto incomplete;
 		*proto++ = 0;
 
 		port = strchr(service, ':');
