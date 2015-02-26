@@ -145,9 +145,11 @@ void tty_start(finit_tty_t *tty)
 		snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
 #else
 		strlcpy(line, FALLBACK_SHELL, sizeof(line));
+		is_console = 1;
 #endif
 	} else {
 		strlcpy(line, tty->name, sizeof(line));
+		is_console = 1;
 	}
 	cmd = strtok(line, " ");
 	args[i++] = basename(cmd);
