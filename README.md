@@ -14,8 +14,9 @@ Table of Contents
 * [/etc/finit.d](#etcfinitd)
 * [Bootstrap](#bootstrap)
 * [Runlevels](#runlevels)
+* [Inetd](#inetd)
 * [Hooks, Callbacks & Plugins](#hooks-callbacks--plugins)
-* [Rebooting and Halting](#rebooting-and-halting)
+* [Rebooting & Halting](#rebooting--halting)
 * [Building](#building)
 * [Running](#running)
 * [Debugging](#debugging)
@@ -59,11 +60,16 @@ Features
 
 **Process Supervision**
 
-Start, monitor and restart services if they fail.
+Start, monitor and restart processes (daemons) if they fail.
+
+**Inetd**
+
+Finit comes with an `inetd` server built-in.  No need to maintain a
+seprate config file for services that you want to start on demand.
 
 **Runlevels**
 
-Runlevels is optional in Finit, but support for [SysV runlevels][5] is
+Runlevels are optional in Finit, but support for [SysV runlevels][5] is
 available if needed.  All services in runlevel S(1) are started first,
 followed by the desired run-time runlevel.  Runlevel S can be started in
 sequence by using `run [S] cmd`.  Changing runlevels at runtime is done
@@ -72,9 +78,10 @@ like any other init, e.g. <kbd>init 4</kbd>.
 **Plugins**
 
 Finit plugins can be either *boot hooks* into different stages of the
-boot process or *service callbacks*, or both.  A basic set of plugins
-that extend and modify the basic behavior are bundled.  See examples in
-the `plugins/` directory.
+boot process, *service callbacks*, or *pure extensions*.  A plugin is a
+C file that compiles into a dynamic library that is loaded automatically
+by finit at boot.  A basic set of plugins that extend and modify the
+basic behavior are bundled.  See examples in the `plugins/` directory.
 
 Plugin capabilities:
 
@@ -132,6 +139,12 @@ Syntax:
   --foreground or --no-background argument to most daemons to prevent
   them from forking off to the background.
 
+* `inetd SVC[@iface[:port]]/PROTO <wait|nowait> [LVLS] /path/to/daemon args -- desc`
+
+  Launch daemon on demand on connection on SVC, as specified in the
+  standard UNIX `/etc/services` file.  With optional filtering for iface
+  and possible custom port.
+
 * `runparts <PATH>`
 
   Call run-parts(8) on a directory other than default ``/etc/finit.d``
@@ -142,27 +155,41 @@ Syntax:
   is prepended to file if the file is not found or an absolute path is
   not given
 
-* `tty [LVLS] <DEV | /bin/sh>`
+* `tty [LVLS] <DEV | /path/to/cmd [args]>`
 
-  Start a getty on the given TTY device, in the given runlevels.  When
+  Start a getty on the given TTY device DEV, in the given runlevels.  If
   no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
   argument instead of a device path, a single shell is started on the
-  default console.  Useful for really bare-bones systems
-
+  default console.  Useful for really bare-bones systems.
+  
+  It is also possible to supply the full command line, with arguments,
+  to your getty.  In this case finit will simply use that command.
+  
   See `finit.h` for the `#define GETTY` that is called, along with the
   default baud rate.
 
-* `console <DEV>`
+* `console <DEV | /path/to/cmd [args]>`
 
-  Some embedded systems have a dedicated console port.  This command
-  tells finit to not start getty, but instead print a friendly message
-  and wait for the user to activate the console with a key press before
-  starting getty.
+  Some embedded systems have a dedicated serial console/service port.
+  This command tells finit to not start getty directly, since there may
+  not be anyone there.  To save RAM and CPU finit instead displays a
+  friendly message and waits for the user to activate the console with a
+  key press before starting getty.  Finit also does some other magic and
+  changes the process name to "console".
+  
+  Like the `tty` command, the `console` command can also be used to
+  simply start a UNIX shell, e.g. `/bin/sh`.
 
 When running <kbd>make install</kbd> no default `/etc/finit.conf` will
 be installed since system requirements differ too much.  Try out the
 Debian 6.0 example `/usr/share/doc/finit/finit.conf` configuration that
 is capable of service monitoring SSH, sysklogd, gdm and a console getty!
+
+Every `run`, `task`, `service`, or `inetd` can also list the privileges
+the `/path/to/cmd` should be executed with.  Simply prefix the path with
+`[@USR[:GRP]]` like this:
+
+    run [2345] @joe:users /usr/bin/logger "Hello world"
 
 
 /etc/finit.d
@@ -255,6 +282,65 @@ Switching between runlevels can be done by calling init with a single
 argument, e.g. <kbd>init 5</kbd> switches to runlevel 5.
 
 
+Inetd
+-----
+
+A built-in *Internet Super Server* support was added in Finit v1.12,
+along with an internal `time` inetd service, RFC 868 (rdate).  The
+latter is supplied as a plugin to illustrate how simple it is to extend
+finit with more internal inetd services.
+
+> Please note, not all UNIX daemons are prepared to run as inetd services.
+> In the example below `sshd` also need the command line argument `-i`.
+
+The inetd support in finit is quite advanced.  Not only does it launch
+services on demand, it can do so on custom ports and also filter inbound
+traffic using a poor man's tcpwrappers.  The syntax is very similar to
+traditional `/etc/inetd.conf`, yet keeping with the style of Finit:
+
+    # Launch SSH on demand, in runlevels 2-5 as root
+    inetd ssh/tcp nowait [2345] @root:root /usr/sbin/sshd -i
+
+A more advanced example:
+
+    # Start sshd if inbound connection on eth0, port 222, or
+    # inbound on eth1, port 22.  Ignore on other interfaces.
+    inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
+    inetd ssh@eth1:22/tcp  nowait [2345] /usr/sbin/sshd -i
+
+If eth0 is your Internet interface you may want to avoid using the
+default port.  To run ssh on port 222, and all others on port 22:
+    
+    inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
+    inetd ssh/tcp          nowait [2345] /usr/sbin/sshd -i
+    
+This actually adds a deny rule for eth0 on ssh/tcp, implicitly.  You can
+even list the services in the reverse order with the same result:
+    
+    inetd ssh/tcp          nowait [2345] /usr/sbin/sshd -i
+    inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
+    
+There is no specific deny syntax available yet, see the TODO file for
+more details on how this can be implemented.
+
+The `time.so` inetd plugin setup as folllows.  Notice the keyword
+`internal` which applies to all built-in inetd services:
+
+    inetd time/tcp         nowait [2345] internal
+
+Then call `rdate` from a remote machine (or use localhost):
+
+    rdate -p <IP>
+
+If you use `time/udp` you must use the standard rdate implementation and
+then call it with `rdate -up` to connect using UDP.  Without the `-p`
+argument rdate will try to set the system clock.  Please note that rdate
+has been deprecated by the NTP protocol and this plugin should only be
+used for testing or environments where NTP for some reason is blocked.
+Also, remember the UNIX year 2038 bug, or in the case of RFC 868 (and
+some NTP implementations), year 2036!
+
+
 Hooks, Callbacks & Plugins
 --------------------------
 
@@ -278,12 +364,16 @@ plugins are available:
 
 * *resolvconf.so*: Setup necessary files for resolvconf at startup.
 
-* *tty.so*: Watches /dev, using inotify, for new device nodes (TTY's) to
-  start/stop getty consoles on them on demand.
+* *tty.so*: Watches `/dev`, using inotify, for new device nodes (TTY's)
+  to start/stop getty consoles on them on demand.  Useful when plugging
+  in a usb2serial converter to loging to your embedded device.
 
 * *urandom.so*: Setup random seed at startup.
 
 * *x11-common.so*: Setup necessary files for X-Window.
+
+* *time.so*: RFC 868 (rdate) plugin.  Start as inetd service.  Useful
+  for testing inetd filtering -- BusyBox has an rdate (TCP) client.
 
 Usually you want to hook into the boot process once, simple hook plugins
 like `bootmisc.so` are great for that purpose.  They are called at each
@@ -322,8 +412,8 @@ service, `SVC_START (1)` to start the service, or `SVC_RELOAD (2)` to
 have finit signal the process with `SIGHUP`.
 
 
-Rebooting and Halting
----------------------
+Rebooting & Halting
+-------------------
 
 Finit handles `SIGUSR1` and `SIGUSR2` for reboot and halt, and listens
 to `/dev/initctl` so system reboot and halt commands should also work.
