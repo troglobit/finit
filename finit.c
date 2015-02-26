@@ -195,6 +195,9 @@ int main(int argc, char* argv[])
 	 */
 	parse_finit_conf(FINIT_CONF);
 
+	/* Set hostname as soon as possible, for syslog et al. */
+	set_hostname(&hostname);
+
 	/*
 	 * Mount filesystems
 	 */
@@ -233,9 +236,6 @@ int main(int argc, char* argv[])
 
 	/* Setup kernel specific settings, e.g. allow broadcast ping, etc. */
 	run("/sbin/sysctl -e -p /etc/sysctl.conf >/dev/null");
-
-	/* Set initial hostname. */
-	set_hostname(&hostname);
 
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 	if (network)
