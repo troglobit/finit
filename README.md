@@ -26,30 +26,26 @@ Table of Contents
 Introduction
 ------------
 
-Init is the first process to run once a UNIX kernel has booted, it
-always has PID 1 and is responsible for starting up the rest of the
-system.  Finit is plugin-based with built in [process supervision][1]
-similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
-[runit][3].  The main focus of Finit is on small and embedded GNU/Linux
-systems, yet fully functional on standard server and desktop
-installations as well.
+Init is the first userland process started by the UNIX kernel, therefore
+it always has PID 1 and is responsible for starting up the rest of the
+system.
+
+Finit is a plugin-based init with [process supervision][1] similar to
+that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's [runit][3].
+The main focus of Finit is on small and embedded GNU/Linux systems, yet
+fully functional on standard server and desktop installations as well.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this can be quite resource intensive and cause longer
 boot times.  Finit is optimized to reduce context switches and forking
 of processes to provide a very basic bootstrap written entirely in C.
-Hence, there is no `/etc/init.d/rcS` script, or similar, but instead a
-human-readable `/etc/finit.conf`.  This file details what kernel modules
-to load, programs to run and daemons to supervise.
 
-The command line arguments given in `/etc/finit.conf` to each service
-provide a default.  Each service can register callbacks, using plugins,
-to override and modify the behavior to suit the current runlevel and
-system configuration.  For instance, before starting a heavily resource
-intensive service like IPsec or OpenVPN, a callback can check if the
-outbound interface is up and has an IP address, or just check if the
-service is disabled -- much like what a SysV init start script usually
-does.
+> Finit basically does everything you need from its `main()` function!
+
+Hence, there is no `/etc/init.d/rcS` script, or similar, instead Finit
+reads its configuration from [/etc/finit.conf](#etcfinitconf).  This
+file details what kernel modules to load, programs to run, daemons to
+supervise, and services to launch on demand.
 
 See [TroglOS][9] for an example of how to boot a small embedded system
 with Finit.
@@ -65,7 +61,7 @@ Start, monitor and restart processes (daemons) if they fail.
 **Inetd**
 
 Finit comes with an `inetd` server built-in.  No need to maintain a
-seprate config file for services that you want to start on demand.
+separate config file for services that you want to start on demand.
 
 **Runlevels**
 
@@ -101,6 +97,16 @@ hook into the boot process or respond to various I/O.
 Contrary to most other script based init alternatives ([SysV init][4],
 [upstart][6], [systemd][7], [OpenRC][8], etc.)  Finit reads its entire
 configuration from `/etc/finit.conf`.
+
+The command line arguments given in `/etc/finit.conf` to each service
+provide a default.  A plugin can be used to register a callback to a
+service and then modify the behavior to suit the current runlevel and
+system configuration.
+
+For instance, before starting a heavily resource intensive service like
+IPsec or OpenVPN, a callback can check if the outbound interface is up
+and has an IP address, or just check if the service is disabled -- much
+like what a SysV init start script usually does.
 
 Syntax:
 
@@ -139,11 +145,19 @@ Syntax:
   --foreground or --no-background argument to most daemons to prevent
   them from forking off to the background.
 
-* `inetd SVC[@iface[:port]]/PROTO <wait|nowait> [LVLS] /path/to/daemon args -- desc`
+* `inetd SVC[@iface[:port]]/PROTO <wait|nowait> [LVLS] /path/to/daemon args`
 
-  Launch daemon on demand on connection on SVC, as specified in the
-  standard UNIX `/etc/services` file.  With optional filtering for iface
-  and possible custom port.
+  Launch daemon on demand when a client initiates a connection to `SVC`.
+  Services (SVC) are specified in the standard UNIX `/etc/services`
+  file.  With optional filtering for `iface` and possible custom `port`.
+  The following example opens port 2323 and only allows inbound telnet
+  connections from `eth0`:
+
+    inetd telnet@eth0:2323/tcp nowait [2345] /sbin/telnetd -i -F
+
+  The `inetd` directive can also have ` -- Optional Description`, only
+  Finit does not output this text on the console when launching inetd
+  services.  Instead this text is sent to syslog.
 
 * `runparts <PATH>`
 
@@ -196,9 +210,9 @@ the `/path/to/cmd` should be executed with.  Simply prefix the path with
 ------------
 
 At the end of the boot, when networking and all services are up, finit
-calls its built-in run-parts(8) on the `/etc/finit.d/` directory, if it
-exists.  Similar to how the `/ec/rc.local` file works in most other init
-daemons, only finit runs a directory of scripts.  This replaces the
+calls its built-in [run-parts(8)] on the `/etc/finit.d/` directory, if
+it exists.  Similar to how the `/ec/rc.local` file works in most other
+init daemons, only finit runs a directory of scripts.  This replaces the
 earlier support for a `/usr/sbin/services.sh` script in the original
 finit.
 
@@ -221,7 +235,7 @@ Bootstrap
 13. Call `network` script, if set in `/etc/finit.conf`
 14. Call 3rd level hooks, `HOOK_NETWORK_UP`
 15. Switch to active runlevel, as set in `/etc/finit.conf`, default 2.
-    Here is where the rest of all tasks and services are started.
+    Here is where the rest of all tasks and inetd services are started.
 16. Call 4th level hooks, `HOOK_SVC_UP`
 17. Run-parts in `/etc/finit.d`, if any
 18. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
@@ -232,7 +246,7 @@ In (10) and (15) tasks and services defined in `/etc/finit.conf` are
 started.  Remember, all `service` and `task` stanzas are started in
 parallel and `run` in sequence, and in the order listed.  Hence, to
 emulate a SysV `/etc/init.d/rcS` one could write a long file with only
-`run` statments.
+`run` statements.
 
 Notice the five hook points that are called at various point in the
 bootstrap process.  This is where plugins can extend the boot in any way
@@ -323,7 +337,7 @@ even list the services in the reverse order with the same result:
 There is no specific deny syntax available yet, see the TODO file for
 more details on how this can be implemented.
 
-The `time.so` inetd plugin setup as folllows.  Notice the keyword
+The `time.so` inetd plugin setup as follows.  Notice the keyword
 `internal` which applies to all built-in inetd services:
 
     inetd time/tcp         nowait [2345] internal
@@ -366,7 +380,7 @@ plugins are available:
 
 * *tty.so*: Watches `/dev`, using inotify, for new device nodes (TTY's)
   to start/stop getty consoles on them on demand.  Useful when plugging
-  in a usb2serial converter to loging to your embedded device.
+  in a usb2serial converter to login to your embedded device.
 
 * *urandom.so*: Setup random seed at startup.
 
@@ -447,7 +461,7 @@ what is built and where resulting binaries are installed.
 
 * `LDLIBS=`: Default `LIBLIBS` are inherited from the environment.
 
-* `prefix=`: Base prefix path for all files, except `sbinbdir` and
+* `prefix=`: Base prefix path for all files, except `sbindir` and
   `sysconfdir`.  Used in concert with the `DESTDIR` variable.
 
   Defaults to `/usr`.
@@ -553,6 +567,7 @@ for bug fixes and proposed extensions.
 [8]:  http://www.gentoo.org/proj/en/base/openrc/
 [9]:  https://github.com/troglobit/troglos
 [10]: ftp://troglobit.com/finit/finit-1.3.tar.xz
+[run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
