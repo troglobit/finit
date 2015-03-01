@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+#include "inetd.h" /* XXX: Move back down after upgrading to libuEv >1.0.4 */
+
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -29,10 +31,10 @@
 #include "libuev/uev.h"
 #include "libite/lite.h"
 
-#include "inetd.h"
 #include "finit.h"
-#include "svc.h"
 #include "helpers.h"
+#include "private.h"
+#include "svc.h"
 
 
 /* Socket callback, looks up correct svc and starts it as an inetd service */
@@ -52,38 +54,38 @@ static void socket_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int UNUSED(ev
 /* Launch Inet socket for service.
  * TODO: Add filtering ALLOW/DENY per interface.
  */
-static void spawn_socket(uev_ctx_t *ctx, svc_t *svc)
+static void spawn_socket(inetd_t *inetd)
 {
 	int sd;
 	socklen_t len = sizeof(struct sockaddr);
 	struct sockaddr_in s;
 
-	if (!svc->inetd.type) {
-		FLOG_ERROR("Skipping invalid inetd service %s", svc->cmd);
+	if (!inetd->type) {
+		FLOG_ERROR("Skipping invalid inetd service %s", inetd->name);
 		return;
 	}
 
-	sd = socket(AF_INET, svc->inetd.type | SOCK_NONBLOCK, svc->inetd.proto);
+	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK, inetd->proto);
 	if (-1 == sd) {
-		FLOG_PERROR("Failed opening inetd socket type %d proto %d", svc->inetd.type, svc->inetd.proto);
+		FLOG_PERROR("Failed opening inetd socket type %d proto %d", inetd->type, inetd->proto);
 		return;
 	}
 
 	memset(&s, 0, sizeof(s));
 	s.sin_family      = AF_INET;
 	s.sin_addr.s_addr = INADDR_ANY;
-	s.sin_port        = htons(svc->inetd.port);
+	s.sin_port        = htons(inetd->port);
 	if (bind(sd, (struct sockaddr *)&s, len) < 0) {
 		FLOG_PERROR("Failed binding to port %d, maybe another %s server is already running",
-			    svc->inetd.port, svc->inetd.name);
+			    inetd->port, inetd->name);
 		close(sd);
 		return;
 	}
 
-	if (svc->inetd.port) {
-		if (svc->inetd.type == SOCK_STREAM) {
+	if (inetd->port) {
+		if (inetd->type == SOCK_STREAM) {
 			if (-1 == listen(sd, 20)) {
-				FLOG_PERROR("Failed listening to inetd service %s", svc->inetd.name);
+				FLOG_PERROR("Failed listening to inetd service %s", inetd->name);
 				close(sd);
 				return;
 			}
@@ -96,9 +98,7 @@ static void spawn_socket(uev_ctx_t *ctx, svc_t *svc)
 		}
 	}
 
-	_d("Initializing inetd %s service %s type %d proto %d on socket %d ...",
-	   svc->inetd.name, basename(svc->cmd), svc->inetd.type, svc->inetd.proto, sd);
-	uev_io_init(ctx, &svc->inetd.watcher, socket_cb, svc, sd, UEV_READ);
+	uev_io_init(ctx, &inetd->watcher, socket_cb, inetd->arg, sd, UEV_READ);
 }
 
 /* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
@@ -163,41 +163,41 @@ int inetd_stream_peek(int sd, char *ifname)
 /* Inetd monitor, called by svc_monitor() */
 int inetd_respawn(pid_t pid)
 {
-	svc_t *svc;
+	svc_t *svc = svc_find_by_pid(pid);
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+	if (svc && SVC_CMD_INETD == svc->type) {
 		inetd_t *inetd = &svc->inetd;
 
-		if (SVC_CMD_INETD != svc->type)
-			continue;
+		svc->pid = 0;
+		if (!inetd->forking)
+			uev_io_set(&inetd->watcher, inetd->watcher.fd, UEV_READ);
 
-		if (svc->pid == pid) {
-			svc->pid = 0;
-			if (!svc->inetd.forking)
-				uev_io_set(&inetd->watcher, inetd->watcher.fd, UEV_READ);
-
-			return 1; /* It was us! */
-		}
+		return 1;	/* It was us! */
 	}
 
-	return 0;		  /* Not an inetd service */
+	return 0;		/* Not an inetd service */
 }
 
-/* Called when changing runlevel to start Inet socket handlers */
-void inetd_runlevel(uev_ctx_t *ctx, int runlevel)
+
+void inetd_start(inetd_t *inetd)
 {
-	svc_t *svc;
+	if (inetd->watcher.fd == -1)
+		spawn_socket(inetd);
+}
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (SVC_CMD_INETD != svc->type)
-			continue;
+void inetd_stop(inetd_t *inetd)
+{
+	svc_t *svc = (svc_t *)inetd->arg;
 
-		if (!ISSET(svc->runlevels, runlevel))
-			continue;
-
-		
-		spawn_socket(ctx, svc);
+	if (inetd->watcher.fd != -1) {
+		uev_io_stop(&inetd->watcher);
+		close(inetd->watcher.fd);
+		inetd->watcher.fd = -1;
 	}
+
+	/* Stop any running service, not allowed anymore. */
+	if (svc->pid)
+		svc_stop(svc);
 }
 
 static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
@@ -222,7 +222,7 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 /*
  * Find exact match.
  */
-inetd_filter_t *inetd_filter_find(inetd_t *inetd, char *ifname)
+static inetd_filter_t *find_filter(inetd_t *inetd, char *ifname)
 {
 	inetd_filter_t *filter;
 
@@ -245,7 +245,7 @@ inetd_filter_t *inetd_filter_find(inetd_t *inetd, char *ifname)
  */
 inetd_filter_t *inetd_filter_match(inetd_t *inetd, char *ifname)
 {
-	inetd_filter_t *filter = inetd_filter_find(inetd, ifname);
+	inetd_filter_t *filter = find_filter(inetd, ifname);
 
 	if (filter)
 		return filter;
@@ -264,7 +264,7 @@ inetd_filter_t *inetd_filter_match(inetd_t *inetd, char *ifname)
 	return NULL;
 }
 
-int inetd_allow_iface(inetd_t *inetd, char *ifname)
+int inetd_allow(inetd_t *inetd, char *ifname)
 {
 	inetd_filter_t *filter;
 
@@ -274,7 +274,7 @@ int inetd_allow_iface(inetd_t *inetd, char *ifname)
 	filter = inetd_filter_match(inetd, ifname);
 	if (filter) {
 		_d("Filter %s for inetd %s already exists, skipping.", ifname ?: "*", inetd->name);
-		return 1;
+		return 0;
 	}
 
 	_d("Allow iface %s for service %s (port %d)", ifname ?: "*", inetd->name, inetd->port);
@@ -293,7 +293,7 @@ int inetd_allow_iface(inetd_t *inetd, char *ifname)
 	return 0;
 }
 
-int inetd_deny_iface(inetd_t *inetd, char *ifname)
+int inetd_deny(inetd_t *inetd, char *ifname)
 {
 	inetd_filter_t *filter;
 
@@ -304,7 +304,7 @@ int inetd_deny_iface(inetd_t *inetd, char *ifname)
 	if (!ifname[0])
 		ifname = NULL;
 
-	filter = inetd_filter_find(inetd, ifname);
+	filter = find_filter(inetd, ifname);
 	if (filter) {
 		_d("%s filter %s for inetd %s already exists, cannot set deny filter for same, skipping.",
 		   filter->deny ? "Deny" : "Allow", ifname ?: "*", inetd->name);
@@ -327,7 +327,7 @@ int inetd_deny_iface(inetd_t *inetd, char *ifname)
 	return 0;
 }
 
-int inetd_is_iface_allowed(inetd_t *inetd, char *ifname)
+int inetd_is_allowed(inetd_t *inetd, char *ifname)
 {
 	inetd_filter_t *filter;
 
@@ -373,47 +373,6 @@ int inetd_match(inetd_t *inetd, char *service, char *proto, char *port)
 	return 0;
 }
 
-static void deny_others(inetd_t *inetd)
-{
-	int first = 1;
-	svc_t *svc;
-
-	while ((svc = svc_iterator(first))) {
-		inetd_filter_t *filter;
-
-		first = 0;
-
-		/* Skip non-inetd services */
-		if (svc->type != SVC_CMD_INETD)
-			continue;
-
-		/* Skip ourselves */
-		if (&svc->inetd == inetd)
-			continue;
-
-		/* Skip different service types (telnet != ssh) */
-		if (strcmp(svc->inetd.name, inetd->name))
-			continue;
-
-		/* Deny all their interfaces from using my service */
-		LIST_FOREACH(filter, &svc->inetd.filters, link) {
-			if (filter->deny)
-				continue;
-
-			inetd_deny_iface(inetd, filter->ifname);
-		}
-
-		/* Deny my interfaces from using their service ... */
-		LIST_FOREACH(filter, &inetd->filters, link) {
-			if (filter->deny)
-				continue;
-
-			inetd_deny_iface(&svc->inetd, filter->ifname);
-		}
-	}
-}
-
-
 /*
  * This function is called to add a new, unique, inetd service.  When an
  * ifname is given as argument this means *only* run service on this
@@ -433,11 +392,11 @@ static void deny_others(inetd_t *inetd)
  * (any!) previous rule and add its ifname to their deny list.
  *
  * If equivalent service exists already svc_register() will instead call
- * inetd_allow_iface().
+ * inetd_allow().
  */
-int inetd_add(inetd_t *inetd, char *service, char *proto, char *ifname, char *port, int forking)
+int inetd_new(inetd_t *inetd, char *service, char *proto, int forking)
 {
-	int dport, cport = -1, result;
+	int result;
 	struct servent  *sv = NULL;
 	struct protoent *pv = NULL;
 
@@ -448,11 +407,11 @@ int inetd_add(inetd_t *inetd, char *service, char *proto, char *ifname, char *po
 	if (result)
 		return result;
 
-	dport = ntohs(sv->s_port);
-	_d("Adding service %s (default port %d proto %s:%d custom port %s)",
-	   service, dport, sv->s_proto, pv->p_proto, port ?: "N/A");
-
-	/* Save inetd service name */
+	/* Setup defaults */
+	inetd->std     = 1;
+	inetd->port    = ntohs(sv->s_port);
+	inetd->proto   = pv->p_proto;
+	inetd->forking = !!forking;
 	strlcpy(inetd->name, service, sizeof(inetd->name));
 
 	/* Naïve mapping tcp->stream, udp->dgram, other->dgram */
@@ -461,27 +420,78 @@ int inetd_add(inetd_t *inetd, char *service, char *proto, char *ifname, char *po
 	else
 		inetd->type = SOCK_DGRAM;
 
-	/* Check custom port */
+	/* Reset descriptor, used internally */
+	inetd->watcher.fd = -1;
+
+	_d("New service %s (default port %d proto %s:%d)", service, inetd->port, sv->s_proto, pv->p_proto);
+
+	return 0;
+}
+
+int inetd_del(inetd_t *inetd)
+{
+	inetd_filter_t *filter, *tmp;
+
+	LIST_FOREACH_SAFE(filter, &inetd->filters, link, tmp)
+		free(filter);
+
+	return 0;
+}
+
+int inetd_init(inetd_t *inetd, void *arg, char *ifname, char *port)
+{
+	int result, cport = -1;
+	svc_t *svc;
+
+	if (!inetd || !arg)
+		return errno = EINVAL;
+
 	if (port)
 		cport = atonum(port);
 
-	/* Compare with default/standard port */
-	if (cport == -1 || cport == dport) {
-		inetd->std  = 1;
-		inetd->port = dport;
-	} else {
+	if (cport != -1 && cport != inetd->port) {
 		inetd->std  = 0;
 		inetd->port = cport;
 	}
 
-	inetd->forking = !!forking;
-	inetd->proto   = pv->p_proto;
+	/* Setup socket callback argument */
+	inetd->arg = arg;
 
 	/* Poor man's tcpwrappers filtering */
-	result = inetd_allow_iface(inetd, ifname);
+	result = inetd_allow(inetd, ifname);
 
 	/* For each similar service, on other port, add their ifnames as deny to ours. */
-	deny_others(inetd);
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		inetd_filter_t *filter;
+
+		/* Skip non-inetd services */
+		if (svc->type != SVC_CMD_INETD)
+			continue;
+
+		/* Skip ourselves */
+		if (&svc->inetd == inetd)
+			continue;
+
+		/* Skip different service types (telnet != ssh) */
+		if (strcmp(svc->inetd.name, inetd->name))
+			continue;
+
+		/* Deny all their interfaces from using my service */
+		LIST_FOREACH(filter, &svc->inetd.filters, link) {
+			if (filter->deny)
+				continue;
+
+			inetd_deny(inetd, filter->ifname);
+		}
+
+		/* Deny my interfaces from using their service ... */
+		LIST_FOREACH(filter, &inetd->filters, link) {
+			if (filter->deny)
+				continue;
+
+			inetd_deny(&svc->inetd, filter->ifname);
+		}
+	}
 
 	return result;
 }

@@ -39,6 +39,7 @@ typedef struct inetd_filter {
 
 typedef struct {
 	uev_t  watcher;
+	void  *arg;		/* svc_t pointer for the socket callback */
 
 	int    type;		/* Socket type: SOCK_STREAM/SOCK_DGRAM    */
 	int    std;		/* Standard proto/port from /etc/services */
@@ -54,15 +55,20 @@ typedef struct {
 int  inetd_dgram_peek  (int sd, char *ifname);
 int  inetd_stream_peek (int sd, char *ifname);
 
-int  inetd_respawn (pid_t pid);
-void inetd_runlevel(uev_ctx_t *ctx, int runlevel);
+void inetd_start       (inetd_t *inetd);
+void inetd_stop        (inetd_t *inetd);
 
-int  inetd_match (inetd_t *inetd, char *service, char *proto, char *port);
-int  inetd_add   (inetd_t *inetd, char *service, char *proto, char *ifname, char *port, int forking);
+int  inetd_respawn     (pid_t pid);
 
-inetd_filter_t *inetd_filter_find      (inetd_t *inetd, char *ifname);
-int             inetd_allow_iface      (inetd_t *inetd, char *ifname);
-int             inetd_is_iface_allowed (inetd_t *inetd, char *ifname);
+int  inetd_new         (inetd_t *inetd, char *service, char *proto, int forking);
+int  inetd_del         (inetd_t *inetd);
+
+int  inetd_init        (inetd_t *inetd, void *arg, char *ifname, char *port);
+int  inetd_match       (inetd_t *inetd, char *service, char *proto, char *port);
+
+int  inetd_allow       (inetd_t *inetd, char *ifname);
+int  inetd_deny        (inetd_t *inetd, char *ifname);
+int  inetd_is_allowed  (inetd_t *inetd, char *ifname);
 
 #endif	/* FINIT_INETD_H_ */
 

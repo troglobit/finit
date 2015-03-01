@@ -28,6 +28,8 @@
 #include "svc.h"
 #include "plugin.h"
 
+uev_ctx_t *ctx;			/* Main loop context */
+
 void      svc_bootstrap    (void);
 void      svc_monitor      (pid_t lost);
 

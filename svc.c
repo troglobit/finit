@@ -69,7 +69,7 @@ svc_t *svc_new(void)
 	svc_t *svc = NULL;
 
 	__connect_shm();
-	if (svc_counter < MAX_NUM_SVC) {
+	if (svc_counter >= 0 && svc_counter < MAX_NUM_SVC) {
 		svc = &services[svc_counter++];
 		memset(svc, 0, sizeof(*svc));
 	} else {
@@ -81,19 +81,39 @@ svc_t *svc_new(void)
 }
 
 /**
- * svc_iterator - Iterates over all registered services.
- * @restart: Get first &svc_t object by setting @restart
+ * svc_del - Delete a service object
+ * @svc: Pointer to an &svc_t object
+ *
+ * Note, this function is not safe for public use.  Should only be used
+ * by this module until the storage of svc_t's has been refactored!
  *
  * Returns:
- * The first &svc_t when @restart is set, otherwise the next &svc_t until
+ * Always succeeds, returning POSIX OK(0).
+ */
+static int svc_del(svc_t *svc)
+{
+	if (svc_counter >= 0 && svc_counter < MAX_NUM_SVC) {
+		svc = &services[--svc_counter];
+		memset(svc, 0, sizeof(*svc));
+	}
+
+	return 0;
+}
+
+/**
+ * svc_iterator - Iterates over all registered services.
+ * @first: Get first &svc_t object, or next until end.
+ *
+ * Returns:
+ * The first &svc_t when @first is set, otherwise the next &svc_t until
  * the end when %NULL is returned.
  */
-svc_t *svc_iterator(int restart)
+svc_t *svc_iterator(int first)
 {
 	static int i = 0;
 
 	__connect_shm();
-	if (restart)
+	if (first)
 		i = 0;
 
 	if (i >= svc_counter)
@@ -111,12 +131,9 @@ svc_t *svc_iterator(int restart)
  */
 svc_t *svc_find(char *path)
 {
-	int first = 1;
 	svc_t *svc;
 
-	while ((svc = svc_iterator(first))) {
-		first = 0;
-
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (!strncmp(path, svc->cmd, strlen(svc->cmd))) {
 			_d("Found a matching svc for %s", path);
 			return svc;
@@ -126,14 +143,30 @@ svc_t *svc_find(char *path)
 	return NULL;
 }
 
-svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
+/**
+ * svc_find_by_pid - Find an service object by its PID
+ * @pid: Process ID to match
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find_by_pid(pid_t pid)
 {
-	int first = 1;
 	svc_t *svc;
 
-	while ((svc = svc_iterator(first))) {
-		first = 0;
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->pid == pid)
+			return svc;
+	}
 
+	return NULL;
+}
+
+svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (svc->type != SVC_CMD_INETD)
 			continue;
 
@@ -163,6 +196,7 @@ void svc_bootstrap(void)
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		svc_cmd_t cmd;
 
+		/* Inetd services cannot be part of bootstrap currently. */
 		if (svc->type == SVC_CMD_INETD)
 			continue;
 
@@ -217,9 +251,17 @@ void svc_runlevel(int newlevel)
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		svc_cmd_t cmd;
 
-		if (svc->type == SVC_CMD_INETD)
-			continue;
+		/* Inetd services have slightly different semantics */
+		if (svc->type == SVC_CMD_INETD) {
+			if (!ISSET(svc->runlevels, runlevel))
+				inetd_stop(&svc->inetd);
+			else
+				inetd_start(&svc->inetd);
 
+			continue;
+		}
+
+		/* All other services consult their callback here */
 		cmd = svc_enabled(svc, 0, NULL);
 		if (svc->pid) {
 			if (cmd == SVC_STOP)
@@ -352,8 +394,8 @@ int svc_register(int type, char *line, char *username)
 
 	/* Check if known inetd, then add ifname for filtering only. */
 	svc = svc_find_inetd(cmd, service, proto, port);
-	if (svc && type == SVC_CMD_INETD)
-		return inetd_allow_iface(&svc->inetd, iface);
+	if (svc)
+		return inetd_allow(&svc->inetd, iface);
 
 	svc = svc_new();
 	if (!svc) {
@@ -376,8 +418,18 @@ int svc_register(int type, char *line, char *username)
 		strlcpy(svc->username, username, sizeof(svc->username));
 	}
 
-	if (svc->type == SVC_CMD_INETD)
-		inetd_add(&svc->inetd, service, proto, iface, port, forking);
+	if (svc->type == SVC_CMD_INETD) {
+		int result;
+
+		result  = inetd_new(&svc->inetd, service, proto, forking);
+		result += inetd_init(&svc->inetd, svc, iface, port);
+
+		if (result) {
+			_e("Failed registering new inetd service %s.", service);
+			inetd_del(&svc->inetd);
+			return svc_del(svc);
+		}
+	}
 
 	if (plugin) {
 		/* Internal plugin provides this service */
@@ -599,7 +651,7 @@ int svc_start(svc_t *svc)
 			inetd_dgram_peek(sd, ifname);
 		}
 
-		if (!inetd_is_iface_allowed(&svc->inetd, ifname)) {
+		if (!inetd_is_allowed(&svc->inetd, ifname)) {
 			FLOG_INFO("Service %s on port %d not allowed from interface %s.",
 				  svc->inetd.name, svc->inetd.port, ifname);
 			if (svc->inetd.type == SOCK_STREAM)
@@ -767,7 +819,6 @@ int svc_reload(svc_t *svc)
 
 /**
  * Local Variables:
- *  compile-command: "gcc -g -DUNITTEST -o unittest svc.c"
  *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"

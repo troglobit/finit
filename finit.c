@@ -50,6 +50,8 @@ char *hostname  = NULL;
 char *rcsd      = NULL;
 char *console   = NULL;
 
+uev_ctx_t *ctx  = NULL;		/* Main loop context */
+
 static void parse_kernel_cmdline(void)
 {
 	FILE *fp;
@@ -140,7 +142,7 @@ static void banner(void)
 
 int main(int argc, char* argv[])
 {
-	uev_ctx_t ctx;
+	uev_ctx_t loop;
 
 	if (getpid() != 1)
 		return client(argc, argv);
@@ -158,7 +160,8 @@ int main(int argc, char* argv[])
 	/*
 	 * Initalize event context.
 	 */
-	uev_init(&ctx);
+	uev_init(&loop);
+	ctx = &loop;
 
 	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
@@ -188,7 +191,7 @@ int main(int argc, char* argv[])
 	 * Load plugins first, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
-	print_result(plugin_load_all(&ctx, PLUGIN_PATH));
+	print_result(plugin_load_all(&loop, PLUGIN_PATH));
 
 	/*
 	 * Parse configuration file
@@ -220,7 +223,7 @@ int main(int argc, char* argv[])
 	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleanup temporary directories");
 
 	/* Base FS up, enable standard SysV init signals */
-	sig_setup(&ctx);
+	sig_setup(&loop);
 
 	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
@@ -250,9 +253,6 @@ int main(int argc, char* argv[])
 	 */
 	svc_runlevel(cfglevel);
 
-	/* Start inetd services */
-	inetd_runlevel(&ctx, runlevel);
-
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 
@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Enter main loop to monior /dev/initctl and services
 	 */
-	return uev_run(&ctx, 0);
+	return uev_run(&loop, 0);
 }
 
 /**

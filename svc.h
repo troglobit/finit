@@ -110,8 +110,9 @@ static inline svc_t *finit_svc_connect(void)
 
 svc_t	 *svc_new	    (void);
 svc_t	 *svc_find	    (char *path);
+svc_t    *svc_find_by_pid   (pid_t pid);
 svc_t    *svc_find_inetd    (char *path, char *service, char *proto, char *port);
-svc_t	 *svc_iterator	    (int restart);
+svc_t	 *svc_iterator	    (int first);
 void	  svc_runlevel	    (int newlevel);
 
 int	  svc_register	    (int type, char *line, char *username);
