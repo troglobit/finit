@@ -45,7 +45,7 @@ static plugin_t plugin = {
 
 static void fifo_open(void)
 {
-	plugin.io.fd = open(FINIT_FIFO, O_RDONLY | O_NONBLOCK);
+	plugin.io.fd = open(FINIT_FIFO, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	if (-1 == plugin.io.fd) {
 		_e("Failed opening %s FIFO, error %d: %s", FINIT_FIFO, errno, strerror(errno));
 		return;
