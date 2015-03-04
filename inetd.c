@@ -169,7 +169,8 @@ int inetd_respawn(pid_t pid)
 		inetd_t *inetd = &svc->inetd;
 
 		svc->pid = 0;
-		if (!inetd->forking)
+
+		if (ISSET(svc->runlevels, runlevel) && !inetd->forking)
 			uev_io_set(&inetd->watcher, inetd->watcher.fd, UEV_READ);
 
 		return 1;	/* It was us! */
