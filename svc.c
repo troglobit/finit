@@ -248,6 +248,8 @@ void svc_runlevel(int newlevel)
 	runlevel  = newlevel;
 	utmp_save(prevlevel, newlevel);
 
+	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
+
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		svc_cmd_t cmd;
 
