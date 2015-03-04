@@ -104,10 +104,14 @@ static void spawn_socket(inetd_t *inetd)
 /* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
 int inetd_dgram_peek(int sd, char *ifname)
 {
+	char cmbuf[0x100];
 	struct msghdr msgh;
 	struct cmsghdr *cmsg;
 
 	memset(&msgh, 0, sizeof(msgh));
+	msgh.msg_control    = cmbuf;
+	msgh.msg_controllen = sizeof(cmbuf);
+
 	if (recvmsg(sd, &msgh, MSG_PEEK) < 0)
 		return -1;
 
