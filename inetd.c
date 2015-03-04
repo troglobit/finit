@@ -36,6 +36,13 @@
 #include "private.h"
 #include "svc.h"
 
+#define ENABLE_SOCKOPT(sd, level, opt)					\
+	do {								\
+		int val = 1;						\
+		if (setsockopt(sd, level, opt, &val, sizeof(val)) < 0)	\
+			FLOG_PERROR("Failed setting %s on %s service.", \
+				    #opt, inetd->name);			\
+	} while (0);
 
 /* Socket callback, looks up correct svc and starts it as an inetd service */
 static void socket_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int UNUSED(events))
@@ -65,11 +72,15 @@ static void spawn_socket(inetd_t *inetd)
 		return;
 	}
 
-	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK, inetd->proto);
+	_d("Spawning server socket for inetd %s ...", inetd->name);
+	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK | SOCK_CLOEXEC, inetd->proto);
 	if (-1 == sd) {
 		FLOG_PERROR("Failed opening inetd socket type %d proto %d", inetd->type, inetd->proto);
 		return;
 	}
+
+	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEADDR);
+	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEPORT);
 
 	memset(&s, 0, sizeof(s));
 	s.sin_family      = AF_INET;
@@ -90,11 +101,8 @@ static void spawn_socket(inetd_t *inetd)
 				return;
 			}
 		} else {           /* SOCK_DGRAM */
-			int opt = 1;
-
 			/* Set extra sockopt to get ifindex from inbound packets */
-			if (-1 == setsockopt(sd, SOL_IP, IP_PKTINFO, &opt, sizeof(opt)))
-				_pe("Failed enabling IP_PKTINFO on socket");
+			ENABLE_SOCKOPT(sd, SOL_IP, IP_PKTINFO);
 		}
 	}
 
