@@ -59,7 +59,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 {
 	struct init_request rq;
 
-	_d("Receiving request on %s...", FINIT_FIFO);
+	_d("Receiving request on descriptor %d, from %s ...", fd, FINIT_FIFO);
 	while (1) {
 		ssize_t len = read(fd, &rq, sizeof(rq));
 
@@ -73,6 +73,9 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 
 				_e("Failed reading initctl request, error %d: %s", errno, strerror(errno));
 			}
+
+			_d("Nothing to do, bailing out.");
+
 			break;
 		}
 
@@ -81,7 +84,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			break;
 		}
 
-		_d("Magic OK...");
+		_d("Magic OK ...");
 		if (rq.cmd == INIT_CMD_RUNLVL) {
 			switch (rq.runlevel) {
 			case '0':
