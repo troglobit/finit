@@ -167,12 +167,14 @@ static void generic_io_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int event
 	plugin_t *p = (plugin_t *)arg;
 
 	if (is_io_plugin(p) && p->io.fd == w->fd) {
+		/* Stop watcher, callback may close descriptor on us ... */
+		uev_io_stop(w);
+
 		_d("Calling I/O %s from runloop...", basename(p->name));
 		p->io.cb(p->io.arg, w->fd, events);
 
 		/* Update fd, may be changed by plugin callback, e.g., if FIFO */
-		if (p->io.fd != w->fd)
-			uev_io_set(w, p->io.fd, p->io.flags);
+		uev_io_set(w, p->io.fd, p->io.flags);
 	}
 }
 
