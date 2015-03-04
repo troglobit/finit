@@ -4,7 +4,7 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
-[1.12] - 2015-02-27
+[1.12] - 2015-03-04
 -------------------
 
 The inetd release.
@@ -12,7 +12,7 @@ The inetd release.
 ### Changes
 * Add support for built-in inetd super server -- launch services on
   demand.  Supports filtering per interface and custom Inet ports.
-* Upgrade to [libuEv] v1.0.4
+* Upgrade to [libuEv] v1.1.0 to better handle error conditions.
 * Allow mixed case config directives in `finit.conf`
 * Add support for RFC 868 (rdate) time plugin, start as inetd service.
 * Load plugins before parsing `finit.conf`, this makes it possible to
@@ -30,7 +30,7 @@ The inetd release.
   turned out to not work so well after all.  For instance, launching
   TTYs in a background process completely blocked inetd services from
   even starting up listening sockets ... proper fork seems to work fine
-  though.
+  though.  This is the casue for *yanking* the [1.11] release, below.
 * Trap segfaults caused by external plugins/callbacks in a sub-process.
   This prevents a single programming mistake in by a 3rd party developer
   from taking down the entire system.
@@ -40,10 +40,14 @@ The inetd release.
 * Only restart *lost daemons* when recovering from a SIGSTOP/norespawn.
 
 
-[1.11] - 2015-01-24
--------------------
+[1.11] - 2015-01-24 [YANKED]
+----------------------------
 
 The [libuEv] release.
+
+**Note:** This release has been *yanked* from distribution due to a
+  regression in launching background processes and TTY's.  Fixed in
+  Finit v[1.12].
 
 ### Changes
 * Now using the asynchronous libuEv library for handling all events:
