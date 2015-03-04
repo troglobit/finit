@@ -80,7 +80,9 @@ static void spawn_socket(inetd_t *inetd)
 	}
 
 	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEADDR);
+#ifdef SO_REUSEPORT
 	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEPORT);
+#endif
 
 	memset(&s, 0, sizeof(s));
 	s.sin_family      = AF_INET;
