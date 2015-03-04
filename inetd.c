@@ -192,6 +192,7 @@ void inetd_stop(inetd_t *inetd)
 
 	if (inetd->watcher.fd != -1) {
 		uev_io_stop(&inetd->watcher);
+		shutdown(inetd->watcher.fd, SHUT_RDWR);
 		close(inetd->watcher.fd);
 		inetd->watcher.fd = -1;
 	}
