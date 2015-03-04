@@ -253,8 +253,9 @@ Support for monitoring the health of the system and its processes.
     the RT priority to 98 (just below the kernel watchdog in prio).
     This to ensure that system monitoring goes before anything else in
     the system.
+  - Use UNIX domain sockets for communication between daemon and clients
 * Separate `/etc/watchdog.conf` configuration file, or a perhaps
-  support for `/etc/finit.d/PLUGIN.conf`?
+  support for a more generic `/etc/finit.d/PLUGIN.conf`?
 * Support enable/disable watchdog features:
   - Supervise processes,
   - CPU loadavg,
