@@ -25,7 +25,9 @@
 
 include  ../common.mk
 
+ifneq ($(STATIC), 1)
 CFLAGS     += -fPIC
+endif
 HEADERS     = lite.h
 OBJS       := copyfile.o dir.o fexist.o fisdir.o fmode.o rsync.o
 OBJS       += strlcpy.o strlcat.o strtonum.o
@@ -33,9 +35,14 @@ DEPS       := $(addprefix ., $(OBJS:.o=.d))
 
 VER         = 0
 LIBNAME     = libite
-TARGET      = $(LIBNAME).so
-VERLIB      = $(TARGET).$(VER)
+SOLIB       = $(LIBNAME).so.$(VER)
+SYMLIB      = $(LIBNAME).so
 STATICLIB   = $(LIBNAME).a
+ifeq ($(STATIC), 1)
+TARGET      = $(STATICLIB)
+else
+TARGET      = $(STATICLIB) $(SOLIB)
+endif
 
 CHECK_FLAGS = $(CFLAGS) $(CPPFLAGS)
 
@@ -43,17 +50,20 @@ all: $(TARGET)
 
 $(OBJS): Makefile
 
-$(TARGET): $(OBJS)
+$(SOLIB): $(OBJS)
 	@printf "  LINK    %s\n" $@
-#	@$(AR) $(ARFLAGS) $(STATICLIB) $(OBJS)
 	@$(CC) $(LDFLAGS) -shared $(OBJS) -lrt -lcrypt -Wl,-soname,$@ -o $@
-	@ln -sf $@ $(VERLIB)
+
+$(STATICLIB): Makefile $(OBJS)
+	@printf "  ARCHIVE $@\n"
+	@$(AR) $(ARFLAGS) $@ $(OBJS)
 
 install-exec: all
 	@install -d $(DESTDIR)$(libdir)
-	@echo "  INSTALL $(DESTDIR)$(libdir)/$(TARGET)"
-	@$(STRIPINST) $(TARGET) $(DESTDIR)$(libdir)/$(TARGET)
-	@ln -sf $(TARGET) $(DESTDIR)$(libdir)/$(VERLIB)
+	@printf "  INSTALL $(DESTDIR)$(libdir)/$(SOLIB)\n"
+	@$(STRIPINST)  $(SOLIB) $(DESTDIR)$(libdir)/$(SOLIB)
+	@$(STRIPINST)  $(STATICLIB) $(DESTDIR)$(libdir)/$(STATICLIB)
+	@ln -sf $(SOLIB) $(DESTDIR)$(libdir)/$(SYMLIB)
 
 install-dev:
 	@for file in $(HEADERS); do	                                \
@@ -61,11 +71,15 @@ install-dev:
 		$(INSTALL) -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
 
-install: install-dev install-exec
+install: install-exec install-dev
 
 uninstall:
-	-@$(RM) $(DESTDIR)$(libdir)/$(VERLIB)
-	-@$(RM) $(DESTDIR)$(libdir)/$(TARGET)
+	-@$(RM) $(DESTDIR)$(libdir)/$(SOLIB)
+	-@$(RM) $(DESTDIR)$(libdir)/$(SYMLIB)
+	-@$(RM) $(DESTDIR)$(libdir)/$(STATICLIB)
+	-@for file in $(HEADERS); do			\
+		$(RM) $(DESTDIR)$(incdir)/$$file;	\
+	done
 
 clean: uninstall
 	-@$(RM) $(OBJS) $(DEPS) $(TARGET) $(VERLIB) $(STATICLIB)

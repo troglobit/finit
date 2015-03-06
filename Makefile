@@ -56,6 +56,19 @@ FINIT_FIFO ?= /dev/initctl
 FINIT_CONF ?= $(sysconfdir)/finit.conf
 FINIT_RCSD ?= $(sysconfdir)/finit.d
 
+# Some people may want to build Finit with statically linked libraries
+# invocation: make STATIC=1
+ifeq ($(STATIC), 1)
+LDFLAGS    += -static
+CPPFLAGS   += -DPLUGINS_STATIC
+PLUGINS     = ""
+SRCS       += $(wjldcard plugins/*.c)
+OBJS       := $(SRCS:.c=.o)
+else
+LDFLAGS    += -rdynamic
+LDLIBS     += -ldl
+endif
+
 CFLAGS     += -W -Wall -Werror -Os
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
@@ -64,12 +77,12 @@ CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
 CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(plugindir)\"
-LDFLAGS    += -rdynamic -L$(TOPDIR)/libite
-DEPLIBS     = libite/libite.so libuev/libuev.a
-LDLIBS     += -ldl -lite
+LDFLAGS    += -L$(TOPDIR)/libite -L$(TOPDIR)/libuev
+DEPLIBS     = libite/libite.a libuev/libuev.a
+LDLIBS     += -lite -luev
 
 include common.mk
-export libdir plugindir incdir ROOTDIR CPPFLAGS LDFLAGS LDLIBS
+export libdir plugindir incdir ROOTDIR CPPFLAGS LDFLAGS LDLIBS STATIC
 
 all: $(DEPLIBS) $(EXEC)
 	+$(MAKE) -C plugins $@
@@ -78,9 +91,9 @@ $(DEPLIBS): Makefile
 	+$(MAKE) -C libite all
 	+$(MAKE) -C libuev all
 
-$(OBJS): Makefile
+$(OBJS): Makefile $(DEPLIBS)
 
-finit: $(OBJS) $(DEPLIBS)
+finit: $(OBJS)
 
 reboot: reboot.o $(DEPLIBS)
 

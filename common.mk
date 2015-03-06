@@ -8,6 +8,7 @@ MAKEFLAGS   = --no-print-directory --silent
 CHECK      := cppcheck $(CPPFLAGS) --quiet --enable=all
 INSTALL    := install --backup=off
 STRIPINST  := $(INSTALL) -s --strip-program=$(CROSS)strip -m 0755
+ARFLAGS    := crus
 
 # Smart autodependecy generation via GCC -M.
 .%.d: %.c
