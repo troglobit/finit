@@ -438,10 +438,46 @@ plugin.
 Building
 --------
 
-The finit build system does not employ the GNU Configure and Build
-System, instead standard makefiles are used. The user is encouraged to
-make source code changes, use defines and conditionally building plugins
-instead to alter the behavior of finit.
+Finit comes with a lightweight configure script to control which
+features to enable an plugins to build.  Below are a few of the main
+switches to configure:
+
+* `--prefix=`: Base prefix path for all files, except `--sbindir` and
+  `--sysconfdir`.  Used in concert with the `DESTDIR` variable.
+
+  Defaults to `/usr`.
+
+* `--sbindir=`: Path to where resulting binaries should install to. Used
+  in concert with the `DESTDIR` variable.
+
+  Defaults to `/sbin`.
+
+* `--sysconfdir=`: Path to where finit configuration files should
+  install to.  Used in concert with the `DESTDIR` variable.
+
+  Defaults to `/etc`, but is currently unused.
+
+* `--plugindir=`: Absolute path to where finit should search for
+  dynamically loadable plugins at runtime.  Can also be controlled
+  with the `--libdir` switch.
+
+  Defaults to `/lib/finit/plugins`.
+
+* `--with-plugins=`: List of stock finit plugins to build and install.
+  The build system adds `.o` or `.so` extension to the listed plugins
+  depending on the `--enable-static` switch.
+
+* `--enable-embedded`: Target finit for BusyBox getty and mdev instead
+  of a standard Linux distribution with GNU tools and udev.
+
+* `--enable-debug`: Add GDB symbols and disable code optimization.
+
+* `--enable-static`: Build Finit statically.  The plugins will be
+  built-in (.o files) instead.  Note: very untested and not all plugins
+  can be built static.  It is recommended to use `--with-plugins` and
+  select only the plugins really needed.
+
+* `--disable-inetd`: Disables the built-in inetd server.
 
 The following environment variables are checked by the makefiles and
 control what is built and where resulting binaries are installed.
@@ -461,29 +497,6 @@ control what is built and where resulting binaries are installed.
 
 * `LDLIBS=`: Default `LIBLIBS` are inherited from the environment.
 
-* `prefix=`: Base prefix path for all files, except `sbindir` and
-  `sysconfdir`.  Used in concert with the `DESTDIR` variable.
-
-  Defaults to `/usr`.
-
-* `sbindir=`: Path to where resulting binaries should install to. Used
-  in concert with the `DESTDIR` variable.
-
-  Defaults to `/sbin`.
-
-* `sysconfdir=`: Path to where finit configuration files should install
-  to.  Used in concert with the `DESTDIR` variable.
-
-  Defaults to `/etc`, but is currently unused.
-
-* `PLUGINS=`: List of stock finit plugins to build and install.
-
-* `plugindir=`: Absolute path to where finit should look for dynamically
-  loadable plugins at runtime.  At installation prepended by `DESTDIR`
-  and `prefix`.
-
-  Defaults to `/lib/finit/plugins`.
-
 * `DESTDIR=`: Used by packagers and distributions when building a
   relocatable bundle of files.  Always prepended to the `prefix`
   destination directory.
@@ -492,12 +505,12 @@ control what is built and where resulting binaries are installed.
 
 First, unpack the archive:
 
-<kbd>$ tar xfJ finit-1.3.tar.xz; cd finit-1.3/</kbd>
+<kbd>$ tar xfJ finit-1.13.tar.xz; cd finit-1.13/</kbd>
 
-Then build and install:
+Then configure, build and install:
 
-<kbd>$ PLUGINS="initctl.so hwclock.so" DESTDIR=/tmp/finit make install</kbd>
-
+      $ ./configure --with-plugins="initctl.so hwclock.so"
+      $ make
       CC      finit.o
       CC      conf.o
       CC      helpers.o
@@ -510,18 +523,22 @@ Then build and install:
       PLUGIN  plugins/initctl.so
       CC      plugins/hwclock.o
       PLUGIN  plugins/hwclock.so
+      $ DESTDIR=/tmp/finit make install
       INSTALL /tmp/finit/sbin/finit
       INSTALL /tmp/finit/lib/finit/plugins/initctl.so
       INSTALL /tmp/finit/lib/finit/plugins/hwclock.so
 
-In this example the [finit-1.3.tar.xz][10] archive is unpacked to the
-user's home directory, built and installed to a temporary staging
-directory.  The environment variables `DESTDIR` and `PLUGINS` are
-changed to suit this particular build.
+In this example the [finit-1.13.tar.xz][10] archive is unpacked to the
+user's home directory, configured, built and installed to a temporary
+staging directory.  The environment variable `DESTDIR` controls the
+destination directory when installing, very useful for building binary
+standalone packages.
 
 To target an embedded Linux system, usally a system that use BusyBox
-tools instead of udev & C:o, add `CPPGLAGS="-DEMBEDDED_SYSTEM"` to the
-build command above.
+tools instead of udev & C:o, add `--enable-embedded` to the configure
+command above.
+
+For more configure flags, see <kbd>./configure --help</kbd>
 
 **Note:** If you run into problems starting Finit, take a look at
   `finit.c`.  One of the most common problems is a custom Linux kernel
@@ -575,7 +592,7 @@ for bug fixes and proposed extensions.
 [7]:  http://www.freedesktop.org/wiki/Software/systemd/
 [8]:  http://www.gentoo.org/proj/en/base/openrc/
 [9]:  https://github.com/troglobit/troglos
-[10]: ftp://troglobit.com/finit/finit-1.3.tar.xz
+[10]: ftp://troglobit.com/finit/finit-1.13.tar.xz
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
