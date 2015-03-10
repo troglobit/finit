@@ -31,7 +31,7 @@ endif
 HEADERS     = lite.h
 OBJS       := copyfile.o dir.o fexist.o fisdir.o fmode.o rsync.o
 OBJS       += strlcpy.o strlcat.o strtonum.o
-DEPS       := $(addprefix ., $(OBJS:.o=.d))
+DEPS       := $(OBJS:.o=.d)
 
 VER         = 0
 LIBNAME     = libite
@@ -44,7 +44,6 @@ else
 TARGET      = $(STATICLIB) $(SOLIB)
 endif
 
-CHECK_FLAGS = $(CFLAGS) $(CPPFLAGS)
 
 all: $(TARGET)
 
@@ -81,14 +80,12 @@ uninstall:
 		$(RM) $(DESTDIR)$(incdir)/$$file;	\
 	done
 
-clean: uninstall
-	-@$(RM) $(OBJS) $(DEPS) $(TARGET) $(VERLIB) $(STATICLIB)
+clean:
+	-@$(RM) $(OBJS) $(DEPS) $(TARGET) $(SOLIB) $(STATICLIB)
 
-distclean: clean
-	-@$(RM) $(JUNK) unittest *.o .*.d *.unittest
+distclean:
+	-@$(RM) $(JUNK) unittest *.o *.a *.so* *.unittest
 
-ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)
 -include $(DEPS)
-endif
 endif

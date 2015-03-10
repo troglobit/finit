@@ -32,7 +32,7 @@
 #include "private.h"
 #include "sig.h"
 #include "tty.h"
-#include "lite.h"
+#include "libite/lite.h"
 #include "svc.h"
 #include "inetd.h"
 
@@ -90,7 +90,7 @@ svc_t *svc_new(void)
  * Returns:
  * Always succeeds, returning POSIX OK(0).
  */
-static int svc_del(svc_t *svc)
+int svc_del(svc_t *svc)
 {
 	if (svc_counter >= 0 && svc_counter < MAX_NUM_SVC) {
 		svc = &services[--svc_counter];
@@ -162,6 +162,7 @@ svc_t *svc_find_by_pid(pid_t pid)
 	return NULL;
 }
 
+#ifndef INETD_DISABLED
 svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
 {
 	svc_t *svc;
@@ -181,6 +182,7 @@ svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
 
 	return NULL;
 }
+#endif
 
 /**
  * svc_bootstrap - Start bootstrap services and tasks
@@ -254,6 +256,7 @@ void svc_runlevel(int newlevel)
 		svc_cmd_t cmd;
 
 		/* Inetd services have slightly different semantics */
+#ifndef INETD_DISABLED
 		if (svc->type == SVC_CMD_INETD) {
 			if (!ISSET(svc->runlevels, runlevel))
 				inetd_stop(&svc->inetd);
@@ -262,6 +265,7 @@ void svc_runlevel(int newlevel)
 
 			continue;
 		}
+#endif
 
 		/* All other services consult their callback here */
 		cmd = svc_enabled(svc, 0, NULL);
@@ -327,7 +331,10 @@ void svc_runlevel(int newlevel)
  */
 int svc_register(int type, char *line, char *username)
 {
-	int i = 0, forking = 0;
+	int i = 0;
+#ifndef INETD_DISABLED
+	int forking = 0;
+#endif
 	char *service = NULL, *proto = NULL, *iface = NULL, *port = NULL;
 	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
@@ -352,10 +359,12 @@ int svc_register(int type, char *line, char *username)
 	while (cmd) {
 		if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
+#ifndef INETD_DISABLED
 		else if (!strncasecmp(cmd, "nowait", 6))
 			forking = 1;
 		else if (!strncasecmp(cmd, "wait", 4))
 			forking = 0;
+#endif
 		else if (cmd[0] == '@')	/* @username[:group] */
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
@@ -385,6 +394,7 @@ int svc_register(int type, char *line, char *username)
 			*iface++ = 0;
 	}
 
+#ifndef INETD_DISABLED
 	/* Find plugin that provides a callback for this inetd service */
 	if (type == SVC_CMD_INETD && !strncasecmp(cmd, "internal", 8)) {
 		plugin = plugin_find(service);
@@ -398,6 +408,7 @@ int svc_register(int type, char *line, char *username)
 	svc = svc_find_inetd(cmd, service, proto, port);
 	if (svc)
 		return inetd_allow(&svc->inetd, iface);
+#endif
 
 	svc = svc_new();
 	if (!svc) {
@@ -420,6 +431,7 @@ int svc_register(int type, char *line, char *username)
 		strlcpy(svc->username, username, sizeof(svc->username));
 	}
 
+#ifndef INETD_DISABLED
 	if (svc->type == SVC_CMD_INETD) {
 		int result;
 
@@ -432,6 +444,7 @@ int svc_register(int type, char *line, char *username)
 			return svc_del(svc);
 		}
 	}
+#endif
 
 	if (plugin) {
 		/* Internal plugin provides this service */
@@ -570,8 +583,10 @@ void svc_monitor(pid_t lost)
 	if (tty_respawn(lost))
 		return;
 
+#ifndef INETD_DISABLED
 	if (inetd_respawn(lost))
 		return;
+#endif
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (lost != svc->pid)
@@ -610,7 +625,6 @@ void svc_monitor(pid_t lost)
 int svc_start(svc_t *svc)
 {
 	int respawn, sd = 0;
-	char ifname[IF_NAMESIZE] = "UNKNOWN";
 	pid_t pid;
 	sigset_t nmask, omask;
 
@@ -633,7 +647,10 @@ int svc_start(svc_t *svc)
 	if (is_norespawn())
 		return 0;
 
+#ifndef INETD_DISABLED
 	if (SVC_CMD_INETD == svc->type) {
+		char ifname[IF_NAMESIZE] = "UNKNOWN";
+
 		sd = svc->inetd.watcher.fd;
 
 		if (svc->inetd.type == SOCK_STREAM) {
@@ -663,8 +680,9 @@ int svc_start(svc_t *svc)
 		}
 
 		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->inetd.name, ifname);
-	}
-	else if (SVC_CMD_SERVICE != svc->type)
+	} else
+#endif
+	if (SVC_CMD_SERVICE != svc->type)
 		print_desc("", svc->desc);
 	else if (!respawn)
 		print_desc("Starting ", svc->desc);
@@ -679,7 +697,11 @@ int svc_start(svc_t *svc)
 	if (pid == 0) {
 		int i = 0;
 		int status;
+#ifdef ENABLE_STATIC
+		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
+#else
 		int uid = getuser(svc->username);
+#endif
 		struct sigaction sa;
 		char *args[MAX_NUM_SVC_ARGS];
 

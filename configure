@@ -1,0 +1,257 @@
+#!/bin/sh
+# Simple home brew configure script, not as fancy as GNU Autotools
+#
+#     --with-plugins="time initctl"
+#     --enable-static
+#     --disable-inetd
+#
+# This creates a configuration where Finit is built statically, with the
+# time and initctl plugins built-in, and no inetd support.
+#
+
+# Setup defaults if undefined
+defaults()
+{
+	prefix=${prefix:="/usr"}
+	sysconfdir=${sysconfdir:="/etc"}
+	sbindir=${sbindir:="/sbin"}
+	libdir=${libdir:="/lib"}
+	pdir="finit/plugins"
+	plugindir=${plugindir:="$libdir/$pdir"}
+	# The initctl FIFO, should probably be in /run, not /dev
+	fifo=${fifo:="/dev/initctl"}
+	conf="finit.conf"
+	config=${config:="$sysconfdir/$conf"}
+	confdir=${confdir:="finit.d"}
+	rcsd=${rcsd:="$sysconfdir/$confdir"}
+	debug=${debug:=0}
+	embedded=${embedded:=0}
+	inetd=${inetd:=1}
+	static=${static:=0}
+}
+
+result()
+{
+	echo
+	echo "Finit configuration"
+	echo "========================================================================"
+if [ x"$heading" != x"" ]; then
+	echo "Heading           : $heading"
+fi
+	echo "Install prefix    : $prefix"
+	echo "System config dir : $sysconfdir"
+	echo "Super user bindir : $sbindir"
+	echo "Shared libs dir   : $libdir"
+	echo "Plugins dir       : $plugindir"
+	echo "FIFO              : $fifo"
+	echo "Config file       : $config"
+	echo "rcs.d/ directory  : $rcsd"
+	if [ $debug -ne 0 ]; then
+		echo "Debug             : ENABLED"
+	fi
+	if [ $embedded -ne 0 ]; then
+		echo "Embedded target   : YES (BusyBox getty, and mdev instead of udev)"
+	fi
+	if [ $inetd -ne 0 ]; then
+		echo "Inetd             : Built-in"
+	else
+		echo "Inetd             : DISABLED"
+	fi
+	if [ $static -ne 0 ]; then
+		echo "Static finit      : YES"
+	fi
+	if [ x"$plugins" = x"" ]; then
+		echo "Plugins           : ALL"
+	else
+		echo "Plugins           : $plugins"
+	fi
+	echo
+}
+
+usage()
+{
+	defaults
+
+        echo "Run this script to configure finit for your operating system."
+        echo
+        echo "Usage: $0 [ARG]"
+	echo
+	echo "  --prefix=PREFIX        Set installation prefix, default '$prefix'"
+	echo "  --sysconfdir=CONF      Set conf dir, default '$sysconfdir'"
+	echo "  --sbindir=SBIN         Set sbin dir, default '$sbindir'"
+	echo "  --libdir=LIB           Set lib dir, default '$libdir'"
+	echo "  --plugindir=DIR        Set plugin dir, default '\$libdir/$pdir'"
+        echo
+	echo "  --with-fifo=FIFO       FIFO for initctl plugin, default '$fifo'"
+	echo "  --with-config=CONFIG   Finit CONFIG file, default '\$sysconfdir/$conf'"
+	echo "  --with-heading=GREET   Display GREET instead of Finit version at boot"
+        echo "  --with-plugins=\"a b c\" Build plugins 'a', 'b' and 'c', either as dynamic .so"
+        echo "                         files, or as built-in if --enable-static is given,"
+	echo "                         defaults to all plugins.  Exclude extension!"
+	echo "  --with-rcsd=RCSD       Finit RCSD directory, default '\$sysconfdir/$confdir'"
+        echo
+	echo "  --enable-embedded      Enable embedded defaults, BusBox getty, mdev etc."
+	echo "  --enable-debug         Enable debug flags, '-O0, -g'"
+        echo "  --enable-static        Link finit statically.  This disables a few features."
+	echo "  --disable-inetd        Disable inetd support if not needed."
+        echo
+	echo "The build system also supports external CFLAGS, CPPFLAGS, LDFLAGS, LDLIBS,"
+	echo "and DESTDIR, useful for packaging or cross-compiling."
+	echo
+        echo "Example:"
+	echo "         ./configure --enable-embedded --with-plugins=\"initctl tty\""
+	echo
+        echo "Report bugs to https://github.com/troglobit/finit/issues"
+        echo
+
+        exit 1
+}
+
+while [ "$*" != "" ]; do
+        opt=`expr "$1" : "--\([^=]*\)=.*"`
+        arg=`expr "$1" : "--[^=]*=\(.*\)"`
+        if [ -z "$opt" ]; then
+                opt=`expr "$1" : "--\(.*\)"`
+        fi
+        shift
+
+        case $opt in
+		prefix)
+			prefix="$arg"
+                        ;;
+
+		sysconfdir)
+			sysconfdir="$arg"
+                        ;;
+
+		sbindir)
+			sbindir="$arg"
+                        ;;
+
+		libdir)
+			libdir="$arg"
+                        ;;
+
+		plugindir)
+			plugindir="$arg"
+                        ;;
+
+                with-fifo)
+                        fifo="$arg"
+                        ;;
+
+                with-config)
+                        config="$arg"
+                        ;;
+
+		with-heading)
+			heading="$arg"
+			;;
+
+                with-plugins)
+                        plugins="$arg"
+                        ;;
+
+                with-rcsd)
+                        rcsd="$arg"
+                        ;;
+
+                enable-debug)
+			debug=1
+                        ;;
+
+                enable-embedded)
+			embedded=1
+                        ;;
+
+                disable-inetd)
+			inetd=0
+                        ;;
+
+                enable-static)
+			static=1
+                        ;;
+
+                help)
+                        usage
+                        ;;
+
+                *)
+                        echo "Unknown option: $opt"
+                        usage
+                        ;;
+        esac
+done
+
+# If no arguments given to configure script, use defaults
+defaults
+result
+
+##############################################################################
+echo "# Generated by finit configure script."                      > config.mk
+echo "prefix      = $prefix"                                      >> config.mk
+echo "sysconfdir  = $sysconfdir"                                  >> config.mk
+echo "sbindir     = $sbindir"                                     >> config.mk
+echo "libdir      = $libdir"                                      >> config.mk
+echo "plugindir   = $plugindir"                                   >> config.mk
+echo "incdir      = \$(prefix)/include/finit"                     >> config.mk
+echo "datadir     = \$(prefix)/share/doc/finit"                   >> config.mk
+echo "mandir      = \$(prefix)/share/man/man8"                    >> config.mk
+
+if [ $inetd -eq 0 ]; then
+	echo                                                      >> config.mk
+	echo "OBJS       := \$(filter-out inetd.o, \$(OBJS))"     >> config.mk
+fi
+
+echo                                                              >> config.mk
+if [ $debug -eq 1 ]; then
+	echo "CPPFLAGS   += -O0 -g"                               >> config.mk
+else
+	echo "CPPFLAGS   += -Os"                                  >> config.mk
+fi
+
+echo                                                              >> config.mk
+if [ $static -ne 0 ]; then
+	echo "STATIC      = 1"                                    >> config.mk
+	echo "LDFLAGS    += -static"                              >> config.mk
+	echo "CPPFLAGS   += -DENABLE_STATIC"                      >> config.mk
+	echo "PLUGINS     = \"\""                                 >> config.mk
+	if [ x"$plugins" != x"" ]; then
+		echo "OBJS       += \$(addsuffix .o, \$(addprefix plugins/, $plugins))" >> config.mk
+	else
+		echo "tmp        += \$(wildcard plugins/*.c)"     >> config.mk
+		echo "OBJS       += \$(tmp:.c=.o)"                >> config.mk
+	fi
+else
+	echo "STATIC      = 0"                                    >> config.mk
+	echo "LDFLAGS    += -rdynamic"                            >> config.mk
+	echo "LDLIBS     += -ldl"                                 >> config.mk
+	if [ x"$plugins" != x"" ]; then
+		echo "PLUGINS     = \$(addsuffix .so, $plugins)"  >> config.mk
+	fi
+fi
+
+echo                                                                 >> config.mk
+echo "export libdir plugindir incdir CPPFLAGS LDFLAGS LDLIBS STATIC" >> config.mk
+
+##############################################################################
+echo "/* Generated by finit configure script. */" > config.h
+
+if [ $embedded -eq 1 ]; then
+	echo "#define EMBEDDED_SYSTEM"              >> config.h
+fi
+
+if [ $inetd -eq 0 ]; then
+	echo "#define INETD_DISABLED"               >> config.h
+fi
+
+if [ x"$heading" != x"" ]; then
+	echo "#define INIT_HEADING    \"$heading\"" >> config.h
+fi
+
+echo "#define FINIT_FIFO      \"$fifo\""            >> config.h
+echo "#define FINIT_CONF      \"$config\""          >> config.h
+echo "#define FINIT_RCSD      \"$rcsd\""            >> config.h
+echo "#define PLUGIN_PATH     \"$plugindir\""       >> config.h
+
+

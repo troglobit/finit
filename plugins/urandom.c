@@ -25,10 +25,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "finit.h"
+#include "../finit.h"
 #include "libite/lite.h"
-#include "helpers.h"
-#include "plugin.h"
+#include "../helpers.h"
+#include "../plugin.h"
 
 static void setup(void *UNUSED(arg))
 {

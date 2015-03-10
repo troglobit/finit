@@ -27,7 +27,7 @@
 #include "finit.h"
 #include "svc.h"
 #include "tty.h"
-#include "lite.h"
+#include "libite/lite.h"
 #include "helpers.h"
 
 #define MATCH_CMD(l, c, x) \
@@ -246,7 +246,11 @@ static int parse_conf(char *file)
 
 		/* Classic inetd service */
 		if (MATCH_CMD(line, "inetd ", x)) {
+#ifndef INETD_DISABLED
 			svc_register(SVC_CMD_INETD, x, NULL);
+#else
+			_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
+#endif
 			continue;
 		}
 

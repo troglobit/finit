@@ -21,9 +21,9 @@
  * THE SOFTWARE.
  */
 
-#include "finit.h"
-#include "helpers.h"
-#include "plugin.h"
+#include "../finit.h"
+#include "../helpers.h"
+#include "../plugin.h"
 
 static void save(void *UNUSED(arg))
 {

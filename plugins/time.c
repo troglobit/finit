@@ -26,7 +26,7 @@
 #include <unistd.h>		/* STDIN_FILENO */
 #include <sys/socket.h>
 
-#include "plugin.h"
+#include "../plugin.h"
 
 /* UNIX epoch starts midnight, 1st Jan, 1970 */
 #define EPOCH_OFFSET 2208988800ULL

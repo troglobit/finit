@@ -28,10 +28,10 @@
 #include <sys/inotify.h>
 #include <sys/stat.h>
 
-#include "finit.h"
-#include "helpers.h"
-#include "plugin.h"
-#include "tty.h"
+#include "../finit.h"
+#include "../helpers.h"
+#include "../plugin.h"
+#include "../tty.h"
 
 static void watcher(void *arg, int fd, int events);
 

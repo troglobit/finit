@@ -438,13 +438,13 @@ plugin.
 Building
 --------
 
-The finit build system does not employ the GNU Configure and Build System,
-instead standard makefiles are used. The user is encouraged to make source
-code changes, using defines and conditionally building plugins instead to
-alter the behavior of finit.
+The finit build system does not employ the GNU Configure and Build
+System, instead standard makefiles are used. The user is encouraged to
+make source code changes, use defines and conditionally building plugins
+instead to alter the behavior of finit.
 
-The following environment variables are checked by the makefiles and control
-what is built and where resulting binaries are installed.
+The following environment variables are checked by the makefiles and
+control what is built and where resulting binaries are installed.
 
 * `ROOTDIR=`: Top directory for building complete system, used in pretty
   printing.
@@ -518,6 +518,15 @@ In this example the [finit-1.3.tar.xz][10] archive is unpacked to the
 user's home directory, built and installed to a temporary staging
 directory.  The environment variables `DESTDIR` and `PLUGINS` are
 changed to suit this particular build.
+
+To target an embedded Linux system, usally a system that use BusyBox
+tools instead of udev & C:o, add `CPPGLAGS="-DEMBEDDED_SYSTEM"` to the
+build command above.
+
+**Note:** If you run into problems starting Finit, take a look at
+  `finit.c`.  One of the most common problems is a custom Linux kernel
+  build that lack `CONFIG_DEVTMPFS`.  Another is too much cruft in the
+  system `/etc/fstab`.
 
 
 Running

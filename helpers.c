@@ -48,7 +48,7 @@
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"
-#include "lite.h"
+#include "libite/lite.h"
 
 #define NUM_ARGS    16
 #define NUM_SCRIPTS 128		/* ought to be enough for anyone */
@@ -710,6 +710,7 @@ int run_parts(char *dir, char *cmd)
 	return 0;
 }
 
+#ifndef ENABLE_STATIC
 int getuser(char *username)
 {
 	struct passwd *usr;
@@ -729,6 +730,7 @@ int getgroup(char *group)
 
 	return grp->gr_gid;
 }
+#endif
 
 /*
  * Other convenience functions

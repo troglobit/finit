@@ -37,54 +37,28 @@ EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
 OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o tty.o inetd.o
-SRCS        = $(OBJS:.o=.c)
-DEPS        = $(addprefix .,$(SRCS:.c=.d))
 
-# Installation paths, always prepended with DESTDIR if set
 TOPDIR      = $(shell pwd)
-prefix     ?= /usr
-sysconfdir ?= /etc
-sbindir    ?= /sbin
-libdir     ?= /lib
-plugindir  ?= $(libdir)/finit/plugins
-incdir      = $(prefix)/include/finit
-datadir     = $(prefix)/share/doc/finit
-mandir      = $(prefix)/share/man/man8
+-include config.mk
 
-# The initctl FIFO, should probably be in /run, not /dev
-FINIT_FIFO ?= /dev/initctl
-FINIT_CONF ?= $(sysconfdir)/finit.conf
-FINIT_RCSD ?= $(sysconfdir)/finit.d
+# Figure out source and dependency files
+SRCS        = $(OBJS:.o=.c)
+DEPS        = $(SRCS:.c=.d)
 
-# Some people may want to build Finit with statically linked libraries
-# invocation: make STATIC=1
-ifeq ($(STATIC), 1)
-LDFLAGS    += -static
-CPPFLAGS   += -DPLUGINS_STATIC
-PLUGINS     = ""
-SRCS       += $(wjldcard plugins/*.c)
-OBJS       := $(SRCS:.c=.o)
-else
-LDFLAGS    += -rdynamic
-LDLIBS     += -ldl
-endif
-
-CFLAGS     += -W -Wall -Werror -Os
+CFLAGS     += -W -Wall -Werror
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
-CPPFLAGS   += -Ilibite -Ilibuev
+CPPFLAGS   += -I$(TOPDIR)
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
-CPPFLAGS   += -DFINIT_FIFO=\"$(FINIT_FIFO)\" -DFINIT_CONF=\"$(FINIT_CONF)\"
-CPPFLAGS   += -DFINIT_RCSD=\"$(FINIT_RCSD)\" -DPLUGIN_PATH=\"$(plugindir)\"
 LDFLAGS    += -L$(TOPDIR)/libite -L$(TOPDIR)/libuev
 DEPLIBS     = libite/libite.a libuev/libuev.a
 LDLIBS     += -lite -luev
 
 include common.mk
-export libdir plugindir incdir ROOTDIR CPPFLAGS LDFLAGS LDLIBS STATIC
 
-all: $(DEPLIBS) $(EXEC)
+
+all: config.h $(DEPLIBS) $(EXEC)
 	+$(MAKE) -C plugins $@
 
 $(DEPLIBS): Makefile
@@ -92,6 +66,10 @@ $(DEPLIBS): Makefile
 	+$(MAKE) -C libuev all
 
 $(OBJS): Makefile $(DEPLIBS)
+
+config.h: configure
+	@echo "Please run configure script first."
+	@exit 1
 
 finit: $(OBJS)
 
@@ -149,16 +127,16 @@ uninstall-dev:
 uninstall: uninstall-exec uninstall-data uninstall-dev
 
 clean:
-	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
 	+$(MAKE) -C plugins $@
 	+$(MAKE) -C libite  $@
 	+$(MAKE) -C libuev  $@
+	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
 
 distclean: clean
-	-@$(RM) $(JUNK) unittest *.o .*.d
 	+$(MAKE) -C plugins $@
 	+$(MAKE) -C libite  $@
 	+$(MAKE) -C libuev  $@
+	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html
 
 check:
 	$(CHECK) *.c plugins/*.c libite/*.c
@@ -186,8 +164,6 @@ dev: distclean
 	  cd - >/dev/null; mv $$dir/$(DEV).tar.xz ../; cd ..;        \
 	  rm -rf $$dir; md5sum $(DEV).tar.xz | tee $(DEV).tar.xz.md5)
 
-ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)
 -include $(DEPS)
-endif
 endif

@@ -24,9 +24,13 @@
 #include <string.h>
 #include <utmp.h>
 
-#include "finit.h"
-#include "helpers.h"
-#include "plugin.h"
+#include "../finit.h"
+#include "../helpers.h"
+#include "../plugin.h"
+
+#ifdef ENABLE_STATIC
+#error This plugin uses getuser(), which relies on dynamically linked GLIBC.  Cannot be built statically!
+#endif
 
 /*
  * Setup standard FHS 2.3 structure in /var, and

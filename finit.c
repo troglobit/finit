@@ -35,7 +35,7 @@
 #include "svc.h"
 #include "sig.h"
 #include "tty.h"
-#include "lite.h"
+#include "libite/lite.h"
 #include "inetd.h"
 
 int   debug     = 0;
@@ -137,7 +137,11 @@ static int client(int argc, char *argv[])
 static void banner(void)
 {
 	delline();
+#ifdef INIT_HEADING
+	echo("%s", INIT_HEADING);
+#else
 	echo("Finit version " VERSION " (" WHOAMI ") " __DATE__ " " __TIME__);
+#endif
 }
 
 int main(int argc, char* argv[])

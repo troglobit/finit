@@ -109,6 +109,7 @@ static inline svc_t *finit_svc_connect(void)
 }
 
 svc_t	 *svc_new	    (void);
+int	  svc_del	    (svc_t *svc);
 svc_t	 *svc_find	    (char *path);
 svc_t    *svc_find_by_pid   (pid_t pid);
 svc_t    *svc_find_inetd    (char *path, char *service, char *proto, char *port);

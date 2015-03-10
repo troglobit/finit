@@ -29,10 +29,10 @@
 #include <unistd.h>		/* read() */
 #include <sys/stat.h>
 
-#include "helpers.h"
-#include "plugin.h"
-#include "sig.h"
-#include "finit.h"
+#include "../helpers.h"
+#include "../plugin.h"
+#include "../sig.h"
+#include "../finit.h"
 
 static void parse(void *arg, int fd, int events);
 

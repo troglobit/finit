@@ -32,14 +32,14 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "queue.h"		/* BSD sys/queue.h API */
-#include "lite.h"
+#include "libite/lite.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 
 static char *plugpath = NULL; /* Set by first load. */
 static TAILQ_HEAD(plugin_head, plugin) plugins  = TAILQ_HEAD_INITIALIZER(plugins);
 
-#ifndef PLUGINS_STATIC
+#ifndef ENABLE_STATIC
 static void check_plugin_depends(plugin_t *plugin);
 #endif
 
@@ -52,7 +52,7 @@ int plugin_register(plugin_t *plugin)
 
 	/* Setup default name if none is provided */
 	if (!plugin->name) {
-#ifndef PLUGINS_STATIC
+#ifndef ENABLE_STATIC
 		Dl_info info;
 
 		if (!dladdr(plugin, &info) || !info.dli_fname)
@@ -70,7 +70,7 @@ int plugin_register(plugin_t *plugin)
 		return 0;
 	}
 
-#ifndef PLUGINS_STATIC
+#ifndef ENABLE_STATIC
 	/* Resolve plugin dependencies */
 	check_plugin_depends(plugin);
 #endif
@@ -83,7 +83,7 @@ int plugin_register(plugin_t *plugin)
 /* Not called, at the moment plugins cannot be unloaded. */
 int plugin_unregister(plugin_t *plugin)
 {
-#ifndef PLUGINS_STATIC
+#ifndef ENABLE_STATIC
 	TAILQ_REMOVE(&plugins, plugin, link);
 
 	if (plugin->svc.cb) {
@@ -203,7 +203,7 @@ static void init_plugins(uev_ctx_t *ctx)
 	}
 }
 
-#ifndef PLUGINS_STATIC
+#ifndef ENABLE_STATIC
 /**
  * load_one - Load one plugin
  * @path: Path to finit plugins, usually %PLUGIN_PATH
@@ -282,12 +282,12 @@ static void check_plugin_depends(plugin_t *plugin)
 		load_one(plugpath, plugin->depends[i]);
 	}
 }
-#endif	/* PLUGINS_STATIC */
+#endif	/* ENABLE_STATIC */
 
 int plugin_load_all(uev_ctx_t *ctx, char *path)
 {
 	int fail = 0;
-#ifndef PLUGINS_STATIC
+#ifndef ENABLE_STATIC
 	DIR *dp = opendir(path);
 	struct dirent *entry;
 
@@ -311,7 +311,7 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 	closedir(dp);
 #else
 	_d("Finit built statically, not loading plugins from %s ...", path);
-#endif	/* PLUGINS_STATIC */
+#endif	/* ENABLE_STATIC */
 
 	/* Always initialize plugins */
 	init_plugins(ctx);
