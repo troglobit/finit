@@ -4,6 +4,7 @@
 #     --with-plugins="time initctl"
 #     --enable-static
 #     --disable-inetd
+#     --disable-plugins
 #
 # This creates a configuration where Finit is built statically, with the
 # time and initctl plugins built-in, and no inetd support.
@@ -28,6 +29,7 @@ defaults()
 	embedded=${embedded:=0}
 	inetd=${inetd:=1}
 	static=${static:=0}
+	disable_plugins=${disable_plugins:=0}
 }
 
 result()
@@ -60,10 +62,14 @@ fi
 	if [ $static -ne 0 ]; then
 		echo "Static finit      : YES"
 	fi
-	if [ x"$plugins" = x"" ]; then
-		echo "Plugins           : ALL"
+	if [ $disable_plugins -eq 1 ]; then
+		echo "Plugins           : DISABLED"
 	else
-		echo "Plugins           : $plugins"
+		if [ x"$plugins" = x"" ]; then
+			echo "Plugins           : ALL"
+		else
+			echo "Plugins           : $plugins"
+		fi
 	fi
 	echo
 }
@@ -94,6 +100,7 @@ usage()
 	echo "  --enable-debug         Enable debug flags, '-O0, -g'"
         echo "  --enable-static        Link finit statically.  This disables a few features."
 	echo "  --disable-inetd        Disable inetd support if not needed."
+	echo "  --disable-plugins      Disable plugins"
         echo
 	echo "The build system also supports external CFLAGS, CPPFLAGS, LDFLAGS, LDLIBS,"
 	echo "and DESTDIR, useful for packaging or cross-compiling."
@@ -168,6 +175,10 @@ while [ "$*" != "" ]; do
 			inetd=0
                         ;;
 
+		disable-plugins)
+			disable_plugins=1
+			;;
+
                 enable-static)
 			static=1
                         ;;
@@ -216,11 +227,13 @@ if [ $static -ne 0 ]; then
 	echo "LDFLAGS    += -static"                              >> config.mk
 	echo "CPPFLAGS   += -DENABLE_STATIC"                      >> config.mk
 	echo "PLUGINS     = \"\""                                 >> config.mk
-	if [ x"$plugins" != x"" ]; then
-		echo "OBJS       += \$(addsuffix .o, \$(addprefix plugins/, $plugins))" >> config.mk
-	else
-		echo "tmp        += \$(wildcard plugins/*.c)"     >> config.mk
-		echo "OBJS       += \$(tmp:.c=.o)"                >> config.mk
+	if [ $disable_plugins -ne 1 ]; then
+		if [ x"$plugins" != x"" ]; then
+			echo "OBJS       += \$(addsuffix .o, \$(addprefix plugins/, $plugins))" >> config.mk
+		else
+			echo "tmp        += \$(wildcard plugins/*.c)"     >> config.mk
+			echo "OBJS       += \$(tmp:.c=.o)"                >> config.mk
+		fi
 	fi
 else
 	echo "STATIC      = 0"                                    >> config.mk
