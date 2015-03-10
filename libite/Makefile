@@ -60,9 +60,11 @@ $(STATICLIB): Makefile $(OBJS)
 install-exec: all
 	@install -d $(DESTDIR)$(libdir)
 	@printf "  INSTALL $(DESTDIR)$(libdir)/$(SOLIB)\n"
-	@$(STRIPINST)  $(SOLIB) $(DESTDIR)$(libdir)/$(SOLIB)
 	@$(STRIPINST)  $(STATICLIB) $(DESTDIR)$(libdir)/$(STATICLIB)
+ifeq ($(STATIC), 0)
+	@$(STRIPINST)  $(SOLIB) $(DESTDIR)$(libdir)/$(SOLIB)
 	@ln -sf $(SOLIB) $(DESTDIR)$(libdir)/$(SYMLIB)
+endif
 
 install-dev:
 	@for file in $(HEADERS); do	                                \
