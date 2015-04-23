@@ -208,6 +208,7 @@ echo "plugindir   = $plugindir"                                   >> config.mk
 echo "incdir      = \$(prefix)/include/finit"                     >> config.mk
 echo "datadir     = \$(prefix)/share/doc/finit"                   >> config.mk
 echo "mandir      = \$(prefix)/share/man/man8"                    >> config.mk
+echo "FINIT_RCSD  = $rcsd"                                        >> config.mk
 
 if [ $inetd -eq 0 ]; then
 	echo                                                      >> config.mk
