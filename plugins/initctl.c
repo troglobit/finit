@@ -45,7 +45,7 @@ static plugin_t plugin = {
 
 static void fifo_open(void)
 {
-	plugin.io.fd = open(FINIT_FIFO, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	plugin.io.fd = open(FINIT_FIFO, O_RDWR | O_NONBLOCK | O_CLOEXEC);
 	if (-1 == plugin.io.fd) {
 		_e("Failed opening %s FIFO, error %d: %s", FINIT_FIFO, errno, strerror(errno));
 		return;
@@ -85,7 +85,8 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 		}
 
 		_d("Magic OK ...");
-		if (rq.cmd == INIT_CMD_RUNLVL) {
+		switch (rq.cmd) {
+		case INIT_CMD_RUNLVL:
 			switch (rq.runlevel) {
 			case '0':
 				_d("Halting system (SIGUSR2)");
@@ -113,13 +114,30 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 				_d("Unsupported runlevel: %d", rq.runlevel);
 				break;
 			}
-		} else if (rq.cmd == INIT_CMD_DEBUG) {
+			break;
+
+		case INIT_CMD_DEBUG:
 			debug = !debug;
-		} else {
+			break;
+
+		case INIT_CMD_ACK:
+			_d("Client failed reading ACK.");
+			goto leave;
+
+		default:
 			_d("Unsupported cmd: %d", rq.cmd);
+			break;
 		}
+
+		rq.cmd = INIT_CMD_ACK;
+		len = write(fd, &rq, sizeof(rq));
+		if (len != sizeof(rq))
+			_d("Failed sending ACK back to client.");
+		else
+			sleep(1); /* Give client time to read FIFO */
 	}
 
+leave:
 	close(fd);
 	fifo_open();
 }

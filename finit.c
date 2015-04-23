@@ -84,6 +84,8 @@ static int client(int argc, char *argv[])
 {
 	int fd;
 	int c;
+	int result = -1;
+	ssize_t len;
 	struct option long_options[] = {
 		{"debug", 0, NULL, 'd'},
 		{"help", 0, NULL, 'h'},
@@ -94,7 +96,7 @@ static int client(int argc, char *argv[])
 		.cmd = 0
 	};
 
-	while ((c = getopt_long (argc, argv, "h?d", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "h?d", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'd':
 			rq.cmd = INIT_CMD_DEBUG;
@@ -123,15 +125,22 @@ static int client(int argc, char *argv[])
 		return 1;
 	}
 
-	fd = open(FINIT_FIFO, O_WRONLY);
+	fd = open(FINIT_FIFO, O_RDWR);
 	if (-1 == fd) {
 		perror("Failed opening " FINIT_FIFO);
 		return 1;
 	}
-	write(fd, &rq, sizeof(rq));
+
+	len = write(fd, &rq, sizeof(rq));
+	if (len == sizeof(rq)) {
+		len = read(fd, &rq, sizeof(rq));
+		if (len == sizeof(rq) && rq.cmd == INIT_CMD_ACK)
+			result = 0;
+	}
+
 	close(fd);
 
-	return 0;
+	return result;
 }
 
 static void banner(void)
