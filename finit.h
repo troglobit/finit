@@ -89,17 +89,19 @@ struct init_request {
 extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;
+extern char  *rcsd;
 extern char  *sdown;
 extern char  *network;
 extern char  *hostname;
 extern char  *username;
-extern char  *rcsd;
+extern char  *runparts;
 extern char  *console;
 extern char  *__progname;
 
 /* conf.c */
 int parse_runlevels  (char *runlevels);
 int parse_finit_conf (char *file);
+int parse_finit_d    (char *dir);
 
 #endif /* FINIT_H_ */
 

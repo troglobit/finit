@@ -18,9 +18,7 @@ very low dependency on external packages.
 General
 -------
 
-* Make it possible to at least reload .conf files in `/etc/finit.d/` --
-  At first all we need to support is the service directive, All other
-  directives, read from `/etc/finit.conf`, can remain static.
+* Add support for instances, e.g. to monitor several DHCP clients.
 * Make initctl synchroneous, don't let `init 1` return until finit
   has successfully entered runlevel 1, all proceses have been stopped.
 * Add `!` or `[wait <pidfile>]` to service directive to let finit pause
@@ -31,10 +29,6 @@ General
   and `RELOAD` on `STDOUT` from a script ... call it for instance
   `.monitor=` in `svc_t` ... the script named as the basename of the
   service it monitors + `.sh`.
-* The `runparts` directive may need to be deprecated, or to have its
-  semantics changed.  We need `/etc/finit.d/` for extending `finit.conf`
-  -- if not possible, then maybe filter out the service monitor scripts
-  before running the scripts?
 * Add compile-time supoprt for running `/bin/sh` instead of `getty`
 * Add support for `init <q | reload-configuration>` and `SIGHUP` to
   have finit reload its `finit.conf`, but also

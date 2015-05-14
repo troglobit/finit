@@ -47,7 +47,8 @@ char *sdown     = NULL;
 char *network   = NULL;
 char *username  = NULL;
 char *hostname  = NULL;
-char *rcsd      = NULL;
+char *rcsd      = FINIT_RCSD;
+char *runparts  = NULL;
 char *console   = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
@@ -262,19 +263,21 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/*
-	 * Start all tasks/services in the configured runlevel
+	 * Load .conf files from /etc/finit.d and start all
+	 * tasks/services in the configured runlevel
 	 */
+	parse_finit_d(rcsd);
 	svc_runlevel(cfglevel);
 
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 
 	/*
-	 * Run startup scripts in /etc/finit.d/, if any.
+	 * Run startup scripts in the runparts directory, if any.
 	 */
-	if (rcsd && fisdir(rcsd)) {
-		_d("Running startup scripts in %s ...", rcsd);
-		run_parts(rcsd, NULL);
+	if (runparts && fisdir(runparts)) {
+		_d("Running startup scripts in %s ...", runparts);
+		run_parts(runparts, NULL);
 	}
 
 	/* Hooks that should run at the very end */

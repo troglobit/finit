@@ -12,6 +12,7 @@ Table of Contents
 * [Features](#features)
 * [/etc/finit.conf](#etcfinitconf)
 * [/etc/finit.d](#etcfinitd)
+* [Runparts](#runparts)
 * [Bootstrap](#bootstrap)
 * [Runlevels](#runlevels)
 * [Inetd](#inetd)
@@ -45,7 +46,7 @@ of processes to provide a very basic bootstrap written entirely in C.
 Hence, there is no `/etc/init.d/rcS` script, or similar, instead Finit
 reads its configuration from [/etc/finit.conf](#etcfinitconf).  This
 file details what kernel modules to load, programs to run, daemons to
-supervise, and services to launch on demand.
+supervise, and inetd services to launch on demand.
 
 See [TroglOS][9] for an example of how to boot a small embedded system
 with Finit.
@@ -159,15 +160,15 @@ Syntax:
   Finit does not output this text on the console when launching inetd
   services.  Instead this text is sent to syslog.
 
-* `runparts <PATH>`
+* `runparts <DIR>`
 
-  Call run-parts(8) on a directory other than default ``/etc/finit.d``
+  Call run-parts(8) on a directory to run start scripts.  All executable
+  files, or scripts, in the directory are called, in alphabetic order.
 
 * `include <CONF>`
 
-  Include another configuration file, ``/etc/finit.d``, or runparts path
-  is prepended to file if the file is not found or an absolute path is
-  not given
+  Include another configuration file.  If the file is not an absolute
+  path ``/etc/finit.d`` is prepended.
 
 * `tty [LVLS] <DEV | /path/to/cmd [args]>`
 
@@ -209,8 +210,37 @@ the `/path/to/cmd` should be executed with.  Simply prefix the path with
 /etc/finit.d
 ------------
 
+Finit supports changes to the overall system configuration at runtime.
+For this purpose the (configurable) directory `/etc/finit.d` is used.
+Here you can put configuration file snippets, one per service if you
+like, which are all sourced automatically by finit at boot when loading
+the static configuration from `/etc/finit.conf`.  This is the default
+behavior, so no include directives are necessary.
+
+To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
+send `SIGHUP` to finit, or call `init q`.  Any service read from this
+directory is flagged as a dynamic service, so changes to their .conf
+files, or even removal of the files, is detected at `SIGHUP`.
+
+- If a service's .conf file has been removed, the service is stopped.
+- If the file has changed the service is reloaded, stopped and
+  restarted.
+- If it is a new service, it is started -- respecting runlevels and
+  callbacks.
+
+The `/etc/finit.d` directory was previously the default Finit `runparts`
+directory.  Finit no longer has a default runparts, so make sure to
+update your setup, or the finit configuration, accordingly.
+
+**Note:** Configurations read from `/etc/finit.d` are read *after*
+  initial bootstrap, runlevel S(1).
+
+
+Runparts
+--------
+
 At the end of the boot, when networking and all services are up, finit
-calls its built-in [run-parts(8)] on the `/etc/finit.d/` directory, if
+calls its built-in [run-parts(8)] on the `runparts <DIR>` directory, if
 it exists.  Similar to how the `/ec/rc.local` file works in most other
 init daemons, only finit runs a directory of scripts.  This replaces the
 earlier support for a `/usr/sbin/services.sh` script in the original

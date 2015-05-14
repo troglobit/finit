@@ -42,10 +42,11 @@ typedef enum {
 } svc_cmd_t;
 
 typedef enum {
-	SVC_CMD_SERVICE = 0,	/* Monitored, will be respawned */
-	SVC_CMD_TASK,		/* One-shot, runs in parallell */
-	SVC_CMD_RUN,		/* Like task, but wait for completion */
-	SVC_CMD_INETD		/* Classic inetd service */
+	SVC_TYPE_FREE = 0,	/* Free to allocate */
+	SVC_TYPE_SERVICE ,	/* Monitored, will be respawned */
+	SVC_TYPE_TASK,		/* One-shot, runs in parallell */
+	SVC_TYPE_RUN,		/* Like task, but wait for completion */
+	SVC_TYPE_INETD		/* Classic inetd service */
 } svc_type_t;
 
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
@@ -62,7 +63,9 @@ typedef enum {
 typedef struct svc {
 	pid_t	       pid;
 	svc_type_t     type;
-	int	       reload;
+	time_t	       mtime;	       /* Modification time for .conf from /etc/finit.d/ */
+	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,
+					* or -1 when marked for removal */
 	int	       runlevels;
 
 	/* Incremented for each restart by service monitor. */
@@ -80,7 +83,7 @@ typedef struct svc {
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
 
-	/* For external plugins. If @cb is set a plugin is loaded.
+	/* For external plugins. If @cb is set, a plugin is loaded.
 	 * @dynamic:	  Set by plugins that want dynamic events.
 	 * @dynamic_stop: Set by plugins that allow dyn. events to stop it as well.
 	 * @private:	  Can be used freely by plugin, e.g., to store "states".
@@ -114,15 +117,18 @@ svc_t	 *svc_find	    (char *path);
 svc_t    *svc_find_by_pid   (pid_t pid);
 svc_t    *svc_find_inetd    (char *path, char *service, char *proto, char *port);
 svc_t	 *svc_iterator	    (int first);
+void      svc_mark_dynamic  (void);
 void	  svc_runlevel	    (int newlevel);
 
-int	  svc_register	    (int type, char *line, char *username);
+int	  svc_register	    (int type, char *line, time_t mtime, char *username);
 int	  svc_id_by_name    (char *name);
 svc_cmd_t svc_enabled	    (svc_t *svc, int event, void *arg);
 int	  svc_start	    (svc_t *svc);
 int	  svc_start_by_name (char *name);
 int	  svc_stop	    (svc_t *svc);
 int	  svc_reload	    (svc_t *svc);
+void      svc_reload_dynamic(void);
+void      svc_cleanup       (void);
 
 #endif	/* FINIT_SVC_H_ */
 

@@ -40,7 +40,6 @@
  * by 3rd party APIs.  Mostly because of the ability to, from the outside, query
  * liveness state of all daemons that should run. */
 static int was_stopped = 0;
-static int svc_counter = 0;		/* Number of registered services to monitor. */
 static svc_t *services = NULL;          /* List of registered services, in shared memory. */
 
 
@@ -66,42 +65,37 @@ static void __connect_shm(void)
  */
 svc_t *svc_new(void)
 {
-	svc_t *svc = NULL;
+	int i;
 
 	__connect_shm();
-	if (svc_counter >= 0 && svc_counter < MAX_NUM_SVC) {
-		svc = &services[svc_counter++];
-		memset(svc, 0, sizeof(*svc));
-	} else {
-		errno = ENOMEM;
-		return NULL;
+	for (i = 0; i < MAX_NUM_SVC; i++) {
+		svc_t *svc = &services[i];
+
+		if (svc->type == SVC_TYPE_FREE) {
+			memset(svc, 0, sizeof(*svc));
+			return svc;
+		}
 	}
 
-	return svc;
+	errno = ENOMEM;
+	return NULL;
 }
 
 /**
  * svc_del - Delete a service object
  * @svc: Pointer to an &svc_t object
  *
- * Note, this function is not safe for public use.  Should only be used
- * by this module until the storage of svc_t's has been refactored!
- *
  * Returns:
  * Always succeeds, returning POSIX OK(0).
  */
 int svc_del(svc_t *svc)
 {
-	if (svc_counter >= 0 && svc_counter < MAX_NUM_SVC) {
-		svc = &services[--svc_counter];
-		memset(svc, 0, sizeof(*svc));
-	}
-
+	svc->type = SVC_TYPE_FREE;
 	return 0;
 }
 
 /**
- * svc_iterator - Iterates over all registered services.
+ * svc_iterator - Naive iterator over all registered services.
  * @first: Get first &svc_t object, or next until end.
  *
  * Returns:
@@ -116,10 +110,14 @@ svc_t *svc_iterator(int first)
 	if (first)
 		i = 0;
 
-	if (i >= svc_counter)
-		return NULL;
+	while (i < MAX_NUM_SVC) {
+		svc_t *svc = &services[i++];
 
-	return &services[i++];
+		if (svc->type != SVC_TYPE_FREE)
+			return svc;
+	}
+
+	return NULL;
 }
 
 /**
@@ -168,7 +166,7 @@ svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->type != SVC_CMD_INETD)
+		if (svc->type != SVC_TYPE_INETD)
 			continue;
 
 		if (strncmp(path, svc->cmd, strlen(svc->cmd)))
@@ -185,6 +183,25 @@ svc_t *svc_find_inetd(char *path, char *service, char *proto, char *port)
 #endif
 
 /**
+ * svc_mark_dynamic - Mark dynamically loaded services for deletion.
+ *
+ * This function traverses the list of known services, marking all that
+ * have been loaded from /etc/finit.d/ for deletion.  If a .conf file
+ * has been removed svc_cleanup() will stop and delete the service.
+ *
+ * This function is called from sighup_cb().
+ */
+void svc_mark_dynamic(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->mtime)
+			svc->dirty = -1;
+	}
+}
+
+/**
  * svc_bootstrap - Start bootstrap services and tasks
  *
  * System startup, runlevel S, where only services, tasks and
@@ -199,7 +216,7 @@ void svc_bootstrap(void)
 		svc_cmd_t cmd;
 
 		/* Inetd services cannot be part of bootstrap currently. */
-		if (svc->type == SVC_CMD_INETD)
+		if (svc->type == SVC_TYPE_INETD)
 			continue;
 
 		cmd = svc_enabled(svc, 0, NULL);
@@ -229,6 +246,22 @@ static void utmp_save(int pre, int now)
 	endutent();
 }
 
+/* Singing and dancing ... */
+static void svc_dance(svc_t *svc)
+{
+	svc_cmd_t cmd = svc_enabled(svc, 0, NULL);
+
+	if (svc->pid) {
+		if (cmd == SVC_STOP)
+			svc_stop(svc);
+		else if (cmd == SVC_RELOAD)
+			svc_reload(svc);
+	} else {
+		if (cmd == SVC_START)
+			svc_start(svc);
+	}
+}
+
 /**
  * svc_runlevel - Change to a new runlevel
  * @newlevel: New runlevel to activate
@@ -253,11 +286,9 @@ void svc_runlevel(int newlevel)
 	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		svc_cmd_t cmd;
-
 		/* Inetd services have slightly different semantics */
 #ifndef INETD_DISABLED
-		if (svc->type == SVC_CMD_INETD) {
+		if (svc->type == SVC_TYPE_INETD) {
 			if (!ISSET(svc->runlevels, runlevel))
 				inetd_stop(&svc->inetd);
 			else
@@ -268,16 +299,7 @@ void svc_runlevel(int newlevel)
 #endif
 
 		/* All other services consult their callback here */
-		cmd = svc_enabled(svc, 0, NULL);
-		if (svc->pid) {
-			if (cmd == SVC_STOP)
-				svc_stop(svc);
-			else if (cmd == SVC_RELOAD)
-				svc_reload(svc);
-		} else {
-			if (cmd == SVC_START)
-				svc_start(svc);
-		}
+		svc_dance(svc);
 	}
 
 	if (0 == runlevel) {
@@ -300,8 +322,9 @@ void svc_runlevel(int newlevel)
 
 /**
  * svc_register - Register service, task or run commands
- * @type:     %SVC_CMD_SERVICE(0), %SVC_CMD_TASK(1), %SVC_CMD_RUN(2)
+ * @type:     %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
  * @line:     A complete command line with -- separated description text
+ * @mtime:    The modification time if service is loaded from /etc/finit.d
  * @username: Optional username to run service as, or %NULL to run as root
  *
  * This function is used to register commands to be run on different
@@ -319,7 +342,7 @@ void svc_runlevel(int newlevel)
  *   "inetd tcp/ssh nowait [2345] @root:root /usr/sbin/sshd -i -- Description"
  *
  * If the username is left out the command is started as root.
- * Inetd services, launched on demand (SVC_CMD_INETD)
+ * Inetd services, launched on demand (SVC_TYPE_INETD)
  * The [] brackets are there to denote the allowed runlevels. Allowed
  * runlevels mimic that of SysV init with the addition of the 'S'
  * runlevel, which is only run once at startup. It can be seen as the
@@ -329,7 +352,7 @@ void svc_runlevel(int newlevel)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int svc_register(int type, char *line, char *username)
+int svc_register(int type, char *line, time_t mtime, char *username)
 {
 	int i = 0;
 #ifndef INETD_DISABLED
@@ -396,7 +419,7 @@ int svc_register(int type, char *line, char *username)
 
 #ifndef INETD_DISABLED
 	/* Find plugin that provides a callback for this inetd service */
-	if (type == SVC_CMD_INETD && !strncasecmp(cmd, "internal", 8)) {
+	if (type == SVC_TYPE_INETD && !strncasecmp(cmd, "internal", 8)) {
 		plugin = plugin_find(service);
 		if (!plugin || !plugin->inetd.cmd) {
 			_e("Inetd service %s has no internal plugin, skipping.", service);
@@ -410,13 +433,18 @@ int svc_register(int type, char *line, char *username)
 		return inetd_allow(&svc->inetd, iface);
 #endif
 
-	svc = svc_new();
+	svc = svc_find(cmd);
 	if (!svc) {
-		_e("Out of memory, cannot register service %s", cmd);
-		return errno = ENOMEM;
+		svc = svc_new();
+		if (!svc) {
+			_e("Out of memory, cannot register service %s", cmd);
+			return errno = ENOMEM;
+		}
 	}
-
-	svc->type = type;
+	if (svc->mtime != mtime)
+		svc->dirty = 1;
+	svc->mtime = mtime;
+	svc->type  = type;
 
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
@@ -432,7 +460,7 @@ int svc_register(int type, char *line, char *username)
 	}
 
 #ifndef INETD_DISABLED
-	if (svc->type == SVC_CMD_INETD) {
+	if (svc->type == SVC_TYPE_INETD) {
 		int result;
 
 		result  = inetd_new(&svc->inetd, service, proto, forking);
@@ -552,7 +580,7 @@ static void restart_any_lost_procs(void)
 			continue;
 
 		/* Only restart lost daemons, not task/run/inetd services */
-		if (SVC_CMD_SERVICE != svc->type) {
+		if (SVC_TYPE_SERVICE != svc->type) {
 			svc->pid = 0;
 			continue;
 		}
@@ -592,7 +620,7 @@ void svc_monitor(pid_t lost)
 		if (lost != svc->pid)
 			continue;
 
-		if (SVC_CMD_SERVICE != svc->type) {
+		if (SVC_TYPE_SERVICE != svc->type) {
 			svc->pid = 0;
 			continue;
 		}
@@ -648,7 +676,7 @@ int svc_start(svc_t *svc)
 		return 0;
 
 #ifndef INETD_DISABLED
-	if (SVC_CMD_INETD == svc->type) {
+	if (SVC_TYPE_INETD == svc->type) {
 		char ifname[IF_NAMESIZE] = "UNKNOWN";
 
 		sd = svc->inetd.watcher.fd;
@@ -682,7 +710,7 @@ int svc_start(svc_t *svc)
 		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->inetd.name, ifname);
 	} else
 #endif
-	if (SVC_CMD_SERVICE != svc->type)
+	if (SVC_TYPE_SERVICE != svc->type)
 		print_desc("", svc->desc);
 	else if (!respawn)
 		print_desc("Starting ", svc->desc);
@@ -723,7 +751,7 @@ int svc_start(svc_t *svc)
 		args[i] = NULL;
 
 		/* Redirect inetd socket to stdin for service */
-		if (SVC_CMD_INETD == svc->type) {
+		if (SVC_TYPE_INETD == svc->type) {
 			/* sd set previously */
 			dup2(sd, STDIN_FILENO);
 			close(sd);
@@ -755,7 +783,7 @@ int svc_start(svc_t *svc)
 		else
 			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
 
-		if (SVC_CMD_INETD == svc->type) {
+		if (SVC_TYPE_INETD == svc->type) {
 			if (svc->inetd.type == SOCK_STREAM) {
 				close(STDIN_FILENO);
 				close(STDOUT_FILENO);
@@ -767,11 +795,11 @@ int svc_start(svc_t *svc)
 	}
 	svc->pid = pid;
 
-	if (SVC_CMD_INETD == svc->type) {
+	if (SVC_TYPE_INETD == svc->type) {
 		if (svc->inetd.type == SOCK_STREAM)
 			close(sd);
 	}
-	else if (SVC_CMD_RUN == svc->type)
+	else if (SVC_TYPE_RUN == svc->type)
 		print_result(WEXITSTATUS(complete(svc->cmd, pid)));
 	else if (!respawn)
 		print_result(svc->pid > 1 ? 0 : 1);
@@ -805,7 +833,7 @@ int svc_stop(svc_t *svc)
 		return 1;
 	}
 
-	if (SVC_CMD_SERVICE != svc->type)
+	if (SVC_TYPE_SERVICE != svc->type)
 		return 0;
 
 	if (runlevel != 1)
@@ -820,6 +848,16 @@ int svc_stop(svc_t *svc)
 	return res;
 }
 
+/**
+ * svc_reload - Send SIGHUP to a service
+ * @svc: Service to reload
+ *
+ * This function does some basic checks of the runtime state of Finit
+ * and a sanity check of the @svc before sending %SIGHUP.
+ * 
+ * Returns:
+ * POSIX OK(0) or non-zero on error.
+ */
 int svc_reload(svc_t *svc)
 {
 	/* Ignore if finit is SIGSTOP'ed */
@@ -839,6 +877,43 @@ int svc_reload(svc_t *svc)
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
 	return kill(svc->pid, SIGHUP);
+}
+
+/**
+ * svc_reload_dynamic - Reload modifued dynamic services
+ *
+ * This function is called when Finit has recieved SIGHUP to reload
+ * .conf files in /etc/finit.d.  It is responsible for starting,
+ * stopping and reloading (forwarding SIGHUP) to processes affected.
+ */
+void svc_reload_dynamic(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->mtime && svc->dirty > 0) {
+			svc_dance(svc);
+			svc->dirty = 0;
+		}
+	}
+}
+
+/**
+ * svc_cleanup - Stop and cleanup stale services removed from /etc/finit.d
+ *
+ * This function traverses the list of known services to stop and clean
+ * up all non-existing services previously marked by svc_mark_dynamic().
+ */
+void svc_cleanup(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->mtime && svc->dirty == -1) {
+			svc_stop(svc);
+			svc_del(svc);
+		}
+	}
 }
 
 /**

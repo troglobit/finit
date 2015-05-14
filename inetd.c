@@ -179,7 +179,7 @@ int inetd_respawn(pid_t pid)
 {
 	svc_t *svc = svc_find_by_pid(pid);
 
-	if (svc && SVC_CMD_INETD == svc->type) {
+	if (svc && SVC_TYPE_INETD == svc->type) {
 		inetd_t *inetd = &svc->inetd;
 
 		svc->pid = 0;
@@ -481,7 +481,7 @@ int inetd_init(inetd_t *inetd, void *arg, char *ifname, char *port)
 		inetd_filter_t *filter;
 
 		/* Skip non-inetd services */
-		if (svc->type != SVC_CMD_INETD)
+		if (svc->type != SVC_TYPE_INETD)
 			continue;
 
 		/* Skip ourselves */

@@ -48,7 +48,7 @@
 #include "sig.h"
 
 static int   stopped = 0;
-static uev_t sigint_watcher, sigpwr_watcher;
+static uev_t sighup_watcher, sigint_watcher, sigpwr_watcher;
 static uev_t sigchld_watcher, sigsegv_watcher;
 static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
@@ -85,6 +85,24 @@ void do_shutdown(int sig)
 		reboot(RB_AUTOBOOT);
 
 	reboot(RB_POWER_OFF);
+}
+
+/*
+ * Reload .conf files in /etc/finit.d/
+ */
+static void sighup_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+{
+	/* Mark and sweep */
+	svc_mark_dynamic();
+
+	/* Reload all *.conf in /etc/finit.d/ */
+	parse_finit_d(rcsd);
+
+	/* Reload dirty services */
+	svc_reload_dynamic();
+
+	/* Cleanup stale services */
+	svc_cleanup();
 }
 
 /*
@@ -207,8 +225,8 @@ void sig_setup(uev_ctx_t *ctx)
 	/* Some C APIs may need SIGALRM for implementing timers. */
 	IGNSIG(sa, SIGALRM, 0);
 
-	/* We don't have any /etc/inittab yet, reread finit.conf? */
-	IGNSIG(sa, SIGHUP, 0);
+	/* /etc/inittab not supported yet, instead /etc/finit.d/ is scanned for *.conf */
+	uev_signal_init(ctx, &sighup_watcher, sighup_cb, NULL, SIGHUP);
 
 	/* After initial bootstrap of Finit we call the service monitor to reap children */
 	uev_signal_init(ctx, &sigchld_watcher, sigchld_cb, NULL, SIGCHLD);
