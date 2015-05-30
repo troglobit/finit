@@ -118,7 +118,16 @@ static void sigint_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *UNUSED(arg), int U
  */
 static void sigchld_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	svc_monitor(waitpid(-1, NULL, WNOHANG));
+	pid_t pid;
+
+	/* Reap all the children! */
+	do {
+		pid = waitpid(-1, NULL, WNOHANG);
+		if (pid > 0) {
+			_d("Collected child %d", pid);
+			svc_monitor(pid);
+		}
+	} while (pid > 0);
 }
 
 /*
