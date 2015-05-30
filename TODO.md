@@ -18,15 +18,12 @@ very low dependency on external packages.
 General
 -------
 
-* Add support for instances, e.g. to monitor several DHCP clients.
-* Make initctl synchroneous, don't let `init 1` return until finit
-  has successfully entered runlevel 1, all proceses have been stopped.
 * Add `!` or `[wait <pidfile>]` to service directive to let finit pause
   and wait for a pidfile before starting processes -- both at boot and
   when starting processes in a runlevel.
 * Allow process callbacks to be scripts.
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
-  and `RELOAD` on `STDOUT` from a script ... call it for instance
+  and `RELOAD` on `STDOUT` from a script ... call it for example
   `.monitor=` in `svc_t` ... the script named as the basename of the
   service it monitors + `.sh`.
 * Add compile-time supoprt for running `/bin/sh` instead of `getty`
