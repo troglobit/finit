@@ -245,19 +245,17 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 {
 	int ret = 1;
 	FILE *fp;
-	char path[32];
+	char *pname, path[32];
 	static char line[64];
 
-	if (!name || len == 0)
-		name = line;
-
 	snprintf(path, sizeof(path), "/proc/%d/status", pid);
-	if ((fp = fopen(path, "r")) != NULL) {
+	fp = fopen(path, "r");
+	if (fp) {
 		if (fgets(line, sizeof (line), fp)) {
-			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
-
+			pname = line + 6; /* Skip first part of line --> "Name:\t" */
 			chomp(pname);
-			strlcpy(name, pname, len);
+			if (name)
+				strlcpy(name, pname, len);
 			ret = 0;		 /* Found it! */
 		}
 
