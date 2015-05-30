@@ -267,72 +267,10 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 	if (ret)
 		return NULL;
 
-	return name;
-}
+	if (name)
+		return name;
 
-/**
- * procname_kill - Send a signal to a process group by name.
- * @name: Name of process to send signal to.
- * @signo: Signal to send.
- *
- * Send a signal to a running process (group). This function searches
- * for a given process @name and sends a signal, @signo, to each
- * process ID matching that @name.
- *
- * Returns:
- * Number of signals sent, i.e. number of processes who have received the signal.
- */
-int procname_kill(char *name, int signo)
-{
-	int result = 0;
-	char path[32], line[64];
-	FILE *fp;
-	DIR *dir;
-	struct dirent *entry;
-
-	if (!name) {
-		errno = EINVAL;
-		return 0;
-	}
-
-	dir = opendir("/proc");
-	if (!dir)
-		return 0;
-
-	while ((entry = readdir(dir)) != NULL) {
-		/* Skip non-process entries in /proc */
-		if (!isdigit(*entry->d_name))
-			continue;
-
-		snprintf(path, sizeof(path), "/proc/%s/status", entry->d_name);
-		/* Skip non-readable files (protected?) */
-		if ((fp = fopen(path, "r")) == NULL)
-			continue;
-
-		if (fgets(line, sizeof (line), fp)) {
-			char *pname = line + 6; /* Skip first part of line --> "Name:\t" */
-
-			if (strncmp(pname, name, strlen(pname) - 1) == 0) {
-				int error = errno;
-				int pid = atonum(entry->d_name);
-
-				if (-1 == pid) {
-					FLOG_ERROR("Failed converting %s to a PID: %s", entry->d_name, strerror(error));
-				} else {
-					if (kill(pid, signo))
-						FLOG_ERROR("Failed signalling(%d) %s: %s!", signo, name, strerror(error));
-					else
-						result++; /* Track number of processes we deliver the signal to. */
-				}
-			}
-		}
-
-		fclose(fp);
-	}
-
-	closedir(dir);
-
-	return result;
+	return pname;
 }
 
 

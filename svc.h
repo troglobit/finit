@@ -61,6 +61,10 @@ typedef enum {
  * of issuing an initctl call. E.g.
  *   initctl <stop|start|restart> service */
 typedef struct svc {
+	/* Instance specifics */
+	int            id;
+
+	/* Service details */
 	pid_t	       pid;
 	svc_type_t     type;
 	time_t	       mtime;	       /* Modification time for .conf from /etc/finit.d/ */
@@ -111,9 +115,9 @@ static inline svc_t *finit_svc_connect(void)
 	return (svc_t *)ptr;
 }
 
-svc_t	 *svc_new	    (void);
+svc_t	 *svc_new	    (int id);
 int	  svc_del	    (svc_t *svc);
-svc_t	 *svc_find	    (char *path);
+svc_t	 *svc_find	    (char *path, int id);
 svc_t    *svc_find_by_pid   (pid_t pid);
 svc_t    *svc_find_inetd    (char *path, char *service, char *proto, char *port);
 svc_t	 *svc_iterator	    (int first);
@@ -124,7 +128,6 @@ int	  svc_register	    (int type, char *line, time_t mtime, char *username);
 int	  svc_id_by_name    (char *name);
 svc_cmd_t svc_enabled	    (svc_t *svc, int event, void *arg);
 int	  svc_start	    (svc_t *svc);
-int	  svc_start_by_name (char *name);
 int	  svc_stop	    (svc_t *svc);
 int	  svc_reload	    (svc_t *svc);
 void      svc_reload_dynamic(void);

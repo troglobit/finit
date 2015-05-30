@@ -214,7 +214,7 @@ static void parse_dynamic(char *line, time_t mtime)
 {
 	char *x;
 
-	/* Skip comments. */
+	/* Skip comments, i.e. lines beginning with # */
 	if (MATCH_CMD(line, "#", x))
 		return;
 

@@ -36,6 +36,8 @@
 #include "svc.h"
 #include "inetd.h"
 
+#define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
+
 /* The registered services are kept in shared memory for easy read-only access
  * by 3rd party APIs.  Mostly because of the ability to, from the outside, query
  * liveness state of all daemons that should run. */
@@ -58,12 +60,13 @@ static void __connect_shm(void)
 }
 
 /**
- * svc_new - Create a new service object
+ * svc_new - Create a new service
+ * @id: Instance id
  *
  * Returns:
- * A pointer to an empty &svc_t object, or %NULL if out of empty slots.
+ * A pointer to a new &svc_t object, or %NULL if out of empty slots.
  */
-svc_t *svc_new(void)
+svc_t *svc_new(int id)
 {
 	int i;
 
@@ -73,6 +76,8 @@ svc_t *svc_new(void)
 
 		if (svc->type == SVC_TYPE_FREE) {
 			memset(svc, 0, sizeof(*svc));
+			svc->id = id;
+
 			return svc;
 		}
 	}
@@ -127,12 +132,12 @@ svc_t *svc_iterator(int first)
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find(char *path)
+svc_t *svc_find(char *path, int id)
 {
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (!strncmp(path, svc->cmd, strlen(svc->cmd))) {
+		if (svc->id == id && !strncmp(path, svc->cmd, strlen(svc->cmd))) {
 			_d("Found a matching svc for %s", path);
 			return svc;
 		}
@@ -252,12 +257,12 @@ static void svc_dance(svc_t *svc)
 	svc_cmd_t cmd = svc_enabled(svc, 0, NULL);
 
 	if (svc->pid) {
-		if (cmd == SVC_STOP)
+		if (SVC_STOP == cmd)
 			svc_stop(svc);
-		else if (cmd == SVC_RELOAD)
+		else if (SVC_RELOAD == cmd)
 			svc_reload(svc);
 	} else {
-		if (cmd == SVC_START)
+		if (SVC_START == cmd || SVC_RELOAD == cmd)
 			svc_start(svc);
 	}
 }
@@ -336,18 +341,27 @@ void svc_runlevel(int newlevel)
  * The @line can optionally start with a username, denoted by an @
  * character. Like this:
  *
- *   "service @username [!0-6,S] /path/to/daemon arg -- Description text"
- *   "task @username [!0-6,S] /path/to/task arg -- Description text"
- *   "run  @username [!0-6,S] /path/to/cmd arg -- Description text"
- *   "inetd tcp/ssh nowait [2345] @root:root /usr/sbin/sshd -i -- Description"
+ *     service @username [!0-6,S] /path/to/daemon arg       -- Description
+ *     task @username [!0-6,S] /path/to/task arg            -- Description
+ *     run  @username [!0-6,S] /path/to/cmd arg             -- Description
+ *     inetd tcp/ssh nowait [2345] @root:root /sbin/sshd -i -- Description
  *
- * If the username is left out the command is started as root.
- * Inetd services, launched on demand (SVC_TYPE_INETD)
- * The [] brackets are there to denote the allowed runlevels. Allowed
- * runlevels mimic that of SysV init with the addition of the 'S'
- * runlevel, which is only run once at startup. It can be seen as the
- * system bootstrap. If a task or run command is listed in more than the
- * [S] runlevel they will be called when changing runlevel.
+ * If the username is left out the command is started as root.  The []
+ * brackets denote the allowed runlevels, if left out the default for a
+ * service is set to [2-5].  Allowed runlevels mimic that of SysV init
+ * with the addition of the 'S' runlevel, which is only run once at
+ * startup.  It can be seen as the system bootstrap.  If a task or run
+ * command is listed in more than the [S] runlevel they will be called
+ * when changing runlevel.
+ *
+ * For multiple instances of the same command, e.g. multiple DHCP
+ * clients, the user may enter an optional ID, using the #ID syntax.
+ *
+ *     service #1 /sbin/udhcpc -i eth1
+ *     service #2 /sbin/udhcpc -i eth2
+ *
+ * Without the #ID syntax Finit will overwrite the first service line
+ * with the contents of the second.  The #ID must be [1,MAXINT].
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
@@ -355,6 +369,7 @@ void svc_runlevel(int newlevel)
 int svc_register(int type, char *line, time_t mtime, char *username)
 {
 	int i = 0;
+	int id = 1;		/* Default to ID:1 */
 #ifndef INETD_DISABLED
 	int forking = 0;
 #endif
@@ -392,6 +407,8 @@ int svc_register(int type, char *line, time_t mtime, char *username)
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
+		else if (cmd[0] == '#')	/* #ID */
+			id = atoi(&cmd[1]);
 		else
 			break;
 
@@ -433,9 +450,10 @@ int svc_register(int type, char *line, time_t mtime, char *username)
 		return inetd_allow(&svc->inetd, iface);
 #endif
 
-	svc = svc_find(cmd);
+	svc = svc_find(cmd, id);
 	if (!svc) {
-		svc = svc_new();
+		_d("Creating new svc for %s id #%d", cmd, id);
+		svc = svc_new(id);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
 			return errno = ENOMEM;
@@ -635,12 +653,14 @@ void svc_monitor(pid_t lost)
 			break;
 		}
 
-		/* Cleanup any lingering or semi-restarting tasks before respawning */
-		_d("Sending SIGTERM to service group %s", basename(svc->cmd));
-		procname_kill(basename(svc->cmd), SIGTERM);
-
 		/* Restarting lost service. */
 		if (svc_enabled(svc, 0, NULL)) {
+			if (svc->restart_counter > RESPAWN_MAX) {
+				_e("Not restarting %s id %d, respawn MAX (%d) reached!",
+				   svc->cmd, svc->id, RESPAWN_MAX);
+				break;
+			}
+
 			svc->restart_counter++;
 			svc_start(svc);
 		}
@@ -807,16 +827,6 @@ int svc_start(svc_t *svc)
 	return 0;
 }
 
-int svc_start_by_name(char *name)
-{
-	svc_t *svc = svc_find(name);
-
-	if (svc && svc_enabled(svc, 0, NULL))
-		return svc_start(svc);
-
-	return 1;
-}
-
 int svc_stop(svc_t *svc)
 {
 	int res = 1;
@@ -838,10 +848,13 @@ int svc_stop(svc_t *svc)
 
 	if (runlevel != 1)
 		print_desc("Stopping ", svc->desc);
-	_d("Sending SIGTERM to pid:%d name:'%s'", svc->pid, pid_get_name(svc->pid, NULL, 0));
+
+	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
+
 	if (runlevel != 1)
 		print_result(res);
+
 	svc->pid = 0;
 	svc->restart_counter = 0;
 
@@ -890,8 +903,11 @@ void svc_reload_dynamic(void)
 {
 	svc_t *svc;
 
+	_d("Checking if any dynamically loaded services need to be reloaded ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (svc->mtime && svc->dirty > 0) {
+			_d("Service %s id %d modified, must stop-start for changes to take effect!", svc->cmd, svc->id);
+			svc_stop(svc); /* This will reset the restart_counter as well! */
 			svc_dance(svc);
 			svc->dirty = 0;
 		}
