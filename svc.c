@@ -286,17 +286,32 @@ void svc_runlevel(int newlevel)
 
 	prevlevel = runlevel;
 	runlevel  = newlevel;
-	utmp_save(prevlevel, newlevel);
 
 	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
+	utmp_save(prevlevel, newlevel);
 
+	_d("Stopping services services not allowed in new runlevel ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		/* Inetd services have slightly different semantics */
+		if (!ISSET(svc->runlevels, runlevel)) {
 #ifndef INETD_DISABLED
-		if (svc->type == SVC_TYPE_INETD) {
-			if (!ISSET(svc->runlevels, runlevel))
+			if (svc->type == SVC_TYPE_INETD)
 				inetd_stop(&svc->inetd);
 			else
+#endif
+				svc_stop(svc);
+		}
+	}
+
+	/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
+	_d("All services have been stoppped, calling runlevel change hooks ...");
+	plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
+
+	_d("Starting services services new to this runlevel ...");
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+#ifndef INETD_DISABLED
+		/* Inetd services have slightly different semantics */
+		if (svc->type == SVC_TYPE_INETD) {
+			if (ISSET(svc->runlevels, runlevel))
 				inetd_start(&svc->inetd);
 
 			continue;
@@ -901,13 +916,26 @@ int svc_reload(svc_t *svc)
  */
 void svc_reload_dynamic(void)
 {
+	int num = 0;
 	svc_t *svc;
 
-	_d("Checking if any dynamically loaded services need to be reloaded ...");
+	_d("Stopping disabled/removed services ...");
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->mtime && svc->dirty != 0) {
+			svc_stop(svc);
+			num++;
+		}
+	}
+
+	if (!num)
+		return;
+
+	_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
+	plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
+
+	_d("Starting enabled/added services ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (svc->mtime && svc->dirty > 0) {
-			_d("Service %s id %d modified, must stop-start for changes to take effect!", svc->cmd, svc->id);
-			svc_stop(svc); /* This will reset the restart_counter as well! */
 			svc_dance(svc);
 			svc->dirty = 0;
 		}

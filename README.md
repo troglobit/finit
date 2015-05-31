@@ -435,6 +435,8 @@ hook point in the boot process, useful to insert some pre-bootstrap
 mechanisms, like generating configuration files, restoring HW device
 state, etc.  Available hook points are:
 
+**Bootstrap Hooks**
+
 * `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
   mounted -- very early
 
@@ -448,6 +450,20 @@ state, etc.  Available hook points are:
 
 * `HOOK_SYSTEM_UP`: All services *and* everything in `/etc/finit.d`
   has been launched
+
+**Runtime Hooks**
+
+* `HOOK_SVC_RECONF`: Called when the user has changed something in the
+  `/etc/finit.d` directory and issued `SIGHUP`.  The hook is called when
+  all modified/removed services have been stopped.  When the hook has
+  completed, Finit continues to start all modified and new services.
+
+* `HOOK_RUNLEVEL_CHANGE`: Called when the user has issued a runlevel
+  change.  The hook is called when services not matching the new
+  runlevel have been been stopped.  When the hook has completed, Finit
+  continues to start all services in the new runlevel.
+
+**Shutdown Hooks**
 
 * `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
   services are sent `SIGTERM`

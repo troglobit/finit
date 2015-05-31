@@ -41,11 +41,18 @@
  * Predefined hook points for easier plugin debugging 
  */
 typedef enum {
+	/* Bootstrap hooks */
 	HOOK_ROOTFS_UP = 0,
 	HOOK_BASEFS_UP,
 	HOOK_NETWORK_UP,
-	HOOK_SYSTEM_UP,
 	HOOK_SVC_UP,
+	HOOK_SYSTEM_UP,
+
+	/* Runtime hooks */
+	HOOK_SVC_RECONF,
+	HOOK_RUNLEVEL_CHANGE,
+
+	/* Shutdown hooks */
 	HOOK_SHUTDOWN,
 	HOOK_MAX_NUM
 } hook_point_t;
