@@ -290,6 +290,10 @@ void svc_runlevel(int newlevel)
 	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
 	utmp_save(prevlevel, newlevel);
 
+	/* Make sure to reload all *.conf in /etc/finit.d/ */
+	svc_mark_dynamic();
+	parse_finit_d(rcsd);
+
 	_d("Stopping services services not allowed in new runlevel ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (!ISSET(svc->runlevels, runlevel)) {
@@ -300,6 +304,10 @@ void svc_runlevel(int newlevel)
 #endif
 				svc_stop(svc);
 		}
+
+		/* ... or disabled/removed services from /etc/finit.d/ */
+		if (svc->mtime && svc->dirty != 0)
+			svc_stop(svc);
 	}
 
 	/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
@@ -321,6 +329,9 @@ void svc_runlevel(int newlevel)
 		/* All other services consult their callback here */
 		svc_dance(svc);
 	}
+
+	/* Cleanup stale services */
+	svc_cleanup();
 
 	if (0 == runlevel) {
 		do_shutdown(SIGUSR2);
@@ -935,10 +946,8 @@ void svc_reload_dynamic(void)
 
 	_d("Starting enabled/added services ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->mtime && svc->dirty > 0) {
+		if (svc->mtime && svc->dirty > 0)
 			svc_dance(svc);
-			svc->dirty = 0;
-		}
 	}
 }
 
@@ -957,6 +966,7 @@ void svc_cleanup(void)
 			svc_stop(svc);
 			svc_del(svc);
 		}
+		svc->dirty = 0;
 	}
 }
 
