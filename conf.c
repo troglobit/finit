@@ -145,24 +145,19 @@ static void parse_static(char *line)
 		return;
 	}
 
-	/* This is the directory from which executable scripts and
-	 * any finit include files are read, default /etc/finit.d/ */
 	if (MATCH_CMD(line, "runparts ", x)) {
 		if (runparts) free(runparts);
 		runparts = strdup(strip_line(x));
 		return;
 	}
 
-	/* Parse any include file, use rcsd if absolute path not given */
 	if (MATCH_CMD(line, "include ", x)) {
 		char *file = strip_line(x);
 
 		strlcpy(cmd, file, sizeof(cmd));
 		if (!fexist(cmd)) {
-			/* ... try /etc/finit.d/ as prefix */
-			snprintf(cmd, sizeof(cmd), "%s/%s", rcsd, file);
-			if (!fexist(cmd))
-				return;
+			_e("Cannot find include file %s, absolute path required!", x);
+			return;
 		}
 
 		parse_conf(cmd);
@@ -180,10 +175,9 @@ static void parse_static(char *line)
 		return;
 	}
 
-	/* The desired runlevel to start when leaving
-	 * bootstrap (S).  Finit supports 1-9, but most
-	 * systems only use 1-6, where 6 is reserved for
-	 * reboot */
+	/* The desired runlevel to start when leaving bootstrap (S).
+	 * Finit supports 1-9, but most systems only use 1-6, where
+	 * 6 is reserved for reboot */
 	if (MATCH_CMD(line, "runlevel ", x)) {
 		char *token = strip_line(x);
 		const char *err = NULL;
