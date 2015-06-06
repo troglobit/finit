@@ -46,6 +46,7 @@
 #include "plugin.h"
 #include "private.h"
 #include "sig.h"
+#include "service.h"
 
 static int   stopped = 0;
 static uev_t sighup_watcher, sigint_watcher, sigpwr_watcher;
@@ -99,10 +100,10 @@ static void sighup_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg
 	parse_finit_d(rcsd);
 
 	/* Reload dirty services */
-	svc_reload_dynamic();
+	service_reload_dynamic();
 
 	/* Cleanup stale services */
-	svc_cleanup();
+	svc_clean_dynamic(service_unregister);
 }
 
 /*
@@ -125,7 +126,7 @@ static void sigchld_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(ar
 		pid = waitpid(-1, NULL, WNOHANG);
 		if (pid > 0) {
 			_d("Collected child %d", pid);
-			svc_monitor(pid);
+			service_monitor(pid);
 		}
 	} while (pid > 0);
 }

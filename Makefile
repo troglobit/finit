@@ -36,7 +36,7 @@ ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
-OBJS        = finit.o conf.o helpers.o sig.o svc.o plugin.o tty.o inetd.o
+OBJS        = finit.o conf.o helpers.o sig.o svc.o service.o plugin.o tty.o inetd.o
 
 TOPDIR      = $(shell pwd)
 -include config.mk

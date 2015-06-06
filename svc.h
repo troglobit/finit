@@ -1,4 +1,4 @@
-/* Finit service monitor and generic API for managing svc_t structures
+/* Low-level service primitives and generic API for managing svc_t structures
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
@@ -33,7 +33,6 @@
 
 #include "inetd.h"
 #include "queue.h"		/* BSD sys/queue.h API */
-#include "libuev/uev.h"
 
 typedef enum {
 	SVC_STOP = 0,		/* Disabled */
@@ -115,23 +114,24 @@ static inline svc_t *finit_svc_connect(void)
 	return (svc_t *)ptr;
 }
 
-svc_t	 *svc_new	    (int id);
-int	  svc_del	    (svc_t *svc);
-svc_t	 *svc_find	    (char *path, int id);
-svc_t    *svc_find_by_pid   (pid_t pid);
-svc_t    *svc_find_inetd    (char *path, char *service, char *proto, char *port);
-svc_t	 *svc_iterator	    (int first);
-void      svc_mark_dynamic  (void);
-void	  svc_runlevel	    (int newlevel);
+svc_t	 *svc_new	       (int id);
+int	  svc_del	       (svc_t *svc);
 
-int	  svc_register	    (int type, char *line, time_t mtime, char *username);
-int	  svc_id_by_name    (char *name);
-svc_cmd_t svc_enabled	    (svc_t *svc, int event, void *arg);
-int	  svc_start	    (svc_t *svc);
-int	  svc_stop	    (svc_t *svc);
-int	  svc_reload	    (svc_t *svc);
-void      svc_reload_dynamic(void);
-void      svc_cleanup       (void);
+svc_t	 *svc_find	       (char *path, int id);
+svc_t	 *svc_find_by_pid      (pid_t pid);
+
+svc_t	 *svc_iterator	       (int first);
+svc_t	 *svc_inetd_iterator   (int first);
+svc_t	 *svc_dynamic_iterator (int first);
+
+void	  svc_foreach	       (void (*cb)(svc_t *));
+void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
+
+void	  svc_mark_dynamic     (void);
+void	  svc_clean_dynamic    (void (*cb)(svc_t *));
+
+static inline int svc_is_inetd (svc_t *svc) { return svc && SVC_TYPE_INETD == svc->type; }
+static inline int svc_is_daemon(svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
 
 #endif	/* FINIT_SVC_H_ */
 

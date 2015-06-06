@@ -34,7 +34,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
-#include "svc.h"
+#include "service.h"
 
 #define ENABLE_SOCKOPT(sd, level, opt)					\
 	do {								\
@@ -49,13 +49,13 @@ static void socket_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int UNUSED(ev
 {
 	svc_t *svc = (svc_t *)arg;
 
-	if (SVC_START != svc_enabled(svc, -1, NULL))
+	if (SVC_START != service_enabled(svc, -1, NULL))
 		return;
 
 	if (!svc->inetd.forking)
 		uev_io_stop(w);
 
-	svc_start(svc);
+	service_start(svc);
 }
 
 /* Launch Inet socket for service.
@@ -174,12 +174,12 @@ int inetd_stream_peek(int sd, char *ifname)
 	return 0;
 }
 
-/* Inetd monitor, called by svc_monitor() */
+/* Inetd monitor, called by service_monitor() */
 int inetd_respawn(pid_t pid)
 {
 	svc_t *svc = svc_find_by_pid(pid);
 
-	if (svc && SVC_TYPE_INETD == svc->type) {
+	if (svc_is_inetd(svc)) {
 		inetd_t *inetd = &svc->inetd;
 
 		svc->pid = 0;
@@ -213,7 +213,7 @@ void inetd_stop(inetd_t *inetd)
 
 	/* Stop any running service, not allowed anymore. */
 	if (svc->pid)
-		svc_stop(svc);
+		service_stop(svc);
 }
 
 static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
@@ -407,7 +407,7 @@ int inetd_match(inetd_t *inetd, char *service, char *proto, char *port)
  * before the specific (eth0:222), the new inetd service must find the
  * (any!) previous rule and add its ifname to their deny list.
  *
- * If equivalent service exists already svc_register() will instead call
+ * If equivalent service exists already service_register() will instead call
  * inetd_allow().
  */
 int inetd_new(inetd_t *inetd, char *service, char *proto, int forking)
@@ -477,12 +477,8 @@ int inetd_init(inetd_t *inetd, void *arg, char *ifname, char *port)
 	result = inetd_allow(inetd, ifname);
 
 	/* For each similar service, on other port, add their ifnames as deny to ours. */
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+	for (svc = svc_inetd_iterator(1); svc; svc = svc_inetd_iterator(0)) {
 		inetd_filter_t *filter;
-
-		/* Skip non-inetd services */
-		if (svc->type != SVC_TYPE_INETD)
-			continue;
 
 		/* Skip ourselves */
 		if (&svc->inetd == inetd)

@@ -32,7 +32,7 @@
 #include "helpers.h"
 #include "private.h"
 #include "plugin.h"
-#include "svc.h"
+#include "service.h"
 #include "sig.h"
 #include "tty.h"
 #include "libite/lite.h"
@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Start all bootstrap tasks, no network available!
 	 */
-	svc_bootstrap();
+	service_bootstrap();
 
 	/*
 	 * Network stuff
@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
 	 * tasks/services in the configured runlevel
 	 */
 	parse_finit_d(rcsd);
-	svc_runlevel(cfglevel);
+	service_runlevel(cfglevel);
 
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);

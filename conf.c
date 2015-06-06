@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "finit.h"
-#include "svc.h"
+#include "service.h"
 #include "tty.h"
 #include "libite/lite.h"
 #include "helpers.h"
@@ -165,7 +165,7 @@ static void parse_static(char *line)
 	}
 
 	if (MATCH_CMD(line, "startx ", x)) {
-		svc_register(SVC_TYPE_SERVICE, strip_line(x), 0, username);
+		service_register(SVC_TYPE_SERVICE, strip_line(x), 0, username);
 		return;
 	}
 
@@ -216,27 +216,27 @@ static void parse_dynamic(char *line, time_t mtime)
 	 * long as the (optional) service callback returns
 	 * non-zero */
 	if (MATCH_CMD(line, "service ", x)) {
-		svc_register(SVC_TYPE_SERVICE, x, mtime, NULL);
+		service_register(SVC_TYPE_SERVICE, x, mtime, NULL);
 		return;
 	}
 
 	/* One-shot task, will not be respawned. Only runs if
 	 * the (optional) service callback returns true */
 	if (MATCH_CMD(line, "task ", x)) {
-		svc_register(SVC_TYPE_TASK, x, mtime, NULL);
+		service_register(SVC_TYPE_TASK, x, mtime, NULL);
 		return;
 	}
 
 	/* Like task but waits for completion, useful w/ [S] */
 	if (MATCH_CMD(line, "run ", x)) {
-		svc_register(SVC_TYPE_RUN, x, mtime, NULL);
+		service_register(SVC_TYPE_RUN, x, mtime, NULL);
 		return;
 	}
 
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
 #ifndef INETD_DISABLED
-		svc_register(SVC_TYPE_INETD, x, mtime, NULL);
+		service_register(SVC_TYPE_INETD, x, mtime, NULL);
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
 #endif

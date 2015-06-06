@@ -1,7 +1,7 @@
-/* Private header file for main finit daemon, not for plugins
+/* Finit service monitor, task starter and generic API for managing svc_t
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,24 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_PRIVATE_H_
-#define FINIT_PRIVATE_H_
+#ifndef FINIT_SERVICE_H_
+#define FINIT_SERVICE_H_
 
 #include "svc.h"
-#include "plugin.h"
 
-uev_ctx_t *ctx;			/* Main loop context */
+void	  service_runlevel	 (int newlevel);
+int	  service_register	 (int type, char *line, time_t mtime, char *username);
+void      service_unregister     (svc_t *svc);
+svc_cmd_t service_enabled	 (svc_t *svc, int event, void *arg);
 
-void      service_bootstrap(void);
-void      service_monitor  (pid_t lost);
+int	  service_start	         (svc_t *svc);
+int	  service_stop	         (svc_t *svc);
+int	  service_reload	 (svc_t *svc);
+void      service_reload_dynamic (void);
 
-void      plugin_run_hooks (hook_point_t no);
-int       plugin_load_all  (uev_ctx_t *ctx, char *path);
+void      service_cleanup        (void);
 
-#endif /* FINIT_PRIVATE_H_ */
+#endif	/* FINIT_SERVICE_H_ */
 
 /**
  * Local Variables:

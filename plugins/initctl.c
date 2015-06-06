@@ -33,6 +33,7 @@
 #include "../plugin.h"
 #include "../sig.h"
 #include "../finit.h"
+#include "../service.h"
 
 static void parse(void *arg, int fd, int events);
 
@@ -102,7 +103,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			case '1'...'5':
 			case '7'...'9':
 				_d("Setting new runlevel %c", rq.runlevel);
-				svc_runlevel(rq.runlevel - '0');
+				service_runlevel(rq.runlevel - '0');
 				break;
 
 			case '6':

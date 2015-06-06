@@ -187,7 +187,7 @@ int tty_enabled(finit_tty_t *tty, int runlevel)
 	return 0;
 }
 
-/* TTY monitor, called by svc_monitor() */
+/* TTY monitor, called by service_monitor() */
 int tty_respawn(pid_t pid)
 {
 	tty_node_t *entry = tty_find_by_pid(pid);
