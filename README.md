@@ -59,10 +59,15 @@ Features
 
 Start, monitor and restart processes (daemons) if they fail.
 
+
 **Inetd**
 
 Finit comes with an `inetd` server built-in.  No need to maintain a
 separate config file for services that you want to start on demand.
+
+All inetd services started can be filtered per port and inbound
+interface, reducing the need for a full blown firewall.
+
 
 **Runlevels**
 
@@ -71,6 +76,7 @@ available if needed.  All services in runlevel S(1) are started first,
 followed by the desired run-time runlevel.  Runlevel S can be started in
 sequence by using `run [S] cmd`.  Changing runlevels at runtime is done
 like any other init, e.g. <kbd>init 4</kbd>.
+
 
 **Plugins**
 
@@ -86,6 +92,7 @@ Plugin capabilities:
 * Task/Run callbacks -- a one-shot commands, executed in sequence
 * Hooks -- hook into the boot at predefined points to extend finit
 * I/O -- listen to external events and control finit behavior/services
+* Inetd -- extend with internal inetd services
 
 Extensions and functionality not purely related to what an `/sbin/init`
 needs to start a system are available as a set of plugins that either
@@ -151,6 +158,7 @@ Syntax:
   Launch daemon on demand when a client initiates a connection to `SVC`.
   Services (SVC) are specified in the standard UNIX `/etc/services`
   file.  With optional filtering for `iface` and possible custom `port`.
+
   The following example opens port 2323 and only allows inbound telnet
   connections from `eth0`:
 
@@ -158,7 +166,7 @@ Syntax:
 
   The `inetd` directive can also have ` -- Optional Description`, only
   Finit does not output this text on the console when launching inetd
-  services.  Instead this text is sent to syslog.
+  services.  Instead this text is sent to syslog.  More on inetd below.
 
 * `runparts <DIR>`
 
@@ -167,8 +175,7 @@ Syntax:
 
 * `include <CONF>`
 
-  Include another configuration file.  If the file is not an absolute
-  path ``/etc/finit.d`` is prepended.
+  Include another configuration file.  Absolute path required.
 
 * `tty [LVLS] <DEV | /path/to/cmd [args]>`
 
@@ -260,7 +267,7 @@ finit.
 Bootstrap
 ---------
 
-1. Setup `/dev`
+1. Populate `/dev`
 2. Parse `/etc/finit.conf`
 3. Load all `.so` plugins
 4. Remount/Pivot `/` to get R+W
@@ -270,8 +277,8 @@ Bootstrap
 8. Enable SysV init signals
 9. Call 2nd level hooks, `HOOK_BASEFS_UP`
 10. Start all 'S' runlevel tasks and services
-11. Setup `/etc/sysctl.conf`
-12. Setup hostname and loopback
+11. Load kernel parameters from `/etc/sysctl.conf`
+12. Set hostname and bring up loopback interface
 13. Call `network` script, if set in `/etc/finit.conf`
 14. Call 3rd level hooks, `HOOK_NETWORK_UP`
 15. Switch to active runlevel, as set in `/etc/finit.conf`, default 2.
@@ -349,8 +356,8 @@ finit with more internal inetd services.
 
 The inetd support in finit is quite advanced.  Not only does it launch
 services on demand, it can do so on custom ports and also filter inbound
-traffic using a poor man's tcpwrappers.  The syntax is very similar to
-traditional `/etc/inetd.conf`, yet keeping with the style of Finit:
+traffic using a poor man's [TCP wrappers].  The syntax is very similar to
+the traditional `/etc/inetd.conf`, yet keeping with the style of Finit:
 
     # Launch SSH on demand, in runlevels 2-5 as root
     inetd ssh/tcp nowait [2345] @root:root /usr/sbin/sshd -i
@@ -362,14 +369,14 @@ A more advanced example:
     inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
     inetd ssh@eth1:22/tcp  nowait [2345] /usr/sbin/sshd -i
 
-If eth0 is your Internet interface you may want to avoid using the
+If `eth0` is your Internet interface you may want to avoid using the
 default port.  To run ssh on port 222, and all others on port 22:
     
     inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
     inetd ssh/tcp          nowait [2345] /usr/sbin/sshd -i
     
-This actually adds a deny rule for eth0 on ssh/tcp, implicitly.  You can
-even list the services in the reverse order with the same result:
+*This actually adds a deny rule for eth0 on ssh/tcp, implicitly.* You
+can even list the services in reverse order with the same result:
     
     inetd ssh/tcp          nowait [2345] /usr/sbin/sshd -i
     inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
@@ -377,7 +384,20 @@ even list the services in the reverse order with the same result:
 There is no specific deny syntax available yet, see the TODO file for
 more details on how this can be implemented.
 
-The `time.so` inetd plugin setup as follows.  Notice the keyword
+**Internal Services**
+
+The original `inetd` had a few standard services built-in:
+
+- time
+- echo
+- chargen
+- discard
+
+Finit only supports the `time` service.  This is realized as a plugin to
+provide a simple means of testing the inetd functionality stand-alone,
+but also as a very rudimentary time server for rdate clients.
+
+The `time.so` inetd plugin is set up as follows.  Notice the keyword
 `internal` which applies to all built-in inetd services:
 
     inetd time/tcp         nowait [2345] internal
@@ -394,6 +414,10 @@ used for testing or environments where NTP for some reason is blocked.
 Also, remember the UNIX year 2038 bug, or in the case of RFC 868 (and
 some NTP implementations), year 2036!
 
+**Note:** There is currently no verification that the same port is used
+  more than once.  So a standard http service will clash with an ssh
+  entry `ssh@*:80/tcp`.
+
 
 Hooks, Callbacks & Plugins
 --------------------------
@@ -401,8 +425,11 @@ Hooks, Callbacks & Plugins
 Finit provides only the bare necessities for starting and supervising
 processes, with an emphasis on *bare* -- for your convenience it does
 however come with support for hooks, service callbacks and plugins that
-can used to extend finit with.  For your convenience a set of *optional*
-plugins are available:
+can used to extend finit with.
+
+**Plugins**
+
+For your convenience a set of *optional* plugins are available:
 
 * *alsa-utils.so*: Restore and save ALSA sound settings on
   startup/shutdown.
@@ -414,9 +441,9 @@ plugins are available:
 * *hwclock.so*: Restore and save system clock from/to RTC on
   startup/shutdown.
 
-* *initctl.so*: Extends finit with a traditional initctl functionality.
+* *initctl.so*: Extends finit with a traditional `initctl` functionality.
 
-* *resolvconf.so*: Setup necessary files for resolvconf at startup.
+* *resolvconf.so*: Setup necessary files for `resolvconf` at startup.
 
 * *tty.so*: Watches `/dev`, using inotify, for new device nodes (TTY's)
   to start/stop getty consoles on them on demand.  Useful when plugging
@@ -473,13 +500,17 @@ they are called I/O plugins and are called from the finit main loop when
 `poll()` detects an event.  See the source code for `plugins/*.c` for
 more help and ideas.
 
-Callback plugins are called by finit them right before a process is
-started, or restarted if it exits.  The callback receive a pointer to
-the `svc_t` (defined in `svc.h`) of the service, with all command line
-parameters free to modify if needed.  All the callback needs to do is
-respond with one of: `SVC_STOP (0)` tells finit to *not* start the
-service, `SVC_START (1)` to start the service, or `SVC_RELOAD (2)` to
-have finit signal the process with `SIGHUP`.
+**Callbacks**
+
+Callback plugins are called by finit right before a process is started,
+or restarted if it exits.  The callback runs as a separate process and
+receives a pointer to the `svc_t` of the service, with all command line
+parameters free to modify as needed.
+
+All the callback needs to do is respond with one of: `SVC_STOP (0)`
+tells finit to *not* start the service, `SVC_START (1)` to start the
+service, or `SVC_RELOAD (2)` to have finit signal the process with
+`SIGHUP`.
 
 
 Rebooting & Halting
@@ -649,6 +680,7 @@ for bug fixes and proposed extensions.
 [8]:  http://www.gentoo.org/proj/en/base/openrc/
 [9]:  https://github.com/troglobit/troglos
 [10]: ftp://troglobit.com/finit/finit-1.13.tar.xz
+[TCP Wrappers]:     https://en.wikipedia.org/wiki/TCP_Wrapper
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
