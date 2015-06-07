@@ -378,11 +378,13 @@ int inetd_match(inetd_t *inetd, char *service, char *proto, char *port)
 			return 1;
 	} else {
 		struct servent *sv = NULL;
+		struct protoent *pv = NULL;
 
-		if (getent(service, proto, &sv, NULL))
+		if (getent(service, proto, &sv, &pv))
 			return 0;
 
-		if (inetd->port == ntohs(sv->s_port))
+		if (inetd->proto == ntohs(pv->p_proto) &&
+		    inetd->port  == ntohs(sv->s_port))
 			return 1;
 	}
 
