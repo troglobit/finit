@@ -506,13 +506,13 @@ void service_runlevel(int newlevel)
  * when changing runlevel.
  *
  * For multiple instances of the same command, e.g. multiple DHCP
- * clients, the user may enter an optional ID, using the #ID syntax.
+ * clients, the user must enter an ID, using the :ID syntax.
  *
- *     service #1 /sbin/udhcpc -i eth1
- *     service #2 /sbin/udhcpc -i eth2
+ *     service :1 /sbin/udhcpc -i eth1
+ *     service :2 /sbin/udhcpc -i eth2
  *
- * Without the #ID syntax Finit will overwrite the first service line
- * with the contents of the second.  The #ID must be [1,MAXINT].
+ * Without the :ID syntax Finit will overwrite the first service line
+ * with the contents of the second.  The :ID must be [1,MAXINT].
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
@@ -558,7 +558,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
-		else if (cmd[0] == '#')	/* #ID */
+		else if (cmd[0] == ':')	/* :ID */
 			id = atoi(&cmd[1]);
 		else
 			break;

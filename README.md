@@ -214,13 +214,13 @@ the `/path/to/cmd` should be executed with.  Simply prefix the path with
     run [2345] @joe:users /usr/bin/logger "Hello world"
 
 For multiple instances of the same command, e.g. a DHCP client or
-multiple web servers, add `#ID` somewhere between the `run`, `task`,
+multiple web servers, add `:ID` somewhere between the `run`, `task`,
 `service` keyword and the command, like this:
 
-    service #1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
-    service #2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
+    service :1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
+    service :2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
 
-Without the `#ID` to the service the latter will overwrite the former
+Without the `:ID` to the service the latter will overwrite the former
 and only the old web server would be started and supervised.
 
 
