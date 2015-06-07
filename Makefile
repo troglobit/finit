@@ -1,7 +1,7 @@
-# Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
+# Finit - Fast /sbin/init replacement w/ I/O, hook & service plugins
 #
 # Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
-# Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
+# Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,8 @@ ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
-OBJS        = finit.o conf.o helpers.o sig.o svc.o service.o plugin.o tty.o inetd.o
+OBJS        = finit.o client.o conf.o helpers.o sig.o svc.o service.o \
+	      plugin.o tty.o inetd.o
 
 TOPDIR      = $(shell pwd)
 -include config.mk

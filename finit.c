@@ -1,7 +1,7 @@
-/* Finit - Extremely fast /sbin/init replacement w/ I/O, hook & service plugins
+/* Finit - Fast /sbin/init replacement w/ I/O, hook & service plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
-#include <getopt.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -70,78 +69,6 @@ static void parse_kernel_cmdline(void)
 
 		fclose(fp);
 	}
-}
-
-static int usage(int rc)
-{
-	fprintf(stderr, "Usage: %s [OPTIONS] [RUNLEVEL]\n\n"
-		"  -d, --debug          Enable/Disable debug\n"
-		"  -h, --help           This help text\n\n", __progname);
-
-	return rc;
-}
-
-static int client(int argc, char *argv[])
-{
-	int fd;
-	int c;
-	int result = -1;
-	ssize_t len;
-	struct option long_options[] = {
-		{"debug", 0, NULL, 'd'},
-		{"help", 0, NULL, 'h'},
-		{NULL, 0, NULL, 0}
-	};
-	struct init_request rq = {
-		.magic = INIT_MAGIC,
-		.cmd = 0
-	};
-
-	while ((c = getopt_long(argc, argv, "h?d", long_options, NULL)) != EOF) {
-		switch(c) {
-		case 'd':
-			rq.cmd = INIT_CMD_DEBUG;
-			break;
-
-		case 'h':
-		case '?':
-			return usage(0);
-		default:
-			return usage(1);
-		}
-	}
-
-	if (!rq.cmd) {
-		if (argc < 2) {
-			fprintf(stderr, "Missing runlevel.\n");
-			return 1;
-		}
-
-		rq.cmd = INIT_CMD_RUNLVL;
-		rq.runlevel = (int)argv[1][0];
-	}
-
-	if (!fexist(FINIT_FIFO)) {
-		fprintf(stderr, "/sbin/init does not support %s!\n", FINIT_FIFO);
-		return 1;
-	}
-
-	fd = open(FINIT_FIFO, O_RDWR);
-	if (-1 == fd) {
-		perror("Failed opening " FINIT_FIFO);
-		return 1;
-	}
-
-	len = write(fd, &rq, sizeof(rq));
-	if (len == sizeof(rq)) {
-		len = read(fd, &rq, sizeof(rq));
-		if (len == sizeof(rq) && rq.cmd == INIT_CMD_ACK)
-			result = 0;
-	}
-
-	close(fd);
-
-	return result;
 }
 
 static void banner(void)

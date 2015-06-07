@@ -30,6 +30,8 @@
 
 uev_ctx_t *ctx;			/* Main loop context */
 
+int       client           (int argc, char *argv[]);
+
 void      service_bootstrap(void);
 void      service_monitor  (pid_t lost);
 
