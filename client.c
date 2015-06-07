@@ -104,6 +104,17 @@ int show_version(void)
 	return 0;
 }
 
+static char *svc_status(svc_t *svc)
+{
+	if (svc->pid)
+		return "running";
+
+	if (svc_is_inetd(svc))
+		return "inetd";
+
+	return "waiting";
+}
+
 static int show_status(void)
 {
 	svc_t *svc;
@@ -111,8 +122,7 @@ static int show_status(void)
 	printf("Status   PID     Runlevels  Service               Description\n");
 	printf("==============================================================================\n");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		printf("%7s  %-6d  %-9s  %-20s  %s\n",
-		       svc->pid ? "running" : "waiting", svc->pid,
+		printf("%7s  %-6d  %-9s  %-20s  %s\n", svc_status(svc), svc->pid,
 		       runlevel_string(svc->runlevels), svc->cmd, svc->desc);
 		if (verbose) {
 			int i;
