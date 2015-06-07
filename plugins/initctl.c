@@ -121,6 +121,10 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			debug = !debug;
 			break;
 
+		case INIT_CMD_RELOAD:
+			reload_finit_d();
+			break;
+
 		case INIT_CMD_ACK:
 			_d("Client failed reading ACK.");
 			goto leave;

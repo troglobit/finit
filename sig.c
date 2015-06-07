@@ -93,17 +93,7 @@ void do_shutdown(int sig)
  */
 static void sighup_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	/* Mark and sweep */
-	svc_mark_dynamic();
-
-	/* Reload all *.conf in /etc/finit.d/ */
-	parse_finit_d(rcsd);
-
-	/* Reload dirty services */
-	service_reload_dynamic();
-
-	/* Cleanup stale services */
-	svc_clean_dynamic(service_unregister);
+	reload_finit_d();
 }
 
 /*

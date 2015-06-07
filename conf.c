@@ -54,6 +54,25 @@ static char *strip_line(char *line)
 	return line;
 }
 
+void parse_kernel_cmdline(void)
+{
+	FILE *fp;
+	char line[LINE_SIZE];
+
+	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
+		fgets(line, sizeof(line), fp);
+		_d("Kernel command line: %s", line);
+
+		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
+			debug = 1;
+
+		if (!debug && strstr(line, "quiet"))
+			verbose = 0;
+
+		fclose(fp);
+	}
+}
+
 /* Convert optional "[!123456789S]" string into a bitmask */
 int parse_runlevels(char *runlevels)
 {
@@ -376,6 +395,22 @@ int parse_finit_conf(char *file)
 	}
 
 	return result;
+}
+
+/* Called on SIGHUP or 'init q' */
+void reload_finit_d(void)
+{
+	/* Mark and sweep */
+	svc_mark_dynamic();
+
+	/* Reload all *.conf in /etc/finit.d/ */
+	parse_finit_d(rcsd);
+
+	/* Reload dirty services */
+	service_reload_dynamic();
+
+	/* Cleanup stale services */
+	svc_clean_dynamic(service_unregister);
 }
 
 

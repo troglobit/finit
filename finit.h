@@ -76,6 +76,7 @@
 #define INIT_MAGIC		0x03091969
 #define INIT_CMD_RUNLVL		1
 #define INIT_CMD_DEBUG		2
+#define INIT_CMD_RELOAD		3
 #define INIT_CMD_ACK		255
 
 struct init_request {
@@ -99,9 +100,11 @@ extern char  *console;
 extern char  *__progname;
 
 /* conf.c */
-int parse_runlevels  (char *runlevels);
-int parse_finit_conf (char *file);
-int parse_finit_d    (char *dir);
+void parse_kernel_cmdline (void);
+int  parse_runlevels      (char *runlevels);
+int  parse_finit_conf     (char *file);
+int  parse_finit_d        (char *dir);
+void reload_finit_d       (void);
 
 #endif /* FINIT_H_ */
 

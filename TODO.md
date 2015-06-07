@@ -28,14 +28,9 @@ General
   service it monitors + `.sh`.
 * Add support for `/etc/sysctl.d`
 * Add compile-time supoprt for running `/bin/sh` instead of `getty`
-* Add support for `init <q | reload-configuration>` and `SIGHUP` to
-  have finit reload its `finit.conf`, but also
-* Add support for inotify to automatically reload `finit.conf`
 * Implement `initctl stop|start|restart|reload|status <SVC>` and
   `service <SVC> stop|start|restart|reload|status` on top
 * Add PRE and POST hooks for when switching between runlevels
-* Add support for `init -v,--version | version`
-* Cleanup move sources from top-level directory to `src/` and `include/`
 * Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
 * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
   instead.  This is the de-facto practice.  But keep the check command

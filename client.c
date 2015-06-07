@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
 
@@ -31,107 +32,20 @@
 
 #include "libite/lite.h"
 
+typedef struct {
+	char  *cmd;
+	int  (*cb)(void);
+} command_t;
 
-static char *runlevel_string(svc_t *svc)
-{
-	int i, pos = 1;;
-	static char lvl[10] = "[]";
 
-	for (i = 0; i < 10; i++) {
-		if (ISSET(svc->runlevels, i)) {
-			if (i == 0)
-				lvl[pos++] = 'S';
-			else
-				lvl[pos++] = '0' + i;
-		}
-	}
-	lvl[pos++] = ']';
-	lvl[pos]   = 0;
-
-	return lvl;
-}
-
-static int status(void)
-{
-	svc_t *svc;
-
-	printf("Status   PID     Runlevels  Service               Description\n");
-	printf("==============================================================================\n");
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		printf("%7s  %-6d  %-9s  %-20s  %s\n",
-		       svc->pid ? "running" : "waiting", svc->pid,
-		       runlevel_string(svc), svc->cmd, svc->desc);
-	}
-
-	return 0;
-}
-
-static int usage(int rc)
-{
-	fprintf(stderr, "Usage: %s [OPTIONS] [status | <1-6>]\n\n"
-		"Options:\n"
-		"  -d, --debug          Enable/Disable debug\n"
-		"  -h, --help           This help text\n\n"
-		"Commands:\n"
-		"        status         Show status of services\n\n", __progname);
-
-	return rc;
-}
-
-int client(int argc, char *argv[])
+static int do_send(struct init_request *rq, ssize_t len)
 {
 	int fd;
-	int c;
 	int result = -1;
-	ssize_t len;
-	struct {
-		char  *cmd;
-		int  (*cb)(void);
-	} command[] = {
-		{ "status", status },
-		{ NULL, NULL }
-	};
-	struct option long_options[] = {
-		{"debug", 0, NULL, 'd'},
-		{"help", 0, NULL, 'h'},
-		{NULL, 0, NULL, 0}
-	};
-	struct init_request rq = {
-		.magic = INIT_MAGIC,
-		.cmd = 0
-	};
-
-	while ((c = getopt_long(argc, argv, "h?d", long_options, NULL)) != EOF) {
-		switch(c) {
-		case 'd':
-			rq.cmd = INIT_CMD_DEBUG;
-			break;
-
-		case 'h':
-		case '?':
-			return usage(0);
-		default:
-			return usage(1);
-		}
-	}
-
-	if (!rq.cmd) {
-		if (argc < 2) {
-			fprintf(stderr, "Missing argument.\n");
-			return usage(1);
-		}
-
-		for (c = 0; command[c].cmd; c++) {
-			if (!strcmp(command[c].cmd, argv[1]))
-				return command[c].cb();
-		}
-
-		rq.cmd = INIT_CMD_RUNLVL;
-		rq.runlevel = (int)argv[1][0];
-	}
+	ssize_t num;
 
 	if (!fexist(FINIT_FIFO)) {
-		fprintf(stderr, "/sbin/init does not support %s!\n", FINIT_FIFO);
+		fprintf(stderr, "%s does not support %s!\n", __progname, FINIT_FIFO);
 		return 1;
 	}
 
@@ -141,16 +55,145 @@ int client(int argc, char *argv[])
 		return 1;
 	}
 
-	len = write(fd, &rq, sizeof(rq));
-	if (len == sizeof(rq)) {
-		len = read(fd, &rq, sizeof(rq));
-		if (len == sizeof(rq) && rq.cmd == INIT_CMD_ACK)
+	num = write(fd, rq, len);
+	if (num == len) {
+		num = read(fd, rq, len);
+		if (num == len && rq->cmd == INIT_CMD_ACK)
 			result = 0;
 	}
 
 	close(fd);
 
 	return result;
+}
+
+static int toggle_debug(void)
+{
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd = INIT_CMD_DEBUG,
+	};
+
+	return do_send(&rq, sizeof(rq));
+}
+
+static int reload_conf(void)
+{
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd = INIT_CMD_RELOAD,
+	};
+
+	return do_send(&rq, sizeof(rq));
+}
+
+static int set_runlevel(int lvl)
+{
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd = INIT_CMD_RUNLVL,
+		.runlevel = lvl,
+	};
+
+	return do_send(&rq, sizeof(rq));
+}
+
+int show_version(void)
+{
+	return banner();
+}
+
+static int show_status(void)
+{
+	svc_t *svc;
+
+	printf("Status   PID     Runlevels  Service               Description\n");
+	printf("==============================================================================\n");
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		printf("%7s  %-6d  %-9s  %-20s  %s\n",
+		       svc->pid ? "running" : "waiting", svc->pid,
+		       runlevel_string(svc->runlevels), svc->cmd, svc->desc);
+		if (verbose) {
+			int i;
+			char args[80] = "";
+
+			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+				strlcat(args, svc->args[i], sizeof(args));
+				strlcat(args, " ", sizeof(args));
+			}
+			printf("                            %s\n", args);
+		}
+	}
+
+	return 0;
+}
+
+static int usage(int rc)
+{
+	fprintf(stderr, "Usage: %s [OPTIONS] [<COMMAND> | <q | 1-6>]\n\n"
+		"Options:\n"
+		"  -d, --debug          Toggle Finit debug\n"
+		"  -v, --verbose        Verbose output\n"
+		"  -h, --help           This help text\n\n"
+		"Commands:\n"
+		"        debug          Toggle Finit debug\n"
+		"        reload         Reload *.conf in /etc/finit.d/\n"
+		"        status         Show status of services\n"
+		"        version        Show Finit version\n\n", __progname);
+
+	return rc;
+}
+
+int client(int argc, char *argv[])
+{
+	int c;
+	command_t command[] = {
+		{ "debug",    toggle_debug },
+		{ "q",        reload_conf  }, /* SysV init compat. */
+		{ "reload",   reload_conf  },
+//		{ "runlevel", set_runlevel },
+		{ "status",   show_status  },
+		{ "version",  show_version },
+		{ NULL, NULL }
+	};
+	struct option long_options[] = {
+		{"debug",   0, NULL, 'd'},
+		{"help",    0, NULL, 'h'},
+		{"verbose", 0, NULL, 'v'},
+		{NULL, 0, NULL, 0}
+	};
+
+	verbose = 0;
+	while ((c = getopt_long(argc, argv, "h?dv", long_options, NULL)) != EOF) {
+		switch(c) {
+		case 'd':
+			toggle_debug();
+			break;
+
+		case 'h':
+		case '?':
+			return usage(0);
+
+		case 'v':
+			verbose = 1;
+			break;
+		}
+	}
+
+	if (optind < argc) {
+		char *cmd = argv[optind];
+
+		/* Compat: 'init <1-9>' */
+		if (strlen(cmd) == 1 && isdigit((int)cmd[0]))
+			return set_runlevel((int)cmd[0]);
+
+		for (c = 0; command[c].cmd; c++) {
+			if (!strcmp(command[c].cmd, cmd))
+				return command[c].cb();
+		}
+	}
+
+	return usage(1);
 }
 
 /**

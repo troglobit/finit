@@ -136,6 +136,50 @@ int atonum(char *str)
 	return val;
 }
 
+/**
+ * runlevel_string - Convert a bit encoded runlevel to .conf syntax
+ * @levels: Bit encoded runlevels
+ *
+ * Returns:
+ * Pointer to string on the form [2345]
+ */
+char *runlevel_string(int levels)
+{
+	int i, pos = 1;;
+	static char lvl[10] = "[]";
+
+	for (i = 0; i < 10; i++) {
+		if (ISSET(levels, i)) {
+			if (i == 0)
+				lvl[pos++] = 'S';
+			else
+				lvl[pos++] = '0' + i;
+		}
+	}
+	lvl[pos++] = ']';
+	lvl[pos]   = 0;
+
+	return lvl;
+}
+
+/**
+ * banner - Show Finit version at boot or from cmdline
+ *
+ * This function prints the default Finit version, or a custom heading.
+ *
+ * Returns:
+ * This function is always successful, returning POSIX OK(0).
+ */
+int banner(void)
+{
+	delline();
+#ifdef INIT_HEADING
+	echo("%s", INIT_HEADING);
+#else
+	echo("Finit version " VERSION " (" WHOAMI ") " __DATE__ " " __TIME__);
+#endif
+	return 0;
+}
 
 /**
  * pidfile_read - Reads a PID value from a pidfile.

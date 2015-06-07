@@ -52,34 +52,6 @@ char *console   = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
-static void parse_kernel_cmdline(void)
-{
-	FILE *fp;
-	char line[LINE_SIZE];
-
-	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
-		fgets(line, sizeof(line), fp);
-		_d("Kernel command line: %s", line);
-
-		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
-			debug = 1;
-
-		if (!debug && strstr(line, "quiet"))
-			verbose = 0;
-
-		fclose(fp);
-	}
-}
-
-static void banner(void)
-{
-	delline();
-#ifdef INIT_HEADING
-	echo("%s", INIT_HEADING);
-#else
-	echo("Finit version " VERSION " (" WHOAMI ") " __DATE__ " " __TIME__);
-#endif
-}
 
 int main(int argc, char* argv[])
 {
