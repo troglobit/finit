@@ -172,6 +172,9 @@ char *runlevel_string(int levels)
  */
 int banner(void)
 {
+	if (getpid() == 1 && !verbose)
+		return 0;
+
 	delline();
 #ifdef INIT_HEADING
 	echo("%s", INIT_HEADING);
@@ -515,7 +518,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 		return 1;
 	}
 
-	if (fmt) {
+	if (verbose && fmt) {
 		va_start(ap, fmt);
 		vsnprintf(line, sizeof(line), fmt, ap);
 		va_end(ap);
@@ -547,7 +550,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 		}
 	}
 
-	if (fmt)
+	if (verbose && fmt)
 		print_result(status);
 
 	/* Dump any results of cmd on stderr after we've printed [ OK ] or [FAIL]  */

@@ -87,6 +87,8 @@ struct init_request {
 	char	data[368];
 };
 
+extern int    debug;
+extern int    verbose;
 extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;

@@ -319,7 +319,8 @@ static int parse_conf(char *file)
 		strcat(line, " ");
 	}
 
-	print(0, "Loading %sconfiguration", line);
+	if (verbose)
+		print(0, "Loading %sconfiguration", line);
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))
 			continue;

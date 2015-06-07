@@ -38,7 +38,7 @@
 #include "inetd.h"
 
 int   debug     = 0;
-int   verbose   = 1;
+int   verbose   = VERBOSE_MODE;
 int   runlevel  = 0;		/* Bootstrap */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = 0;		/* HALT */
@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 	 * Load plugins first, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
-	print_result(plugin_load_all(&loop, PLUGIN_PATH));
+	plugin_load_all(&loop, PLUGIN_PATH);
 
 	/*
 	 * Parse configuration file

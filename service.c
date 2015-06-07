@@ -145,11 +145,13 @@ int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!fexist(svc->cmd) && !svc->inetd.cmd) {
-		char msg[80];
+		if (verbose) {
+			char msg[80];
 
-		snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
-		print_desc("", msg);
-		print_result(1);
+			snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
+			print_desc("", msg);
+			print_result(1);
+		}
 
 		return 0;
 	}
@@ -193,10 +195,12 @@ int service_start(svc_t *svc)
 		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->inetd.name, ifname);
 	} else
 #endif
-	if (svc_is_daemon(svc))
-		print_desc("", svc->desc);
-	else if (!respawn)
-		print_desc("Starting ", svc->desc);
+	if (verbose) {
+		if (svc_is_daemon(svc))
+			print_desc("", svc->desc);
+		else if (!respawn)
+			print_desc("Starting ", svc->desc);
+	}
 
 	/* Block sigchild while forking.  */
 	sigemptyset(&nmask);
@@ -281,11 +285,12 @@ int service_start(svc_t *svc)
 	if (svc_is_inetd(svc)) {
 		if (svc->inetd.type == SOCK_STREAM)
 			close(sd);
+	} else if (verbose) {
+		if (SVC_TYPE_RUN == svc->type)
+			print_result(WEXITSTATUS(complete(svc->cmd, pid)));
+		else if (!respawn)
+			print_result(svc->pid > 1 ? 0 : 1);
 	}
-	else if (SVC_TYPE_RUN == svc->type)
-		print_result(WEXITSTATUS(complete(svc->cmd, pid)));
-	else if (!respawn)
-		print_result(svc->pid > 1 ? 0 : 1);
 
 	return 0;
 }
@@ -308,13 +313,13 @@ int service_stop(svc_t *svc)
 	if (SVC_TYPE_SERVICE != svc->type)
 		return 0;
 
-	if (runlevel != 1)
+	if (runlevel != 1 && verbose)
 		print_desc("Stopping ", svc->desc);
 
 	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
 
-	if (runlevel != 1)
+	if (runlevel != 1 && verbose)
 		print_result(res);
 exit:
 	svc->pid = 0;

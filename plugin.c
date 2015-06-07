@@ -295,10 +295,12 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 	DIR *dp = opendir(path);
 	struct dirent *entry;
 
-	print_desc("Loading plugins", NULL);
+	if (verbose)
+		print_desc("Loading plugins", NULL);
 	if (!dp) {
 		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
-		return 1;
+		fail = 1;
+		goto exit;
 	}
 	plugpath = path;
 
@@ -319,6 +321,9 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 
 	/* Always initialize plugins */
 	init_plugins(ctx);
+exit:
+	if (verbose)
+		print_result(fail);
 
 	return fail;
 }

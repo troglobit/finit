@@ -88,9 +88,6 @@ do {								\
 #define SETBIT(a,i)  (a |= (1 << (i)))
 #define CLRBIT(a,i)  (a &= ~(1 << (i)))
 
-extern int debug;
-extern int verbose;
-
 int     makepath        (char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
 
