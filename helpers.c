@@ -172,14 +172,15 @@ char *runlevel_string(int levels)
  */
 int banner(void)
 {
-	if (getpid() == 1 && !verbose)
+	if (!verbose)
 		return 0;
 
 	delline();
 #ifdef INIT_HEADING
 	echo("%s", INIT_HEADING);
 #else
-	echo("Finit version " VERSION " (" WHOAMI ") " __DATE__ " " __TIME__);
+	echo("Finit v" VERSION);
+	echo("===================================================================");
 #endif
 	return 0;
 }

@@ -100,7 +100,8 @@ static int set_runlevel(int lvl)
 
 int show_version(void)
 {
-	return banner();
+	puts("v" VERSION);
+	return 0;
 }
 
 static int show_status(void)
