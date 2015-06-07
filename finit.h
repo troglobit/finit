@@ -88,6 +88,7 @@ struct init_request {
 };
 
 extern int    debug;
+extern int    quiet;
 extern int    verbose;
 extern int    runlevel;
 extern int    cfglevel;

@@ -29,6 +29,7 @@ defaults()
 	embedded=${embedded:=0}
 	inetd=${inetd:=1}
 	verbose=${verbose:=1}
+	kernel_quiet=${kernel_quiet:=1}
 	static=${static:=0}
 	disable_plugins=${disable_plugins:=0}
 }
@@ -64,6 +65,11 @@ fi
 		echo "Quiet Finit       : YES"
         else
 		echo "Quiet Finit       : NO, verbose output (default)"
+	fi
+	if [ $kernel_quiet -eq 1 ]; then
+		echo "Kernel Quiet      : YES, silent after inital boot (default)"
+        else
+		echo "Kernel Quiet      : NO"
 	fi
 	if [ $static -ne 0 ]; then
 		echo "Static Finit      : YES"
@@ -105,6 +111,7 @@ usage()
 	echo "  --enable-embedded      Enable embedded defaults, BusBox getty, mdev etc."
 	echo "  --enable-debug         Enable debug flags, '-O0, -g'"
 	echo "  --enable-quiet         Quiet mode, reduce screen output to absolute minimum."
+	echo "  --enable-kernel-quiet  Like quiet, but after boot, using kernel cmdline quiet."
 	echo "  --enable-static        Link statically.  This disables a few features."
 	echo "  --disable-inetd        Disable inetd support if not needed."
 	echo "  --disable-plugins      Disable plugins"
@@ -180,6 +187,10 @@ while [ "$*" != "" ]; do
 
                 enable-quiet)
 			verbose=0
+                        ;;
+
+                enable-kernel-quiet)
+			kernel_quiet=1
                         ;;
 
                 enable-static)
@@ -275,6 +286,7 @@ if [ x"$heading" != x"" ]; then
 fi
 
 echo "#define VERBOSE_MODE    $verbose"             >> config.h
+echo "#define KERNEL_QUIET    $kernel_quiet"        >> config.h
 echo "#define FINIT_FIFO      \"$fifo\""            >> config.h
 echo "#define FINIT_CONF      \"$config\""          >> config.h
 echo "#define FINIT_RCSD      \"$rcsd\""            >> config.h

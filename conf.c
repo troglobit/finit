@@ -65,10 +65,12 @@ void parse_kernel_cmdline(void)
 
 		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
 			debug = 1;
-
+#ifdef KERNEL_QUIET
 		if (!debug && strstr(line, "quiet"))
-			verbose = 0;
-
+			quiet = 1;
+		else
+			quiet = 0;
+#endif
 		fclose(fp);
 	}
 }

@@ -38,6 +38,7 @@
 #include "inetd.h"
 
 int   debug     = 0;
+int   quiet     = KERNEL_QUIET;	/* Delayed disable of verbose mode. */
 int   verbose   = VERBOSE_MODE;
 int   runlevel  = 0;		/* Bootstrap */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
@@ -184,6 +185,10 @@ int main(int argc, char* argv[])
 
 	/* Start TTYs */
 	tty_runlevel(runlevel);
+
+	/* Disable verbose mode, if selected */
+	if (quiet)
+		verbose = 0;
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services
