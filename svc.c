@@ -23,11 +23,14 @@
  */
 
 #include <stdlib.h>
+#include "libite/lite.h"
 
 #include "finit.h"
 #include "svc.h"
 #include "helpers.h"
 
+/* Each svc_t needs a unique job# */
+static int jobcounter = 1;
 
 static svc_t *__connect_shm(void)
 {
@@ -45,22 +48,37 @@ static svc_t *__connect_shm(void)
 
 /**
  * svc_new - Create a new service
- * @id: Instance id
+ * @cmd:  External program to call, or 'internal' for internal inetd services
+ * @id:   Instance id
+ * @type: Service type, one of service, task, run or inetd
  *
  * Returns:
  * A pointer to a new &svc_t object, or %NULL if out of empty slots.
  */
-svc_t *svc_new(int id)
+svc_t *svc_new(char *cmd, int id, int type)
 {
-	int i;
-	svc_t *list = __connect_shm();
+	int i, job = -1;
+	svc_t *svc, *list = __connect_shm();
+
+	/* Find first job n:o if registering multiple instances */
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!strcmp(svc->cmd, cmd)) {
+			job = svc->job;
+			break;
+		}
+	}
+	if (job == -1)
+		job = jobcounter++;
 
 	for (i = 0; i < MAX_NUM_SVC; i++) {
 		svc_t *svc = &list[i];
 
 		if (svc->type == SVC_TYPE_FREE) {
 			memset(svc, 0, sizeof(*svc));
-			svc->id = id;
+			svc->type = type;
+			svc->job  = job;
+			svc->id   = id;
+			strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
 			return svc;
 		}
@@ -186,18 +204,18 @@ void svc_foreach_dynamic(void (*cb)(svc_t *))
 
 /**
  * svc_find - Find a service object by its full path name
- * @path: Full path name, e.g., /sbin/syslogd
+ * @cmd: Full path name, e.g., /sbin/syslogd
  *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find(char *path, int id)
+svc_t *svc_find(char *cmd, int id)
 {
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->id == id && !strncmp(path, svc->cmd, strlen(svc->cmd))) {
-			_d("Found a matching svc for %s", path);
+		if (svc->id == id && !strncmp(svc->cmd, cmd, strlen(svc->cmd))) {
+			_d("Found a matching svc for %s", cmd);
 			return svc;
 		}
 	}
@@ -218,6 +236,26 @@ svc_t *svc_find_by_pid(pid_t pid)
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (svc->pid == pid)
+			return svc;
+	}
+
+	return NULL;
+}
+
+/**
+ * svc_find_by_jobid - Find an service object by its JOB:ID
+ * @job: Job n:o
+ * @id:  Instance id
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find_by_jobid(int job, int id)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->job == job && svc->id == id)
 			return svc;
 	}
 
@@ -262,6 +300,54 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 		svc->dirty = 0;
 		svc = svc_dynamic_iterator(0);
 	}
+}
+
+char *svc_status(svc_t *svc)
+{
+	if (svc->pid)
+		return "running";
+
+	if (svc_is_inetd(svc))
+		return "waiting";
+
+	return "stopped";
+}
+
+/* Same base service, return unique ID */
+int svc_next_id(char *cmd)
+{
+	int id = 0;
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!strcmp(svc->cmd, cmd) && id < svc->id)
+			id = svc->id;
+	}
+
+	return id + 1;
+}
+
+int svc_is_unique(svc_t *svc)
+{
+	svc_t *list = __connect_shm();
+	int i, unique = 1;
+
+	for (i = 0; i < MAX_NUM_SVC; i++) {
+		svc_t *s = &list[i];
+
+		if (svc->type == SVC_TYPE_FREE)
+			continue;
+
+		if (s == svc)
+			continue;
+
+		if (s->job == svc->job) {
+			unique = 0;
+			break;
+		}
+	}
+
+	return unique;
 }
 
 

@@ -61,7 +61,7 @@ typedef enum {
  *   initctl <stop|start|restart> service */
 typedef struct svc {
 	/* Instance specifics */
-	int            id;
+	int            job, id;	       /* JOB:ID */
 
 	/* Service details */
 	pid_t	       pid;
@@ -114,11 +114,12 @@ static inline svc_t *finit_svc_connect(void)
 	return (svc_t *)ptr;
 }
 
-svc_t	 *svc_new	       (int id);
+svc_t    *svc_new              (char *cmd, int id, int type);
 int	  svc_del	       (svc_t *svc);
 
-svc_t	 *svc_find	       (char *path, int id);
+svc_t	 *svc_find	       (char *cmd, int id);
 svc_t	 *svc_find_by_pid      (pid_t pid);
+svc_t	 *svc_find_by_jobid    (int job, int id);
 
 svc_t	 *svc_iterator	       (int first);
 svc_t	 *svc_inetd_iterator   (int first);
@@ -129,6 +130,10 @@ void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
 
 void	  svc_mark_dynamic     (void);
 void	  svc_clean_dynamic    (void (*cb)(svc_t *));
+
+char     *svc_status           (svc_t *svc);
+int       svc_next_id          (char *cmd);
+int       svc_is_unique        (svc_t *svc);
 
 static inline int svc_is_inetd (svc_t *svc) { return svc && SVC_TYPE_INETD == svc->type; }
 static inline int svc_is_daemon(svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }

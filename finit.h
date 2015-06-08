@@ -69,15 +69,20 @@
 # define DEFHOST		"noname"
 #endif
 
-#define CMD_SIZE		256
-#define LINE_SIZE		1024
-#define BUF_SIZE		4096
+#define CMD_SIZE                256
+#define LINE_SIZE               1024
+#define BUF_SIZE                4096
 
-#define INIT_MAGIC		0x03091969
-#define INIT_CMD_RUNLVL		1
-#define INIT_CMD_DEBUG		2
-#define INIT_CMD_RELOAD		3
-#define INIT_CMD_ACK		255
+#define INIT_MAGIC              0x03091969
+#define INIT_CMD_RUNLVL         1
+#define INIT_CMD_DEBUG          2    /* Toggle Finit debug */
+#define INIT_CMD_RELOAD         3    /* Reload *.conf in /etc/finit.d/ */
+#define INIT_CMD_START_SVC      4
+#define INIT_CMD_STOP_SVC       5
+#define INIT_CMD_RELOAD_SVC     6    /* SIGHUP service */
+#define INIT_CMD_RESTART_SVC    7    /* STOP + START service */
+#define INIT_CMD_NACK           254
+#define INIT_CMD_ACK            255
 
 struct init_request {
 	int	magic;		/* Magic number			*/

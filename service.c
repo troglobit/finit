@@ -26,13 +26,13 @@
 #include <sys/wait.h>
 #include <utmp.h>
 #include <net/if.h>
+#include "libite/lite.h"
 
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"
 #include "tty.h"
-#include "libite/lite.h"
 #include "service.h"
 #include "inetd.h"
 
@@ -140,7 +140,7 @@ int service_start(svc_t *svc)
 	sigset_t nmask, omask;
 
 	if (!svc)
-		return 0;
+		return 1;
 	respawn = svc->pid != 0;
 
 	/* Don't try and start service if it doesn't exist. */
@@ -153,7 +153,7 @@ int service_start(svc_t *svc)
 			print_result(1);
 		}
 
-		return 0;
+		return 1;
 	}
 
 	/* Ignore if finit is SIGSTOP'ed */
@@ -171,7 +171,7 @@ int service_start(svc_t *svc)
 			sd = accept(sd, NULL, NULL);
 			if (sd < 0) {
 				FLOG_PERROR("Failed accepting inetd service %d/tcp", svc->inetd.port);
-				return 0;
+				return 1;
 			}
 
 			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->inetd.port);
@@ -189,7 +189,7 @@ int service_start(svc_t *svc)
 			if (svc->inetd.type == SOCK_STREAM)
 				close(sd);
 
-			return 0;
+			return 1;
 		}
 
 		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->inetd.name, ifname);
@@ -299,10 +299,8 @@ int service_stop(svc_t *svc)
 {
 	int res = 1;
 
-	if (!svc) {
-		_e("Failed, no svc pointer.");
+	if (!svc)
 		return 1;
-	}
 
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->desc);
@@ -326,6 +324,21 @@ exit:
 	svc->restart_counter = 0;
 
 	return res;
+}
+
+/* stop + start */
+int service_restart(svc_t *svc)
+{
+	int result = 0;
+
+	if (!svc)
+		return 1;
+
+	result += service_stop(svc);
+	sleep(1);
+	result += service_start(svc);
+
+	return result;
 }
 
 /**
@@ -587,24 +600,28 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 #ifndef INETD_DISABLED
 	/* Find plugin that provides a callback for this inetd service */
-	if (type == SVC_TYPE_INETD && !strncasecmp(cmd, "internal", 8)) {
-		plugin = plugin_find(service);
-		if (!plugin || !plugin->inetd.cmd) {
-			_e("Inetd service %s has no internal plugin, skipping.", service);
-			return errno = ENOENT;
+	if (type == SVC_TYPE_INETD) {
+		if (!strncasecmp(cmd, "internal", 8)) {
+			plugin = plugin_find(service);
+			if (!plugin || !plugin->inetd.cmd) {
+				_e("Inetd service %s has no internal plugin, skipping.", service);
+				return errno = ENOENT;
+			}
 		}
-	}
 
-	/* Check if known inetd, then add ifname for filtering only. */
-	svc = find_inetd_svc(cmd, service, proto, port);
-	if (svc)
-		return inetd_allow(&svc->inetd, iface);
+		/* Check if known inetd, then add ifname for filtering only. */
+		svc = find_inetd_svc(cmd, service, proto, port);
+		if (svc)
+			return inetd_allow(&svc->inetd, iface);
+
+		id = svc_next_id(cmd);
+	}
 #endif
 
 	svc = svc_find(cmd, id);
 	if (!svc) {
-		_d("Creating new svc for %s id #%d", cmd, id);
-		svc = svc_new(id);
+		_d("Creating new svc for %s id #%d type %d", cmd, id, type);
+		svc = svc_new(cmd, id, type);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
 			return errno = ENOMEM;
@@ -613,7 +630,6 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	if (svc->mtime != mtime)
 		svc->dirty = 1;
 	svc->mtime = mtime;
-	svc->type  = type;
 
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
@@ -632,6 +648,8 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	if (svc_is_inetd(svc)) {
 		int result;
 
+		_d("Creating new svc job %d inetd %s proto %s iface %s port %s",
+		   svc->job, service, proto, iface, port);
 		result  = inetd_new(&svc->inetd, service, proto, forking);
 		result += inetd_init(&svc->inetd, svc, iface, port);
 
@@ -647,9 +665,6 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		/* Internal plugin provides this service */
 		svc->inetd.cmd = plugin->inetd.cmd;
 	} else {
-		/* External program to call */
-		strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
-
 		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 		while ((cmd = strtok(NULL, " ")))
 			strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
@@ -808,7 +823,7 @@ static svc_t *find_inetd_svc(char *path, char *service, char *proto, char *port)
 			continue;
 
 		if (inetd_match(&svc->inetd, service, proto, port)) {
-			_d("Found a matching svc for %s", path);
+			_d("Found a matching inetd svc for %s %s %s %s", path, service, proto, port);
 			return svc;
 		}
 	}

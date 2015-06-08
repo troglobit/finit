@@ -34,6 +34,7 @@ svc_cmd_t service_enabled	 (svc_t *svc, int event, void *arg);
 
 int	  service_start	         (svc_t *svc);
 int	  service_stop	         (svc_t *svc);
+int       service_restart        (svc_t *svc);
 int	  service_reload	 (svc_t *svc);
 void      service_reload_dynamic (void);
 
