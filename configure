@@ -111,9 +111,9 @@ usage()
 	echo "  --enable-embedded      Enable embedded defaults, BusBox getty, mdev etc."
 	echo "  --enable-debug         Enable debug flags, '-O0, -g'"
 	echo "  --enable-quiet         Quiet mode, reduce screen output to absolute minimum."
-	echo "  --enable-kernel-quiet  Like quiet, but after boot, using kernel cmdline quiet."
 	echo "  --enable-static        Link statically.  This disables a few features."
 	echo "  --disable-inetd        Disable inetd support if not needed."
+	echo "  --disable-kernel-quiet Disable kernel cmdline quiet, default enabled."
 	echo "  --disable-plugins      Disable plugins"
         echo
 	echo "The build system also supports external CFLAGS, CPPFLAGS, LDFLAGS, LDLIBS,"
@@ -189,16 +189,16 @@ while [ "$*" != "" ]; do
 			verbose=0
                         ;;
 
-                enable-kernel-quiet)
-			kernel_quiet=1
-                        ;;
-
                 enable-static)
 			static=1
                         ;;
 
                 disable-inetd)
 			inetd=0
+                        ;;
+
+                disable-kernel-quiet)
+			kernel_quiet=0
                         ;;
 
 		disable-plugins)
