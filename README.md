@@ -519,7 +519,40 @@ Rebooting & Halting
 Finit handles `SIGUSR1` and `SIGUSR2` for reboot and halt, and listens
 to `/dev/initctl` so system reboot and halt commands should also work.
 This latter functionality is implemented in the optional `initctl.so`
-plugin.
+plugin and can be accessed with the `initctl` command line tool (which
+is symlinked to `finit`).
+
+    ~ # initctl
+    Usage: initctl [OPTIONS] [<COMMAND> | <q | 1-6>]
+    
+    Options:
+      -d, --debug           Toggle Finit debug
+      -v, --verbose         Verbose output
+      -h, --help            This help text
+    
+    Commands:
+            debug           Toggle Finit debug
+            q | reload      Reload *.conf in /etc/finit.d/
+            runlevel <1-6>  Set new runlevel
+            status          Show status of services
+            start   <JOB#>  Start stopped service
+            stop    <JOB#>  Stop running service
+            restart <JOB#>  Restart (stop/start) running service
+            reload  <JOB#>  Reload (SIGHUP) running service
+            version         Show Finit version
+    
+    ~ # initctl status
+    #       Status   PID     Runlevels  Service               Description
+    ====================================================================================
+    1       running  480     [S12345]   /sbin/watchdog        System watchdog daemon
+    2       running  481     [S12345]   /sbin/syslogd         System log daemon
+    3       running  519     [S12345]   /sbin/klogd           Kernel log daemon
+    4:1     stopped  0       [345]      /sbin/dropbear        SSH daemon
+    4:2     stopped  0       [345]      /sbin/dropbear        SSH daemon
+    5:1     waiting  0       [2345]     internal              UNIX rdate service
+    5:2     waiting  0       [2345]     internal              UNIX rdate service
+    6:1     waiting  0       [2345]     /sbin/telnetd         Telnet service
+    6:2     waiting  0       [2345]     /sbin/telnetd         Telnet service
 
 
 Building

@@ -83,6 +83,8 @@ install-exec: all
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
 		$(STRIPINST) $$file $(DESTDIR)$(sbindir)/$$file; 	\
 	done
+	printf "  INSTALL $(DESTDIR)$(sbindir)/initctl\n"
+	@ln -sf  finit $(DESTDIR)$(sbindir)/initctl
 	$(MAKE) -C libite  install-exec
 	$(MAKE) -C plugins install
 
@@ -109,6 +111,7 @@ uninstall-exec:
 		printf "  REMOVE  $(DESTDIR)$(sbindir)/$$file\n";   	\
 		rm $(DESTDIR)$(sbindir)/$$file 2>/dev/null; 		\
 	done
+	-@rm  $(DESTDIR)$(sbindir)/initctl
 	-@rmdir $(DESTDIR)$(sbindir) 2>/dev/null
 	-@rmdir $(DESTDIR)$(FINIT_RCSD) 2>/dev/null
 	$(MAKE) -C libite  uninstall
