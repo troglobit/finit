@@ -91,7 +91,7 @@ void do_shutdown(int sig)
 /*
  * Reload .conf files in /etc/finit.d/
  */
-static void sighup_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
 	reload_finit_d();
 }
@@ -99,7 +99,7 @@ static void sighup_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg
 /*
  * Shut down on INT PWR
  */
-static void sigint_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *UNUSED(arg), int UNUSED(events))
+static void sigint_cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 {
 	do_shutdown(w->signo);
 }
@@ -107,7 +107,7 @@ static void sigint_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *UNUSED(arg), int U
 /*
  * SIGCHLD: one of our children has died
  */
-static void sigchld_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigchld_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
 	pid_t pid;
 
@@ -124,7 +124,7 @@ static void sigchld_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(ar
 /*
  * SIGSEGV: mostly if service callbacks segfault
  */
-static void sigsegv_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigsegv_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
 	_e("PID %d caused a segfault!\n", getpid());
 	exit(-1);
@@ -133,7 +133,7 @@ static void sigsegv_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(ar
 /*
  * SIGSTOP/SIGTSTP: Paused by user or netflash
  */
-static void sigstop_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigstop_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
 	touch(SYNC_STOPPED);
 	stopped++;
@@ -142,7 +142,7 @@ static void sigstop_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(ar
 /*
  * SIGCONT: Restart service monitor
  */
-static void sigcont_cb(uev_ctx_t *UNUSED(ctx), uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigcont_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
 	stopped = 0;
 	erase(SYNC_STOPPED);

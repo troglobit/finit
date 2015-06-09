@@ -178,7 +178,7 @@ void plugin_run_hooks(hook_point_t no)
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
-static void generic_io_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int events)
+static void generic_io_cb(uev_t *w, void *arg, int events)
 {
 	plugin_t *p = (plugin_t *)arg;
 

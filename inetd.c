@@ -21,8 +21,6 @@
  * THE SOFTWARE.
  */
 
-#include "inetd.h" /* XXX: Move back down after upgrading to libuEv >1.0.4 */
-
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -32,6 +30,7 @@
 #include "libite/lite.h"
 
 #include "finit.h"
+#include "inetd.h"
 #include "helpers.h"
 #include "private.h"
 #include "service.h"
@@ -45,7 +44,7 @@
 	} while (0);
 
 /* Socket callback, looks up correct svc and starts it as an inetd service */
-static void socket_cb(uev_ctx_t *UNUSED(ctx), uev_t *w, void *arg, int UNUSED(events))
+static void socket_cb(uev_t *w, void *arg, int UNUSED(events))
 {
 	svc_t *svc = (svc_t *)arg;
 
