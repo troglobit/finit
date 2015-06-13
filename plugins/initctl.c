@@ -1,7 +1,7 @@
-/* Optional /dev/initctl FIFO monitor
+/* Optional /dev/initctl FIFO monitor, for receiving commands from telinit
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,48 +53,6 @@ static void fifo_open(void)
 	}
 }
 
-static svc_t *convert_jobid(char *jobid)
-{
-	int job, id = 1;
-	char *token;
-
-	if (!jobid)
-		return NULL;
-
-	token = strtok(jobid, ":");
-	if (!token) {
-		job = atoi(jobid);
-	} else {
-		job = atoi(token);
-		token = strtok(NULL, "");
-		if (token)
-			id = atoi(token);
-	}
-
-	_d("Got job %d id %d ...", job, id);
-	return svc_find_by_jobid(job, id);
-}
-
-static int do_start(char *jobid)
-{
-	return service_start(convert_jobid(jobid));
-}
-
-static int do_stop(char *jobid)
-{
-	return service_stop(convert_jobid(jobid));
-}
-
-static int do_reload(char *jobid)
-{
-	return service_reload(convert_jobid(jobid));
-}
-
-static int do_restart(char *jobid)
-{
-	return service_restart(convert_jobid(jobid));
-}
-
 /* Standard reboot/shutdown utilities talk to init using /dev/initctl.
  * We should check if the fifo was recreated and reopen it.
  */
@@ -102,9 +60,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 {
 	struct init_request rq;
 
-	_d("Receiving request on descriptor %d, from %s ...", fd, FINIT_FIFO);
 	while (1) {
-		int result = 0;
 		ssize_t len = read(fd, &rq, sizeof(rq));
 
 		if (len <= 0) {
@@ -119,7 +75,6 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			}
 
 			_d("Nothing to do, bailing out.");
-
 			break;
 		}
 
@@ -128,7 +83,6 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			break;
 		}
 
-		_d("Magic OK ...");
 		switch (rq.cmd) {
 		case INIT_CMD_RUNLVL:
 			switch (rq.runlevel) {
@@ -160,51 +114,16 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			}
 			break;
 
-		case INIT_CMD_DEBUG:
-			debug = !debug;
-			break;
-
 		case INIT_CMD_RELOAD:
 			reload_finit_d();
 			break;
-
-		case INIT_CMD_START_SVC:
-			result = do_start(rq.data);
-			break;
-
-		case INIT_CMD_STOP_SVC:
-			result = do_stop(rq.data);
-			break;
-
-		case INIT_CMD_RELOAD_SVC:
-			result = do_reload(rq.data);
-			break;
-
-		case INIT_CMD_RESTART_SVC:
-			result = do_restart(rq.data);
-			break;
-
-		case INIT_CMD_ACK:
-			_d("Client failed reading ACK.");
-			goto leave;
 
 		default:
 			_d("Unsupported cmd: %d", rq.cmd);
 			break;
 		}
-
-		if (result)
-			rq.cmd = INIT_CMD_NACK;
-		else
-			rq.cmd = INIT_CMD_ACK;
-		len = write(fd, &rq, sizeof(rq));
-		if (len != sizeof(rq))
-			_d("Failed sending ACK/NACK back to client.");
-		else
-			sleep(1); /* Give client time to read FIFO */
 	}
 
-leave:
 	close(fd);
 	fifo_open();
 }

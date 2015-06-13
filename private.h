@@ -30,6 +30,7 @@
 
 uev_ctx_t *ctx;			/* Main loop context */
 
+int       api_init         (uev_ctx_t *ctx);
 int       client           (int argc, char *argv[]);
 
 void      service_bootstrap(void);

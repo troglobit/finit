@@ -27,6 +27,10 @@ General
 * Add support for listening to netlink messages for GW, ADDR, IF UP/DOWN
 * Add <!,...> to let Finit know that a service does not support reload
   (SIGHUP), but must be restarted (stop+start)
+* Allow custom reload for processes like libreSwan's pluto
+
+    service [2345] <!gw,if:eth0,reload:'starter reload'> /sbin/pluto
+
 * Allow process callbacks to be scripts.
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
   and `RELOAD` on `STDOUT` from a script ... call it for example
@@ -54,6 +58,17 @@ to achieve compatibility would be to add a plugin to finit which reads
 
 Inetd
 -----
+
+wkz says we need deny rules and better syntax! we agrees
+
+
+wkz --> inetd telnet/tcp @!eth0
+wkz --> inetd 2323/tcp @eth0
+wkz --> 77/udp wait [2345] @finit/time
+
+jnn --> telnet@eth0,eth1/tcp
+jnn --> 2323@eth2/tcp
+jnn --> 3000/udp wait [2345] time/internal
 
 Optimize interface filtering by using socket filter.  The functions
 `inet_*_peek()` and `inetd_is_allowed()` used for interace filtering

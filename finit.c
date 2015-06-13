@@ -53,11 +53,29 @@ char *console   = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
+static int banner(void)
+{
+	if (!verbose)
+		return 0;
+
+	delline();
+#ifdef INIT_HEADING
+	echo("%s", INIT_HEADING);
+#else
+	echo("Finit v" VERSION);
+	echo("===================================================================");
+#endif
+	return 0;
+}
 
 int main(int argc, char* argv[])
 {
 	uev_ctx_t loop;
 
+	/*
+	 * finit/init/telinit client tool uses /dev/initctl pipe
+	 * for compatibility but initctl client tool uses socket
+	 */
 	if (getpid() != 1)
 		return client(argc, argv);
 
@@ -189,6 +207,9 @@ int main(int argc, char* argv[])
 	/* Disable verbose mode, if selected */
 	if (quiet)
 		verbose = 0;
+
+	/* Start new initctl API responder */
+	api_init(&loop);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services

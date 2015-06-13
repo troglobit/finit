@@ -93,7 +93,6 @@ void    ifconfig        (char *ifname, char *addr, char *mask, int up);
 
 int     atonum          (char *str);
 char   *runlevel_string (int levels);
-int     banner          (void);
 
 pid_t   pidfile_read    (char *pidfile);
 pid_t   pidfile_poll    (char *cmd, char *path);

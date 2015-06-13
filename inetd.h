@@ -65,6 +65,7 @@ int  inetd_del         (inetd_t *inetd);
 
 int  inetd_init        (inetd_t *inetd, void *arg, char *ifname, char *port);
 int  inetd_match       (inetd_t *inetd, char *service, char *proto, char *port);
+int  inetd_filter_str  (inetd_t *inetd, char *str, size_t len);
 
 int  inetd_allow       (inetd_t *inetd, char *ifname);
 int  inetd_deny        (inetd_t *inetd, char *ifname);

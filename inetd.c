@@ -390,6 +390,60 @@ int inetd_match(inetd_t *inetd, char *service, char *proto, char *port)
 	return 0;
 }
 
+/* Compose presentable string of inetd filters: !eth0,eth1,eth2,!eth3 */
+int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
+{
+	int prev = 0;
+	char buf[42];
+	inetd_filter_t *filter;
+
+	if (!inetd || !str || len <= 0) {
+		_e("Dafuq?");
+		return 1;
+	}
+
+	snprintf(str, len, "%s allow ", inetd->name);
+	LIST_FOREACH(filter, &inetd->filters, link) {
+		char ifname[IFNAMSIZ];
+
+		if (filter->deny)
+			continue;
+
+		if (!strlen(filter->ifname))
+			snprintf(ifname, sizeof(ifname), "ANY");
+		else
+			strlcpy(ifname, filter->ifname, sizeof(ifname));
+
+		snprintf(buf, sizeof(buf), "%s%s:%d", prev ? "," : "",
+			 ifname, inetd->port);
+		prev = 1;
+		strlcat(str, buf, len);
+	}
+
+	prev = 0;
+	LIST_FOREACH(filter, &inetd->filters, link) {
+		char ifname[IFNAMSIZ];
+
+		if (!filter->deny)
+			continue;
+		if (!prev) {
+			snprintf(buf, sizeof(buf), " deny ");
+			strlcat(str, buf, len);
+		}
+
+		if (!strlen(filter->ifname))
+			snprintf(ifname, sizeof(ifname), "ANY");
+		else
+			strlcpy(ifname, filter->ifname, sizeof(ifname));
+
+		snprintf(buf, sizeof(buf), "%s%s", prev ? "," : "", ifname);
+		prev = 1;
+		strlcat(str, buf, len);
+	}
+
+	return 0;
+}
+
 /*
  * This function is called to add a new, unique, inetd service.  When an
  * ifname is given as argument this means *only* run service on this

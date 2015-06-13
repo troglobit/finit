@@ -33,11 +33,11 @@ DEV         = $(NAME)-dev
 ARCHTOOL    = `which git-archive-all`
 ARCHIVE     = $(PKG).tar
 ARCHIVEZ    = ../$(ARCHIVE).xz
-EXEC        = finit reboot
+EXEC        = finit initctl reboot
 HEADERS     = plugin.h svc.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
-OBJS        = finit.o client.o conf.o helpers.o sig.o svc.o service.o \
-	      plugin.o tty.o inetd.o
+OBJS        = finit.o api.o client.o conf.o exec.o helpers.o pid.o sig.o \
+	      svc.o service.o plugin.o tty.o inetd.o
 
 TOPDIR      = $(shell pwd)
 -include config.mk
@@ -74,6 +74,8 @@ config.h: configure
 
 finit: $(OBJS)
 
+initctl: initctl.o svc.o helpers.o
+
 reboot: reboot.o $(DEPLIBS)
 
 install-exec: all
@@ -83,8 +85,8 @@ install-exec: all
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
 		$(STRIPINST) $$file $(DESTDIR)$(sbindir)/$$file; 	\
 	done
-	printf "  INSTALL $(DESTDIR)$(sbindir)/initctl\n"
-	@ln -sf  finit $(DESTDIR)$(sbindir)/initctl
+	printf "  INSTALL $(DESTDIR)$(sbindir)/telinit\n"
+	@ln -sf  finit $(DESTDIR)$(sbindir)/telinit
 	$(MAKE) -C libite  install-exec
 	$(MAKE) -C plugins install
 

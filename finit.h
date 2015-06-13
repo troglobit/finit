@@ -73,6 +73,9 @@
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
 
+/* We reuse the INIT_CMD_ for the new initctl tool, but telinit only
+ * supports changing runlevel and reloading the configuration. */
+#define INIT_SOCKET             _PATH_VARRUN "finit.sock"
 #define INIT_MAGIC              0x03091969
 #define INIT_CMD_RUNLVL         1
 #define INIT_CMD_DEBUG          2    /* Toggle Finit debug */
@@ -81,6 +84,7 @@
 #define INIT_CMD_STOP_SVC       5
 #define INIT_CMD_RELOAD_SVC     6    /* SIGHUP service */
 #define INIT_CMD_RESTART_SVC    7    /* STOP + START service */
+#define INIT_CMD_QUERY_INETD    8
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 

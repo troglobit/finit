@@ -308,9 +308,9 @@ char *svc_status(svc_t *svc)
 		return "running";
 
 	if (svc_is_inetd(svc))
-		return "waiting";
+		return "inetd";
 
-	return "stopped";
+	return "waiting";
 }
 
 /* Same base service, return unique ID */
