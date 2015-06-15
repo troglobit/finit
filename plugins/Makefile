@@ -1,4 +1,6 @@
 # Plugin based services architecture for finit
+-include ../config.mk
+
 TOPDIR     ?= $(shell pwd)
 CFLAGS     += -fPIC
 LDFLAGS    := $(filter-out -rdynamic, $(LDFLAGS))
