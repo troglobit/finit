@@ -62,7 +62,7 @@ Start, monitor and restart processes (daemons) if they fail.
 
 **Inetd**
 
-Finit comes with an `inetd` server built-in.  No need to maintain a
+Finit comes with a built-in `inetd` server.  No need to maintain a
 separate config file for services that you want to start on demand.
 
 All inetd services started can be filtered per port and inbound
@@ -75,7 +75,7 @@ Runlevels are optional in Finit, but support for [SysV runlevels][5] is
 available if needed.  All services in runlevel S(1) are started first,
 followed by the desired run-time runlevel.  Runlevel S can be started in
 sequence by using `run [S] cmd`.  Changing runlevels at runtime is done
-like any other init, e.g. <kbd>init 4</kbd>.
+like any other init, e.g. <kbd>init 4</kbd>
 
 
 **Plugins**
@@ -92,7 +92,7 @@ Plugin capabilities:
 * Task/Run callbacks -- a one-shot commands, executed in sequence
 * Hooks -- hook into the boot at predefined points to extend finit
 * I/O -- listen to external events and control finit behavior/services
-* Inetd -- extend with internal inetd services
+* Inetd -- extend with internal inetd services, see `plugins/time.c`
 
 Extensions and functionality not purely related to what an `/sbin/init`
 needs to start a system are available as a set of plugins that either
@@ -150,23 +150,32 @@ Syntax:
 
   Service, or daemon, to be monitored and automatically restarted if it
   exits prematurely.  Please note that you often need to provide a
-  --foreground or --no-background argument to most daemons to prevent
-  them from forking off to the background.
+  `--foreground` or `--no-background` argument to most daemons to
+  prevent them from forking off a sub-process in the background.
 
-* `inetd SVC[@iface[:port]]/PROTO <wait|nowait> [LVLS] /path/to/daemon args`
+* `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`
 
-  Launch daemon on demand when a client initiates a connection to `SVC`.
-  Services (SVC) are specified in the standard UNIX `/etc/services`
-  file.  With optional filtering for `iface` and possible custom `port`.
+  Launch a daemon when a client initiates a connection on an Internet
+  port.  Available services are listed in the UNIX `/etc/services` file.
+  Finit can filter access to from a list of interfaces, `@iflist`, per
+  inetd service as well as listen to custom ports.
 
-  The following example opens port 2323 and only allows inbound telnet
-  connections from `eth0`:
+        inetd ftp/tcp	nowait	@root	/usr/sbin/uftpd -i -f
+        inetd tftp/udp	wait	@root	/usr/sbin/uftpd -i -t
 
-    inetd telnet@eth0:2323/tcp nowait [2345] /sbin/telnetd -i -F
+  The following example listens to port 2323 for telnet connections and
+  only allows clients connecting from `eth0`:
+
+        inetd 2323/tcp@eth0 nowait [2345] /sbin/telnetd -i -F
+
+  The interface list, `@iflist`, is of the format `@iface,!iface,iface`,
+  where a single `!` means to deny access.  Notice how interfaces are
+  comma separated with no spaces.
 
   The `inetd` directive can also have ` -- Optional Description`, only
   Finit does not output this text on the console when launching inetd
-  services.  Instead this text is sent to syslog.  More on inetd below.
+  services.  Instead this text is sent to syslog and also shown by the
+  `initctl` tool.  More on inetd below.
 
 * `runparts <DIR>`
 
@@ -280,10 +289,11 @@ Bootstrap
 12. Set hostname and bring up loopback interface
 13. Call `network` script, if set in `/etc/finit.conf`
 14. Call 3rd level hooks, `HOOK_NETWORK_UP`
-15. Switch to active runlevel, as set in `/etc/finit.conf`, default 2.
-    Here is where the rest of all tasks and inetd services are started.
+15. Load all `*.conf` files in `/etc/finit.d/` and switch to the active
+    active runlevel, as set in `/etc/finit.conf`, default is 2.  Here is
+    where the rest of all tasks and inetd services are started.
 16. Call 4th level hooks, `HOOK_SVC_UP`
-17. Run-parts in `/etc/finit.d`, if any
+17. If `runparts <DIR>` is set, [run-parts(8)] is called on `<DIR>`
 18. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
 19. Start TTYs defined in `/etc/finit.conf`, or rescue on `/dev/console`
 20. Enter main monitor loop
