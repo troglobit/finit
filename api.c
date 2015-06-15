@@ -262,7 +262,7 @@ int api_init(uev_ctx_t *ctx)
 		return 1;
 	}
 
-	remove(INIT_SOCKET);
+	erase(INIT_SOCKET);
 	if (-1 == bind(sd, (struct sockaddr*)&sun, sizeof(sun)))
 		goto error;
 
