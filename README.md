@@ -357,10 +357,10 @@ start any new ones for you, without rebooting the system.
 Inetd
 -----
 
-A built-in *Internet Super Server* support was added in Finit v1.12,
-along with an internal `time` inetd service, RFC 868 (rdate).  The
-latter is supplied as a plugin to illustrate how simple it is to extend
-finit with more internal inetd services.
+A built-in *Internet Super Server* support was added in Finit v1.12 and
+v1.13, along with an internal `time` inetd service, RFC 868 (rdate).
+The latter is supplied as a plugin to illustrate how simple it is to
+extend finit with more internal inetd services.
 
 > Please note, not all UNIX daemons are prepared to run as inetd services.
 > In the example below `sshd` also need the command line argument `-i`.
@@ -373,7 +373,7 @@ the traditional `/etc/inetd.conf`, yet keeping with the style of Finit:
     # Launch SSH on demand, in runlevels 2-5 as root
     inetd ssh/tcp            nowait [2345] @root:root /usr/sbin/sshd -i
 
-A more advanced example is listed below, please not the *incompatible
+A more advanced example is listed below, please note the *incompatible
 syntax change* that was made between Finit v1.12 and v1.13 to support
 deny filters:
 

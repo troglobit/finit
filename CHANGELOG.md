@@ -3,6 +3,77 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
+[1.13] - 2015-06-15
+-------------------
+
+Support for multiple instances and introduction of an `initctl` tool.
+
+**Note:** Incompatible change to syntax for custom `inetd` services,
+  c.f. Finit v[1.12].
+
+### Changes
+* The most notable change is the support for multiple instances.  A must
+  have when running multiple DHCP clients, OpenVPN tunnels, or anything
+  that means using the same command only with different arguments.  Now
+  simply add a `:ID` after the `service` keyword, where `ID` is a unique
+  instance number for that service.
+
+        service #1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
+        service #2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
+
+* Support for dynamically reloadable `*.conf` files in `/etc/finit.d/`.
+  All `task`, `service` and `run` statements can be used in these .conf
+  files.  Use the `telinit q` command, `initctl reload` or simply send
+  `SIGHUP` to PID 1 to reload them.  Finit automatically does reload of
+  these `*.conf` files when changing runlevel.
+* Support for a modern `initctl` tool which can stop/start/reload and
+  list status of all system services.  Also, the old client tool used
+  to change runlevel is now also available as a symlink: `telinit`.
+* Add concept of "jobs".  This is a unique identifier, composed of a
+  service and instance number, SVC:ID
+
+        finit <stop|start|reload|restart> JOB
+
+* Support for *deny filters* in `inetd` services.
+
+        inetd service/proto[@iface,!iface,...] </path/to/cmd | internal[.service]>
+    
+  Internal services on a custom port must use the `internal.service`
+  syntax so Finit can properly bind the inetd service to the correct
+  plugin.  Here follows a few examples:
+    
+        inetd time/udp                    wait [2345] internal                -- UNIX rdate service
+        inetd time/tcp                  nowait [2345] internal                -- UNIX rdate service
+        inetd 3737/tcp                  nowait [2345] internal.time           -- UNIX rdate service
+        inetd telnet/tcp@*,!eth1,!eth0, nowait [2345] /sbin/telnetd -i -F     -- Telnet service
+        inetd 2323/tcp@eth1,eth2,eth0   nowait [2345] /sbin/telnetd -i -F     -- Telnet service
+        inetd 222/tcp@eth0              nowait [2345] /sbin/dropbear -i -R -F -- SSH service
+        inetd ssh/tcp@*,!eth0           nowait [2345] /sbin/dropbear -i -R -F -- SSH service
+    
+  Access to telnet on port `2323` is only possible from interfaces
+  `eth0`, `eth1` and `eth2`.  The standard telnet port (`23`) is
+  available from all other interfaces, but also `eth2`.  The `*`
+  notation used in the ssh stanza means *any* interface, however, here
+  `eth0` is not allowed.
+
+  **NOTE:** This change breaks syntax compatibility with Finit v[1.12].
+* Support for a more user-friendly configure script rather than editing
+  the top Makefile, or setting environment variables at build time.
+* Support for building Finit statically, no external libraries.  This
+  unfortunately means that some plugins cannot be built, at all.  Thanks
+  to James Mills for all help testing this out!
+* Support for disabling the built-in inetd server with configure.
+* Support for two new hook points: `HOOK_SVC_RECONF` and
+  `HOOK_RUNLEVEL_CHANGE`.  See the source for the exact location.
+* The `include <FILE>` option now needs an absolute path to `FILE`.
+
+### Fixes
+* Rename `patches/` to `contrib/` to simplify integration in 3rd party
+  build systems.
+* Fix for unwanted zombies ... when receiving SIGCHLD we must reap *all*
+  children.  We only receive one signal, but multiple processes may have
+  exited and need to be collected.
+
 
 [1.12] - 2015-03-04
 -------------------
@@ -295,7 +366,8 @@ Major bug fix release.
 
 [libuEv]: https://github.com/troglobit/libuev
 [dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
-[UNRELEASED]: https://github.com/troglobit/finit/compare/1.12...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/1.13...HEAD
+[1.13]: https://github.com/troglobit/finit/compare/1.12...1.13
 [1.12]: https://github.com/troglobit/finit/compare/1.11...1.12
 [1.11]: https://github.com/troglobit/finit/compare/1.10...1.11
 [1.10]: https://github.com/troglobit/finit/compare/1.9...1.10
@@ -318,3 +390,8 @@ Major bug fix release.
 [0.3]: https://github.com/troglobit/finit/compare/0.2...0.3
 [0.2]: https://github.com/troglobit/finit/compare/0.1...0.2
 
+<!--
+  -- Local Variables:
+  -- mode: markdown
+  -- End:
+  -->
