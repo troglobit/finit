@@ -22,6 +22,7 @@
  */
 
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,18 +36,46 @@
 #include "finit.h"
 #include "service.h"
 
+#include "libite/lite.h"
 #include "libuev/uev.h"
 
 uev_t api_watcher;
 
+/* Make sure the job id is NUL terminated and on the form SVC:ID. */
+static char *sanitize_jobid(char *jobid, size_t len)
+{
+	size_t i = 0;
+	static char buf[42];
 
-static svc_t *convert_jobid(char *jobid)
+	while (isdigit(jobid[i]) && i < len)
+		i++;
+
+	if (jobid[i++] == ':') {
+		while (isdigit(jobid[i]) && i < len)
+			i++;
+	}
+
+	if (i + 1 < sizeof(buf)) {
+		memcpy(buf, jobid, i);
+		buf[i + 1] = 0;
+
+		return buf;
+	}
+
+	return NULL;
+}
+
+static svc_t *convert_jobid(int noid, char *jobid, size_t len)
 {
 	int job, id = 1;
-	char *token;
+	char *token, *ptr;
 
+	jobid = sanitize_jobid(jobid, len);
 	if (!jobid)
 		return NULL;
+
+	if (noid && (ptr = strchr(jobid, ':')))
+	    ptr = 0;
 
 	token = strtok(jobid, ":");
 	if (!token) {
@@ -62,35 +91,31 @@ static svc_t *convert_jobid(char *jobid)
 	return svc_find_by_jobid(job, id);
 }
 
-static int do_start(char *jobid)
+static int do_start(char *buf, size_t len)
 {
-	return service_start(convert_jobid(jobid));
+	return service_start(convert_jobid(0, buf, len));
 }
 
-static int do_stop(char *jobid)
+static int do_stop(char *buf, size_t len)
 {
-	return service_stop(convert_jobid(jobid));
+	return service_stop(convert_jobid(0, buf, len));
 }
 
-static int do_reload(char *jobid)
+static int do_reload(char *buf, size_t len)
 {
-	return service_reload(convert_jobid(jobid));
+	return service_reload(convert_jobid(0, buf, len));
 }
 
-static int do_restart(char *jobid)
+static int do_restart(char *buf, size_t len)
 {
-	return service_restart(convert_jobid(jobid));
+	return service_restart(convert_jobid(0, buf, len));
 }
 
 static int do_query_inetd(char *buf, size_t len)
 {
-	char *ptr = strchr(buf, ':');
 	svc_t *svc;
 
-	if (ptr)
-		ptr = 0;
-
-	svc = convert_jobid(buf);
+	svc = convert_jobid(1, buf, len);
 	if (!svc || !svc_is_inetd(svc)) {
 		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", buf);
 		return 1;
@@ -106,8 +131,10 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 	while (1) {
 		int result = 0;
-		ssize_t len = read(sd, &rq, sizeof(rq));
+		ssize_t len;
 
+		memset(&rq, 0, sizeof(rq));
+		len = read(sd, &rq, sizeof(rq));
 		if (len <= 0) {
 			if (-1 == len) {
 				if (EINTR == errno)
@@ -169,19 +196,19 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_START_SVC:
-			result = do_start(rq.data);
+			result = do_start(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_STOP_SVC:
-			result = do_stop(rq.data);
+			result = do_stop(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RELOAD_SVC:
-			result = do_reload(rq.data);
+			result = do_reload(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:
-			result = do_restart(rq.data);
+			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_QUERY_INETD:
