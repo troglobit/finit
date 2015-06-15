@@ -138,12 +138,12 @@ svc_t *svc_iterator(int first)
  */
 svc_t *svc_inetd_iterator(int first)
 {
-	svc_t *svc = svc_iterator(first);
+	svc_t *svc;
 
-	do {
+	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
 		if (svc_is_inetd(svc))
 			return svc;
-	} while ((svc  = svc_iterator(0)));
+	}
 
 	return NULL;
 }
@@ -159,12 +159,12 @@ svc_t *svc_inetd_iterator(int first)
  */
 svc_t *svc_dynamic_iterator(int first)
 {
-	svc_t *svc = svc_iterator(first);
+	svc_t *svc;
 
-	do {
+	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
 		if (svc->mtime)
 			return svc;
-	} while ((svc  = svc_iterator(0)));
+	}
 
 	return NULL;
 }
