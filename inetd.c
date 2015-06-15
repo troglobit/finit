@@ -219,14 +219,28 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 {
 	*sv = getservbyname(service, proto);
 	if (!*sv) {
-		_pe("Invalid inetd %s/%s (service/proto), skipping", service, proto);
-		return errno = EINVAL;
+		static struct servent s;
+
+		s.s_name  = service;
+		s.s_port  = atonum(service);
+		s.s_proto = NULL;
+		if (!strcmp("tcp", proto) || !strcmp("udp", proto))
+			s.s_proto = proto;
+
+		if (s.s_port == -1 || !s.s_proto) {
+			_e("Invalid/unknown inetd service, cannot create custom entry.");
+			return errno = EINVAL;
+		}
+
+		_d("Creating cutom inetd service %s/%s.", service, proto);
+		s.s_port = htons(s.s_port);
+		*sv = &s;
 	}
 
 	if (pv) {
 		*pv = getprotobyname((*sv)->s_proto);
 		if (!*pv) {
-			_pe("Cannot find proto %s, skipping.", (*sv)->s_proto);
+			_e("Cannot find proto %s, skipping.", (*sv)->s_proto);
 			return errno = EINVAL;
 		}
 	}
@@ -242,7 +256,7 @@ static inetd_filter_t *find_filter(inetd_t *inetd, char *ifname)
 	inetd_filter_t *filter;
 
 	if (!ifname)
-		ifname = "";
+		ifname = "*";
 
 	LIST_FOREACH(filter, &inetd->filters, link) {
 		_d("Checking filters for %s: '%s' vs '%s' (exact match) ...",
@@ -265,20 +279,18 @@ inetd_filter_t *inetd_filter_match(inetd_t *inetd, char *ifname)
 	if (filter)
 		return filter;
 
-	if (!ifname)
-		ifname = "";
-
 	LIST_FOREACH(filter, &inetd->filters, link) {
 		_d("Checking filters for %s: '%s' vs '%s' (any match) ...",
 		   inetd->name, filter->ifname, ifname);
 
-		if (!strlen(filter->ifname))
+		if (!strcmp(filter->ifname, "*"))
 			return filter;
 	}
 
 	return NULL;
 }
 
+/* Poor man's tcpwrappers filtering */
 int inetd_allow(inetd_t *inetd, char *ifname)
 {
 	inetd_filter_t *filter;
@@ -286,21 +298,22 @@ int inetd_allow(inetd_t *inetd, char *ifname)
 	if (!inetd)
 		return errno = EINVAL;
 
+	if (!ifname)
+		ifname = "*";
+
 	filter = inetd_filter_match(inetd, ifname);
 	if (filter) {
-		_d("Filter %s for inetd %s already exists, skipping.", ifname ?: "*", inetd->name);
+		_d("Filter %s for inetd %s already exists, skipping.", ifname, inetd->name);
 		return 0;
 	}
 
-	_d("Allow iface %s for service %s (port %d)", ifname ?: "*", inetd->name, inetd->port);
+	_d("Allow iface %s for service %s (port %d)", ifname, inetd->name, inetd->port);
 	filter = calloc(1, sizeof(*filter));
 	if (!filter) {
 		_e("Out of memory, cannot add filter to service %s", inetd->name);
 		return errno = ENOMEM;
 	}
 
-	if (!ifname)
-		ifname = "";
 	filter->deny = 0;
 	strlcpy(filter->ifname, ifname, sizeof(filter->ifname));
 	LIST_INSERT_HEAD(&inetd->filters, filter, link);
@@ -315,26 +328,23 @@ int inetd_deny(inetd_t *inetd, char *ifname)
 	if (!inetd)
 		return errno = EINVAL;
 
-	/* Reset to NULL for debug output below */
-	if (!ifname[0])
-		ifname = NULL;
+	if (!ifname)
+		ifname = "*";
 
 	filter = find_filter(inetd, ifname);
 	if (filter) {
 		_d("%s filter %s for inetd %s already exists, cannot set deny filter for same, skipping.",
-		   filter->deny ? "Deny" : "Allow", ifname ?: "*", inetd->name);
+		   filter->deny ? "Deny" : "Allow", ifname, inetd->name);
 		return 1;
 	}
 
-	_d("Deny iface %s for service %s (port %d)", ifname ?: "*", inetd->name, inetd->port);
+	_d("Deny iface %s for service %s (port %d)", ifname, inetd->name, inetd->port);
 	filter = calloc(1, sizeof(*filter));
 	if (!filter) {
 		_e("Out of memory, cannot add filter to service %s", inetd->name);
 		return errno = ENOMEM;
 	}
 
-	if (!ifname)
-		ifname = "";
 	filter->deny = 1;
 	strlcpy(filter->ifname, ifname, sizeof(filter->ifname));
 	LIST_INSERT_HEAD(&inetd->filters, filter, link);
@@ -362,9 +372,10 @@ int inetd_is_allowed(inetd_t *inetd, char *ifname)
 	return 0;
 }
 
-int inetd_match(inetd_t *inetd, char *service, char *proto, char *port)
+int inetd_match(inetd_t *inetd, char *service, char *proto)
 {
-	int cport = port ? atonum(port) : -1;
+	struct servent *sv = NULL;
+	struct protoent *pv = NULL;
 
 	if (!inetd || !service || !proto)
 		return errno = EINVAL;
@@ -372,20 +383,12 @@ int inetd_match(inetd_t *inetd, char *service, char *proto, char *port)
 	if (strncmp(inetd->name, service, sizeof(inetd->name)))
 		return 0;
 
-	if (cport != -1) {
-		if (inetd->port == cport)
-			return 1;
-	} else {
-		struct servent *sv = NULL;
-		struct protoent *pv = NULL;
+	if (getent(service, proto, &sv, &pv))
+		return 0;
 
-		if (getent(service, proto, &sv, &pv))
-			return 0;
-
-		if (inetd->proto == ntohs(pv->p_proto) &&
-		    inetd->port  == ntohs(sv->s_port))
-			return 1;
-	}
+	if (inetd->proto == ntohs(pv->p_proto) &&
+	    inetd->port  == ntohs(sv->s_port))
+		return 1;
 
 	return 0;
 }
@@ -410,7 +413,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 			continue;
 
 		if (!strlen(filter->ifname))
-			snprintf(ifname, sizeof(ifname), "ANY");
+			snprintf(ifname, sizeof(ifname), "*");
 		else
 			strlcpy(ifname, filter->ifname, sizeof(ifname));
 
@@ -432,7 +435,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 		}
 
 		if (!strlen(filter->ifname))
-			snprintf(ifname, sizeof(ifname), "ANY");
+			snprintf(ifname, sizeof(ifname), "*");
 		else
 			strlcpy(ifname, filter->ifname, sizeof(ifname));
 
@@ -465,7 +468,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
  * If equivalent service exists already service_register() will instead call
  * inetd_allow().
  */
-int inetd_new(inetd_t *inetd, char *service, char *proto, int forking)
+int inetd_new(inetd_t *inetd, char *service, char *proto, int forking, void *arg)
 {
 	int result;
 	struct servent  *sv = NULL;
@@ -494,6 +497,9 @@ int inetd_new(inetd_t *inetd, char *service, char *proto, int forking)
 	/* Reset descriptor, used internally */
 	inetd->watcher.fd = -1;
 
+	/* Setup socket callback argument */
+	inetd->arg = arg;
+
 	_d("New service %s (default port %d proto %s:%d)", service, inetd->port, sv->s_proto, pv->p_proto);
 
 	return 0;
@@ -507,60 +513,6 @@ int inetd_del(inetd_t *inetd)
 		free(filter);
 
 	return 0;
-}
-
-int inetd_init(inetd_t *inetd, void *arg, char *ifname, char *port)
-{
-	int result, cport = -1;
-	svc_t *svc;
-
-	if (!inetd || !arg)
-		return errno = EINVAL;
-
-	if (port)
-		cport = atonum(port);
-
-	if (cport != -1 && cport != inetd->port) {
-		inetd->std  = 0;
-		inetd->port = cport;
-	}
-
-	/* Setup socket callback argument */
-	inetd->arg = arg;
-
-	/* Poor man's tcpwrappers filtering */
-	result = inetd_allow(inetd, ifname);
-
-	/* For each similar service, on other port, add their ifnames as deny to ours. */
-	for (svc = svc_inetd_iterator(1); svc; svc = svc_inetd_iterator(0)) {
-		inetd_filter_t *filter;
-
-		/* Skip ourselves */
-		if (&svc->inetd == inetd)
-			continue;
-
-		/* Skip different service types (telnet != ssh) */
-		if (strcmp(svc->inetd.name, inetd->name))
-			continue;
-
-		/* Deny all their interfaces from using my service */
-		LIST_FOREACH(filter, &svc->inetd.filters, link) {
-			if (filter->deny)
-				continue;
-
-			inetd_deny(inetd, filter->ifname);
-		}
-
-		/* Deny my interfaces from using their service ... */
-		LIST_FOREACH(filter, &inetd->filters, link) {
-			if (filter->deny)
-				continue;
-
-			inetd_deny(&svc->inetd, filter->ifname);
-		}
-	}
-
-	return result;
 }
 
 /**

@@ -42,7 +42,7 @@ static int   is_norespawn        (void);
 static void   restart_lost_procs (void);
 static void   svc_dance          (svc_t *svc);
 static void   utmp_save          (int pre, int now);
-static svc_t *find_inetd_svc     (char *path, char *service, char *proto, char *port);
+static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
 
 	
 /**
@@ -537,7 +537,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 #ifndef INETD_DISABLED
 	int forking = 0;
 #endif
-	char *service = NULL, *proto = NULL, *iface = NULL, *port = NULL;
+	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
@@ -582,37 +582,42 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			goto incomplete;
 	}
 
-	/* Example: inetd ssh@eth0:222/tcp */
+	/* Example: inetd ssh/tcp@eth0,eth1 or 222/tcp@eth2 */
 	if (service) {
+		ifaces = strchr(service, '@');
+		if (ifaces)
+			*ifaces++ = 0;
+
 		proto = strchr(service, '/');
 		if (!proto)
 			goto incomplete;
 		*proto++ = 0;
-
-		port = strchr(service, ':');
-		if (port)
-			*port++ = 0;
-
-		iface = strchr(service, '@');
-		if (iface)
-			*iface++ = 0;
 	}
 
 #ifndef INETD_DISABLED
 	/* Find plugin that provides a callback for this inetd service */
 	if (type == SVC_TYPE_INETD) {
 		if (!strncasecmp(cmd, "internal", 8)) {
-			plugin = plugin_find(service);
+			char *ptr, *ps = service;
+
+			/* internal.service */
+			ptr = strchr(cmd, '.');
+			if (ptr) {
+				*ptr++ = 0;
+				ps = ptr;
+			}
+
+			plugin = plugin_find(ps);
 			if (!plugin || !plugin->inetd.cmd) {
 				_e("Inetd service %s has no internal plugin, skipping.", service);
 				return errno = ENOENT;
 			}
 		}
 
-		/* Check if known inetd, then add ifname for filtering only. */
-		svc = find_inetd_svc(cmd, service, proto, port);
+		/* Check if known inetd, then add ifnames for filtering only. */
+		svc = find_inetd_svc(cmd, service, proto);
 		if (svc)
-			return inetd_allow(&svc->inetd, iface);
+			goto inetd_setup;
 
 		id = svc_next_id(cmd);
 	}
@@ -644,23 +649,6 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		strlcpy(svc->username, username, sizeof(svc->username));
 	}
 
-#ifndef INETD_DISABLED
-	if (svc_is_inetd(svc)) {
-		int result;
-
-		_d("Creating new svc job %d inetd %s proto %s iface %s port %s",
-		   svc->job, service, proto, iface, port);
-		result  = inetd_new(&svc->inetd, service, proto, forking);
-		result += inetd_init(&svc->inetd, svc, iface, port);
-
-		if (result) {
-			_e("Failed registering new inetd service %s.", service);
-			inetd_del(&svc->inetd);
-			return svc_del(svc);
-		}
-	}
-#endif
-
 	if (plugin) {
 		/* Internal plugin provides this service */
 		svc->inetd.cmd = plugin->inetd.cmd;
@@ -680,6 +668,35 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 	svc->runlevels = parse_runlevels(runlevels);
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
+
+#ifndef INETD_DISABLED
+	if (svc_is_inetd(svc)) {
+		char *iface;
+
+		_d("Creating new svc job %d inetd %s proto %s iface %s",
+		   svc->job, service, proto, ifaces);
+		if (inetd_new(&svc->inetd, service, proto, forking, svc)) {
+			_e("Failed registering new inetd service %s.", service);
+			inetd_del(&svc->inetd);
+			return svc_del(svc);
+		}
+
+	inetd_setup:
+		if (!ifaces) {
+			_d("No specific iface listed for %s, allowing ANY.", service);
+			return inetd_allow(&svc->inetd, NULL);
+		}
+
+		_d("Setting up interface filters for inetd service %s ...", service);
+		for (iface = strtok(ifaces, ","); iface; iface = strtok(NULL, ",")) {
+			_d("Checking interface name %s ...", iface);
+			if (iface[0] == '!')
+				inetd_deny(&svc->inetd, &iface[1]);
+			else
+				inetd_allow(&svc->inetd, iface);
+		}
+	}
+#endif
 
 	return 0;
 }
@@ -814,7 +831,7 @@ static void utmp_save(int pre, int now)
 }
 
 #ifndef INETD_DISABLED
-static svc_t *find_inetd_svc(char *path, char *service, char *proto, char *port)
+static svc_t *find_inetd_svc(char *path, char *service, char *proto)
 {
 	svc_t *svc;
 
@@ -822,8 +839,8 @@ static svc_t *find_inetd_svc(char *path, char *service, char *proto, char *port)
 		if (strncmp(path, svc->cmd, strlen(svc->cmd)))
 			continue;
 
-		if (inetd_match(&svc->inetd, service, proto, port)) {
-			_d("Found a matching inetd svc for %s %s %s %s", path, service, proto, port);
+		if (inetd_match(&svc->inetd, service, proto)) {
+			_d("Found a matching inetd svc for %s %s %s", path, service, proto);
 			return svc;
 		}
 	}

@@ -59,14 +59,16 @@ static int do_send(int cmd, int runlevel)
 	return result;
 }
 
-/* telinit q | telinit <1-6> */
+/* telinit q | telinit <0-9> */
 static int usage(int rc)
 {
-	fprintf(stderr, "Usage: %s <q | 1-6>\n\n"
+	fprintf(stderr, "Usage: %s [OPTIONS] [q | Q | 0-9]\n\n"
 		"Options:\n"
-		"  -v, --verbose         Verbose output\n"
 		"  -h, --help            This help text\n\n"
-		"  -V, --version         Show Finit version\n\n", __progname);
+		"  -V, --version         Show Finit version\n\n"
+		"Commands:\n"
+		"  q | Q                 Reload *.conf in /etc/finit.d/, like SIGHUP\n"
+		"  0 - 9                 Change runlevel: 0 halt, 6 reboot\n\n", __progname);
 
 	return rc;
 }
@@ -95,7 +97,7 @@ int client(int argc, char *argv[])
 	if (optind < argc) {
 		int req = (int)argv[optind][0];
 
-		/* Compat: 'init <1-9>' */
+		/* Compat: 'init <0-9>' */
 		if (isdigit(req))
 			return do_send(INIT_CMD_RUNLVL, req);
 

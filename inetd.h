@@ -60,11 +60,10 @@ void inetd_stop        (inetd_t *inetd);
 
 int  inetd_respawn     (pid_t pid);
 
-int  inetd_new         (inetd_t *inetd, char *service, char *proto, int forking);
+int  inetd_new         (inetd_t *inetd, char *service, char *proto, int forking, void *arg);
 int  inetd_del         (inetd_t *inetd);
 
-int  inetd_init        (inetd_t *inetd, void *arg, char *ifname, char *port);
-int  inetd_match       (inetd_t *inetd, char *service, char *proto, char *port);
+int  inetd_match       (inetd_t *inetd, char *service, char *proto);
 int  inetd_filter_str  (inetd_t *inetd, char *str, size_t len);
 
 int  inetd_allow       (inetd_t *inetd, char *ifname);

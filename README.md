@@ -235,18 +235,17 @@ the static configuration from `/etc/finit.conf`.  This is the default
 behavior, so no include directives are necessary.
 
 To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
-send `SIGHUP` to finit, or call `init q`.  Any service read from this
-directory is flagged as a dynamic service, so changes to their .conf
+send `SIGHUP` to PID 1, or call `finit q`.  Any service read from this
+directory is flagged as a dynamic service, so changes to their `.conf`
 files, or even removal of the files, is detected at `SIGHUP`.
 
-- If a service's .conf file has been removed, the service is stopped.
-- If the file has changed the service is reloaded, stopped and
-  restarted.
-- If it is a new service, it is started -- respecting runlevels and
-  callbacks.
+- If a service's `.conf` file has been removed, the service is stopped.
+- If the file is modified, the service is reloaded, stopped and started.
+- If a new service is detected, it is started -- respecting runlevels
+  and return values from any callbacks.
 
 The `/etc/finit.d` directory was previously the default Finit `runparts`
-directory.  Finit no longer has a default runparts, so make sure to
+directory.  Finit no longer has a default `runparts`, so make sure to
 update your setup, or the finit configuration, accordingly.
 
 **Note:** Configurations read from `/etc/finit.d` are read *after*
@@ -314,8 +313,14 @@ default all services, tasks, run commands and TTYs listed without a set
 of runlevels get a default set `[234]` assigned.  The default runlevel
 after boot is 2.
 
-To specify an allowed set of runlevels for a `service`, `run` command, `task`,
-or `tty`, add `[NNN]` to it in your `/etc/finit.conf`, like this:
+Finit supports runlevels 0-9, and S, with 0 reserved for halt, 6 reboot
+and S for services to only run at bootstrap.  Runlevel 1 is the single
+user level, where usually no networking is enabled.  In Finit this is
+more of a policy for the user to define.  Normally only runlevels 1-6
+are used, and even more commonly, only the default runlevel is used.
+
+To specify an allowed set of runlevels for a `service`, `run` command,
+`task`, or `tty`, add `[NNN]` to your `/etc/finit.conf`, like this:
 
     service [S12345] /sbin/syslogd -n -x     -- System log daemon
     run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
@@ -340,7 +345,13 @@ are called in the order listed and subsequent commands are not started
 until a run command has completed.
 
 Switching between runlevels can be done by calling init with a single
-argument, e.g. <kbd>init 5</kbd> switches to runlevel 5.
+argument, e.g. <kbd>init 5</kbd> switches to runlevel 5.  When changing
+runlevels Finit also automatically reloads all `.conf` files in the
+`/etc/finit.d/` directory.  So if you want to set a new system config,
+switch to runlevel 1, change all config files in the system, and touch
+all `.conf` files in `/etc/finit.d` before switching back to the
+previous runlevel again -- that way Finit can both stop old services and
+start any new ones for you, without rebooting the system.
 
 
 Inetd
@@ -360,29 +371,25 @@ traffic using a poor man's [TCP wrappers].  The syntax is very similar to
 the traditional `/etc/inetd.conf`, yet keeping with the style of Finit:
 
     # Launch SSH on demand, in runlevels 2-5 as root
-    inetd ssh/tcp nowait [2345] @root:root /usr/sbin/sshd -i
+    inetd ssh/tcp            nowait [2345] @root:root /usr/sbin/sshd -i
 
-A more advanced example:
+A more advanced example is listed below, please not the *incompatible
+syntax change* that was made between Finit v1.12 and v1.13 to support
+deny filters:
 
     # Start sshd if inbound connection on eth0, port 222, or
     # inbound on eth1, port 22.  Ignore on other interfaces.
-    inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
-    inetd ssh@eth1:22/tcp  nowait [2345] /usr/sbin/sshd -i
+    inetd 222/tcp@eth0       nowait [2345] /usr/sbin/sshd -i
+    inetd ssh/tcp@eth1,eth1  nowait [2345] /usr/sbin/sshd -i
 
 If `eth0` is your Internet interface you may want to avoid using the
 default port.  To run ssh on port 222, and all others on port 22:
     
-    inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
-    inetd ssh/tcp          nowait [2345] /usr/sbin/sshd -i
+    inetd 222/tcp@eth0       nowait [2345] /usr/sbin/sshd -i
+    inetd ssh/tcp@*,!eth0    nowait [2345] /usr/sbin/sshd -i
+
+Compared to Finit v1.12 you must *explicitly deny* access from `eth0`!
     
-*This actually adds a deny rule for eth0 on ssh/tcp, implicitly.* You
-can even list the services in reverse order with the same result:
-    
-    inetd ssh/tcp          nowait [2345] /usr/sbin/sshd -i
-    inetd ssh@eth0:222/tcp nowait [2345] /usr/sbin/sshd -i
-    
-There is no specific deny syntax available yet, see the TODO file for
-more details on how this can be implemented.
 
 **Internal Services**
 
@@ -415,8 +422,8 @@ Also, remember the UNIX year 2038 bug, or in the case of RFC 868 (and
 some NTP implementations), year 2036!
 
 **Note:** There is currently no verification that the same port is used
-  more than once.  So a standard http service will clash with an ssh
-  entry `ssh@*:80/tcp`.
+  more than once.  So a standard `inetd http/tcp` service will clash
+  with an ssh entry for the same port `inetd 80/tcp` ...
 
 
 Hooks, Callbacks & Plugins
@@ -517,42 +524,58 @@ Rebooting & Halting
 -------------------
 
 Finit handles `SIGUSR1` and `SIGUSR2` for reboot and halt, and listens
-to `/dev/initctl` so system reboot and halt commands should also work.
-This latter functionality is implemented in the optional `initctl.so`
-plugin and can be accessed with the `initctl` command line tool (which
-is symlinked to `finit`).
+to `/dev/initctl` so system reboot and halt commands also work.  This
+latter functionality is implemented in the optional `initctl.so` plugin
+and can be accessed with the `telinit` command line tool, symlinked to
+`finit`).
 
-    ~ # initctl
-    Usage: initctl [OPTIONS] [<COMMAND> | <q | 1-6>]
+    ~ # telinit
+    Usage: telinit [OPTIONS] [q | Q | 0-9]
     
     Options:
-      -d, --debug           Toggle Finit debug
+      -h, --help            This help text
+      -v, --version         Show Finit version
+    
+    Commands:
+      q | Q           Reload *.conf in /etc/finit.d/, like SIGHUP
+      0 - 9           Change runlevel: 0 halt, 6 reboot
+
+Finit also implements a more modern API to query status, and start/stop
+services, called `initctl`.
+
+    ~ # initctl -h
+    Usage: initctl [OPTIONS] <COMMAND>
+    
+    Options:
       -v, --verbose         Verbose output
       -h, --help            This help text
     
     Commands:
             debug           Toggle Finit debug
-            q | reload      Reload *.conf in /etc/finit.d/
-            runlevel <1-6>  Set new runlevel
+            reload          Reload *.conf in /etc/finit.d/
+            runlevel <0-9>  Change runlevel: 0 halt, 6 reboot
             status          Show status of services
             start   <JOB#>  Start stopped service
             stop    <JOB#>  Stop running service
             restart <JOB#>  Restart (stop/start) running service
             reload  <JOB#>  Reload (SIGHUP) running service
             version         Show Finit version
-    
-    ~ # initctl status
-    #       Status   PID     Runlevels  Service               Description
-    ====================================================================================
-    1       running  480     [S12345]   /sbin/watchdog        System watchdog daemon
-    2       running  481     [S12345]   /sbin/syslogd         System log daemon
-    3       running  519     [S12345]   /sbin/klogd           Kernel log daemon
-    4:1     stopped  0       [345]      /sbin/dropbear        SSH daemon
-    4:2     stopped  0       [345]      /sbin/dropbear        SSH daemon
-    5:1     waiting  0       [2345]     internal              UNIX rdate service
-    5:2     waiting  0       [2345]     internal              UNIX rdate service
-    6:1     waiting  0       [2345]     /sbin/telnetd         Telnet service
-    6:2     waiting  0       [2345]     /sbin/telnetd         Telnet service
+
+Remember, you can only start/stop services that match the current
+runlevel.  Hence, if the runlevel is 2, the below Dropbear SSH service
+cannot be started.
+
+    ~ # initctl status -v
+    1       running  476     [S12345]   /sbin/watchdog -T 16 -t 2 -F /dev/watchdog
+    2       running  477     [S12345]   /sbin/syslogd -n -b 3 -D
+    3       running  478     [S12345]   /sbin/klogd -n
+    4:1       inetd  0       [2345]     internal time allow *:37
+    4:2       inetd  0       [2345]     internal time allow *:37
+    4:3       inetd  0       [2345]     internal 3737 allow *:3737
+    5:1       inetd  0       [2345]     /sbin/telnetd allow *:23 deny eth0,eth1
+    5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
+    6:1       inetd  0       [2345]     /sbin/dropbear allow eth0:222
+    6:2       inetd  0       [2345]     /sbin/dropbear allow *:22 deny eth0
 
 
 Building

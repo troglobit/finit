@@ -59,17 +59,6 @@ to achieve compatibility would be to add a plugin to finit which reads
 Inetd
 -----
 
-wkz says we need deny rules and better syntax! we agrees
-
-
-wkz --> inetd telnet/tcp @!eth0
-wkz --> inetd 2323/tcp @eth0
-wkz --> 77/udp wait [2345] @finit/time
-
-jnn --> telnet@eth0,eth1/tcp
-jnn --> 2323@eth2/tcp
-jnn --> 3000/udp wait [2345] time/internal
-
 Optimize interface filtering by using socket filter.  The functions
 `inet_*_peek()` and `inetd_is_allowed()` used for interace filtering
 should be possible to rewrite as socket filters.

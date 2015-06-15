@@ -198,7 +198,7 @@ static int usage(int rc)
 		"Commands:\n"
 		"        debug           Toggle Finit debug\n"
 		"        reload          Reload *.conf in /etc/finit.d/\n"
-		"        runlevel <1-6>  Set new runlevel\n"
+		"        runlevel <0-9>  Change runlevel: 0 halt, 6 reboot\n"
 		"        status          Show status of services\n"
 		"        start   <JOB#>  Start stopped service\n"
 		"        stop    <JOB#>  Stop running service\n"
