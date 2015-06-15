@@ -21,15 +21,16 @@ General
 * Add `!` or `[wait <pidfile>]` to service directive to let finit pause
   and wait for a pidfile before starting processes -- both at boot and
   when starting processes in a runlevel.
-* Add <GW,ADDR:iface,IF:iface> events to service stanza so services can
-  be reloaded/restarted/stopped -- e.g, new GW --> SIGHUP process, or
-  loss of IF:eth1 --> stop service, start it when eth1 comes up again.
+* Add `<GW,ADDR:iface,IF:iface>` events to service stanza so services
+  can be reloaded/restarted/stopped -- e.g, new GW --> SIGHUP process,
+  or loss of `IF:eth1` --> stop service, start it when eth1 comes up
+  again.
 * Add support for listening to netlink messages for GW, ADDR, IF UP/DOWN
-* Add <!,...> to let Finit know that a service does not support reload
-  (SIGHUP), but must be restarted (stop+start)
+* Add `<!,...>` to let Finit know that a service does not support reload
+  (`SIGHUP`), but must be restarted (stop+start)
 * Allow custom reload for processes like libreSwan's pluto
 
-    service [2345] <!gw,if:eth0,reload:'starter reload'> /sbin/pluto
+        service [2345] <!gw,if:eth0,reload:'starter reload'> /sbin/pluto
 
 * Allow process callbacks to be scripts.
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
