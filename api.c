@@ -126,8 +126,14 @@ static int do_query_inetd(char *buf, size_t len)
 
 static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 {
-	int sd = accept(w->fd, NULL, NULL);
+	int sd;
 	struct init_request rq;
+
+	sd = accept(w->fd, NULL, NULL);
+	if (sd < 0) {
+		_pe("Failed serving API request");
+		return;
+	}
 
 	while (1) {
 		int result = 0;
