@@ -285,11 +285,18 @@ int service_start(svc_t *svc)
 	if (svc_is_inetd(svc)) {
 		if (svc->inetd.type == SOCK_STREAM)
 			close(sd);
-	} else if (verbose) {
+	} else {
+		int result;
+
 		if (SVC_TYPE_RUN == svc->type)
-			print_result(WEXITSTATUS(complete(svc->cmd, pid)));
+			result = WEXITSTATUS(complete(svc->cmd, pid));
 		else if (!respawn)
-			print_result(svc->pid > 1 ? 0 : 1);
+			result = svc->pid > 1 ? 0 : 1;
+		else
+			result = 0;
+
+		if (verbose)
+			print_result(result);
 	}
 
 	return 0;
