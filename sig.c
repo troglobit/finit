@@ -38,6 +38,7 @@
  *	      It activates the kbrequest action.
  */
 
+#include <string.h>		/* strerror() */
 #include <sys/reboot.h>
 #include <sys/wait.h>
 

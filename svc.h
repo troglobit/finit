@@ -25,14 +25,11 @@
 #ifndef FINIT_SVC_H_
 #define FINIT_SVC_H_
 
-#include <errno.h>
-#include <string.h>		/* strerror() */
 #include <sys/ipc.h>		/* IPC_CREAT */
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 
 #include "inetd.h"
-#include "queue.h"		/* BSD sys/queue.h API */
 
 typedef enum {
 	SVC_STOP = 0,		/* Disabled */

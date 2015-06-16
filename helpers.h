@@ -1,7 +1,7 @@
 /* Misc. utility functions and C-library extensions for finit and its plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2014  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #define FINIT_HELPERS_H_
 
 #include <stdio.h>
+#include <string.h>		/* strerror() */
 #include <syslog.h>
 
 #define DO_LOG(level, fmt, args...)				\
