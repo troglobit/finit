@@ -13,6 +13,7 @@
 # Setup defaults if undefined
 defaults()
 {
+	heading=${heading:='"Finit v" VERSION'}
 	prefix=${prefix:="/usr"}
 	sysconfdir=${sysconfdir:="/etc"}
 	sbindir=${sbindir:="/sbin"}
@@ -166,7 +167,7 @@ while [ "$*" != "" ]; do
                         ;;
 
 		with-heading)
-			heading="$arg"
+			heading="\"$arg\""
 			;;
 
                 with-plugins)
@@ -282,7 +283,7 @@ if [ $inetd -eq 0 ]; then
 fi
 
 if [ x"$heading" != x"" ]; then
-	echo "#define INIT_HEADING    \"$heading\"" >> config.h
+	echo "#define INIT_HEADING    $heading"     >> config.h
 fi
 
 echo "#define VERBOSE_MODE    $verbose"             >> config.h

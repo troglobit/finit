@@ -55,16 +55,14 @@ uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
 static int banner(void)
 {
+	char buf[42] = INIT_HEADING;
+	const char separator[] = "========================================================================";
+
 	if (!verbose)
 		return 0;
 
-	delline();
-#ifdef INIT_HEADING
-	echo("%s", INIT_HEADING);
-#else
-	echo("Finit v" VERSION);
-	echo("===================================================================");
-#endif
+	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, 66 - (int)strlen(buf), separator);
+
 	return 0;
 }
 
