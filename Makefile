@@ -59,22 +59,21 @@ LDLIBS     += -lite -luev
 include common.mk
 
 
-all: config.h $(DEPLIBS) $(EXEC)
+all: config.h $(EXEC)
 	+$(MAKE) -C plugins $@
 
 $(DEPLIBS): Makefile
-	+$(MAKE) -C libite all
-	+$(MAKE) -C libuev all
+	+$(MAKE) -C `dirname $@` all
 
-$(OBJS): Makefile $(DEPLIBS)
+$(OBJS): Makefile
 
 config.h: configure
 	@echo "Please run configure script first."
 	@exit 1
 
-finit: $(OBJS)
+finit: $(OBJS) $(DEPLIBS)
 
-initctl: initctl.o svc.o helpers.o
+initctl: initctl.o svc.o helpers.o $(DEPLIBS)
 
 reboot: reboot.o $(DEPLIBS)
 
