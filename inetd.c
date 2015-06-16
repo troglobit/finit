@@ -468,7 +468,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
  * If equivalent service exists already service_register() will instead call
  * inetd_allow().
  */
-int inetd_new(inetd_t *inetd, char *service, char *proto, int forking, void *arg)
+int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forking, void *arg)
 {
 	int result;
 	struct servent  *sv = NULL;
@@ -486,7 +486,9 @@ int inetd_new(inetd_t *inetd, char *service, char *proto, int forking, void *arg
 	inetd->port    = ntohs(sv->s_port);
 	inetd->proto   = pv->p_proto;
 	inetd->forking = !!forking;
-	strlcpy(inetd->name, service, sizeof(inetd->name));
+	if (!name)
+		name = service;
+	strlcpy(inetd->name, name, sizeof(inetd->name));
 
 	/* Naïve mapping tcp->stream, udp->dgram, other->dgram */
 	if (!strcasecmp(sv->s_proto, "tcp"))
@@ -500,7 +502,7 @@ int inetd_new(inetd_t *inetd, char *service, char *proto, int forking, void *arg
 	/* Setup socket callback argument */
 	inetd->arg = arg;
 
-	_d("New service %s (default port %d proto %s:%d)", service, inetd->port, sv->s_proto, pv->p_proto);
+	_d("New service %s (default port %d proto %s:%d)", name, inetd->port, sv->s_proto, pv->p_proto);
 
 	return 0;
 }

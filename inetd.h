@@ -60,7 +60,7 @@ void inetd_stop        (inetd_t *inetd);
 
 int  inetd_respawn     (pid_t pid);
 
-int  inetd_new         (inetd_t *inetd, char *service, char *proto, int forking, void *arg);
+int  inetd_new         (inetd_t *inetd, char *name, char *service, char *proto, int forking, void *arg);
 int  inetd_del         (inetd_t *inetd);
 
 int  inetd_match       (inetd_t *inetd, char *service, char *proto);

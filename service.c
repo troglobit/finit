@@ -671,11 +671,12 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
-		char *iface;
+		char *iface, *name = service;
 
-		_d("Creating new svc job %d inetd %s proto %s iface %s",
-		   svc->job, service, proto, ifaces);
-		if (inetd_new(&svc->inetd, service, proto, forking, svc)) {
+		if (svc->inetd.cmd && plugin)
+			name = plugin->name;
+
+		if (inetd_new(&svc->inetd, name, service, proto, forking, svc)) {
 			_e("Failed registering new inetd service %s.", service);
 			inetd_del(&svc->inetd);
 			return svc_del(svc);
@@ -687,9 +688,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			return inetd_allow(&svc->inetd, NULL);
 		}
 
-		_d("Setting up interface filters for inetd service %s ...", service);
 		for (iface = strtok(ifaces, ","); iface; iface = strtok(NULL, ",")) {
-			_d("Checking interface name %s ...", iface);
 			if (iface[0] == '!')
 				inetd_deny(&svc->inetd, &iface[1]);
 			else
