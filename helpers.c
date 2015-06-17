@@ -243,14 +243,6 @@ int getgroup(char *group)
 }
 #endif
 
-void chomp(char *str)
-{
-	char *x = strrchr(str, 0x0a);
-
-	if (x)
-		*x = 0;
-}
-
 /* Signal safe sleep ... we get a lot of SIGCHLD at reboot */
 void do_sleep(unsigned int sec)
 {

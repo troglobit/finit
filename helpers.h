@@ -43,30 +43,6 @@ do {								\
 #define FLOG_PERROR(fmt, args...) DO_LOG(LOG_CRIT, fmt ". Error %d: %s", ##args, errno, strerror(errno))
 
 
-#ifndef touch
-# define touch(x) do { if (mknod((x), S_IFREG|0644, 0) && errno != EEXIST) _pe("Failed creating %s", x); } while (0)
-#endif
-#ifndef makedir
-# define makedir(x, p) do { if (mkdir(x, p) && errno != EEXIST) _pe("Failed creating directory %s", x); } while (0)
-#endif
-#ifndef makefifo
-# define makefifo(x, p) do { if (mkfifo(x, p) && errno != EEXIST) _pe("Failed creating FIFO %s", x); } while (0)
-#endif
-#ifndef erase
-# define erase(x) do { if (remove(x) && errno != ENOENT) _pe("Failed removing %s", x); } while (0)
-#endif
-#ifndef chardev
-# define chardev(x,m,maj,min) mknod((x), S_IFCHR|(m), makedev((maj),(min)))
-#endif
-#ifndef blkdev
-# define blkdev(x,m,maj,min) mknod((x), S_IFBLK|(m), makedev((maj),(min)))
-#endif
-#ifndef S_ISEXEC
-# define S_ISEXEC(m) (((m) & S_IXUSR) == S_IXUSR)
-#endif
-#ifndef UNUSED
-#define UNUSED(x) UNUSED_ ## x __attribute__ ((unused))
-#endif
 /* Esc[2JEsc[1;1H          Clear screen and move cursor to 1,1 (upper left) pos. */
 #define clrscr()           fputs("\e[2J\e[1;1H", stderr)
 /* Esc[K                   Erases from the current cursor position to the end of the current line. */
@@ -107,7 +83,6 @@ void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);
-void    chomp           (char *str);
 void    do_sleep        (unsigned int sec);
 int     getuser         (char *username);
 int     getgroup        (char *group);
