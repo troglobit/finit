@@ -34,7 +34,7 @@ ARCHTOOL    = `which git-archive-all`
 ARCHIVE     = $(PKG).tar
 ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit initctl reboot
-HEADERS     = plugin.h svc.h helpers.h queue.h
+HEADERS     = plugin.h svc.h inetd.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
 OBJS        = finit.o api.o client.o conf.o exec.o helpers.o pid.o sig.o \
 	      svc.o service.o plugin.o tty.o inetd.o
