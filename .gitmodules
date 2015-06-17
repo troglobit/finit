@@ -1,3 +1,6 @@
 [submodule "libuev"]
 	path = libuev
 	url = https://github.com/troglobit/libuev.git
+[submodule "libite"]
+	path = libite
+	url = git@github.com:troglobit/libite.git
