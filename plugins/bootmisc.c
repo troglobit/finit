@@ -27,6 +27,7 @@
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
+#include "libite/lite.h"
 
 #ifdef ENABLE_STATIC
 #error This plugin uses getuser(), which relies on dynamically linked GLIBC.  Cannot be built statically!

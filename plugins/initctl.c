@@ -34,6 +34,7 @@
 #include "../sig.h"
 #include "../finit.h"
 #include "../service.h"
+#include "libite/lite.h"
 
 static void parse(void *arg, int fd, int events);
 

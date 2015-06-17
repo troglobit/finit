@@ -24,6 +24,7 @@
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
+#include "libite/lite.h"
 
 static void setup(void *UNUSED(arg))
 {
