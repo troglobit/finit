@@ -3,7 +3,7 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[1.13] - 2015-06-15
+[1.13] - 2015-06-17
 -------------------
 
 Support for multiple instances and introduction of an `initctl` tool.
@@ -21,7 +21,7 @@ Support for multiple instances and introduction of an `initctl` tool.
         service #1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
         service #2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
 
-* Support for dynamically reloadable `*.conf` files in `/etc/finit.d/`.
+* Support for reloading `*.conf` files in `/etc/finit.d/` on SIGHUP.
   All `task`, `service` and `run` statements can be used in these .conf
   files.  Use the `telinit q` command, `initctl reload` or simply send
   `SIGHUP` to PID 1 to reload them.  Finit automatically does reload of
@@ -29,10 +29,13 @@ Support for multiple instances and introduction of an `initctl` tool.
 * Support for a modern `initctl` tool which can stop/start/reload and
   list status of all system services.  Also, the old client tool used
   to change runlevel is now also available as a symlink: `telinit`.
-* Add concept of "jobs".  This is a unique identifier, composed of a
-  service and instance number, SVC:ID
 
-        finit <stop|start|reload|restart> JOB
+        initctl [-v] <status|stop|start|reload|restart> [JOB]
+
+* Add concept of "jobs".  This is a unique identifier, composed of a
+  service and instance number, `SVC:ID`
+
+        initctl <stop|start|reload|restart> JOB
 
 * Support for *deny filters* in `inetd` services.
 
@@ -60,9 +63,9 @@ Support for multiple instances and introduction of an `initctl` tool.
 * Support for a more user-friendly configure script rather than editing
   the top Makefile, or setting environment variables at build time.
 * Support for building Finit statically, no external libraries.  This
-  unfortunately means that some plugins cannot be built, at all.  Thanks
-  to James Mills for all help testing this out!
-* Support for disabling the built-in inetd server with configure.
+  unfortunately means that some plugins cannot be built, at all.
+  Big thanks goes to James Mills for all help testing this out!
+* Support for disabling the built-in inetd server with `configure`.
 * Support for two new hook points: `HOOK_SVC_RECONF` and
   `HOOK_RUNLEVEL_CHANGE`.  See the source for the exact location.
 * The `include <FILE>` option now needs an absolute path to `FILE`.
