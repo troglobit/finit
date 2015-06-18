@@ -103,7 +103,8 @@ install-dev:
 		printf "  INSTALL $(DESTDIR)$(incdir)/$$file\n";	\
 		$(INSTALL) -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
-	$(MAKE) -C libite install-dev install-exec
+	$(MAKE) -C libite install-dev
+	$(MAKE) -C libuev install-dev
 
 install: install-exec install-data install-dev
 
