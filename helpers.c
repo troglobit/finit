@@ -138,9 +138,12 @@ int atonum(char *str)
 FILE *tempfile(void)
 {
 	int fd;
+	mode_t oldmask;
 	char *template = "/tmp/finit.XXXXXX";
 
+	oldmask = umask(0077);
 	fd = mkstemp(template);
+	umask(oldmask);
 	if (-1 == fd)
 		return NULL;
 
