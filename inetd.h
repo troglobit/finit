@@ -32,7 +32,7 @@
 
 
 typedef struct inetd_filter {
-	LIST_ENTRY(inetd_filter) link;
+	TAILQ_ENTRY(inetd_filter) link;
 	int  deny;		/* 0:allow, 1:deny */
 	char ifname[IFNAMSIZ];	/* E.g., eth0 */
 } inetd_filter_t;
@@ -49,7 +49,7 @@ typedef struct {
 	char   name[10];
 	int  (*cmd)(int type);	/* internal inetd service, like 'time' */
 
-	LIST_HEAD(, inetd_filter) filters;
+	TAILQ_HEAD(, inetd_filter) filters;
 } inetd_t;
 
 int  inetd_dgram_peek  (int sd, char *ifname);

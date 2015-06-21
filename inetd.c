@@ -258,7 +258,7 @@ static inetd_filter_t *find_filter(inetd_t *inetd, char *ifname)
 	if (!ifname)
 		ifname = "*";
 
-	LIST_FOREACH(filter, &inetd->filters, link) {
+	TAILQ_FOREACH(filter, &inetd->filters, link) {
 		_d("Checking filters for %s: '%s' vs '%s' (exact match) ...",
 		   inetd->name, filter->ifname, ifname);
 
@@ -279,7 +279,7 @@ inetd_filter_t *inetd_filter_match(inetd_t *inetd, char *ifname)
 	if (filter)
 		return filter;
 
-	LIST_FOREACH(filter, &inetd->filters, link) {
+	TAILQ_FOREACH(filter, &inetd->filters, link) {
 		_d("Checking filters for %s: '%s' vs '%s' (any match) ...",
 		   inetd->name, filter->ifname, ifname);
 
@@ -316,7 +316,7 @@ int inetd_allow(inetd_t *inetd, char *ifname)
 
 	filter->deny = 0;
 	strlcpy(filter->ifname, ifname, sizeof(filter->ifname));
-	LIST_INSERT_HEAD(&inetd->filters, filter, link);
+	TAILQ_INSERT_TAIL(&inetd->filters, filter, link);
 
 	return 0;
 }
@@ -347,7 +347,7 @@ int inetd_deny(inetd_t *inetd, char *ifname)
 
 	filter->deny = 1;
 	strlcpy(filter->ifname, ifname, sizeof(filter->ifname));
-	LIST_INSERT_HEAD(&inetd->filters, filter, link);
+	TAILQ_INSERT_TAIL(&inetd->filters, filter, link);
 
 	return 0;
 }
@@ -407,7 +407,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 
 	snprintf(str, len, "%s allow %s ", inetd->name,
 		 inetd->type == SOCK_DGRAM ? "UDP" : "TCP");
-	LIST_FOREACH(filter, &inetd->filters, link) {
+	TAILQ_FOREACH(filter, &inetd->filters, link) {
 		char ifname[IFNAMSIZ];
 
 		if (filter->deny)
@@ -425,7 +425,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 	}
 
 	prev = 0;
-	LIST_FOREACH(filter, &inetd->filters, link) {
+	TAILQ_FOREACH(filter, &inetd->filters, link) {
 		char ifname[IFNAMSIZ];
 
 		if (!filter->deny)
@@ -490,6 +490,7 @@ int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forkin
 	if (!name)
 		name = service;
 	strlcpy(inetd->name, name, sizeof(inetd->name));
+	TAILQ_INIT(&inetd->filters);
 
 	/* Naïve mapping tcp->stream, udp->dgram, other->dgram */
 	if (!strcasecmp(sv->s_proto, "tcp"))
@@ -512,7 +513,7 @@ int inetd_del(inetd_t *inetd)
 {
 	inetd_filter_t *filter, *tmp;
 
-	LIST_FOREACH_SAFE(filter, &inetd->filters, link, tmp)
+	TAILQ_FOREACH_SAFE(filter, &inetd->filters, link, tmp)
 		free(filter);
 
 	return 0;
