@@ -38,9 +38,9 @@ typedef struct {
 	int  (*cb)(char *arg);
 } command_t;
 
-int debug   = 0;
-int verbose = 0;
-
+int debug    = 0;
+int verbose  = 0;
+int runlevel = 0;
 
 static int do_send(struct init_request *rq, ssize_t len)
 {
@@ -93,14 +93,14 @@ static int set_runlevel(char *arg)
 	return do_send(&rq, sizeof(rq));
 }
 
-static int do_svc(int cmd, char *jobid)
+static int do_svc(int cmd, char *arg)
 {
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
 		.cmd = cmd,
 	};
 
-	if (!jobid) {
+	if (!arg) {
 		if (cmd == INIT_CMD_RELOAD_SVC) {
 			rq.cmd = INIT_CMD_RELOAD;
 			goto exit;
@@ -108,7 +108,7 @@ static int do_svc(int cmd, char *jobid)
 
 		return 1;
 	}
-	strlcpy(rq.data, jobid, sizeof(rq.data));
+	strlcpy(rq.data, arg, sizeof(rq.data));
 
 exit:
 	return do_send(&rq, sizeof(rq));
@@ -132,57 +132,59 @@ static int show_status(char *UNUSED(arg))
 {
 	svc_t *svc;
 
+	/* Fetch UTMP runlevel, needed for svc_status() call below */
+	runlevel = runlevel_get();
+
 	if (!verbose) {
-		printf("#       Status   PID     Runlevels  Service               Description\n");
+		printf("#      Status   PID     Runlevels  Service               Description\n");
 		printf("====================================================================================\n");
 	}
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		int  inetd = svc_is_inetd(svc);
-		char jobid[10];
+		char jobid[10], args[80] = "";
+		struct init_request rq = {
+			.magic = INIT_MAGIC,
+			.cmd = INIT_CMD_QUERY_INETD,
+		};
 
 		if (svc_is_unique(svc))
 			snprintf(jobid, sizeof(jobid), "%d", svc->job);
 		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
-		if (verbose) {
-			int internal = !strcmp("internal", svc->cmd);
-			char *info, args[80] = "";
-			struct init_request rq = {
-				.magic = INIT_MAGIC,
-				.cmd = INIT_CMD_QUERY_INETD,
-			};
+		printf("%-5s  %7s  %-6d  %-9s  ", jobid, svc_status(svc), svc->pid, runlevel_string(svc->runlevels));
+		if (!verbose) {
+			printf("%-20s  %s\n", svc->cmd, svc->desc);
+			continue;
+		}
 
-			printf("%-6s  %7s  %-6d  %-9s  ", jobid, svc_status(svc), svc->pid, runlevel_string(svc->runlevels));
-			if (inetd) {
-				snprintf(rq.data, sizeof(rq.data), "%s", jobid);
-				if (do_send(&rq, sizeof(rq))) {
-					snprintf(args, sizeof(args), "Unknown inetd");
-					info = args;
-				} else {
-					info = rq.data;
-					if (!internal) {
-						char *ptr = strchr(info, ' ');
-						if (ptr)
-							info = ptr + 1;
-					}
-				}
+		if (inetd) {
+			char *info;
 
-				printf("%s %s\n", svc->cmd, info);
+			snprintf(rq.data, sizeof(rq.data), "%s", jobid);
+			if (do_send(&rq, sizeof(rq))) {
+				snprintf(args, sizeof(args), "Unknown inetd");
+				info = args;
 			} else {
-				int i;
-
-				for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
-					strlcat(args, svc->args[i], sizeof(args));
-					strlcat(args, " ", sizeof(args));
+				info = rq.data;
+				if (strcmp("internal", svc->cmd)) {
+					char *ptr = strchr(info, ' ');
+					if (ptr)
+						info = ptr + 1;
 				}
-
-				printf("%s %s\n", svc->cmd, args);
 			}
+
+			printf("%s %s\n", svc->cmd, info);
 		} else {
-			printf("%-6s  %7s  %-6d  %-9s  %-20s  %s\n", jobid, svc_status(svc), svc->pid,
-			       runlevel_string(svc->runlevels), svc->cmd, svc->desc);
+			int i;
+
+			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+				strlcat(args, svc->args[i], sizeof(args));
+				strlcat(args, " ", sizeof(args));
+			}
+
+			printf("%s %s\n", svc->cmd, args);
 		}
 	}
 
@@ -196,15 +198,15 @@ static int usage(int rc)
 		"  -v, --verbose         Verbose output\n"
 		"  -h, --help            This help text\n\n"
 		"Commands:\n"
-		"        debug           Toggle Finit debug\n"
-		"        reload          Reload *.conf in /etc/finit.d/\n"
-		"        runlevel <0-9>  Change runlevel: 0 halt, 6 reboot\n"
-		"        status          Show status of services\n"
-		"        start   <JOB#>  Start stopped service\n"
-		"        stop    <JOB#>  Stop running service\n"
-		"        restart <JOB#>  Restart (stop/start) running service\n"
-		"        reload  <JOB#>  Reload (SIGHUP) running service\n"
-		"        version         Show Finit version\n\n", __progname);
+		"  debug                 Toggle Finit debug\n"
+		"  reload                Reload *.conf in /etc/finit.d/\n"
+		"  runlevel <0-9>        Change runlevel: 0 halt, 6 reboot\n"
+		"  status                Show status of services\n"
+		"  start    <JOB|NAME>   Start stopped job or service\n"
+		"  stop     <JOB|NAME>   Stop running job or service\n"
+		"  restart  <JOB|NAME>   Restart (stop/start) job or service\n"
+		"  reload   <JOB|NAME>   Reload (SIGHUP) job or service\n"
+		"  version               Show Finit version\n\n", __progname);
 
 	return rc;
 }
@@ -244,7 +246,12 @@ int main(int argc, char *argv[])
 
 	if (optind < argc) {
 		char *cmd = argv[optind++];
-		char *arg = optind < argc ? argv[optind] : NULL;
+		char  arg[120] = "";
+
+		while (optind < argc) {
+			strlcat(arg, argv[optind++], sizeof(arg));
+			strlcat(arg, " ", sizeof(arg));
+		}
 
 		for (c = 0; command[c].cmd; c++) {
 			if (!strcmp(command[c].cmd, cmd))

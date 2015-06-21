@@ -171,6 +171,31 @@ svc_t *svc_dynamic_iterator(int first)
 
 
 /**
+ * svc_named_iterator - Iterates over all instances of a service.
+ * @first: Get first &svc_t object, or next until end.
+ * @cmd:   Service name to look for.
+ *
+ * Returns:
+ * The first matching &svc_t when @first is set, otherwise the next
+ * &svc_t instance with the same @cmd until the end when %NULL is
+ * returned.
+ */
+svc_t *svc_named_iterator(int first, char *cmd)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
+		char *name = basename(svc->cmd);
+
+		if (!strncmp(name, cmd, strlen(name)))
+			return svc;
+	}
+
+	return NULL;
+}
+
+
+/**
  * svc_foreach - Run a callback for each registered service
  * @cb: Callback to run for each service
  */
@@ -307,10 +332,13 @@ char *svc_status(svc_t *svc)
 	if (svc->pid)
 		return "running";
 
-	if (svc_is_inetd(svc))
-		return "inetd";
+	if (!ISSET(svc->runlevels, runlevel))
+		return "halted";
 
-	return "waiting";
+	if (svc_is_inetd(svc))
+		return "waiting";
+
+	return "stopped";
 }
 
 /* Same base service, return unique ID */

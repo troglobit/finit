@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <utmp.h>
 
 #include "finit.h"
 #include "helpers.h"
@@ -120,6 +121,42 @@ int atonum(char *str)
 		return -1;
 
 	return val;
+}
+
+static int encode(int lvl)
+{
+	if (!lvl) return 0;
+	return lvl + '0';
+}
+
+void runlevel_set(int pre, int now)
+{
+	struct utmp utent;
+
+	utent.ut_type  = RUN_LVL;
+	utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
+	strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
+
+	setutent();
+	pututline(&utent);
+	endutent();
+}
+
+int runlevel_get(void)
+{
+	int lvl = '?';		/* Non-existing runlevel */
+	struct utmp *utent;
+
+	setutent();
+	while ((utent = getutent())) {
+		if (utent->ut_type == RUN_LVL) {
+			lvl = utent->ut_pid & 0xFF;
+			break;
+		}
+	}
+	endutent();
+
+	return lvl - '0';
 }
 
 /**

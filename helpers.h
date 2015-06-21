@@ -69,6 +69,8 @@ int     makepath        (char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
 
 int     atonum          (char *str);
+void    runlevel_set    (int pre, int now);
+int     runlevel_get    (void);
 char   *runlevel_string (int levels);
 
 pid_t   pidfile_read    (char *pidfile);

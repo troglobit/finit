@@ -24,7 +24,6 @@
 
 #include <string.h>
 #include <sys/wait.h>
-#include <utmp.h>
 #include <net/if.h>
 #include "libite/lite.h"
 
@@ -38,10 +37,9 @@
 
 #define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
 
-static int   is_norespawn        (void);
+static int    is_norespawn       (void);
 static void   restart_lost_procs (void);
 static void   svc_dance          (svc_t *svc);
-static void   utmp_save          (int pre, int now);
 static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
 
 	
@@ -433,7 +431,7 @@ void service_runlevel(int newlevel)
 	runlevel  = newlevel;
 
 	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
-	utmp_save(prevlevel, newlevel);
+	runlevel_set(prevlevel, newlevel);
 
 	/* Make sure to reload all *.conf in /etc/finit.d/ */
 	svc_mark_dynamic();
@@ -815,25 +813,6 @@ static void svc_dance(svc_t *svc)
 		if (SVC_START == cmd || SVC_RELOAD == cmd)
 			service_start(svc);
 	}
-}
-
-static int encode(int lvl)
-{
-	if (!lvl) return 0;
-	return lvl + '0';
-}
-
-static void utmp_save(int pre, int now)
-{
-	struct utmp utent;
-
-	utent.ut_type  = RUN_LVL;
-	utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
-	strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
-
-	setutent();
-	pututline(&utent);
-	endutent();
 }
 
 #ifndef INETD_DISABLED

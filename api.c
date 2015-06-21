@@ -41,45 +41,37 @@
 
 uev_t api_watcher;
 
-/* Make sure the job id is NUL terminated and on the form SVC:ID. */
-static char *sanitize_jobid(char *jobid, size_t len)
+/* Sanitize user input, make sure to NUL terminate. */
+static char *sanitize(char *arg, size_t len)
 {
 	size_t i = 0;
-	static char buf[42];
 
-	while (isdigit(jobid[i]) && i < len)
+	while ((isalnum(arg[i]) || isspace(arg[i])) && i < len)
 		i++;
 
-	if (jobid[i++] == ':') {
-		while (isdigit(jobid[i]) && i < len)
-			i++;
-	}
-
-	if (i + 1 < sizeof(buf)) {
-		memcpy(buf, jobid, i);
-		buf[i + 1] = 0;
-
-		return buf;
+	if (i + 1 < len) {
+		arg[i + 1] = 0;
+		return arg;
 	}
 
 	return NULL;
 }
 
-static svc_t *convert_jobid(int noid, char *jobid, size_t len)
+static svc_t *convert(int noid, char *arg, size_t len)
 {
 	int job, id = 1;
 	char *token, *ptr;
 
-	jobid = sanitize_jobid(jobid, len);
-	if (!jobid)
+	arg = sanitize(arg, len);
+	if (!arg)
 		return NULL;
 
-	if (noid && (ptr = strchr(jobid, ':')))
+	if (noid && (ptr = strchr(arg, ':')))
 	    ptr = 0;
 
-	token = strtok(jobid, ":");
+	token = strtok(arg, ":");
 	if (!token) {
-		job = atoi(jobid);
+		job = atoi(arg);
 	} else {
 		job = atoi(token);
 		token = strtok(NULL, "");
@@ -91,31 +83,51 @@ static svc_t *convert_jobid(int noid, char *jobid, size_t len)
 	return svc_find_by_jobid(job, id);
 }
 
+static int call(int (*action)(svc_t *), char *buf, size_t len)
+{
+	int result = 0;
+	char *job = strtok(sanitize(buf, len), " ");
+
+	while (job) {
+		svc_t *svc;
+
+		if (isdigit(job[0]))
+			result += action(convert(0, job, len));
+		else
+			for (svc = svc_named_iterator(1, job); svc; svc = svc_named_iterator(0, job))
+				result += action(svc);
+
+		job = strtok(NULL, " ");
+	}
+
+	return result;
+}
+
 static int do_start(char *buf, size_t len)
 {
-	return service_start(convert_jobid(0, buf, len));
+	return call(service_start, buf, len);
 }
 
 static int do_stop(char *buf, size_t len)
 {
-	return service_stop(convert_jobid(0, buf, len));
+	return call(service_stop, buf, len);
 }
 
 static int do_reload(char *buf, size_t len)
 {
-	return service_reload(convert_jobid(0, buf, len));
+	return call(service_reload, buf, len);
 }
 
 static int do_restart(char *buf, size_t len)
 {
-	return service_restart(convert_jobid(0, buf, len));
+	return call(service_restart, buf, len);
 }
 
 static int do_query_inetd(char *buf, size_t len)
 {
 	svc_t *svc;
 
-	svc = convert_jobid(1, buf, len);
+	svc = convert(1, buf, len);
 	if (!svc || !svc_is_inetd(svc)) {
 		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", buf);
 		return 1;
@@ -151,8 +163,6 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 				_e("Failed reading initctl request, error %d: %s", errno, strerror(errno));
 			}
-
-			_d("Nothing to do, bailing out.");
 
 			break;
 		}
@@ -237,11 +247,6 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 		len = write(sd, &rq, sizeof(rq));
 		if (len != sizeof(rq))
 			_d("Failed sending ACK/NACK back to client.");
-#if 0
-		else
-			sleep(1); /* Give client time to read FIFO */
-		_e("Ready for next station.");
-#endif
 	}
 
 leave:
