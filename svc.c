@@ -196,6 +196,29 @@ svc_t *svc_named_iterator(int first, char *cmd)
 
 
 /**
+ * svc_job_iterator - Iterates over all instances of a service.
+ * @first: Get first &svc_t object, or next until end.
+ * @job:   Job to look for.
+ *
+ * Returns:
+ * The first matching &svc_t when @first is set, otherwise the next
+ * &svc_t instance with the same @job until the end when %NULL is
+ * returned.
+ */
+svc_t *svc_job_iterator(int first, int job)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
+		if (svc->job == job)
+			return svc;
+	}
+
+	return NULL;
+}
+
+
+/**
  * svc_foreach - Run a callback for each registered service
  * @cb: Callback to run for each service
  */

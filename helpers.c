@@ -115,6 +115,9 @@ int atonum(char *str)
 	int val;
 	char *end;
 
+	if (!str)
+		return -1;
+
 	errno = 0;
 	val = strtol(str, &end, 10);
 	if (errno || end == str)

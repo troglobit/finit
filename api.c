@@ -41,12 +41,18 @@
 
 uev_t api_watcher;
 
+/* Allowed characters in job/id/name */
+static int isallowed(int ch)
+{
+	return isalnum(ch) || isspace(ch) || ch == ':';
+}
+
 /* Sanitize user input, make sure to NUL terminate. */
 static char *sanitize(char *arg, size_t len)
 {
 	size_t i = 0;
 
-	while ((isalnum(arg[i]) || isspace(arg[i])) && i < len)
+	while (isallowed(arg[i]) && i < len)
 		i++;
 
 	if (i + 1 < len) {
@@ -57,79 +63,65 @@ static char *sanitize(char *arg, size_t len)
 	return NULL;
 }
 
-static svc_t *convert(int noid, char *arg, size_t len)
-{
-	int job, id = 1;
-	char *token, *ptr;
-
-	arg = sanitize(arg, len);
-	if (!arg)
-		return NULL;
-
-	if (noid && (ptr = strchr(arg, ':')))
-	    ptr = 0;
-
-	token = strtok(arg, ":");
-	if (!token) {
-		job = atoi(arg);
-	} else {
-		job = atoi(token);
-		token = strtok(NULL, "");
-		if (token)
-			id = atoi(token);
-	}
-
-	_d("Got job %d id %d ...", job, id);
-	return svc_find_by_jobid(job, id);
-}
-
 static int call(int (*action)(svc_t *), char *buf, size_t len)
 {
 	int result = 0;
-	char *job = strtok(sanitize(buf, len), " ");
+	char *input, *token, *pos;
 
-	while (job) {
+	input = sanitize(buf, len);
+	if (!input)
+		return -1;
+
+	token = strtok_r(input, " ", &pos);
+	while (token) {
 		svc_t *svc;
 
-		if (isdigit(job[0]))
-			result += action(convert(0, job, len));
-		else
-			for (svc = svc_named_iterator(1, job); svc; svc = svc_named_iterator(0, job))
-				result += action(svc);
+		if (isdigit(token[0])) {
+			int job = atonum(token);
+			char *ptr = strchr(token, ':');
 
-		job = strtok(NULL, " ");
+			if (!ptr) {
+				svc = svc_job_iterator(1, job);
+				while (svc) {
+					result += action(svc);
+					svc = svc_job_iterator(0, job);
+				}
+			} else {
+				*ptr++ = 0;
+				job = atonum(token);
+				result += action(svc_find_by_jobid(job, atonum(ptr)));
+			}
+
+		} else {
+			svc = svc_named_iterator(1, token);
+			while (svc) {
+				result += action(svc);
+				svc = svc_named_iterator(0, token);
+			}
+		}
+
+		token = strtok_r(NULL, " ", &pos);
 	}
 
 	return result;
 }
 
-static int do_start(char *buf, size_t len)
-{
-	return call(service_start, buf, len);
-}
-
-static int do_stop(char *buf, size_t len)
-{
-	return call(service_stop, buf, len);
-}
-
-static int do_reload(char *buf, size_t len)
-{
-	return call(service_reload, buf, len);
-}
-
-static int do_restart(char *buf, size_t len)
-{
-	return call(service_restart, buf, len);
-}
+static int do_start  (char *buf, size_t len) { return call(service_start,   buf, len); }
+static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
+static int do_reload (char *buf, size_t len) { return call(service_reload,  buf, len); }
+static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
 static int do_query_inetd(char *buf, size_t len)
 {
+	char *input = sanitize(buf, len);
 	svc_t *svc;
 
-	svc = convert(1, buf, len);
+	if (!input)
+		return -1;
+
+	svc = svc_find_by_jobid(atonum(input), 1);
 	if (!svc || !svc_is_inetd(svc)) {
-		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", buf);
+		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", input);
 		return 1;
 	}
 
@@ -151,7 +143,6 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 		int result = 0;
 		ssize_t len;
 
-		memset(&rq, 0, sizeof(rq));
 		len = read(sd, &rq, sizeof(rq));
 		if (len <= 0) {
 			if (-1 == len) {
