@@ -405,7 +405,8 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 		return 1;
 	}
 
-	snprintf(str, len, "%s allow ", inetd->name);
+	snprintf(str, len, "%s allow %s ", inetd->name,
+		 inetd->type == SOCK_DGRAM ? "UDP" : "TCP");
 	LIST_FOREACH(filter, &inetd->filters, link) {
 		char ifname[IFNAMSIZ];
 
