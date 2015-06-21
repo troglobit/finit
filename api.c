@@ -113,13 +113,20 @@ static int do_restart(char *buf, size_t len) { return call(service_restart, buf,
 
 static int do_query_inetd(char *buf, size_t len)
 {
-	char *input = sanitize(buf, len);
+	int id = 1;
+	char *ptr, *input = sanitize(buf, len);
 	svc_t *svc;
 
 	if (!input)
 		return -1;
 
-	svc = svc_find_by_jobid(atonum(input), 1);
+	ptr = strchr(input, ':');
+	if (ptr) {
+		*ptr++ = 0;
+		id = atonum(ptr);
+	}
+
+	svc = svc_find_by_jobid(atonum(input), id);
 	if (!svc || !svc_is_inetd(svc)) {
 		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", input);
 		return 1;
