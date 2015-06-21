@@ -179,7 +179,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	}
 
 	/* Redirect output from cmd to a tempfile */
-	fp = tmpfile();
+	fp = tempfile();
 	if (fp && !debug) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);

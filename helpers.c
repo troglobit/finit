@@ -126,6 +126,27 @@ int atonum(char *str)
 	return val;
 }
 
+/**
+ * tempfile - A secure tmpfile() replacement
+ *
+ * This is the secure replacement for tmpfile() that does not exist in GLIBC.
+ * The function uses mkstemp() for security.
+ *
+ * Returns:
+ * An open %FILE pointer, or %NULL on error.
+ */
+FILE *tempfile(void)
+{
+	int fd;
+	char *template = "/tmp/finit.XXXXXX";
+
+	fd = mkstemp(template);
+	if (-1 == fd)
+		return NULL;
+
+	return fdopen(fd, "rw");
+}
+
 static int encode(int lvl)
 {
 	if (!lvl) return 0;
