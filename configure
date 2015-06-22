@@ -28,6 +28,7 @@ defaults()
 	rcsd=${rcsd:="$sysconfdir/$confdir"}
         defuser=${defuser:="root"}
         defhost=${defhost:="noname"}
+        runlevel=${runlevel:=2}
 	debug=${debug:=0}
 	embedded=${embedded:=0}
 	inetd=${inetd:=1}
@@ -55,6 +56,7 @@ fi
 	echo "rcs.d/ directory  : $rcsd"
         echo "Default username  : $defuser"
         echo "Default hostname  : $defhost"
+        echo "Default runlevel  : $runlevel"
 
 	if [ $debug -ne 0 ]; then
 		echo "Debug             : ENABLED"
@@ -115,6 +117,7 @@ usage()
 	echo "  --with-rcsd=RCSD       Finit RCSD directory, default '\$sysconfdir/$confdir'"
 	echo "  --with-username=USER   User for 'startx' .conf option, default: root"
 	echo "  --with-hostname=NAME   Hostname, if /etc/hostname is missing, default: noname"
+        echo "  --with-runlevel=LEVEL  Runlevel to switch to after bootstrap (S), default: 2"
         echo
 	echo "  --enable-embedded      Enable embedded defaults, BusBox getty, mdev etc."
 	echo "  --enable-debug         Enable debug flags, '-O0, -g'"
@@ -191,6 +194,10 @@ while [ "$*" != "" ]; do
 
                 with-hostname)
                         defhost="$arg"
+                        ;;
+
+                with-runlevel)
+                        runlevel="$arg"
                         ;;
 
                 enable-debug)
@@ -309,3 +316,4 @@ echo "#define FINIT_RCSD      \"$rcsd\""            >> config.h
 echo "#define PLUGIN_PATH     \"$plugindir\""       >> config.h
 echo "#define DEFUSER         \"$defuser\""         >> config.h
 echo "#define DEFHOST         \"$defhost\""         >> config.h
+echo "#define RUNLEVEL        $runlevel"            >> config.h

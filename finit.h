@@ -43,14 +43,12 @@
 # define GETTY			"/sbin/getty -L"
 # define GETTY_BUSYBOX		/* Tell tty.c about the getty argument order */
 # define BAUDRATE		115200
-# define RUNLEVEL		2
 #else /* Debian/Ubuntu based distributions */
 # define CONSOLE		"/dev/tty1"
 # define SETUP_DEVFS		"/sbin/udevd --daemon"
 # define GETTY			"/sbin/getty -8"
 # define GETTY_AGETTY		/* Tell tty.c about the getty argument order */
 # define BAUDRATE		38400
-# define RUNLEVEL		2
 # define RANDOMSEED		"/var/lib/urandom/random-seed"
 # define REMOUNT_ROOTFS_RW
 # define HAVE_DBUS
