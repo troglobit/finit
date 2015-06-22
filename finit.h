@@ -38,18 +38,15 @@
 
 /* Distribution specific configuration */
 #if defined EMBEDDED_SYSTEM
-# define CONSOLE		_PATH_CONSOLE
 # define SETUP_DEVFS		"/sbin/mdev -s"
 # define GETTY			"/sbin/getty -L"
 # define GETTY_BUSYBOX		/* Tell tty.c about the getty argument order */
 # define BAUDRATE		115200
 #else /* Debian/Ubuntu based distributions */
-# define CONSOLE		"/dev/tty1"
 # define SETUP_DEVFS		"/sbin/udevd --daemon"
 # define GETTY			"/sbin/getty -8"
 # define GETTY_AGETTY		/* Tell tty.c about the getty argument order */
 # define BAUDRATE		38400
-# define HAVE_DBUS
 #endif
 
 /* If the user configures us to not know about any getty use the system

@@ -21,7 +21,10 @@
  * THE SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include "../finit.h"
+#include "../config.h"
 #include "../helpers.h"
 #include "../plugin.h"
 #include "libite/lite.h"
