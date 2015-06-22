@@ -62,13 +62,6 @@
 # define FALLBACK_SHELL		_PATH_BSHELL
 #endif
 
-#ifndef DEFUSER
-# define DEFUSER		"root"
-#endif
-#ifndef DEFHOST
-# define DEFHOST		"noname"
-#endif
-
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
