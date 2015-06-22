@@ -28,6 +28,7 @@
 #include "libite/lite.h"
 
 #include "finit.h"
+#include "conf.h"
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"

@@ -111,13 +111,6 @@ extern char  *runparts;
 extern char  *console;
 extern char  *__progname;
 
-/* conf.c */
-void parse_kernel_cmdline (void);
-int  parse_runlevels      (char *runlevels);
-int  parse_finit_conf     (char *file);
-int  parse_finit_d        (char *dir);
-void reload_finit_d       (void);
-
 #endif /* FINIT_H_ */
 
 /**

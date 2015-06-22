@@ -1,4 +1,4 @@
-/* Parser for finit.conf
+/* Parser for /etc/finit.conf and /etc/finit.d/<SVC>.conf
  *
  * Copyright (c) 2012-2015  Joachim Nilsson <troglobit@gmail.com>
  *

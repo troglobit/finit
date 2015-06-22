@@ -28,6 +28,7 @@
 #include <sys/stat.h>		/* umask(), mkdir() */
 
 #include "finit.h"
+#include "conf.h"
 #include "helpers.h"
 #include "private.h"
 #include "plugin.h"

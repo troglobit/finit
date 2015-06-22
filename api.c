@@ -30,10 +30,11 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include "finit.h"
+#include "conf.h"
 #include "helpers.h"
 #include "plugin.h"
 #include "sig.h"
-#include "finit.h"
 #include "service.h"
 
 #include "libite/lite.h"
