@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
 	run("/bin/mount -n -o remount,rw /");
 #endif
 #ifdef SYSROOT
-	run(SYSROOT, "/", NULL, MS_MOVE, NULL);
+	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 
 	_d("Root FS up, calling hooks ...");

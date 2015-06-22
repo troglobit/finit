@@ -53,6 +53,9 @@ result()
 	echo "FIFO              : $fifo"
 	echo "Config file       : $config"
 	echo "rcs.d/ directory  : $rcsd"
+        if [ x"$sysroot" != x"" ]; then
+                echo "Swap rootfs to    : $sysroot"
+        fi
         echo "Default username  : $defuser"
         echo "Default hostname  : $defhost"
         echo "Default runlevel  : $runlevel"
@@ -131,6 +134,8 @@ usage()
         echo "                         files, or as built-in if --enable-static is given,"
 	echo "                         defaults to all plugins.  Exclude extension!"
 	echo "  --with-rcsd=RCSD       Finit RCSD directory, default '\$sysconfdir/$confdir'"
+        echo "  --with-sysroot=PATH    Some distributions keep a different (writable) rootfs"
+        echo "                         that is used at runtime, usually /sysroot or /mnt"
 	echo "  --with-username=USER   User for 'startx' .conf option, default: root"
 	echo "  --with-hostname=NAME   Hostname, if /etc/hostname is missing, default: noname"
         echo "  --with-runlevel=LEVEL  Runlevel to switch to after bootstrap (S), default: 2"
@@ -207,6 +212,10 @@ while [ "$*" != "" ]; do
 
                 with-rcsd)
                         rcsd="$arg"
+                        ;;
+
+                with-sysroot)
+                        sysroot="$arg"
                         ;;
 
                 with-usename)
@@ -337,6 +346,9 @@ fi
 echo "#define FINIT_FIFO      \"$fifo\""            >> config.h
 echo "#define FINIT_CONF      \"$config\""          >> config.h
 echo "#define FINIT_RCSD      \"$rcsd\""            >> config.h
+if [ x"$sysroot" != x"" ]; then
+	echo "#define SYSROOT         \"$sysroot\"" >> config.h
+fi
 echo "#define PLUGIN_PATH     \"$plugindir\""       >> config.h
 if [ x"$random" != x"" ]; then
 	echo "#define RANDOMSEED      \"$random\""  >> config.h
