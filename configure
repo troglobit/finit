@@ -27,6 +27,7 @@ defaults()
         confdir=${confdir:="finit.d"}
         rcsd=${rcsd:="$sysconfdir/$confdir"}
         console=${console:='_PATH_CONSOLE'}
+        shell=${shell:='_PATH_BSHELL'}
         defuser=${defuser:="root"}
         defhost=${defhost:="noname"}
         runlevel=${runlevel:=2}
@@ -56,6 +57,7 @@ result()
         echo "Config file       : $config"
         echo "rcs.d/ directory  : $rcsd"
         echo "Default console   : $console"
+#        echo "Fallback shell    : $shell"
         if [ x"$sysroot" != x"" ]; then
                 echo "Swap rootfs to    : $sysroot"
         fi
@@ -143,6 +145,7 @@ usage()
         echo "                         defaults to all plugins.  Exclude extension!"
         echo "  --with-rcsd=RCSD       Finit RCSD directory, default '\$sysconfdir/$confdir'"
         echo "  --with-console=DEV     Console to use, default: /dev/console"
+#        echo "  --with-shell=PATH      Fallback shell to use, default: /bin/sh"
         echo "  --with-sysroot=PATH    Some distributions keep a different (writable) rootfs"
         echo "                         that is used at runtime, usually /sysroot or /mnt"
         echo "  --with-username=USER   User for 'startx' .conf option, default: root"
@@ -226,6 +229,10 @@ while [ "$*" != "" ]; do
 
                 with-console)
                         console="\"$arg\""
+                        ;;
+
+                with-shell)
+                        shell="\"$arg\""
                         ;;
 
                 with-sysroot)
@@ -380,6 +387,7 @@ echo "#define FINIT_FIFO      \"$fifo\""            >> config.h
 echo "#define FINIT_CONF      \"$config\""          >> config.h
 echo "#define FINIT_RCSD      \"$rcsd\""            >> config.h
 echo "#define CONSOLE         $console"             >> config.h
+echo "#define FALLBACK_SHELL  $shell"               >> config.h
 if [ x"$sysroot" != x"" ]; then
         echo "#define SYSROOT         \"$sysroot\"" >> config.h
 fi
