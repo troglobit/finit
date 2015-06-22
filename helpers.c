@@ -139,7 +139,7 @@ FILE *tempfile(void)
 {
 	int fd;
 	mode_t oldmask;
-	char *template = "/tmp/finit.XXXXXX";
+	char template[] = "/tmp/finit.XXXXXX";
 
 	oldmask = umask(0077);
 	fd = mkstemp(template);
