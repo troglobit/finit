@@ -46,7 +46,7 @@ TOPDIR      = $(shell pwd)
 SRCS        = $(OBJS:.o=.c)
 DEPS        = $(SRCS:.c=.d)
 
-CFLAGS     += -W -Wall -Werror
+CFLAGS     += -W -Wall
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(TOPDIR)
