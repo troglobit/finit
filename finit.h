@@ -36,19 +36,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* Distribution specific configuration */
-#if defined EMBEDDED_SYSTEM
-# define SETUP_DEVFS		"/sbin/mdev -s"
-# define GETTY			"/sbin/getty -L"
-# define GETTY_BUSYBOX		/* Tell tty.c about the getty argument order */
-# define BAUDRATE		115200
-#else /* Debian/Ubuntu based distributions */
-# define SETUP_DEVFS		"/sbin/udevd --daemon"
-# define GETTY			"/sbin/getty -8"
-# define GETTY_AGETTY		/* Tell tty.c about the getty argument order */
-# define BAUDRATE		38400
-#endif
-
 /* If the user configures us to not know about any getty use the system
  * defined /bin/sh (or similar) as fallback for TTYs. */
 #ifndef FALLBACK_SHELL
