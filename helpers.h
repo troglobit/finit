@@ -69,7 +69,6 @@ int     makepath        (char *path);
 void    ifconfig        (char *ifname, char *addr, char *mask, int up);
 
 int     atonum          (char *str);
-FILE   *tempfile        (void);
 
 void    runlevel_set    (int pre, int now);
 int     runlevel_get    (void);
