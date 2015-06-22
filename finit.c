@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Mount filesystems
 	 */
-#ifdef REMOUNT_ROOTFS_RW
+#ifdef REMOUNT_ROOTFS
 	run("/bin/mount -n -o remount,rw /");
 #endif
 #ifdef SYSROOT

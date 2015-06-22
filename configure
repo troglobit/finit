@@ -31,6 +31,7 @@ defaults()
         runlevel=${runlevel:=2}
 	debug=${debug:=0}
 	embedded=${embedded:=0}
+	remount=${remount:=0}
 	inetd=${inetd:=1}
 	verbose=${verbose:=1}
 	kernel_quiet=${kernel_quiet:=1}
@@ -62,6 +63,10 @@ result()
 
 	if [ $embedded -ne 0 ]; then
 		echo "Embedded target   : YES (BusyBox getty, and mdev instead of udev)"
+	fi
+
+        if [ $remount -ne 0 ]; then
+		echo "Remount ROOT fs   : YES, / will be remounted as read-write at bootstrap"
 	fi
 
         if [ x"$random" != x"" ]; then
@@ -130,9 +135,10 @@ usage()
 	echo "  --with-hostname=NAME   Hostname, if /etc/hostname is missing, default: noname"
         echo "  --with-runlevel=LEVEL  Runlevel to switch to after bootstrap (S), default: 2"
         echo
-	echo "  --enable-embedded      Enable embedded defaults, BusBox getty, mdev etc."
+	echo "  --enable-embedded      Embedded defaults, BusBox getty, mdev etc."
+        echo "  --enable-rw-rootfs     Remount / as read-write at bootstrap, not for embedded"
 	echo "  --enable-debug         Enable debug flags, '-O0, -g'"
-	echo "  --enable-quiet         Quiet mode, reduce screen output to absolute minimum."
+	echo "  --enable-quiet         Quiet mode, reduce screen output to absolute minimum"
 	echo "  --enable-static        Link statically.  This disables a few features."
 	echo "  --disable-inetd        Disable inetd support if not needed."
 	echo "  --disable-kernel-quiet Disable kernel cmdline quiet, default enabled."
@@ -221,6 +227,10 @@ while [ "$*" != "" ]; do
 
                 enable-embedded)
 			embedded=1
+                        ;;
+
+                enable-rw-rootfs)
+                        remount=1
                         ;;
 
                 enable-quiet)
@@ -315,7 +325,10 @@ echo "#define INIT_HEADING    $heading"             >> config.h
 echo "#define VERBOSE_MODE    $verbose"             >> config.h
 echo "#define KERNEL_QUIET    $kernel_quiet"        >> config.h
 if [ $embedded -eq 1 ]; then
-	echo "#define EMBEDDED_SYSTEM"              >> config.h
+	echo "#define EMBEDDED_SYSTEM 1"            >> config.h
+fi
+if [ $remount -eq 1 ]; then
+	echo "#define REMOUNT_ROOTFS  1"            >> config.h
 fi
 
 if [ $inetd -eq 0 ]; then
