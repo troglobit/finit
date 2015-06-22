@@ -49,7 +49,6 @@
 # define GETTY			"/sbin/getty -8"
 # define GETTY_AGETTY		/* Tell tty.c about the getty argument order */
 # define BAUDRATE		38400
-# define RANDOMSEED		"/var/lib/urandom/random-seed"
 # define REMOUNT_ROOTFS_RW
 # define HAVE_DBUS
 #endif
