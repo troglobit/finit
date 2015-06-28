@@ -3,4 +3,13 @@
 *.so
 *.gz
 *.map
-finit
+/finit
+/initctl
+/reboot
+/config.h
+/config.mk
+/GPATH
+/GRTAGS
+/GSYMS
+/GTAGS
+/contrib/*
