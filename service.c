@@ -91,7 +91,7 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 		return SVC_STOP;
 	}
 
-	if (!ISSET(svc->runlevels, runlevel))
+	if (!svc_in_runlevel(svc, runlevel))
 		return SVC_STOP;
 
 	/* Is there a service plugin registered? */
@@ -335,7 +335,7 @@ exit:
 }
 
 /**
- * service_start_dynamic - Start or reload modified dynamic services
+ * service_start_dynamic - Start new or reload modified dynamic services
  */
 void service_start_dynamic(void)
 {
@@ -343,7 +343,7 @@ void service_start_dynamic(void)
 
 	_d("Starting enabled/added services ...");
 	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
-		if (svc->dirty > 0)
+		if (svc_is_updated(svc))
 			svc_dance(svc);
 	}
 
@@ -360,7 +360,7 @@ void service_stop_dynamic(void)
 
 	_d("Stopping disabled/removed services ...");
 	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
-		if (svc->dirty != 0)
+		if (svc_is_changed(svc))
 			service_stop(svc);
 	}
 }
@@ -461,7 +461,7 @@ void service_runlevel(int newlevel)
 
 	_d("Stopping services services not allowed in new runlevel ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (!ISSET(svc->runlevels, runlevel)) {
+		if (!svc_in_runlevel(svc, runlevel)) {
 #ifndef INETD_DISABLED
 			if (svc_is_inetd(svc))
 				inetd_stop(&svc->inetd);
@@ -471,7 +471,7 @@ void service_runlevel(int newlevel)
 		}
 
 		/* ... or disabled/removed services from /etc/finit.d/ */
-		if (svc->mtime && svc->dirty != 0)
+		if (svc_is_dynamic(svc) && svc_is_changed(svc))
 			service_stop(svc);
 	}
 
@@ -484,7 +484,7 @@ void service_runlevel(int newlevel)
 #ifndef INETD_DISABLED
 		/* Inetd services have slightly different semantics */
 		if (svc_is_inetd(svc)) {
-			if (ISSET(svc->runlevels, runlevel))
+			if (svc_in_runlevel(svc, runlevel))
 				inetd_start(&svc->inetd);
 
 			continue;

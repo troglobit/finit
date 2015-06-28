@@ -364,7 +364,7 @@ char *svc_status(svc_t *svc)
 	if (svc->pid)
 		return "running";
 
-	if (!ISSET(svc->runlevels, runlevel))
+	if (!svc_in_runlevel(svc, runlevel))
 		return "halted";
 
 	if (svc_is_inetd(svc))

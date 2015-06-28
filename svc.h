@@ -30,6 +30,7 @@
 #include <sys/types.h>		/* pid_t */
 
 #include "inetd.h"
+#include "helpers.h"
 
 typedef enum {
 	SVC_STOP = 0,		/* Disabled */
@@ -135,8 +136,15 @@ char     *svc_status           (svc_t *svc);
 int       svc_next_id          (char *cmd);
 int       svc_is_unique        (svc_t *svc);
 
-static inline int svc_is_inetd (svc_t *svc) { return svc && SVC_TYPE_INETD == svc->type; }
-static inline int svc_is_daemon(svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
+static inline int svc_in_runlevel(svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
+
+static inline int svc_is_dynamic(svc_t *svc) { return svc &&  0 != svc->mtime; }
+static inline int svc_is_removed(svc_t *svc) { return svc && -1 == svc->dirty; }
+static inline int svc_is_changed(svc_t *svc) { return svc &&  0 != svc->dirty; }
+static inline int svc_is_updated(svc_t *svc) { return svc &&  1 == svc->dirty; }
+
+static inline int svc_is_inetd  (svc_t *svc) { return svc && SVC_TYPE_INETD   == svc->type; }
+static inline int svc_is_daemon (svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
 
 #endif	/* FINIT_SVC_H_ */
 
