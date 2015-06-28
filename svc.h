@@ -128,6 +128,7 @@ void	  svc_foreach	       (void (*cb)(svc_t *));
 void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
 
 void	  svc_mark_dynamic     (void);
+void	  svc_check_dirty      (svc_t *svc, time_t mtime);
 void	  svc_clean_dynamic    (void (*cb)(svc_t *));
 
 char     *svc_status           (svc_t *svc);

@@ -659,9 +659,9 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			return errno = ENOMEM;
 		}
 	}
-	if (svc->mtime != mtime)
-		svc->dirty = 1;
-	svc->mtime = mtime;
+
+	/* New, recently modified or unchanged ... used on reload. */
+	svc_check_dirty(svc, mtime);
 
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));

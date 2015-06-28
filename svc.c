@@ -330,6 +330,15 @@ void svc_mark_dynamic(void)
 	}
 }
 
+void svc_check_dirty(svc_t *svc, time_t mtime)
+{
+	if (svc->mtime != mtime)
+		svc->dirty = 1;
+	else
+		svc->dirty = 0;
+	svc->mtime = mtime;
+}
+
 /**
  * svc_clean_dynamic - Stop and cleanup stale services removed from /etc/finit.d
  * @cb: Callback to run for each stale service
