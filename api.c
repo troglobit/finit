@@ -207,7 +207,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_RELOAD:
-			reload_finit_d();
+			service_reload_dynamic();
 			break;
 
 		case INIT_CMD_START_SVC:

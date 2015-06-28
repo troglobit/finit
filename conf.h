@@ -24,11 +24,10 @@
 #ifndef FINIT_CONF_H_
 #define FINIT_CONF_H_
 
-void parse_kernel_cmdline (void);
-int  parse_runlevels      (char *runlevels);
-int  parse_finit_conf     (char *file);
-int  parse_finit_d        (char *dir);
-void reload_finit_d       (void);
+void conf_parse_cmdline   (void);
+int  conf_parse_runlevels (char *runlevels);
+int  conf_parse_config    (void);
+int  conf_reload_dynamic  (void);
 
 #endif	/* FINIT_CONF_H_ */
 

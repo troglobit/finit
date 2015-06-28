@@ -119,7 +119,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 			break;
 
 		case INIT_CMD_RELOAD:
-			reload_finit_d();
+			service_reload_dynamic();
 			break;
 
 		default:

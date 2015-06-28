@@ -96,7 +96,7 @@ void do_shutdown(int sig)
  */
 static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	reload_finit_d();
+	service_reload_dynamic();
 }
 
 /*

@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Parse kernel parameters
 	 */
-	parse_kernel_cmdline();
+	conf_parse_cmdline();
 
 	/*
 	 * Hello world.
@@ -127,9 +127,9 @@ int main(int argc, char* argv[])
 	plugin_load_all(&loop, PLUGIN_PATH);
 
 	/*
-	 * Parse configuration file
+	 * Parse /etc/finit.conf, main configuration file
 	 */
-	parse_finit_conf(FINIT_CONF);
+	conf_parse_config();
 
 	/* Set hostname as soon as possible, for syslog et al. */
 	set_hostname(&hostname);
@@ -182,10 +182,8 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/*
-	 * Load .conf files from /etc/finit.d and start all
-	 * tasks/services in the configured runlevel
+	 * Start all tasks/services in the configured runlevel
 	 */
-	parse_finit_d(rcsd);
 	service_runlevel(cfglevel);
 
 	_d("Running svc up hooks ...");

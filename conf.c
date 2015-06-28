@@ -56,7 +56,7 @@ static char *strip_line(char *line)
 	return line;
 }
 
-void parse_kernel_cmdline(void)
+void conf_parse_cmdline(void)
 {
 	FILE *fp;
 	char line[LINE_SIZE];
@@ -78,7 +78,7 @@ void parse_kernel_cmdline(void)
 }
 
 /* Convert optional "[!123456789S]" string into a bitmask */
-int parse_runlevels(char *runlevels)
+int conf_parse_runlevels(char *runlevels)
 {
 	int i, not = 0, bitmask = 0;
 
@@ -340,10 +340,15 @@ static int parse_conf(char *file)
 	return 0;
 }
 
-int parse_finit_d(char *dir)
+/* Reload all *.conf in /etc/finit.d/ */
+int conf_reload_dynamic(void)
 {
 	int i, num;
+	char *dir = rcsd;
 	struct dirent **e;
+
+	/* Mark and sweep */
+	svc_mark_dynamic();
 
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {
@@ -382,14 +387,14 @@ int parse_finit_d(char *dir)
 	return 0;
 }
 
-int parse_finit_conf(char *file)
+int conf_parse_config(void)
 {
 	int result;
 
 	username = strdup(DEFUSER);
 	hostname = strdup(DEFHOST);
 
-	result = parse_conf(file);
+	result = parse_conf(FINIT_CONF);
 	if (!tty_num()) {
 		char *fallback = FALLBACK_SHELL;
 
@@ -400,22 +405,6 @@ int parse_finit_conf(char *file)
 	}
 
 	return result;
-}
-
-/* Called on SIGHUP or 'init q' */
-void reload_finit_d(void)
-{
-	/* Mark and sweep */
-	svc_mark_dynamic();
-
-	/* Reload all *.conf in /etc/finit.d/ */
-	parse_finit_d(rcsd);
-
-	/* Reload dirty services */
-	service_reload_dynamic();
-
-	/* Cleanup stale services */
-	svc_clean_dynamic(service_unregister);
 }
 
 

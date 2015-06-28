@@ -83,7 +83,7 @@ int tty_register(char *line)
 		baud = BAUDRATE;
 	entry->data.baud = baud;
 	entry->data.term = term ? strdup(term) : NULL;
-	entry->data.runlevels = parse_runlevels(runlevels);
+	entry->data.runlevels = conf_parse_runlevels(runlevels);
 	_d("Registering tty %s at %d baud with term=%s on runlevels %s", dev, baud, term ?: "N/A", runlevels);
 
 	if (insert)

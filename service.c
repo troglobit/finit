@@ -334,6 +334,37 @@ exit:
 	return res;
 }
 
+/**
+ * service_start_dynamic - Start or reload modified dynamic services
+ */
+void service_start_dynamic(void)
+{
+	svc_t *svc;
+
+	_d("Starting enabled/added services ...");
+	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
+		if (svc->dirty > 0)
+			svc_dance(svc);
+	}
+
+	/* Cleanup stale services */
+	svc_clean_dynamic(service_unregister);
+}
+
+/**
+ * service_stop_dynamic - Stop disabled/removed dynamic services
+ */
+void service_stop_dynamic(void)
+{
+	svc_t *svc;
+
+	_d("Stopping disabled/removed services ...");
+	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
+		if (svc->dirty != 0)
+			service_stop(svc);
+	}
+}
+
 /* stop + start */
 int service_restart(svc_t *svc)
 {
@@ -381,7 +412,7 @@ int service_reload(svc_t *svc)
 }
 
 /**
- * service_reload_dynamic - Reload modifued dynamic services
+ * service_reload_dynamic - Called on SIGHUP, 'init q' or 'initctl reload'
  *
  * This function is called when Finit has recieved SIGHUP to reload
  * .conf files in /etc/finit.d.  It is responsible for starting,
@@ -389,25 +420,17 @@ int service_reload(svc_t *svc)
  */
 void service_reload_dynamic(void)
 {
-	int num = 0;
-	svc_t *svc;
+	/* First reload all *.conf in /etc/finit.d/ */
+	conf_reload_dynamic();
 
-	_d("Stopping disabled/removed services ...");
-	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
-		if (svc->dirty != 0) {
-			service_stop(svc);
-			num++;
-		}
-	}
+	/* Then stop any disabled/removed services and non-reloadable */
+	service_stop_dynamic();
 
 	_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
 	plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
 
-	_d("Starting enabled/added services ...");
-	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
-		if (svc->dirty > 0)
-			svc_dance(svc);
-	}
+	/* Finish off by starting/reload modified/new services */
+	service_start_dynamic();
 }
 
 /**
@@ -433,9 +456,8 @@ void service_runlevel(int newlevel)
 	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
 	runlevel_set(prevlevel, newlevel);
 
-	/* Make sure to reload all *.conf in /etc/finit.d/ */
-	svc_mark_dynamic();
-	parse_finit_d(rcsd);
+	/* Make sure to (re)load all *.conf in /etc/finit.d/ */
+	conf_reload_dynamic();
 
 	_d("Stopping services services not allowed in new runlevel ...");
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
@@ -671,7 +693,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		}
 	}
 
-	svc->runlevels = parse_runlevels(runlevels);
+	svc->runlevels = conf_parse_runlevels(runlevels);
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 #ifndef INETD_DISABLED
