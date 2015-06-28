@@ -50,6 +50,7 @@
 #define INIT_CMD_RELOAD_SVC     6    /* SIGHUP service */
 #define INIT_CMD_RESTART_SVC    7    /* STOP + START service */
 #define INIT_CMD_QUERY_INETD    8
+#define INIT_CMD_EMIT           9
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 

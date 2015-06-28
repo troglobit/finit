@@ -27,7 +27,7 @@
 void conf_parse_cmdline   (void);
 int  conf_parse_runlevels (char *runlevels);
 int  conf_parse_config    (void);
-int  conf_reload_dynamic  (void);
+void conf_reload_dynamic  (void);
 
 #endif	/* FINIT_CONF_H_ */
 

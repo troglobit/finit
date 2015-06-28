@@ -341,7 +341,7 @@ static int parse_conf(char *file)
 }
 
 /* Reload all *.conf in /etc/finit.d/ */
-int conf_reload_dynamic(void)
+void conf_reload_dynamic(void)
 {
 	int i, num;
 	char *dir = rcsd;
@@ -353,7 +353,7 @@ int conf_reload_dynamic(void)
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {
 		_d("No files found in %s, skipping ...", dir);
-		return -1;
+		return;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -383,8 +383,6 @@ int conf_reload_dynamic(void)
 	while (num--)
 		free(e[num]);
 	free(e);
-
-	return 0;
 }
 
 int conf_parse_config(void)

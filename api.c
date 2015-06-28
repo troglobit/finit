@@ -136,6 +136,55 @@ static int do_query_inetd(char *buf, size_t len)
 	return inetd_filter_str(&svc->inetd, buf, len);
 }
 
+typedef struct {
+	char *event;
+	void (*cb)(void);
+} ev_t;
+
+ev_t ev_list[] = {
+	{ "RELOAD", conf_reload_dynamic   },
+	{ "STOP",   service_stop_dynamic  },
+	{ "START",  service_start_dynamic },
+	{ NULL, NULL }
+};
+
+static int do_handle_event(char *event)
+{
+	int i;
+
+	for (i = 0; ev_list[i].event; i++) {
+		ev_t *e = &ev_list[i];
+		size_t len = MAX(strlen(e->event), strlen(event));
+
+		if (!strncasecmp(e->event, event, len)) {
+			e->cb();
+			return 0;
+		}
+	}
+
+	/* XXX: iterate over all services' events before failing. */
+
+	return -1;
+}
+
+static int do_handle_emit(char *buf, size_t len)
+{
+	int result = 0;
+	char *input, *event, *pos;
+
+	input = sanitize(buf, len);
+	if (!input)
+		return -1;
+
+	event = strtok_r(input, " ", &pos);
+	while (event) {
+		result += do_handle_event(event);
+		event = strtok_r(NULL, " ", &pos);
+	}
+
+	return result;
+}
+
 static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 {
 	int sd;
@@ -228,6 +277,10 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 		case INIT_CMD_QUERY_INETD:
 			result = do_query_inetd(rq.data, sizeof(rq.data));
+			break;
+
+		case INIT_CMD_EMIT:
+			result = do_handle_emit(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_ACK:

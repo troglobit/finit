@@ -107,7 +107,7 @@ static int do_svc(int cmd, char *arg)
 		.cmd = cmd,
 	};
 
-	if (!arg) {
+	if (!arg || !arg[0]) {
 		if (cmd == INIT_CMD_RELOAD_SVC) {
 			rq.cmd = INIT_CMD_RELOAD;
 			goto exit;
@@ -121,6 +121,7 @@ exit:
 	return do_send(&rq, sizeof(rq));
 }
 
+static int do_emit   (char *arg) { return do_svc(INIT_CMD_EMIT,        arg); }
 static int do_start  (char *arg) { return do_svc(INIT_CMD_START_SVC,   arg); }
 static int do_stop   (char *arg) { return do_svc(INIT_CMD_STOP_SVC,    arg); }
 static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD_SVC,  arg); }
@@ -206,7 +207,11 @@ static int usage(int rc)
 		"  -h, --help            This help text\n\n"
 		"Commands:\n"
 		"  debug                 Toggle Finit debug\n"
-		"  reload                Reload *.conf in /etc/finit.d/\n"
+		"  emit     <EV>         Emit an event.  Can be a predefined event: RELOAD, STOP,\n"
+		"                        START, or a custom string to match the event list in a\n"
+		"                        service stanza, e.g: GW, IFUP:IFNAME, IFDN:IFNAME, where\n"
+		"                        IFNAME is the interface name, e.g. eth0\n"
+		"  reload                Reload *.conf in /etc/finit.d/ and activate changes\n"
 		"  runlevel [0-9]        Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status                Show status of services\n"
 		"  start    <JOB|NAME>   Start stopped job or service\n"
@@ -223,6 +228,7 @@ int main(int argc, char *argv[])
 	int c;
 	command_t command[] = {
 		{ "debug",    toggle_debug },
+		{ "emit",     do_emit      },
 		{ "reload",   do_reload    },
 		{ "runlevel", do_runlevel  },
 		{ "status",   show_status  },
