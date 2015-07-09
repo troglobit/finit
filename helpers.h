@@ -74,9 +74,6 @@ void    runlevel_set    (int pre, int now);
 int     runlevel_get    (void);
 char   *runlevel_string (int levels);
 
-pid_t   pidfile_read    (char *pidfile);
-pid_t   pidfile_poll    (char *cmd, char *path);
-
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);
 
