@@ -219,15 +219,16 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 {
 	*sv = getservbyname(service, proto);
 	if (!*sv) {
+		const char *errstr;
 		static struct servent s;
 
 		s.s_name  = service;
-		s.s_port  = atonum(service);
+		s.s_port  = strtonum(service, 1, UINT16_MAX, &errstr);
 		s.s_proto = NULL;
 		if (!strcmp("tcp", proto) || !strcmp("udp", proto))
 			s.s_proto = proto;
 
-		if (s.s_port == -1 || !s.s_proto) {
+		if (errstr || !s.s_proto) {
 			_e("Invalid/unknown inetd service, cannot create custom entry.");
 			return errno = EINVAL;
 		}
