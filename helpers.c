@@ -1,4 +1,4 @@
-/* Misc. utility functions and C-library extensions for finit and its plugins
+/* Misc. utility functions for finit and its plugins
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
  * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
@@ -39,69 +39,6 @@
 #include "private.h"
 #include "libite/lite.h"
 
-
-/*
- * Helpers to replace system() calls
- */
-
-int makepath(char *path)
-{
-	char buf[PATH_MAX];
-	char *x = buf;
-	int ret;
-
-	if (!path) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	do {
-		do {
-			*x++ = *path++;
-		} while (*path && *path != '/');
-
-		*x = 0;
-		ret = mkdir(buf, 0777);
-	} while (*path && (*path != '/' || *(path + 1))); /* ignore trailing slash */
-
-	return ret;
-}
-
-void ifconfig(char *ifname, char *addr, char *mask, int up)
-{
-	struct ifreq ifr;
-	struct sockaddr_in *a = (struct sockaddr_in *)&ifr.ifr_addr;
-	int sock;
-
-	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
-		return;
-
-	memset(&ifr, 0, sizeof (ifr));
-	strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	ifr.ifr_addr.sa_family = AF_INET;
-
-	if (up) {
-		if (addr) {
-			inet_aton(addr, &a->sin_addr);
-			ioctl(sock, SIOCSIFADDR, &ifr);
-		}
-		if (mask) {
-			inet_aton(mask, &a->sin_addr);
-			ioctl(sock, SIOCSIFNETMASK, &ifr);
-		}
-	}
-
-	ioctl(sock, SIOCGIFFLAGS, &ifr);
-
-	if (up)
-		ifr.ifr_flags |= IFF_UP;
-	else
-		ifr.ifr_flags &= ~IFF_UP;
-
-	ioctl(sock, SIOCSIFFLAGS, &ifr);
-
-	close(sock);
-}
 
 /**
  * atonum - Convert string to integer
