@@ -65,8 +65,6 @@ do {								\
 #define SETBIT(a,i)  (a |= (1 << (i)))
 #define CLRBIT(a,i)  (a &= ~(1 << (i)))
 
-int     atonum          (char *str);
-
 void    runlevel_set    (int pre, int now);
 int     runlevel_get    (void);
 char   *runlevel_string (int levels);

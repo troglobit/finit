@@ -39,30 +39,6 @@
 #include "private.h"
 #include "libite/lite.h"
 
-
-/**
- * atonum - Convert string to integer
- * @str: String value to convert.
- *
- * Returns:
- * The converted (positive) number, or -1 on error, with @errno set.
- */
-int atonum(char *str)
-{
-	int val;
-	char *end;
-
-	if (!str)
-		return -1;
-
-	errno = 0;
-	val = strtol(str, &end, 10);
-	if (errno || end == str)
-		return -1;
-
-	return val;
-}
-
 static int encode(int lvl)
 {
 	if (!lvl) return 0;
