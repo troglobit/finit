@@ -525,7 +525,7 @@ receives a pointer to the `svc_t` of the service, with all command line
 parameters free to modify as needed.
 
 All the callback needs to do is respond with one of: `SVC_STOP (0)`
-tells finit to *not* start the service, `SVC_START (1)` to start the
+tells Finit to *not* start the service, `SVC_START (1)` to start the
 service, or `SVC_RELOAD (2)` to have finit signal the process with
 `SIGHUP`.
 
@@ -534,10 +534,9 @@ Rebooting & Halting
 -------------------
 
 Finit handles `SIGUSR1` and `SIGUSR2` for reboot and halt, and listens
-to `/dev/initctl` so system reboot and halt commands also work.  This
-latter functionality is implemented in the optional `initctl.so` plugin
-and can be accessed with the `telinit` command line tool, symlinked to
-`finit`).
+to `/dev/initctl` so system reboot and halt commands also work.  The
+latter is implemented in the optional `initctl.so` plugin and can be
+accessed with the `telinit` command line tool, symlinked to `finit`.
 
     ~ # telinit
     Usage: telinit [OPTIONS] [q | Q | 0-9]
@@ -557,19 +556,48 @@ services, called `initctl`.
     Usage: initctl [OPTIONS] <COMMAND>
     
     Options:
+      -a, --activate        Activate changes, only with 'reload'
       -v, --verbose         Verbose output
       -h, --help            This help text
     
     Commands:
+            update | prepare
             debug           Toggle Finit debug
-            reload          Reload *.conf in /etc/finit.d/
+            emit     <EV>   Emit an event, EV: can be one of STOP,
+                            START, GW, IFUP:IFNAME, IFDN:IFNAME, where
+                            IFNAME is the interface name, e.g. eth0
+            reload   [-a]   Reload *.conf in /etc/finit.d/
             runlevel <0-9>  Change runlevel: 0 halt, 6 reboot
             status          Show status of services
-            start   <JOB#>  Start stopped service
-            stop    <JOB#>  Stop running service
-            restart <JOB#>  Restart (stop/start) running service
-            reload  <JOB#>  Reload (SIGHUP) running service
+            start    <JOB#> Start stopped service
+            stop     <JOB#> Stop running service
+            restart  <JOB#> Restart (stop/start) running service
+            reload   <JOB#> Reload (SIGHUP) running service
             version         Show Finit version
+
+The `emit <EV>` command can be used to send events to Finit.  Built-in
+events are: RELOAD, STOP, START.  These events act on a lower level than
+their command counterparts.  The `reload` command reloads all `*.conf`
+files *and* activates the changes, with `emit RELOAD` only the `*.conf`
+files are reloaded.  To simulate the `reload` command all three events
+need to be emitted, in order: `emit RELOAD`, `emit STOP`, `emit START`.
+In practise this can be used to load a complete system configuration,
+and between `STOP` and `START` reset/change any hardware or kernel
+settings required to be in effect before new services are started.
+
+The `emit <EV>` command can also be used to emit custom events.  In
+fact, the event is a simple string.  Declare a list of events in a
+service stanza: `service ... <GW,IFUP:eth0>` to reload (`SIGHUP`) a
+service when recieving the `"GW"` or `"IFUP:eth0"` strings.  If a
+service cannot handle reload and must be stopped-started, simply add an
+exclamation mark first: `service ... <!GW,IGUP:eth0>`.
+
+The `<!>` notation to a service stanza can be use empty then it will
+apply to `reload` and `runlevel` commands.  I.e., when a service's .conf
+file has been changed Finit will stop and start a service marked with
+`<!>`.  If a service does *not* have `<!>` declared, then the `STOP`
+phase is postponed and the service is reloaded (`SIGHUP`:ed) in the
+`START` phase instead.
 
 Remember, you can only start/stop services that match the current
 runlevel.  Hence, if the runlevel is 2, the below Dropbear SSH service
