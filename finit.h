@@ -34,6 +34,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "libite/lite.h"
+
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
