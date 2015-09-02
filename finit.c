@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 	set_hostname(&hostname);
 
 	/* Set default PATH, for uid 0 */
-	setenv("PATH", _PATH_STDPATH);
+	setenv("PATH", _PATH_STDPATH, 1);
 
 	/*
 	 * Mount filesystems

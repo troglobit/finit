@@ -235,7 +235,7 @@ int service_start(svc_t *svc)
 
 			/* Set default path for regular users */
 			if (uid > 0)
-				setenv("PATH", _PATH_DEFPATH);
+				setenv("PATH", _PATH_DEFPATH, 1);
 		}
 
 		/* Serve copy of args to process in case it modifies them. */
