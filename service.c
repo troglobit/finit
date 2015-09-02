@@ -230,8 +230,13 @@ int service_start(svc_t *svc)
 			DFLSIG(sa, i, 0);
 
 		/* Set desired user */
-		if (uid >= 0)
+		if (uid >= 0) {
 			setuid(uid);
+
+			/* Set default path for regular users */
+			if (uid > 0)
+				setenv("PATH", _PATH_DEFPATH);
+		}
 
 		/* Serve copy of args to process in case it modifies them. */
 		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)

@@ -134,6 +134,9 @@ int main(int argc, char* argv[])
 	/* Set hostname as soon as possible, for syslog et al. */
 	set_hostname(&hostname);
 
+	/* Set default PATH, for uid 0 */
+	setenv("PATH", _PATH_STDPATH);
+
 	/*
 	 * Mount filesystems
 	 */
