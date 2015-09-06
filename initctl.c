@@ -213,7 +213,7 @@ static int usage(int rc)
 		"                        IFNAME is the interface name, e.g. eth0\n"
 		"  reload                Reload *.conf in /etc/finit.d/ and activate changes\n"
 		"  runlevel [0-9]        Show or set runlevel: 0 halt, 6 reboot\n"
-		"  status                Show status of services\n"
+		"  status | show         Show status of services\n"
 		"  start    <JOB|NAME>   Start stopped job or service\n"
 		"  stop     <JOB|NAME>   Stop running job or service\n"
 		"  restart  <JOB|NAME>   Restart (stop/start) job or service\n"
@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
 		{ "reload",   do_reload    },
 		{ "runlevel", do_runlevel  },
 		{ "status",   show_status  },
+		{ "show",     show_status  }, /* Convenience alias */
 		{ "start",    do_start     },
 		{ "stop",     do_stop      },
 		{ "restart",  do_restart   },
