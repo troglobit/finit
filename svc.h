@@ -28,7 +28,7 @@
 #include <sys/ipc.h>		/* IPC_CREAT */
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
-
+#include "libite/lite.h"
 #include "inetd.h"
 #include "helpers.h"
 
