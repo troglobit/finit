@@ -3,4 +3,4 @@
 	url = https://github.com/troglobit/libuev.git
 [submodule "libite"]
 	path = libite
-	url = git@github.com:troglobit/libite.git
+	url = https://github.com/troglobit/libite.git
