@@ -50,7 +50,7 @@ CFLAGS     += -W -Wall -Werror
 # Disable annoying gcc warning for "warn_unused_result", see GIT 37af997
 CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(TOPDIR)
-CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE
+CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
 LDFLAGS    += -L$(TOPDIR)/libite -L$(TOPDIR)/libuev
 DEPLIBS     = libite/libite.a libuev/libuev.a
