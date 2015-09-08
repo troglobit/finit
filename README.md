@@ -561,7 +561,7 @@ services, called `initctl`.
       -h, --help            This help text
     
     Commands:
-            update | prepare
+            update | prepare  <-- Only ideas atm!
             debug           Toggle Finit debug
             emit     <EV>   Emit an event, EV: can be one of STOP,
                             START, GW, IFUP:IFNAME, IFDN:IFNAME, where
@@ -578,26 +578,28 @@ services, called `initctl`.
 The `emit <EV>` command can be used to send events to Finit.  Built-in
 events are: RELOAD, STOP, START.  These events act on a lower level than
 their command counterparts.  The `reload` command reloads all `*.conf`
-files *and* activates the changes, with `emit RELOAD` only the `*.conf`
-files are reloaded.  To simulate the `reload` command all three events
-need to be emitted, in order: `emit RELOAD`, `emit STOP`, `emit START`.
-In practise this can be used to load a complete system configuration,
-and between `STOP` and `START` reset/change any hardware or kernel
-settings required to be in effect before new services are started.
+files *and* activates the changes (with `-a`), with `emit RELOAD` only
+the `*.conf` files are reloaded.  To simulate the `reload` command all
+three events need to be emitted, in order: `emit RELOAD`, `emit STOP`,
+`emit START`.  In practise this can be used to load a complete system
+configuration, and between `STOP` and `START` reset/change any hardware
+or kernel settings required to be in effect before new services are
+started.
 
 The `emit <EV>` command can also be used to emit custom events.  In
 fact, the event is a simple string.  Declare a list of events in a
 service stanza: `service ... <GW,IFUP:eth0>` to reload (`SIGHUP`) a
 service when recieving the `"GW"` or `"IFUP:eth0"` strings.  If a
 service cannot handle reload and must be stopped-started, simply add an
-exclamation mark first: `service ... <!GW,IGUP:eth0>`.
+exclamation mark first: `service ... <!GW,IFUP:eth0>`.
 
-The `<!>` notation to a service stanza can be use empty then it will
-apply to `reload` and `runlevel` commands.  I.e., when a service's .conf
-file has been changed Finit will stop and start a service marked with
-`<!>`.  If a service does *not* have `<!>` declared, then the `STOP`
-phase is postponed and the service is reloaded (`SIGHUP`:ed) in the
-`START` phase instead.
+The `<!>` notation to a service stanza can be used empty, then it will
+apply to `reload` and `runlevel` commands.  I.e., when a service's
+`.conf` file has been changed Finit will stop and start it instead.  If
+a service does *not* have `<!>` declared, then the `STOP` phase is
+postponed and the service is reloaded (`SIGHUP`:ed) in the `START` phase
+instead.  (The latter is the preferred behaviour, but not all daemons
+support this, unfortunately.)
 
 Remember, you can only start/stop services that match the current
 runlevel.  Hence, if the runlevel is 2, the below Dropbear SSH service
@@ -612,8 +614,8 @@ cannot be started.
     4:3       inetd  0       [2345]     internal 3737 allow *:3737
     5:1       inetd  0       [2345]     /sbin/telnetd allow *:23 deny eth0,eth1
     5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
-    6:1       inetd  0       [2345]     /sbin/dropbear allow eth0:222
-    6:2       inetd  0       [2345]     /sbin/dropbear allow *:22 deny eth0
+    6:1       inetd  0       [345]      /sbin/dropbear allow eth0:222
+    6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
 
 
 Building
