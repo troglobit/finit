@@ -46,6 +46,8 @@ General
 * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
   instead.  This is the de-facto practice.  But keep the check command
   for really low-end systems w/o `/etc/fstab`.
+* Add support for generic events (strings or ubus events) that are passed
+  verbatim (?) to the service stanza definitions.
 
 
 Init
