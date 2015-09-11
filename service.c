@@ -368,6 +368,9 @@ void service_stop_dynamic(void)
 		if (svc_is_changed(svc))
 			service_stop(svc);
 	}
+
+	_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
+	plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
 }
 
 /* stop + start */
@@ -430,9 +433,6 @@ void service_reload_dynamic(void)
 
 	/* Then stop any disabled/removed services and non-reloadable */
 	service_stop_dynamic();
-
-	_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
-	plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
 
 	/* Finish off by starting/reload modified/new services */
 	service_start_dynamic();
