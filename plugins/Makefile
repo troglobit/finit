@@ -7,7 +7,8 @@ LDFLAGS    := $(filter-out -rdynamic, $(LDFLAGS))
 LDFLAGS    += -shared
 ifneq ($(STATIC), 1)
 PLUGINS    ?= initctl.so alsa-utils.so bootmisc.so dbus.so hwclock.so \
-	      resolvconf.so urandom.so x11-common.so tty.so time.so
+	      resolvconf.so urandom.so x11-common.so tty.so time.so   \
+	      netlink.so
 DEPS       := $(PLUGINS:.so=.d)
 endif
 
