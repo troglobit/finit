@@ -29,120 +29,146 @@
 #include "../helpers.h"
 #include "../plugin.h"
 
+static int nlmsg_validate(struct nlmsghdr *nlmsg, size_t len)
+{
+	if (!NLMSG_OK(nlmsg, len))
+		return 1;
+
+	if (len < sizeof(struct nlmsghdr))
+		return 1;
+
+	if (len < nlmsg->nlmsg_len)
+		return 1;
+
+	return 0;
+}
+
+static void nl_route(struct nlmsghdr *nlmsg)
+{
+	struct rtmsg *r;
+	struct rtattr *a;
+	int la;
+	int gw = 0, dst = 0, mask = 0, idx = 0;
+
+	if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof(struct rtmsg))) {
+		_e("Packet too small or truncated!");
+		return;
+	}
+
+	r  = NLMSG_DATA(nlmsg);
+	a  = RTM_RTA(r);
+	la = RTM_PAYLOAD(nlmsg);
+	while (RTA_OK(a, la)) {
+		void *data = RTA_DATA(a);
+		switch (a->rta_type) {
+		case RTA_GATEWAY:
+			gw = *((int *)data);
+			_d("GW: 0x%04x", gw);
+			break;
+
+		case RTA_DST:
+			dst = *((int *)data);
+			mask = r->rtm_dst_len;
+			_d("MASK: 0x%04x", mask);
+			break;
+
+		case RTA_OIF:
+			idx = *((int *)data);
+			_d("IDX: 0x%04x", idx);
+			break;
+		}
+
+		a = RTA_NEXT(a, la);
+	}
+
+	if ((!dst && !mask) && (gw || idx)) {
+		if (nlmsg->nlmsg_type == RTM_DELROUTE)
+			_d("Default gateway 0x%4x removed", gw);
+		else
+			_d("New default gateway: 0x%4x", gw);
+	}
+}
+
+static void nl_link(struct nlmsghdr *nlmsg)
+{
+	int la;
+	char ifname[IFNAMSIZ + 1];
+	struct rtattr *a;
+	struct ifinfomsg *i;
+
+	if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof(struct ifinfomsg))) {
+		_e("Packet too small or truncated!");
+		return;
+	}
+
+	i  = NLMSG_DATA(nlmsg);
+	a  = (struct rtattr *)((char *)i + NLMSG_ALIGN(sizeof(struct ifinfomsg)));
+	la = NLMSG_PAYLOAD(nlmsg, sizeof(struct ifinfomsg));
+
+	while (RTA_OK(a, la)) {
+		if (a->rta_type == IFLA_IFNAME) {
+			strncpy(ifname, RTA_DATA(a), sizeof(ifname));
+			switch (nlmsg->nlmsg_type) {
+			case RTM_NEWLINK:
+				/* New interface has appearad, or interface flags has changed.
+				 * Check ifi_flags here to see if the interface is UP/DOWN
+				 */
+				_d("New link (%s), UP: %d", ifname, i->ifi_flags & IFF_UP);
+				if (i->ifi_change & IFF_UP) {
+					int msg = (i->ifi_flags & IFF_UP) ? 1 : 0;
+
+					_d("%s: %s", ifname, msg ? "UP" : "DOWN");
+				}
+				break;
+
+			case RTM_DELLINK:
+				/* NOTE: Interface has dissapeared, not link down ... */
+				_d("%s: DOWN", ifname);
+				break;
+
+			case RTM_NEWADDR:
+				_d("%s: New Address", ifname);
+				break;
+
+			case RTM_DELADDR:
+				_d("%s: Deconfig Address", ifname);
+				break;
+
+			default:
+				_d("%s: Msg 0x%x", ifname, nlmsg->nlmsg_type);
+				break;
+			}
+		}
+
+		a = RTA_NEXT(a, la);
+	}
+}
+
 static void nl_callback(void *UNUSED(arg), int sd, int UNUSED(events))
 {
-	ssize_t bytes;
+	ssize_t len;
 	static char replybuf[2048];
 	struct nlmsghdr *p = (struct nlmsghdr *)replybuf;
 
 	memset(replybuf, 0, sizeof(replybuf));
-	bytes = recv(sd, replybuf, sizeof(replybuf), 0);
-	if (bytes < 0) {
+	len = recv(sd, replybuf, sizeof(replybuf), 0);
+	if (len < 0) {
 		if (errno != EINTR)	/* Signal */
 			_pe("recv()");
 		return;
 	}
 
-	for (; bytes > 0; p = NLMSG_NEXT(p, bytes)) {
-		if (!NLMSG_OK(p, (size_t)bytes)
-		    || (size_t)bytes < sizeof(struct nlmsghdr)
-		    || (size_t)bytes < p->nlmsg_len) {
+	for (; len > 0; p = NLMSG_NEXT(p, len)) {
+		if (nlmsg_validate(p, len)) {
 			_e("Packet too small or truncated!");
 			return;
 		}
+		_d("Well formed netlink message received.");
 
-		/* Check if this message is about the routing table */
-		if (p->nlmsg_type == RTM_NEWROUTE) {
-			struct rtmsg *r;
-			struct rtattr *a;
-			int la;
-			int gw = 0, dst = 0, mask = 0, idx = 0;
-
-			if (p->nlmsg_len < NLMSG_LENGTH(sizeof(struct rtmsg))) {
-				_e("Packet too small or truncated!");
-				return;
-			}
-
-			r  = NLMSG_DATA(p);
-			a  = RTM_RTA(r);
-			la = RTM_PAYLOAD(p);
-			while (RTA_OK(a, la)) {
-				void *data = RTA_DATA(a);
-				switch (a->rta_type) {
-				case RTA_GATEWAY:
-					gw = *((int *)data);
-					break;
-
-				case RTA_DST:
-					dst = *((int *)data);
-					mask = r->rtm_dst_len;
-					break;
-
-				case RTA_OIF:
-					idx = *((int *)data);
-					break;
-				}
-
-				a = RTA_NEXT(a, la);
-			}
-
-			if ((!dst && !mask) && (gw || idx)) {
-				_d("Default gateway changed --> 0x%4x", gw);
-			}
-		} else {
-			/* If not about the routing table, assume it is linkup/down or new ipv4/ipv6 address */
-			int la;
-			char ifname[IFNAMSIZ + 1];
-			struct rtattr *a;
-			struct ifinfomsg *i;
-
-			if (p->nlmsg_len < NLMSG_LENGTH(sizeof(struct ifinfomsg))) {
-				_e("Packet too small or truncated!");
-				return;
-			}
-
-			i  = NLMSG_DATA(p);
-			a  = (struct rtattr *)((char *)i + NLMSG_ALIGN(sizeof(struct ifinfomsg)));
-			la = NLMSG_PAYLOAD(p, sizeof(struct ifinfomsg));
-
-			while (RTA_OK(a, la)) {
-				if (a->rta_type == IFLA_IFNAME) {
-					strncpy(ifname, RTA_DATA(a), sizeof(ifname));
-					switch (p->nlmsg_type) {
-					case RTM_NEWLINK:
-						/* New interface has appearad, or interface flags has changed.
-						 * Check ifi_flags here to see if the interface is UP/DOWN
-						 */
-						_d("New link (%s), UP: %d", ifname, i->ifi_flags & IFF_UP);
-						if (i->ifi_change & IFF_UP) {
-							int msg = (i->ifi_flags & IFF_UP) ? 1 : 0;
-
-							_d("%s: %s", ifname, msg ? "UP" : "DOWN");
-						}
-						break;
-
-					case RTM_DELLINK:
-						/* NOTE: Interface has dissapeared, not link down ... */
-						_d("%s: DOWN", ifname);
-						break;
-
-					case RTM_NEWADDR:
-						_d("%s: New Address", ifname);
-						break;
-
-					case RTM_DELADDR:
-						_d("%s: Deconfig Address", ifname);
-						break;
-
-					default:
-						_d("%s: Msg 0x%x", ifname, p->nlmsg_type);
-						break;
-					}
-				}
-
-				a = RTA_NEXT(a, la);
-			}
-		}
+		if (p->nlmsg_type == RTM_NEWROUTE || p->nlmsg_type == RTM_DELROUTE)
+			nl_route(p);
+		else
+			nl_link(p);
 	}
 }
 
