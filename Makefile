@@ -26,7 +26,7 @@
 	uninstall-exec uninstall-data uninstall-dev
 
 #VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 1.13-dev
+VERSION    ?= 2.0-beta1
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
@@ -35,7 +35,7 @@ ARCHIVE     = $(PKG).tar
 ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit initctl reboot
 HEADERS     = finit.h plugin.h svc.h inetd.h helpers.h queue.h
-DISTFILES   = LICENSE README CHANGELOG finit.conf services
+DISTFILES   = LICENSE README ChangeLog finit.conf services
 OBJS        = finit.o api.o client.o conf.o exec.o helpers.o pid.o sig.o \
 	      svc.o service.o plugin.o tty.o inetd.o event.o
 
