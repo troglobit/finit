@@ -3,13 +3,14 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[1.13] - 2015-06-17
--------------------
+[2.0][] - [UNRELEASED][]
+------------------------
 
-Support for multiple instances and introduction of an `initctl` tool.
+Support for multiple instances and event based services, as well as the
+introduction of an `initctl` tool.
 
 **Note:** Incompatible change to syntax for custom `inetd` services,
-  c.f. Finit v[1.12].
+  c.f. Finit v[1.12][].
 
 ### Changes
 * The most notable change is the support for multiple instances.  A must
@@ -21,6 +22,17 @@ Support for multiple instances and introduction of an `initctl` tool.
         service #1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
         service #2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
 
+* Another noteworthy new feature is support for starting/stopping
+  services on Netlink events:
+
+        service :1 [2345] <!IFUP:eth0,GW> /sbin/dropbear -R -F -p 22 -- SSH daemon
+
+  Here the first instance `:1` of the SSH daemon is declared to run in
+  runlevels 2-5, but only if eth0 `IFUP:eth0` is up and a gateway `GW`
+  is set.  When the configuration changes, a new gateway is set, or if
+  somehow a new `IFUP` event for eth0 is received, then dropbear is not
+  SIGHUP'ed, but instead stop-started `<!>`.  The latter trick applies
+  to all services, even those that do not define any events.
 * Support for reloading `*.conf` files in `/etc/finit.d/` on SIGHUP.
   All `task`, `service` and `run` statements can be used in these .conf
   files.  Use the `telinit q` command, `initctl reload` or simply send
@@ -78,8 +90,8 @@ Support for multiple instances and introduction of an `initctl` tool.
   exited and need to be collected.
 
 
-[1.12] - 2015-03-04
--------------------
+[1.12][] - 2015-03-04
+---------------------
 
 The inetd release.
 
@@ -114,8 +126,8 @@ The inetd release.
 * Only restart *lost daemons* when recovering from a SIGSTOP/norespawn.
 
 
-[1.11] - 2015-01-24 [YANKED]
-----------------------------
+[1.11][] - 2015-01-24 [YANKED]
+------------------------------
 
 The [libuEv] release.
 
@@ -138,8 +150,8 @@ The [libuEv] release.
   commit [dea3ae8] for this.
 
 
-[1.10] - 2014-11-27
--------------------
+[1.10][] - 2014-11-27
+---------------------
 Major bug fix release.
 
 ### Changes
@@ -165,8 +177,8 @@ Major bug fix release.
   `remove()`, etc.
 
 
-[1.9] - 2014-04-21
-------------------
+[1.9][] - 2014-04-21
+--------------------
 
 ### Changes
 * Add support for an include directive to `.conf` files
@@ -179,8 +191,8 @@ Major bug fix release.
 * Misc. major (memleak) and minor fixes and additions to `libite/lite.h`
 
 
-[1.8] - 2013-06-07
-------------------
+[1.8][] - 2013-06-07
+--------------------
 
 ### Changes
 * Support for runlevels, with a bootstrap runlevel 'S'
@@ -194,8 +206,8 @@ Major bug fix release.
 * Bugfixes to libite
 
 
-[1.7] - 2012-10-08
-------------------
+[1.7][] - 2012-10-08
+--------------------
 
 ### Changes
 * Show `__FILE__` in `_d()` debug messages, useful for plugins with
@@ -209,8 +221,8 @@ Major bug fix release.
 * Bugfix: Do not `free()` static string in `finit.conf` parser
 
 
-[1.6] - 2012-10-06
-------------------
+[1.6][] - 2012-10-06
+--------------------
 
 ### Changes
 * Skip `.` and `..` in plugin loader and display error when failing to
@@ -225,8 +237,8 @@ Major bug fix release.
 * Minor fix to alsa-utils plugin to silence on non-existing cards
 
 
-[1.5] - 2012-10-03
-------------------
+[1.5][] - 2012-10-03
+--------------------
 
 ### Changes
 * Use bootmisc plugin to setup standard FHS 2.3 structure in `/var`
@@ -234,8 +246,8 @@ Major bug fix release.
 * Add plugin dependency resolver. Checks `plugin_t` for `.depends`
 
 
-[1.4] - 2012-10-02
-------------------
+[1.4][] - 2012-10-02
+--------------------
 
 ### Changes
 * Start refactoring helpers.c into a libite.so (-lite).  This means
@@ -251,8 +263,8 @@ Major bug fix release.
 * Fix I/O plugin watcher and load plugins earlier for a new hook
 
 
-[1.3] - 2012-09-28
-------------------
+[1.3][] - 2012-09-28
+--------------------
 
 ### Changes
 * Cleanup public plugin API a bit and add new pid/pidfile funcs
@@ -271,8 +283,8 @@ Major bug fix release.
 * Note change in `$PLUGIN_DIR` environemnt variable to `$plugindir`
 
 
-[1.2] - 2012-09-27
-------------------
+[1.2][] - 2012-09-27
+--------------------
 
 ### Changes
 * Update README with section on building and enviroment variables
@@ -281,8 +293,8 @@ Major bug fix release.
 * Fix installation paths encoded in finit binary
 
 
-[1.1] - 2012-09-27
-------------------
+[1.1][] - 2012-09-27
+--------------------
 
 ### Changes
 * Rename signal.[ch]-->sig.[ch] to avoid name clash w/ system headers
@@ -291,8 +303,8 @@ Major bug fix release.
 * Build fixes for ARM eabi/uClibc
 
 
-[1.0] - 2012-09-26
-------------------
+[1.0][] - 2012-09-26
+--------------------
 
 ### Changes
 * New plugin based system for all odd extensions
@@ -302,8 +314,8 @@ Major bug fix release.
 * New focus: embedded systems and small headless servers
 
 
-[0.6] - 2010-06-14
-------------------
+[0.6][] - 2010-06-14
+--------------------
 
 * Don't start consolekit manually, dbus starts it (rtp)
 * Unmount all filesystems before rebooting
@@ -312,8 +324,8 @@ Major bug fix release.
 * Remove extra sleep in finit-alt before calling services.sh (caio)
 
 
-[0.5] - 2008-08-21
-------------------
+[0.5][] - 2008-08-21
+--------------------
 
 * Add option to start dbus and consolekit before the X server
 * finit-alt listens to `/dev/initctl` to work with `reboot(8)` (smurfy)
@@ -324,8 +336,8 @@ Major bug fix release.
 * Add support to `/var/run/resolvconf` in Mandriva (blino)
 
 
-[0.4] - 2008-05-16
-------------------
+[0.4][] - 2008-05-16
+--------------------
 
 * Default username for finit-alt configurable in Makefile
 * Create loopback device node in finit-alt (for squashfs)
@@ -339,8 +351,8 @@ Major bug fix release.
 * Run getty with openvt on the virtual terminal
 
 
-[0.3] - 2008-02-23
-------------------
+[0.3][] - 2008-02-23
+--------------------
 
 * Change poweroff method to `reboot(RB_POWER_OFF)` (Metalshark)
 * Remove duplicate `unionctl()` reimplementation error
@@ -348,8 +360,8 @@ Major bug fix release.
 * Mount `/var/lock` and `/var/run` as tmpfs
 
 
-[0.2] - 2008-02-19
-------------------
+[0.2][] - 2008-02-19
+--------------------
 
 * Replace `system("touch")` with `touch()` in finit-mod (Metalshark)
 * Disable `NO_HCTOSYS` by default to match stock Eeepc kernel
@@ -367,10 +379,8 @@ Major bug fix release.
 
 * Initial release
 
-[libuEv]: https://github.com/troglobit/libuev
-[dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
-[UNRELEASED]: https://github.com/troglobit/finit/compare/1.13...HEAD
-[1.13]: https://github.com/troglobit/finit/compare/1.12...1.13
+[UNRELEASED]: https://github.com/troglobit/finit/compare/1.12...HEAD
+[2.0]: https://github.com/troglobit/finit/compare/1.12...2.0
 [1.12]: https://github.com/troglobit/finit/compare/1.11...1.12
 [1.11]: https://github.com/troglobit/finit/compare/1.10...1.11
 [1.10]: https://github.com/troglobit/finit/compare/1.9...1.10
@@ -392,6 +402,8 @@ Major bug fix release.
 [0.4]: https://github.com/troglobit/finit/compare/0.3...0.4
 [0.3]: https://github.com/troglobit/finit/compare/0.2...0.3
 [0.2]: https://github.com/troglobit/finit/compare/0.1...0.2
+[libuEv]: https://github.com/troglobit/libuev
+[dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
 
 <!--
   -- Local Variables:
