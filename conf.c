@@ -113,6 +113,38 @@ int conf_parse_runlevels(char *runlevels)
 	return bitmask;
 }
 
+void conf_parse_events(svc_t *svc, char *events)
+{
+	size_t i = 0;
+	char *ptr = events;
+
+	if (!events)
+		return;
+
+	if (!svc) {
+		_e("Invalid service pointer");
+		return;
+	}
+
+	/* First character must be '!' if SIGHUP is not supported. */
+	svc->sighup = 1;
+	if (ptr[i] == '!') {
+		svc->sighup = 0;
+		ptr++;
+	}
+
+	while (ptr[i] != '>' && ptr[i] != 0)
+		i++;
+	ptr[i] = 0;
+
+	if (i >= sizeof(svc->events)) {
+		FLOG_WARN("Too long event list in declaration of %s: %s", svc->cmd, ptr);
+		return;
+	}
+
+	strlcpy(svc->events, ptr, sizeof(svc->events));
+}
+
 static void parse_static(char *line)
 {
 	char *x;

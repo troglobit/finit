@@ -31,6 +31,7 @@
 
 #include "finit.h"
 #include "conf.h"
+#include "event.h"
 #include "helpers.h"
 #include "private.h"
 #include "sig.h"
@@ -92,6 +93,12 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 	}
 
 	if (!svc_in_runlevel(svc, runlevel))
+		return SVC_STOP;
+
+	/*
+	 * Event conditions for services are ignored during bootstrap.
+	 */
+	if (runlevel && !event_service_cond(svc->events))
 		return SVC_STOP;
 
 	/* Is there a service plugin registered? */
@@ -373,7 +380,11 @@ void service_stop_dynamic(void)
 	plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
 }
 
-/* stop + start */
+/* stop + start
+ *
+ * XXX: This should be refactored into a background job AND marked such
+ *      so that the service monitor doesn't attempt to restart it!
+ */
 int service_restart(svc_t *svc)
 {
 	int result = 0;
@@ -537,7 +548,7 @@ void service_runlevel(int newlevel)
  * The @line can optionally start with a username, denoted by an @
  * character. Like this:
  *
- *     service @username [!0-6,S] /path/to/daemon arg       -- Description
+ *     service @username [!0-6,S] <!EV> /path/to/daemon arg -- Description
  *     task @username [!0-6,S] /path/to/task arg            -- Description
  *     run  @username [!0-6,S] /path/to/cmd arg             -- Description
  *     inetd tcp/ssh nowait [2345] @root:root /sbin/sshd -i -- Description
@@ -549,6 +560,18 @@ void service_runlevel(int newlevel)
  * startup.  It can be seen as the system bootstrap.  If a task or run
  * command is listed in more than the [S] runlevel they will be called
  * when changing runlevel.
+ *
+ * Services (daemons, not inetd services) also support an optional <!EV>
+ * argument.  This is for services that, e.g., require a system gateway
+ * or interface to be up before they are started.  Or restarted, or even
+ * SIGHUP'ed, when the gateway changes or interfaces come and go.  The
+ * special case when a service is declared with <!> means it does not
+ * support SIGHUP but must be STOP/START'ed at system reconfiguration.
+ *
+ * Supported service events are: GW, IFUP[:ifname], IFDN[:ifname], where
+ * the interface name (:ifname) is optional.  Actully, the check with a
+ * service event declaration is string based, so 'IFUP:ppp' will match
+ * any of "IFUP:ppp0" or "IFUP:pppoe1" sent by the netlink.so plugin.
  *
  * For multiple instances of the same command, e.g. multiple DHCP
  * clients, the user must enter an ID, using the :ID syntax.
@@ -570,7 +593,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	int forking = 0;
 #endif
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
-	char *cmd, *desc, *runlevels = NULL;
+	char *cmd, *desc, *runlevels = NULL, *events = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
@@ -603,6 +626,8 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
+		else if (cmd[0] == '<')	/* [!ev] */
+			events = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
 			id = atoi(&cmd[1]);
 		else
@@ -700,6 +725,9 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 	svc->runlevels = conf_parse_runlevels(runlevels);
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
+
+	if (type == SVC_TYPE_SERVICE)
+		conf_parse_events(svc, events);
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {

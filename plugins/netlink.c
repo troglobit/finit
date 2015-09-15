@@ -18,7 +18,6 @@
 
 #include <errno.h>
 #include <net/if.h>		/* IFNAMSIZ */
-//#include <stdint.h>
 #include <sys/socket.h>
 #include <linux/types.h>
 #include <linux/netlink.h>
@@ -26,6 +25,7 @@
 #include <unistd.h>
 
 #include "../finit.h"
+#include "../event.h"
 #include "../helpers.h"
 #include "../plugin.h"
 
@@ -63,18 +63,18 @@ static void nl_route(struct nlmsghdr *nlmsg)
 		switch (a->rta_type) {
 		case RTA_GATEWAY:
 			gw = *((int *)data);
-			_d("GW: 0x%04x", gw);
+			//_d("GW: 0x%04x", gw);
 			break;
 
 		case RTA_DST:
 			dst = *((int *)data);
 			mask = r->rtm_dst_len;
-			_d("MASK: 0x%04x", mask);
+			//_d("MASK: 0x%04x", mask);
 			break;
 
 		case RTA_OIF:
 			idx = *((int *)data);
-			_d("IDX: 0x%04x", idx);
+			//_d("IDX: 0x%04x", idx);
 			break;
 		}
 
@@ -82,10 +82,13 @@ static void nl_route(struct nlmsghdr *nlmsg)
 	}
 
 	if ((!dst && !mask) && (gw || idx)) {
+		char msg[MAX_ARG_LEN];
+
 		if (nlmsg->nlmsg_type == RTM_DELROUTE)
-			_d("Default gateway 0x%4x removed", gw);
+			snprintf(msg, sizeof(msg), "GW:DN");
 		else
-			_d("New default gateway: 0x%4x", gw);
+			snprintf(msg, sizeof(msg), "GW:UP");
+		event_dispatch(msg);
 	}
 }
 
@@ -107,23 +110,28 @@ static void nl_link(struct nlmsghdr *nlmsg)
 
 	while (RTA_OK(a, la)) {
 		if (a->rta_type == IFLA_IFNAME) {
+			char msg[MAX_ARG_LEN];
+
 			strncpy(ifname, RTA_DATA(a), sizeof(ifname));
 			switch (nlmsg->nlmsg_type) {
 			case RTM_NEWLINK:
-				/* New interface has appearad, or interface flags has changed.
+				/*
+				 * New interface has appearad, or interface flags has changed.
 				 * Check ifi_flags here to see if the interface is UP/DOWN
 				 */
-				_d("New link (%s), UP: %d", ifname, i->ifi_flags & IFF_UP);
-				if (i->ifi_change & IFF_UP) {
-					int msg = (i->ifi_flags & IFF_UP) ? 1 : 0;
-
-					_d("%s: %s", ifname, msg ? "UP" : "DOWN");
-				}
+				if (i->ifi_change & IFF_UP)
+					snprintf(msg, sizeof(msg), "IF%s:%s",
+						 (i->ifi_flags & IFF_UP) ? "UP" : "DN",
+						 ifname);
+				else
+					snprintf(msg, sizeof(msg), "IFADD:%s", ifname);
+				event_dispatch(msg);
 				break;
 
 			case RTM_DELLINK:
 				/* NOTE: Interface has dissapeared, not link down ... */
-				_d("%s: DOWN", ifname);
+				snprintf(msg, sizeof(msg), "IFDEL:%s", ifname);
+				event_dispatch(msg);
 				break;
 
 			case RTM_NEWADDR:

@@ -68,6 +68,8 @@ typedef struct svc {
 	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,
 					* or -1 when marked for removal */
 	int	       runlevels;
+	int            sighup;	       /* This service supports SIGHUP :) */
+	char           events[MAX_ARG_LEN];
 
 	/* Incremented for each restart by service monitor. */
 	unsigned int   restart_counter;

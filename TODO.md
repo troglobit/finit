@@ -18,16 +18,10 @@ very low dependency on external packages.
 General
 -------
 
+* Add compile-time support for running `/bin/sh` instead of `getty`
 * Add `!` or `[wait <pidfile>]` to service directive to let finit pause
   and wait for a pidfile before starting processes -- both at boot and
   when starting processes in a runlevel.
-* Add `<GW,ADDR:iface,IF:iface>` events to service stanza so services
-  can be reloaded/restarted/stopped -- e.g, new GW --> SIGHUP process,
-  or loss of `IF:eth1` --> stop service, start it when eth1 comes up
-  again.
-* Add support for listening to netlink messages for GW, ADDR, IF UP/DOWN
-* Add `<!,...>` to let Finit know that a service does not support reload
-  (`SIGHUP`), but must be restarted (stop+start)
 * Allow custom reload for processes like libreSwan's pluto
 
         service [2345] <!gw,if:eth0,reload:'starter reload'> /sbin/pluto
@@ -38,7 +32,6 @@ General
   `.monitor=` in `svc_t` ... the script named as the basename of the
   service it monitors + `.sh`.
 * Add support for `/etc/sysctl.d`
-* Add compile-time supoprt for running `/bin/sh` instead of `getty`
 * Implement `initctl stop|start|restart|reload|status <SVC>` and
   `service <SVC> stop|start|restart|reload|status` on top
 * Add PRE and POST hooks for when switching between runlevels

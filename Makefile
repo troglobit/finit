@@ -37,7 +37,7 @@ EXEC        = finit initctl reboot
 HEADERS     = finit.h plugin.h svc.h inetd.h helpers.h queue.h
 DISTFILES   = LICENSE README CHANGELOG finit.conf services
 OBJS        = finit.o api.o client.o conf.o exec.o helpers.o pid.o sig.o \
-	      svc.o service.o plugin.o tty.o inetd.o
+	      svc.o service.o plugin.o tty.o inetd.o event.o
 
 TOPDIR      = $(shell pwd)
 -include config.mk

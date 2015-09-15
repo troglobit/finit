@@ -1,6 +1,6 @@
-/* Parser for /etc/finit.conf and /etc/finit.d/<SVC>.conf
+/* Event aggregator, also serves as event cache, remembering GW and IFUP states
  *
- * Copyright (c) 2012-2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,18 +21,15 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_CONF_H_
-#define FINIT_CONF_H_
+#ifndef FINIT_EVENT_H_
+#define FINIT_EVENT_H_
 
-#include "svc.h"
+int  event_cache_gw     (void);
+int  event_cache_if     (char *ifname);
+int  event_service_cond (char *events);
+void event_dispatch     (char *msg);
 
-void conf_parse_cmdline   (void);
-int  conf_parse_runlevels (char *runlevels);
-void conf_parse_events    (svc_t *svc, char *events);
-int  conf_parse_config    (void);
-void conf_reload_dynamic  (void);
-
-#endif	/* FINIT_CONF_H_ */
+#endif	/* FINIT_EVENT_H_ */
 
 /**
  * Local Variables:
