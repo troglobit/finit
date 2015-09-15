@@ -610,10 +610,10 @@ their command counterparts.  The `reload` command reloads all `*.conf`
 files in `/etc/finit.d/` *and* activates the changes, with `emit RELOAD`
 only the `*.conf` files are reloaded.
 
-To achieve the same result as `initctl reload` issue all three events:
+To achieve the same result as `initctl reload` emit all three events:
 
 ```shell
-    ~ $ initctl emit "RELOAD STOP START"
+    ~ $ initctl emit "RELOAD,STOP,START"
 ```
 
 On an embedded system this can be used when changing complete system
@@ -629,7 +629,7 @@ started.
     ~ $ …
     
     # 3. Prepare finit, stop all old/previous services
-    ~ $ initctl emit "RELOAD STOP"
+    ~ $ initctl emit "RELOAD,STOP"
     
     # 4. Reconfigure hardware, interfaces/bridges/VLANs, etc.
     ~ $ brctl    …
