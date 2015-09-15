@@ -112,7 +112,7 @@ static void nl_link(struct nlmsghdr *nlmsg)
 		if (a->rta_type == IFLA_IFNAME) {
 			char msg[MAX_ARG_LEN];
 
-			strncpy(ifname, RTA_DATA(a), sizeof(ifname));
+			strlcpy(ifname, RTA_DATA(a), sizeof(ifname));
 			switch (nlmsg->nlmsg_type) {
 			case RTM_NEWLINK:
 				/*
