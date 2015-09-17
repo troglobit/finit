@@ -38,7 +38,7 @@ HEADERS     = finit.h plugin.h svc.h inetd.h helpers.h queue.h
 DISTFILES   = LICENSE README ChangeLog finit.conf services
 OBJS        = finit.o api.o client.o conf.o exec.o helpers.o pid.o sig.o \
 	      svc.o service.o plugin.o tty.o inetd.o event.o
-
+DEPLIBS     =
 TOPDIR      = $(shell pwd)
 -include config.mk
 
@@ -52,9 +52,6 @@ CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(TOPDIR)
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
-LDFLAGS    += -L$(TOPDIR)/libuev
-DEPLIBS    += libuev/libuev.a
-LDLIBS     += -luev
 
 include common.mk
 
@@ -89,7 +86,9 @@ install-exec: all
 ifndef LIBITE
 	$(MAKE) -C libite  install-exec
 endif
+ifndef LIBUEV
 	$(MAKE) -C plugins install
+endif
 
 install-data:
 	@$(INSTALL) -d $(DESTDIR)$(datadir)
@@ -108,7 +107,9 @@ install-dev:
 ifndef LIBITE
 	$(MAKE) -C libite install-dev
 endif
+ifndef LIBUEV
 	$(MAKE) -C libuev install-dev
+endif
 
 install: install-exec install-data install-dev
 
@@ -123,7 +124,9 @@ uninstall-exec:
 ifndef LIBITE
 	$(MAKE) -C libite  uninstall
 endif
+ifndef LIBUEV
 	$(MAKE) -C plugins uninstall
+endif
 
 uninstall-data:
 	@for file in $(DISTFILES); do	                                \
@@ -143,7 +146,9 @@ clean:
 ifndef LIBITE
 	+$(MAKE) -C libite  $@
 endif
+ifndef LIBUEV
 	+$(MAKE) -C libuev  $@
+endif
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
 
 distclean: clean
@@ -151,7 +156,9 @@ distclean: clean
 ifndef LIBITE
 	+$(MAKE) -C libite  $@
 endif
+ifndef LIBUEV
 	+$(MAKE) -C libuev  $@
+endif
 	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html
 
 check:

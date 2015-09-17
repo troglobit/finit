@@ -97,6 +97,12 @@ result()
                 echo "Libite (LITE)     : $libite + {/lib, /include}"
 	fi
 
+	if [ x"$libuev" = x"" ]; then
+                echo "LibuEv            : Built-in"
+	else
+                echo "LibuEv            : $libuev + {/lib, /include}"
+	fi
+
         if [ $verbose -ne 1 ]; then
                 echo "Quiet Finit       : YES"
         else
@@ -157,8 +163,10 @@ usage()
         echo "  --with-username=USER   User for 'startx' .conf option, default: root"
         echo "  --with-hostname=NAME   Hostname, if /etc/hostname is missing, default: noname"
         echo "  --with-runlevel=LEVEL  Runlevel to switch to after bootstrap (S), default: 2"
-	echo "  --with-libite=PATH     Look for libite in PATH/include and PATH/lib"
-	echo "                         This is for disabling the use of built-in libite."
+        echo "  --with-libite=PATH     Look for libite in PATH/include and PATH/lib"
+        echo "                         This is for disabling the use of built-in libite."
+        echo "  --with-libuev=PATH     Look for libuEv in PATH/include and PATH/lib"
+        echo "                         This is for disabling the use of built-in libuEv."
         echo
         echo "  --enable-embedded      Embedded defaults, BusBox getty, mdev etc."
         echo "  --enable-dbus          Enable D-Bus plugin.  Note: install plugin as well!"
@@ -261,6 +269,10 @@ while [ "$*" != "" ]; do
 
                 with-libite)
                         libite="$arg"
+                        ;;
+
+                with-libuev)
+                        libuev="$arg"
                         ;;
 
                 enable-debug)
@@ -369,7 +381,18 @@ if [ x"$libite" != x"" ]; then
 else
         echo "LDFLAGS    += -L\$(TOPDIR)/libite"                  >> config.mk
         echo "LDLIBS     += -lite"                                >> config.mk
-        echo "DEPLIBS     = libite/libite.a"                      >> config.mk
+        echo "DEPLIBS    += libite/libite.a"                      >> config.mk
+fi
+
+if [ x"$libuev" != x"" ]; then
+        echo "LIBUEV      = $libuev"                              >> config.mk
+        echo "CFLAGS     += -I\$(LIBUEV)/include"                 >> config.mk
+        echo "LDFLAGS    += -L\$(LIBUEV)/lib"                     >> config.mk
+        echo "LDLIBS     += -l:libuev.so.1"                       >> config.mk
+else
+        echo "LDFLAGS    += -L\$(TOPDIR)/libuev"                  >> config.mk
+        echo "LDLIBS     += -luev"                                >> config.mk
+        echo "DEPLIBS    += libuev/libuev.a"                      >> config.mk
 fi
 
 echo                                                              >> config.mk
