@@ -52,9 +52,9 @@ CPPFLAGS   += -U_FORTIFY_SOURCE
 CPPFLAGS   += -I$(TOPDIR)
 CPPFLAGS   += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 CPPFLAGS   += -DVERSION=\"$(VERSION)\" -DWHOAMI=\"`whoami`@`hostname`\"
-LDFLAGS    += -L$(TOPDIR)/libite -L$(TOPDIR)/libuev
-DEPLIBS     = libite/libite.a libuev/libuev.a
-LDLIBS     += -lite -luev
+LDFLAGS    += -L$(TOPDIR)/libuev
+DEPLIBS    += libuev/libuev.a
+LDLIBS     += -luev
 
 include common.mk
 
@@ -86,7 +86,9 @@ install-exec: all
 	done
 	printf "  INSTALL $(DESTDIR)$(sbindir)/telinit\n"
 	@ln -sf  finit $(DESTDIR)$(sbindir)/telinit
+ifndef LIBITE
 	$(MAKE) -C libite  install-exec
+endif
 	$(MAKE) -C plugins install
 
 install-data:
@@ -103,7 +105,9 @@ install-dev:
 		printf "  INSTALL $(DESTDIR)$(incdir)/$$file\n";	\
 		$(INSTALL) -m 0644 $$file $(DESTDIR)$(incdir)/$$file;	\
 	done
+ifndef LIBITE
 	$(MAKE) -C libite install-dev
+endif
 	$(MAKE) -C libuev install-dev
 
 install: install-exec install-data install-dev
@@ -116,7 +120,9 @@ uninstall-exec:
 	-@rm  $(DESTDIR)$(sbindir)/initctl
 	-@rmdir $(DESTDIR)$(sbindir) 2>/dev/null
 	-@rmdir $(DESTDIR)$(FINIT_RCSD) 2>/dev/null
+ifndef LIBITE
 	$(MAKE) -C libite  uninstall
+endif
 	$(MAKE) -C plugins uninstall
 
 uninstall-data:
@@ -134,18 +140,22 @@ uninstall: uninstall-exec uninstall-data uninstall-dev
 
 clean:
 	+$(MAKE) -C plugins $@
+ifndef LIBITE
 	+$(MAKE) -C libite  $@
+endif
 	+$(MAKE) -C libuev  $@
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
 
 distclean: clean
 	+$(MAKE) -C plugins $@
+ifndef LIBITE
 	+$(MAKE) -C libite  $@
+endif
 	+$(MAKE) -C libuev  $@
 	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html
 
 check:
-	$(CHECK) *.c plugins/*.c libite/*.c
+	$(CHECK) *.c plugins/*.c
 
 dist:
 	@if [ x"$(ARCHTOOL)" = x"" ]; then \
