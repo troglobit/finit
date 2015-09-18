@@ -143,22 +143,14 @@ uninstall: uninstall-exec uninstall-data uninstall-dev
 
 clean:
 	+$(MAKE) -C plugins $@
-ifndef LIBITE
 	+$(MAKE) -C libite  $@
-endif
-ifndef LIBUEV
 	+$(MAKE) -C libuev  $@
-endif
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
 
 distclean: clean
 	+$(MAKE) -C plugins $@
-ifndef LIBITE
 	+$(MAKE) -C libite  $@
-endif
-ifndef LIBUEV
 	+$(MAKE) -C libuev  $@
-endif
 	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html
 
 check:
