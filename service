@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]; then
+    initctl show
+    exit 0
+fi
+
+if [ $# -lt 2 -o $# -gt 2 ]; then
+    echo "Usage: service [job# | name] <stop | start | restart | reload>"
+    exit 1
+fi
+
+initctl $2 $1
+

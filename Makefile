@@ -77,17 +77,17 @@ reboot: reboot.o $(DEPLIBS)
 install-exec: all
 	@$(INSTALL) -d $(DESTDIR)$(FINIT_RCSD)
 	@$(INSTALL) -d $(DESTDIR)$(sbindir)
-	@for file in $(EXEC); do                                        \
+	@for file in $(EXEC); do                                	\
 		printf "  INSTALL $(DESTDIR)$(sbindir)/$$file\n";   	\
 		$(STRIPINST) $$file $(DESTDIR)$(sbindir)/$$file; 	\
 	done
+	@printf "  INSTALL $(DESTDIR)$(sbindir)/service\n"
+	@$(INSTALL) -m 0755 service $(DESTDIR)$(sbindir)/service
 	printf "  INSTALL $(DESTDIR)$(sbindir)/telinit\n"
 	@ln -sf  finit $(DESTDIR)$(sbindir)/telinit
-ifndef LIBITE
-	$(MAKE) -C libite  install-exec
-endif
-ifndef LIBUEV
 	$(MAKE) -C plugins install
+ifndef LIBITE
+	$(MAKE) -C libite install-exec
 endif
 
 install-data:
@@ -118,26 +118,27 @@ uninstall-exec:
 		printf "  REMOVE  $(DESTDIR)$(sbindir)/$$file\n";   	\
 		rm $(DESTDIR)$(sbindir)/$$file 2>/dev/null; 		\
 	done
-	-@rm  $(DESTDIR)$(sbindir)/initctl
+	-@for file in service telinit; do				\
+		printf "  REMOVE  $(DESTDIR)$(sbindir)/$$file\n";   	\
+		rm  $(DESTDIR)$(sbindir)/$$file 2>/dev/null;		\
+	done
 	-@rmdir $(DESTDIR)$(sbindir) 2>/dev/null
 	-@rmdir $(DESTDIR)$(FINIT_RCSD) 2>/dev/null
+	$(MAKE) -C plugins uninstall
 ifndef LIBITE
 	$(MAKE) -C libite  uninstall
 endif
-ifndef LIBUEV
-	$(MAKE) -C plugins uninstall
-endif
 
 uninstall-data:
-	@for file in $(DISTFILES); do	                                \
+	-@for file in $(DISTFILES); do	                                \
 		printf "  REMOVE  $(DESTDIR)$(datadir)/$$file\n";	\
 		rm $(DESTDIR)$(datadir)/$$file 2>/dev/null;		\
 	done
-	-@rmdir $(DESTDIR)$(mandir)
-	-@rmdir $(DESTDIR)$(datadir)
+	-@rmdir $(DESTDIR)$(mandir) 2>/dev/null
+	-@rmdir $(DESTDIR)$(datadir) 2>/dev/null
 
 uninstall-dev:
-	-@$(RM) -rf $(DESTDIR)$(incdir)
+	-@$(RM) -rf $(DESTDIR)$(incdir) 2>/dev/null
 
 uninstall: uninstall-exec uninstall-data uninstall-dev
 
@@ -145,13 +146,13 @@ clean:
 	+$(MAKE) -C plugins $@
 	+$(MAKE) -C libite  $@
 	+$(MAKE) -C libuev  $@
-	-@$(RM) $(OBJS) $(DEPS) $(EXEC)
+	-@$(RM) $(OBJS) $(DEPS) $(EXEC) 2>/dev/null
 
 distclean: clean
 	+$(MAKE) -C plugins $@
 	+$(MAKE) -C libite  $@
 	+$(MAKE) -C libuev  $@
-	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html
+	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html 2>/dev/null
 
 check:
 	$(CHECK) *.c plugins/*.c
