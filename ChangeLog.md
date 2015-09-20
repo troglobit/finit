@@ -3,8 +3,8 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
-[2.0][] - [UNRELEASED][]
-------------------------
+[2.0][] - 2015-09-20
+--------------------
 
 Support for multiple instances and event based services, as well as the
 introduction of an `initctl` tool.
@@ -52,11 +52,11 @@ introduction of an `initctl` tool.
 * Support for *deny filters* in `inetd` services.
 
         inetd service/proto[@iface,!iface,...] </path/to/cmd | internal[.service]>
-    
+
   Internal services on a custom port must use the `internal.service`
   syntax so Finit can properly bind the inetd service to the correct
   plugin.  Here follows a few examples:
-    
+
         inetd time/udp                    wait [2345] internal                -- UNIX rdate service
         inetd time/tcp                  nowait [2345] internal                -- UNIX rdate service
         inetd 3737/tcp                  nowait [2345] internal.time           -- UNIX rdate service
@@ -64,7 +64,7 @@ introduction of an `initctl` tool.
         inetd 2323/tcp@eth1,eth2,eth0   nowait [2345] /sbin/telnetd -i -F     -- Telnet service
         inetd 222/tcp@eth0              nowait [2345] /sbin/dropbear -i -R -F -- SSH service
         inetd ssh/tcp@*,!eth0           nowait [2345] /sbin/dropbear -i -R -F -- SSH service
-    
+
   Access to telnet on port `2323` is only possible from interfaces
   `eth0`, `eth1` and `eth2`.  The standard telnet port (`23`) is
   available from all other interfaces, but also `eth2`.  The `*`
