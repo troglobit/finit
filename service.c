@@ -128,7 +128,7 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 			return WEXITSTATUS(status);
 
 		/* Check for SEGFAULT or other error ... */
-		if (WCOREDUMP(status))
+		if (WIFSIGNALED(status) && WCOREDUMP(status))
 			_e("Callback to %s crashed!\n", svc->cmd);
 		else
 			_e("Callback to %s did not exit normally!\n", svc->cmd);
