@@ -43,6 +43,7 @@
 typedef enum {
 	/* Bootstrap hooks */
 	HOOK_ROOTFS_UP = 0,
+	HOOK_MOUNT_ERROR,
 	HOOK_BASEFS_UP,
 	HOOK_NETWORK_UP,
 	HOOK_SVC_UP,

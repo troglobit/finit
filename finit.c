@@ -71,6 +71,7 @@ static int banner(void)
 
 int main(int argc, char* argv[])
 {
+	int err;
 	uev_ctx_t loop;
 
 	/*
@@ -151,7 +152,13 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_ROOTFS_UP);
 
 	umask(0);
-	run("/bin/mount -na");
+	print_desc("Mounting filesystems", NULL);
+
+	err = run("/bin/mount -na");
+	print_result(err);
+	if (err)
+		plugin_run_hooks(HOOK_MOUNT_ERROR);
+
 	run("/sbin/swapon -ea");
 	umask(0022);
 
