@@ -345,9 +345,9 @@ fi
 
 echo                                                              >> config.mk
 if [ $debug -eq 1 ]; then
-        echo "CPPFLAGS   += -O0 -g"                               >> config.mk
+        echo "CFLAGS     += -O0 -g"                               >> config.mk
 else
-        echo "CPPFLAGS   += -Os"                                  >> config.mk
+        echo "CFLAGS     += -Os"                                  >> config.mk
 fi
 
 echo                                                              >> config.mk
