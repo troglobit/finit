@@ -25,8 +25,8 @@
 	install-exec install-data install-dev		\
 	uninstall-exec uninstall-data uninstall-dev
 
-#VERSION    ?= $(shell git tag -l | tail -1)
-VERSION    ?= 2.0
+#VERSION     = $(shell git tag -l | tail -1)
+VERSION     = 2.0.1-dev
 NAME        = finit
 PKG         = $(NAME)-$(VERSION)
 DEV         = $(NAME)-dev
