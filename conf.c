@@ -415,6 +415,8 @@ void conf_reload_dynamic(void)
 	while (num--)
 		free(e[num]);
 	free(e);
+
+	set_hostname(&hostname);
 }
 
 int conf_parse_config(void)
