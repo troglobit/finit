@@ -150,7 +150,7 @@ static int show_status(char *UNUSED(arg))
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		int  inetd = svc_is_inetd(svc);
-		char jobid[10], args[80] = "";
+		char jobid[10], args[512] = "";
 		struct init_request rq = {
 			.magic = INIT_MAGIC,
 			.cmd = INIT_CMD_QUERY_INETD,

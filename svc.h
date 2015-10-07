@@ -52,7 +52,7 @@ typedef enum {
 #define MAX_USER_LEN     16
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
 #define MAX_NUM_SVC      64	     /* Enough? */
-#define MAX_NUM_SVC_ARGS 16
+#define MAX_NUM_SVC_ARGS 32
 
 /* Default enable for all services, can be stopped by means
  * of issuing an initctl call. E.g.
