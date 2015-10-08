@@ -29,16 +29,20 @@
 #include "../helpers.h"
 #include "../plugin.h"
 
-static int nlmsg_validate(struct nlmsghdr *nlmsg, size_t len)
+static int nlmsg_validate(struct nlmsghdr *nh, size_t len)
 {
-	if (!NLMSG_OK(nlmsg, len))
+	if (!NLMSG_OK(nh, len))
 		return 1;
 
-	if (len < sizeof(struct nlmsghdr))
+	if (nh->nlmsg_type == NLMSG_DONE) {
+		_d("Done with netlink messages.");
 		return 1;
+	}
 
-	if (len < nlmsg->nlmsg_len)
+	if (nh->nlmsg_type == NLMSG_ERROR) {
+		_d("Netlink reports error.");
 		return 1;
+	}
 
 	return 0;
 }
@@ -155,28 +159,23 @@ static void nl_link(struct nlmsghdr *nlmsg)
 static void nl_callback(void *UNUSED(arg), int sd, int UNUSED(events))
 {
 	ssize_t len;
-	static char replybuf[2048];
-	struct nlmsghdr *p = (struct nlmsghdr *)replybuf;
+	static char buf[4096];
+	struct nlmsghdr *nh;
 
-	memset(replybuf, 0, sizeof(replybuf));
-	len = recv(sd, replybuf, sizeof(replybuf), 0);
+	memset(buf, 0, sizeof(buf));
+	len = recv(sd, buf, sizeof(buf), 0);
 	if (len < 0) {
 		if (errno != EINTR)	/* Signal */
 			_pe("recv()");
 		return;
 	}
 
-	for (; len > 0; p = NLMSG_NEXT(p, len)) {
-		if (nlmsg_validate(p, len)) {
-			_e("Packet too small or truncated!");
-			return;
-		}
-		_d("Well formed netlink message received.");
-
-		if (p->nlmsg_type == RTM_NEWROUTE || p->nlmsg_type == RTM_DELROUTE)
-			nl_route(p);
+	for (nh = (struct nlmsghdr *)buf; !nlmsg_validate(nh, len); nh = NLMSG_NEXT(nh, len)) {
+		//_d("Well formed netlink message received. type %d ...", nh->nlmsg_type);
+		if (nh->nlmsg_type == RTM_NEWROUTE || nh->nlmsg_type == RTM_DELROUTE)
+			nl_route(nh);
 		else
-			nl_link(p);
+			nl_link(nh);
 	}
 }
 
@@ -190,20 +189,20 @@ static plugin_t plugin = {
 PLUGIN_INIT(plugin_init)
 {
 	int sd;
-	struct sockaddr_nl addr;
+	struct sockaddr_nl sa;
 
-	sd = socket(PF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_ROUTE);
+	sd = socket(AF_NETLINK, SOCK_RAW | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_ROUTE);
 	if (sd < 0) {
 		_pe("socket()");
 		return;
 	}
 
-	memset(&addr, 0, sizeof(addr));
-	addr.nl_family = AF_NETLINK;
-	addr.nl_groups = RTMGRP_IPV4_ROUTE | RTMGRP_LINK;
-	addr.nl_pid    = getpid();
+	memset(&sa, 0, sizeof(sa));
+	sa.nl_family = AF_NETLINK;
+	sa.nl_groups = RTMGRP_IPV4_ROUTE | RTMGRP_LINK; // | RTMGRP_NOTIFY | RTMGRP_IPV4_IFADDR;
+	sa.nl_pid    = getpid();
 
-	if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+	if (bind(sd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
 		_pe("bind()");
 		close(sd);
 		return;
