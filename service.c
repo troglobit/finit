@@ -113,10 +113,8 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 			return SVC_STOP;
 		}
 
-		if (!pid) {
-			status = svc->cb(svc, event, arg);
-			exit(status);
-		}
+		if (!pid)
+			_exit(svc->cb(svc, event, arg));
 
 		if (waitpid(pid, &status, 0) == -1) {
 			_pe("Failed reading status from %s callback", svc->cmd);
