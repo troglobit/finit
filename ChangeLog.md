@@ -399,7 +399,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/1.12...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/2.1...HEAD
+[2.1]: https://github.com/troglobit/finit/compare/2.0...2.1
 [2.0]: https://github.com/troglobit/finit/compare/1.12...2.0
 [1.12]: https://github.com/troglobit/finit/compare/1.11...1.12
 [1.11]: https://github.com/troglobit/finit/compare/1.10...1.11
