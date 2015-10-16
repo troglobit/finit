@@ -188,6 +188,7 @@ void sig_unblock(void)
 	struct sigaction sa;
 
 	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGHUP);
 	sigaddset(&nmask, SIGCHLD);
 	sigaddset(&nmask, SIGINT);
 	sigaddset(&nmask, SIGPWR);

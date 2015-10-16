@@ -278,6 +278,8 @@ int service_start(svc_t *svc)
 			_e("%starting %s: %s", respawn ? "Res" : "S", svc->cmd, buf);
 		}
 
+		sig_unblock();
+
 		if (svc->inetd.cmd)
 			status = svc->inetd.cmd(svc->inetd.type);
 		else
