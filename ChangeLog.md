@@ -1,7 +1,8 @@
 Change Log
 ==========
 
-All notable changes to the project are documented in this file.
+All relevant changes are documented in this file.
+
 
 [2.1][] - 2015-10-16
 --------------------
@@ -20,6 +21,7 @@ All notable changes to the project are documented in this file.
 * Do not allow build VERSION to be overloaded by an environment variable
 * Fix too small MAX arguments and too few argments in `svc_t` for
   reading currently running services with `initctl show`
+* Unblock blocked signals after forking off a child
 
 
 [2.0][] - 2015-09-20
