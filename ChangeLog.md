@@ -3,6 +3,25 @@ Change Log
 
 All notable changes to the project are documented in this file.
 
+[2.1][] - 2015-10-16
+--------------------
+
+### Changes
+
+* Add hook point for fstab mount failure
+* Set hostname on dynamic reload
+* Upgrade to libite v1.1.1
+
+### Fixes
+
+* Fix service callback coredump checks and simplify callback exit
+* Do not use `-Os` use `-O2` as default optimization level.  Many cross
+  compiler toolchains are known to have problems with `-Os`
+* Do not allow build VERSION to be overloaded by an environment variable
+* Fix too small MAX arguments and too few argments in `svc_t` for
+  reading currently running services with `initctl show`
+
+
 [2.0][] - 2015-09-20
 --------------------
 
@@ -19,8 +38,8 @@ introduction of an `initctl` tool.
   simply add a `:ID` after the `service` keyword, where `ID` is a unique
   instance number for that service.
 
-        service #1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
-        service #2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
+        service :1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
+        service :2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
 
 * Another noteworthy new feature is support for starting/stopping
   services on Netlink events:
@@ -152,6 +171,7 @@ The [libuEv] release.
 
 [1.10][] - 2014-11-27
 ---------------------
+
 Major bug fix release.
 
 ### Changes
