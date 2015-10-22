@@ -29,9 +29,8 @@
 #include "../plugin.h"
 #include "libite/lite.h"
 
-#ifdef ENABLE_STATIC
-#error This plugin uses getuser(), which relies on dynamically linked GLIBC.  Cannot be built statically!
-#endif
+/* This plugin uses getuser(), which relies on dynamically linked GLIBC.  Cannot be built statically! */
+#ifndef ENABLE_STATIC
 
 /*
  * Setup standard FHS 2.3 structure in /var, and
@@ -104,6 +103,8 @@ PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
 }
+
+#endif/* ENABLE_STATIC */
 
 /**
  * Local Variables:
