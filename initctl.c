@@ -149,12 +149,7 @@ static int show_status(char *UNUSED(arg))
 	}
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		int  inetd = svc_is_inetd(svc);
 		char jobid[10], args[512] = "";
-		struct init_request rq = {
-			.magic = INIT_MAGIC,
-			.cmd = INIT_CMD_QUERY_INETD,
-		};
 
 		if (svc_is_unique(svc))
 			snprintf(jobid, sizeof(jobid), "%d", svc->job);
@@ -167,8 +162,13 @@ static int show_status(char *UNUSED(arg))
 			continue;
 		}
 
-		if (inetd) {
+#ifndef INETD_DISABLED
+		if (svc_is_inetd(svc)) {
 			char *info;
+			struct init_request rq = {
+				.magic = INIT_MAGIC,
+				.cmd = INIT_CMD_QUERY_INETD,
+			};
 
 			snprintf(rq.data, sizeof(rq.data), "%s", jobid);
 			if (do_send(&rq, sizeof(rq))) {
@@ -184,7 +184,10 @@ static int show_status(char *UNUSED(arg))
 			}
 
 			printf("%s %s\n", svc->cmd, info);
-		} else {
+		}
+		else
+#endif /* !INETD_DISABLED */
+		{
 			int i;
 
 			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {

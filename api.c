@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include "config.h"
 #include "finit.h"
 #include "conf.h"
 #include "helpers.h"
@@ -112,6 +113,7 @@ static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf,
 static int do_reload (char *buf, size_t len) { return call(service_reload,  buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
+#ifndef INETD_DISABLED
 static int do_query_inetd(char *buf, size_t len)
 {
 	int id = 1;
@@ -135,6 +137,7 @@ static int do_query_inetd(char *buf, size_t len)
 
 	return inetd_filter_str(&svc->inetd, buf, len);
 }
+#endif /* !INETD_DISABLED */
 
 typedef struct {
 	char *event;
@@ -275,9 +278,11 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
+#ifndef INETD_DISABLED
 		case INIT_CMD_QUERY_INETD:
 			result = do_query_inetd(rq.data, sizeof(rq.data));
 			break;
+#endif
 
 		case INIT_CMD_EMIT:
 			result = do_handle_emit(rq.data, sizeof(rq.data));

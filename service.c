@@ -44,8 +44,9 @@
 static int    is_norespawn       (void);
 static void   restart_lost_procs (void);
 static void   svc_dance          (svc_t *svc);
+#ifndef INETD_DISABLED
 static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
-
+#endif
 	
 /**
  * service_bootstrap - Start bootstrap services and tasks
