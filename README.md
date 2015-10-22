@@ -706,7 +706,8 @@ switches to configure:
 
 * `--with-plugins=`: List of stock finit plugins to build and install.
   The build system adds `.o` or `.so` extension to the listed plugins
-  depending on the `--enable-static` switch.
+  depending on the `--enable-static` switch.  Hence, list the plugins
+  *without* their extension.
 
 * `--enable-embedded`: Target finit for BusyBox getty and mdev instead
   of a standard Linux distribution with GNU tools and udev.
@@ -754,7 +755,7 @@ First, unpack the archive:
 Then configure, build and install:
 
 ```shell
-    $ ./configure --with-plugins="initctl.so hwclock.so"
+    $ ./configure --with-plugins="initctl hwclock"
     $ make
     CC      finit.o
     CC      conf.o
