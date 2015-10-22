@@ -14,7 +14,12 @@ endif
 
 include ../common.mk
 
+ifneq ($(STATIC), 1)
 all: $(PLUGINS)
+else
+all:
+	@true
+endif
 
 clean:
 	-@$(RM) $(PLUGINS)

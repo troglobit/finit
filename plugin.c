@@ -321,7 +321,10 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 
 	/* Always initialize plugins */
 	init_plugins(ctx);
+
+#ifndef ENABLE_STATIC
 exit:
+#endif
 	if (verbose)
 		print_result(fail);
 
