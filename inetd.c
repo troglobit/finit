@@ -217,7 +217,22 @@ void inetd_stop(inetd_t *inetd)
 
 static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
 {
+#ifdef ENABLE_STATIC
+	int service_num;
+	static struct servent lfs;
+
+	service_num = fgetint("/etc/services", " \n\t", service);
+	if (service_num > 0) {
+		lfs.s_name = service;
+		lfs.s_port = htons(service_num);
+		lfs.s_proto = NULL;
+		if (!strcmp("tcp", proto) || !strcmp("udp", proto))
+			lfs.s_proto = proto;
+		*sv = &lfs;
+	}
+#else
 	*sv = getservbyname(service, proto);
+#endif
 	if (!*sv) {
 		const char *errstr;
 		static struct servent s;
@@ -238,8 +253,20 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 		*sv = &s;
 	}
 
-	if (pv) {
+	if (pv && (*sv)->s_proto) {
+#ifdef ENABLE_STATIC
+		int proto_num;
+		static struct protoent lfp;
+
+		proto_num = fgetint("/etc/protocols", " \n\t", (*sv)->s_proto);
+		if (proto_num > 0) {
+			lfp.p_name  = proto;
+			lfp.p_proto = proto_num;
+		}
+		*pv = &lfp;
+#else
 		*pv = getprotobyname((*sv)->s_proto);
+#endif
 		if (!*pv) {
 			_e("Cannot find proto %s, skipping.", (*sv)->s_proto);
 			return errno = EINVAL;

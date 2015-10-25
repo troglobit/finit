@@ -27,6 +27,7 @@ clean:
 distclean:
 	-@$(RM) *.o *.so $(JUNK) $(DEPS)
 
+ifneq ($(STATIC), 1)
 install: all
 	@install -d $(DESTDIR)$(plugindir)
 	@for plugin in $(PLUGINS); do \
@@ -40,6 +41,12 @@ uninstall:
 		rm $(DESTDIR)$(plugindir)/$$plugin 2>/dev/null; 	\
 	done
 	-@rmdir $(DESTDIR)$(plugindir) 2>/dev/null
+else
+install:
+	@true
+uninstall:
+	@true
+endif
 
 ifneq ($(MAKECMDGOALS),distclean)
 -include $(DEPS)

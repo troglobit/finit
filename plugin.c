@@ -317,6 +317,8 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 	closedir(dp);
 #else
 	_d("Finit built statically, not loading plugins from %s ...", path);
+	if (verbose)
+		print_desc("Initializing plugins", NULL);
 #endif	/* ENABLE_STATIC */
 
 	/* Always initialize plugins */

@@ -174,27 +174,33 @@ int print_result(int fail)
 	return fail;
 }
 
-#ifndef ENABLE_STATIC
 int getuser(char *username)
 {
+#ifdef ENABLE_STATIC
+	return fgetint("/etc/passwd", "x:\n", username);
+#else
 	struct passwd *usr;
 
 	if (!username || (usr = getpwnam(username)) == NULL)
 		return -1;
 
 	return usr->pw_uid;
+#endif
 }
 
 int getgroup(char *group)
 {
+#ifdef ENABLE_STATIC
+	return fgetint("/etc/group", "x:\n", group);
+#else
 	struct group *grp;
 
 	if ((grp = getgrnam(group)) == NULL)
 		return -1;
 
 	return grp->gr_gid;
-}
 #endif
+}
 
 /* Signal safe sleep ... we get a lot of SIGCHLD at reboot */
 void do_sleep(unsigned int sec)

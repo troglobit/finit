@@ -29,9 +29,6 @@
 #include "../plugin.h"
 #include "libite/lite.h"
 
-/* This plugin uses getuser(), which relies on dynamically linked GLIBC.  Cannot be built statically! */
-#ifndef ENABLE_STATIC
-
 /*
  * Setup standard FHS 2.3 structure in /var, and
  * write runlevel to UTMP, needed by, e.g., printerdrake.
@@ -103,8 +100,6 @@ PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
 }
-
-#endif/* ENABLE_STATIC */
 
 /**
  * Local Variables:
