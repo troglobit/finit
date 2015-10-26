@@ -62,7 +62,7 @@ static int rfc868(int type)
 }
 
 static plugin_t plugin = {
-	.name  = "time",
+	.name  = "time",	/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = rfc868
 	}
