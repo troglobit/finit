@@ -42,6 +42,7 @@
 static void parse(void *arg, int fd, int events);
 
 static plugin_t plugin = {
+	.name = __FILE__,
 	.io = {
 		.cb    = parse,
 		.flags = PLUGIN_IO_READ,

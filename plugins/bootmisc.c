@@ -87,7 +87,7 @@ static void setup(void *UNUSED(arg))
 }
 
 static plugin_t plugin = {
-	.name = "bootmisc",
+	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},

@@ -37,6 +37,7 @@
 static void watcher(void *arg, int fd, int events);
 
 static plugin_t plugin = {
+	.name = __FILE__,
 	.io = {
 		.cb    = watcher,
 		.flags = PLUGIN_IO_READ,

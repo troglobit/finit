@@ -76,7 +76,7 @@ static void save(void *UNUSED(arg))
 }
 
 static plugin_t plugin = {
-	.name = "urandom",
+	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = { .cb  = setup },
 	.hook[HOOK_SHUTDOWN]  = { .cb  = save  },
 	.depends = { "bootmisc", }

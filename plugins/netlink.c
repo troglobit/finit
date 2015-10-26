@@ -180,6 +180,7 @@ static void nl_callback(void *UNUSED(arg), int sd, int UNUSED(events))
 }
 
 static plugin_t plugin = {
+	.name = __FILE__,
 	.io = {
 		.cb    = nl_callback,
 		.flags = PLUGIN_IO_READ,

@@ -66,6 +66,7 @@ static void setup(void *UNUSED(arg))
 }
 
 static plugin_t plugin = {
+	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
