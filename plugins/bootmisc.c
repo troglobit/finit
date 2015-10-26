@@ -24,6 +24,7 @@
 #include <string.h>
 #include <utmp.h>
 
+#include "../config.h"
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
@@ -45,6 +46,7 @@ static void setup(void *UNUSED(arg))
 	makedir("/var/lib",        0755);
 	makedir("/var/lib/misc",   0755);
 	makedir("/var/lib/alarm",  0755);
+	makedir("/var/lib/urandom",0755);
 	makedir("/var/lock",       0755);
 	makedir("/var/log",        0755);
 	makedir("/var/mail",       0755);

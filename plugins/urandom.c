@@ -22,29 +22,63 @@
  */
 
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>		/* gettimeofday() */
+#include <sys/types.h>
 
+#include "../config.h"
 #include "../finit.h"
-#include "libite/lite.h"
 #include "../helpers.h"
 #include "../plugin.h"
+#include "libite/lite.h"
 
 static void setup(void *UNUSED(arg))
 {
 #ifdef RANDOMSEED
-	copyfile(RANDOMSEED, "/dev/urandom", 0, 0);
-	unlink(RANDOMSEED);
+	if (!fexist(RANDOMSEED)) {
+		int ret = 1;
+		FILE *fp;
+
+		print_desc("Bootstrapping random seed", NULL);
+		umask(077);
+		fp = fopen(RANDOMSEED, "w");
+		if (fp) {
+			int iter = 128;
+			struct timeval tv;
+
+			gettimeofday(&tv, NULL);
+			srandom(tv.tv_sec % 3600);
+			while (iter--) {
+				uint32_t i, prng = random();
+
+				for (i = 0; i < sizeof(prng); i++)
+					fputc((prng >> (i * CHAR_BIT)) & UCHAR_MAX, fp);
+			}
+			ret = fclose(fp);
+		}
+		print_result(ret);
+		umask(0);
+	}
+
+	print_desc("Initializing random number generator", NULL);
+	print_result(512 != copyfile(RANDOMSEED, "/dev/urandom", 0, 0));
+#endif
+}
+
+static void save(void *UNUSED(arg))
+{
+#ifdef RANDOMSEED
 	umask(077);
-	copyfile("/dev/urandom", RANDOMSEED, 4096, 0);
+	print_desc("Saving random seed", NULL);
+	print_result(512 != copyfile("/dev/urandom", RANDOMSEED, 512, 0));
 	umask(0);
 #endif
 }
 
 static plugin_t plugin = {
-	.hook[HOOK_BASEFS_UP] = {
-		.cb  = setup
-	},
+	.name = "urandom",
+	.hook[HOOK_BASEFS_UP] = { .cb  = setup },
+	.hook[HOOK_SHUTDOWN]  = { .cb  = save  },
 	.depends = { "bootmisc", }
 };
 

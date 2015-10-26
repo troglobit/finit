@@ -22,6 +22,7 @@ defaults()
         plugindir=${plugindir:="$libdir/$pdir"}
         # The initctl FIFO, should probably be in /run, not /dev
         fifo=${fifo:="/dev/initctl"}
+        random=${random:="/var/lib/urandom/random-seed"}
         conf="finit.conf"
         config=${config:="$sysconfdir/$conf"}
         confdir=${confdir:="finit.d"}
@@ -149,9 +150,9 @@ usage()
         echo "  --with-fifo=FIFO       FIFO for initctl plugin, default '$fifo'"
         echo "  --with-config=CONFIG   Finit CONFIG file, default '\$sysconfdir/$conf'"
         echo "  --with-heading=GREET   Display GREET instead of Finit version at boot"
-        echo "  --with-randomseed=SEED Seed /dev/urandom from file SEED.  On Debian/Ubuntu"
-        echo "                         systems, set this to /var/lib/urandom/random-seed"
-        echo "                         Default: none"
+        echo "  --with-randomseed=SEED Seed /dev/urandom at boot from SEED.  Usually found in"
+        echo "                         standard Linux systems at $random"
+        echo "                         which is also the default.  Requires urandom plugin!"
         echo "  --with-plugins=\"a b c\" Build plugins 'a', 'b' and 'c', either as dynamic .so"
         echo "                         files, or as built-in if --enable-static is given,"
         echo "                         defaults to all plugins.  Exclude extension!"
