@@ -25,9 +25,10 @@
 #ifndef FINIT_TTY_H_
 #define FINIT_TTY_H_
 
+#include <limits.h>
 #include "queue.h"		/* BSD sys/queue.h API */
 
-#define EVENT_SIZE ((sizeof(struct inotify_event) + 20))
+#define EVENT_SIZE ((sizeof(struct inotify_event) + NAME_MAX + 1))
 
 typedef struct {
 	char  *name;
