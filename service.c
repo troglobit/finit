@@ -41,6 +41,8 @@
 
 #define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
 
+static int    dyn_stop_cnt = 0;
+
 static int    is_norespawn       (void);
 static void   restart_lost_procs (void);
 static void   svc_dance          (svc_t *svc);
@@ -364,6 +366,26 @@ void service_start_dynamic(void)
 	svc_clean_dynamic(service_unregister);
 }
 
+/*
+ * Unless there are services we must collect first (wait for
+ * them to stop), we can call HOOK_SVC_RECONF here.
+ */
+static int service_stop_done(svc_t *svc)
+{
+	if (svc && !svc_is_changed(svc))
+		return 0;
+
+	if (svc && dyn_stop_cnt)
+		dyn_stop_cnt--;
+
+	if (!dyn_stop_cnt) {
+		_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
+		plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
+	}
+
+	return 1;
+}
+
 /**
  * service_stop_dynamic - Stop disabled/removed dynamic services
  */
@@ -373,12 +395,14 @@ void service_stop_dynamic(void)
 
 	_d("Stopping disabled/removed services ...");
 	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
-		if (svc_is_changed(svc))
+		if (svc_is_changed(svc)) {
+			dyn_stop_cnt++;
 			service_stop(svc);
+		}
 	}
 
-	_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
-	plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
+	/* Check if we need to collect any services before calling user HOOK */
+	service_stop_done(NULL);
 }
 
 /* stop + start
@@ -808,6 +832,10 @@ void service_monitor(pid_t lost)
 
 		/* No longer running, update books. */
 		svc->pid = 0;
+
+		/* Check if we're still collecting stopped dynamic services */
+		if (service_stop_done(svc))
+			break;
 
 		if (sig_stopped()) {
 			_e("Stopped, not respawning killed processes.");
