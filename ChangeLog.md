@@ -4,6 +4,36 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[2.2][] - 2015-11-23
+--------------------
+
+Lots of fixes to handle static builds, but also fixes for dynamic event
+handling and reconfiguration at runtime.
+
+### Changes
+
+* Upgrade to libuEv v1.2.4, to handle static builds
+* Upgrade to libite (LITE) v1.2.0, to handle static builds
+* Clarify how to select different plugins with the configure script
+* Improve urandom plugin for embedded systems w/o random seed
+* Add `--debug` flag to `initctl`
+* The runlevels listed for services in `initctl show` now hightlight the
+  active runlevel.
+* Clarify in the README and in `initctl help` that the GW event to
+  listen for in service declarations is `GW:UP`
+
+### Fixes
+
+* Build fixes for `configure --disable-inetd`
+* Fixed issue #14: Improved support for static Finit builds
+* Misc. fixes to silence warnings when building a static Finit
+* Default to register services as `SIGHUP`'able, regression in v2.0
+* Call `HOOK_SVC_RECONF` only when all processes have been stopped
+* On reload/reconf we must wait for all services to stop first
+* Only trigger on events that matches the service's specification,
+  fix by Tobias Waldekranz
+
+
 [2.1][] - 2015-10-16
 --------------------
 
