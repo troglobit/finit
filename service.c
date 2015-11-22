@@ -90,6 +90,8 @@ void service_bootstrap(void)
  */
 svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 {
+	svc_cmd_t cmd = SVC_START; /* Default to start, since listed in finit.conf */
+
 	if (!svc) {
 		errno = EINVAL;
 		return SVC_STOP;
@@ -103,6 +105,11 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 	 */
 	if (runlevel && !event_service_cond(svc->events))
 		return SVC_STOP;
+
+	if (svc->state == SVC_RELOAD_STATE)
+		cmd = SVC_RELOAD;
+	if (svc->state == SVC_PAUSED_STATE)
+		cmd = SVC_STOP;
 
 	/* Is there a service plugin registered? */
 	if (svc->cb) {
@@ -125,8 +132,10 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 		}
 
 		/* Callback normally exits here. */
-		if (WIFEXITED(status))
-			return WEXITSTATUS(status);
+		if (WIFEXITED(status)) {
+			svc_cmd_t tmp = WEXITSTATUS(status);
+			return tmp == SVC_START ? cmd : tmp;
+		}
 
 		/* Check for SEGFAULT or other error ... */
 		if (WIFSIGNALED(status) && WCOREDUMP(status))
@@ -137,8 +146,7 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 		return SVC_STOP;
 	}
 
-	/* No service plugin, default to start, since listed in finit.conf */
-	return SVC_START;
+	return cmd;
 }
 
 /* Remember: service_enabled() must be called before calling service_start() */
@@ -297,6 +305,7 @@ int service_start(svc_t *svc)
 		exit(status);
 	}
 	svc->pid = pid;
+	svc->state = SVC_RUNNING_STATE;
 
 	if (svc_is_inetd(svc)) {
 		if (svc->inetd.type == SOCK_STREAM)
@@ -318,9 +327,9 @@ int service_start(svc_t *svc)
 	return 0;
 }
 
-int service_stop(svc_t *svc)
+int service_stop(svc_t *svc, int state)
 {
-	int res = 1;
+	int res = 0;
 
 	if (!svc)
 		return 1;
@@ -334,6 +343,12 @@ int service_stop(svc_t *svc)
 	if (SVC_TYPE_SERVICE != svc->type)
 		return 0;
 
+	_d("Service %s state %d, new state %d, sighup %d", svc->cmd, svc->state, state, svc->sighup);
+	if (state == SVC_RELOAD_STATE && svc->sighup)
+		goto exit;
+	if (state == SVC_RESTART_STATE && svc->sighup)
+		return service_reload(svc);
+
 	if (runlevel != 1 && verbose)
 		print_desc("Stopping ", svc->desc);
 
@@ -343,7 +358,8 @@ int service_stop(svc_t *svc)
 	if (runlevel != 1 && verbose)
 		print_result(res);
 exit:
-	svc->pid = 0;
+	if (!res)
+		svc->state = state;
 	svc->restart_counter = 0;
 
 	return res;
@@ -381,6 +397,10 @@ static int service_stop_done(svc_t *svc)
 	if (!dyn_stop_cnt) {
 		_d("All disabled/removed services have been stoppped, calling reconf hooks ...");
 		plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
+
+		/* Finish off by starting/reload modified/new services */
+		if (svc->state == SVC_RELOAD_STATE)
+			service_start_dynamic();
 	}
 
 	return 1;
@@ -388,6 +408,10 @@ static int service_stop_done(svc_t *svc)
 
 /**
  * service_stop_dynamic - Stop disabled/removed dynamic services
+ *
+ * We call it "stop", but in reality it could be "skip" as well, if the
+ * service supports SIGHUP.  This function is just one step on the road
+ * to reload all modified services.
  */
 void service_stop_dynamic(void)
 {
@@ -397,7 +421,8 @@ void service_stop_dynamic(void)
 	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
 		if (svc_is_changed(svc)) {
 			dyn_stop_cnt++;
-			service_stop(svc);
+			_d("Marking service %s as state %d", svc->cmd, SVC_RELOAD_STATE);
+			service_stop(svc, SVC_RELOAD_STATE);
 		}
 	}
 
@@ -405,23 +430,30 @@ void service_stop_dynamic(void)
 	service_stop_done(NULL);
 }
 
-/* stop + start
+/**
+ * service_restart - Restart or SIGHUP a process
  *
- * XXX: This should be refactored into a background job AND marked such
- *      so that the service monitor doesn't attempt to restart it!
+ * Unfortunately we cannot call service_start() here because we must
+ * wait for the svc to actually be collected by the service_monitor()
+ * first.  Currently this means that an initctl user will not get
+ * correct feedback when restarting a service.  (Prompt may return
+ * before we've actually started upp the service again.)
+ *
+ * XXX: This should be refactored to let initctl check the sighup
+ *      flag and then to stop+start or reload.
  */
 int service_restart(svc_t *svc)
 {
-	int result = 0;
-
 	if (!svc)
 		return 1;
 
-	result += service_stop(svc);
-	sleep(1);
-	result += service_start(svc);
+	/* Ignore if finit is SIGSTOP'ed */
+	if (is_norespawn())
+		return 0;
 
-	return result;
+	svc->restart_counter = 0;
+
+	return service_stop(svc, SVC_RESTART_STATE);
 }
 
 /**
@@ -440,16 +472,15 @@ int service_reload(svc_t *svc)
 	if (is_norespawn())
 		return 0;
 
-	if (!svc) {
-		_e("Failed, no svc pointer.");
+	if (!svc)
 		return 1;
-	}
 
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGHUP", svc->pid, svc->cmd);
 		svc->pid = 0;
 		return 1;
 	}
+	svc->state = SVC_RUNNING_STATE;
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
 	return kill(svc->pid, SIGHUP);
@@ -470,8 +501,12 @@ void service_reload_dynamic(void)
 	/* Then stop any disabled/removed services and non-reloadable */
 	service_stop_dynamic();
 
-	/* Finish off by starting/reload modified/new services */
-	service_start_dynamic();
+	/*
+	 * Finish off by starting/reloading modified/new services.
+	 * Postponed to service_stop_done() to make sure all services
+	 * are guaranteed to have been stopped before being started
+	 * again.
+	 */
 }
 
 /**
@@ -508,12 +543,12 @@ void service_runlevel(int newlevel)
 				inetd_stop(&svc->inetd);
 			else
 #endif
-				service_stop(svc);
+				service_stop(svc, SVC_HALTED_STATE);
 		}
 
 		/* ... or disabled/removed services from /etc/finit.d/ */
 		if (svc_is_dynamic(svc) && svc_is_changed(svc))
-			service_stop(svc);
+			service_stop(svc, SVC_HALTED_STATE);
 	}
 
 	/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
@@ -787,7 +822,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 void service_unregister(svc_t *svc)
 {
-	service_stop(svc);
+	service_stop(svc, SVC_HALTED_STATE);
 	svc_del(svc);
 }
 
@@ -890,7 +925,7 @@ static void svc_dance(svc_t *svc)
 
 	if (svc->pid) {
 		if (SVC_STOP == cmd)
-			service_stop(svc);
+			service_stop(svc, SVC_HALTED_STATE);
 		else if (SVC_RELOAD == cmd)
 			service_reload(svc);
 	} else {

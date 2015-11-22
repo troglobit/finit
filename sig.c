@@ -96,6 +96,7 @@ void do_shutdown(int sig)
  */
 static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
+	/* INIT_CMD_RELOAD: 'init q', 'initctl reload', and SIGHUP */
 	service_reload_dynamic();
 }
 

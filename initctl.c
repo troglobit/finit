@@ -218,7 +218,7 @@ static int usage(int rc)
 		"  runlevel [0-9]        Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status | show         Show status of services\n"
 		"  start    <JOB|NAME>   Start stopped job or service\n"
-		"  stop     <JOB|NAME>   Stop running job or service\n"
+		"  stop     <JOB|NAME>   Stop/Pause running job or service\n"
 		"  restart  <JOB|NAME>   Restart (stop/start) job or service\n"
 		"  reload   <JOB|NAME>   Reload (SIGHUP) job or service\n"
 		"  version               Show Finit version\n\n", __progname);

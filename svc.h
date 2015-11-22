@@ -40,11 +40,21 @@ typedef enum {
 
 typedef enum {
 	SVC_TYPE_FREE = 0,	/* Free to allocate */
-	SVC_TYPE_SERVICE ,	/* Monitored, will be respawned */
+	SVC_TYPE_SERVICE,	/* Monitored, will be respawned */
 	SVC_TYPE_TASK,		/* One-shot, runs in parallell */
 	SVC_TYPE_RUN,		/* Like task, but wait for completion */
 	SVC_TYPE_INETD		/* Classic inetd service */
 } svc_type_t;
+
+typedef enum {
+	SVC_HALTED_STATE = 0,	/* Not allowed in runlevel, or not enabled. */
+	SVC_WAITING_STATE,	/* Waiting for connection (inetd service)   */
+	SVC_PAUSED_STATE,	/* Stopped/Paused by user started on reload */
+	SVC_CONDHALT_STATE,	/* Not allowed to run atm. event/state lost */
+	SVC_RESTART_STATE,	/* Restarting service waiting to be stopped */
+	SVC_RELOAD_STATE,	/* Reloading services, after .conf changed  */
+	SVC_RUNNING_STATE,	/* Currently running service, see svc->pid  */
+} svc_state_t;
 
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
@@ -63,6 +73,7 @@ typedef struct svc {
 
 	/* Service details */
 	pid_t	       pid;
+	svc_state_t    state;	       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;
 	time_t	       mtime;	       /* Modification time for .conf from /etc/finit.d/ */
 	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,

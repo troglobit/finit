@@ -220,11 +220,10 @@ void event_dispatch(char *msg)
 				service_restart(svc);
 		} else { /* change == -1 */
 			if (svc->pid && !event_service_cond(svc->events))
-				service_stop(svc);
+				service_stop(svc, SVC_CONDHALT_STATE);
 		}
 	}
 }
-
 
 /**
  * Local Variables:

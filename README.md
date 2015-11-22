@@ -597,7 +597,7 @@ not return until the given command has fully completed.
             reload          Reload *.conf in /etc/finit.d/, like SIGHUP
             runlevel <0-9>  Change runlevel: 0 (halt), 6 (reboot)
             start    <JOB#> Start a stopped service
-            stop     <JOB#> Stop a running service
+            stop     <JOB#> Stop/Pause a running service
             restart  <JOB#> Restart (stop/start) a running service
             reload   <JOB#> Reload (SIGHUP) a running service
             status | show   List status of all services known to Finit
@@ -609,6 +609,11 @@ events are: RELOAD, STOP, START.  These events act on a lower level than
 their command counterparts.  The `reload` command reloads all `*.conf`
 files in `/etc/finit.d/` *and* activates the changes, with `emit RELOAD`
 only the `*.conf` files are reloaded.
+
+**Note:** The `emit STOP` event is more like "prepare" than "stop".
+  Depending on how the service is declared, `<!>` or not, the service
+  may be stopped, or skipped to be be sent `SIGHUP` later when `emit
+  START` is issued.
 
 To achieve the same result as `initctl reload` emit all three events:
 

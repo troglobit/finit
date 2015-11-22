@@ -212,7 +212,7 @@ void inetd_stop(inetd_t *inetd)
 
 	/* Stop any running service, not allowed anymore. */
 	if (svc->pid)
-		service_stop(svc);
+		service_stop(svc, SVC_WAITING_STATE);
 }
 
 static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)

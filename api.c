@@ -108,8 +108,13 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 	return result;
 }
 
+static int service_pause(svc_t *svc)
+{
+	return service_stop(svc, SVC_PAUSED_STATE);
+}
+
 static int do_start  (char *buf, size_t len) { return call(service_start,   buf, len); }
-static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
+static int do_pause  (char *buf, size_t len) { return call(service_pause,   buf, len); }
 static int do_reload (char *buf, size_t len) { return call(service_reload,  buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
@@ -258,7 +263,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			debug = !debug;
 			break;
 
-		case INIT_CMD_RELOAD:
+		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */
 			service_reload_dynamic();
 			break;
 
@@ -267,7 +272,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_STOP_SVC:
-			result = do_stop(rq.data, sizeof(rq.data));
+			result = do_pause(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RELOAD_SVC:

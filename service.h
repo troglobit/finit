@@ -33,7 +33,7 @@ void      service_unregister     (svc_t *svc);
 svc_cmd_t service_enabled	 (svc_t *svc, int event, void *arg);
 
 int	  service_start	         (svc_t *svc);
-int	  service_stop	         (svc_t *svc);
+int	  service_stop	         (svc_t *svc, int state);
 void      service_start_dynamic  (void);
 void      service_stop_dynamic   (void);
 int       service_restart        (svc_t *svc);
