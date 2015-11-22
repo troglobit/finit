@@ -103,6 +103,7 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 	/*
 	 * Event conditions for services are ignored during bootstrap.
 	 */
+	_d("Checking %s runlevel %d and events %s", svc->cmd, runlevel, svc->events);
 	if (runlevel && !event_service_cond(svc->events))
 		return SVC_STOP;
 
@@ -145,6 +146,12 @@ svc_cmd_t service_enabled(svc_t *svc, int event, void *arg)
 
 		return SVC_STOP;
 	}
+
+	_d("%s => %s", svc->cmd, (cmd == SVC_START
+				  ? "SVC_START"
+				  : (cmd == SVC_RELOAD
+				     ? "SVC_RELOAD"
+				     : "SVC_STOP")));
 
 	return cmd;
 }

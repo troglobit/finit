@@ -209,8 +209,10 @@ void event_dispatch(char *msg)
 		if (svc->type != SVC_TYPE_SERVICE  ||
 		    !service_enabled(svc, 1, NULL) ||
 		    !has_events(svc->events)       ||
-		    !matches_event(svc->events, msg))
+		    !matches_event(svc->events, msg)) {
+			_d("No match for %s in service %s", msg, svc->cmd);
 			continue;
+		}
 
 		if (change == 1) {
 			_d("%s matches <%s> %s (re)starting ...", msg, svc->events, svc->cmd);
