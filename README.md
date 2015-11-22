@@ -648,10 +648,10 @@ started.
 	
 The `emit <EV>` command can also be used to emit custom events.  In
 fact, the event is a simple string.  Declare a list of events in a
-service stanza: `service … <GW,IFUP:eth0>` to reload (`SIGHUP`) a
-service when recieving the `"GW"` or `"IFUP:eth0"` strings.  If a
+service stanza: `service … <GW:UP,IFUP:eth0>` to reload (`SIGHUP`) a
+service when recieving the `"GW:UP"` or `"IFUP:eth0"` strings.  If a
 service cannot handle reload and must be stopped-started, simply add an
-exclamation mark first: `service … <!GW,IFUP:eth0>`.
+exclamation mark first: `service … <!GW:UP,IFUP:eth0>`.
 
 The `<!>` notation to a service stanza can be used empty, then it will
 apply to `reload` and `runlevel` commands.  I.e., when a service's
