@@ -116,18 +116,21 @@ int conf_parse_runlevels(char *runlevels)
 void conf_parse_events(svc_t *svc, char *events)
 {
 	size_t i = 0;
-	char *ptr = events;
-
-	if (!events)
-		return;
+	char *ptr;
 
 	if (!svc) {
 		_e("Invalid service pointer");
 		return;
 	}
 
-	/* First character must be '!' if SIGHUP is not supported. */
+	/* By default we assume UNIX daemons support SIGHUP */
 	svc->sighup = 1;
+
+	if (!events)
+		return;
+
+	/* First character must be '!' if SIGHUP is not supported. */
+	ptr = events;
 	if (ptr[i] == '!') {
 		svc->sighup = 0;
 		ptr++;
