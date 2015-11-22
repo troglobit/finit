@@ -140,9 +140,14 @@ int event_cache_if(char *ifname)
 	return entry->updown;
 }
 
-static int validate_events(char *events)
+static int has_events(char *events)
 {
-	return !events || !events[0];
+	return events && events[0];
+}
+
+static int matches_event(char *events, char *event)
+{
+	return strcasestr(events, event) ? 1 : 0;
 }
 
 int event_service_cond(char *events)
@@ -152,7 +157,7 @@ int event_service_cond(char *events)
 	char temp[MAX_ARG_LEN];
 
 	/* No required events, condition satisfied */
-	if (validate_events(events))
+	if (!has_events(events))
 		return cond;
 
 	strlcpy(temp, events, sizeof(temp));
@@ -201,14 +206,14 @@ void event_dispatch(char *msg)
 
 	/* Iterate over svc_t and call service_restart() for event matches */
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->type != SVC_TYPE_SERVICE || validate_events(svc->events))
+		if (svc->type != SVC_TYPE_SERVICE  ||
+		    !service_enabled(svc, 1, NULL) ||
+		    !has_events(svc->events)       ||
+		    !matches_event(svc->events, msg))
 			continue;
 
 		if (change == 1) {
-			if (!service_enabled(svc, 1, NULL))
-				continue;
-
-			_d("Got event %s, (re)starting %s ...", svc->events, svc->cmd);
+			_d("%s matches <%s> %s (re)starting ...", msg, svc->events, svc->cmd);
 			if (!svc->pid) {
 				service_start(svc);
 				continue;
