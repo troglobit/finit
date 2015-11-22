@@ -84,17 +84,27 @@ int runlevel_get(void)
  */
 char *runlevel_string(int levels)
 {
-	int i, pos = 1;;
-	static char lvl[10] = "[]";
+	int i, pos = 1;
+	static char lvl[20];
+
+	memset(lvl, 0, sizeof(lvl));
+	lvl[0] = '[';
 
 	for (i = 0; i < 10; i++) {
 		if (ISSET(levels, i)) {
+			if (runlevel == i)
+				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
+
 			if (i == 0)
 				lvl[pos++] = 'S';
 			else
 				lvl[pos++] = '0' + i;
+
+			if (runlevel == i)
+				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
 		}
 	}
+
 	lvl[pos++] = ']';
 	lvl[pos]   = 0;
 

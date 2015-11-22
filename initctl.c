@@ -144,7 +144,7 @@ static int show_status(char *UNUSED(arg))
 	runlevel = runlevel_get();
 
 	if (!verbose) {
-		printf("#      Status   PID     Runlevels  Service               Description\n");
+		printf("#      Status   PID     Runlevels   Service               Description\n");
 		printf("====================================================================================\n");
 	}
 
@@ -156,7 +156,7 @@ static int show_status(char *UNUSED(arg))
 		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
-		printf("%-5s  %7s  %-6d  %-9s  ", jobid, svc_status(svc), svc->pid, runlevel_string(svc->runlevels));
+		printf("%-5s  %7s  %-6d  %-18.18s  ", jobid, svc_status(svc), svc->pid, runlevel_string(svc->runlevels));
 		if (!verbose) {
 			printf("%-20s  %s\n", svc->cmd, svc->desc);
 			continue;
