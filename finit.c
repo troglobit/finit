@@ -119,6 +119,10 @@ int main(int argc, char* argv[])
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
+#ifdef EMBEDDED_SYSTEM
+	if (debug)
+		touch("/dev/mdev.log");
+#endif
 	run_interactive(SETUP_DEVFS, "Populating device tree");
 
 	/*
