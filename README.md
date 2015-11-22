@@ -586,22 +586,24 @@ not return until the given command has fully completed.
     Usage: initctl [OPTIONS] <COMMAND>
     
     Options:
+      -d, --debug           Debug initctl (client)
       -v, --verbose         Verbose output
       -h, --help            This help text
     
     Commands:
-            debug           Toggle init daemon debug
-            emit     <EV>   Emit an event: RELOAD, STOP, START, GW
-                            IFUP:IFNAME, IFDN:IFNAME
-                            IFNAME is the interface name, e.g. eth0
-            reload          Reload *.conf in /etc/finit.d/, like SIGHUP
-            runlevel <0-9>  Change runlevel: 0 (halt), 6 (reboot)
-            start    <JOB#> Start a stopped service
-            stop     <JOB#> Stop/Pause a running service
-            restart  <JOB#> Restart (stop/start) a running service
-            reload   <JOB#> Reload (SIGHUP) a running service
-            status | show   List status of all services known to Finit
-            version         Show Finit version
+      debug                 Toggle Finit (daemon) debug
+      emit     <EV>         Emit an event.  Can be a predefined event: RELOAD, STOP,
+                            START, or a custom string to match the event list in a
+                            service stanza, e.g: GW:UP, IFUP:IFNAME, IFDN:IFNAME,
+                            where IFNAME is the interface name, e.g. eth0
+      reload                Reload *.conf in /etc/finit.d/ and activate changes
+      runlevel [0-9]        Show or set runlevel: 0 halt, 6 reboot
+      status | show         Show status of services
+      start    <JOB|NAME>   Start stopped job or service
+      stop     <JOB|NAME>   Stop/Pause running job or service
+      restart  <JOB|NAME>   Restart (stop/start) job or service
+      reload   <JOB|NAME>   Reload (SIGHUP) job or service
+      version               Show Finit version
 ```
 
 The `emit <EV>` command can be used to send events to Finit.  Built-in
