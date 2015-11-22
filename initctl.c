@@ -206,10 +206,11 @@ static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS] <COMMAND>\n\n"
 		"Options:\n"
+		"  -d, --debug           Debug initctl (client)\n"
 		"  -v, --verbose         Verbose output\n"
 		"  -h, --help            This help text\n\n"
 		"Commands:\n"
-		"  debug                 Toggle Finit debug\n"
+		"  debug                 Toggle Finit (daemon) debug\n"
 		"  emit     <EV>         Emit an event.  Can be a predefined event: RELOAD, STOP,\n"
 		"                        START, or a custom string to match the event list in a\n"
 		"                        service stanza, e.g: GW, IFUP:IFNAME, IFDN:IFNAME, where\n"
@@ -244,16 +245,21 @@ int main(int argc, char *argv[])
 	};
 	struct option long_options[] = {
 		{"help",    0, NULL, 'h'},
+		{"debug",   0, NULL, 'd'},
 		{"verbose", 0, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
 
 	verbose = 0;
-	while ((c = getopt_long(argc, argv, "h?v", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "dh?v", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'h':
 		case '?':
 			return usage(0);
+
+		case 'd':
+			debug = 1;
+			break;
 
 		case 'v':
 			verbose = 1;
