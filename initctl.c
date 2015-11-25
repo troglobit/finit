@@ -149,14 +149,20 @@ static int show_status(char *UNUSED(arg))
 	}
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		char jobid[10], args[512] = "";
+		char jobid[10], args[512] = "", *lvls;
 
 		if (svc_is_unique(svc))
 			snprintf(jobid, sizeof(jobid), "%d", svc->job);
 		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
-		printf("%-5s  %7s  %-6d  %-18.18s  ", jobid, svc_status(svc), svc->pid, runlevel_string(svc->runlevels));
+		printf("%-5s  %7s  %-6d  ", jobid, svc_status(svc), svc->pid);
+		lvls = runlevel_string(svc->runlevels);
+		if (strchr(lvls, '\e'))
+			printf("%-18.18s  ", lvls);
+		else
+			printf("%-10.10s  ", lvls);
+
 		if (!verbose) {
 			printf("%-20s  %s\n", svc->cmd, svc->desc);
 			continue;
