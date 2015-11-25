@@ -353,8 +353,6 @@ int service_stop(svc_t *svc, int state)
 	_d("Service %s state %d, new state %d, sighup %d", svc->cmd, svc->state, state, svc->sighup);
 	if (state == SVC_RELOAD_STATE && svc->sighup)
 		goto exit;
-	if (state == SVC_RESTART_STATE && svc->sighup)
-		return service_reload(svc);
 
 	if (runlevel != 1 && verbose)
 		print_desc("Stopping ", svc->desc);
