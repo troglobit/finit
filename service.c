@@ -406,7 +406,7 @@ static int service_stop_done(svc_t *svc)
 		plugin_run_hooks(HOOK_SVC_RECONF); /* Reconfigure HW/VLANs/etc here */
 
 		/* Finish off by starting/reload modified/new services */
-		if (svc->state == SVC_RELOAD_STATE)
+		if (svc && svc->state == SVC_RELOAD_STATE)
 			service_start_dynamic();
 	}
 
