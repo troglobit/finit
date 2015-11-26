@@ -43,9 +43,9 @@
 int   debug     = 0;
 int   quiet     = KERNEL_QUIET;	/* Delayed disable of verbose mode. */
 int   verbose   = VERBOSE_MODE;
-int   runlevel  = 0;		/* Bootstrap */
+int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
-int   prevlevel = 0;		/* HALT */
+int   prevlevel = -1;
 char *sdown     = NULL;
 char *network   = NULL;
 char *username  = NULL;

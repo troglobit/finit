@@ -359,6 +359,24 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 	}
 }
 
+/**
+ * svc_clean_bootstrap - Remove bootstrap-only services after boot
+ * @svc: Pointer to &svc_t object
+ *
+ * Returns:
+ * %TRUE(1) if object was bootstrap-only, otherwise %FALSE(0)
+ */
+int svc_clean_bootstrap(svc_t *svc)
+{
+	if (!ISOTHER(svc->runlevels, 0)) {
+		svc->pid = 0;
+		svc_del(svc);
+		return 1;
+	}
+
+	return 0;
+}
+
 char *svc_status(svc_t *svc)
 {
 	if (svc->pid)

@@ -144,6 +144,7 @@ void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
 void	  svc_mark_dynamic     (void);
 void	  svc_check_dirty      (svc_t *svc, time_t mtime);
 void	  svc_clean_dynamic    (void (*cb)(svc_t *));
+int	  svc_clean_bootstrap  (svc_t *svc);
 
 char     *svc_status           (svc_t *svc);
 int       svc_next_id          (char *cmd);

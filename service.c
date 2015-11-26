@@ -598,7 +598,8 @@ void service_runlevel(int newlevel)
 	else
 		erase("/etc/nologin");
 
-	if (0 != prevlevel)
+	/* No TTYs run at bootstrap, they have a delayed start. */
+	if (prevlevel > 0)
 		tty_runlevel(runlevel);
 }
 
@@ -867,6 +868,9 @@ void service_monitor(pid_t lost)
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (lost != svc->pid)
+			continue;
+
+		if (!prevlevel && svc_clean_bootstrap(svc))
 			continue;
 
 		if (SVC_TYPE_SERVICE != svc->type) {
