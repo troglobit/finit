@@ -804,6 +804,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	if (svc_is_inetd(svc)) {
 		char *iface, *name = service;
 
+		svc->state = SVC_WAITING_STATE;
 		if (svc->inetd.cmd && plugin)
 			name = plugin->name;
 

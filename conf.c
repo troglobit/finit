@@ -145,6 +145,7 @@ void conf_parse_events(svc_t *svc, char *events)
 		return;
 	}
 
+	svc->state = SVC_CONDHALT_STATE;
 	strlcpy(svc->events, ptr, sizeof(svc->events));
 }
 

@@ -379,16 +379,36 @@ int svc_clean_bootstrap(svc_t *svc)
 
 char *svc_status(svc_t *svc)
 {
-	if (svc->pid)
-		return "running";
-
 	if (!svc_in_runlevel(svc, runlevel))
-		return "halted";
+		return "stopped";
 
-	if (svc_is_inetd(svc))
+	switch (svc->state) {
+	case SVC_WAITING_STATE:
 		return "waiting";
 
-	return "stopped";
+	case SVC_PAUSED_STATE:
+		return "paused";
+
+	case SVC_CONDHALT_STATE:
+		return "nocond";
+
+	case SVC_RESTART_STATE:
+		return "restart";
+
+	case SVC_RELOAD_STATE:
+		return "reload";
+
+	case SVC_RUNNING_STATE:
+		if (svc->pid)
+			return "running";
+		/* Fall through */
+
+	case SVC_HALTED_STATE:
+	default:
+		break;
+	}
+
+	return "halted";
 }
 
 /* Same base service, return unique ID */
