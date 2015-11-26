@@ -311,6 +311,33 @@ svc_t *svc_find_by_jobid(int job, int id)
 }
 
 /**
+ * svc_find_by_nameid - Find an service object by its basename:ID
+ * @name: Process name to match
+ * @id:   Instance id
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find_by_nameid(char *name, int id)
+{
+	char *ptr;
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		ptr = strrchr(svc->cmd, '/');
+		if (ptr)
+			ptr++;
+		else
+			ptr = svc->cmd;
+
+		if (svc->id == id && !strcmp(name, ptr))
+			return svc;
+	}
+
+	return NULL;
+}
+
+/**
  * svc_mark_dynamic - Mark dynamically loaded services for deletion.
  *
  * This function traverses the list of known services, marking all that

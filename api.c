@@ -77,10 +77,10 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 	token = strtok_r(input, " ", &pos);
 	while (token) {
 		svc_t *svc;
+		char *ptr = strchr(token, ':');
 
 		if (isdigit(token[0])) {
 			int job = atonum(token);
-			char *ptr = strchr(token, ':');
 
 			if (!ptr) {
 				svc = svc_job_iterator(1, job);
@@ -95,10 +95,15 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 			}
 
 		} else {
-			svc = svc_named_iterator(1, token);
-			while (svc) {
-				result += action(svc);
-				svc = svc_named_iterator(0, token);
+			if (!ptr) {
+				svc = svc_named_iterator(1, token);
+				while (svc) {
+					result += action(svc);
+					svc = svc_named_iterator(0, token);
+				}
+			} else {
+				*ptr++ = 0;
+				result += action(svc_find_by_nameid(token, atonum(ptr)));
 			}
 		}
 

@@ -131,6 +131,7 @@ int	  svc_del	       (svc_t *svc);
 svc_t	 *svc_find	       (char *cmd, int id);
 svc_t	 *svc_find_by_pid      (pid_t pid);
 svc_t	 *svc_find_by_jobid    (int job, int id);
+svc_t	 *svc_find_by_nameid   (char *name, int id);
 
 svc_t	 *svc_iterator	       (int first);
 svc_t	 *svc_inetd_iterator   (int first);
