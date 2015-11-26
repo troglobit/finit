@@ -424,10 +424,15 @@ void service_stop_dynamic(void)
 
 	_d("Stopping disabled/removed services ...");
 	for (svc = svc_dynamic_iterator(1); svc; svc = svc_dynamic_iterator(0)) {
-		if (svc_is_changed(svc)) {
+		if (svc_is_changed(svc) && svc->pid) {
+			svc_state_t new_state = SVC_RELOAD_STATE;
+
+			if (svc_is_removed(svc))
+				new_state = SVC_HALTED_STATE;
+
 			dyn_stop_cnt++;
-			_d("Marking service %s as state %d", svc->cmd, SVC_RELOAD_STATE);
-			service_stop(svc, SVC_RELOAD_STATE);
+			_d("Marking service %s as state %d", svc->cmd, new_state);
+			service_stop(svc, new_state);
 		}
 	}
 
@@ -827,7 +832,8 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 void service_unregister(svc_t *svc)
 {
-	service_stop(svc, SVC_HALTED_STATE);
+	if (svc->state != SVC_HALTED_STATE)
+		_e("Failed stopping %s, removing anyway from list of monitored services.", svc->cmd);
 	svc_del(svc);
 }
 
