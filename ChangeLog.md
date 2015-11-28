@@ -3,6 +3,29 @@ Change Log
 
 All relevant changes are documented in this file.
 
+[2.3][] - 2015-11-28
+--------------------
+
+Bug fix release.
+
+### Changes
+
+* Add support for stop/start/restart/reload service by `name:id`
+* Refactor service status listed in `initctl show`, show actual status
+
+### Fixes
+
+* Remove bootstrap-only tasks/services when leaving runlevel 'S'
+* Fix reference counting issue with already stopped and removed services
+  when the user performs `initctl reload` to change system configuration
+* Revert semantic change in behavior of `initctl restart`: users expect
+  service to be stopped/started, not reloaded with `SIGHUP` even if the
+  service supports it
+* Fix `NULL` pointer dereference causing kernel panic when user calls
+  `initctl reload` after change of system configuration
+* Fix column alignment in output of `initctl show` for services not in
+  current runlevel
+
 
 [2.2][] - 2015-11-23
 --------------------
