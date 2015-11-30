@@ -38,12 +38,14 @@
  *	      It activates the kbrequest action.
  */
 
+#include <sched.h>
 #include <string.h>		/* strerror() */
 #include <sys/reboot.h>
 #include <sys/wait.h>
 
 #include "finit.h"
 #include "conf.h"
+#include "config.h"
 #include "helpers.h"
 #include "plugin.h"
 #include "private.h"
@@ -63,6 +65,15 @@ void do_shutdown(int sig)
 
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
+
+	/* If we enabled terse mode at boot, restore to previous setting at shutdown */
+	if (quiet) {
+		verbose = VERBOSE_MODE;
+		if (verbose) {
+			sched_yield();
+			fputs("\n", stderr);
+		}
+	}
 
 	/* Call all shutdown hooks before rebooting... */
 	plugin_run_hooks(HOOK_SHUTDOWN);
