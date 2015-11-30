@@ -142,6 +142,9 @@ void print(int action, const char *fmt, ...)
 	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
 	const char dots[] = " .....................................................................";
 
+	if (!verbose)
+		return;
+
 	if (fmt) {
 		va_start(ap, fmt);
 		len = vsnprintf(buf, sizeof(buf), fmt, ap);
