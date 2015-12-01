@@ -828,9 +828,9 @@ give the kernel the following extra command line:
 Debugging
 ---------
 
-Add `finit_debug`, or `--debug`, to the kernel command line to
-enable trace messages.  A console getty is always started, see the file
-`finit.h` for more useful compile-time tweaks:
+Add `finit_debug`, or `--debug`, to the kernel command line to enable
+debug messages.  See the output from `configure --help` for more on
+how to assist debugging.
 
 ```shell
     init=/sbin/finit --debug
