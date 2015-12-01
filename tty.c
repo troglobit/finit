@@ -130,7 +130,7 @@ tty_node_t *tty_find_by_pid(pid_t pid)
 void tty_start(finit_tty_t *tty)
 {
 	int i = 0, is_console = 0;
-	char *cmd, *arg;
+	char *cmd, *arg, *name;
 	char  line[FILENAME_MAX];
 	char *args[42];
 
@@ -144,7 +144,9 @@ void tty_start(finit_tty_t *tty)
 #if   defined(GETTY_AGETTY)
 		snprintf(line, sizeof(line), "%s %s %d %s", GETTY, tty->name, tty->baud, tty->term ?: "");
 #elif defined(GETTY_BUSYBOX)
-		snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
+		/* BusyBox getty won't work if the TTY device name is prefixed with /dev path */
+		name = tty->name + strlen(_PATH_DEV);
+		snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, name, tty->term ?: "");
 #else
 		strlcpy(line, FALLBACK_SHELL, sizeof(line));
 		is_console = 1;
