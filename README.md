@@ -197,6 +197,11 @@ Syntax:
   See `finit.h` for the `#define GETTY` that is called, along with the
   default baud rate.
 
+  **Note:** BusyBox getty, used when Finit is built for embedded
+    systems, can take a `DEV` with *or* without `/dev/` prefix.  Make
+    sure to call the configure script with `--enable-embedded` if this
+	is what you want.
+
 * `console <DEV | /path/to/cmd [args]>`  
   Some embedded systems have a dedicated serial console/service port.
   This command tells finit to not start getty directly, since there may
