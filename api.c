@@ -266,6 +266,10 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 		case INIT_CMD_DEBUG:
 			debug = !debug;
+			if (debug)
+				verbose = 1;
+			else
+				verbose = quiet ? 0 : VERBOSE_MODE;
 			break;
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */

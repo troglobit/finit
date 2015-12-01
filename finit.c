@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
 	tty_runlevel(runlevel);
 
 	/* Disable verbose mode, if selected */
-	if (quiet)
+	if (quiet && !debug)
 		verbose = 0;
 
 	/* Start new initctl API responder */
