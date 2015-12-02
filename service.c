@@ -687,15 +687,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	}
 
 	while (cmd) {
-		if (cmd[0] != '/' && strchr(cmd, '/'))
-			service = cmd;   /* inetd service/proto */
-#ifndef INETD_DISABLED
-		else if (!strncasecmp(cmd, "nowait", 6))
-			forking = 1;
-		else if (!strncasecmp(cmd, "wait", 4))
-			forking = 0;
-#endif
-		else if (cmd[0] == '@')	/* @username[:group] */
+		     if (cmd[0] == '@')	/* @username[:group] */
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
@@ -703,6 +695,14 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			events = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
 			id = atoi(&cmd[1]);
+#ifndef INETD_DISABLED
+		else if (!strncasecmp(cmd, "nowait", 6))
+			forking = 1;
+		else if (!strncasecmp(cmd, "wait", 4))
+			forking = 0;
+#endif
+		else if (cmd[0] != '/' && strchr(cmd, '/'))
+			service = cmd;   /* inetd service/proto */
 		else
 			break;
 
