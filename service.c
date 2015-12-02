@@ -430,7 +430,9 @@ void service_stop_dynamic(void)
 			if (svc_is_removed(svc))
 				new_state = SVC_HALTED_STATE;
 
-			dyn_stop_cnt++;
+			if (!svc_has_sighup(svc))
+				dyn_stop_cnt++;
+
 			_d("Marking service %s as state %d", svc->cmd, new_state);
 			service_stop(svc, new_state);
 		}

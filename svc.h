@@ -152,6 +152,7 @@ int       svc_next_id          (char *cmd);
 int       svc_is_unique        (svc_t *svc);
 
 static inline int svc_in_runlevel(svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
+static inline int svc_has_sighup(svc_t *svc) { return svc &&  0 != svc->sighup; }
 
 static inline int svc_is_dynamic(svc_t *svc) { return svc &&  0 != svc->mtime; }
 static inline int svc_is_removed(svc_t *svc) { return svc && -1 == svc->dirty; }
