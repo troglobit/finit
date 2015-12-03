@@ -136,12 +136,37 @@ static int show_version(char *UNUSED(arg))
 /* In verbose mode we skip the header and each service description.
  * This in favor of having all info on one line so a machine can more
  * easily parse it. */
-static int show_status(char *UNUSED(arg))
+static int show_status(char *arg)
 {
 	svc_t *svc;
 
 	/* Fetch UTMP runlevel, needed for svc_status() call below */
 	runlevel = runlevel_get();
+
+	if (arg && arg[0]) {
+		int id = 1;
+		char *ptr, *next;
+
+		ptr = strchr(arg, ':');
+		if (ptr) {
+			*ptr++ = 0;
+			next = strchr(ptr, ' ');
+			if (next)
+				*next = 0;
+			id = atonum(ptr);
+		}
+
+		if (isdigit(arg[0]))
+			svc = svc_find_by_jobid(atonum(arg), id);
+		else
+			svc = svc_find_by_nameid(arg, id);
+
+		if (!svc)
+			return 1;
+
+		printf("%s\n", svc_status(svc));
+		return 0;
+	}
 
 	if (!verbose) {
 		printf("#      Status   PID     Runlevels   Service               Description\n");
@@ -229,6 +254,8 @@ static int usage(int rc)
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
 		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
+		"  status   <JOB|NAME>[:ID]  Show status of a service by job# or name\n"
+		"  show     <JOB|NAME>[:ID]  Alias to 'status <JOB|NAME>[:ID]'\n"
 		"  version                   Show Finit version\n\n", __progname);
 
 	return rc;
