@@ -407,14 +407,14 @@ int svc_clean_bootstrap(svc_t *svc)
 char *svc_status(svc_t *svc)
 {
 	if (!svc_in_runlevel(svc, runlevel))
-		return "stopped";
+		return "halted";
 
 	switch (svc->state) {
 	case SVC_WAITING_STATE:
 		return "waiting";
 
 	case SVC_PAUSED_STATE:
-		return "paused";
+		return "stopped";
 
 	case SVC_CONDHALT_STATE:
 		return "nocond";
