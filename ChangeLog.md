@@ -3,6 +3,34 @@ Change Log
 
 All relevant changes are documented in this file.
 
+
+[2.4][] - 2015-12-04
+--------------------
+
+Bug fix release.
+
+### Changes
+
+* Add support for status/show service by `name:id`
+* Enforce terse mode after boot, if verbose mode is disabled
+* Reenable verbose mode at reboot, if disabled at boot
+* Update section mentioning BusyBox getty
+* Update debugging documentation
+* Allow debug to override terse mode
+* Revert confusing change in service state introduced in [v2.3][].
+  As of v2.4 services are listed as "halted" and "stopped", when
+  they have been halted due to a runlevel changed or stopped by
+  the user, respectively.
+
+### Fixes
+
+* Fix system freeze at reconfiguration.  Changed services that
+  all support `SIGHUP` caused a freeze due to Finit waiting for
+  them to stop.
+* Make sure to start and/or `SIGHUP` services after reconfiguration
+  when there was no services to stop.
+
+
 [2.3][] - 2015-11-28
 --------------------
 
@@ -454,7 +482,10 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/2.1...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/2.4...HEAD
+[2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
+[2.3]: https://github.com/troglobit/finit/compare/2.2...2.3
+[2.2]: https://github.com/troglobit/finit/compare/2.1...2.2
 [2.1]: https://github.com/troglobit/finit/compare/2.0...2.1
 [2.0]: https://github.com/troglobit/finit/compare/1.12...2.0
 [1.12]: https://github.com/troglobit/finit/compare/1.11...1.12
