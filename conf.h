@@ -28,7 +28,7 @@
 
 void conf_parse_cmdline   (void);
 int  conf_parse_runlevels (char *runlevels);
-void conf_parse_events    (svc_t *svc, char *events);
+void conf_parse_cond      (svc_t *svc, char *cond);
 int  conf_parse_config    (void);
 void conf_reload_dynamic  (void);
 

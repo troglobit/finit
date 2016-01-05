@@ -406,36 +406,32 @@ int svc_clean_bootstrap(svc_t *svc)
 
 char *svc_status(svc_t *svc)
 {
-	if (!svc_in_runlevel(svc, runlevel))
-		return "halted";
-
 	switch (svc->state) {
+	case SVC_HALTED_STATE:
+		switch (svc->block) {
+		case SVC_BLOCK_NONE:
+			return "halted";
+		case SVC_BLOCK_MISSING:
+			return "missing";
+		case SVC_BLOCK_CRASHING:
+			return "crashing";
+		case SVC_BLOCK_USER:
+			return "blocked";
+		}
+	case SVC_DONE_STATE:
+		return "done";
+	case SVC_STOPPING_STATE:
+		return "stopping";
 	case SVC_WAITING_STATE:
 		return "waiting";
-
-	case SVC_PAUSED_STATE:
-		return "stopped";
-
-	case SVC_CONDHALT_STATE:
-		return "nocond";
-
-	case SVC_RESTART_STATE:
-		return "restart";
-
-	case SVC_RELOAD_STATE:
-		return "reload";
-
+	case SVC_READY_STATE:
+		return "ready";
 	case SVC_RUNNING_STATE:
-		if (svc->pid)
-			return "running";
-		/* Fall through */
+		return "running";
 
-	case SVC_HALTED_STATE:
 	default:
-		break;
+		return "UNKNOWN";
 	}
-
-	return "halted";
 }
 
 /* Same base service, return unique ID */
