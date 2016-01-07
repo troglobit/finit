@@ -272,8 +272,10 @@ static int service_start(svc_t *svc)
 	} else {
 		int result = 0;
 
-		if (SVC_TYPE_RUN == svc->type)
+		if (SVC_TYPE_RUN == svc->type) {
 			result = WEXITSTATUS(complete(svc->cmd, pid));
+			svc->pid = 0;
+		}
 
 		if (verbose)
 			print_result(result);
@@ -808,8 +810,20 @@ restart:
 		break;
 
 	case SVC_STOPPING_STATE:
-		if (!svc->pid)
-			*state = SVC_HALTED_STATE;
+		if (!svc->pid) {
+			switch (svc->type) {
+			case SVC_TYPE_SERVICE:
+			case SVC_TYPE_INETD:
+				*state = SVC_HALTED_STATE;
+				break;
+			case SVC_TYPE_TASK:
+			case SVC_TYPE_RUN:
+				*state = SVC_DONE_STATE;
+				break;
+			default:
+				_e("unknown service type %d", svc->type);
+			}
+		}
 		break;
 
 	case SVC_READY_STATE:
@@ -825,7 +839,7 @@ restart:
 			}
 
 			err = service_start(svc);
-			if (err || !svc->pid) {
+			if (err) {
 				(*restart_counter)++;
 				break;
 			}
@@ -838,10 +852,8 @@ restart:
 				break;
 			case SVC_TYPE_INETD:
 			case SVC_TYPE_TASK:
-				*state = SVC_STOPPING_STATE;
-				break;
 			case SVC_TYPE_RUN:
-				*state = SVC_DONE_STATE;
+				*state = SVC_STOPPING_STATE;
 				break;
 			default:
 				_e("unknown service type %d", svc->type);
@@ -858,6 +870,8 @@ restart:
 
 		if (!svc->pid) {
 			(*restart_counter)++;
+			/* TODO: There should be an async wait here
+			 * before moving back to READY */
 			*state = SVC_READY_STATE;
 			break;
 		}
@@ -867,7 +881,7 @@ restart:
 		if (cond == COND_OFF ||
 		    (!svc->sighup && (cond < COND_ON || svc_is_changed(svc)))) {
 			service_stop(svc);
-			*state = SVC_READY_STATE;
+			*state = SVC_STOPPING_STATE;
 			break;
 		}
 
@@ -882,7 +896,7 @@ restart:
 				service_restart(svc);
 			} else {
 				service_stop(svc);
-				*state = SVC_READY_STATE;
+				*state = SVC_STOPPING_STATE;
 			}
 			svc->dirty = 0;
 		}
@@ -893,7 +907,7 @@ restart:
 		if (!enabled) {
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
-			*state = SVC_HALTED_STATE;
+			*state = SVC_STOPPING_STATE;
 			break;
 		}
 
@@ -913,7 +927,7 @@ restart:
 		case COND_OFF:
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
-			*state = SVC_READY_STATE;
+			*state = SVC_STOPPING_STATE;
 			break;
 
 		case COND_FLUX:
