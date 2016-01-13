@@ -352,17 +352,27 @@ void svc_mark_dynamic(void)
 	svc_t *svc = svc_dynamic_iterator(1);
 
 	while (svc) {
-		svc->dirty = -1;
+		*((int *)&svc->dirty) = -1;
 		svc = svc_dynamic_iterator(0);
 	}
+}
+
+void svc_mark_dirty(svc_t *svc)
+{
+	*((int *)&svc->dirty) = 1;
+}
+
+void svc_mark_clean(svc_t *svc)
+{
+	*((int *)&svc->dirty) = 0;
 }
 
 void svc_check_dirty(svc_t *svc, time_t mtime)
 {
 	if (svc->mtime != mtime)
-		svc->dirty = 1;
+		svc_mark_dirty(svc);
 	else
-		svc->dirty = 0;
+		svc_mark_clean(svc);
 	svc->mtime = mtime;
 }
 
@@ -381,7 +391,6 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 		if (svc->dirty == -1 && cb)
 			cb(svc);
 
-		svc->dirty = 0;
 		svc = svc_dynamic_iterator(0);
 	}
 }

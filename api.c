@@ -130,7 +130,7 @@ static int service_unblock(svc_t *svc)
 
 static int service_restart(svc_t *svc)
 {
-	svc->dirty = 1;
+	svc_mark_dirty(svc);
 	service_step(svc);
 	return 0;
 }

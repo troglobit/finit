@@ -84,7 +84,7 @@ typedef struct svc {
 	const svc_state_t    state;	       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;
 	time_t	       mtime;	       /* Modification time for .conf from /etc/finit.d/ */
-	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,
+	const int      dirty;	       /* Set if old mtime != new mtime  => reloaded,
 					* or -1 when marked for removal */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
@@ -153,6 +153,8 @@ void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
 
 void	  svc_mark_dynamic     (void);
 void	  svc_check_dirty      (svc_t *svc, time_t mtime);
+void	  svc_mark_dirty       (svc_t *svc);
+void	  svc_mark_clean       (svc_t *svc);
 void	  svc_clean_dynamic    (void (*cb)(svc_t *));
 int	  svc_clean_bootstrap  (svc_t *svc);
 

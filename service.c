@@ -844,7 +844,7 @@ restart:
 				break;
 			}
 
-			svc->dirty = 0;
+			svc_mark_clean(svc);
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
@@ -898,7 +898,7 @@ restart:
 				service_stop(svc);
 				*state = SVC_STOPPING_STATE;
 			}
-			svc->dirty = 0;
+			svc_mark_clean(svc);
 		}
 
 		break;
