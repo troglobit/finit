@@ -167,6 +167,7 @@ static inline int svc_is_dynamic(svc_t *svc) { return svc &&  0 != svc->mtime; }
 static inline int svc_is_removed(svc_t *svc) { return svc && -1 == svc->dirty; }
 static inline int svc_is_changed(svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated(svc_t *svc) { return svc &&  1 == svc->dirty; }
+const char       *svc_dirtystr  (svc_t *svc);
 
 static inline int svc_is_inetd  (svc_t *svc) { return svc && SVC_TYPE_INETD   == svc->type; }
 static inline int svc_is_daemon (svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }

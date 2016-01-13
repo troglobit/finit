@@ -787,15 +787,15 @@ void service_step(svc_t *svc)
 	svc_cmd_t enabled;
 	svc_state_t old_state;
 	cond_state_t cond;
-	char *old_status = NULL;
 	int err;
 
 restart:
 	old_state = *state;
 	enabled = service_enabled(svc);
 
-	if (debug)
-		old_status = strdup(svc_status(svc));
+	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc->cmd, svc->pid,
+	   svc_status(svc), enabled? "en" : "dis", svc_dirtystr(svc),
+	   condstr(cond_get_agg(svc->cond)));
 
 	switch(*state) {
 	case SVC_HALTED_STATE:
@@ -937,11 +937,7 @@ restart:
 	}
 
 	if (*state != old_state) {
-		if (debug) {
-			_d("%-20.20s %s -> %s", svc->cmd,
-			   old_status, svc_status(svc));
-			free(old_status);
-		}
+		_d("%20s(%4d): -> %8s", svc->cmd, svc->pid, svc_status(svc));
 		goto restart;
 	}
 }

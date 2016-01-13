@@ -434,6 +434,18 @@ char *svc_status(svc_t *svc)
 	}
 }
 
+const char *svc_dirtystr(svc_t *svc)
+{
+	if (svc_is_removed(svc))
+		return "removed";
+	else if (svc_is_updated(svc))
+		return "updated";
+	else if (svc_is_changed(svc))
+		return "UNKNOWN";
+	else
+		return "clean";
+}
+
 /* Same base service, return unique ID */
 int svc_next_id(char *cmd)
 {
