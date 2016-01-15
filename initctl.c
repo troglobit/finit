@@ -234,7 +234,12 @@ static int show_status(char *arg)
 		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
-		printf("%-5s  %7s  %-6d  ", jobid, svc_status(svc), svc->pid);
+		printf("%-5s  %7s  ", jobid, svc_status(svc));
+		if (svc_is_inetd(svc))
+			printf("inetd   ");
+		else
+			printf("%-6d  ", svc->pid);
+
 		lvls = runlevel_string(svc->runlevels);
 		if (strchr(lvls, '\e'))
 			printf("%-18.18s  ", lvls);

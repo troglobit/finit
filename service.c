@@ -112,7 +112,7 @@ static int is_norespawn(void)
  */
 static int service_start(svc_t *svc)
 {
-	int sd = 0;
+	int result = 0;
 	pid_t pid;
 	sigset_t nmask, omask;
 
@@ -137,46 +137,18 @@ static int service_start(svc_t *svc)
 	if (is_norespawn())
 		return 1;
 
-#ifndef INETD_DISABLED
-	if (svc_is_inetd(svc)) {
-		char ifname[IF_NAMESIZE] = "UNKNOWN";
-
-		sd = svc->inetd.watcher.fd;
-
-		if (svc->inetd.type == SOCK_STREAM) {
-			/* Open new client socket from server socket */
-			sd = accept(sd, NULL, NULL);
-			if (sd < 0) {
-				FLOG_PERROR("Failed accepting inetd service %d/tcp", svc->inetd.port);
-				return 1;
-			}
-
-			_d("New client socket %d accepted for inetd service %d/tcp", sd, svc->inetd.port);
-
-			/* Find ifname by means of getsockname() and getifaddrs() */
-			inetd_stream_peek(sd, ifname);
-		} else {           /* SOCK_DGRAM */
-			/* Find ifname by means of IP_PKTINFO sockopt --> ifindex + if_indextoname() */
-			inetd_dgram_peek(sd, ifname);
-		}
-
-		if (!inetd_is_allowed(&svc->inetd, ifname)) {
-			FLOG_INFO("Service %s on port %d not allowed from interface %s.",
-				  svc->inetd.name, svc->inetd.port, ifname);
-			if (svc->inetd.type == SOCK_STREAM)
-				close(sd);
-
-			return 1;
-		}
-
-		FLOG_INFO("Starting inetd service %s for requst from iface %s ...", svc->inetd.name, ifname);
-	} else
-#endif
 	if (verbose) {
-		if (svc_is_daemon(svc))
+		if (svc_is_daemon(svc) || svc_is_inetd(svc))
 			print_desc("Starting ", svc->desc);
 		else
 			print_desc("", svc->desc);
+	}
+
+	if (svc_is_inetd(svc)) {
+		result = inetd_start(&svc->inetd);
+		if (verbose)
+			print_result(result);
+		return result;
 	}
 
 	/* Block sigchild while forking.  */
@@ -219,11 +191,10 @@ static int service_start(svc_t *svc)
 			args[i] = svc->args[i];
 		args[i] = NULL;
 
-		/* Redirect inetd socket to stdin for service */
-		if (svc_is_inetd(svc)) {
-			/* sd set previously */
-			dup2(sd, STDIN_FILENO);
-			close(sd);
+		/* Redirect inetd socket to stdin for connection */
+		if (svc_is_inetd_conn(svc)) {
+			dup2(svc->stdin, STDIN_FILENO);
+			close(svc->stdin);
 			dup2(STDIN_FILENO, STDOUT_FILENO);
 			dup2(STDIN_FILENO, STDERR_FILENO);
 		} else if (debug) {
@@ -254,7 +225,7 @@ static int service_start(svc_t *svc)
 		else
 			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
 
-		if (svc_is_inetd(svc)) {
+		if (svc_is_inetd_conn(svc)) {
 			if (svc->inetd.type == SOCK_STREAM) {
 				close(STDIN_FILENO);
 				close(STDOUT_FILENO);
@@ -266,20 +237,16 @@ static int service_start(svc_t *svc)
 	}
 	svc->pid = pid;
 
-	if (svc_is_inetd(svc)) {
-		if (svc->inetd.type == SOCK_STREAM)
-			close(sd);
-	} else {
-		int result = 0;
+	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
+			close(svc->stdin);
 
-		if (SVC_TYPE_RUN == svc->type) {
-			result = WEXITSTATUS(complete(svc->cmd, pid));
-			svc->pid = 0;
-		}
-
-		if (verbose)
-			print_result(result);
+	if (SVC_TYPE_RUN == svc->type) {
+		result = WEXITSTATUS(complete(svc->cmd, pid));
+		svc->pid = 0;
 	}
+
+	if (verbose)
+		print_result(result);
 
 	return 0;
 }
@@ -297,6 +264,20 @@ static int service_stop(svc_t *svc)
 
 	if (!svc)
 		return 1;
+
+	if (svc_is_inetd(svc)) {
+		int do_print = runlevel != 1 && verbose &&
+			svc->block != SVC_BLOCK_INETD_BUSY;
+
+		if (do_print)
+			print_desc("Stopping ", svc->desc);
+
+		inetd_stop(&svc->inetd);
+
+		if (do_print)
+			print_result(0);
+		return 0;
+	}
 
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->desc);
@@ -371,12 +352,12 @@ static void service_reload_dynamic_finish(void)
 	svc_clean_dynamic(service_unregister);
 
 	_d("Starting services after reconf ...");
-	service_step_all(SVC_TYPE_SERVICE);
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
 
 	_d("Calling reconf hooks ...");
 	plugin_run_hooks(HOOK_SVC_RECONF);
 
-	service_step_all(SVC_TYPE_SERVICE);
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
 	_d("Reconfiguration done");
 }
 
@@ -397,7 +378,7 @@ void service_reload_dynamic(void)
 	_d("Stopping services services not allowed after reconf ...");
 	in_dyn_teardown = 1;
 	cond_reload();
-	service_step_all(SVC_TYPE_SERVICE);
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
 
 	/* Need to wait for any services to stop? If so, exit early
 	 * and perform second stage from service_monitor later. */
@@ -684,7 +665,6 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	if (svc_is_inetd(svc)) {
 		char *iface, *name = service;
 
-		svc->state = SVC_WAITING_STATE;
 		if (svc->inetd.cmd && plugin)
 			name = plugin->name;
 
@@ -714,8 +694,6 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 void service_unregister(svc_t *svc)
 {
-	if (svc->state != SVC_HALTED_STATE)
-		_e("Failed stopping %s, removing anyway from list of monitored services.", svc->cmd);
 	svc_del(svc);
 }
 
@@ -751,11 +729,6 @@ void service_monitor(pid_t lost)
 
 	if (tty_respawn(lost))
 		return;
-
-#ifndef INETD_DISABLED
-	if (inetd_respawn(lost))
-		return;
-#endif
 
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
@@ -805,6 +778,15 @@ restart:
 		break;
 
 	case SVC_DONE_STATE:
+		if (svc_is_inetd_conn(svc)) {
+			if (svc->inetd.svc->block == SVC_BLOCK_INETD_BUSY) {
+				svc->inetd.svc->block = 0;
+				service_step(svc->inetd.svc);
+			}
+			service_unregister(svc);
+			return;
+		}
+
 		if (svc_is_changed(svc))
 			*state = SVC_HALTED_STATE;
 		break;
@@ -816,6 +798,7 @@ restart:
 			case SVC_TYPE_INETD:
 				*state = SVC_HALTED_STATE;
 				break;
+			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
 				*state = SVC_DONE_STATE;
@@ -841,16 +824,19 @@ restart:
 			err = service_start(svc);
 			if (err) {
 				(*restart_counter)++;
-				break;
+
+				if (!svc_is_inetd_conn(svc))
+					break;
 			}
 
 			svc_mark_clean(svc);
 
 			switch (svc->type) {
+			case SVC_TYPE_INETD:
 			case SVC_TYPE_SERVICE:
 				*state = SVC_RUNNING_STATE;
 				break;
-			case SVC_TYPE_INETD:
+			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
 				*state = SVC_STOPPING_STATE;
@@ -868,7 +854,7 @@ restart:
 			break;
 		}
 
-		if (!svc->pid) {
+		if (!svc->pid && !svc_is_inetd(svc)) {
 			(*restart_counter)++;
 			/* TODO: There should be an async wait here
 			 * before moving back to READY */

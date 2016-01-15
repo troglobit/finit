@@ -39,11 +39,12 @@ typedef enum {
 } svc_cmd_t;
 
 typedef enum {
-	SVC_TYPE_FREE    = 0,	/* Free to allocate */
-	SVC_TYPE_SERVICE = 1,	/* Monitored, will be respawned */
-	SVC_TYPE_TASK    = 2,	/* One-shot, runs in parallell */
-	SVC_TYPE_RUN     = 4,	/* Like task, but wait for completion */
-	SVC_TYPE_INETD   = 8	/* Classic inetd service */
+	SVC_TYPE_FREE       = 0,	/* Free to allocate */
+	SVC_TYPE_SERVICE    = 1,	/* Monitored, will be respawned */
+	SVC_TYPE_TASK       = 2,	/* One-shot, runs in parallell */
+	SVC_TYPE_RUN        = 4,	/* Like task, but wait for completion */
+	SVC_TYPE_INETD      = 8,	/* Classic inetd service */
+	SVC_TYPE_INETD_CONN = 16,	/* Single inetd connection */
 } svc_type_t;
 
 #define SVC_TYPE_ANY          (-1)
@@ -62,6 +63,7 @@ typedef enum {
 	SVC_BLOCK_MISSING,
 	SVC_BLOCK_CRASHING,
 	SVC_BLOCK_USER,
+	SVC_BLOCK_INETD_BUSY,
 } svc_block_t;
 
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
@@ -96,6 +98,7 @@ typedef struct svc {
 
 	/* For inetd services */
 	inetd_t        inetd;
+	int            stdin;
 
 	/* Identity */
 	char	       username[MAX_USER_LEN];
@@ -171,8 +174,9 @@ static inline int svc_is_changed(svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated(svc_t *svc) { return svc &&  1 == svc->dirty; }
 const char       *svc_dirtystr  (svc_t *svc);
 
-static inline int svc_is_inetd  (svc_t *svc) { return svc && SVC_TYPE_INETD   == svc->type; }
-static inline int svc_is_daemon (svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
+static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
+static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
+static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
 
 #endif	/* FINIT_SVC_H_ */
 

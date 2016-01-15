@@ -426,11 +426,20 @@ char *svc_status(svc_t *svc)
 			return "crashing";
 		case SVC_BLOCK_USER:
 			return "blocked";
+		case SVC_BLOCK_INETD_BUSY:
+			return "busy";
 		}
 	case SVC_DONE_STATE:
 		return "done";
 	case SVC_STOPPING_STATE:
-		return "stopping";
+		switch (svc->type) {
+		case SVC_TYPE_INETD_CONN:
+		case SVC_TYPE_RUN:
+		case SVC_TYPE_TASK:
+			return "active";
+		default:
+			return "stopping";
+		}
 	case SVC_WAITING_STATE:
 		return "waiting";
 	case SVC_READY_STATE:

@@ -30,6 +30,7 @@
 #include "queue.h"
 #include "libuev/uev.h"
 
+typedef struct svc svc_t;
 
 typedef struct inetd_filter {
 	TAILQ_ENTRY(inetd_filter) link;
@@ -39,28 +40,25 @@ typedef struct inetd_filter {
 
 typedef struct {
 	uev_t  watcher;
-	void  *arg;		/* svc_t pointer for the socket callback */
+	svc_t *svc;		/* svc_t pointer for the socket callback */
 
 	int    type;		/* Socket type: SOCK_STREAM/SOCK_DGRAM    */
 	int    std;		/* Standard proto/port from /etc/services */
 	int    proto;
 	int    port;
 	int    forking;
+	int    next_id;		/* Next child job's id */
 	char   name[10];
 	int  (*cmd)(int type);	/* internal inetd service, like 'time' */
 
 	TAILQ_HEAD(, inetd_filter) filters;
 } inetd_t;
 
-int  inetd_dgram_peek  (int sd, char *ifname);
-int  inetd_stream_peek (int sd, char *ifname);
-
-void inetd_start       (inetd_t *inetd);
+int  inetd_start       (inetd_t *inetd);
 void inetd_stop        (inetd_t *inetd);
 
-int  inetd_respawn     (pid_t pid);
-
-int  inetd_new         (inetd_t *inetd, char *name, char *service, char *proto, int forking, void *arg);
+int  inetd_new         (inetd_t *inetd, char *name, char *service, char *proto,
+			int forking, svc_t *svc);
 int  inetd_del         (inetd_t *inetd);
 
 int  inetd_match       (inetd_t *inetd, char *service, char *proto);
