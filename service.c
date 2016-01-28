@@ -750,11 +750,17 @@ void service_monitor(pid_t lost)
 	service_teardown_finish();
 }
 
+static void svc_set_state(svc_t *svc, svc_state_t new)
+{
+	svc_state_t *state = (svc_state_t *)&svc->state;
+
+	*state = new;
+}
+
 void service_step(svc_t *svc)
 {
 	/* These fields are marked as const in svc_t, only this
 	 * function is allowed to modify them */
-	svc_state_t *state = (svc_state_t *)&svc->state;
 	int *restart_counter = (int *)&svc->restart_counter;
 
 	svc_cmd_t enabled;
@@ -763,18 +769,18 @@ void service_step(svc_t *svc)
 	int err;
 
 restart:
-	old_state = *state;
+	old_state = svc->state;
 	enabled = service_enabled(svc);
 
 	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc->cmd, svc->pid,
 	   svc_status(svc), enabled? "en" : "dis", svc_dirtystr(svc),
 	   condstr(cond_get_agg(svc->cond)));
 
-	switch(*state) {
+	switch(svc->state) {
 	case SVC_HALTED_STATE:
 		*restart_counter = 0;
 		if (enabled)
-			*state = SVC_READY_STATE;
+			svc_set_state(svc, SVC_READY_STATE);
 		break;
 
 	case SVC_DONE_STATE:
@@ -788,7 +794,7 @@ restart:
 		}
 
 		if (svc_is_changed(svc))
-			*state = SVC_HALTED_STATE;
+			svc_set_state(svc, SVC_HALTED_STATE);
 		break;
 
 	case SVC_STOPPING_STATE:
@@ -796,12 +802,12 @@ restart:
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
 			case SVC_TYPE_INETD:
-				*state = SVC_HALTED_STATE;
+				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
-				*state = SVC_DONE_STATE;
+				svc_set_state(svc, SVC_DONE_STATE);
 				break;
 			default:
 				_e("unknown service type %d", svc->type);
@@ -811,13 +817,13 @@ restart:
 
 	case SVC_READY_STATE:
 		if (!enabled) {
-			*state = SVC_HALTED_STATE;
+			svc_set_state(svc, SVC_HALTED_STATE);
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
 			if (*restart_counter >= RESPAWN_MAX) {
 				_e("%s keeps crashing, not restarting",
 				   svc->desc ? : svc->cmd);
 				svc->block = SVC_BLOCK_CRASHING;
-				*state = SVC_HALTED_STATE;
+				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 			}
 
@@ -834,12 +840,12 @@ restart:
 			switch (svc->type) {
 			case SVC_TYPE_INETD:
 			case SVC_TYPE_SERVICE:
-				*state = SVC_RUNNING_STATE;
+				svc_set_state(svc, SVC_RUNNING_STATE);
 				break;
 			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
-				*state = SVC_STOPPING_STATE;
+				svc_set_state(svc, SVC_STOPPING_STATE);
 				break;
 			default:
 				_e("unknown service type %d", svc->type);
@@ -850,7 +856,7 @@ restart:
 	case SVC_RUNNING_STATE:
 		if (!enabled) {
 			service_stop(svc);
-			*state = SVC_STOPPING_STATE;
+			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 		}
 
@@ -858,7 +864,7 @@ restart:
 			(*restart_counter)++;
 			/* TODO: There should be an async wait here
 			 * before moving back to READY */
-			*state = SVC_READY_STATE;
+			svc_set_state(svc, SVC_READY_STATE);
 			break;
 		}
 
@@ -867,13 +873,13 @@ restart:
 		if (cond == COND_OFF ||
 		    (!svc->sighup && (cond < COND_ON || svc_is_changed(svc)))) {
 			service_stop(svc);
-			*state = SVC_STOPPING_STATE;
+			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 		}
 
 		if (cond == COND_FLUX) {
 			kill(svc->pid, SIGSTOP);
-			*state = SVC_WAITING_STATE;
+			svc_set_state(svc, SVC_WAITING_STATE);
 			break;
 		}
 
@@ -882,7 +888,7 @@ restart:
 				service_restart(svc);
 			} else {
 				service_stop(svc);
-				*state = SVC_STOPPING_STATE;
+				svc_set_state(svc, SVC_STOPPING_STATE);
 			}
 			svc_mark_clean(svc);
 		}
@@ -893,13 +899,13 @@ restart:
 		if (!enabled) {
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
-			*state = SVC_STOPPING_STATE;
+			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 		}
 
 		if (!svc->pid) {
 			(*restart_counter)++;
-			*state = SVC_READY_STATE;
+			svc_set_state(svc, SVC_READY_STATE);
 			break;
 		}
 
@@ -907,13 +913,13 @@ restart:
 		switch (cond) {
 		case COND_ON:
 			kill(svc->pid, SIGCONT);
-			*state = SVC_RUNNING_STATE;
+			svc_set_state(svc, SVC_RUNNING_STATE);
 			break;
 
 		case COND_OFF:
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
-			*state = SVC_STOPPING_STATE;
+			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 
 		case COND_FLUX:
@@ -922,7 +928,7 @@ restart:
 		break;
 	}
 
-	if (*state != old_state) {
+	if (svc->state != old_state) {
 		_d("%20s(%4d): -> %8s", svc->cmd, svc->pid, svc_status(svc));
 		goto restart;
 	}
