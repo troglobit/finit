@@ -622,9 +622,6 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		}
 	}
 
-	/* New, recently modified or unchanged ... used on reload. */
-	svc_check_dirty(svc, mtime);
-
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
 
@@ -658,8 +655,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	svc->runlevels = conf_parse_runlevels(runlevels);
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
-	if (type == SVC_TYPE_SERVICE)
-		conf_parse_cond(svc, cond);
+	conf_parse_cond(svc, cond);
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
@@ -677,18 +673,20 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	inetd_setup:
 		if (!ifaces) {
 			_d("No specific iface listed for %s, allowing ANY.", service);
-			return inetd_allow(&svc->inetd, NULL);
-		}
-
-		for (iface = strtok(ifaces, ","); iface; iface = strtok(NULL, ",")) {
-			if (iface[0] == '!')
-				inetd_deny(&svc->inetd, &iface[1]);
-			else
-				inetd_allow(&svc->inetd, iface);
+			inetd_allow(&svc->inetd, NULL);
+		} else {
+			for (iface = strtok(ifaces, ","); iface; iface = strtok(NULL, ",")) {
+				if (iface[0] == '!')
+					inetd_deny(&svc->inetd, &iface[1]);
+				else
+					inetd_allow(&svc->inetd, iface);
+			}
 		}
 	}
 #endif
 
+	/* New, recently modified or unchanged ... used on reload. */
+	svc_check_dirty(svc, mtime);
 	return 0;
 }
 
