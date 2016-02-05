@@ -15,7 +15,7 @@ struct context {
 
 static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 {
-	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1)];
+	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
 	static char cond[MAX_ARG_LEN];
 
 	struct inotify_event *ev;
@@ -23,11 +23,12 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 	char *basename;
 	svc_t *svc;
 
-	sz = read(fd, ev_buf, sizeof(ev_buf));
+	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
 		_pe("invalid inotify event\n");
 		return;
 	}
+	ev_buf[sz] = 0;
 
 	for (ev = (void *)ev_buf; sz > (ssize_t)sizeof(*ev);
 	     len = sizeof(*ev) + ev->len, ev = (void *)ev + len, sz -= len) {
