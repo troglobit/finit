@@ -28,6 +28,7 @@
 #include <sys/un.h>
 
 #include "finit.h"
+#include "cond.h"
 #include "helpers.h"
 #include "service.h"
 
@@ -107,25 +108,77 @@ static int do_svc(int cmd, char *arg)
 		.cmd = cmd,
 	};
 
-	if (!arg || !arg[0]) {
-		if (cmd == INIT_CMD_RELOAD_SVC) {
-			rq.cmd = INIT_CMD_RELOAD;
-			goto exit;
-		}
-
-		return 1;
-	}
 	strlcpy(rq.data, arg, sizeof(rq.data));
 
-exit:
 	return do_send(&rq, sizeof(rq));
 }
 
 static int do_emit   (char *arg) { return do_svc(INIT_CMD_EMIT,        arg); }
+static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD,      arg); }
 static int do_start  (char *arg) { return do_svc(INIT_CMD_START_SVC,   arg); }
 static int do_stop   (char *arg) { return do_svc(INIT_CMD_STOP_SVC,    arg); }
-static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD_SVC,  arg); }
 static int do_restart(char *arg) { return do_svc(INIT_CMD_RESTART_SVC, arg); }
+
+static void show_cond_one(const char *_conds)
+{
+	static char conds[MAX_ARG_LEN];
+	char *cond;
+
+	strlcpy(conds, _conds, sizeof(conds));
+
+	putchar('<');
+
+	for (cond = strtok(conds, ","); cond; cond = strtok(NULL, ",")) {
+		if (cond != conds)
+			putchar(',');
+
+		switch (cond_get(cond)) {
+		case COND_ON:
+			printf("+%s", cond);
+			break;
+		case COND_FLUX:
+			printf("\e[1m~%s\e[0m", cond);
+			break;
+		case COND_OFF:
+			printf("\e[1m-%s\e[0m", cond);
+			break;
+		}
+	}
+
+	putchar('>');
+}
+
+static void show_cond(void)
+{
+	enum cond_state cond;
+	svc_t *svc;
+
+	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
+	printf("====================================================================================\n");
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!svc->cond[0])
+			continue;
+
+		cond = cond_get_agg(svc->cond);
+
+		printf("%-6d  %-20.20s  ", svc->pid, svc->cmd);
+
+		if (cond == COND_ON)
+			printf("%-6.6s  ", condstr(cond));
+		else
+			printf("\e[1m%-6.6s\e[0m  ", condstr(cond));
+
+		show_cond_one(svc->cond);
+		putchar('\n');
+	}
+}
+
+static int do_cond(char *arg)
+{
+	show_cond();
+	return 0;
+}
 
 static int show_version(char *UNUSED(arg))
 {
@@ -181,7 +234,12 @@ static int show_status(char *arg)
 		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
-		printf("%-5s  %7s  %-6d  ", jobid, svc_status(svc), svc->pid);
+		printf("%-5s  %7s  ", jobid, svc_status(svc));
+		if (svc_is_inetd(svc))
+			printf("inetd   ");
+		else
+			printf("%-6d  ", svc->pid);
+
 		lvls = runlevel_string(svc->runlevels);
 		if (strchr(lvls, '\e'))
 			printf("%-18.18s  ", lvls);
@@ -250,12 +308,10 @@ static int usage(int rc)
 		"  reload                    Reload *.conf in /etc/finit.d/ and activate changes\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status | show             Show status of services\n"
+		"  cond     show             Show condition status\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
-		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
-		"  status   <JOB|NAME>[:ID]  Show status of a service by job# or name\n"
-		"  show     <JOB|NAME>[:ID]  Alias to 'status <JOB|NAME>[:ID]'\n"
 		"  version                   Show Finit version\n\n", __progname);
 
 	return rc;
@@ -271,6 +327,7 @@ int main(int argc, char *argv[])
 		{ "runlevel", do_runlevel  },
 		{ "status",   show_status  },
 		{ "show",     show_status  }, /* Convenience alias */
+		{ "cond",     do_cond      },
 		{ "start",    do_start     },
 		{ "stop",     do_stop      },
 		{ "restart",  do_restart   },

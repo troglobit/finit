@@ -352,17 +352,27 @@ void svc_mark_dynamic(void)
 	svc_t *svc = svc_dynamic_iterator(1);
 
 	while (svc) {
-		svc->dirty = -1;
+		*((int *)&svc->dirty) = -1;
 		svc = svc_dynamic_iterator(0);
 	}
+}
+
+void svc_mark_dirty(svc_t *svc)
+{
+	*((int *)&svc->dirty) = 1;
+}
+
+void svc_mark_clean(svc_t *svc)
+{
+	*((int *)&svc->dirty) = 0;
 }
 
 void svc_check_dirty(svc_t *svc, time_t mtime)
 {
 	if (svc->mtime != mtime)
-		svc->dirty = 1;
+		svc_mark_dirty(svc);
 	else
-		svc->dirty = 0;
+		svc_mark_clean(svc);
 	svc->mtime = mtime;
 }
 
@@ -381,7 +391,6 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 		if (svc->dirty == -1 && cb)
 			cb(svc);
 
-		svc->dirty = 0;
 		svc = svc_dynamic_iterator(0);
 	}
 }
@@ -406,36 +415,53 @@ int svc_clean_bootstrap(svc_t *svc)
 
 char *svc_status(svc_t *svc)
 {
-	if (!svc_in_runlevel(svc, runlevel))
-		return "halted";
-
 	switch (svc->state) {
+	case SVC_HALTED_STATE:
+		switch (svc->block) {
+		case SVC_BLOCK_NONE:
+			return "halted";
+		case SVC_BLOCK_MISSING:
+			return "missing";
+		case SVC_BLOCK_CRASHING:
+			return "crashing";
+		case SVC_BLOCK_USER:
+			return "blocked";
+		case SVC_BLOCK_INETD_BUSY:
+			return "busy";
+		}
+	case SVC_DONE_STATE:
+		return "done";
+	case SVC_STOPPING_STATE:
+		switch (svc->type) {
+		case SVC_TYPE_INETD_CONN:
+		case SVC_TYPE_RUN:
+		case SVC_TYPE_TASK:
+			return "active";
+		default:
+			return "stopping";
+		}
 	case SVC_WAITING_STATE:
 		return "waiting";
-
-	case SVC_PAUSED_STATE:
-		return "stopped";
-
-	case SVC_CONDHALT_STATE:
-		return "nocond";
-
-	case SVC_RESTART_STATE:
-		return "restart";
-
-	case SVC_RELOAD_STATE:
-		return "reload";
-
+	case SVC_READY_STATE:
+		return "ready";
 	case SVC_RUNNING_STATE:
-		if (svc->pid)
-			return "running";
-		/* Fall through */
+		return "running";
 
-	case SVC_HALTED_STATE:
 	default:
-		break;
+		return "UNKNOWN";
 	}
+}
 
-	return "halted";
+const char *svc_dirtystr(svc_t *svc)
+{
+	if (svc_is_removed(svc))
+		return "removed";
+	else if (svc_is_updated(svc))
+		return "updated";
+	else if (svc_is_changed(svc))
+		return "UNKNOWN";
+	else
+		return "clean";
 }
 
 /* Same base service, return unique ID */

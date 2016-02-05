@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "finit.h"
+#include "cond.h"
 #include "conf.h"
 #include "helpers.h"
 #include "plugin.h"
@@ -46,7 +47,7 @@ uev_t api_watcher;
 /* Allowed characters in job/id/name */
 static int isallowed(int ch)
 {
-	return isalnum(ch) || isspace(ch) || ch == ':';
+	return isprint(ch);
 }
 
 /* Sanitize user input, make sure to NUL terminate. */
@@ -113,14 +114,29 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 	return result;
 }
 
-static int service_pause(svc_t *svc)
+static int service_block(svc_t *svc)
 {
-	return service_stop(svc, SVC_PAUSED_STATE);
+	svc->block = SVC_BLOCK_USER;
+	service_step(svc);
+	return 0;
 }
 
-static int do_start  (char *buf, size_t len) { return call(service_start,   buf, len); }
-static int do_pause  (char *buf, size_t len) { return call(service_pause,   buf, len); }
-static int do_reload (char *buf, size_t len) { return call(service_reload,  buf, len); }
+static int service_unblock(svc_t *svc)
+{
+	svc->block = SVC_BLOCK_NONE;
+	service_step(svc);
+	return 0;
+}
+
+static int service_restart(svc_t *svc)
+{
+	svc_mark_dirty(svc);
+	service_step(svc);
+	return 0;
+}
+
+static int do_start  (char *buf, size_t len) { return call(service_unblock, buf, len); }
+static int do_pause  (char *buf, size_t len) { return call(service_block,   buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
 #ifndef INETD_DISABLED
@@ -155,9 +171,7 @@ typedef struct {
 } ev_t;
 
 ev_t ev_list[] = {
-	{ "RELOAD", conf_reload_dynamic   },
-	{ "STOP",   service_stop_dynamic  },
-	{ "START",  service_start_dynamic },
+	{ "RELOAD", service_reload_dynamic   },
 	{ NULL, NULL }
 };
 
@@ -175,9 +189,13 @@ static int do_handle_event(char *event)
 		}
 	}
 
-	/* XXX: iterate over all services' events before failing. */
-
-	return -1;
+	if (event[0] == '-')
+		cond_clear(&event[1]);
+	else if (event[0] == '+')
+		cond_set(&event[1]);
+	else
+		cond_set(event);
+	return 0;
 }
 
 static int do_handle_emit(char *buf, size_t len)
@@ -282,10 +300,6 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 		case INIT_CMD_STOP_SVC:
 			result = do_pause(rq.data, sizeof(rq.data));
-			break;
-
-		case INIT_CMD_RELOAD_SVC:
-			result = do_reload(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:

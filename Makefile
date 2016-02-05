@@ -34,10 +34,10 @@ ARCHTOOL    = `which git-archive-all`
 ARCHIVE     = $(PKG).tar
 ARCHIVEZ    = ../$(ARCHIVE).xz
 EXEC        = finit initctl reboot
-HEADERS     = finit.h plugin.h svc.h inetd.h helpers.h queue.h
+HEADERS     = finit.h plugin.h svc.h inetd.h helpers.h queue.h cond.h
 DISTFILES   = LICENSE README ChangeLog finit.conf services
 OBJS        = finit.o api.o client.o conf.o exec.o helpers.o pid.o sig.o \
-	      svc.o service.o plugin.o tty.o inetd.o event.o
+	      svc.o service.o plugin.o tty.o inetd.o cond.o cond-w.o
 DEPLIBS     =
 TOPDIR      = $(shell pwd)
 -include config.mk
@@ -70,7 +70,7 @@ config.h: configure
 
 finit: $(OBJS) $(DEPLIBS)
 
-initctl: initctl.o svc.o helpers.o $(DEPLIBS)
+initctl: initctl.o svc.o helpers.o cond.o $(DEPLIBS)
 
 reboot: reboot.o $(DEPLIBS)
 

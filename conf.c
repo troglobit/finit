@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "finit.h"
+#include "cond.h"
 #include "service.h"
 #include "tty.h"
 #include "libite/lite.h"
@@ -113,7 +114,7 @@ int conf_parse_runlevels(char *runlevels)
 	return bitmask;
 }
 
-void conf_parse_events(svc_t *svc, char *events)
+void conf_parse_cond(svc_t *svc, char *cond)
 {
 	size_t i = 0;
 	char *ptr;
@@ -126,11 +127,11 @@ void conf_parse_events(svc_t *svc, char *events)
 	/* By default we assume UNIX daemons support SIGHUP */
 	svc->sighup = 1;
 
-	if (!events)
+	if (!cond)
 		return;
 
 	/* First character must be '!' if SIGHUP is not supported. */
-	ptr = events;
+	ptr = cond;
 	if (ptr[i] == '!') {
 		svc->sighup = 0;
 		ptr++;
@@ -140,13 +141,12 @@ void conf_parse_events(svc_t *svc, char *events)
 		i++;
 	ptr[i] = 0;
 
-	if (i >= sizeof(svc->events)) {
+	if (i >= sizeof(svc->cond)) {
 		FLOG_WARN("Too long event list in declaration of %s: %s", svc->cmd, ptr);
 		return;
 	}
 
-	svc->state = SVC_CONDHALT_STATE;
-	strlcpy(svc->events, ptr, sizeof(svc->events));
+	strlcpy(svc->cond, ptr, sizeof(svc->cond));
 }
 
 static void parse_static(char *line)

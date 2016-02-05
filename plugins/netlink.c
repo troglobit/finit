@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <net/if.h>		/* IFNAMSIZ */
 #include <sys/socket.h>
@@ -25,7 +26,7 @@
 #include <unistd.h>
 
 #include "../finit.h"
-#include "../event.h"
+#include "../cond.h"
 #include "../helpers.h"
 #include "../plugin.h"
 
@@ -86,13 +87,10 @@ static void nl_route(struct nlmsghdr *nlmsg)
 	}
 
 	if ((!dst && !mask) && (gw || idx)) {
-		char msg[MAX_ARG_LEN];
-
 		if (nlmsg->nlmsg_type == RTM_DELROUTE)
-			snprintf(msg, sizeof(msg), "GW:DN");
+			cond_clear("net/gw");
 		else
-			snprintf(msg, sizeof(msg), "GW:UP");
-		event_dispatch(msg);
+			cond_set("net/gw");
 	}
 }
 
@@ -123,19 +121,24 @@ static void nl_link(struct nlmsghdr *nlmsg)
 				 * New interface has appearad, or interface flags has changed.
 				 * Check ifi_flags here to see if the interface is UP/DOWN
 				 */
-				if (i->ifi_change & IFF_UP)
-					snprintf(msg, sizeof(msg), "IF%s:%s",
-						 (i->ifi_flags & IFF_UP) ? "UP" : "DN",
-						 ifname);
-				else
-					snprintf(msg, sizeof(msg), "IFADD:%s", ifname);
-				event_dispatch(msg);
+				if (i->ifi_change & IFF_UP) {
+					snprintf(msg, sizeof(msg), "net/%s/up", ifname);
+
+					if (i->ifi_flags & IFF_UP)
+						cond_set(msg);
+					else
+						cond_clear(msg);
+
+				} else {
+					snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+					cond_set(msg);
+				}
 				break;
 
 			case RTM_DELLINK:
 				/* NOTE: Interface has dissapeared, not link down ... */
-				snprintf(msg, sizeof(msg), "IFDEL:%s", ifname);
-				event_dispatch(msg);
+				snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+				cond_clear(msg);
 				break;
 
 			case RTM_NEWADDR:

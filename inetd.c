@@ -43,75 +43,8 @@
 				    #opt, inetd->name);			\
 	} while (0);
 
-/* Socket callback, looks up correct svc and starts it as an inetd service */
-static void socket_cb(uev_t *w, void *arg, int UNUSED(events))
-{
-	svc_t *svc = (svc_t *)arg;
-
-	if (SVC_START != service_enabled(svc, -1, NULL))
-		return;
-
-	if (!svc->inetd.forking)
-		uev_io_stop(w);
-
-	service_start(svc);
-}
-
-/* Launch Inet socket for service.
- * TODO: Add filtering ALLOW/DENY per interface.
- */
-static void spawn_socket(inetd_t *inetd)
-{
-	int sd;
-	socklen_t len = sizeof(struct sockaddr);
-	struct sockaddr_in s;
-
-	if (!inetd->type) {
-		FLOG_ERROR("Skipping invalid inetd service %s", inetd->name);
-		return;
-	}
-
-	_d("Spawning server socket for inetd %s ...", inetd->name);
-	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK | SOCK_CLOEXEC, inetd->proto);
-	if (-1 == sd) {
-		FLOG_PERROR("Failed opening inetd socket type %d proto %d", inetd->type, inetd->proto);
-		return;
-	}
-
-	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEADDR);
-#ifdef SO_REUSEPORT
-	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEPORT);
-#endif
-
-	memset(&s, 0, sizeof(s));
-	s.sin_family      = AF_INET;
-	s.sin_addr.s_addr = INADDR_ANY;
-	s.sin_port        = htons(inetd->port);
-	if (bind(sd, (struct sockaddr *)&s, len) < 0) {
-		FLOG_PERROR("Failed binding to port %d, maybe another %s server is already running",
-			    inetd->port, inetd->name);
-		close(sd);
-		return;
-	}
-
-	if (inetd->port) {
-		if (inetd->type == SOCK_STREAM) {
-			if (-1 == listen(sd, 20)) {
-				FLOG_PERROR("Failed listening to inetd service %s", inetd->name);
-				close(sd);
-				return;
-			}
-		} else {           /* SOCK_DGRAM */
-			/* Set extra sockopt to get ifindex from inbound packets */
-			ENABLE_SOCKOPT(sd, SOL_IP, IP_PKTINFO);
-		}
-	}
-
-	uev_io_init(ctx, &inetd->watcher, socket_cb, inetd->arg, sd, UEV_READ);
-}
-
 /* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
-int inetd_dgram_peek(int sd, char *ifname)
+static int inetd_dgram_peek(int sd, char *ifname)
 {
 	char cmbuf[0x100];
 	struct msghdr msgh;
@@ -139,7 +72,7 @@ int inetd_dgram_peek(int sd, char *ifname)
 }
 
 /* Peek into SOCK_STREAM on accepted client socket to figure out inbound interface */
-int inetd_stream_peek(int sd, char *ifname)
+static int inetd_stream_peek(int sd, char *ifname)
 {
 	struct ifaddrs *ifaddr, *ifa;
 	struct sockaddr_in sin;
@@ -173,46 +106,146 @@ int inetd_stream_peek(int sd, char *ifname)
 	return 0;
 }
 
-/* Inetd monitor, called by service_monitor() */
-int inetd_respawn(pid_t pid)
+static int get_stdin(svc_t *svc)
 {
-	svc_t *svc = svc_find_by_pid(pid);
+	char ifname[IF_NAMESIZE] = "UNKNOWN";
+	int stdin = svc->inetd.watcher.fd;
 
-	if (svc_is_inetd(svc)) {
-		inetd_t *inetd = &svc->inetd;
+	if (svc->inetd.type == SOCK_STREAM) {
+		/* Open new client socket from server socket */
+		stdin = accept(stdin, NULL, NULL);
+		if (stdin < 0) {
+			FLOG_PERROR("Failed accepting inetd service %d/tcp", svc->inetd.port);
+			return -1;
+		}
 
-		svc->pid = 0;
+		_d("New client socket %d accepted for inetd service %d/tcp", stdin, svc->inetd.port);
 
-		if (svc_in_runlevel(svc, runlevel) && !inetd->forking)
-			uev_io_set(&inetd->watcher, inetd->watcher.fd, UEV_READ);
-
-		return 1;	/* It was us! */
+		inetd_stream_peek(stdin, ifname);
+	} else {           /* SOCK_DGRAM */
+		inetd_dgram_peek(stdin, ifname);
 	}
 
-	return 0;		/* Not an inetd service */
+	if (!inetd_is_allowed(&svc->inetd, ifname)) {
+		FLOG_INFO("Service %s on port %d not allowed from interface %s.",
+			  svc->inetd.name, svc->inetd.port, ifname);
+		if (svc->inetd.type == SOCK_STREAM)
+			close(stdin);
+
+		return -1;
+	}
+
+	return stdin;
 }
 
+/* Socket callback, looks up correct svc and starts it as an inetd service */
+static void socket_cb(uev_t *w, void *arg, int UNUSED(events))
+{
+	svc_t *svc = (svc_t *)arg, *task;
+	int stdin;
 
-void inetd_start(inetd_t *inetd)
+	stdin = get_stdin(svc);
+	if (stdin < 0) {
+		FLOG_ERROR("%s: Unable to accept incoming connection",
+			   svc->cmd);
+		return;
+	}
+
+	task = svc_new(svc->cmd, svc->inetd.next_id++, SVC_TYPE_INETD_CONN);
+	if (!task) {
+		FLOG_ERROR("%s: Unable to allocate service for inetd client",
+			   svc->cmd);
+		return;
+	}
+
+	/* Copy inherited attributes from inetd */
+	task->runlevels = svc->runlevels;
+	task->inetd     = svc->inetd;
+	memcpy(task->cond,     svc->cond,     sizeof(task->cond));
+	memcpy(task->username, svc->username, sizeof(task->username));
+	memcpy(task->group,    svc->group,    sizeof(task->group));
+	memcpy(task->args,     svc->args,     sizeof(task->args));
+	snprintf(task->desc, sizeof(task->desc), "%s Connection", svc->desc);
+
+	task->stdin = stdin;
+	service_step(task);
+
+	if (!svc->inetd.forking) {
+		svc->block = SVC_BLOCK_INETD_BUSY;
+		service_step(svc);
+	}
+}
+
+/* Launch Inet socket for service.
+ * TODO: Add filtering ALLOW/DENY per interface.
+ */
+static int spawn_socket(inetd_t *inetd)
+{
+	int sd;
+	socklen_t len = sizeof(struct sockaddr);
+	struct sockaddr_in s;
+
+	if (!inetd->type) {
+		FLOG_ERROR("Skipping invalid inetd service %s", inetd->name);
+		return -EINVAL;
+	}
+
+	_d("Spawning server socket for inetd %s ...", inetd->name);
+	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK | SOCK_CLOEXEC, inetd->proto);
+	if (-1 == sd) {
+		FLOG_PERROR("Failed opening inetd socket type %d proto %d", inetd->type, inetd->proto);
+		return -errno;
+	}
+
+	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEADDR);
+#ifdef SO_REUSEPORT
+	ENABLE_SOCKOPT(sd, SOL_SOCKET, SO_REUSEPORT);
+#endif
+
+	memset(&s, 0, sizeof(s));
+	s.sin_family      = AF_INET;
+	s.sin_addr.s_addr = INADDR_ANY;
+	s.sin_port        = htons(inetd->port);
+	if (bind(sd, (struct sockaddr *)&s, len) < 0) {
+		FLOG_PERROR("Failed binding to port %d, maybe another %s server is already running",
+			    inetd->port, inetd->name);
+		close(sd);
+		return -errno;
+	}
+
+	if (inetd->port) {
+		if (inetd->type == SOCK_STREAM) {
+			if (-1 == listen(sd, 20)) {
+				FLOG_PERROR("Failed listening to inetd service %s", inetd->name);
+				close(sd);
+				return -errno;
+			}
+		} else {           /* SOCK_DGRAM */
+			/* Set extra sockopt to get ifindex from inbound packets */
+			ENABLE_SOCKOPT(sd, SOL_IP, IP_PKTINFO);
+		}
+	}
+
+	uev_io_init(ctx, &inetd->watcher, socket_cb, inetd->svc, sd, UEV_READ);
+	return 0;
+}
+
+int inetd_start(inetd_t *inetd)
 {
 	if (inetd->watcher.fd == -1)
-		spawn_socket(inetd);
+		return spawn_socket(inetd);
+
+	return -EEXIST;
 }
 
 void inetd_stop(inetd_t *inetd)
 {
-	svc_t *svc = (svc_t *)inetd->arg;
-
 	if (inetd->watcher.fd != -1) {
 		uev_io_stop(&inetd->watcher);
 		shutdown(inetd->watcher.fd, SHUT_RDWR);
 		close(inetd->watcher.fd);
 		inetd->watcher.fd = -1;
 	}
-
-	/* Stop any running service, not allowed anymore. */
-	if (svc->pid)
-		service_stop(svc, SVC_WAITING_STATE);
 }
 
 static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
@@ -497,7 +530,7 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
  * If equivalent service exists already service_register() will instead call
  * inetd_allow().
  */
-int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forking, void *arg)
+int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forking, svc_t *svc)
 {
 	int result;
 	struct servent  *sv = NULL;
@@ -515,6 +548,7 @@ int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forkin
 	inetd->port    = ntohs(sv->s_port);
 	inetd->proto   = pv->p_proto;
 	inetd->forking = !!forking;
+	inetd->next_id = 2;
 	if (!name)
 		name = service;
 	strlcpy(inetd->name, name, sizeof(inetd->name));
@@ -526,11 +560,18 @@ int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forkin
 	else
 		inetd->type = SOCK_DGRAM;
 
+	if (inetd->type == SOCK_DGRAM && inetd->forking) {
+		FLOG_WARN("%s: 'nowait' is not applicable on UDP services, ignoring",
+			  svc->cmd);
+
+		inetd->forking = 0;
+	}
+
 	/* Reset descriptor, used internally */
 	inetd->watcher.fd = -1;
 
 	/* Setup socket callback argument */
-	inetd->arg = arg;
+	inetd->svc = svc;
 
 	_d("New service %s (default port %d proto %s:%d)", name, inetd->port, sv->s_proto, pv->p_proto);
 
