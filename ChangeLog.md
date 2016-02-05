@@ -17,10 +17,10 @@ Bug fix release.
 * Update section mentioning BusyBox getty
 * Update debugging documentation
 * Allow debug to override terse mode
-* Revert confusing change in service state introduced in [v2.3][].
-  As of v2.4 services are listed as "halted" and "stopped", when
-  they have been halted due to a runlevel changed or stopped by
-  the user, respectively.
+* Revert confusing change in service state introduced in [v2.3][2.3].
+  As of [v2.4][2.4] services are listed as "halted" and "stopped", when
+  they have been halted due to a runlevel changed or stopped by the
+  user, respectively.
 
 ### Fixes
 
