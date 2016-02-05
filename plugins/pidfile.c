@@ -36,6 +36,9 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 			continue;
 
 		basename = strtok(ev->name, ".");
+		if (!basename)
+			continue;
+
 		svc = svc_find_by_nameid(basename, 1);
 		if (!svc)
 			continue;
