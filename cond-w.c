@@ -22,7 +22,10 @@ int cond_set_path(const char *path, enum cond_state new)
 			_e("Invalid path '%s' for condition", path);
 			return 0;
 		}
-		makepath(dir);
+		if (makepath(dir)) {
+			_pe("Failed creating dir '%s' for condition '%s'", dir, path);
+			return 0;
+		}
 		touch(path);
 		utime(path, NULL);
 		break;
