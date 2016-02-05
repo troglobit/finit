@@ -380,8 +380,7 @@ if [ x"$libite" != x"" ]; then
         echo "LDLIBS     += -l:libite.so.2"                       >> config.mk
 else
         echo "LDFLAGS    += -L\$(TOPDIR)/libite"                  >> config.mk
-        echo "LDLIBS     += -lite"                                >> config.mk
-        echo "DEPLIBS    += libite/libite.a"                      >> config.mk
+        echo "DEPLIBS    += libite/.libs/libite.a"                >> config.mk
 fi
 
 if [ x"$libuev" != x"" ]; then
@@ -391,8 +390,7 @@ if [ x"$libuev" != x"" ]; then
         echo "LDLIBS     += -l:libuev.so.1"                       >> config.mk
 else
         echo "LDFLAGS    += -L\$(TOPDIR)/libuev"                  >> config.mk
-        echo "LDLIBS     += -luev"                                >> config.mk
-        echo "DEPLIBS    += libuev/libuev.a"                      >> config.mk
+        echo "DEPLIBS    += libuev/.libs/libuev.a"                >> config.mk
 fi
 
 echo                                                              >> config.mk

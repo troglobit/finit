@@ -60,7 +60,7 @@ all: config.h $(EXEC)
 	+$(MAKE) -C plugins $@
 
 $(DEPLIBS): Makefile
-	+$(MAKE) -C `dirname $@` all
+	+$(MAKE) -C `dirname \`dirname $@\`` all
 
 $(OBJS): Makefile
 
