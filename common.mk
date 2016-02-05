@@ -18,13 +18,13 @@ export libdir plugindir incdir ROOTDIR CPPFLAGS LDFLAGS LDLIBS STATIC
 
 # Override default implicit rules
 %.o: %.c
-	@printf "  CC      $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
+	@printf "  CC       $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c -MMD -MP -o $@ $<
 
 %: %.o
-	@printf "  LINK    $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
+	@printf "  LINK     $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
 	@$(CC) $(CFLAGS) $(LDFLAGS) -Wl,-Map,$@.map -o $@ $^ $(LDLIBS$(LDLIBS-$(@)))
 
 %.so: %.o
-	@printf "  PLUGIN  $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
+	@printf "  PLUGIN   $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
 	@$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
