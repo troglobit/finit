@@ -174,7 +174,7 @@ static void show_cond(void)
 	}
 }
 
-static int do_cond(char *arg)
+static int do_cond(char *UNUSED(arg))
 {
 	show_cond();
 	return 0;
