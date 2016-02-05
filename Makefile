@@ -147,7 +147,9 @@ clean:
 ifndef LIBITE
 	+$(MAKE) -C libite  $@
 endif
+ifndef LIBUEV
 	+$(MAKE) -C libuev  $@
+endif
 	-@$(RM) $(OBJS) $(DEPS) $(EXEC) 2>/dev/null
 
 distclean: clean
@@ -155,7 +157,9 @@ distclean: clean
 ifndef LIBITE
 	+$(MAKE) -C libite  $@
 endif
+ifndef LIBUEV
 	+$(MAKE) -C libuev  $@
+endif
 	-@$(RM) $(JUNK) config.mk config.h unittest *.o *.html 2>/dev/null
 
 check:

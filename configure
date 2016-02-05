@@ -456,6 +456,18 @@ if [ x"$libite" = x"" ]; then
     test -e Makefile && make distclean >/dev/null
     ./autogen.sh
     ./configure
+    cd -
+    set +e
+fi
+
+# Call configure in local libuev if --with-libuev is not selected
+if [ x"$libuev" = x"" ]; then
+    set -e
+    cd libuev
+    test -e Makefile && make distclean >/dev/null
+    ./autogen.sh
+    ./configure
+    cd -
     set +e
 fi
 
