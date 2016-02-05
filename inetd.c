@@ -139,7 +139,7 @@ static int get_stdin(svc_t *svc)
 }
 
 /* Socket callback, looks up correct svc and starts it as an inetd service */
-static void socket_cb(uev_t *w, void *arg, int UNUSED(events))
+static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 {
 	svc_t *svc = (svc_t *)arg, *task;
 	int stdin;
