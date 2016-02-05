@@ -867,30 +867,29 @@ restart:
 		}
 
 		cond = cond_get_agg(svc->cond);
-
-		if (cond == COND_OFF ||
-		    (!svc->sighup && (cond < COND_ON || svc_is_changed(svc)))) {
+		switch (cond) {
+		case COND_OFF:
 			service_stop(svc);
 			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
-		}
 
-		if (cond == COND_FLUX) {
+		case COND_FLUX:
 			kill(svc->pid, SIGSTOP);
 			svc_set_state(svc, SVC_WAITING_STATE);
 			break;
-		}
 
-		if (svc_is_changed(svc)) {
-			if (svc->sighup) {
-				service_restart(svc);
-			} else {
-				service_stop(svc);
-				svc_set_state(svc, SVC_STOPPING_STATE);
+		case COND_ON:
+			if (svc_is_changed(svc)) {
+				if (svc->sighup) {
+					service_restart(svc);
+				} else {
+					service_stop(svc);
+					svc_set_state(svc, SVC_STOPPING_STATE);
+				}
+				svc_mark_clean(svc);
 			}
-			svc_mark_clean(svc);
+			break;
 		}
-
 		break;
 
 	case SVC_WAITING_STATE:
