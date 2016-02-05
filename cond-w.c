@@ -9,22 +9,28 @@
 
 int cond_set_path(const char *path, enum cond_state new)
 {
-	static char dir[MAX_ARG_LEN];
-
+	char buf[MAX_ARG_LEN], *dir;
 	enum cond_state old;
 
 	old = cond_get_path(path);
 
 	switch (new) {
 	case COND_ON:
-		strlcpy(dir, path, sizeof(dir));
-		makepath(dirname(dir));
+		strlcpy(buf, path, sizeof(buf));
+		dir = dirname(buf);
+		if (!dir) {
+			_e("Invalid path '%s' for condition", path);
+			return 0;
+		}
+		makepath(dir);
 		touch(path);
 		utime(path, NULL);
 		break;
+
 	case COND_OFF:
 		unlink(path);
 		break;
+
 	default:
 		_e("Invalid condition state");
 		return 0;
