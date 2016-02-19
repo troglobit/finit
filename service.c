@@ -671,6 +671,8 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		}
 
 	inetd_setup:
+		inetd_flush(&svc->inetd);
+
 		if (!ifaces) {
 			_d("No specific iface listed for %s, allowing ANY.", service);
 			inetd_allow(&svc->inetd, NULL);

@@ -351,6 +351,18 @@ inetd_filter_t *inetd_filter_match(inetd_t *inetd, char *ifname)
 	return NULL;
 }
 
+int inetd_flush(inetd_t *inetd)
+{
+	inetd_filter_t *filter, *next;
+
+	TAILQ_FOREACH_SAFE(filter, &inetd->filters, link, next) {
+		TAILQ_REMOVE(&inetd->filters, filter, link);
+		free(filter);
+	}
+
+	return 0;
+}
+
 /* Poor man's tcpwrappers filtering */
 int inetd_allow(inetd_t *inetd, char *ifname)
 {
