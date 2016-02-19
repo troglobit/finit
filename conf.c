@@ -125,7 +125,8 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	}
 
 	/* By default we assume UNIX daemons support SIGHUP */
-	svc->sighup = 1;
+	if (svc_is_daemon(svc))
+		svc->sighup = 1;
 
 	if (!cond)
 		return;
