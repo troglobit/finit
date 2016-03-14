@@ -2,7 +2,7 @@
 # Defaults to GNU GCC and autotools: ./configure && make && make test
 language: c
 
-# We don't need to install packages, use dockerized build, quicker
+# Use docker for quicker builds, it now allows https://docs.travis-ci.com/user/apt/
 sudo: false
 
 # Test build with both GCC and Clang (LLVM)
@@ -11,6 +11,9 @@ compiler:
   - clang
 
 env:
+  apt:
+    packages:
+      - tree
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
@@ -28,5 +31,15 @@ addons:
 
 # Custom build script for the time being, no "make test" yet
 script:
+  - ./autogen.sh
   - ./configure
-  - make
+  - ./configure --prefix=
+  - make clean
+  - make -j5
+  - DESTDIR=~/tmp make install-strip
+  - tree ~/tmp
+  - ldd ~/tmp/sbin/finit
+  - size ~/tmp/sbin/finit
+  - size ~/tmp/sbin/initctl
+  - size ~/tmp/sbin/reboot
+  - ~/tmp/sbin/initctl -h
