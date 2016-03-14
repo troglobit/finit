@@ -144,12 +144,14 @@ static int service_start(svc_t *svc)
 			print_desc("", svc->desc);
 	}
 
+#ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
 		result = inetd_start(&svc->inetd);
 		if (verbose)
 			print_result(result);
 		return result;
 	}
+#endif
 
 	/* Block sigchild while forking.  */
 	sigemptyset(&nmask);
@@ -192,12 +194,15 @@ static int service_start(svc_t *svc)
 		args[i] = NULL;
 
 		/* Redirect inetd socket to stdin for connection */
+#ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
 			dup2(svc->stdin, STDIN_FILENO);
 			close(svc->stdin);
 			dup2(STDIN_FILENO, STDOUT_FILENO);
 			dup2(STDIN_FILENO, STDERR_FILENO);
-		} else if (debug) {
+		} else
+#endif
+		if (debug) {
 			int fd;
 			char buf[CMD_SIZE] = "";
 
@@ -225,6 +230,7 @@ static int service_start(svc_t *svc)
 		else
 			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
 
+#ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
 			if (svc->inetd.type == SOCK_STREAM) {
 				close(STDIN_FILENO);
@@ -232,13 +238,15 @@ static int service_start(svc_t *svc)
 				close(STDERR_FILENO);
 			}
 		}
-
+#endif
 		exit(status);
 	}
 	svc->pid = pid;
 
+#ifndef INETD_DISABLED
 	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
 			close(svc->stdin);
+#endif
 
 	if (SVC_TYPE_RUN == svc->type) {
 		result = WEXITSTATUS(complete(svc->cmd, pid));
@@ -265,6 +273,7 @@ static int service_stop(svc_t *svc)
 	if (!svc)
 		return 1;
 
+#ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
 		int do_print = runlevel != 1 && verbose &&
 			svc->block != SVC_BLOCK_INETD_BUSY;
@@ -278,6 +287,7 @@ static int service_stop(svc_t *svc)
 			print_result(0);
 		return 0;
 	}
+#endif
 
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->desc);
@@ -784,6 +794,7 @@ restart:
 		break;
 
 	case SVC_DONE_STATE:
+#ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
 			if (svc->inetd.svc->block == SVC_BLOCK_INETD_BUSY) {
 				svc->inetd.svc->block = 0;
@@ -792,7 +803,7 @@ restart:
 			service_unregister(svc);
 			return;
 		}
-
+#endif
 		if (svc_is_changed(svc))
 			svc_set_state(svc, SVC_HALTED_STATE);
 		break;

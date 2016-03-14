@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include "config.h"
 #include "finit.h"
 #include "cond.h"
 #include "helpers.h"
@@ -182,7 +183,7 @@ static int do_cond(char *UNUSED(arg))
 
 static int show_version(char *UNUSED(arg))
 {
-	puts("v" VERSION);
+	puts("v" PACKAGE_VERSION);
 	return 0;
 }
 

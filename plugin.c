@@ -27,6 +27,7 @@
 #include <poll.h>
 #include <string.h>
 
+#include "config.h"
 #include "finit.h"
 #include "private.h"
 #include "helpers.h"
