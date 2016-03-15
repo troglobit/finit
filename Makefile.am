@@ -6,13 +6,13 @@ if INETD
 finit_SOURCES      += inetd.c
 endif
 finit_CFLAGS       = -W -Wall -Wextra -std=gnu99
-finit_LDADD        = libite/libite.a libuev/libuev.la -ldl
+finit_LDADD        = libite/libite.la libuev/libuev.la -ldl
 if STATIC
 finit_LDADD       += plugins/libplug.la
 endif
-DEPENDENCIES       = libite/libite.a libuev/libuev.la
+DEPENDENCIES       = libite/libite.la libuev/libuev.la
 initctl_SOURCES    = initctl.c svc.c helpers.c cond.c
-initctl_LDADD      = libite/libite.a
+initctl_LDADD      = libite/libite.la
 reboot_SOURCES     = reboot.c
 SYMLINK            = telinit init
 DIST_SUBDIRS       = libite libuev
