@@ -247,7 +247,14 @@ static int show_status(char *arg)
 			printf("%-10.10s  ", lvls);
 
 		if (!verbose) {
-			printf("%-20s  %s\n", svc->cmd, svc->desc);
+			char *name = strrchr(svc->cmd, '/');
+
+			if (!name)
+				name = svc->cmd;
+			else
+				name++;
+
+			printf("%-20s  %s\n", name, svc->desc);
 			continue;
 		}
 
