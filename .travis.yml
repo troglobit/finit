@@ -11,15 +11,15 @@ compiler:
   - clang
 
 env:
-  apt:
-    packages:
-      - tree
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
    - secure: "eOiuHs02lG2Uv146K9dMqucGTWUJFEhpz1oAtwe+kPrRXsXWc20hYMO+DSpMgD05vSvNeQA6p7h7LdRFQ+/g/Obj27TsOE+RKkUvRAtdwzxnKVyii9C/nmML8cFw7rIA0VS8O9mAkVYeyDxNDupBp3e9DPCibhKPvqCvioTnyy4="
 
 addons:
+  apt:
+    packages:
+      - tree
   coverity_scan:
     project:
       name: "troglobit/finit"
