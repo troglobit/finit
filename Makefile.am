@@ -6,17 +6,17 @@ if INETD
 finit_SOURCES      += inetd.c
 endif
 finit_CFLAGS       = -W -Wall -Wextra -std=gnu99
-finit_LDADD        = libite/libite.la libuev/libuev.la -ldl
+finit_LDADD        = libite/.libs/libite.la libuev/.libs/libuev.la -ldl
 if STATIC
 finit_LDADD       += plugins/libplug.la
 endif
 DEPENDENCIES       = libite/libite.la libuev/libuev.la
 initctl_SOURCES    = initctl.c svc.c helpers.c cond.c
-initctl_LDADD      = libite/libite.la
+initctl_LDADD      = libite/.libs/libite.la
 reboot_SOURCES     = reboot.c
 SYMLINK            = telinit init
-DIST_SUBDIRS       = libite libuev
-SUBDIRS            = plugins
+#DIST_SUBDIRS       = libite libuev
+SUBDIRS            = libite libuev plugins
 doc_DATA           = README.md LICENSE finit.conf services
 EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf services
 AM_CPPFLAGS        = -U_FORTIFY_SOURCE
@@ -26,13 +26,15 @@ AM_CPPFLAGS       += -DFINIT_CONF=\"$(conf)\" -DFINIT_RCSD=\"$(rcsd)\" -DFINIT_F
 
 # Slightly ugly hacks to prevent the build system from installing
 # libuev/libite, which it does if we use the more plain SUBDIRS.
-$(DEPENDENCIES):
-	@$(MAKE) -C `dirname $@` all
-
-clean-local:
-	@-for dep in $(DEPENDENCIES); do			\
-		$(MAKE) -C `dirname $$dep` clean;		\
-	done
+#$(DEPENDENCIES):
+#	@$(MAKE) -C `dirname $@` all
+#
+#$(initctl_LDADD) $(finit_LDADD): $(DEPENDENCIES)
+#
+#clean-local:
+#	@-for dep in $(DEPENDENCIES); do			\
+#		$(MAKE) -C `dirname $$dep` clean;		\
+#	done
 
 # Hook in install to add finit --> telinit symlink(s)
 install-exec-hook:
