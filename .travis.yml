@@ -35,10 +35,10 @@ script:
   - ./configure --prefix=
   - make clean
   - make -j5
-  - DESTDIR=~/tmp make install-strip
-  - tree ~/tmp
-  - ldd ~/tmp/sbin/finit
-  - size ~/tmp/sbin/finit
-  - size ~/tmp/sbin/initctl
-  - size ~/tmp/sbin/reboot
-  - ~/tmp/sbin/initctl -h
+  - DESTDIR=/tmp make install-strip
+  - tree /tmp
+  - ldd /tmp/sbin/finit
+  - size /tmp/sbin/finit
+  - size /tmp/sbin/initctl
+  - size /tmp/sbin/reboot
+  - LD_LIBRARY_PATH=/tmp/lib /tmp/sbin/initctl -h
