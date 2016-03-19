@@ -32,7 +32,6 @@ addons:
 # Custom build script for the time being, no "make test" yet
 script:
   - ./autogen.sh
-  - ./configure
   - ./configure --prefix=
   - make clean
   - make -j5
