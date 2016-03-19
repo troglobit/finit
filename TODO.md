@@ -34,6 +34,8 @@ General
 * Add support for `/etc/sysctl.d`
 * Implement `initctl stop|start|restart|reload|status <SVC>` and
   `service <SVC> stop|start|restart|reload|status` on top
+* Add support for JSON output, or similar, from `initctl show`, e.g.
+  `initctl show --json`
 * Add PRE and POST hooks for when switching between runlevels
 * Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
 * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
