@@ -1,6 +1,6 @@
-/* Event aggregator, also serves as event cache, remembering GW and IFUP states
+/* Condition engine (read)
  *
- * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2015-2016  Tobias Waldekranz <tobias@waldekranz.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,6 +53,7 @@ const char *cond_path(const char *name)
 	static char file[MAX_ARG_LEN];
 
 	snprintf(file, sizeof(file), COND_PATH "/%s", name);
+
 	return file;
 }
 
@@ -77,10 +78,9 @@ enum cond_state cond_get(const char *name)
 
 enum cond_state cond_get_agg(const char *names)
 {
-	static char conds[MAX_ARG_LEN];
-
-	enum cond_state s = COND_ON;
 	char *cond;
+	enum cond_state s = COND_ON;
+	static char conds[MAX_ARG_LEN];
 
 	if (!names)
 		return COND_ON;
@@ -94,17 +94,17 @@ enum cond_state cond_get_agg(const char *names)
 
 int cond_affects(const char *name, const char *names)
 {
-	static char conds[MAX_ARG_LEN];
-
 	char *cond;
+	static char conds[MAX_ARG_LEN];
 
 	if (!name || !names)
 		return 0;
 
 	strlcpy(conds, names, sizeof(conds));
-	for (cond = strtok(conds, ","); cond; cond = strtok(NULL, ","))
+	for (cond = strtok(conds, ","); cond; cond = strtok(NULL, ",")) {
 		if (!strcmp(cond, name))
 			return 1;
+	}
 
 	return 0;
 }
