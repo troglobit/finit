@@ -352,7 +352,7 @@ static int service_restart(svc_t *svc)
  *
  * Second stage of dynamic reload. Called either directly from first
  * stage if no services had to be stopped, or later from
- * service_monitor once all stopped services have been collected.
+ * service_monitor() once all stopped services have been collected.
  */
 static void service_reload_dynamic_finish(void)
 {
@@ -391,7 +391,7 @@ void service_reload_dynamic(void)
 	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
 
 	/* Need to wait for any services to stop? If so, exit early
-	 * and perform second stage from service_monitor later. */
+	 * and perform second stage from service_monitor() later. */
 	if (!service_stop_is_done())
 		return;
 
@@ -404,7 +404,7 @@ void service_reload_dynamic(void)
  *
  * Second stage of runlevel change. Called either directly from first
  * stage if no services had to be stopped, or later from
- * service_monitor once all stopped services have been collected.
+ * service_monitor() once all stopped services have been collected.
  */
 static void service_runlevel_finish(void)
 {
@@ -467,7 +467,7 @@ void service_runlevel(int newlevel)
 	service_step_all(SVC_TYPE_ANY);
 
 	/* Need to wait for any services to stop? If so, exit early
-	 * and perform second stage from service_monitor later. */
+	 * and perform second stage from service_monitor() later. */
 	if (!service_stop_is_done())
 		return;
 
