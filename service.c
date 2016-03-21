@@ -977,7 +977,6 @@ static svc_t *find_inetd_svc(char *path, char *service, char *proto)
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

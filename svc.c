@@ -504,7 +504,6 @@ int svc_is_unique(svc_t *svc)
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

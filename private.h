@@ -43,7 +43,6 @@ int       plugin_load_all  (uev_ctx_t *ctx, char *path);
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

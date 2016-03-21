@@ -92,7 +92,6 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

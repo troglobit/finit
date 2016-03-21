@@ -137,7 +137,6 @@ plugin_t *plugin_find (char *name);
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

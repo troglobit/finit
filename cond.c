@@ -111,7 +111,6 @@ int cond_affects(const char *name, const char *names)
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

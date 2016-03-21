@@ -65,7 +65,6 @@ void sig_setup      (uev_ctx_t *ctx);
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

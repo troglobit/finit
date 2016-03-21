@@ -182,7 +182,6 @@ static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

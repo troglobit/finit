@@ -41,7 +41,6 @@ void service_step_all(int types);
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

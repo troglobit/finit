@@ -351,7 +351,6 @@ int run_parts(char *dir, char *cmd)
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

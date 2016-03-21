@@ -602,7 +602,6 @@ int inetd_del(inetd_t *inetd)
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:
