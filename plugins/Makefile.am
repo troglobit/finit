@@ -5,12 +5,12 @@ AM_CPPFLAGS        += -DFINIT_FIFO=\"$(fifo)\"
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = alsa-utils.c bootmisc.c dbus.c hwclock.c		\
-		      initctl.c netlink.c pidfile.c resolvconf.c	\
+libplug_la_SOURCES  = alsa-utils.c bootmisc.c dbus.c hwclock.c			\
+		      initctl.c lost.c netlink.c pidfile.c resolvconf.c		\
 		      time.c tty.c urandom.c x11-common.c
 else
-pkglib_LTLIBRARIES  = alsa-utils.la bootmisc.la dbus.la hwclock.la	\
-		      initctl.la netlink.la pidfile.la resolvconf.la	\
+pkglib_LTLIBRARIES  = alsa-utils.la bootmisc.la dbus.la hwclock.la		\
+		      initctl.la lost.la netlink.la pidfile.la resolvconf.la	\
 		      time.la tty.la urandom.la x11-common.la
 
 # Clean up .la files installed by libtool despite being in -module mode

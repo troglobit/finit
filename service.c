@@ -740,6 +740,8 @@ void service_monitor(pid_t lost)
 	if (tty_respawn(lost))
 		return;
 
+	plugin_run_hook(HOOK_SVC_LOST, (void *)(uintptr_t)lost);
+
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
 		_d("collected unknown PID %d", lost);

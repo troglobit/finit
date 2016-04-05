@@ -1,7 +1,6 @@
-/* Private header file for main finit daemon, not for plugins
+/* Example HOOK_SVC_LOST plugin, very noisy do not use as-is!
  *
- * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +21,36 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_PRIVATE_H_
-#define FINIT_PRIVATE_H_
+#include "../finit.h"
+#include "../svc.h"
+#include "../plugin.h"
 
-#include "svc.h"
-#include "plugin.h"
+static void lost_pid(void *arg)
+{
+	pid_t pid = (uintptr_t)arg;
+	svc_t *svc;
 
-uev_ctx_t *ctx;			/* Main loop context */
+	svc = svc_find_by_pid(pid);
+	if (!svc)
+		return;
 
-int       api_init         (uev_ctx_t *ctx);
-int       client           (int argc, char *argv[]);
+	FLOG_INFO("Lost PID %u, svc %s", pid, svc->cmd);
+}
 
-void      service_bootstrap(void);
-void      service_monitor  (pid_t lost);
+static plugin_t plugin = {
+	.name = __FILE__,
+	.hook[HOOK_SVC_LOST] = { .cb  = lost_pid },
+};
 
-void      plugin_run_hook  (hook_point_t no, void *arg);
-void      plugin_run_hooks (hook_point_t no);
-int       plugin_load_all  (uev_ctx_t *ctx, char *path);
+PLUGIN_INIT(plugin_init)
+{
+	plugin_register(&plugin);
+}
 
-#endif /* FINIT_PRIVATE_H_ */
+PLUGIN_EXIT(plugin_exit)
+{
+	plugin_unregister(&plugin);
+}
 
 /**
  * Local Variables:

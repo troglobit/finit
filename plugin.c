@@ -166,16 +166,24 @@ plugin_t *plugin_find(char *name)
 }
 
 /* Private daemon API *******************************************************/
-void plugin_run_hooks(hook_point_t no)
+
+/* Some hooks are called with a fixed argument, like HOOK_SVC_LOST */
+void plugin_run_hook(hook_point_t no, void *arg)
 {
 	plugin_t *p, *tmp;
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
-			_d("Calling %s hook n:o %d from runloop...", basename(p->name), no);
-			p->hook[no].cb(p->hook[no].arg);
+			_d("Calling %s hook n:o %d (arg: %p) ...", basename(p->name), no, arg);
+			p->hook[no].cb(arg ? arg : p->hook[no].arg);
 		}
 	}
+}
+
+/* Regular hooks are called with the registered plugin's argument */
+void plugin_run_hooks(hook_point_t no)
+{
+	plugin_run_hook(no, NULL);
 }
 
 /* Generic libev I/O callback, looks up correct plugin and calls its callback */
