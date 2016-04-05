@@ -248,6 +248,8 @@ static int service_start(svc_t *svc)
 			close(svc->stdin);
 #endif
 
+	plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
+
 	if (SVC_TYPE_RUN == svc->type) {
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		svc->pid = 0;

@@ -52,6 +52,7 @@ typedef enum {
 	/* Runtime hooks */
 	HOOK_SVC_RECONF,
 	HOOK_SVC_LOST,
+	HOOK_SVC_START,
 	HOOK_RUNLEVEL_CHANGE,
 
 	/* Shutdown hooks */

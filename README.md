@@ -538,6 +538,11 @@ state, etc.  Available hook points are:
 
   **NOTE:** This hook callback gets the lost PID as argument.
 
+* `HOOK_SVC_START`: Like `HOOK_SVC_LOST`, but called when a process is
+  started.  Same caveats apply.
+
+  **NOTE:** This hook callback gets the new PID as argument.
+
 * `HOOK_RUNLEVEL_CHANGE`: Called when the user has issued a runlevel
   change.  The hook is called when services not matching the new
   runlevel have been been stopped.  When the hook has completed, Finit
