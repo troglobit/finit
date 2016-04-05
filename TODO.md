@@ -138,7 +138,8 @@ Documentation
   `pimd` man pages ...
 * Update Debian `finit.conf` example with runlevels, `tty/console` and
   dependency handling for Debian 8 (the dreaded systemd release).
-
+* Add simple, *very* simple, `finit-simple.conf` example. To illustrate
+  how close Finit3 still is to the original easy-to-use Finit0 :)
 
 Investigation
 -------------
