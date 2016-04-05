@@ -22,7 +22,7 @@ EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf services
 AM_CPPFLAGS        = -U_FORTIFY_SOURCE
 AM_CPPFLAGS       += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 AM_CPPFLAGS       += -DFINIT_CONF=\"$(conf)\" -DFINIT_RCSD=\"$(rcsd)\" -DFINIT_FIFO=\"$(fifo)\" \
-		     -DPLUGIN_PATH=\"$(plugindir)\" 
+		     -DPLUGIN_PATH=\"$(pkglibdir)\"
 
 # Slightly ugly hacks to prevent the build system from installing
 # libuev/libite, which it does if we use the more plain SUBDIRS.
