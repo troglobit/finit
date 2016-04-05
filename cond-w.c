@@ -45,7 +45,7 @@ int cond_set_path(const char *path, enum cond_state new)
 			_e("Invalid path '%s' for condition", path);
 			return 0;
 		}
-		if (makepath(dir)) {
+		if (makepath(dir) && errno != EEXIST) {
 			_pe("Failed creating dir '%s' for condition '%s'", dir, path);
 			return 0;
 		}
