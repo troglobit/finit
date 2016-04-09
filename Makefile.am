@@ -6,11 +6,10 @@ if INETD
 finit_SOURCES      += inetd.c
 endif
 finit_CFLAGS       = -W -Wall -Wextra -std=gnu99
-finit_LDADD        = libite/.libs/libite.la libuev/.libs/libuev.la -ldl
+finit_LDADD        = -lite -luev -ldl
 if STATIC
 finit_LDADD       += plugins/libplug.la
 endif
-DEPENDENCIES       = -lite -luev
 initctl_SOURCES    = initctl.c svc.c helpers.c cond.c
 initctl_LDADD      = -lite
 reboot_SOURCES     = reboot.c
