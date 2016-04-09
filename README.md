@@ -1,9 +1,10 @@
-Finit ][ Fast & Extensible init for Linux
-=========================================
+Finit3-dev | Fast & Extensible init for Linux
+=============================================
 [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 ![Original Finit homepage image](images/finit.jpg "Finit in action!")
 
+DEVELOPMENT VERSION -- USE STABLE RELEASES, THX!
 
 Table of Contents
 -----------------
