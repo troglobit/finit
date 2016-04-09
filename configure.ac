@@ -7,8 +7,6 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([finit.c])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile plugins/Makefile])
-AC_CONFIG_FILES([libite/Makefile])
-AC_CONFIG_FILES([libuev/Makefile libuev/examples/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/misc.m4])
@@ -20,8 +18,9 @@ AC_PREFIX_DEFAULT([/])
 datarootdir=/usr/share
 AC_SUBST([datarootdir])
 
-# Default plugins
+# Check for plugins
 #plugins_all="alsa-utils bootmisc dbus hwclock initctl netlink pidfile resolvconf time tty urandom x11-common"
+LT_INIT([shared disable-static dlopen])
 
 # Checks for programs.
 AC_PROG_CC
@@ -37,11 +36,9 @@ AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
-# Needed for the libraries
-AM_PROG_AR
-LT_INIT([shared disable-static dlopen])
-#LT_INIT([dlopen])
-AM_CONDITIONAL([ENABLE_EXAMPLES], [test "$enable_examples" = yes])
+# Check for required libraries
+PKG_CHECK_MODULES([libuEv], [libuev >= 1.4.0])
+PKG_CHECK_MODULES([lite], [libite >= 1.5.0])
 
 # Check for configured Finit features
 AC_ARG_ENABLE(embedded,

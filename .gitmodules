@@ -1,6 +1,0 @@
-[submodule "libuev"]
-	path = libuev
-	url = https://github.com/troglobit/libuev.git
-[submodule "libite"]
-	path = libite
-	url = https://github.com/troglobit/libite.git
