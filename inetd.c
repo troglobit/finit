@@ -26,8 +26,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "libuev/uev.h"
-#include "libite/lite.h"
+#include "uev/uev.h"
+#include "lite/lite.h"
 
 #include "finit.h"
 #include "inetd.h"

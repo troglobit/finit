@@ -41,7 +41,7 @@
 #include "finit.h"
 #include "sig.h"
 #include "helpers.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 #define NUM_ARGS    16
 

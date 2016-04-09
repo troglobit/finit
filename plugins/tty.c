@@ -32,7 +32,7 @@
 #include "../helpers.h"
 #include "../plugin.h"
 #include "../tty.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 static void watcher(void *arg, int fd, int events);
 

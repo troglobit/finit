@@ -28,7 +28,7 @@
 #include <net/if.h>
 
 #include "queue.h"
-#include "libuev/uev.h"
+#include "uev/uev.h"
 
 typedef struct svc svc_t;
 

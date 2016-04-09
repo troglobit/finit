@@ -31,7 +31,7 @@
 #include "cond.h"
 #include "service.h"
 #include "tty.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 #include "helpers.h"
 
 #define MATCH_CMD(l, c, x) \

@@ -26,7 +26,7 @@
 
 #include "queue.h"		/* BSD sys/queue.h API */
 #include "svc.h"
-#include "libuev/uev.h"
+#include "uev/uev.h"
 
 #define PLUGIN_DEP_MAX  10
 #define PLUGIN_IO_READ  UEV_READ

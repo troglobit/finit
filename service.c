@@ -27,7 +27,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <net/if.h>
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 #include "finit.h"
 #include "conf.h"

@@ -37,7 +37,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 static int encode(int lvl)
 {

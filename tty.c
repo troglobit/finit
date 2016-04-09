@@ -29,7 +29,7 @@
 #include "finit.h"
 #include "conf.h"
 #include "helpers.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 #include "tty.h"
 
 LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();

@@ -33,7 +33,7 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "queue.h"		/* BSD sys/queue.h API */
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 

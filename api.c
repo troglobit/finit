@@ -39,8 +39,8 @@
 #include "sig.h"
 #include "service.h"
 
-#include "libite/lite.h"
-#include "libuev/uev.h"
+#include "lite/lite.h"
+#include "uev/uev.h"
 
 uev_t api_watcher;
 

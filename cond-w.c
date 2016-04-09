@@ -22,7 +22,7 @@
  */
 
 #include <libgen.h>
-#include <libite/lite.h>
+#include <lite/lite.h>
 #include <stdio.h>
 #include <utime.h>
 

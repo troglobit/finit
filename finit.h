@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 #define CMD_SIZE                256
 #define LINE_SIZE               1024

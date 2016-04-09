@@ -28,7 +28,7 @@
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 /*
  * Setup standard FHS 2.3 structure in /var, and

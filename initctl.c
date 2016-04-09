@@ -33,7 +33,7 @@
 #include "helpers.h"
 #include "service.h"
 
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 typedef struct {
 	char  *cmd;

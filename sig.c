@@ -51,7 +51,7 @@
 #include "private.h"
 #include "sig.h"
 #include "service.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 static int   stopped = 0;
 static uev_t sighup_watcher, sigint_watcher, sigpwr_watcher;

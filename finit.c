@@ -37,7 +37,7 @@
 #include "service.h"
 #include "sig.h"
 #include "tty.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 #include "inetd.h"
 
 int   debug     = 0;

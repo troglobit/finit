@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #include "finit.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 static int do_send(int cmd, int runlevel)
 {

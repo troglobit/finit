@@ -23,7 +23,7 @@
  */
 
 #include <stdlib.h>
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 #include "finit.h"
 #include "svc.h"

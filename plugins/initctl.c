@@ -37,7 +37,7 @@
 #include "../plugin.h"
 #include "../sig.h"
 #include "../service.h"
-#include "libite/lite.h"
+#include "lite/lite.h"
 
 static void parse(void *arg, int fd, int events);
 
