@@ -68,8 +68,8 @@ void do_shutdown(int sig)
 
 	/* If we enabled terse mode at boot, restore to previous setting at shutdown */
 	if (quiet) {
-		verbose = VERBOSE_MODE;
-		if (verbose) {
+		silent = SILENT_MODE;
+		if (!silent) {
 			sched_yield();
 			fputs("\n", stderr);
 		}

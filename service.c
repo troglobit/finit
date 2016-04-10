@@ -121,7 +121,7 @@ static int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!fexist(svc->cmd) && !svc->inetd.cmd) {
-		if (verbose) {
+		if (!silent) {
 			char msg[80];
 
 			snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
@@ -137,7 +137,7 @@ static int service_start(svc_t *svc)
 	if (is_norespawn())
 		return 1;
 
-	if (verbose) {
+	if (!silent) {
 		if (svc_is_daemon(svc) || svc_is_inetd(svc))
 			print_desc("Starting ", svc->desc);
 		else
@@ -147,7 +147,7 @@ static int service_start(svc_t *svc)
 #ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
 		result = inetd_start(&svc->inetd);
-		if (verbose)
+		if (!silent)
 			print_result(result);
 		return result;
 	}
@@ -258,7 +258,7 @@ static int service_start(svc_t *svc)
 		svc->pid = 0;
 	}
 
-	if (verbose)
+	if (!silent)
 		print_result(result);
 
 	return 0;
@@ -280,7 +280,7 @@ static int service_stop(svc_t *svc)
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
-		int do_print = runlevel != 1 && verbose &&
+		int do_print = runlevel != 1 && !silent &&
 			svc->block != SVC_BLOCK_INETD_BUSY;
 
 		if (do_print)
@@ -302,13 +302,13 @@ static int service_stop(svc_t *svc)
 	if (SVC_TYPE_SERVICE != svc->type)
 		return 0;
 
-	if (runlevel != 1 && verbose)
+	if (runlevel != 1 && !silent)
 		print_desc("Stopping ", svc->desc);
 
 	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
 
-	if (runlevel != 1 && verbose)
+	if (runlevel != 1 && !silent)
 		print_result(res);
 
 	return res;
@@ -341,7 +341,7 @@ static int service_restart(svc_t *svc)
 		return 1;
 	}
 
-	if (verbose)
+	if (!silent)
 		print_desc("Restarting ", svc->desc);
 
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
@@ -350,7 +350,7 @@ static int service_restart(svc_t *svc)
 	_d("Sending SIGHUP to PID %d", svc->pid);
 	err = kill(svc->pid, SIGHUP);
 
-	if (verbose)
+	if (!silent)
 		print_result(err);
 	return err;
 }

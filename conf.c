@@ -62,18 +62,17 @@ void conf_parse_cmdline(void)
 	FILE *fp;
 	char line[LINE_SIZE];
 
-	if ((fp = fopen("/proc/cmdline", "r")) != NULL) {
+	fp = fopen("/proc/cmdline", "r");
+	if (fp) {
 		fgets(line, sizeof(line), fp);
 		_d("Kernel command line: %s", line);
 
 		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
 			debug = 1;
-#ifdef KERNEL_QUIET
+
 		if (!debug && strstr(line, "quiet"))
 			quiet = 1;
-		else
-			quiet = 0;
-#endif
+
 		fclose(fp);
 	}
 }
@@ -360,7 +359,7 @@ static int parse_conf(char *file)
 		strcat(line, " ");
 	}
 
-	if (verbose)
+	if (!silent)
 		print(0, "Loading %sconfiguration", line);
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))

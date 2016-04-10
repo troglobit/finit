@@ -42,6 +42,7 @@ typedef struct {
 
 int debug    = 0;
 int verbose  = 0;
+int silent   = 1;		/* For helpers.c */
 int runlevel = 0;
 
 static int do_send(struct init_request *rq, ssize_t len)
@@ -349,7 +350,6 @@ int main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	verbose = 0;
 	while ((c = getopt_long(argc, argv, "dh?v", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'h':
@@ -365,6 +365,7 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+	silent = !verbose;
 
 	if (optind < argc) {
 		char *cmd = argv[optind++];

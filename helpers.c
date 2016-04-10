@@ -142,7 +142,7 @@ void print(int action, const char *fmt, ...)
 	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
 	const char dots[] = " .....................................................................";
 
-	if (!verbose)
+	if (silent)
 		return;
 
 	if (fmt) {

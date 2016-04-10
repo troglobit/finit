@@ -304,7 +304,7 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 	DIR *dp = opendir(path);
 	struct dirent *entry;
 
-	if (verbose)
+	if (!silent)
 		print_desc("Loading plugins", NULL);
 	if (!dp) {
 		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
@@ -326,7 +326,7 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 	closedir(dp);
 #else
 	_d("Finit built statically, not loading plugins from %s ...", path);
-	if (verbose)
+	if (!silent)
 		print_desc("Initializing plugins", NULL);
 #endif	/* ENABLE_STATIC */
 
@@ -336,7 +336,7 @@ int plugin_load_all(uev_ctx_t *ctx, char *path)
 #ifndef ENABLE_STATIC
 exit:
 #endif
-	if (verbose)
+	if (!silent)
 		print_result(fail);
 
 	return fail;

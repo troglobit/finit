@@ -47,14 +47,14 @@ AC_ARG_ENABLE(embedded,
 AC_ARG_ENABLE(rw-rootfs,
         AS_HELP_STRING([--enable-rw-rootfs], [Remount / as read-write at boot, not for embedded]))
 
-AC_ARG_ENABLE(quiet,
-        AS_HELP_STRING([--enable-quiet], [Quiet mode, reduce screen output to absolute minimum]))
+AC_ARG_ENABLE(silent,
+        AS_HELP_STRING([--enable-silent], [Completely silent operation, not even boot messages]))
 
 AC_ARG_ENABLE(inetd,
         AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]))
 
-AC_ARG_ENABLE(kernel-quiet,
-        AS_HELP_STRING([--disable-kernel-quiet], [Disable kernel cmdline quiet, default enabled]))
+AC_ARG_ENABLE(quiet,
+        AS_HELP_STRING([--disable-quiet], [Disable quiet mode, default: silent after boot]))
 
 AC_ARG_WITH(fifo,
         AS_HELP_STRING([--with-fifo=FIFO], [Old Finit initctl FIFO, default /dev/initctl]),
@@ -128,19 +128,19 @@ AS_IF([test "x$enable_embedded" = "xyes"],[
 AS_IF([test "x$enable_rw-rootfs" = "xyes"],[
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
-AS_IF([test "x$enable_quiet" = "xyes"],[
-        AC_DEFINE(VERBOSE_MODE,  0, [Quiet Finit])
+AS_IF([test "x$enable_silent" = "xyes"],[
+        AC_DEFINE(SILENT_MODE,  1, [Completely silent operation, not even boot messages])
 	],[
-	AC_DEFINE(VERBOSE_MODE,  1, [Verbose output, default])])
+	AC_DEFINE(SILENT_MODE,  0, [Normal output, default])])
 
 ### Disable features ###########################################################################
 AS_IF([test "x$enable_inetd" != "xno"],enable_inetd="yes",[
 	AC_DEFINE(INETD_DISABLED,  1, [Disable built-in inetd])])
 
-AS_IF([test "x$enable_kernel-quiet" != "xno"],[
-        AC_DEFINE(KERNEL_QUIET,  0, [Will print stopping/starting/etc messages])
+AS_IF([test "x$enable_quiet" != "xno"],[
+        AC_DEFINE(QUIET_MODE,  0, [Will print stopping/starting/etc messages at runtime])
 	],[
-	AC_DEFINE(KERNEL_QUIET,  1, [Silent after initial boot, default])
+	AC_DEFINE(QUIET_MODE,  1, [Silent at runtime, after initial boot, default])
 	])
 
 ### With features ##############################################################################

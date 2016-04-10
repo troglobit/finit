@@ -41,8 +41,8 @@
 #include "inetd.h"
 
 int   debug     = 0;
-int   quiet     = KERNEL_QUIET;	/* Delayed disable of verbose mode. */
-int   verbose   = VERBOSE_MODE;
+int   quiet     = QUIET_MODE;	/* Delayed disable of silent mode. */
+int   silent    = SILENT_MODE;	/* Completely silent, including boot */
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
@@ -61,7 +61,7 @@ static int banner(void)
 	char buf[42] = INIT_HEADING;
 	const char separator[] = "========================================================================";
 
-	if (!verbose)
+	if (silent)
 		return 0;
 
 	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, 66 - (int)strlen(buf), separator);
@@ -217,9 +217,9 @@ int main(int argc, char* argv[])
 	/* Start TTYs */
 	tty_runlevel(runlevel);
 
-	/* Disable verbose mode, if selected */
+	/* Enable silent mode, if selected */
 	if (quiet && !debug)
-		verbose = 0;
+		silent = 1;
 
 	/* Start new initctl API responder */
 	api_init(&loop);
