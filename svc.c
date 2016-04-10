@@ -429,8 +429,10 @@ char *svc_status(svc_t *svc)
 		case SVC_BLOCK_INETD_BUSY:
 			return "busy";
 		}
+
 	case SVC_DONE_STATE:
 		return "done";
+
 	case SVC_STOPPING_STATE:
 		switch (svc->type) {
 		case SVC_TYPE_INETD_CONN:
@@ -440,10 +442,13 @@ char *svc_status(svc_t *svc)
 		default:
 			return "stopping";
 		}
+
 	case SVC_WAITING_STATE:
 		return "waiting";
+
 	case SVC_READY_STATE:
 		return "ready";
+
 	case SVC_RUNNING_STATE:
 		return "running";
 
@@ -460,8 +465,8 @@ const char *svc_dirtystr(svc_t *svc)
 		return "updated";
 	else if (svc_is_changed(svc))
 		return "UNKNOWN";
-	else
-		return "clean";
+
+	return "clean";
 }
 
 /* Same base service, return unique ID */

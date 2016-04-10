@@ -25,7 +25,7 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 
 	sz = read(fd, ev_buf, sizeof(ev_buf));
 	if (sz <= 0) {
-		_pe("invalid inotify event\n");
+		_pe("invalid inotify event");
 		return;
 	}
 
