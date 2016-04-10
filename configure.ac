@@ -45,13 +45,13 @@ AC_ARG_ENABLE(embedded,
         AS_HELP_STRING([--enable-embedded], [Embedded defaults, BusBox getty, mdev etc.]))
 
 AC_ARG_ENABLE(rw-rootfs,
-        AS_HELP_STRING([--enable-rw-rootfs], [Remount / as read-write at bootstrap, not for embedded]))
+        AS_HELP_STRING([--enable-rw-rootfs], [Remount / as read-write at boot, not for embedded]))
 
 AC_ARG_ENABLE(quiet,
         AS_HELP_STRING([--enable-quiet], [Quiet mode, reduce screen output to absolute minimum]))
 
 AC_ARG_ENABLE(inetd,
-        AS_HELP_STRING([--disable-inetd], [Disable inetd support if not needed, default enabled]))
+        AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]))
 
 AC_ARG_ENABLE(kernel-quiet,
         AS_HELP_STRING([--disable-kernel-quiet], [Disable kernel cmdline quiet, default enabled]))
