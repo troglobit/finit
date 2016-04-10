@@ -71,13 +71,20 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 		
 		_d("%s: match %s", basename, svc->cmd);
 		snprintf(cond, sizeof(cond), "svc%s", svc->cmd);
-		if (ev->mask & (IN_CREATE | IN_ATTRIB))
+		if (ev->mask & (IN_CREATE | IN_ATTRIB)) {
+			svc_started(svc);
 			cond_set(cond);
-		else if (ev->mask & IN_DELETE)
+		} else if (ev->mask & IN_DELETE)
 			cond_clear(cond);
 	}
 }
 
+/*
+ * Assert condition only if the service is running, but not if it's
+ * recently been changed or while it's starting up.
+ *
+ * We must wait for the service to create/touch its pidfile.
+ */
 static void pidfile_reconf(void *_null)
 {
 	static char name[MAX_ARG_LEN];
@@ -86,14 +93,14 @@ static void pidfile_reconf(void *_null)
 	(void)(_null);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->state == SVC_RUNNING_STATE && !svc_is_changed(svc)) {
+		if (svc->state == SVC_RUNNING_STATE && !svc_is_changed(svc) && !svc_is_starting(svc)) {
 			snprintf(name, MAX_ARG_LEN, "svc%s", svc->cmd);
 			cond_set_path(cond_path(name), COND_ON);
 		}
 	}
 }
 
-static void pidfile_init (void *arg)
+static void pidfile_init(void *arg)
 {
 	struct context *ctx = arg;
 
