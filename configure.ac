@@ -213,21 +213,6 @@ AS_IF([test "x$with_runlevel" != "xno"],[
 	],[
 	AC_DEFINE(RUNLEVEL, 2, [Default runlevel to start after S])])
 
-# Check if user has downloaded a GitHub ZIP file and attempt to fix it.
-AC_MSG_CHECKING([status of GIT submodules])
-if test ! -e libite/lite.h; then
-    AC_MSG_RESULT([Missing!])
-    AC_MSG_CHECKING([if we can update all submodules])
-    run=`git submodule update --init`
-    if test $? -ne 0; then
-       AC_MSG_RESULT([Failed!  No Internet access?])
-       exit 1
-    fi
-    AC_MSG_RESULT([Yes, all fixed!])
-else
-    AC_MSG_RESULT([OK])
-fi
-
 # Control build with automake flags
 AM_CONDITIONAL(STATIC, [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(INETD, [test "x$enable_inetd" = "xyes"])
