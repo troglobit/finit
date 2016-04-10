@@ -793,7 +793,7 @@ restart:
 	enabled = service_enabled(svc);
 
 	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc->cmd, svc->pid,
-	   svc_status(svc), enabled? "en" : "dis", svc_dirtystr(svc),
+	   svc_status(svc), enabled ? "en" : "dis", svc_dirtystr(svc),
 	   condstr(cond_get_agg(svc->cond)));
 
 	switch(svc->state) {
