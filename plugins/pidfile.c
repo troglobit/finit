@@ -29,7 +29,7 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 		return;
 	}
 
-	for (ev = (void *)ev_buf; sz > sizeof(*ev);
+	for (ev = (void *)ev_buf; sz > (ssize_t)sizeof(*ev);
 	     len = sizeof(*ev) + ev->len, ev = (void *)ev + len, sz -= len) {
 	     /* ev = (void *)(ev + 1) + ev->len, sz -= sizeof(*ev) + ev->len) { */
 		if (!ev->mask || !strstr(ev->name, ".pid"))
