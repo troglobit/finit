@@ -151,6 +151,9 @@ static int service_start(svc_t *svc)
 		return result;
 	}
 
+	/* Declare we're waiting for svc to create its pidfile */
+	svc_starting(svc);
+
 	/* Block sigchild while forking.  */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
@@ -328,6 +331,9 @@ static int service_restart(svc_t *svc)
 
 	if (verbose)
 		print_desc("Restarting ", svc->desc);
+
+	/* Declare we're waiting for svc to re-assert/touch its pidfile */
+	svc_starting(svc);
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
 	err = kill(svc->pid, SIGHUP);

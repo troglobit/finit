@@ -88,6 +88,7 @@ typedef struct svc {
 	time_t	       mtime;	       /* Modification time for .conf from /etc/finit.d/ */
 	const int      dirty;	       /* Set if old mtime != new mtime  => reloaded,
 					* or -1 when marked for removal */
+	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
 	svc_block_t    block;	       /* Reason that this service is currently blocked */
@@ -167,6 +168,10 @@ int       svc_is_unique        (svc_t *svc);
 
 static inline int svc_in_runlevel(svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_has_sighup(svc_t *svc) { return svc &&  0 != svc->sighup; }
+
+static inline void svc_starting   (svc_t *svc) { svc->starting = 1;  }
+static inline void svc_started    (svc_t *svc) { svc->starting = 0;  }
+static inline int  svc_is_starting(svc_t *svc) { 0 != svc->starting; }
 
 static inline int svc_is_dynamic(svc_t *svc) { return svc &&  0 != svc->mtime; }
 static inline int svc_is_removed(svc_t *svc) { return svc && -1 == svc->dirty; }
