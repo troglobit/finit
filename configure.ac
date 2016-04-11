@@ -20,7 +20,7 @@ AC_SUBST([datarootdir])
 
 # Check for plugins
 #plugins_all="alsa-utils bootmisc dbus hwclock initctl netlink pidfile resolvconf time tty urandom x11-common"
-LT_INIT([shared disable-static dlopen aix-soname=both])
+LT_INIT([shared disable-static dlopen aix-soname=both disable-fast-install])
 
 # Checks for programs.
 AC_PROG_CC
