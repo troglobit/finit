@@ -625,6 +625,7 @@ not return until the given command has fully completed.
       reload                    Reload *.conf in /etc/finit.d/ and activate changes
       runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
       status | show             Show status of services
+      cond     show             Show condition status
       start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
       stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
       restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
