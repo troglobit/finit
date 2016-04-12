@@ -56,6 +56,14 @@ AC_ARG_ENABLE(inetd,
 AC_ARG_ENABLE(quiet,
         AS_HELP_STRING([--disable-quiet], [Disable quiet mode, default: silent after boot]))
 
+# Check for extra plugins to enable
+AC_PLUGIN([alsa-utils], [no],  [Save and restore ALSA sound settings using alsactl])
+AC_PLUGIN([dbus],       [no],  [Setup and start system message bus, D-Bus])
+AC_PLUGIN([lost],       [no],  [Example HOOK_SVC_LOST plugin, very noisy as-is!])
+AC_PLUGIN([resolvconf], [no],  [Setup necessary files for resolvconf])
+AC_PLUGIN([x11-common], [no],  [Console setup (for X)])
+
+# Check for extra arguments or packages
 AC_ARG_WITH(fifo,
         AS_HELP_STRING([--with-fifo=FIFO], [Old Finit initctl FIFO, default /dev/initctl]),
 	[fifo=$withval], [fifo=/dev/initctl])
