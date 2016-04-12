@@ -5,13 +5,48 @@ AM_CPPFLAGS        += -DFINIT_FIFO=\"$(fifo)\"
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = alsa-utils.c bootmisc.c dbus.c hwclock.c			\
-		      initctl.c lost.c netlink.c pidfile.c resolvconf.c		\
-		      time.c tty.c urandom.c x11-common.c
+libplug_la_SOURCES  = bootmisc.c hwclock.c initctl.c netlink.c pidfile.c	\
+		      time.c tty.c urandom.c
+
+if BUILD_ALSA_UTILS_PLUGIN
+libplug_la_SOURCES += alsa-utils.c
+endif
+
+if BUILD_DBUS_PLUGIN
+libplug_la_SOURCES += dbus.c
+endif
+
+if BUILD_LOST_PLUGIN
+libplug_la_SOURCES += lost.c
+endif
+
+if BUILD_RESOLVCONF_PLUGIN
+libplug_la_SOURCES += resolvconf.c
+endif
+
 else
-pkglib_LTLIBRARIES  = alsa-utils.la bootmisc.la dbus.la hwclock.la		\
-		      initctl.la lost.la netlink.la pidfile.la resolvconf.la	\
-		      time.la tty.la urandom.la x11-common.la
+pkglib_LTLIBRARIES  = bootmisc.la hwclock.la initctl.la netlink.la pidfile.la	\
+		      time.la tty.la urandom.la
+
+if BUILD_ALSA_UTILS_PLUGIN
+pkglib_LTLIBRARIES += alsa-utils.la
+endif
+
+if BUILD_DBUS_PLUGIN
+pkglib_LTLIBRARIES += dbus.la
+endif
+
+if BUILD_LOST_PLUGIN
+pkglib_LTLIBRARIES += lost.la
+endif
+
+if BUILD_RESOLVCONF_PLUGIN
+pkglib_LTLIBRARIES += resolvconf.la
+endif
+
+if BUILD_X11_COMMON_PLUGIN
+pkglib_LTLIBRARIES += x11-common.la
+endif
 
 # Clean up .la files installed by libtool despite being in -module mode
 install-exec-hook:
