@@ -470,11 +470,12 @@ can used to extend finit with.
 For your convenience a set of *optional* plugins are available:
 
 * *alsa-utils.so*: Restore and save ALSA sound settings on
-  startup/shutdown.
+  startup/shutdown.  _Optional plugin._
 
 * *bootmisc.so*: Setup necessary files for UTMP, tracks logins at boot.
 
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
+  _Optional plugin._
 
 * *hwclock.so*: Restore and save system clock from/to RTC on
   startup/shutdown.
@@ -482,7 +483,7 @@ For your convenience a set of *optional* plugins are available:
 * *initctl.so*: Extends finit with a traditional `initctl` functionality.
 
 * *lost.so*: Very simple `HOOK_SVC_LOST` example.  Logs process ID and
-  name to syslog.
+  name to syslog.  _Optional plugin._
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor
@@ -490,6 +491,7 @@ For your convenience a set of *optional* plugins are available:
   interfaces going up/down.
 
 * *resolvconf.so*: Setup necessary files for `resolvconf` at startup.
+  _Optional plugin._
 
 * *time.so*: RFC 868 (rdate) plugin.  Start as inetd service.  Useful
   for testing inetd filtering — BusyBox has an rdate (TCP) client.
@@ -500,7 +502,7 @@ For your convenience a set of *optional* plugins are available:
 
 * *urandom.so*: Setup random seed at startup.
 
-* *x11-common.so*: Setup necessary files for X-Window.
+* *x11-common.so*: Setup necessary files for X-Window.  _Optional plugin._
 
 Usually you want to hook into the boot process once, simple hook plugins
 like `bootmisc.so` are great for that purpose.  They are called at each
