@@ -4,7 +4,8 @@ Finit3-dev | Fast & Extensible init for Linux
 
 ![Original Finit homepage image](images/finit.jpg "Finit in action!")
 
-DEVELOPMENT VERSION -- USE STABLE RELEASES, THX!
+Finit3 is currently in heavy development, please use stable releases if
+you want a stable and fully functional system.  Otherwise YMMV!
 
 Table of Contents
 -----------------
