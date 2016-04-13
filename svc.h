@@ -101,6 +101,8 @@ typedef struct svc {
 	inetd_t        inetd;
 	int            stdin;
 
+	int log;
+
 	/* Identity */
 	char	       username[MAX_USER_LEN];
 	char	       group[MAX_USER_LEN];

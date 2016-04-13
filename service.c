@@ -195,7 +195,28 @@ static int service_start(svc_t *svc)
 			dup2(STDIN_FILENO, STDERR_FILENO);
 		} else
 #endif
-		if (debug) {
+		if (svc->log) {
+			/* Open PTY to connect to logger (A pty isn't buffered like a pipe, and it eats newlines so they aren't logged) */
+			int fd = posix_openpt(O_RDWR);
+			/* SIGCHLD is still blocked for grantpt() and fork() */
+			sigprocmask(SIG_BLOCK, &nmask, NULL);
+			if (fd >= 0 && grantpt(fd) == 0 && unlockpt(fd) == 0) {
+				pid = fork();
+				if (pid == 0) {
+					int fds = open(ptsname(fd), O_RDONLY);
+					close(fd);
+					dup2(fds, STDIN_FILENO);
+
+					/* Reset signals */
+					sig_unblock();
+
+					exit(execlp("logger", "logger", "-t", strlen(svc->desc) > 0 ? svc->desc : svc->cmd, (char*)NULL));
+				}
+				dup2(fd, STDOUT_FILENO);
+				dup2(fd, STDERR_FILENO);
+				close(fd);
+			}
+		} else if (debug) {
 			int fd;
 			char buf[CMD_SIZE] = "";
 
@@ -230,10 +251,14 @@ static int service_start(svc_t *svc)
 				close(STDOUT_FILENO);
 				close(STDERR_FILENO);
 			}
-		}
+		} else
 #endif
+		if (svc->log) {
+			waitpid(pid, NULL, 0);
+		}
 		exit(status);
 	}
+
 	svc->pid = pid;
 
 #ifndef INETD_DISABLED
@@ -534,6 +559,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 #ifndef INETD_DISABLED
 	int forking = 0;
 #endif
+	int log = 0;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
@@ -572,6 +598,8 @@ int service_register(int type, char *line, time_t mtime, char *username)
 #endif
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
+		else if (!strncasecmp(cmd, "log", 3))
+			log = 1;
 		else
 			break;
 
@@ -632,6 +660,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		}
 	}
 
+	svc->log = log;
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
 
