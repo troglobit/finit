@@ -99,7 +99,9 @@ typedef struct svc {
 
 	/* For inetd services */
 	inetd_t        inetd;
-	int            stdin;
+	int            stdin_fd;
+
+	int log;
 
 	/* Identity */
 	char	       username[MAX_USER_LEN];

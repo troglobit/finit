@@ -75,6 +75,42 @@ exit:
 	return result;
 }
 
+static int runlevel_get(void)
+{
+	struct init_request rq;
+	int sd, result = 255;
+
+	rq.cmd = INIT_CMD_GET_RUNLEVEL;
+	rq.magic = INIT_MAGIC;
+
+	struct sockaddr_un sun = {
+		.sun_family = AF_UNIX,
+		.sun_path   = INIT_SOCKET,
+	};
+
+	sd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (-1 == sd)
+		return -1;
+
+	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
+		goto error;
+
+	if (write(sd, &rq, sizeof(rq)) != sizeof(rq))
+		goto error;
+
+	if (read(sd, &rq, sizeof(rq)) != sizeof(rq))
+		goto error;
+
+	result = rq.runlevel;
+	goto exit;
+error:
+	perror("Failed communicating with finit");
+	result = -1;
+exit:
+	close(sd);
+	return result;
+}
+
 static int toggle_debug(char *UNUSED(arg))
 {
 	struct init_request rq = {

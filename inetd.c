@@ -167,7 +167,7 @@ static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 	memcpy(task->args,     svc->args,     sizeof(task->args));
 	snprintf(task->desc, sizeof(task->desc), "%s Connection", svc->desc);
 
-	task->stdin = stdin;
+	task->stdin_fd = stdin;
 	service_step(task);
 
 	if (!svc->inetd.forking) {

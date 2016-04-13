@@ -162,7 +162,6 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
-	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (pid == 0) {
 		int i = 0;
 		int status;
@@ -171,16 +170,7 @@ static int service_start(svc_t *svc)
 #else
 		int uid = getuser(svc->username);
 #endif
-		struct sigaction sa;
 		char *args[MAX_NUM_SVC_ARGS];
-
-		sigemptyset(&nmask);
-		sigaddset(&nmask, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
-
-		/* Reset signal handlers that were set by the parent process */
-		for (i = 1; i < NSIG; i++)
-			DFLSIG(sa, i, 0);
 
 		/* Set desired user */
 		if (uid >= 0) {
@@ -199,13 +189,34 @@ static int service_start(svc_t *svc)
 		/* Redirect inetd socket to stdin for connection */
 #ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
-			dup2(svc->stdin, STDIN_FILENO);
-			close(svc->stdin);
+			dup2(svc->stdin_fd, STDIN_FILENO);
+			close(svc->stdin_fd);
 			dup2(STDIN_FILENO, STDOUT_FILENO);
 			dup2(STDIN_FILENO, STDERR_FILENO);
 		} else
 #endif
-		if (debug) {
+		if (svc->log) {
+			/* Open PTY to connect to logger (A pty isn't buffered like a pipe, and it eats newlines so they aren't logged) */
+			int fd = posix_openpt(O_RDWR);
+			/* SIGCHLD is still blocked for grantpt() and fork() */
+			sigprocmask(SIG_BLOCK, &nmask, NULL);
+			if (fd >= 0 && grantpt(fd) == 0 && unlockpt(fd) == 0) {
+				pid = fork();
+				if (pid == 0) {
+					int fds = open(ptsname(fd), O_RDONLY);
+					close(fd);
+					dup2(fds, STDIN_FILENO);
+
+					/* Reset signals */
+					sig_unblock();
+
+					exit(execlp("logger", "logger", "-t", strlen(svc->desc) > 0 ? svc->desc : svc->cmd, (char*)NULL));
+				}
+				dup2(fd, STDOUT_FILENO);
+				dup2(fd, STDERR_FILENO);
+				close(fd);
+			}
+		} else if (debug) {
 			int fd;
 			char buf[CMD_SIZE] = "";
 
@@ -240,15 +251,19 @@ static int service_start(svc_t *svc)
 				close(STDOUT_FILENO);
 				close(STDERR_FILENO);
 			}
-		}
+		} else
 #endif
+		if (svc->log) {
+			waitpid(pid, NULL, 0);
+		}
 		exit(status);
 	}
+
 	svc->pid = pid;
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
-			close(svc->stdin);
+			close(svc->stdin_fd);
 #endif
 
 	plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
@@ -257,6 +272,8 @@ static int service_start(svc_t *svc)
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		svc->pid = 0;
 	}
+	
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	if (!silent)
 		print_result(result);
@@ -542,6 +559,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 #ifndef INETD_DISABLED
 	int forking = 0;
 #endif
+	int log = 0;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
@@ -580,6 +598,8 @@ int service_register(int type, char *line, time_t mtime, char *username)
 #endif
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
+		else if (!strncasecmp(cmd, "log", 3))
+			log = 1;
 		else
 			break;
 
@@ -640,6 +660,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		}
 	}
 
+	svc->log = log;
 	if (desc)
 		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
 
