@@ -162,7 +162,6 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
-	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (pid == 0) {
 		int i = 0;
 		int status;
@@ -171,16 +170,7 @@ static int service_start(svc_t *svc)
 #else
 		int uid = getuser(svc->username);
 #endif
-		struct sigaction sa;
 		char *args[MAX_NUM_SVC_ARGS];
-
-		sigemptyset(&nmask);
-		sigaddset(&nmask, SIGCHLD);
-		sigprocmask(SIG_UNBLOCK, &nmask, NULL);
-
-		/* Reset signal handlers that were set by the parent process */
-		for (i = 1; i < NSIG; i++)
-			DFLSIG(sa, i, 0);
 
 		/* Set desired user */
 		if (uid >= 0) {
@@ -257,6 +247,8 @@ static int service_start(svc_t *svc)
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		svc->pid = 0;
 	}
+	
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	if (!silent)
 		print_result(result);
