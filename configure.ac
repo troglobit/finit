@@ -14,7 +14,7 @@ AC_CONFIG_FILES([Makefile plugins/Makefile])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Change default prefix, we're PID 1 after all ...
-AC_PREFIX_DEFAULT([/])
+AC_PREFIX_DEFAULT([])
 datarootdir=/usr/share
 AC_SUBST([datarootdir])
 
