@@ -79,18 +79,6 @@ AC_ARG_WITH(plugindir,
 	[pkglibdir=$withval], [pkglibdir='$(libdir)/finit/plugins'])
 AC_SUBST([pkglibdir])
 
-#AC_ARG_WITH(plugins,
-#        AS_HELP_STRING([--with-plugins=LIST], [Finit plugins to build, default $plugins_all]),
-#	[plugins=$withval], [plugins=$plugins_all])
-#plugins_src=""
-#plugins_lib=""
-#for plug in $plugins; do
-#    plugins_src="${plugins_src} ${plug}.c"
-#    plugins_lib="${plugins_lib} ${plug}.la"
-#done    
-#AC_SUBST([plugins_src])
-#AC_SUBST([plugins_lib])
-
 AC_ARG_WITH(rcsd,
         AS_HELP_STRING([--with-rcsd=DIR], [Finit rc.d/ directory, default $sysconfdir/finit.d]),
 	[rcsd=$withval], [rcsd='$(sysconfdir)/finit.d'])
@@ -170,19 +158,6 @@ AS_IF([test "x$with_heading" != "xno"],[
 	],[
 	heading='$(libdir)/finit'])
 AC_DEFINE_UNQUOTED(INIT_HEADING, "$heading", [Displayed by Finit at boot])
-
-#AS_IF([test "x$with_plugindir" != "xno"],[
-#	AS_IF([test "x$plugindir" = "xyes"],[
-#		AC_MSG_ERROR([Must supply argument])])
-#	],[
-#	plugindir='$(libdir)/finit'])
-#AC_SUBST(plugindir)
-
-#AS_IF([test "x$with_rcsd" != "xno"],[
-#	AS_IF([test "x$rcsd" = "xyes"],[
-#		AC_MSG_ERROR([Must supply argument])])
-#	],[
-#	rcsd='$(sysconfdir)/finit.d'])
 
 AS_IF([test "x$with_console" != "xno"],[
 	AS_IF([test "x$console" = "xyes"],[
