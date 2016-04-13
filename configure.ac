@@ -15,8 +15,6 @@ AC_CONFIG_MACRO_DIR([m4])
 
 # Change default prefix, we're PID 1 after all ...
 AC_PREFIX_DEFAULT([])
-datarootdir=/usr/share
-AC_SUBST([datarootdir])
 
 # Check for plugins
 #plugins_all="alsa-utils bootmisc dbus hwclock initctl netlink pidfile resolvconf time tty urandom x11-common"
