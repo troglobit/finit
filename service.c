@@ -189,8 +189,8 @@ static int service_start(svc_t *svc)
 		/* Redirect inetd socket to stdin for connection */
 #ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
-			dup2(svc->stdin, STDIN_FILENO);
-			close(svc->stdin);
+			dup2(svc->stdin_fd, STDIN_FILENO);
+			close(svc->stdin_fd);
 			dup2(STDIN_FILENO, STDOUT_FILENO);
 			dup2(STDIN_FILENO, STDERR_FILENO);
 		} else
@@ -263,7 +263,7 @@ static int service_start(svc_t *svc)
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
-			close(svc->stdin);
+			close(svc->stdin_fd);
 #endif
 
 	plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
