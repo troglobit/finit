@@ -5,7 +5,7 @@ Finit3-dev | Fast & Extensible init for Linux
 ![Original Finit homepage image](images/finit.jpg "Finit in action!")
 
 Finit3 is currently in heavy development, please use stable releases if
-you want a stable and fully functional system.  Otherwise YMMV!
+you want a stable and fully functional system.  YMMV!
 
 Table of Contents
 -----------------
@@ -833,6 +833,7 @@ which was reverse engineered from syscalls of the [EeePC fastinit][] —
 Finit is developed and maintained by [Joachim Nilsson][] at [GitHub][].
 Please file bug reports, clone it, or send pull requests for bug fixes
 and proposed extensions.
+
 
 [1]:  https://en.wikipedia.org/wiki/Process_supervision
 [2]:  http://cr.yp.to/daemontools.html

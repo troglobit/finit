@@ -143,11 +143,13 @@ Documentation
 * Add simple, *very* simple, `finit-simple.conf` example. To illustrate
   how close Finit3 still is to the original easy-to-use Finit0 :)
 
+
 Investigation
 -------------
 
 * [FHS changes](http://askubuntu.com/questions/57297/why-has-var-run-been-migrated-to-run)
   affecting runtime status, plugins, etc.
+
 
 [libwdt]:                http://www.wehavemorefun.de/fritzbox/Libwdt.so
 [Fritz!Box source dump]: ftp://ftp.avm.de/fritz.box/fritzbox.fon_wlan_7170/x_misc/opensrc/
