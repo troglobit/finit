@@ -57,6 +57,8 @@ to achieve compatibility would be to add a plugin to finit which reads
 Inetd
 -----
 
+Add support for throttling connections.
+
 Optimize interface filtering by using socket filter.  The functions
 `inet_*_peek()` and `inetd_is_allowed()` used for interace filtering
 should be possible to rewrite as socket filters.
