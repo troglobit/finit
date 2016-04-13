@@ -240,6 +240,10 @@ multiple web servers, add `:ID` somewhere between the `run`, `task`,
 Without the `:ID` to the service the latter will overwrite the former
 and only the old web server would be started and supervised.
 
+The `run`, `task`, `service`, or `inetd` stanzas also allow the keyword
+`log` to redirect `stderr` and `stdout` of the application to syslog,
+using `logger`.
+
 
 /etc/finit.d
 ------------
