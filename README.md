@@ -720,7 +720,7 @@ switches to configure:
 * `--prefix=`: Base prefix path for all files, except `--sbindir` and
   `--sysconfdir`.  Used in concert with the `DESTDIR` variable.
 
-  Defaults to `/usr`.
+  Defaults to `/`, i.e. `""`.
 
 * `--sbindir=`: Path to where resulting binaries should install to. Used
   in concert with the `DESTDIR` variable.
@@ -730,40 +730,19 @@ switches to configure:
 * `--sysconfdir=`: Path to where finit configuration files should
   install to.  Used in concert with the `DESTDIR` variable.
 
-  Defaults to `/etc`, but is currently unused.
-
-* `--plugindir=`: Absolute path to where finit should search for
-  dynamically loadable plugins at runtime.  Can also be controlled
-  with the `--libdir` switch.
-
-  Defaults to `/lib/finit/plugins`.
-
-* `--with-plugins=`: List of stock finit plugins to build and install.
-  The build system adds `.o` or `.so` extension to the listed plugins
-  depending on the `--enable-static` switch.  Hence, list the plugins
-  *without* their extension.
+  Defaults to `/etc`, but is currently unused.  It is up to the user
+  to set up suitable `/etc/finit.conf` and `/etc/finit.d/*.conf`.
 
 * `--enable-embedded`: Target finit for BusyBox getty and mdev instead
   of a standard Linux distribution with GNU tools and udev.
 
-* `--enable-debug`: Add GDB symbols and disable code optimization.
-
 * `--enable-static`: Build Finit statically.  The plugins will be
-  built-in (.o files) instead.  Note: very untested and not all plugins
-  can be built static.  It is recommended to use `--with-plugins` and
-  select only the plugins really needed.
+  built-in (.o files) instead.  Note: very untested in Finit3!
 
 * `--disable-inetd`: Disables the built-in inetd server.
 
 The following environment variables are checked by the makefiles and
 control what is built and where resulting binaries are installed.
-
-* `ROOTDIR=`: Top directory for building complete system, used in pretty
-  printing at build time.
-
-* `VERSION=`: Defaults to the currently released version of finit,
-  e.g., 1.3 but can be overridden by packagers using this variable to
-  add a suffix or completely alter the version.
 
 * `CFLAGS=`: Default `CFLAGS` are inherited from the environment.
 
@@ -782,35 +761,21 @@ control what is built and where resulting binaries are installed.
 First, unpack the archive:
 
 ```shell
-    $ tar xfJ finit-1.13.tar.xz
-    $ cd finit-1.13/
+    $ tar xf finit-3.0.tar.xz
+    $ cd finit-3.0/
 ```
 
 Then configure, build and install:
 
 ```shell
-    $ ./configure --with-plugins="initctl hwclock"
-    $ make
-    CC      finit.o
-    CC      conf.o
-    CC      helpers.o
-    CC      sig.o
-    CC      svc.o
-    CC      plugin.o
-    CC      strlcpy.o
-    LINK    finit
-    CC      plugins/initctl.o
-    PLUGIN  plugins/initctl.so
-    CC      plugins/hwclock.o
-    PLUGIN  plugins/hwclock.so
-	$
+    $ ./configure && make
+    .
+    .
+    .
     $ DESTDIR=/tmp/finit make install
-    INSTALL /tmp/finit/sbin/finit
-    INSTALL /tmp/finit/lib/finit/plugins/initctl.so
-    INSTALL /tmp/finit/lib/finit/plugins/hwclock.so
 ```
 
-In this example the [finit-1.13.tar.xz][10] archive is unpacked to the
+In this example the [finit-3.0.tar.xz][10] archive is unpacked to the
 user's home directory, configured, built and installed to a temporary
 staging directory.  The environment variable `DESTDIR` controls the
 destination directory when installing, very useful for building binary
@@ -878,7 +843,7 @@ and proposed extensions.
 [7]:  http://www.freedesktop.org/wiki/Software/systemd/
 [8]:  http://www.gentoo.org/proj/en/base/openrc/
 [9]:  https://github.com/troglobit/troglos
-[10]: ftp://troglobit.com/finit/finit-1.13.tar.xz
+[10]: ftp://troglobit.com/finit/finit-3.0.tar.xz
 [TCP Wrappers]:     https://en.wikipedia.org/wiki/TCP_Wrapper
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
