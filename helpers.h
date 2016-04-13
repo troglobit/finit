@@ -62,7 +62,6 @@ do {								\
 #define  _pe(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
 
 void    runlevel_set    (int pre, int now);
-int     runlevel_get    (void);
 char   *runlevel_string (int levels);
 
 int     pid_alive       (pid_t pid);

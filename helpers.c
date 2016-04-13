@@ -58,23 +58,6 @@ void runlevel_set(int pre, int now)
 	endutent();
 }
 
-int runlevel_get(void)
-{
-	int lvl = '?';		/* Non-existing runlevel */
-	struct utmp *utent;
-
-	setutent();
-	while ((utent = getutent())) {
-		if (utent->ut_type == RUN_LVL) {
-			lvl = utent->ut_pid & 0xFF;
-			break;
-		}
-	}
-	endutent();
-
-	return lvl - '0';
-}
-
 /**
  * runlevel_string - Convert a bit encoded runlevel to .conf syntax
  * @levels: Bit encoded runlevels
