@@ -44,6 +44,7 @@ install:
 script:
   - ./autogen.sh
   - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp
+  - cat config.log
   - make clean
   - make -j5 V=1
   - make install-strip
