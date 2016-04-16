@@ -5,13 +5,14 @@ finit_SOURCES      = finit.c api.c client.c conf.c exec.c helpers.c pid.c \
 if INETD
 finit_SOURCES      += inetd.c
 endif
-finit_CFLAGS       = -W -Wall -Wextra -std=gnu99
-finit_LDADD        = -lite -luev -ldl
+finit_CFLAGS       = -W -Wall -Wextra -std=gnu99 $(lite_CFLAGS) $(libuEv_CFLAGS)
+finit_LDADD        = -ldl $(lite_LIBS) $(libuEv_LIBS)
 if STATIC
 finit_LDADD       += plugins/libplug.la
 endif
 initctl_SOURCES    = initctl.c svc.c helpers.c cond.c
-initctl_LDADD      = -lite
+initctl_CFLAGS     = $(lite_CFLAGS)
+initctl_LDADD      = $(lite_LIBS)
 reboot_SOURCES     = reboot.c
 SYMLINK            = telinit init
 SUBDIRS            = plugins
