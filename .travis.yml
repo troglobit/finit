@@ -3,10 +3,10 @@
 language: c
 
 # Use docker for quicker builds, it now allows https://docs.travis-ci.com/user/apt/
-#sudo: false
+sudo: false
 
 # Use non-docker builds atm. to install libuEv and libite from source
-sudo: true
+#sudo: true
 
 # Test build with both GCC and Clang (LLVM)
 compiler:
@@ -37,14 +37,14 @@ install:
   - wget https://github.com/troglobit/libite/releases/download/v1.5.0/libite-1.5.0.tar.xz
   - tar xf libuev-1.4.0.tar.xz
   - tar xf libite-1.5.0.tar.xz
-  - (cd libuev-1.4.0 && ./configure && make && sudo make install)
-  - (cd libite-1.5.0 && ./configure && make && sudo make install)
-  - sudo ldconfig
+  - (cd libuev-1.4.0 && ./configure --prefix= && make && DESTDIR=/tmp make install)
+  - (cd libite-1.5.0 && ./configure --prefix= && make && DESTDIR=/tmp make install)
+#  - sudo ldconfig
 
 # Custom build script for the time being, no "make test" yet
 script:
   - ./autogen.sh
-  - ./configure --prefix=
+  - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=
   - make clean
   - make -j5
   - DESTDIR=/tmp make install-strip
