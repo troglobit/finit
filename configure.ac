@@ -1,5 +1,3 @@
-# Use v2.61 for backwards compat with Ubuntu 12.04 LTS
-AC_PREREQ([2.61])
 AC_INIT(Finit, 3.0-beta1, https://github.com/troglobit/finit/issues, finit, http://troglobit.com/finit.html)
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz subdir-objects])
 AM_SILENT_RULES([yes])
