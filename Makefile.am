@@ -5,8 +5,8 @@ finit_SOURCES      = finit.c api.c client.c conf.c exec.c helpers.c pid.c \
 if INETD
 finit_SOURCES      += inetd.c
 endif
-finit_CFLAGS       = -W -Wall -Wextra -std=gnu99 $(lite_CFLAGS) $(libuEv_CFLAGS)
-finit_LDADD        = -ldl $(lite_LIBS) $(libuEv_LIBS)
+finit_CFLAGS       = -W -Wall -Wextra -std=gnu99 $(lite_CFLAGS) $(uev_CFLAGS)
+finit_LDADD        = -ldl $(lite_LIBS) $(uev_LIBS)
 if STATIC
 finit_LDADD       += plugins/libplug.la
 endif
