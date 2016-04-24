@@ -127,8 +127,7 @@ static int get_stdin(svc_t *svc)
 	}
 
 	if (!inetd_is_allowed(&svc->inetd, ifname)) {
-		FLOG_INFO("Service %s on port %d not allowed from interface %s.",
-			  svc->inetd.name, svc->inetd.port, ifname);
+		FLOG_INFO("Service %s on %s:%d is not allowed.", svc->inetd.name, ifname, svc->inetd.port);
 		if (svc->inetd.type == SOCK_STREAM)
 			close(stdin);
 
@@ -144,10 +143,10 @@ static void socket_cb(uev_t *w, void *arg, int UNUSED(events))
 	svc_t *svc = (svc_t *)arg, *task;
 	int stdin;
 
+	_d("Got event on %s socket ...", svc->cmd);
 	stdin = get_stdin(svc);
 	if (stdin < 0) {
-		FLOG_ERROR("%s: Unable to accept incoming connection",
-			   svc->cmd);
+		FLOG_ERROR("%s: Unable to accept incoming connection", svc->cmd);
 		return;
 	}
 
@@ -190,7 +189,7 @@ static int spawn_socket(inetd_t *inetd)
 		return -EINVAL;
 	}
 
-	_d("Spawning server socket for inetd %s ...", inetd->name);
+	_d("Spawning server socket for inetd %s, type %s ...", inetd->name, inetd->type == SOCK_STREAM ? "stream" : "dgram");
 	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK | SOCK_CLOEXEC, inetd->proto);
 	if (-1 == sd) {
 		FLOG_PERROR("Failed opening inetd socket type %d proto %d", inetd->type, inetd->proto);
