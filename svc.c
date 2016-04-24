@@ -97,7 +97,9 @@ svc_t *svc_new(char *cmd, int id, int type)
  */
 int svc_del(svc_t *svc)
 {
-	svc->type = SVC_TYPE_FREE;
+	/* Clear any old references and set SVC_TYPE_FREE */
+	memset(svc, 0, sizeof(*svc));
+
 	return 0;
 }
 
