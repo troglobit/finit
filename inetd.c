@@ -183,7 +183,7 @@ static void socket_cb(uev_t *w, void *arg, int UNUSED(events))
 	memcpy(task->username, svc->username, sizeof(task->username));
 	memcpy(task->group,    svc->group,    sizeof(task->group));
 	memcpy(task->args,     svc->args,     sizeof(task->args));
-	snprintf(task->desc, sizeof(task->desc), "%s Connection", svc->desc);
+	snprintf(task->desc, sizeof(task->desc), "%s connection", svc->desc);
 
 	task->stdin = stdin;
 	service_step(task);
