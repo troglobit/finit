@@ -127,8 +127,7 @@ static int get_stdin(svc_t *svc)
 	}
 
 	if (!inetd_is_allowed(&svc->inetd, ifname)) {
-		FLOG_INFO("Service %s on port %d not allowed from interface %s.",
-			  svc->inetd.name, svc->inetd.port, ifname);
+		FLOG_INFO("Service %s on %s:%d is not allowed.", svc->inetd.name, ifname, svc->inetd.port);
 		if (svc->inetd.type == SOCK_STREAM)
 			close(stdin);
 
@@ -144,10 +143,19 @@ static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 	svc_t *svc = (svc_t *)arg, *task;
 	int stdin;
 
+	_d("Got event on %s socket ...", svc->cmd);
 	stdin = get_stdin(svc);
 	if (stdin < 0) {
-		FLOG_ERROR("%s: Unable to accept incoming connection",
-			   svc->cmd);
+		FLOG_ERROR("%s: Unable to accept incoming connection", svc->cmd);
+		return;
+	}
+
+	/*
+	 * Make sure to disable O_NONBLOCK on the descriptor before
+	 * passing it to the inetd service, that's what is expected.
+	 */
+	if (fcntl(stdin, F_SETFL, fcntl(stdin, F_GETFL, 0) & ~O_NONBLOCK) < 0) {
+		FLOG_ERROR("Failed disabling non-blocking on %s socket", svc->cmd);
 		return;
 	}
 
@@ -158,22 +166,27 @@ static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 		return;
 	}
 
-	/* Copy inherited attributes from inetd */
-	task->runlevels = svc->runlevels;
-	task->inetd     = svc->inetd;
-	memcpy(task->cond,     svc->cond,     sizeof(task->cond));
-	memcpy(task->username, svc->username, sizeof(task->username));
-	memcpy(task->group,    svc->group,    sizeof(task->group));
-	memcpy(task->args,     svc->args,     sizeof(task->args));
-	snprintf(task->desc, sizeof(task->desc), "%s Connection", svc->desc);
-
-	task->stdin_fd = stdin;
-	service_step(task);
-
 	if (!svc->inetd.forking) {
 		svc->block = SVC_BLOCK_INETD_BUSY;
 		service_step(svc);
 	}
+
+	/* Copy inherited attributes from inetd service's svc */
+	task->runlevels = svc->runlevels;
+
+	/* Only copy the most relevant parts of inetd, in particular we
+	 * must *not* copy the watcher data to the clone! */
+	task->inetd.svc  = svc;
+	task->inetd.type = svc->inetd.type;
+
+	memcpy(task->cond,     svc->cond,     sizeof(task->cond));
+	memcpy(task->username, svc->username, sizeof(task->username));
+	memcpy(task->group,    svc->group,    sizeof(task->group));
+	memcpy(task->args,     svc->args,     sizeof(task->args));
+	snprintf(task->desc, sizeof(task->desc), "%s connection", svc->desc);
+
+	task->stdin_fd = stdin;
+	service_step(task);
 }
 
 /* Launch Inet socket for service.
@@ -190,7 +203,7 @@ static int spawn_socket(inetd_t *inetd)
 		return -EINVAL;
 	}
 
-	_d("Spawning server socket for inetd %s ...", inetd->name);
+	_d("Spawning server socket for inetd %s, type %s ...", inetd->name, inetd->type == SOCK_STREAM ? "stream" : "dgram");
 	sd = socket(AF_INET, inetd->type | SOCK_NONBLOCK | SOCK_CLOEXEC, inetd->proto);
 	if (-1 == sd) {
 		FLOG_PERROR("Failed opening inetd socket type %d proto %d", inetd->type, inetd->proto);
@@ -215,7 +228,7 @@ static int spawn_socket(inetd_t *inetd)
 
 	if (inetd->port) {
 		if (inetd->type == SOCK_STREAM) {
-			if (-1 == listen(sd, 20)) {
+			if (-1 == listen(sd, 10)) {
 				FLOG_PERROR("Failed listening to inetd service %s", inetd->name);
 				close(sd);
 				return -errno;
@@ -232,19 +245,40 @@ static int spawn_socket(inetd_t *inetd)
 
 int inetd_start(inetd_t *inetd)
 {
-	if (inetd->watcher.fd == -1)
+	int sd;
+	char buf[BUFSIZ];
+	ssize_t len;
+
+	sd = inetd->watcher.fd;
+	if (sd == -1)
 		return spawn_socket(inetd);
 
-	return -EEXIST;
+	/* Read anything lingering, or clean up socket after failure */
+	len = recv(sd, buf, sizeof(buf), MSG_DONTWAIT);
+	_d("Read %d lingering bytes from socket before restarting %s ...", len, inetd->svc->cmd);
+
+	/* Restore O_NONBLOCK for socket */
+	fcntl(sd, F_SETFL, fcntl(sd, F_GETFL, 0) | O_NONBLOCK);
+
+	_d("Re-starting %s socket watcher ...", inetd->svc->cmd);
+	uev_io_start(&inetd->watcher);
+
+	return 0;
 }
 
 void inetd_stop(inetd_t *inetd)
 {
 	if (inetd->watcher.fd != -1) {
+		_d("Stopping %s socket watcher ...", inetd->svc->cmd);
 		uev_io_stop(&inetd->watcher);
-		shutdown(inetd->watcher.fd, SHUT_RDWR);
-		close(inetd->watcher.fd);
-		inetd->watcher.fd = -1;
+
+		/* For dgram inetd services we block the parent SVC
+		 * and halt the watcher, so don't close the socket! */
+		if (inetd->svc->block != SVC_BLOCK_INETD_BUSY) {
+			shutdown(inetd->watcher.fd, SHUT_RDWR);
+			close(inetd->watcher.fd);
+			inetd->watcher.fd = -1;
+		}
 	}
 }
 

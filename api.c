@@ -351,7 +351,7 @@ int api_init(uev_ctx_t *ctx)
 		.sun_path   = INIT_SOCKET,
 	};
 
-	sd = socket(AF_UNIX, SOCK_STREAM, 0);
+	sd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (-1 == sd) {
 		_pe("Failed starting external API socket");
 		return 1;

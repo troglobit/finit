@@ -245,9 +245,9 @@ pid_t run_getty(char *cmd, char *args[], int console)
 			if (fd != STDIN_FILENO)
 				exit(1);
 
-			dup2(0, STDIN_FILENO);
-			dup2(0, STDOUT_FILENO);
-			dup2(0, STDERR_FILENO);
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
 
 			prctl(PR_SET_NAME, "console", 0, 0, 0);
 		}
