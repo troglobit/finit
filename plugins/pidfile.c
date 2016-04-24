@@ -104,7 +104,7 @@ static plugin_t plugin = {
 
 PLUGIN_INIT(plugin_init)
 {
-	pidfile_ctx.fd = inotify_init();
+	pidfile_ctx.fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 	if (pidfile_ctx.fd < 0) {
 		_pe("inotify_init()");
 		return;
