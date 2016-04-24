@@ -228,7 +228,7 @@ static int spawn_socket(inetd_t *inetd)
 
 	if (inetd->port) {
 		if (inetd->type == SOCK_STREAM) {
-			if (-1 == listen(sd, 20)) {
+			if (-1 == listen(sd, 10)) {
 				FLOG_PERROR("Failed listening to inetd service %s", inetd->name);
 				close(sd);
 				return -errno;
