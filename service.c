@@ -648,6 +648,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 		id = svc_next_id(cmd);
 	}
+recreate:
 #endif
 
 	svc = svc_find(cmd, id);
@@ -657,6 +658,13 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
 			return errno = ENOMEM;
+		}
+	} else {
+		if (svc_is_inetd(svc) && type != SVC_TYPE_INETD) {
+			_d("Service was previously inetd, deregistering ...");
+			inetd_del(&svc->inetd);
+			svc_del(svc);
+			goto recreate;
 		}
 	}
 

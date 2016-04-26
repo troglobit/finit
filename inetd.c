@@ -275,7 +275,9 @@ void inetd_stop(inetd_t *inetd)
 		/* For dgram inetd services we block the parent SVC
 		 * and halt the watcher, so don't close the socket! */
 		if (inetd->svc->block != SVC_BLOCK_INETD_BUSY) {
-			shutdown(inetd->watcher.fd, SHUT_RDWR);
+			_d("Shutting down inet socket %d ...", inetd->watcher.fd);
+			if (inetd->type == SOCK_STREAM)
+				shutdown(inetd->watcher.fd, SHUT_RDWR);
 			close(inetd->watcher.fd);
 			inetd->watcher.fd = -1;
 		}
@@ -626,12 +628,10 @@ int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forkin
 
 int inetd_del(inetd_t *inetd)
 {
-	inetd_filter_t *filter, *tmp;
+	inetd->svc->block = 0;
+	inetd_stop(inetd);
 
-	TAILQ_FOREACH_SAFE(filter, &inetd->filters, link, tmp)
-		free(filter);
-
-	return 0;
+	return inetd_flush(inetd);
 }
 
 /**
