@@ -112,7 +112,7 @@ static int is_norespawn(void)
  */
 static int service_start(svc_t *svc)
 {
-	int result = 0;
+	int i, result = 0;
 	pid_t pid;
 	sigset_t nmask, omask;
 
@@ -163,7 +163,6 @@ static int service_start(svc_t *svc)
 
 	pid = fork();
 	if (pid == 0) {
-		int i = 0;
 		int status;
 #ifdef ENABLE_STATIC
 		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
@@ -218,7 +217,6 @@ static int service_start(svc_t *svc)
 			}
 		} else if (debug) {
 			int fd;
-			char buf[CMD_SIZE] = "";
 
 			fd = open(CONSOLE, O_WRONLY | O_APPEND);
 			if (-1 != fd) {
@@ -226,15 +224,6 @@ static int service_start(svc_t *svc)
 				dup2(fd, STDERR_FILENO);
 				close(fd);
 			}
-
-			for (i = 0; i < MAX_NUM_SVC_ARGS && args[i]; i++) {
-				char arg[MAX_ARG_LEN];
-
-				snprintf(arg, sizeof(arg), "%s ", args[i]);
-				if (strlen(arg) < (sizeof(buf) - strlen(buf)))
-					strcat(buf, arg);
-			}
-			_e("Starting %s: %s", svc->cmd, buf);
 		}
 
 		sig_unblock();
@@ -257,6 +246,17 @@ static int service_start(svc_t *svc)
 			waitpid(pid, NULL, 0);
 		}
 		exit(status);
+	} else if (debug) {
+		char buf[CMD_SIZE] = "";
+
+		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++) {
+			char arg[MAX_ARG_LEN];
+
+			snprintf(arg, sizeof(arg), "%s ", svc->args[i]);
+			if (strlen(arg) < (sizeof(buf) - strlen(buf)))
+				strcat(buf, arg);
+		}
+		_e("Starting %s: %s", svc->cmd, buf);
 	}
 
 	svc->pid = pid;
