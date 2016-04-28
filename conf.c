@@ -27,6 +27,8 @@
 #include <dirent.h>
 #include <string.h>
 
+#include <sys/resource.h>
+
 #include "finit.h"
 #include "cond.h"
 #include "service.h"
@@ -148,6 +150,86 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	}
 
 	strlcpy(svc->cond, ptr, sizeof(svc->cond));
+}
+
+struct rlimit_name {
+	char *name;
+	int val;
+};
+
+static const struct rlimit_name rlimit_names[] = {
+	{ "as",         RLIMIT_AS         },
+	{ "core",       RLIMIT_CORE       },
+	{ "cpu",        RLIMIT_CPU        },
+	{ "data",       RLIMIT_DATA       },
+	{ "fsize",      RLIMIT_FSIZE      },
+	{ "locks",      RLIMIT_LOCKS      },
+	{ "memlock",    RLIMIT_MEMLOCK    },
+	{ "msgqueue",   RLIMIT_MSGQUEUE   },
+	{ "nice",       RLIMIT_NICE       },
+	{ "nofile",     RLIMIT_NOFILE     },
+	{ "nproc",      RLIMIT_NPROC      },
+	{ "rss",        RLIMIT_RSS        },
+	{ "rtprio",     RLIMIT_RTPRIO     },
+	{ "rttime",     RLIMIT_RTTIME     },
+	{ "sigpending", RLIMIT_SIGPENDING },
+	{ "stack",      RLIMIT_STACK      },
+
+	{ NULL }
+};
+
+void conf_parse_rlimit(char *line)
+{
+	struct rlimit rlim;
+	rlim_t new, *set;
+	const struct rlimit_name *name;
+	int resource = -1;
+
+	char *tok = strtok(line, " \t");
+
+	if (tok && !strcmp(tok, "soft"))
+		set = &rlim.rlim_cur;
+	else if (tok && !strcmp(tok, "hard"))
+		set = &rlim.rlim_max;
+	else
+		goto fail;
+
+	tok = strtok(NULL, " \t");
+	if (!tok)
+		goto fail;
+
+	for (name = rlimit_names; name->name; name++)
+		if (!strcmp(tok, name->name))
+			resource = name->val;
+
+	if (resource < 0)
+		goto fail;
+
+	tok = strtok(NULL, " \t");
+	if (!tok)
+		goto fail;
+
+	if (!strcmp(tok, "infinity"))
+		new = RLIM_INFINITY;
+	else {
+		const char *err = NULL;
+
+		new = strtonum(tok, 0, 2 << 31, &err);
+		if (err)
+			goto fail;
+	}
+
+	if (getrlimit(resource, &rlim))
+		goto fail;
+
+	*set = new;
+	if (setrlimit(resource, &rlim))
+		goto fail;
+
+	return;
+
+fail:
+	FLOG_WARN("Failed parsing/setting %s rlimit", name->name ? : "unknown");
 }
 
 static void parse_static(char *line)
@@ -300,6 +382,11 @@ static void parse_dynamic(char *line, time_t mtime)
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
 #endif
+		return;
+	}
+
+	if (MATCH_CMD(line, "rlimit ", x)) {
+		conf_parse_rlimit(x);
 		return;
 	}
 }
