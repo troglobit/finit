@@ -25,6 +25,10 @@ AM_CPPFLAGS       += -DFINIT_CONF=\"$(conf)\" -DFINIT_RCSD=\"$(rcsd)\" -DFINIT_F
 		     -DPLUGIN_PATH=\"$(pkglibdir)\"
 AM_LDFLAGS         = -export-dynamic
 
+
+# Compat hook
+install-dev: install-pkgincludeHEADERS
+
 # Hook in install to add finit --> telinit symlink(s)
 install-exec-hook:
 	@for file in $(SYMLINK); do				\
