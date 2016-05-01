@@ -135,6 +135,24 @@ Syntax:
 * `network <PATH>`  
   Script or program to bring up networking, with optional arguments
 
+* `rlimit <hard|soft> RESOURCE <LIMIT|infinity>`  
+  Modify the specified resource's hard or soft limit to be the
+  specifed limit. `RESOURCE` is a lower-case string matching the
+  constants in `setrlimit(2)` with the `RLIMIT_` prefix
+  removed. E.g. to select `RLIMIT_CPU`, `RESOURCE` would be
+  `cpu`. `LIMIT` is an integer whose unit depends on the resource
+  being modified, see `setrlimit(2)` for more information. The special
+  limit `infinity` means the there should be no limit on the resource,
+  i.e. `RLIM_INFINITY` is passed to `setrlimit(2)`.
+
+```shell
+        # No process is allowed more than 8MB of address space
+        rlimit hard as 8388608
+
+        # Core dumps may be arbitrarily large
+        rlimit soft core infinity
+```
+
 * `runlevel <N>`  
   N is the runlevel number 1-9, where 6 is reserved for reboot.  
   Default is 2.
