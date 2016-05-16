@@ -48,18 +48,6 @@ static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
 #endif
 
 /**
- * service_bootstrap - Start bootstrap services and tasks
- *
- * System startup, runlevel S, where only services, tasks and
- * run commands absolutely essential to bootstrap are located.
- */
-void service_bootstrap(void)
-{
-	_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
-	service_step_all(SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SERVICE);
-}
-
-/**
  * service_enabled - Should the service run?
  * @svc: Pointer to &svc_t object
  *

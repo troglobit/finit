@@ -1,7 +1,6 @@
-/* Private header file for main finit daemon, not for plugins
+/* Finit state machine
  *
- * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2013  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2016  xxx
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,27 +21,25 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_PRIVATE_H_
-#define FINIT_PRIVATE_H_
+#ifndef FINIT_SM_H_
+#define FINIT_SM_H_
 
-#include "svc.h"
-#include "plugin.h"
+typedef enum {
+	SM_BOOTSTRAP_STATE = 0,
+	SM_RUNNING_STATE,
+} sm_state_t;
 
-uev_ctx_t *ctx;			/* Main loop context */
+typedef struct sm {
+	sm_state_t state;
+} sm_t;
 
-int       api_init         (uev_ctx_t *ctx);
-int       client           (int argc, char *argv[]);
+void  sm_init(sm_t *sm);
+void  sm_step(sm_t *sm);
 
-void      service_monitor  (pid_t lost);
-
-void      plugin_run_hooks (hook_point_t no);
-int       plugin_load_all  (uev_ctx_t *ctx, char *path);
-
-#endif /* FINIT_PRIVATE_H_ */
+#endif	/* FINIT_SM_H_ */
 
 /**
  * Local Variables:
- *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:

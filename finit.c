@@ -39,6 +39,7 @@
 #include "tty.h"
 #include "libite/lite.h"
 #include "inetd.h"
+#include "sm.h"
 
 int   debug     = 0;
 int   quiet     = KERNEL_QUIET;	/* Delayed disable of verbose mode. */
@@ -53,6 +54,7 @@ char *hostname  = NULL;
 char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;
 char *console   = NULL;
+sm_t sm;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
@@ -176,9 +178,10 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
-	 * Start all bootstrap tasks, no network available!
+	 * Initalize finit state machine and start all bootstrap tasks, no network available!
 	 */
-	service_bootstrap();
+	sm_init(&sm);
+	sm_step(&sm);
 
 	/*
 	 * Network stuff
