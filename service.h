@@ -37,6 +37,8 @@ void      service_reload_dynamic (void);
 void service_step(svc_t *svc);
 void service_step_all(int types);
 
+int  service_stop_is_done(void);
+
 #endif	/* FINIT_SERVICE_H_ */
 
 /**

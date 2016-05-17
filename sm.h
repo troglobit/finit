@@ -27,14 +27,18 @@
 typedef enum {
 	SM_BOOTSTRAP_STATE = 0,
 	SM_RUNNING_STATE,
+	SM_RUNLEVEL_CHANGE_STATE,
+	SM_RUNLEVEL_WAIT_STOP_STATE,
 } sm_state_t;
 
 typedef struct sm {
 	sm_state_t state;
+	int newlevel;
 } sm_t;
 
 void  sm_init(sm_t *sm);
 void  sm_step(sm_t *sm);
+void  sm_set_runlevel(sm_t *sm, int newlevel);
 
 #endif	/* FINIT_SM_H_ */
 

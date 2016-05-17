@@ -26,13 +26,39 @@
 #include <sys/types.h>
 
 #include "finit.h"
+#include "conf.h"
 #include "helpers.h"
+#include "private.h"
 #include "service.h"
+#include "sig.h"
+#include "tty.h"
 #include "sm.h"
 
 void sm_init(sm_t *sm)
 {
 	sm->state = SM_BOOTSTRAP_STATE;
+	sm->newlevel = -1;
+}
+
+void sm_set_runlevel(sm_t *sm, int newlevel)
+{
+	sm->newlevel = newlevel;
+}
+
+char *sm_status(sm_t *sm)
+{
+	switch (sm->state) {
+	case SM_BOOTSTRAP_STATE:
+		return "bootstrap";
+	case SM_RUNNING_STATE:
+		return "running";
+	case SM_RUNLEVEL_CHANGE_STATE:
+		return "runlevel/change";
+	case SM_RUNLEVEL_WAIT_STOP_STATE:
+		return "runlevel/wait";
+	default:
+		return "unknown";
+	}
 }
 
 void sm_step(sm_t *sm)
@@ -42,6 +68,8 @@ void sm_step(sm_t *sm)
 restart:
 	old_state = sm->state;
 
+	_d("state: %s", sm_status(sm));
+
 	switch(sm->state) {
 	case SM_BOOTSTRAP_STATE:
 		_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
@@ -50,6 +78,70 @@ restart:
 		break;
 
 	case SM_RUNNING_STATE:
+		/* runlevel changed? */
+		if (sm->newlevel >= 0 && sm->newlevel <= 9) {
+			if (runlevel == sm->newlevel) {
+				sm->newlevel = -1;
+				break;
+			}
+			sm->state = SM_RUNLEVEL_CHANGE_STATE;
+			break;
+		}
+
+	case SM_RUNLEVEL_CHANGE_STATE:
+		prevlevel    = runlevel;
+		runlevel     = sm->newlevel;
+		sm->newlevel = -1;
+
+		_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
+		runlevel_set(prevlevel, runlevel);
+
+		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
+		conf_reload_dynamic();
+
+		_d("Stopping services services not allowed in new runlevel ...");
+		service_step_all(SVC_TYPE_ANY);
+
+		sm->state = SM_RUNLEVEL_WAIT_STOP_STATE;
+		break;
+
+	case SM_RUNLEVEL_WAIT_STOP_STATE:
+		/* Need to wait for any services to stop? If so, exit early
+		 * and perform second stage from service_monitor later. */
+		if (!service_stop_is_done())
+			break;
+
+		/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
+		_d("All services have been stoppped, calling runlevel change hooks ...");
+		plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
+
+		_d("Starting services services new to this runlevel ...");
+		service_step_all(SVC_TYPE_ANY);
+
+		/* Cleanup stale services */
+		svc_clean_dynamic(service_unregister);
+
+		if (0 == runlevel) {
+			do_shutdown(SIGUSR2);
+			sm->state = SM_RUNNING_STATE;
+			break;
+		}
+		if (6 == runlevel) {
+			do_shutdown(SIGUSR1);
+			sm->state = SM_RUNNING_STATE;
+			break;
+		}
+
+		if (runlevel == 1)
+			touch("/etc/nologin");	/* Disable login in single-user mode */
+		else
+			erase("/etc/nologin");
+
+		/* No TTYs run at bootstrap, they have a delayed start. */
+		if (prevlevel > 0)
+			tty_runlevel(runlevel);
+
+		sm->state = SM_RUNNING_STATE;
 		break;
 	}
 

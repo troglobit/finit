@@ -38,6 +38,7 @@
 #include "tty.h"
 #include "service.h"
 #include "inetd.h"
+#include "sm.h"
 
 #define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
 
@@ -73,7 +74,7 @@ int service_enabled(svc_t *svc)
  * Returns:
  * 1, if all stopped services have been collected. 0 otherwise.
  */
-static int service_stop_is_done(void)
+int service_stop_is_done(void)
 {
 	svc_t *svc;
 
@@ -392,34 +393,8 @@ void service_reload_dynamic(void)
  */
 static void service_runlevel_finish(void)
 {
-	/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
-	_d("All services have been stoppped, calling runlevel change hooks ...");
-	plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
-
-	_d("Starting services services new to this runlevel ...");
 	in_teardown = 0;
-	service_step_all(SVC_TYPE_ANY);
-
-	/* Cleanup stale services */
-	svc_clean_dynamic(service_unregister);
-
-	if (0 == runlevel) {
-		do_shutdown(SIGUSR2);
-		return;
-	}
-	if (6 == runlevel) {
-		do_shutdown(SIGUSR1);
-		return;
-	}
-
-	if (runlevel == 1)
-		touch("/etc/nologin");	/* Disable login in single-user mode */
-	else
-		erase("/etc/nologin");
-
-	/* No TTYs run at bootstrap, they have a delayed start. */
-	if (prevlevel > 0)
-		tty_runlevel(runlevel);
+	sm_step(&sm);
 }
 
 /**
@@ -431,31 +406,9 @@ static void service_runlevel_finish(void)
  */
 void service_runlevel(int newlevel)
 {
-	if (runlevel == newlevel)
-		return;
-
-	if (newlevel < 0 || newlevel > 9)
-		return;
-
-	prevlevel = runlevel;
-	runlevel  = newlevel;
-
-	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
-	runlevel_set(prevlevel, newlevel);
-
-	/* Make sure to (re)load all *.conf in /etc/finit.d/ */
-	conf_reload_dynamic();
-
-	_d("Stopping services services not allowed in new runlevel ...");
 	in_teardown = 1;
-	service_step_all(SVC_TYPE_ANY);
-
-	/* Need to wait for any services to stop? If so, exit early
-	 * and perform second stage from service_monitor later. */
-	if (!service_stop_is_done())
-		return;
-
-	service_runlevel_finish();
+	sm_set_runlevel(&sm, newlevel);
+	sm_step(&sm);
 }
 
 /**
