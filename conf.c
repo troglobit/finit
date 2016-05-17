@@ -519,10 +519,12 @@ int conf_parse_config(void)
 
 	result = parse_conf(FINIT_CONF);
 	if (!tty_num()) {
-		char *fallback = FALLBACK_SHELL;
+		char *fallback = NULL;
 
 		if (console)
 			fallback = console;
+		else
+			fallback = strdup(FALLBACK_SHELL);
 
 		tty_register(fallback);
 	}
