@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include "finit.h"
+#include "cond.h"
 #include "conf.h"
 #include "helpers.h"
 #include "private.h"
@@ -38,11 +39,17 @@ void sm_init(sm_t *sm)
 {
 	sm->state = SM_BOOTSTRAP_STATE;
 	sm->newlevel = -1;
+	sm->reload = 0;
 }
 
 void sm_set_runlevel(sm_t *sm, int newlevel)
 {
 	sm->newlevel = newlevel;
+}
+
+void sm_set_reload(sm_t *sm)
+{
+	sm->reload = 1;
 }
 
 char *sm_status(sm_t *sm)
@@ -54,8 +61,12 @@ char *sm_status(sm_t *sm)
 		return "running";
 	case SM_RUNLEVEL_CHANGE_STATE:
 		return "runlevel/change";
-	case SM_RUNLEVEL_WAIT_STOP_STATE:
+	case SM_RUNLEVEL_WAIT_STATE:
 		return "runlevel/wait";
+	case SM_RELOAD_CHANGE_STATE:
+		return "reload/change";
+	case SM_RELOAD_WAIT_STATE:
+		return "reload/wait";
 	default:
 		return "unknown";
 	}
@@ -70,7 +81,7 @@ restart:
 
 	_d("state: %s", sm_status(sm));
 
-	switch(sm->state) {
+	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
 		_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
 		service_step_all(SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SERVICE);
@@ -87,6 +98,12 @@ restart:
 			sm->state = SM_RUNLEVEL_CHANGE_STATE;
 			break;
 		}
+		/* reload ? */
+		if (sm->reload) {
+			sm->reload = 0;
+			sm->state = SM_RELOAD_CHANGE_STATE;
+		}
+		break;
 
 	case SM_RUNLEVEL_CHANGE_STATE:
 		prevlevel    = runlevel;
@@ -102,10 +119,10 @@ restart:
 		_d("Stopping services services not allowed in new runlevel ...");
 		service_step_all(SVC_TYPE_ANY);
 
-		sm->state = SM_RUNLEVEL_WAIT_STOP_STATE;
+		sm->state = SM_RUNLEVEL_WAIT_STATE;
 		break;
 
-	case SM_RUNLEVEL_WAIT_STOP_STATE:
+	case SM_RUNLEVEL_WAIT_STATE:
 		/* Need to wait for any services to stop? If so, exit early
 		 * and perform second stage from service_monitor later. */
 		if (!service_stop_is_done())
@@ -140,6 +157,40 @@ restart:
 		/* No TTYs run at bootstrap, they have a delayed start. */
 		if (prevlevel > 0)
 			tty_runlevel(runlevel);
+
+		sm->state = SM_RUNNING_STATE;
+		break;
+
+	case SM_RELOAD_CHANGE_STATE:
+		/* First reload all *.conf in /etc/finit.d/ */
+		conf_reload_dynamic();
+
+		/* Then, mark all affected service conditions as in-flux and
+		 * let all affected services move to WAITING/HALTED */
+		_d("Stopping services services not allowed after reconf ...");
+		cond_reload();
+		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+
+		sm->state = SM_RELOAD_WAIT_STATE;
+		break;
+
+	case SM_RELOAD_WAIT_STATE:
+		/* Need to wait for any services to stop? If so, exit early
+		 * and perform second stage from service_monitor later. */
+		if (!service_stop_is_done())
+			break;
+
+		/* Cleanup stale services */
+		svc_clean_dynamic(service_unregister);
+
+		_d("Starting services after reconf ...");
+		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+
+		_d("Calling reconf hooks ...");
+		plugin_run_hooks(HOOK_SVC_RECONF);
+
+		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+		_d("Reconfiguration done");
 
 		sm->state = SM_RUNNING_STATE;
 		break;

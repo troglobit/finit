@@ -342,18 +342,7 @@ static int service_restart(svc_t *svc)
 static void service_reload_dynamic_finish(void)
 {
 	in_dyn_teardown = 0;
-
-	/* Cleanup stale services */
-	svc_clean_dynamic(service_unregister);
-
-	_d("Starting services after reconf ...");
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-
-	_d("Calling reconf hooks ...");
-	plugin_run_hooks(HOOK_SVC_RECONF);
-
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-	_d("Reconfiguration done");
+	sm_step(&sm);
 }
 
 /**
@@ -365,23 +354,9 @@ static void service_reload_dynamic_finish(void)
  */
 void service_reload_dynamic(void)
 {
-	/* First reload all *.conf in /etc/finit.d/ */
-	conf_reload_dynamic();
-
-	/* Then, mark all affected service conditions as in-flux and
-	 * let all affected services move to WAITING/HALTED */
-	_d("Stopping services services not allowed after reconf ...");
 	in_dyn_teardown = 1;
-	cond_reload();
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-
-	/* Need to wait for any services to stop? If so, exit early
-	 * and perform second stage from service_monitor later. */
-	if (!service_stop_is_done())
-		return;
-
-	/* Otherwise, kick all svcs again right away */
-	service_reload_dynamic_finish();
+	sm_set_reload(&sm);
+	sm_step(&sm);
 }
 
 /**
