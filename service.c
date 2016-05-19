@@ -42,8 +42,6 @@
 
 #define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
 
-static int    in_teardown = 0, in_dyn_teardown = 0;
-
 #ifndef INETD_DISABLED
 static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
 #endif
@@ -333,19 +331,6 @@ static int service_restart(svc_t *svc)
 }
 
 /**
- * service_reload_dynamic_finish - Finish dynamic service reload
- *
- * Second stage of dynamic reload. Called either directly from first
- * stage if no services had to be stopped, or later from
- * service_monitor once all stopped services have been collected.
- */
-static void service_reload_dynamic_finish(void)
-{
-	in_dyn_teardown = 0;
-	sm_step(&sm);
-}
-
-/**
  * service_reload_dynamic - Called on SIGHUP, 'init q' or 'initctl reload'
  *
  * This function is called when Finit has recieved SIGHUP to reload
@@ -354,21 +339,7 @@ static void service_reload_dynamic_finish(void)
  */
 void service_reload_dynamic(void)
 {
-	in_dyn_teardown = 1;
 	sm_set_reload(&sm);
-	sm_step(&sm);
-}
-
-/**
- * service_runlevel_finish - Finish runlevel change
- *
- * Second stage of runlevel change. Called either directly from first
- * stage if no services had to be stopped, or later from
- * service_monitor once all stopped services have been collected.
- */
-static void service_runlevel_finish(void)
-{
-	in_teardown = 0;
 	sm_step(&sm);
 }
 
@@ -381,7 +352,6 @@ static void service_runlevel_finish(void)
  */
 void service_runlevel(int newlevel)
 {
-	in_teardown = 1;
 	sm_set_runlevel(&sm, newlevel);
 	sm_step(&sm);
 }
@@ -627,29 +597,6 @@ void service_unregister(svc_t *svc)
 	svc_del(svc);
 }
 
-/**
- * service_teardown_finish - Complete runlevel change or dynamic reload
- *
- * If any runlevel change or dynamic service reload is in progress and
- * all services that had to be stopped have been collected, run the
- * corresponding second stage.
- */
-static void service_teardown_finish(void)
-{
-	if (!(in_teardown || in_dyn_teardown))
-		return;
-	
-	if (!service_stop_is_done())
-		return;
-
-	if (in_teardown)
-		service_runlevel_finish();
-
-	if (in_dyn_teardown)
-		service_reload_dynamic_finish();
-}
-
-
 void service_monitor(pid_t lost)
 {
 	svc_t *svc;
@@ -676,8 +623,7 @@ void service_monitor(pid_t lost)
 	svc->pid = 0;
 	service_step(svc);
 
-	/* Check if we're still collecting stopped dynamic services */
-	service_teardown_finish();
+	sm_step(&sm);
 }
 
 static void svc_set_state(svc_t *svc, svc_state_t new)
@@ -757,6 +703,10 @@ restart:
 				break;
 			}
 
+			/* wait until all processes has been stopped before continuing... */
+			if (sm_is_in_teardown(&sm))
+				break;
+
 			err = service_start(svc);
 			if (err) {
 				(*restart_counter)++;
@@ -813,6 +763,9 @@ restart:
 		case COND_ON:
 			if (svc_is_changed(svc)) {
 				if (svc->sighup) {
+					/* wait until all processes has been stopped before continuing... */
+					if (sm_is_in_teardown(&sm))
+						break;
 					service_restart(svc);
 				} else {
 					service_stop(svc);

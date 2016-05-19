@@ -40,19 +40,10 @@ void sm_init(sm_t *sm)
 	sm->state = SM_BOOTSTRAP_STATE;
 	sm->newlevel = -1;
 	sm->reload = 0;
+	sm->in_teardown = 0;
 }
 
-void sm_set_runlevel(sm_t *sm, int newlevel)
-{
-	sm->newlevel = newlevel;
-}
-
-void sm_set_reload(sm_t *sm)
-{
-	sm->reload = 1;
-}
-
-char *sm_status(sm_t *sm)
+static char *sm_status(sm_t *sm)
 {
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
@@ -70,6 +61,21 @@ char *sm_status(sm_t *sm)
 	default:
 		return "unknown";
 	}
+}
+
+void sm_set_runlevel(sm_t *sm, int newlevel)
+{
+	sm->newlevel = newlevel;
+}
+
+void sm_set_reload(sm_t *sm)
+{
+	sm->reload = 1;
+}
+
+int sm_is_in_teardown(sm_t *sm)
+{
+	return sm->in_teardown;
 }
 
 void sm_step(sm_t *sm)
@@ -117,6 +123,7 @@ restart:
 		conf_reload_dynamic();
 
 		_d("Stopping services services not allowed in new runlevel ...");
+		sm->in_teardown = 1;
 		service_step_all(SVC_TYPE_ANY);
 
 		sm->state = SM_RUNLEVEL_WAIT_STATE;
@@ -133,6 +140,7 @@ restart:
 		plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
 
 		_d("Starting services services new to this runlevel ...");
+		sm->in_teardown = 0;
 		service_step_all(SVC_TYPE_ANY);
 
 		/* Cleanup stale services */
@@ -168,6 +176,7 @@ restart:
 		/* Then, mark all affected service conditions as in-flux and
 		 * let all affected services move to WAITING/HALTED */
 		_d("Stopping services services not allowed after reconf ...");
+		sm->in_teardown = 1;
 		cond_reload();
 		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
 
@@ -180,6 +189,7 @@ restart:
 		if (!service_stop_is_done())
 			break;
 
+		sm->in_teardown = 0;
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 

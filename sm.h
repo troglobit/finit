@@ -25,24 +25,26 @@
 #define FINIT_SM_H_
 
 typedef enum {
-	SM_BOOTSTRAP_STATE = 0,
-	SM_RUNNING_STATE,
-	SM_RUNLEVEL_CHANGE_STATE,
-	SM_RUNLEVEL_WAIT_STATE,
-	SM_RELOAD_CHANGE_STATE,
-	SM_RELOAD_WAIT_STATE,
+	SM_BOOTSTRAP_STATE = 0,   /* Init state, bootstrap services */
+	SM_RUNNING_STATE,         /* Normal state, services running */
+	SM_RUNLEVEL_CHANGE_STATE, /* A runlevel change has occured */
+	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped runlevel processes to be halted */
+	SM_RELOAD_CHANGE_STATE,   /* A reload event has occured */
+	SM_RELOAD_WAIT_STATE,     /* Waiting for all stopped reload processes to be halted */
 } sm_state_t;
 
 typedef struct sm {
-	sm_state_t state;
-	int newlevel;
-	int reload;
+	sm_state_t state;         /* Running, Changed, Waiting, ... */
+	int newlevel;             /* Set on runlevel change to new runlevel, -1 if not change */
+	int reload;               /* Set on reload event, else 0  */
+	int in_teardown;          /* Set when waiting for all processes to be halted */
 } sm_t;
 
 void sm_init(sm_t *sm);
 void sm_step(sm_t *sm);
 void sm_set_runlevel(sm_t *sm, int newlevel);
 void sm_set_reload(sm_t *sm);
+int  sm_is_in_teardown(sm_t *sm);
 
 #endif	/* FINIT_SM_H_ */
 
