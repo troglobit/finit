@@ -600,6 +600,7 @@ void service_unregister(svc_t *svc)
 void service_monitor(pid_t lost)
 {
 	svc_t *svc;
+	char pidfile[MAX_ARG_LEN];
 
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;
@@ -618,6 +619,10 @@ void service_monitor(pid_t lost)
 		return;
 
 	_d("collected %s(%d)", svc->cmd, lost);
+
+	/* Remove pid file (in case service is careless) */
+	snprintf(pidfile, sizeof(pidfile), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
+	remove(pidfile);
 
 	/* No longer running, update books. */
 	svc->pid = 0;
