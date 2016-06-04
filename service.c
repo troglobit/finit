@@ -38,26 +38,13 @@
 #include "tty.h"
 #include "service.h"
 #include "inetd.h"
+#include "sm.h"
 
 #define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
-
-static int    in_teardown = 0, in_dyn_teardown = 0;
 
 #ifndef INETD_DISABLED
 static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
 #endif
-
-/**
- * service_bootstrap - Start bootstrap services and tasks
- *
- * System startup, runlevel S, where only services, tasks and
- * run commands absolutely essential to bootstrap are located.
- */
-void service_bootstrap(void)
-{
-	_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
-	service_step_all(SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SERVICE);
-}
 
 /**
  * service_enabled - Should the service run?
@@ -85,7 +72,7 @@ int service_enabled(svc_t *svc)
  * Returns:
  * 1, if all stopped services have been collected. 0 otherwise.
  */
-static int service_stop_is_done(void)
+int service_stop_is_done(void)
 {
 	svc_t *svc;
 
@@ -373,30 +360,6 @@ static int service_restart(svc_t *svc)
 }
 
 /**
- * service_reload_dynamic_finish - Finish dynamic service reload
- *
- * Second stage of dynamic reload. Called either directly from first
- * stage if no services had to be stopped, or later from
- * service_monitor() once all stopped services have been collected.
- */
-static void service_reload_dynamic_finish(void)
-{
-	in_dyn_teardown = 0;
-
-	/* Cleanup stale services */
-	svc_clean_dynamic(service_unregister);
-
-	_d("Starting services after reconf ...");
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-
-	_d("Calling reconf hooks ...");
-	plugin_run_hooks(HOOK_SVC_RECONF);
-
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-	_d("Reconfiguration done");
-}
-
-/**
  * service_reload_dynamic - Called on SIGHUP, 'init q' or 'initctl reload'
  *
  * This function is called when Finit has recieved SIGHUP to reload
@@ -405,62 +368,8 @@ static void service_reload_dynamic_finish(void)
  */
 void service_reload_dynamic(void)
 {
-	/* First reload all *.conf in /etc/finit.d/ */
-	conf_reload_dynamic();
-
-	/* Then, mark all affected service conditions as in-flux and
-	 * let all affected services move to WAITING/HALTED */
-	_d("Stopping services services not allowed after reconf ...");
-	in_dyn_teardown = 1;
-	cond_reload();
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-
-	/* Need to wait for any services to stop? If so, exit early
-	 * and perform second stage from service_monitor() later. */
-	if (!service_stop_is_done())
-		return;
-
-	/* Otherwise, kick all svcs again right away */
-	service_reload_dynamic_finish();
-}
-
-/**
- * service_runlevel_finish - Finish runlevel change
- *
- * Second stage of runlevel change. Called either directly from first
- * stage if no services had to be stopped, or later from
- * service_monitor() once all stopped services have been collected.
- */
-static void service_runlevel_finish(void)
-{
-	/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
-	_d("All services have been stoppped, calling runlevel change hooks ...");
-	plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
-
-	_d("Starting services services new to this runlevel ...");
-	in_teardown = 0;
-	service_step_all(SVC_TYPE_ANY);
-
-	/* Cleanup stale services */
-	svc_clean_dynamic(service_unregister);
-
-	if (0 == runlevel) {
-		do_shutdown(SIGUSR2);
-		return;
-	}
-	if (6 == runlevel) {
-		do_shutdown(SIGUSR1);
-		return;
-	}
-
-	if (runlevel == 1)
-		touch("/etc/nologin");	/* Disable login in single-user mode */
-	else
-		erase("/etc/nologin");
-
-	/* No TTYs run at bootstrap, they have a delayed start. */
-	if (prevlevel > 0)
-		tty_runlevel(runlevel);
+	sm_set_reload(&sm);
+	sm_step(&sm);
 }
 
 /**
@@ -472,31 +381,8 @@ static void service_runlevel_finish(void)
  */
 void service_runlevel(int newlevel)
 {
-	if (runlevel == newlevel)
-		return;
-
-	if (newlevel < 0 || newlevel > 9)
-		return;
-
-	prevlevel = runlevel;
-	runlevel  = newlevel;
-
-	_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
-	runlevel_set(prevlevel, newlevel);
-
-	/* Make sure to (re)load all *.conf in /etc/finit.d/ */
-	conf_reload_dynamic();
-
-	_d("Stopping services services not allowed in new runlevel ...");
-	in_teardown = 1;
-	service_step_all(SVC_TYPE_ANY);
-
-	/* Need to wait for any services to stop? If so, exit early
-	 * and perform second stage from service_monitor() later. */
-	if (!service_stop_is_done())
-		return;
-
-	service_runlevel_finish();
+	sm_set_runlevel(&sm, newlevel);
+	sm_step(&sm);
 }
 
 /**
@@ -744,32 +630,10 @@ void service_unregister(svc_t *svc)
 	svc_del(svc);
 }
 
-/**
- * service_teardown_finish - Complete runlevel change or dynamic reload
- *
- * If any runlevel change or dynamic service reload is in progress and
- * all services that had to be stopped have been collected, run the
- * corresponding second stage.
- */
-static void service_teardown_finish(void)
-{
-	if (!(in_teardown || in_dyn_teardown))
-		return;
-	
-	if (!service_stop_is_done())
-		return;
-
-	if (in_teardown)
-		service_runlevel_finish();
-
-	if (in_dyn_teardown)
-		service_reload_dynamic_finish();
-}
-
-
 void service_monitor(pid_t lost)
 {
 	svc_t *svc;
+	char pidfile[MAX_ARG_LEN];
 
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;
@@ -791,12 +655,15 @@ void service_monitor(pid_t lost)
 
 	_d("collected %s(%d)", svc->cmd, lost);
 
+	/* Remove pid file (in case service is careless) */
+	snprintf(pidfile, sizeof(pidfile), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
+	remove(pidfile);
+
 	/* No longer running, update books. */
 	svc->pid = 0;
 	service_step(svc);
 
-	/* Check if we're still collecting stopped dynamic services */
-	service_teardown_finish();
+	sm_step(&sm);
 }
 
 static void svc_set_state(svc_t *svc, svc_state_t new)
@@ -877,6 +744,10 @@ restart:
 				break;
 			}
 
+			/* wait until all processes has been stopped before continuing... */
+			if (sm_is_in_teardown(&sm))
+				break;
+
 			err = service_start(svc);
 			if (err) {
 				(*restart_counter)++;
@@ -933,6 +804,9 @@ restart:
 		case COND_ON:
 			if (svc_is_changed(svc)) {
 				if (svc->sighup) {
+					/* wait until all processes has been stopped before continuing... */
+					if (sm_is_in_teardown(&sm))
+						break;
 					service_restart(svc);
 				} else {
 					service_stop(svc);

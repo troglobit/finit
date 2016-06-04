@@ -71,7 +71,7 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 		
 		_d("%s: match %s", basename, svc->cmd);
 		snprintf(cond, sizeof(cond), "svc%s", svc->cmd);
-		if (ev->mask & (IN_CREATE | IN_ATTRIB)) {
+		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY)) {
 			svc_started(svc);
 			cond_set(cond);
 		} else if (ev->mask & IN_DELETE)
@@ -105,7 +105,7 @@ static void pidfile_init(void *arg)
 	struct context *ctx = arg;
 
 	ctx->wd = inotify_add_watch(ctx->fd, _PATH_VARRUN,
-				    IN_CREATE | IN_ATTRIB | IN_DELETE);
+				    IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY);
 	if (ctx->wd < 0) {
 		_pe("inotify_add_watch()");
 		close(ctx->fd);
