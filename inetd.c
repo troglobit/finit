@@ -255,7 +255,8 @@ int inetd_start(inetd_t *inetd)
 
 	/* Read anything lingering, or clean up socket after failure */
 	len = recv(sd, buf, sizeof(buf), MSG_DONTWAIT);
-	_d("Read %d lingering bytes from socket before restarting %s ...", len, inetd->svc->cmd);
+	if (len > 0)
+		_d("Read %zd lingering bytes from socket before restarting %s ...", len, inetd->svc->cmd);
 
 	/* Restore O_NONBLOCK for socket */
 	fcntl(sd, F_SETFL, fcntl(sd, F_GETFL, 0) | O_NONBLOCK);
