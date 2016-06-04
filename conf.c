@@ -191,15 +191,16 @@ void conf_parse_rlimit(char *line)
 	else if (tok && !strcmp(tok, "hard"))
 		set = &rlim.rlim_max;
 	else
-		goto fail;
+		goto error;
 
 	tok = strtok(NULL, " \t");
 	if (!tok)
-		goto fail;
+		goto error;
 
-	for (name = rlimit_names; name->name; name++)
+	for (name = rlimit_names; name->name; name++) {
 		if (!strcmp(tok, name->name))
 			resource = name->val;
+	}
 
 	if (resource < 0)
 		goto fail;
@@ -208,9 +209,9 @@ void conf_parse_rlimit(char *line)
 	if (!tok)
 		goto fail;
 
-	if (!strcmp(tok, "infinity"))
+	if (!strcmp(tok, "infinity")) {
 		new = RLIM_INFINITY;
-	else {
+	} else {
 		const char *err = NULL;
 
 		new = strtonum(tok, 0, 2 << 31, &err);
@@ -228,7 +229,10 @@ void conf_parse_rlimit(char *line)
 	return;
 
 fail:
-	FLOG_WARN("Failed parsing/setting %s rlimit", name->name ? : "unknown");
+	FLOG_WARN("rlimit: Failed setting rlimit %s", name->name ? : "unknown");
+	return;
+error:
+	FLOG_WARN("rlimit: parse error");
 }
 
 static void parse_static(char *line)
