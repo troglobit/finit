@@ -181,27 +181,46 @@ static int service_start(svc_t *svc)
 			dup2(STDIN_FILENO, STDERR_FILENO);
 		} else
 #endif
+
 		if (svc->log) {
-			/* Open PTY to connect to logger (A pty isn't buffered like a pipe, and it eats newlines so they aren't logged) */
-			int fd = posix_openpt(O_RDWR);
+			int fd;
+
+			/*
+			 * Open PTY to connect to logger.  A pty isn't buffered
+			 * like a pipe, and it eats newlines so they aren't logged
+			 */
+			fd = posix_openpt(O_RDWR);
+			if (fd == -1) {
+				svc->log = 0;
+				goto logger_err;
+			}
+			if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
+				close(fd);
+				svc->log = 0;
+				goto logger_err;
+			}
+
 			/* SIGCHLD is still blocked for grantpt() and fork() */
 			sigprocmask(SIG_BLOCK, &nmask, NULL);
-			if (fd >= 0 && grantpt(fd) == 0 && unlockpt(fd) == 0) {
-				pid = fork();
-				if (pid == 0) {
-					int fds = open(ptsname(fd), O_RDONLY);
-					close(fd);
-					dup2(fds, STDIN_FILENO);
+			pid = fork();
+			if (pid == 0) {
+				int fds = open(ptsname(fd), O_RDONLY);
 
-					/* Reset signals */
-					sig_unblock();
-
-					exit(execlp("logger", "logger", "-t", strlen(svc->desc) > 0 ? svc->desc : svc->cmd, (char*)NULL));
-				}
-				dup2(fd, STDOUT_FILENO);
-				dup2(fd, STDERR_FILENO);
 				close(fd);
+				if (fds == -1)
+					_exit(0);
+				dup2(fds, STDIN_FILENO);
+
+				/* Reset signals */
+				sig_unblock();
+
+				execlp("logger", "logger", "-t", strlen(svc->desc) > 0 ? svc->desc : svc->cmd, NULL);
+				_exit(0);
 			}
+
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			close(fd);
 		} else if (debug) {
 			int fd;
 
@@ -212,7 +231,7 @@ static int service_start(svc_t *svc)
 				close(fd);
 			}
 		}
-
+	logger_err:
 		sig_unblock();
 
 		if (svc->inetd.cmd)
@@ -229,9 +248,9 @@ static int service_start(svc_t *svc)
 			}
 		} else
 #endif
-		if (svc->log) {
+		if (svc->log)
 			waitpid(pid, NULL, 0);
-		}
+
 		exit(status);
 	} else if (debug) {
 		char buf[CMD_SIZE] = "";
