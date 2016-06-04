@@ -674,9 +674,12 @@ void service_monitor(pid_t lost)
 
 	_d("collected %s(%d)", svc->cmd, lost);
 
-	/* Remove pid file (in case service is careless) */
+	/* Try removing PID file (in case service does not clean up after itself) */
 	snprintf(pidfile, sizeof(pidfile), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
-	remove(pidfile);
+	if (remove(pidfile)) {
+		if (errno != ENOENT)
+			FLOG_PERROR("Failed removing service %s pidfile %s", basename(svc->cmd), pidfile);
+	}
 
 	/* No longer running, update books. */
 	svc->pid = 0;
