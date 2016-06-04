@@ -1,7 +1,6 @@
-/* Finit service monitor, task starter and generic API for managing svc_t
+/* Finit state machine
  *
- * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2016  xxx
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,24 +21,32 @@
  * THE SOFTWARE.
  */
 
-#ifndef FINIT_SERVICE_H_
-#define FINIT_SERVICE_H_
+#ifndef FINIT_SM_H_
+#define FINIT_SM_H_
 
-#include "svc.h"
+typedef enum {
+	SM_BOOTSTRAP_STATE = 0,   /* Init state, bootstrap services */
+	SM_RUNNING_STATE,         /* Normal state, services running */
+	SM_RUNLEVEL_CHANGE_STATE, /* A runlevel change has occured */
+	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped runlevel processes to be halted */
+	SM_RELOAD_CHANGE_STATE,   /* A reload event has occured */
+	SM_RELOAD_WAIT_STATE,     /* Waiting for all stopped reload processes to be halted */
+} sm_state_t;
 
-void	  service_runlevel	 (int newlevel);
-int	  service_register	 (int type, char *line, time_t mtime, char *username);
-void      service_unregister     (svc_t *svc);
-int       service_enabled	 (svc_t *svc);
+typedef struct sm {
+	sm_state_t state;         /* Running, Changed, Waiting, ... */
+	int newlevel;             /* Set on runlevel change to new runlevel, -1 if not change */
+	int reload;               /* Set on reload event, else 0  */
+	int in_teardown;          /* Set when waiting for all processes to be halted */
+} sm_t;
 
-void      service_reload_dynamic (void);
+void sm_init(sm_t *sm);
+void sm_step(sm_t *sm);
+void sm_set_runlevel(sm_t *sm, int newlevel);
+void sm_set_reload(sm_t *sm);
+int  sm_is_in_teardown(sm_t *sm);
 
-void service_step(svc_t *svc);
-void service_step_all(int types);
-
-int  service_stop_is_done(void);
-
-#endif	/* FINIT_SERVICE_H_ */
+#endif	/* FINIT_SM_H_ */
 
 /**
  * Local Variables:
