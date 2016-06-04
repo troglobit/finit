@@ -530,7 +530,11 @@ int conf_parse_config(void)
 		else
 			fallback = strdup(FALLBACK_SHELL);
 
-		tty_register(fallback);
+		if (tty_register(fallback)) {
+			free(fallback);
+			if (console)
+				console = NULL;
+		}
 	}
 
 	return result;
