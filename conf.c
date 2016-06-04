@@ -530,16 +530,15 @@ int conf_parse_config(void)
 		else
 			fallback = strdup(FALLBACK_SHELL);
 
-		if (tty_register(fallback)) {
+		if (tty_register(fallback))
+			_pe("Failed registering fallback TTY");
+
+		if (!console)
 			free(fallback);
-			if (console)
-				console = NULL;
-		}
 	}
 
 	return result;
 }
-
 
 /**
  * Local Variables:
