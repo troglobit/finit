@@ -28,9 +28,9 @@ addons:
       name: "troglobit/finit"
       description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./configure"
-    build_command:      "make"
-    branch_pattern:     dev
+    build_command_prepend: "./autogen.sh && PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp"
+    build_command: "make"
+    branch_pattern: dev
 
 install:
   - wget https://github.com/troglobit/libuev/releases/download/v1.4.0/libuev-1.4.0.tar.xz
