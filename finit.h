@@ -35,8 +35,6 @@
 #include <unistd.h>
 #include <lite/lite.h>
 
-#include "sm.h"
-
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
@@ -80,7 +78,6 @@ extern char  *username;
 extern char  *runparts;
 extern char  *console;
 extern char  *__progname;
-extern sm_t  sm;
 
 #endif /* FINIT_H_ */
 

@@ -40,6 +40,8 @@ typedef struct sm {
 	int in_teardown;          /* Set when waiting for all processes to be halted */
 } sm_t;
 
+extern sm_t  sm;
+
 void sm_init(sm_t *sm);
 void sm_step(sm_t *sm);
 void sm_set_runlevel(sm_t *sm, int newlevel);

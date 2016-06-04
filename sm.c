@@ -35,6 +35,8 @@
 #include "tty.h"
 #include "sm.h"
 
+sm_t sm;
+
 void sm_init(sm_t *sm)
 {
 	sm->state = SM_BOOTSTRAP_STATE;
