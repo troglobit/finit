@@ -239,7 +239,13 @@ static int spawn_socket(inetd_t *inetd)
 		}
 	}
 
-	uev_io_init(ctx, &inetd->watcher, socket_cb, inetd->svc, sd, UEV_READ);
+	if (uev_io_init(ctx, &inetd->watcher, socket_cb, inetd->svc, sd, UEV_READ)) {
+		FLOG_PERROR("Failed setting up inetd watcher for %s", inetd->name);
+		close(sd);
+		return -errno;
+	}
+
+
 	return 0;
 }
 

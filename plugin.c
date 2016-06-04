@@ -211,7 +211,8 @@ static void init_plugins(uev_ctx_t *ctx)
 	PLUGIN_ITERATOR(p, tmp) {
 		if (is_io_plugin(p)) {
 			_d("Initializing plugin %s for I/O", basename(p->name));
-			uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags);
+			if (uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags))
+				_e("Failed setting up I/O plugin %s", basename(p->name));
 		}
 	}
 }

@@ -364,7 +364,8 @@ int api_init(uev_ctx_t *ctx)
 	if (-1 == listen(sd, 10))
 		goto error;
 
-	return uev_io_init(ctx, &api_watcher, cb, NULL, sd, UEV_READ);
+	if (!uev_io_init(ctx, &api_watcher, cb, NULL, sd, UEV_READ))
+		return 0;
 
 error:
 	_pe("Failed intializing API socket");
