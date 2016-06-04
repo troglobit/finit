@@ -262,10 +262,13 @@ int inetd_start(inetd_t *inetd)
 	/* Read anything lingering, or clean up socket after failure */
 	len = recv(sd, buf, sizeof(buf), MSG_DONTWAIT);
 	if (len > 0)
-		_d("Read %zd lingering bytes from socket before restarting %s ...", len, inetd->svc->cmd);
+		_d("Read %zd lingering bytes from socket before (re)starting %s ...", len, inetd->svc->cmd);
 
 	/* Restore O_NONBLOCK for socket */
-	fcntl(sd, F_SETFL, fcntl(sd, F_GETFL, 0) | O_NONBLOCK);
+	if (fcntl(sd, F_SETFL, fcntl(sd, F_GETFL, 0) | O_NONBLOCK)) {
+		FLOG_PERROR("Cannot safely (re)start %s inetd service", inetd->svc->cmd);
+		return -errno;
+	}
 
 	_d("Re-starting %s socket watcher ...", inetd->svc->cmd);
 	uev_io_start(&inetd->watcher);
