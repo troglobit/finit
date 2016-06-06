@@ -117,6 +117,10 @@ static void pidfile_init(void *arg)
 
 static struct context pidfile_ctx;
 
+/*
+ * We require /var/run to be set up before calling pidfile_init(),
+ * so the bootmisc plugin must run first.
+ */
 static plugin_t plugin = {
 	.hook[HOOK_BASEFS_UP]  = { .arg = &pidfile_ctx, .cb = pidfile_init },
 	.hook[HOOK_SVC_RECONF] = { .cb = pidfile_reconf },
@@ -124,6 +128,7 @@ static plugin_t plugin = {
 		.cb    = pidfile_callback,
 		.flags = PLUGIN_IO_READ,
 	},
+	.depends = { "bootmisc", },
 };
 
 PLUGIN_INIT(plugin_init)
