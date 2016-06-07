@@ -1,6 +1,6 @@
 /* Finit state machine
  *
- * Copyright (c) 2016  xxx
+ * Copyright (c) 2016  Jonas Johansson <jonas.johansson@westermo.se>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,16 +50,22 @@ static char *sm_status(sm_t *sm)
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
 		return "bootstrap";
+
 	case SM_RUNNING_STATE:
 		return "running";
+
 	case SM_RUNLEVEL_CHANGE_STATE:
 		return "runlevel/change";
+
 	case SM_RUNLEVEL_WAIT_STATE:
 		return "runlevel/wait";
+
 	case SM_RELOAD_CHANGE_STATE:
 		return "reload/change";
+
 	case SM_RELOAD_WAIT_STATE:
 		return "reload/wait";
+
 	default:
 		return "unknown";
 	}
