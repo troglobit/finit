@@ -495,7 +495,14 @@ For your convenience a set of *optional* plugins are available:
 * *alsa-utils.so*: Restore and save ALSA sound settings on
   startup/shutdown.  _Optional plugin._
 
-* *bootmisc.so*: Setup necessary files for UTMP, tracks logins at boot.
+* *bootmisc.so*: Setup necessary files and system directories for, e.g.,
+  UTMP (tracks logins at boot).  This plugin is central to get a working
+  system and runs at `HOOK_BASEFS_UP`.  The `/var`, `/run`, and `/dev`
+  file systems must be writable for this plugin to work.
+
+  Note: On an embedded system both `/var` and `/run` can be `tmpfs` RAM
+  disks and `/dev` is usually a `devtmpfs`.  This must be defined in the
+  `/etc/fstab` file and in the Linux kernel config.
 
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
   _Optional plugin._
@@ -790,7 +797,10 @@ standalone packages.
 
 To target an embedded Linux system, usally a system that use BusyBox
 tools instead of udev & C:o, add <kbd>--enable-embedded</kbd> to the
-configure command above.
+configure command above.  This enables `mdev` instead of `udev` and the
+BusyBox `getty` syntax.  Remember to also change the Linux config to:
+
+    CONFIG_UEVENT_HELPER_PATH="/sbin/mdev"
 
 For more configure flags, see <kbd>./configure --help</kbd>
 
