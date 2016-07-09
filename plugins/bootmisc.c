@@ -48,6 +48,7 @@ static void setup(void *UNUSED(arg))
 	makedir("/var/lib/alarm",  0755);
 	makedir("/var/lib/urandom",0755);
 	makedir("/var/lock",       0755);
+	makedir("/var/lock/subsys",0755); /* Needed by D-Bus plugin */
 	makedir("/var/log",        0755);
 	makedir("/var/mail",       0755);
 	makedir("/var/opt",        0755);
