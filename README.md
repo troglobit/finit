@@ -746,29 +746,31 @@ Finit comes with a traditional configure script to control features and
 optional plugins to enable.  Below are a few of the main switches to
 configure:
 
-* `--prefix=`: Base prefix path for all files, except `--sbindir` and
-  `--sysconfdir`.  Used in concert with the `DESTDIR` variable.
-
-  Defaults to `/`, i.e. `""`.
-
-* `--sbindir=`: Path to where resulting binaries should install to. Used
-  in concert with the `DESTDIR` variable.
-
-  Defaults to `/sbin`.
-
-* `--sysconfdir=`: Path to where finit configuration files should
-  install to.  Used in concert with the `DESTDIR` variable.
-
-  Defaults to `/etc`, but is currently unused.  It is up to the user
-  to set up suitable `/etc/finit.conf` and `/etc/finit.d/*.conf`.
+* `--disable-inetd`: Disable the built-in inetd server.
 
 * `--enable-embedded`: Target finit for BusyBox getty and mdev instead
   of a standard Linux distribution with GNU tools and udev.
 
-* `--enable-static`: Build Finit statically.  The plugins will be
-  built-in (.o files) instead.  Note: very untested in Finit3!
+* `--enable-rw-rootfs`: Most desktop and server systems boot with the
+  root file stystem read-only.  With this setting Finit will remount it
+  as read-write early at boot so the `bootmisc.so` plugin can run.
+  Usually not needed on embedded systems.
 
-* `--disable-inetd`: Disables the built-in inetd server.
+* `--enable-static`: Build Finit statically.  The plugins will be
+  built-ins (.o files) and all external libraries, except the C library
+  will be linked statically.
+
+* `--enable-alsa-utils`: Enable the optional `alsa-utils.so` sound plugin.
+
+* `--enable-dbus`: Enable the optional D-Bus `dbus.so` plugin.
+
+* `--enable-lost`: Enable noisy example plugin for `HOOK_SVC_LOST`.
+
+* `--enable-resolvconf`: Enable the `resolvconf.so` optional plugin.
+
+* `--enable-x11-common`: Enable the optional X Window `x11-common.so` plugin.
+
+For more configure flags, see <kbd>./configure --help</kbd>
 
 **Example**
 
@@ -801,8 +803,6 @@ configure command above.  This enables `mdev` instead of `udev` and the
 BusyBox `getty` syntax.  Remember to also change the Linux config to:
 
     CONFIG_UEVENT_HELPER_PATH="/sbin/mdev"
-
-For more configure flags, see <kbd>./configure --help</kbd>
 
 **Note:** If you run into problems starting Finit, take a look at
   `finit.c`.  One of the most common problems is a custom Linux kernel
