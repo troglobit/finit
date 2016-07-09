@@ -1,6 +1,6 @@
-/* Setup necessary files for UTMP, tracking logins
+/* Setup necessary system files for, e.g. UTMP (tracking logins)
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012-2016  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,14 +31,11 @@
 #include "lite/lite.h"
 
 /*
- * Setup standard FHS 2.3 structure in /var, and
- * write runlevel to UTMP, needed by, e.g., printerdrake.
+ * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
 static void setup(void *UNUSED(arg))
 {
-#ifdef RUNLEVEL
 	struct utmp entry;
-#endif
 
 	_d("Setting up FHS structure in /var ...");
 	makedir("/var/cache",      0755);
@@ -62,14 +59,8 @@ static void setup(void *UNUSED(arg))
 	touch("/var/run/utmp");
 	chown("/var/run/utmp", 0, getgroup("utmp"));
 
-#ifdef RUNLEVEL
-	memset(&entry, 0, sizeof(struct utmp));
-	entry.ut_type = RUN_LVL;
-	entry.ut_pid = '0' + RUNLEVEL;
-	setutent();
-	pututline(&entry);
-	endutent();
-#endif
+	_d("Setting initial runlevel 'S', bootstrap ...");
+	runlevel_set(0, 0);	/* Bootstrap 'S' */
 
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");

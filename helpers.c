@@ -49,6 +49,7 @@ void runlevel_set(int pre, int now)
 {
 	struct utmp utent;
 
+	memset(&utent, 0, sizeof(utent));
 	utent.ut_type  = RUN_LVL;
 	utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
 	strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
