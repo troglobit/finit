@@ -126,11 +126,13 @@ int main(int argc, char* argv[])
 #endif
 	run_interactive(SETUP_DEVFS, "Populating device tree");
 
+#ifndef ENABLE_STATIC
 	/*
 	 * Load plugins first, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
 	plugin_load_all(&loop, PLUGIN_PATH);
+#endif
 
 	/*
 	 * Parse /etc/finit.conf, main configuration file
