@@ -117,7 +117,7 @@ AS_IF([test "x$enable_embedded" = "xyes"],[
         AC_DEFINE(GETTY_AGETTY,    1,                [Use standard agetty call syntax])
         AC_DEFINE(BAUDRATE,        38400,            [Default getty baudrate])])
 
-AS_IF([test "x$enable_rw-rootfs" = "xyes"],[
+AS_IF([test "x$enable_rw_rootfs" = "xyes"],[
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
 AS_IF([test "x$enable_silent" = "xyes"],[
