@@ -735,9 +735,9 @@ exits.
 Building
 --------
 
-Finit comes with a lightweight configure script to control which
-features to enable an plugins to build.  Below are a few of the main
-switches to configure:
+Finit comes with a traditional configure script to control features and
+optional plugins to enable.  Below are a few of the main switches to
+configure:
 
 * `--prefix=`: Base prefix path for all files, except `--sbindir` and
   `--sysconfdir`.  Used in concert with the `DESTDIR` variable.
@@ -762,21 +762,6 @@ switches to configure:
   built-in (.o files) instead.  Note: very untested in Finit3!
 
 * `--disable-inetd`: Disables the built-in inetd server.
-
-The following environment variables are checked by the makefiles and
-control what is built and where resulting binaries are installed.
-
-* `CFLAGS=`: Default `CFLAGS` are inherited from the environment.
-
-* `CPPFLAGS=`: Default `CPPFLAGS` are inherited from the environment.
-
-* `LDFLAGS=`: Default `LDFLAGS` are inherited from the environment.
-
-* `LDLIBS=`: Default `LIBLIBS` are inherited from the environment.
-
-* `DESTDIR=`: Used by packagers and distributions when building a
-  relocatable bundle of files.  Always prepended to the `prefix`
-  destination directory.
 
 **Example**
 
