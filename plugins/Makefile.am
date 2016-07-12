@@ -16,6 +16,10 @@ if BUILD_DBUS_PLUGIN
 libplug_la_SOURCES += dbus.c
 endif
 
+if BUILD_INETD_ECHO_PLUGIN
+libplug_la_SOURCES += echo.c
+endif
+
 if BUILD_LOST_PLUGIN
 libplug_la_SOURCES += lost.c
 endif
@@ -34,6 +38,10 @@ endif
 
 if BUILD_DBUS_PLUGIN
 pkglib_LTLIBRARIES += dbus.la
+endif
+
+if BUILD_INETD_ECHO_PLUGIN
+pkglib_LTLIBRARIES += echo.la
 endif
 
 if BUILD_LOST_PLUGIN
