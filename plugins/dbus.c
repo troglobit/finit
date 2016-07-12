@@ -22,12 +22,12 @@
  */
 
 #include <sys/types.h>
+#include <lite/lite.h>
 
 #include "../finit.h"
 #include "../config.h"
 #include "../helpers.h"
 #include "../plugin.h"
-#include "lite/lite.h"
 
 static void setup(void *UNUSED(arg))
 {

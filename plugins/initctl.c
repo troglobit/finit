@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>		/* read() */
 #include <sys/stat.h>
+#include <lite/lite.h>
 
 #include "../finit.h"
 #include "../conf.h"
@@ -37,7 +38,6 @@
 #include "../plugin.h"
 #include "../sig.h"
 #include "../service.h"
-#include "lite/lite.h"
 
 static void parse(void *arg, int fd, int events);
 

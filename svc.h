@@ -28,7 +28,8 @@
 #include <sys/ipc.h>		/* IPC_CREAT */
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
-#include "lite/lite.h"
+#include <lite/lite.h>
+
 #include "inetd.h"
 #include "helpers.h"
 

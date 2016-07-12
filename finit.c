@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
+#include <lite/lite.h>
 
 #include "finit.h"
 #include "conf.h"
@@ -37,7 +38,6 @@
 #include "service.h"
 #include "sig.h"
 #include "tty.h"
-#include "lite/lite.h"
 #include "inetd.h"
 #include "sm.h"
 

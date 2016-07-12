@@ -27,12 +27,12 @@
 #include <unistd.h>		/* read() */
 #include <sys/inotify.h>
 #include <sys/stat.h>
+#include <lite/lite.h>
 
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
 #include "../tty.h"
-#include "lite/lite.h"
 
 static void watcher(void *arg, int fd, int events);
 

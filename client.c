@@ -27,9 +27,9 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <lite/lite.h>
 
 #include "finit.h"
-#include "lite/lite.h"
 
 static int do_send(int cmd, int runlevel)
 {

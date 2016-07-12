@@ -26,14 +26,13 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <string.h>
-
 #include <sys/resource.h>
+#include <lite/lite.h>
 
 #include "finit.h"
 #include "cond.h"
 #include "service.h"
 #include "tty.h"
-#include "lite/lite.h"
 #include "helpers.h"
 
 #define MATCH_CMD(l, c, x) \

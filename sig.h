@@ -26,7 +26,7 @@
 #define FINIT_SIG_H_
 
 #include <signal.h>
-#include "uev/uev.h"
+#include <uev/uev.h>
 
 #define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
 #define SYNC_STOPPED    "/var/lock/finit.stopped"

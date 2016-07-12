@@ -26,6 +26,7 @@
 #include <dirent.h>		/* readdir() et al */
 #include <poll.h>
 #include <string.h>
+#include <lite/lite.h>
 
 #include "config.h"
 #include "finit.h"
@@ -33,7 +34,6 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "queue.h"		/* BSD sys/queue.h API */
-#include "lite/lite.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 

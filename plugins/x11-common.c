@@ -24,11 +24,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <lite/lite.h>
 
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
-#include "lite/lite.h"
 
 static void setup(void *UNUSED(arg))
 {

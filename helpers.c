@@ -33,11 +33,11 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <utmp.h>
+#include <lite/lite.h>
 
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
-#include "lite/lite.h"
 
 static int encode(int lvl)
 {

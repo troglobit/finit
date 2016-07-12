@@ -26,9 +26,9 @@
 
 #include <netdb.h>
 #include <net/if.h>
+#include <uev/uev.h>
 
 #include "queue.h"
-#include "uev/uev.h"
 
 typedef struct svc svc_t;
 

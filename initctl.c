@@ -26,14 +26,13 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <lite/lite.h>
 
 #include "config.h"
 #include "finit.h"
 #include "cond.h"
 #include "helpers.h"
 #include "service.h"
-
-#include "lite/lite.h"
 
 typedef struct {
 	char  *cmd;

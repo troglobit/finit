@@ -24,9 +24,10 @@
 #ifndef FINIT_PLUGIN_H_
 #define FINIT_PLUGIN_H_
 
+#include <uev/uev.h>
+
 #include "queue.h"		/* BSD sys/queue.h API */
 #include "svc.h"
-#include "uev/uev.h"
 
 #define PLUGIN_DEP_MAX  10
 #define PLUGIN_IO_READ  UEV_READ

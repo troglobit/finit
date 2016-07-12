@@ -37,11 +37,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <lite/lite.h>
 
 #include "finit.h"
 #include "sig.h"
 #include "helpers.h"
-#include "lite/lite.h"
 
 #define NUM_ARGS    16
 

@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <lite/lite.h>
+#include <uev/uev.h>
 
 #include "config.h"
 #include "finit.h"
@@ -38,9 +40,6 @@
 #include "plugin.h"
 #include "sig.h"
 #include "service.h"
-
-#include "lite/lite.h"
-#include "uev/uev.h"
 
 uev_t api_watcher;
 

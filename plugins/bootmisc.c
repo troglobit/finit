@@ -23,12 +23,12 @@
 
 #include <string.h>
 #include <utmp.h>
+#include <lite/lite.h>
 
 #include "../config.h"
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
-#include "lite/lite.h"
 
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP

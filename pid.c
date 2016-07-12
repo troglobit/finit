@@ -26,9 +26,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <lite/lite.h>
 
 #include "helpers.h"
-#include "lite/lite.h"
 
 
 /**

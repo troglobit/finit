@@ -25,12 +25,12 @@
 #include <sys/stat.h>
 #include <sys/time.h>		/* gettimeofday() */
 #include <sys/types.h>
+#include <lite/lite.h>
 
 #include "../config.h"
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
-#include "lite/lite.h"
 
 static void setup(void *UNUSED(arg))
 {
