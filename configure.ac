@@ -56,6 +56,7 @@ AC_ARG_ENABLE(quiet,
 AC_PLUGIN([alsa-utils], [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],       [no],  [Setup and start system message bus, D-Bus])
 AC_PLUGIN([inetd-echo], [no],  [Inetd plugin: echo server, RFC862])
+AC_PLUGIN([inetd-time], [no],  [Inetd plugin: time (rdate) server, RFC868])
 AC_PLUGIN([lost],       [no],  [Example HOOK_SVC_LOST plugin, very noisy as-is!])
 AC_PLUGIN([resolvconf], [no],  [Setup necessary files for resolvconf])
 AC_PLUGIN([x11-common], [no],  [Console setup (for X)])
