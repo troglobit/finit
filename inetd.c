@@ -177,6 +177,7 @@ static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 	/* Only copy the most relevant parts of inetd, in particular we
 	 * must *not* copy the watcher data to the clone! */
 	task->inetd.svc  = svc;
+	task->inetd.cmd  = svc->inetd.cmd;
 	task->inetd.type = svc->inetd.type;
 
 	memcpy(task->cond,     svc->cond,     sizeof(task->cond));
