@@ -25,8 +25,8 @@
 #define FINIT_PLUGIN_H_
 
 #include <uev/uev.h>
+#include <lite/queue.h>		/* BSD sys/queue.h API */
 
-#include "queue.h"		/* BSD sys/queue.h API */
 #include "svc.h"
 
 #define PLUGIN_DEP_MAX  10

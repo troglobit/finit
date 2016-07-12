@@ -26,7 +26,7 @@
 #define FINIT_TTY_H_
 
 #include <limits.h>
-#include "queue.h"		/* BSD sys/queue.h API */
+#include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #define EVENT_SIZE ((sizeof(struct inotify_event) + NAME_MAX + 1))
 

@@ -27,13 +27,13 @@
 #include <poll.h>
 #include <string.h>
 #include <lite/lite.h>
+#include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #include "config.h"
 #include "finit.h"
 #include "private.h"
 #include "helpers.h"
 #include "plugin.h"
-#include "queue.h"		/* BSD sys/queue.h API */
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
 
