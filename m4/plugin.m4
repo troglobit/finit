@@ -3,6 +3,7 @@
 
 define([toupper], [translit([$1], [a-z], [A-Z])])
 define([sanitize], [translit([$1], [-], [_])])
+define([enadis], [ifelse([$1], [yes], [disable], [enable])])
 
 # AC_PLUGIN(name, default, info)
 # ------------------------------------------------------------
@@ -12,7 +13,7 @@ Optional Plugins:])
     enable_plugin="no"
     define(pluggy, sanitize($1))
     define(PLUGGY, toupper(pluggy))
-    AC_ARG_ENABLE([$1-plugin], AS_HELP_STRING([--enable-$1-plugin], [$3]), [
+    AC_ARG_ENABLE([$1-plugin], AS_HELP_STRING([--enadis($2)-$1-plugin], [$3]), [
     if test "x$enableval" = "xyes"; then
              enable_plugin="yes"
     else
