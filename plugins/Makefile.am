@@ -5,8 +5,7 @@ AM_CPPFLAGS        += -DFINIT_FIFO=\"$(fifo)\" $(lite_CFLAGS)
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = bootmisc.c hwclock.c initctl.c netlink.c pidfile.c	\
-		      tty.c urandom.c
+libplug_la_SOURCES  = bootmisc.c hwclock.c initctl.c pidfile.c tty.c urandom.c
 
 if BUILD_ALSA_UTILS_PLUGIN
 libplug_la_SOURCES += alsa-utils.c
@@ -28,13 +27,16 @@ if BUILD_LOST_PLUGIN
 libplug_la_SOURCES += lost.c
 endif
 
+if BUILD_NETLINK_PLUGIN
+libplug_la_SOURCES += netlink.c
+endif
+
 if BUILD_RESOLVCONF_PLUGIN
 libplug_la_SOURCES += resolvconf.c
 endif
 
 else
-pkglib_LTLIBRARIES  = bootmisc.la hwclock.la initctl.la netlink.la pidfile.la	\
-		      tty.la urandom.la
+pkglib_LTLIBRARIES  = bootmisc.la hwclock.la initctl.la pidfile.la tty.la urandom.la
 
 if BUILD_ALSA_UTILS_PLUGIN
 pkglib_LTLIBRARIES += alsa-utils.la
@@ -54,6 +56,10 @@ endif
 
 if BUILD_LOST_PLUGIN
 pkglib_LTLIBRARIES += lost.la
+endif
+
+if BUILD_NETLINK_PLUGIN
+pkglib_LTLIBRARIES += netlink.la
 endif
 
 if BUILD_RESOLVCONF_PLUGIN
