@@ -1,7 +1,7 @@
 Finit Conditions
 ================
 
-![Condition state machine](../images/cond-statem.jpg "Condition state machine")
+![The service state machine](svc-machine.png "The service state machine")
 
 
 Table of Contents
@@ -17,11 +17,12 @@ Table of Contents
 Introduction
 ------------
 
-In addition to runlevels, services can declare user-defined conditions
-as dependencies.  Conditions are specified within angle brackets (<>) in
-the service stanza.  Multiple conditions may be specified separated by
-comma.  Conditions are AND'ed during evaluation, i.e. all conditions
-must be satisfied in order for a service to run.
+In addition to declaring allowed runlevels per service, it is also
+possible to declare user-defined conditions as dependencies.  Conditions
+are specified within angle brackets (<>) in the service stanza.
+Multiple conditions may be specified separated by comma.  Conditions are
+AND'ed during evaluation, i.e. all conditions must be satisfied in order
+for a service to run.
 
 
 **Example:**
@@ -39,8 +40,8 @@ service's pidfile being created.
 Triggering
 ----------
 
-Conditions are triggered by using the `emit` command of the `initctl`
-control tool.
+Conditions are triggered either by plugins or by using the `emit`
+command of the `initctl` control tool.
 
 * `initctl emit +your/cond/here`
 
@@ -61,20 +62,38 @@ new (or possibly unchanged) state of it.
 Built-in Conditions
 -------------------
 
-Finit is distributed with the `pidfile`-plugin. If enabled, it will
-watch `/var/run/` for pidfiles created by services that it controls
-and set a corresponding condition in the `svc/` namespace.
+Finit is distributed with a `pidfile` and `netlink` plugin.  If enabled,
+the `pidfile` plugin watches `/var/run/` for PID files created by
+monitored services, and sets a corresponding condition in the `svc/`
+namespace.  Similarily, the `netlink` plugin provides basic conditions
+for when an interface is brought up/down and when a default route
+(gateway) is set.
 
-For example, if Finit starts the `/sbin/netd` daemon and it creates the
-file `/var/run/netd.pid`, the condition `svc/sbin/netd` is satisfied.
-If the file is removed, the condition is cleared.
+With the example listed above, finit does not start the `/sbin/netd`
+daemon until `setupd` and `zebra` has started *and* created their PID
+files.  Which they do when they completed their main tasks of setting up
+VLANs, bridge, interfaces, etc.  When `netd` in turn starts up it
+creates the file `/var/run/netd.pid`, and the condition `svc/sbin/netd`
+is satisfied.  When the file is removed, the condition is cleared.
+
+The full path to the dependency is needed by finit to match the PID file
+to a monitored process.
+
+Built-in conditions:
+
+- `svc/<PATH>`
+- `net/route/default`
+- `net/<IFNAME>/exist`
+- `net/<IFNAME>/up`
+
+Note: `up` is administratively up, `IFF_UP`, not link up, `IFF_RUNNING`.
 
 
 Debugging
 ---------
 
 If a service is not being started as it should, the problem might be
-that one of its conditions are not in the expected state.  Use the
+that one of its conditions is not in the expected state.  Use the
 command `initctl status` to inspect service status.  Services in the
 `ready` state are pending a condition.
 
@@ -102,9 +121,9 @@ Internals
 
 A condition is always in one of three states:
 
-* `on`: The condition is asserted.
-* `off`: The condition is deasserted.
-* `flux`: The conditions state is unknown.
+* `on` (+): The condition is asserted.
+* `off` (-): The condition is deasserted.
+* `flux` (~): The conditions state is unknown.
 
 All conditions that have not explicitly been set are interpreted as
 being in the `off` state.

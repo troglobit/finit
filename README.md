@@ -162,19 +162,26 @@ Syntax:
   N is the runlevel number 1-9, where 6 is reserved for reboot.  
   Default is 2.
 
-* `run [LVLS] /path/to/cmd ARGS -- Optional description`  
+* `run [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
   One-shot command to run in sequence when entering a runlevel, with
   optional arguments and description.  This command is guaranteed to be
   completed before running the next command.
 
-* `task [LVLS] /path/to/cmd ARGS -- Optional description`  
+* `task [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
   One-shot like 'run', but starts in parallel with the next command
 
-* `service [LVLS] /path/to/daemon ARGS -- Optional description`  
+* `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
   Service, or daemon, to be monitored and automatically restarted if it
   exits prematurely.  Please note that you often need to provide a
   `--foreground` or `--no-background` argument to most daemons to
   prevent them from forking off a sub-process in the background.
+
+```shell
+        service [2345] <svc/sbin/zebra> /sbin/ospfd -- OSPF daemon
+```
+
+  For a detailed description of conditions, and how to debug them,
+  see the [Finit Conditions](doc/conditions.md) document.
 
 * `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
   Launch a daemon when a client initiates a connection on an Internet
@@ -227,7 +234,7 @@ Syntax:
     sure to call the configure script with `--enable-embedded` if this
 	is what you want.
 
-* `console <DEV | /path/to/cmd [args]>`  
+* `console <DEV | /path/to/cmd [args]`  
   Some embedded systems have a dedicated serial console/service port.
   This command tells finit to not start getty directly, since there may
   not be anyone there.  To save RAM and CPU finit instead displays a
@@ -284,14 +291,17 @@ call `finit q`, but that has been deprecated with the `initctl` tool).
 Any service read from this directory is flagged as a dynamic service, so
 changes to or removal of `/etc/finit.d/*.conf` files, is detected.
 
-- If a service's `.conf` file has been removed, the service is stopped.
-- If the file is modified, the service is reloaded, stopped and started.
-- If service 1 is reloaded, and service 2 depends on service 1, then
-  service 2 will also be reloaded. Note: service dependencies must be
-  declared for each service for this to work.  For more info on this,
-  see the separate document [Finit Conditions](doc/conditions.md).
+On `initctl reload` the following is checked for all services:
+
+- If a service's `.conf` file has been removed, or its conditions are no
+  longer satisifed, the service is stopped.
+- If the file is modified, or a service it depends on has been reloaded,
+  the service is reloaded (stopped and started).
 - If a new service is added it is automatically started — respecting
   runlevels and return values from any callbacks.
+
+For more info on the different states of a service, see the separate
+document [Finit Services](doc/service.md).
 
 The `/etc/finit.d` directory was previously the default Finit `runparts`
 directory.  Finit no longer has a default `runparts`, so make sure to
@@ -840,7 +850,7 @@ The default install does not setup finit as the system default
 `/sbin/init`, neither does it setup an initial `/etc/finit.conf`.
 
 It is assumed that users of finit are competent enough to either setup
-finit as their default `/sbin/init` or alter their respective Grub,
+finit as their default `/sbin/init` or alter their respective GRUB,
 LOADLIN, LILO, U-Boot/Barebox or RedBoot boot loader configuration to
 give the kernel the following extra command line:
 
