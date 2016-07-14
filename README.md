@@ -60,7 +60,7 @@ Features
 
 **Process Supervision**
 
-Start, monitor and restart processes (daemons) if they fail.
+Start, monitor and restart services should they fail.
 
 
 **Inetd**
@@ -70,6 +70,11 @@ separate config file for services that you want to start on demand.
 
 All inetd services started can be filtered per port and inbound
 interface, reducing the need for a full blown firewall.
+
+Built-in optional inetd services:
+
+- time (rdate) RFC862
+- echo RFC868
 
 
 **Runlevels**
@@ -274,14 +279,19 @@ the static configuration from `/etc/finit.conf`.  This is the default
 behavior, so no include directives are necessary.
 
 To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
-send `SIGHUP` to PID 1, or call `finit q`.  Any service read from this
-directory is flagged as a dynamic service, so changes to their `.conf`
-files, or even removal of the files, is detected at `SIGHUP`.
+run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
+call `finit q`, but that has been deprecated with the `initctl` tool).
+Any service read from this directory is flagged as a dynamic service, so
+changes to or removal of `/etc/finit.d/*.conf` files, is detected.
 
 - If a service's `.conf` file has been removed, the service is stopped.
 - If the file is modified, the service is reloaded, stopped and started.
-- If a new service is detected, it is started — respecting runlevels
-  and return values from any callbacks.
+- If service 1 is reloaded, and service 2 depends on service 1, then
+  service 2 will also be reloaded. Note: service dependencies must be
+  declared for each service for this to work.  For more info on this,
+  see the separate document [Finit Conditions](doc/conditions.md).
+- If a new service is added it is automatically started — respecting
+  runlevels and return values from any callbacks.
 
 The `/etc/finit.d` directory was previously the default Finit `runparts`
 directory.  Finit no longer has a default `runparts`, so make sure to
@@ -450,21 +460,32 @@ The original `inetd` had a few standard services built-in:
 - chargen
 - discard
 
-Finit only supports the `time` service.  This is realized as a plugin to
-provide a simple means of testing the inetd functionality stand-alone,
-but also as a very rudimentary time server for rdate clients.
+Finit currently supports the `time` and `echo` services.  Both of which
+are realized as plugins to provide a simple means of testing the inetd
+functionality stand-alone.  But this also provides both a useful network
+testing/availability and a rudimentary time server for rdate clients.
 
-The `time.so` inetd plugin is set up as follows.  Notice the keyword
-`internal` which applies to all built-in inetd services:
+Internal inetd services are set up as follows:
 
 ```shell
+    inetd time/udp           wait [2345] internal
     inetd time/tcp         nowait [2345] internal
+    inetd echo/udp           wait [2345] internal
+    inetd echo/tcp         nowait [2345] internal
 ```
 
 Then call `rdate` from a remote machine (or use localhost):
 
 ```shell
-    rdate -p <IP>
+    rdate -p  <IP>
+    rdate -up <IP>
+```
+
+Or `echoping` to reach the echo service:
+
+```shell
+    echoping -v  <IP>
+    echoping -uv <IP>
 ```
 
 If you use `time/udp` you must use the standard rdate implementation and
@@ -506,6 +527,8 @@ For your convenience a set of *optional* plugins are available:
 
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
   _Optional plugin._
+
+* *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
 
 * *hwclock.so*: Restore and save system clock from/to RTC on
   startup/shutdown.
