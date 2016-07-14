@@ -88,9 +88,9 @@ static void nl_route(struct nlmsghdr *nlmsg)
 
 	if ((!dst && !mask) && (gw || idx)) {
 		if (nlmsg->nlmsg_type == RTM_DELROUTE)
-			cond_clear("net/gw");
+			cond_clear("net/route/default");
 		else
-			cond_set("net/gw");
+			cond_set("net/route/default");
 	}
 }
 
