@@ -420,10 +420,10 @@ void service_runlevel(int newlevel)
  * The @line can optionally start with a username, denoted by an @
  * character. Like this:
  *
- *     service @username [!0-6,S] <!EV> /path/to/daemon arg -- Description
- *     task @username [!0-6,S] /path/to/task arg            -- Description
- *     run  @username [!0-6,S] /path/to/cmd arg             -- Description
- *     inetd tcp/ssh nowait [2345] @root:root /sbin/sshd -i -- Description
+ *     service @username [!0-6,S] <!COND> /path/to/daemon arg -- Description
+ *     task @username [!0-6,S] /path/to/task arg              -- Description
+ *     run  @username [!0-6,S] /path/to/cmd arg               -- Description
+ *     inetd tcp/ssh nowait [2345] @root:root /sbin/sshd -i   -- Description
  *
  * If the username is left out the command is started as root.  The []
  * brackets denote the allowed runlevels, if left out the default for a
@@ -440,10 +440,9 @@ void service_runlevel(int newlevel)
  * special case when a service is declared with <!> means it does not
  * support SIGHUP but must be STOP/START'ed at system reconfiguration.
  *
- * Supported service events are: GW, IFUP[:ifname], IFDN[:ifname], where
- * the interface name (:ifname) is optional.  Actully, the check with a
- * service event declaration is string based, so 'IFUP:ppp' will match
- * any of "IFUP:ppp0" or "IFUP:pppoe1" sent by the netlink.so plugin.
+ * Service conditions can be: svc/<PATH> for PID files, net/<IFNAME>/up
+ * and net/<IFNAME>/exists.  The condition handling is further described
+ * doc/conditions.md.
  *
  * For multiple instances of the same command, e.g. multiple DHCP
  * clients, the user must enter an ID, using the :ID syntax.
@@ -491,7 +490,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
-		else if (cmd[0] == '<')	/* <[!][ev][,ev..]> */
+		else if (cmd[0] == '<')	/* <[!][cond][,cond..]> */
 			cond = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
 			id = atoi(&cmd[1]);

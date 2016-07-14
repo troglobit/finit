@@ -22,10 +22,6 @@ General
 * Add `!` or `[wait <pidfile>]` to service directive to let finit pause
   and wait for a pidfile before starting processes -- both at boot and
   when starting processes in a runlevel.
-* Allow custom reload for processes like libreSwan's pluto
-
-        service [2345] <!gw,if:eth0,reload:'starter reload'> /sbin/pluto
-
 * Allow process callbacks to be scripts.
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
   and `RELOAD` on `STDOUT` from a script ... call it for example
