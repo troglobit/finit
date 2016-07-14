@@ -694,13 +694,12 @@ not return until the given command has fully completed.
     Commands:
       debug                     Toggle Finit (daemon) debug
       help                      This help text
-      emit     <EV>             Emit event; a predefined event: RELOAD, STOP, START
-                                or a custom string matching an event in a service
-                                stanza, e.g: GW:UP, IFUP:IFNAME, IFDN:IFNAME. Where
-                                IFNAME is the interface name, e.g. eth0
       reload                    Reload *.conf in /etc/finit.d/ and activate changes
       runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
       status | show             Show status of services
+      cond     set   <COND>     Set (assert) condition     => +COND
+      cond     clear <COND>     Clear (deassert) condition => -COND
+      cond     flux  <COND>     Emulate flux condition     => ~COND
       cond     show             Show condition status
       start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
       stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
@@ -708,55 +707,6 @@ not return until the given command has fully completed.
       reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name
       version                   Show Finit version
 ```
-
-The `emit <EV>` command can be used to send events to Finit.  Built-in
-events are: RELOAD, STOP, START.  These events act on a lower level than
-their command counterparts.  The `reload` command reloads all `*.conf`
-files in `/etc/finit.d/` *and* activates the changes, with `emit RELOAD`
-only the `*.conf` files are reloaded.
-
-**Note:** The `emit STOP` event is more like "prepare" than "stop".
-  Depending on how the service is declared, `<!>` or not, the service
-  may be stopped, or skipped to be be sent `SIGHUP` later when `emit
-  START` is issued.
-
-To achieve the same result as `initctl reload` emit all three events:
-
-```shell
-    ~ $ initctl emit "RELOAD,STOP,START"
-```
-
-On an embedded system this can be used when changing complete system
-configuration.   Between `STOP` and `START` reset/change any hardware
-or kernel settings required to be in effect before new services are
-started.
-
-```shell
-    # 1. Update/Change/Generate all daemon configuration files
-    ~ $ …
-    
-    # 2. Update /etc/finit.d/*.conf
-    ~ $ …
-    
-    # 3. Prepare finit, stop all old/previous services
-    ~ $ initctl emit "RELOAD,STOP"
-    
-    # 4. Reconfigure hardware, interfaces/bridges/VLANs, etc.
-    ~ $ brctl    …
-    ~ $ vconfig  …
-    ~ $ ifconfig …
-    
-    # 5. Complete finit reload by starting all new services and
-    #    SIGHUP any changed services
-    ~ $ initctl emit "START"
-```
-	
-The `emit <EV>` command can also be used to emit custom events.  In
-fact, the event is a simple string.  Declare a list of events in a
-service stanza: `service … <GW:UP,IFUP:eth0>` to reload (`SIGHUP`) a
-service when recieving the `"GW:UP"` or `"IFUP:eth0"` strings.  If a
-service cannot handle reload and must be stopped-started, simply add an
-exclamation mark first: `service … <!GW:UP,IFUP:eth0>`.
 
 The `<!>` notation to a service stanza can be used empty, then it will
 apply to `reload` and `runlevel` commands.  I.e., when a service's
@@ -768,8 +718,7 @@ behaviour, but not all daemons support this, unfortunately.
 **Note:** even though it is possible to start services not belonging to
 the current runlevel these services will not be respawned automatically
 by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
-Dropbear SSH service will not be restarted if it, for some reason,
-exits.
+Dropbear SSH service will not be restarted if it is killed or exits.
 
 ```shell
     ~ $ initctl status -v

@@ -173,9 +173,11 @@ static void show_cond_one(const char *_conds)
 		case COND_ON:
 			printf("+%s", cond);
 			break;
+
 		case COND_FLUX:
 			printf("\e[1m~%s\e[0m", cond);
 			break;
+
 		case COND_OFF:
 			printf("\e[1m-%s\e[0m", cond);
 			break;
@@ -185,10 +187,20 @@ static void show_cond_one(const char *_conds)
 	putchar('>');
 }
 
-static void show_cond(void)
+static int do_cond_magic(char op, char *cond)
 {
-	enum cond_state cond;
+	cond[0] = op;
+	return do_emit(cond);
+}
+
+static int do_cond_set  (char *cond) { return do_cond_magic('+', cond); }
+static int do_cond_clear(char *cond) { return do_cond_magic('-', cond); }
+static int do_cond_flux (char *cond) { return do_cond_magic('~', cond); }
+
+static int do_cond_show(char *UNUSED(arg))
+{
 	svc_t *svc;
+	enum cond_state cond;
 
 	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
 	printf("====================================================================================\n");
@@ -209,12 +221,33 @@ static void show_cond(void)
 		show_cond_one(svc->cond);
 		putchar('\n');
 	}
+
+	return 0;
 }
 
-static int do_cond(char *UNUSED(arg))
+static int do_cond(char *cmd)
 {
-	show_cond();
-	return 0;
+	int c;
+	char *arg;
+	command_t command[] = {
+		{ "set",     do_cond_set   },
+		{ "clear",   do_cond_clear },
+		{ "flux",    do_cond_flux  },
+		{ "show",    do_cond_show  },
+		{ NULL, NULL }
+	};
+
+	arg = strpbrk(cmd, " ");
+	if (arg) {
+		*arg = 0;
+
+		for (c = 0; command[c].cmd; c++) {
+			if (!strcmp(command[c].cmd, cmd))
+				return command[c].cb(arg);
+		}
+	}
+
+	return do_cond_show(NULL);
 }
 
 static int show_version(char *UNUSED(arg))
@@ -345,13 +378,12 @@ static int usage(int rc)
 		"Commands:\n"
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
-		"  emit     <EV>             Emit event; a predefined event: RELOAD, STOP, START\n"
-		"                            or a custom string matching an event in a service\n"
-		"                            stanza, e.g: GW:UP, IFUP:IFNAME, IFDN:IFNAME. Where\n"
-		"                            IFNAME is the interface name, e.g. eth0\n"
 		"  reload                    Reload *.conf in /etc/finit.d/ and activate changes\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status | show             Show status of services\n"
+		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
+		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
+		"  cond     flux  <COND>     Emulate flux condition     => ~COND\n"
 		"  cond     show             Show condition status\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
@@ -366,7 +398,6 @@ int main(int argc, char *argv[])
 	int c;
 	command_t command[] = {
 		{ "debug",    toggle_debug },
-		{ "emit",     do_emit      },
 		{ "reload",   do_reload    },
 		{ "runlevel", do_runlevel  },
 		{ "status",   show_status  },

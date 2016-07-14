@@ -40,14 +40,14 @@ service's pidfile being created.
 Triggering
 ----------
 
-Conditions are triggered either by plugins or by using the `emit`
+Conditions are triggered either by plugins or by using the `cond`
 command of the `initctl` control tool.
 
-* `initctl emit +your/cond/here`
+* `initctl cond set your/cond/here`
 
   To set a condition
 
-* `initctl emit -your/cond/here`
+* `initctl cond clear your/cond/here`
 
   To clear a condition
 
@@ -114,6 +114,18 @@ Here we can see that `netd` is allowed to run since both its conditions
 are in the `on` state, as indicated by the `+`-prefix.  `udhcpc` however
 is not allowed to run since `net/vlan1/exist` condition is not satsifed.
 As indicated by the `-`-prefix.
+
+To fake interface `vlan1` suddenly appearing, and test what happens to
+`udhcpc` we can enable debug mode and assert the condition, like this:
+
+```shell
+    ~ # initctl debug
+    ~ # initctl cond set net/vlan1/exist
+```
+
+Then watch the console for the debug messages and then check the output
+from `initctl cond show` again.  (The client will likely have failed to
+start, but at least the condition is now satisfied.)
 
 
 Internals
