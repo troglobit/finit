@@ -24,3 +24,9 @@ The current state depends on the two following conditions:
   - The binary is missing in the filesystem.
 
 * `C`: Service conditions are satisfied.
+
+<!--
+  -- Local Variables:
+  -- mode: markdown
+  -- End:
+  -->
