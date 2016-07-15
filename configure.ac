@@ -7,15 +7,14 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile plugins/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
-#m4_include([m4/misc.m4])
-#m4_include([m4/mroute.m4])
+#m4_include([m4/plugin.m4])
+#m4_include([m4/expand.m4])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Change default prefix, we're PID 1 after all ...
 AC_PREFIX_DEFAULT([])
 
-# Check for plugins
-#plugins_all="alsa-utils bootmisc dbus hwclock initctl netlink pidfile resolvconf time tty urandom x11-common"
+# Handle building plugins either as dynamically loadable, or built-in
 LT_INIT([shared disable-static dlopen aix-soname=both disable-fast-install])
 
 # Checks for programs.
