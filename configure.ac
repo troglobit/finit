@@ -86,6 +86,10 @@ AC_ARG_WITH(rcsd,
 	[rcsd=$withval], [rcsd='$(sysconfdir)/finit.d'])
 AC_SUBST(rcsd)
 
+AC_ARG_WITH(rc-local,
+        AS_HELP_STRING([--with-rc-local=FILE], [SysV init /etc/rc.local file, default /etc/rc.local]),
+	[rclocal=$withval], [rclocal=$sysconfdir/rc.local])
+
 AC_ARG_WITH(console,
         AS_HELP_STRING([--with-console=DEV], [Console to use, default: /dev/console]),
 	[console=$withval], [console=/dev/console])
@@ -153,6 +157,12 @@ AS_IF([test "x$with_config" != "xno"],[
 	],[
 	conf='$(sysconfdir)/finit.conf'])
 AC_SUBST(conf)
+
+AS_IF([test "x$with_rc_local" != "xno"],[
+	AS_IF([test "x$rclocal" = "xyes"],[
+		rclocal=$sysconfdir/rc.local])])
+AC_EXPAND_DIR(lurvig, "$rclocal")
+AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$lurvig", [Compat SysV /etc/rc.local file to run last at boot.])
 
 AS_IF([test "x$with_heading" != "xno"],[
 	AS_IF([test "x$heading" = "xyes"],[
