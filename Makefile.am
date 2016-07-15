@@ -27,7 +27,6 @@ doc_DATA           = README.md LICENSE finit.conf services
 EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf services
 AM_CPPFLAGS        = -U_FORTIFY_SOURCE
 AM_CPPFLAGS       += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
-AM_CPPFLAGS       += -DFINIT_CONF=\"$(conf)\" -DFINIT_RCSD=\"$(rcsd)\" -DFINIT_FIFO=\"$(fifo)\"
 
 if STATIC
 AM_CPPFLAGS       += -DENABLE_STATIC

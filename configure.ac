@@ -63,27 +63,26 @@ AC_PLUGIN([x11-common], [no],  [Console setup (for X)])
 AC_PLUGIN([netlink],    [yes], [Basic netlink plugin for IFUP/IFDN and GW events. Can be replaced with externally built plugin that links with libnl or similar.])
 
 # Check for extra arguments or packages
-AC_ARG_WITH(fifo,
-        AS_HELP_STRING([--with-fifo=FIFO], [Old Finit initctl FIFO, default /dev/initctl]),
-	[fifo=$withval], [fifo=/dev/initctl])
-
-AC_ARG_WITH(config,
-        AS_HELP_STRING([--with-config=CONFIG], [Finit CONFIG file, default $sysconfdir/finit.conf]),
-	[conf=$withval], [conf='$(sysconfdir)/finit.conf'])
-
 AC_ARG_WITH(heading,
         AS_HELP_STRING([--with-heading=GREET], [Display GREET instead of Finit version at boot]),
-	[heading=$withval], [heading='$(PACKAGE_NAME) v$(PACKAGE_VERSION)'])
+	[heading=$withval], [heading='$PACKAGE_NAME v$PACKAGE_VERSION'])
+
+AC_ARG_WITH(fifo,
+        AS_HELP_STRING([--with-fifo=FIFO], [FIFO for init/telinit clients, default /dev/initctl]),
+	[fifo=$withval], [fifo=/dev/initctl])
 
 AC_ARG_WITH(plugindir,
-        AS_HELP_STRING([--with-plugindir=DIR], [Finit plugins directory, default $libdir/finit/plugins]),
-	[pkglibdir=$withval], [pkglibdir='$(libdir)/finit/plugins'])
+        AS_HELP_STRING([--with-plugindir=DIR], [Finit plugin directory, default /lib/finit/plugins]),
+	[pkglibdir=$withval], [pkglibdir=$libdir/finit/plugins])
 AC_SUBST([pkglibdir])
 
+AC_ARG_WITH(config,
+        AS_HELP_STRING([--with-config=CONFIG], [Finit bootstrap config file, default /etc/finit.conf]),
+	[conf=$withval], [conf=$sysconfdir/finit.conf])
+
 AC_ARG_WITH(rcsd,
-        AS_HELP_STRING([--with-rcsd=DIR], [Finit rc.d/ directory, default $sysconfdir/finit.d]),
-	[rcsd=$withval], [rcsd='$(sysconfdir)/finit.d'])
-AC_SUBST(rcsd)
+        AS_HELP_STRING([--with-rcsd=DIR], [Finit rcS.d/ directory, default /etc/finit.d]),
+	[rcsd=$withval], [rcsd=$sysconfdir/finit.d])
 
 AC_ARG_WITH(rc-local,
         AS_HELP_STRING([--with-rc-local=FILE], [SysV init /etc/rc.local file, default /etc/rc.local]),
@@ -102,7 +101,7 @@ AC_ARG_WITH(username,
 	[username=$withval], [username=root])
 
 AC_ARG_WITH(hostname,
-        AS_HELP_STRING([--with-hostname=NAME], [Hostname, if /etc/hostname is missing, default: noname]),
+        AS_HELP_STRING([--with-hostname=NAME], [If /etc/hostname is missing, default: noname]),
 	[hostname=$withval], [hostname=noname])
 
 AC_ARG_WITH(runlevel,
@@ -139,23 +138,26 @@ AS_IF([test "x$enable_inetd" != "xno"],enable_inetd="yes",[
 AS_IF([test "x$enable_quiet" != "xno"],[
         AC_DEFINE(QUIET_MODE,  0, [Will print stopping/starting/etc messages at runtime])
 	],[
-	AC_DEFINE(QUIET_MODE,  1, [Silent at runtime, after initial boot, default])
-	])
+	AC_DEFINE(QUIET_MODE,  1, [Silent at runtime, after initial boot, default])])
 
 ### With features ##############################################################################
 AS_IF([test "x$with_fifo" != "xno"],[
 	AS_IF([test "x$fifo" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	fifo='/dev/initctl'])
-AC_SUBST(fifo)
+		    fifo='/dev/initctl'])])
+AC_EXPAND_DIR(lurvig, "$fifo")
+AC_DEFINE_UNQUOTED(FINIT_FIFO, "$lurvig", [FIFO for old style init/telinit client programs])
 
 AS_IF([test "x$with_config" != "xno"],[
 	AS_IF([test "x$config" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	conf='$(sysconfdir)/finit.conf'])
-AC_SUBST(conf)
+		conf=$sysconfdir/finit.conf])])
+AC_EXPAND_DIR(lurvig, "$conf")
+AC_DEFINE_UNQUOTED(FINIT_CONF, "$lurvig", [Main Finit configuration file, default /etc/finit.conf])
+
+AS_IF([test "x$with_rcsd" != "xno"],[
+	AS_IF([test "x$rcsd" = "xyes"],[
+		rcsd=$sysconfdir/finit.d])])
+AC_EXPAND_DIR(lurvig, "$rcsd")
+AC_DEFINE_UNQUOTED(FINIT_RCSD, "$lurvig", [Finit rcS.d/, default /etc/finit.d])
 
 AS_IF([test "x$with_rc_local" != "xno"],[
 	AS_IF([test "x$rclocal" = "xyes"],[
@@ -165,45 +167,33 @@ AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$lurvig", [Compat SysV /etc/rc.local file to
 
 AS_IF([test "x$with_heading" != "xno"],[
 	AS_IF([test "x$heading" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	heading='$(libdir)/finit'])
+		heading='$PACKAGE_NAME v$PACKAGE_VERSION'])])
 AC_DEFINE_UNQUOTED(INIT_HEADING, "$heading", [Displayed by Finit at boot])
 
 AS_IF([test "x$with_console" != "xno"],[
 	AS_IF([test "x$console" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	console=/dev/console])
+		console=/dev/console])])
 AC_DEFINE_UNQUOTED(CONSOLE, "$console", [Default console to use])
 
 AS_IF([test "x$with_shell" != "xno"],[
 	AS_IF([test "x$shell" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	shell=/bin/sh])
+		shell=/bin/sh])])
 AC_DEFINE_UNQUOTED(FALLBACK_SHELL, "$shell", [Used if no login getty])
 
 AS_IF([test "x$with_username" != "xno"],[
 	AS_IF([test "x$username" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	username=root])
+		username=root])])
 AC_DEFINE_UNQUOTED(DEFUSER, "$username", [Used for startx .conf option])
 
 AS_IF([test "x$with_hostname" != "xno"],[
 	AS_IF([test "x$hostname" = "xyes"],[
-		AC_MSG_ERROR([Must supply argument])])
-	],[
-	hostname=noname])
+		hostname=noname])])
 AC_DEFINE_UNQUOTED(DEFHOST, "$hostname", [For /etc/hostname])
 
 AS_IF([test "x$with_runlevel" != "xno"],[
 	AS_IF([test "x$runlevel" = "xyes"],[
-		AC_MSG_ERROR([Runlevel must be a number, 1-9, but not 6 (reboot)])])
-	AC_DEFINE_UNQUOTED(RUNLEVEL, $runlevel, [Runlevel to start after S])
-	],[
-	AC_DEFINE(RUNLEVEL, 2, [Default runlevel to start after S])])
+		AC_DEFINE_UNQUOTED(RUNLEVEL, 2, [Default runlevel to start after S])])
+	AC_DEFINE_UNQUOTED(RUNLEVEL, $runlevel, [Runlevel to start after S])])
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC, [test "x$enable_static" = "xyes"])
