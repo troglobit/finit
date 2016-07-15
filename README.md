@@ -14,7 +14,7 @@ Table of Contents
 * [Features](#features)
 * [/etc/finit.conf](#etcfinitconf)
 * [/etc/finit.d](#etcfinitd)
-* [Runparts](#runparts)
+* [Runparts & /etc/rc.local](#runparts---etc-rc-local)
 * [Bootstrap](#bootstrap)
 * [Runlevels](#runlevels)
 * [Inetd](#inetd)
@@ -211,8 +211,16 @@ Syntax:
   `initctl` tool.  More on inetd below.
 
 * `runparts <DIR>`  
-  Call run-parts(8) on a directory to run start scripts.  All executable
+  Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
   files, or scripts, in the directory are called, in alphabetic order.
+
+  It can be beneficial to use `S01name`, `S02othername`, etc. if there
+  is a dependency order between the scripts.  Symlinks to existing
+  daemons can talso be used, but make sure they daemonize by default.
+
+  As the optional `/etc/rc.local` shell script, make sure that all your
+  services and programs either terminate or start in the background or
+  you will block Finit.
 
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
@@ -312,15 +320,21 @@ update your setup, or the finit configuration, accordingly.
   in `/etc/finit.conf`!
 
 
-Runparts
---------
+Runparts & /etc/rc.local
+------------------------
 
 At the end of the boot, when networking and all services are up, finit
 calls its built-in [run-parts(8)][] on the `runparts <DIR>` directory,
-if it exists.  Similar to how the `/ec/rc.local` file works in most
-other init daemons, only finit runs a directory of scripts.  This
-replaces the earlier support for a `/usr/sbin/services.sh` script in the
-original finit.
+and `/etc/rc.local`, in that order if they exist.
+
+```shell
+    runparts /etc/rc.d/
+```
+
+No configuration stanza in `/etc/finit.conf` is required for `rc.local`.
+If it exists and is an executable shell script, finit calls it at the
+very end of the boot, before calling the `HOOK_SYSTEM_UP`.  See more on
+hooks and the system bootstrap below.
 
 
 Bootstrap
@@ -345,9 +359,9 @@ Bootstrap
     where the rest of all tasks and inetd services are started.
 16. Call 4th level hooks, `HOOK_SVC_UP`
 17. If `runparts <DIR>` is set, [run-parts(8)][] is called on `<DIR>`
-18. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
-19. Start TTYs defined in `/etc/finit.conf`, or rescue on `/dev/console`
-20. Enter main monitor loop
+18. Call `/etc/rc.local`, if it exists and is an executable shell script
+19. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
+20. Start TTYs defined in `/etc/finit.conf`, or rescue on `/dev/console`
 
 In (10) and (15) tasks and services defined in `/etc/finit.conf` are
 started.  Remember, all `service` and `task` stanzas are started in
