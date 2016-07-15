@@ -147,7 +147,7 @@ AS_IF([test "x$with_fifo" != "xno"],[
 	fifo='/dev/initctl'])
 AC_SUBST(fifo)
 
-AS_IF([test "x$with_confing" != "xno"],[
+AS_IF([test "x$with_config" != "xno"],[
 	AS_IF([test "x$config" = "xyes"],[
 		AC_MSG_ERROR([Must supply argument])])
 	],[
