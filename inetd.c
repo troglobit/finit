@@ -189,6 +189,33 @@ static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 	service_step(task);
 }
 
+/*
+ * Refuse service if the request specifies a reply port corresponding to any internal service.
+ * This is done as a defense against looping attacks; the remote IP address is logged.
+ * http://www.freebsd.org/cgi/man.cgi?inetd(8)
+ * https://svnweb.freebsd.org/base/head/usr.sbin/inetd/inetd.c?revision=298909&view=markup#l2094
+ */
+int inetd_check_loop(struct sockaddr *sa, socklen_t len, char *name)
+{
+	svc_t *svc;
+        char pname[NI_MAXHOST];
+
+        for (svc = svc_inetd_iterator(1); svc; svc = svc_inetd_iterator(0)) {
+		inetd_t *i = &svc->inetd;
+
+                if (!i->builtin || i->type != SOCK_DGRAM)
+                        continue;
+
+		if (((const struct sockaddr_in *)sa)->sin_port == i->port) {
+			getnameinfo(sa, len, pname, sizeof(pname), NULL, 0, NI_NUMERICHOST);
+			FLOG_WARN("%s/%s:%s/%s loop request REFUSED from %s", i->name, "UDP", name, "UDP", pname);
+			return 1;
+		}
+        }
+
+        return 0;
+}
+
 /* Launch Inet socket for service.
  * TODO: Add filtering ALLOW/DENY per interface.
  */

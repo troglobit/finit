@@ -27,6 +27,7 @@
 
 #include "../plugin.h"
 
+#define NAME    "chargen"
 #define PATTERN "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "
 
 static char *generator(char *buf, size_t len)
@@ -61,6 +62,9 @@ static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, sockle
 	if (-1 == len)
 		return -1;	/* On error, close connection. */
 
+	if (inetd_check_loop(sa, *sa_len, NAME))
+		return -1;
+
 	return 0;
 } 
 
@@ -86,7 +90,7 @@ static int cb(int type)
 }
 
 static plugin_t plugin = {
-	.name  = "chargen",	/* Must match the inetd /etc/services entry */
+	.name  = NAME,		/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = cb
 	},

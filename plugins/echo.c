@@ -27,6 +27,20 @@
 
 #include "../plugin.h"
 
+#define NAME "echo"
+
+static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t *sa_len)
+{
+	len = recvfrom(sd, buf, sizeof(buf), MSG_DONTWAIT, sa, sa_len);
+	if (-1 == len)
+		return -1;	/* On error, close connection. */
+
+	if (inetd_check_loop(sa, *sa_len, NAME))
+		return -1;
+
+	return len;
+}
+
 static int cb(int type)
 {
 	int sd = STDIN_FILENO;
@@ -35,7 +49,7 @@ static int cb(int type)
 	struct sockaddr_storage sa;
 	socklen_t sa_len = sizeof(sa);
 
-	len = recvfrom(sd, buf, sizeof(buf), MSG_DONTWAIT, (struct sockaddr *)&sa, &sa_len);
+	len = recv_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, &sa_len);
 	if (-1 == len)
 		return -1;	/* On error, close connection. */
 
@@ -43,7 +57,7 @@ static int cb(int type)
 }
 
 static plugin_t plugin = {
-	.name  = "echo",	/* Must match the inetd /etc/services entry */
+	.name  = NAME,		/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = cb
 	},

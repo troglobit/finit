@@ -476,7 +476,11 @@ default port.  To run ssh on port 222, and all others on port 22:
 ```
 
 Compared to Finit v1.12 you must *explicitly deny* access from `eth0`!
-    
+
+To protect against looping attacks, the inetd server will refuse UDP
+service if the reply port corresponds to any internal service.  Similar
+to how the FreeBSD inetd operates.
+
 
 **Internal Services**
 

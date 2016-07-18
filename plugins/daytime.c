@@ -28,6 +28,9 @@
 
 #include "../plugin.h"
 
+#define NAME "daytime"
+
+
 static char *daytime(char *buf, size_t len)
 {
 	time_t t;
@@ -47,6 +50,9 @@ static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, sockle
 	len = recvfrom(sd, buf, sizeof(buf), MSG_DONTWAIT, sa, sa_len);
 	if (-1 == len)
 		return -1;	/* On error, close connection. */
+
+	if (inetd_check_loop(sa, *sa_len, NAME))
+		return -1;
 
 	return 0;
 } 
@@ -72,7 +78,7 @@ static int cb(int type)
 }
 
 static plugin_t plugin = {
-	.name  = "daytime",	/* Must match the inetd /etc/services entry */
+	.name  = NAME,		/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = cb
 	}

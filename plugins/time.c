@@ -28,6 +28,8 @@
 
 #include "../plugin.h"
 
+#define NAME "time"
+
 /* UNIX epoch starts midnight, 1st Jan, 1970 */
 #define EPOCH_OFFSET 2208988800ULL
 
@@ -59,6 +61,9 @@ static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, sockle
 	if (-1 == len)
 		return -1;	/* On error, close connection. */
 
+	if (inetd_check_loop(sa, *sa_len, NAME))
+		return -1;
+
 	return 0;
 }
 
@@ -87,7 +92,7 @@ static int cb(int type)
 }
 
 static plugin_t plugin = {
-	.name  = "time",	/* Must match the inetd /etc/services entry */
+	.name  = NAME,		/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = cb
 	}

@@ -46,12 +46,15 @@ typedef struct {
 	int    proto;
 	int    port;
 	int    forking;
+	int    builtin;		/* Set by built-in inetd services only */
 	int    next_id;		/* Next child job's id */
 	char   name[10];
 	int  (*cmd)(int type);	/* internal inetd service, like 'time' */
 
 	TAILQ_HEAD(, inetd_filter) filters;
 } inetd_t;
+
+int  inetd_check_loop  (struct sockaddr *sa, socklen_t len, char *name);
 
 int  inetd_start       (inetd_t *inetd);
 void inetd_stop        (inetd_t *inetd);
