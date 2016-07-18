@@ -75,6 +75,7 @@ Built-in optional inetd services:
 
 - echo RFC862
 - chargen RFC864
+- daytime RFC867
 - discard RFC863
 - time (rdate) RFC868
 
@@ -487,6 +488,7 @@ network testing/availability, as well as a rudimentary time server for
 
 - echo
 - chargen
+- daytime
 - discard
 - time
 
@@ -499,6 +501,8 @@ the `finit.conf` or `finit.d/*.conf` like this:
     inetd echo/tcp         nowait [2345] internal
     inetd chargen/udp        wait [2345] internal
     inetd chargen/tcp      nowait [2345] internal
+    inetd daytime/udp        wait [2345] internal
+    inetd daytime/tcp      nowait [2345] internal
     inetd discard/udp        wait [2345] internal
     inetd discard/tcp      nowait [2345] internal
     inetd time/udp           wait [2345] internal
@@ -576,6 +580,8 @@ For your convenience a set of *optional* plugins are available:
 * *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
 
 * *chargen.so*: RFC 864 plugin.  Start as inetd service, like time below.
+
+* *daytime.so*: RFC 867 plugin.  Start as inetd service, like time below.
 
 * *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
 
