@@ -73,8 +73,9 @@ interface, reducing the need for a full blown firewall.
 
 Built-in optional inetd services:
 
-- time (rdate) RFC862
-- echo RFC868
+- echo RFC862
+- discard RFC863
+- time (rdate) RFC868
 
 
 **Runlevels**
@@ -484,10 +485,11 @@ The original `inetd` had a few standard services built-in:
 - chargen
 - discard
 
-Finit currently supports the `time` and `echo` services.  Both of which
-are realized as plugins to provide a simple means of testing the inetd
-functionality stand-alone.  But this also provides both a useful network
-testing/availability and a rudimentary time server for rdate clients.
+Finit currently supports the `time`, `echo`, and `discard` services.
+Both of which are realized as plugins to provide a simple means of
+testing the inetd functionality stand-alone.  But this also provides
+both a useful network testing/availability and a rudimentary time server
+for rdate clients.
 
 Internal inetd services are set up as follows:
 
@@ -496,6 +498,8 @@ Internal inetd services are set up as follows:
     inetd time/tcp         nowait [2345] internal
     inetd echo/udp           wait [2345] internal
     inetd echo/tcp         nowait [2345] internal
+    inetd discard/udp        wait [2345] internal
+    inetd discard/tcp      nowait [2345] internal
 ```
 
 Then call `rdate` from a remote machine (or use localhost):
@@ -510,6 +514,13 @@ Or `echoping` to reach the echo service:
 ```shell
     echoping -v  <IP>
     echoping -uv <IP>
+```
+
+Or `echoping -d` to reach the discard service:
+
+```shell
+    echoping -dv  <IP>
+    echoping -duv <IP>
 ```
 
 If you use `time/udp` you must use the standard rdate implementation and
@@ -553,6 +564,8 @@ For your convenience a set of *optional* plugins are available:
   _Optional plugin._
 
 * *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
+
+* *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
 
 * *hwclock.so*: Restore and save system clock from/to RTC on
   startup/shutdown.

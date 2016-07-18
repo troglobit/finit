@@ -1,4 +1,4 @@
-/* Optional inetd plugin for the echo protocol RFC 862
+/* Optional inetd plugin for the Echo Protocol, RFC 862
  *
  * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>
  *
@@ -27,7 +27,7 @@
 
 #include "../plugin.h"
 
-static int echo_cb(int type)
+static int cb(int type)
 {
 	int sd = STDIN_FILENO;
 	char buf[BUFSIZ];
@@ -45,7 +45,7 @@ static int echo_cb(int type)
 static plugin_t plugin = {
 	.name  = "echo",	/* Must match the inetd /etc/services entry */
 	.inetd = {
-		.cmd = echo_cb
+		.cmd = cb
 	},
 };
 

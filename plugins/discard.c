@@ -1,6 +1,6 @@
-/* Optional inetd plugin for Time Protocol (rdate), RFC 868
+/* Optional inetd plugin for the Discard Protocol, RFC 863
  *
- * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,50 +22,31 @@
  */
 
 #include <arpa/inet.h>
-#include <time.h>
 #include <unistd.h>		/* STDIN_FILENO */
 #include <sys/socket.h>
 
 #include "../plugin.h"
 
-/* UNIX epoch starts midnight, 1st Jan, 1970 */
-#define EPOCH_OFFSET 2208988800ULL
-
-/* Return number of seconds since midnight, 1st Jan, 1900 */
 static int cb(int type)
 {
 	int sd = STDIN_FILENO;
-	time_t now;
+	char buf[BUFSIZ];
+	ssize_t len;
 	struct sockaddr_storage sa;
 	socklen_t sa_len = sizeof(sa);
 
-	if (SOCK_DGRAM == type) {
-		int dummy;
+	len = recvfrom(sd, buf, sizeof(buf), MSG_DONTWAIT, (struct sockaddr *)&sa, &sa_len);
+	if (-1 == len)
+		return -1;	/* On error, close connection. */
 
-		/* Read empty datagram in UDP mode before sending reply. */
-		if (-1 == recvfrom(sd, &dummy, sizeof(dummy), MSG_DONTWAIT, (struct sockaddr *)&sa, &sa_len))
-			return -1;	/* On error, close connection. */
-	}
-
-	now = time(NULL);
-	if ((time_t)-1 == now)
-		return -1;		/* On error, close connection. */
-
-	/* Account for UNIX epoch offset */
-	now += EPOCH_OFFSET;
-
-	/* Convert to network byte order, not explicitly stated in RFC */
-	now = htonl(now);
-
-	/* Send reply, ignore error, simply close connection. */
-	return sendto(sd, &now, sizeof(now), MSG_DONTWAIT, (struct sockaddr *)&sa, sa_len);
+	return 0;
 }
 
 static plugin_t plugin = {
-	.name  = "time",	/* Must match the inetd /etc/services entry */
+	.name  = "discard",	/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = cb
-	}
+	},
 };
 
 PLUGIN_INIT(plugin_init)
