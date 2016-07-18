@@ -1,4 +1,4 @@
-/* Optional inetd plugin for the Echo Protocol, RFC 862
+/* Optional inetd plugin for Daytime Protocol, RFC 867
  *
  * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>
  *
@@ -22,12 +22,28 @@
  */
 
 #include <arpa/inet.h>
+#include <time.h>
 #include <unistd.h>		/* STDIN_FILENO */
 #include <sys/socket.h>
 
 #include "../plugin.h"
 
-#define NAME "echo"
+#define NAME "daytime"
+
+
+static char *daytime(char *buf, size_t len)
+{
+	time_t t;
+	struct tm *tmp;
+
+	t = time(NULL);
+	tmp = localtime(&t);
+
+	memset(buf, 0, len);
+	strftime(buf, len, "%a, %B %d, %Y %T-%Z", tmp);
+
+	return buf;
+}
 
 static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t *sa_len)
 {
@@ -38,29 +54,34 @@ static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, sockle
 	if (inetd_check_loop(sa, *sa_len, NAME))
 		return -1;
 
-	return len;
+	return 0;
+} 
+
+static int send_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t sa_len)
+{
+	char *now = daytime(buf, len);
+
+	return sendto(sd, now, strlen(now), MSG_DONTWAIT, sa, sa_len);
 }
 
 static int cb(int type)
 {
 	int sd = STDIN_FILENO;
 	char buf[BUFSIZ];
-	ssize_t len;
 	struct sockaddr_storage sa;
 	socklen_t sa_len = sizeof(sa);
 
-	len = recv_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, &sa_len);
-	if (-1 == len)
-		return -1;	/* On error, close connection. */
+	if (recv_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, &sa_len))
+		return -1;
 
-	return sendto(sd, buf, len, MSG_DONTWAIT, (struct sockaddr *)&sa, sa_len);
+	return send_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, sa_len);
 }
 
 static plugin_t plugin = {
 	.name  = NAME,		/* Must match the inetd /etc/services entry */
 	.inetd = {
 		.cmd = cb
-	},
+	}
 };
 
 PLUGIN_INIT(plugin_init)

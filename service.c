@@ -589,6 +589,7 @@ recreate:
 	if (plugin) {
 		/* Internal plugin provides this service */
 		svc->inetd.cmd = plugin->inetd.cmd;
+		svc->inetd.builtin = 1;
 	} else {
 		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
 		while ((cmd = strtok(NULL, " ")))

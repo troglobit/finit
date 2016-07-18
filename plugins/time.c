@@ -1,4 +1,4 @@
-/* Optional inetd plugin for time (rdate) protocol RFC 868
+/* Optional inetd plugin for Time Protocol (rdate), RFC 868
  *
  * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
  *
@@ -28,43 +28,73 @@
 
 #include "../plugin.h"
 
+#define NAME "time"
+
 /* UNIX epoch starts midnight, 1st Jan, 1970 */
 #define EPOCH_OFFSET 2208988800ULL
 
 /* Return number of seconds since midnight, 1st Jan, 1900 */
-static int rfc868(int type)
+static char *rfctime(char *buf, size_t *len)
 {
-	int sd = STDIN_FILENO;
 	time_t now;
-	struct sockaddr_storage sa;
-	socklen_t sa_len = sizeof(sa);
-
-	if (SOCK_DGRAM == type) {
-		int dummy;
-
-		/* Read empty datagram in UDP mode before sending reply. */
-		if (-1 == recvfrom(sd, &dummy, sizeof(dummy), MSG_DONTWAIT, (struct sockaddr *)&sa, &sa_len))
-			return -1;	/* On error, close connection. */
-	}
 
 	now = time(NULL);
 	if ((time_t)-1 == now)
-		return -1;		/* On error, close connection. */
+		return NULL;
 
-	/* Account for UNIX epoch offset */
+	/*
+	 * Account for UNIX epoch offset, and
+	 * convert to network byte order
+	 */
 	now += EPOCH_OFFSET;
+	now  = htonl(now);
 
-	/* Convert to network byte order, not explicitly stated in RFC */
-	now = htonl(now);
+	*len = sizeof(now);
+	memcpy(buf, &now, *len);
 
-	/* Send reply, ignore error, simply close connection. */
-	return sendto(sd, &now, sizeof(now), MSG_DONTWAIT, (struct sockaddr *)&sa, sa_len);
+	return buf;
+}
+
+static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t *sa_len)
+{
+	len = recvfrom(sd, buf, sizeof(buf), MSG_DONTWAIT, sa, sa_len);
+	if (-1 == len)
+		return -1;	/* On error, close connection. */
+
+	if (inetd_check_loop(sa, *sa_len, NAME))
+		return -1;
+
+	return 0;
+}
+
+static int send_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t sa_len)
+{
+	char *now;
+
+	now = rfctime(buf, &len);
+	if (!now)
+		return -1;	/* On error, close connection. */
+
+	return sendto(sd, now, len, MSG_DONTWAIT, sa, sa_len);
+}
+
+static int cb(int type)
+{
+	int sd = STDIN_FILENO;
+	char buf[BUFSIZ];
+	struct sockaddr_storage sa;
+	socklen_t sa_len = sizeof(sa);
+
+	if (recv_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, &sa_len))
+		return -1;	/* On error, close connection. */
+
+	return send_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, sa_len);
 }
 
 static plugin_t plugin = {
-	.name  = "time",	/* Must match the inetd /etc/services entry */
+	.name  = NAME,		/* Must match the inetd /etc/services entry */
 	.inetd = {
-		.cmd = rfc868
+		.cmd = cb
 	}
 };
 

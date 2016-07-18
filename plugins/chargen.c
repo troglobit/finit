@@ -1,4 +1,4 @@
-/* Optional inetd plugin for the Echo Protocol, RFC 862
+/* Optional inetd plugin for the Character Generator Protocol, RFC 864
  *
  * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>
  *
@@ -27,33 +27,66 @@
 
 #include "../plugin.h"
 
-#define NAME "echo"
+#define NAME    "chargen"
+#define PATTERN "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "
+
+static char *generator(char *buf, size_t len)
+{
+	size_t num;
+	static size_t pos = 0;
+	const char pattern[] = PATTERN;
+
+	len = 72;
+	if (pos + len > sizeof(pattern)) {
+		num = sizeof(pattern) - pos;
+		len -= num;
+	} else {
+		num = 72;
+		len = 0;
+	}
+
+	strncpy(&buf[0], &pattern[pos], num--);
+	if (len++)
+		strncpy(&buf[num], pattern, len);
+	strcat(buf, "\r\n");
+
+	if (++pos >= sizeof(pattern) - 1)
+		pos = 0;
+
+	return buf;
+}
 
 static int recv_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t *sa_len)
 {
-	len = recvfrom(sd, buf, sizeof(buf), MSG_DONTWAIT, sa, sa_len);
+	len = recvfrom(sd, buf, len, MSG_DONTWAIT, sa, sa_len);
 	if (-1 == len)
 		return -1;	/* On error, close connection. */
 
 	if (inetd_check_loop(sa, *sa_len, NAME))
 		return -1;
 
-	return len;
+	return 0;
+} 
+
+static int send_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, socklen_t sa_len)
+{
+	char *pattern = generator(buf, len);
+
+	return sendto(sd, pattern, strlen(pattern), MSG_DONTWAIT, sa, sa_len);
 }
 
 static int cb(int type)
 {
 	int sd = STDIN_FILENO;
-	char buf[BUFSIZ];
 	ssize_t len;
+	char buf[BUFSIZ];
 	struct sockaddr_storage sa;
 	socklen_t sa_len = sizeof(sa);
 
-	len = recv_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, &sa_len);
-	if (-1 == len)
-		return -1;	/* On error, close connection. */
+	if (recv_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, &sa_len))
+		return -1;
 
-	return sendto(sd, buf, len, MSG_DONTWAIT, (struct sockaddr *)&sa, sa_len);
+	return send_peer(sd, buf, sizeof(buf), (struct sockaddr *)&sa, sa_len);
 }
 
 static plugin_t plugin = {

@@ -73,8 +73,11 @@ interface, reducing the need for a full blown firewall.
 
 Built-in optional inetd services:
 
-- time (rdate) RFC862
-- echo RFC868
+- echo RFC862
+- chargen RFC864
+- daytime RFC867
+- discard RFC863
+- time (rdate) RFC868
 
 
 **Runlevels**
@@ -437,7 +440,8 @@ Inetd
 A built-in *Internet Super Server* support was added in Finit v1.12 and
 v1.13, along with an internal `time` inetd service, RFC 868 (rdate).
 The latter is supplied as a plugin to illustrate how simple it is to
-extend finit with more internal inetd services.
+extend finit with more internal inetd services.  Today more built-in
+services are available.
 
 > Please note, not all UNIX daemons are prepared to run as inetd services.
 > In the example below `sshd` also need the command line argument `-i`.
@@ -473,29 +477,41 @@ default port.  To run ssh on port 222, and all others on port 22:
 ```
 
 Compared to Finit v1.12 you must *explicitly deny* access from `eth0`!
-    
+
+To protect against looping attacks, the inetd server will refuse UDP
+service if the reply port corresponds to any internal service.  Similar
+to how the FreeBSD inetd operates.
+
 
 **Internal Services**
 
-The original `inetd` had a few standard services built-in:
+Like the original `inetd`, Finit has a few standard services built-in.
+They are realized as plugins to provide a simple means of testing the
+inetd functionality stand-alone.  But this also provides both a useful
+network testing/availability, as well as a rudimentary time server for
+`rdate` clients.
 
-- time
 - echo
 - chargen
+- daytime
 - discard
+- time
 
-Finit currently supports the `time` and `echo` services.  Both of which
-are realized as plugins to provide a simple means of testing the inetd
-functionality stand-alone.  But this also provides both a useful network
-testing/availability and a rudimentary time server for rdate clients.
-
-Internal inetd services are set up as follows:
+For security reasons they are all disabled by default and have to be
+enabled with both the `configure` script and a special `inetd` stanza in
+the `finit.conf` or `finit.d/*.conf` like this:
 
 ```shell
-    inetd time/udp           wait [2345] internal
-    inetd time/tcp         nowait [2345] internal
     inetd echo/udp           wait [2345] internal
     inetd echo/tcp         nowait [2345] internal
+    inetd chargen/udp        wait [2345] internal
+    inetd chargen/tcp      nowait [2345] internal
+    inetd daytime/udp        wait [2345] internal
+    inetd daytime/tcp      nowait [2345] internal
+    inetd discard/udp        wait [2345] internal
+    inetd discard/tcp      nowait [2345] internal
+    inetd time/udp           wait [2345] internal
+    inetd time/tcp         nowait [2345] internal
 ```
 
 Then call `rdate` from a remote machine (or use localhost):
@@ -510,6 +526,20 @@ Or `echoping` to reach the echo service:
 ```shell
     echoping -v  <IP>
     echoping -uv <IP>
+```
+
+Or `echoping -d` to reach the discard service:
+
+```shell
+    echoping -dv  <IP>
+    echoping -duv <IP>
+```
+
+Or `echoping -c` to reach the chargen service:
+
+```shell
+    echoping -cv  <IP>
+    echoping -cuv <IP>
 ```
 
 If you use `time/udp` you must use the standard rdate implementation and
@@ -553,6 +583,12 @@ For your convenience a set of *optional* plugins are available:
   _Optional plugin._
 
 * *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
+
+* *chargen.so*: RFC 864 plugin.  Start as inetd service, like time below.
+
+* *daytime.so*: RFC 867 plugin.  Start as inetd service, like time below.
+
+* *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
 
 * *hwclock.so*: Restore and save system clock from/to RTC on
   startup/shutdown.
