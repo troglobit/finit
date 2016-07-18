@@ -74,6 +74,7 @@ interface, reducing the need for a full blown firewall.
 Built-in optional inetd services:
 
 - echo RFC862
+- chargen RFC864
 - discard RFC863
 - time (rdate) RFC868
 
@@ -478,28 +479,30 @@ Compared to Finit v1.12 you must *explicitly deny* access from `eth0`!
 
 **Internal Services**
 
-The original `inetd` had a few standard services built-in:
+Like the original `inetd`, Finit has a few standard services built-in.
+They are realized as plugins to provide a simple means of testing the
+inetd functionality stand-alone.  But this also provides both a useful
+network testing/availability, as well as a rudimentary time server for
+`rdate` clients.
 
-- time
 - echo
 - chargen
 - discard
+- time
 
-Finit currently supports the `time`, `echo`, and `discard` services.
-Both of which are realized as plugins to provide a simple means of
-testing the inetd functionality stand-alone.  But this also provides
-both a useful network testing/availability and a rudimentary time server
-for rdate clients.
-
-Internal inetd services are set up as follows:
+For security reasons they are all disabled by default and have to be
+enabled with both the `configure` script and a special `inetd` stanza in
+the `finit.conf` or `finit.d/*.conf` like this:
 
 ```shell
-    inetd time/udp           wait [2345] internal
-    inetd time/tcp         nowait [2345] internal
     inetd echo/udp           wait [2345] internal
     inetd echo/tcp         nowait [2345] internal
+    inetd chargen/udp        wait [2345] internal
+    inetd chargen/tcp      nowait [2345] internal
     inetd discard/udp        wait [2345] internal
     inetd discard/tcp      nowait [2345] internal
+    inetd time/udp           wait [2345] internal
+    inetd time/tcp         nowait [2345] internal
 ```
 
 Then call `rdate` from a remote machine (or use localhost):
@@ -521,6 +524,13 @@ Or `echoping -d` to reach the discard service:
 ```shell
     echoping -dv  <IP>
     echoping -duv <IP>
+```
+
+Or `echoping -c` to reach the chargen service:
+
+```shell
+    echoping -cv  <IP>
+    echoping -cuv <IP>
 ```
 
 If you use `time/udp` you must use the standard rdate implementation and
@@ -564,6 +574,8 @@ For your convenience a set of *optional* plugins are available:
   _Optional plugin._
 
 * *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
+
+* *chargen.so*: RFC 864 plugin.  Start as inetd service, like time below.
 
 * *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
 

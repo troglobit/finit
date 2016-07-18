@@ -19,6 +19,10 @@ if BUILD_INETD_ECHO_PLUGIN
 libplug_la_SOURCES += echo.c
 endif
 
+if BUILD_INETD_CHARGEN_PLUGIN
+libplug_la_SOURCES += chargen.c
+endif
+
 if BUILD_INETD_DISCARD_PLUGIN
 libplug_la_SOURCES += discard.c
 endif
@@ -52,6 +56,10 @@ endif
 
 if BUILD_INETD_ECHO_PLUGIN
 pkglib_LTLIBRARIES += echo.la
+endif
+
+if BUILD_INETD_CHARGEN_PLUGIN
+pkglib_LTLIBRARIES += chargen.la
 endif
 
 if BUILD_INETD_DISCARD_PLUGIN
