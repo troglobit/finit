@@ -38,7 +38,6 @@
 #include "service.h"
 #include "sig.h"
 #include "tty.h"
-#include "inetd.h"
 #include "sm.h"
 
 int   debug     = 0;

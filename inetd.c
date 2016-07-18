@@ -107,8 +107,8 @@ static int inetd_stream_peek(int sd, char *ifname)
 
 static int get_stdin(svc_t *svc)
 {
-	char ifname[IF_NAMESIZE] = "UNKNOWN";
 	int stdin = svc->inetd.watcher.fd;
+	char ifname[IF_NAMESIZE] = "UNKNOWN";
 
 	if (svc->inetd.type == SOCK_STREAM) {
 		/* Open new client socket from server socket */
