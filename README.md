@@ -440,7 +440,8 @@ Inetd
 A built-in *Internet Super Server* support was added in Finit v1.12 and
 v1.13, along with an internal `time` inetd service, RFC 868 (rdate).
 The latter is supplied as a plugin to illustrate how simple it is to
-extend finit with more internal inetd services.
+extend finit with more internal inetd services.  Today more built-in
+services are available.
 
 > Please note, not all UNIX daemons are prepared to run as inetd services.
 > In the example below `sshd` also need the command line argument `-i`.
