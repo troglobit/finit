@@ -1,11 +1,8 @@
-Finit3-dev | Fast & Extensible init for Linux
-=============================================
+Fast init for Linux
+===================
 [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 ![Original Finit homepage image](images/finit.jpg "Finit in action!")
-
-Finit3 is currently in heavy development, please use stable releases if
-you want a stable and fully functional system.  YMMV!
 
 Table of Contents
 -----------------
@@ -30,29 +27,26 @@ Table of Contents
 Introduction
 ------------
 
-Init is the first userland process started by the UNIX kernel, therefore
-it always has PID 1 and is responsible for starting up the rest of the
-system.
-
 Finit is a plugin-based init with [process supervision][1] similar to
 that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's [runit][3].
 The main focus of Finit is on small and embedded GNU/Linux systems, yet
 fully functional on standard server and desktop installations as well.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
-embedded systems this can be quite resource intensive and cause longer
-boot times.  Finit is optimized to reduce context switches and forking
-of processes to provide a very basic bootstrap written entirely in C.
+embedded systems this is quite resource intensive and leads to long boot
+times.  Finit reduces context switches and forking of shell scripts to
+provide a system bootstrap written entirely in C.
 
-> Finit basically does everything you need from its `main()` function!
+There is no `/etc/init.d/rcS` script, or similar.  Instead Finit reads
+its configuration from [/etc/finit.conf](#etcfinitconf), which details
+kernel modules to load, programs to run, daemons to supervise, and inetd
+services to launch on demand.
 
-Hence, there is no `/etc/init.d/rcS` script, or similar, instead Finit
-reads its configuration from [/etc/finit.conf](#etcfinitconf).  This
-file details what kernel modules to load, programs to run, daemons to
-supervise, and inetd services to launch on demand.
+```
+    TBD: Add conf sample here, early!
+```
 
-See [TroglOS][9] for an example of how to boot a small embedded system
-with Finit.
+For an example of a full blown embedded Linux, see [TroglOS][9].
 
 
 Features
