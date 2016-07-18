@@ -15,6 +15,7 @@ if BUILD_DBUS_PLUGIN
 libplug_la_SOURCES += dbus.c
 endif
 
+if INETD
 if BUILD_INETD_ECHO_PLUGIN
 libplug_la_SOURCES += echo.c
 endif
@@ -33,6 +34,7 @@ endif
 
 if BUILD_INETD_TIME_PLUGIN
 libplug_la_SOURCES += time.c
+endif
 endif
 
 if BUILD_LOST_PLUGIN
@@ -58,6 +60,7 @@ if BUILD_DBUS_PLUGIN
 pkglib_LTLIBRARIES += dbus.la
 endif
 
+if INETD
 if BUILD_INETD_ECHO_PLUGIN
 pkglib_LTLIBRARIES += echo.la
 endif
@@ -76,6 +79,7 @@ endif
 
 if BUILD_INETD_TIME_PLUGIN
 pkglib_LTLIBRARIES += time.la
+endif
 endif
 
 if BUILD_LOST_PLUGIN
