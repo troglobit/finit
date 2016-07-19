@@ -169,7 +169,9 @@ static const struct rlimit_name rlimit_names[] = {
 	{ "nproc",      RLIMIT_NPROC      },
 	{ "rss",        RLIMIT_RSS        },
 	{ "rtprio",     RLIMIT_RTPRIO     },
+#ifdef RLIMIT_RTTIME
 	{ "rttime",     RLIMIT_RTTIME     },
+#endif
 	{ "sigpending", RLIMIT_SIGPENDING },
 	{ "stack",      RLIMIT_STACK      },
 
