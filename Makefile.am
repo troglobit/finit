@@ -43,12 +43,16 @@ install-dev: install-pkgincludeHEADERS
 install-exec-hook:
 	@for file in $(SYMLINK); do				\
 		link=$(DESTDIR)$(sbindir)/$$file;		\
-		test "`readlink $$link`" = "finit" && continue;	\
-		$(LN_S) finit $$link;				\
+		if [ -e $$link ]; then				\
+			echo "Skipping $$link exists already.";	\
+		else						\
+			$(LN_S) finit $$link;			\
+		fi;						\
 	done
 
 uninstall-hook:
 	@for file in $(SYMLINK); do				\
+		test "`readlink $$link`" = "finit" || continue;	\
 		$(RM) $(DESTDIR)$(sbindir)/$$file;		\
 	done
 
