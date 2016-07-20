@@ -250,7 +250,7 @@ int main(int argc, char* argv[])
 
 	/* Convenient SysV compat for when you just don't care ... */
 	if (!access(FINIT_RC_LOCAL, X_OK))
-		run_interactive(FINIT_RC_LOCAL, "Calling SysV style rc.local: %s", FINIT_RC_LOCAL);
+		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
 
 	/* Hooks that should run at the very end */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
