@@ -111,6 +111,11 @@ AC_ARG_WITH(runlevel,
         AS_HELP_STRING([--with-runlevel=N], [Runlevel to switch to after bootstrap, default: 2]),
 	[runlevel=$withval], [runlevel=2])
 
+AC_ARG_WITH(random-seed,
+        AS_HELP_STRING([--with-random-seed=FILE], [Save a random seed for /dev/urandom across reboots, default /var/lib/misc/random-seed]),
+	[random_seed=$withval], [random_seed=/var/lib/misc/random-seed])
+
+
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defautls
@@ -197,6 +202,12 @@ AS_IF([test "x$with_runlevel" != "xno"],[
 	AS_IF([test "x$runlevel" = "xyes"],[
 		AC_DEFINE_UNQUOTED(RUNLEVEL, 2, [Default runlevel to start after S])])
 	AC_DEFINE_UNQUOTED(RUNLEVEL, $runlevel, [Runlevel to start after S])])
+
+AS_IF([test "x$with_random_seed" != "xno"],[
+	AS_IF([test "x$random_seed" = "xyes"],[
+		random_seed=/var/lib/misc/random-seed])
+	AC_EXPAND_DIR(lurvig, "$random_seed")
+	AC_DEFINE_UNQUOTED(RANDOMSEED, "$lurvig", [Improve random at boot by seeding it with sth from before.])])
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC, [test "x$enable_static" = "xyes"])
