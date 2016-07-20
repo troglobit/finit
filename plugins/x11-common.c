@@ -51,6 +51,9 @@ static void setup(void *UNUSED(arg))
 
 	makedir("/tmp/.X11-unix", 01777);
 	makedir("/tmp/.ICE-unix", 01777);
+
+	if (fexist("/sbin/restorecon"))
+		run("/sbin/restorecon /tmp/.ICE-unix /tmp/.X11-unix");
 }
 
 static plugin_t plugin = {
