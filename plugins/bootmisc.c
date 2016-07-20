@@ -65,7 +65,14 @@ static void setup(void *UNUSED(arg))
 
 	_d("Setting up necessary UTMP files ...");
 	touch("/var/run/utmp");
+	chmod("/var/run/utmp", 0664);
 	chown("/var/run/utmp", 0, getgroup("utmp"));
+	touch("/var/log/wtmp");
+	chmod("/var/log/wtmp", 0664);
+	chown("/var/log/wtmp", 0, getgroup("utmp"));
+	touch("/var/log/lastlog");
+	chmod("/var/log/lastlog", 0664);
+	chown("/var/log/lastlog", 0, getgroup("utmp"));
 
 	_d("Setting initial runlevel 'S', bootstrap ...");
 	runlevel_set(0, 0);	/* Bootstrap 'S' */
