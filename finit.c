@@ -202,8 +202,8 @@ int main(int argc, char* argv[])
 	run("/sbin/swapon -ea");
 	umask(0022);
 
-	/* Cleanup stale files, if any still linger on. */
-	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleanup temporary directories");
+	/* Cleanup of stale files, if any still linger on. */
+	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleaning up temporary directories");
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
