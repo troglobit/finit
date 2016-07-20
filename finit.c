@@ -224,9 +224,11 @@ int main(int argc, char* argv[])
 	/* Setup kernel specific settings, e.g. allow broadcast ping, etc. */
 	run("/sbin/sysctl -e -p /etc/sysctl.conf >/dev/null");
 
-	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
+	/* Run user network start script, or fall back to at least loopback */
 	if (network)
 		run_interactive(network, "Starting networking: %s", network);
+	else
+		ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 	umask(022);
 
 	/* Hooks that rely on loopback, or basic networking being up. */
