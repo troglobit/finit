@@ -44,12 +44,20 @@ static void setup(void *UNUSED(arg))
 	makedir("/var/lib/misc",   0755);
 	makedir("/var/lib/alarm",  0755);
 	makedir("/var/lib/urandom",0755);
-	makedir("/var/lock",       0755);
+	if (fisdir("/run")) {
+		_d("System with new /run tmpfs ...");
+		makedir("/run/lock",       1777);
+		symlink("/run/lock", "/var/lock");
+		symlink("/run",      "/var/run");
+		symlink("/dev/shm",  "/run/shm");
+	} else {
+		makedir("/var/lock",       1777);
+		makedir("/var/run",        0755);
+	}
 	makedir("/var/lock/subsys",0755); /* Needed by D-Bus plugin */
 	makedir("/var/log",        0755);
 	makedir("/var/mail",       0755);
 	makedir("/var/opt",        0755);
-	makedir("/var/run",        0755);
 	makedir("/var/spool",      0755);
 	makedir("/var/spool/cron", 0755);
 	makedir("/var/tmp",        0755);

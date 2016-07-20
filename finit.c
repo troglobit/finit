@@ -27,6 +27,7 @@
 #include <sys/mount.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <mntent.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
 #include <lite/lite.h>
 
@@ -69,6 +70,28 @@ static int banner(void)
 	return 0;
 }
 
+/* Requires /proc to be mounted */
+static int fismnt(char *dir)
+{
+	FILE *fp;
+	int found = 0;
+	struct mntent *mnt;
+
+	fp = setmntent("/proc/mounts", "r");
+	if (!fp)
+		return 0;	/* Dunno, maybe not */
+
+	while ((mnt = getmntent(fp))) {
+		if (!strcmp(mnt->mnt_dir, dir)) {
+			found = 1;
+			break;
+		}
+	}
+	endmntent(fp);
+
+	return found;
+}
+
 int main(int argc, char* argv[])
 {
 	int err;
@@ -100,10 +123,21 @@ int main(int argc, char* argv[])
 	mount("none", "/proc", "proc", 0, NULL);
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
+
+	/* Some systems use /dev/pts */
 	makedir("/dev/pts", 0755);
+	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
+
 	makedir("/dev/shm", 0755);
-	mount("none", "/dev/pts", "devpts", 0, "gid=5,mode=620");
-	mount("none", "/dev/shm", "tmpfs", 0, NULL);
+	if (!fismnt("/dev/shm"))
+		mount("shm", "/dev/shm", "tmpfs", 0, NULL);
+
+	/*
+	 * New tmpfs based /run for volatile runtime data
+	 * For details, see http://lwn.net/Articles/436012/
+	 */
+	if (fisdir("/run") && !fismnt("/run"))
+		mount("tmpfs", "/run", "tmpfs", MS_NODEV, "mode=0755,size=10%");
 	umask(022);
 
 	/*
