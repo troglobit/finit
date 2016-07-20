@@ -68,7 +68,7 @@ AC_PLUGIN([netlink],       [yes], [Basic netlink plugin for IFUP/IFDN and GW eve
 # Check for extra arguments or packages
 AC_ARG_WITH(heading,
         AS_HELP_STRING([--with-heading=GREET], [Display GREET instead of Finit version at boot]),
-	[heading=$withval], [heading='$PACKAGE_NAME v$PACKAGE_VERSION'])
+	[heading=$withval], [heading="$PACKAGE_NAME v$PACKAGE_VERSION"])
 
 AC_ARG_WITH(fifo,
         AS_HELP_STRING([--with-fifo=FIFO], [FIFO for init/telinit clients, default /dev/initctl]),
@@ -170,7 +170,7 @@ AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$lurvig", [Compat SysV /etc/rc.local file to
 
 AS_IF([test "x$with_heading" != "xno"],[
 	AS_IF([test "x$heading" = "xyes"],[
-		heading='$PACKAGE_NAME v$PACKAGE_VERSION'])])
+		heading="$PACKAGE_NAME v$PACKAGE_VERSION"])])
 AC_DEFINE_UNQUOTED(INIT_HEADING, "$heading", [Displayed by Finit at boot])
 
 AS_IF([test "x$with_console" != "xno"],[
