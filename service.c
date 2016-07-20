@@ -667,7 +667,6 @@ void service_monitor(pid_t lost)
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
 		_d("collected unknown PID %d", lost);
-		FLOG_WARN("collected unknown PID %d", lost);
 		return;
 	}
 
