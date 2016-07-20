@@ -475,8 +475,10 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	}
 
 	desc = strstr(line, "-- ");
-	if (desc)
+	if (desc) {
 		*desc = 0;
+		desc += 3;
+	}
 
 	cmd = strtok(line, " ");
 	if (!cmd) {
@@ -574,7 +576,7 @@ recreate:
 
 	svc->log = log;
 	if (desc)
-		strlcpy(svc->desc, desc + 3, sizeof(svc->desc));
+		strlcpy(svc->desc, desc, sizeof(svc->desc));
 
 	if (username) {
 		char *ptr = strchr(username, ':');
@@ -759,8 +761,7 @@ restart:
 			svc_set_state(svc, SVC_HALTED_STATE);
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
 			if (*restart_counter >= RESPAWN_MAX) {
-				_e("%s keeps crashing, not restarting",
-				   svc->desc ? : svc->cmd);
+				_e("%s keeps crashing, not restarting", svc->desc);
 				svc->block = SVC_BLOCK_CRASHING;
 				svc_set_state(svc, SVC_HALTED_STATE);
 				break;

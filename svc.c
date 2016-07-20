@@ -23,6 +23,7 @@
  */
 
 #include <stdlib.h>
+#include <strings.h>
 #include <lite/lite.h>
 
 #include "finit.h"
@@ -74,11 +75,21 @@ svc_t *svc_new(char *cmd, int id, int type)
 		svc_t *svc = &list[i];
 
 		if (svc->type == SVC_TYPE_FREE) {
+			char *desc;
+
 			memset(svc, 0, sizeof(*svc));
 			svc->type = type;
 			svc->job  = job;
 			svc->id   = id;
 			strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
+
+			/* Default description, if missing */
+			desc = rindex(cmd, '/');
+			if (desc)
+				desc++;
+			else
+				desc = cmd;
+			strlcpy(svc->desc, desc, sizeof(svc->desc));
 
 			return svc;
 		}
