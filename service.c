@@ -214,7 +214,7 @@ static int service_start(svc_t *svc)
 				/* Reset signals */
 				sig_unblock();
 
-				execlp("logger", "logger", "-t", strlen(svc->desc) > 0 ? svc->desc : svc->cmd, NULL);
+				execlp("logger", "logger", "-t", svc->cmd, "-p", "daemon.info", NULL);
 				_exit(0);
 			}
 
