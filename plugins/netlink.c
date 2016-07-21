@@ -129,6 +129,10 @@ static void nl_link(struct nlmsghdr *nlmsg)
 					else
 						cond_clear(msg);
 
+					if (string_compare("lo", ifname)) {
+						snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+						cond_set(msg);
+					}
 				} else {
 					snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
 					cond_set(msg);
