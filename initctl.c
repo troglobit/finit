@@ -23,6 +23,8 @@
 
 #include <ctype.h>
 #include <getopt.h>
+#include <glob.h>
+#include <paths.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -33,6 +35,8 @@
 #include "cond.h"
 #include "helpers.h"
 #include "service.h"
+
+#define _PATH_COND _PATH_VARRUN "finit/cond/"
 
 typedef struct {
 	char  *cmd;
@@ -202,6 +206,30 @@ static int do_cond_show(char *UNUSED(arg))
 	svc_t *svc;
 	enum cond_state cond;
 
+	if (verbose) {
+		glob_t gl;
+
+		printf("Asserted conditions (taken from %s)\n", _PATH_COND);
+		printf("====================================================================================\n");
+
+		if (!glob(_PATH_COND "*/*/*", 0, NULL, &gl)) {
+			size_t i;
+
+			for (i = 0; i < gl.gl_pathc; i++) {
+				char *cond, *name = gl.gl_pathv[i];
+				struct stat st;
+
+				if (stat(name, &st) || S_ISDIR(st.st_mode))
+					continue;
+
+				cond = name + strlen(_PATH_COND);
+				printf("\t%s\n", cond);
+			}
+			globfree(&gl);
+		}
+		puts("");
+	}
+
 	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
 	printf("====================================================================================\n");
 
@@ -219,7 +247,7 @@ static int do_cond_show(char *UNUSED(arg))
 			printf("\e[1m%-6.6s\e[0m  ", condstr(cond));
 
 		show_cond_one(svc->cond);
-		putchar('\n');
+		puts("");
 	}
 
 	return 0;
