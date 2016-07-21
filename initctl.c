@@ -210,7 +210,7 @@ static int do_cond_show(char *UNUSED(arg))
 		glob_t gl;
 
 		printf("Asserted conditions (taken from %s)\n", _PATH_COND);
-		printf("==============================================================================\n");
+		printf("===============================================================================\n");
 
 		if (!glob(_PATH_COND "*/*/*", 0, NULL, &gl)) {
 			size_t i;
@@ -231,7 +231,7 @@ static int do_cond_show(char *UNUSED(arg))
 	}
 
 	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
-	printf("==============================================================================\n");
+	printf("===============================================================================\n");
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (!svc->cond[0])
@@ -321,7 +321,7 @@ static int show_status(char *arg)
 
 	if (!verbose) {
 		printf("#      Status   PID     Runlevels   Service               Description\n");
-		printf("==============================================================================\n");
+		printf("===============================================================================\n");
 	}
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
@@ -352,7 +352,7 @@ static int show_status(char *arg)
 			else
 				name++;
 
-			printf("%-20s  %s\n", name, svc->desc);
+			printf("%-21.21s  %s\n", name, svc->desc);
 			continue;
 		}
 
