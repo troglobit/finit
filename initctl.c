@@ -210,7 +210,7 @@ static int do_cond_show(char *UNUSED(arg))
 		glob_t gl;
 
 		printf("Asserted conditions (taken from %s)\n", _PATH_COND);
-		printf("====================================================================================\n");
+		printf("==============================================================================\n");
 
 		if (!glob(_PATH_COND "*/*/*", 0, NULL, &gl)) {
 			size_t i;
@@ -231,7 +231,7 @@ static int do_cond_show(char *UNUSED(arg))
 	}
 
 	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
-	printf("====================================================================================\n");
+	printf("==============================================================================\n");
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (!svc->cond[0])
@@ -321,7 +321,7 @@ static int show_status(char *arg)
 
 	if (!verbose) {
 		printf("#      Status   PID     Runlevels   Service               Description\n");
-		printf("====================================================================================\n");
+		printf("==============================================================================\n");
 	}
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
@@ -406,7 +406,7 @@ static int usage(int rc)
 		"Commands:\n"
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
-		"  reload                    Reload *.conf in /etc/finit.d/ and activate changes\n"
+		"  reload                    Reload *.conf in /etc/finit.d and activate changes\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status | show             Show status of services\n"
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
