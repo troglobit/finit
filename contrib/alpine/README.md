@@ -11,11 +11,11 @@ default they install to `/usr/local` and Alpine's `pkg-config` does not
 look for libraries and header files there.  So the `PKG_CONFIG_LIBDIR`
 environment variable has to be used:
 
-	alpine:~/finit# PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure \
-		--enable-embedded --enable-rw-rootfs --enable-inetd-echo-plugin    \
-		--enable-inetd-chargen-plugin --enable-inetd-daytime-plugin        \
-		--enable-inetd-discard-plugin --enable-inetd-time-plugin           \
-		--with-heading="Alpine Linux 3.4" --with-hostname=alpine
+    alpine:~/finit# PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure \
+        --enable-embedded --enable-rw-rootfs --enable-inetd-echo-plugin    \
+        --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin        \
+        --enable-inetd-discard-plugin --enable-inetd-time-plugin           \
+        --with-heading="Alpine Linux 3.4" --with-hostname=alpine
 
 The plugins are optional, but the other configure flags are *not*.
 
@@ -30,3 +30,11 @@ Before rebooting, make sure to install `/etc/finit.conf` and the glue
 be tweaked for your installation, you may not run Dropbear SSH or speak
 Swedish ...
 
+[libuEv]: https://github.com/troglobit/libuev
+[libite]: https://github.com/troglobit/libite
+
+<!--
+  -- Local Variables:
+  -- mode: markdown
+  -- End:
+  -->
