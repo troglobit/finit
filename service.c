@@ -744,13 +744,16 @@ restart:
 			case SVC_TYPE_INETD:
 				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
+
 			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
 				svc_set_state(svc, SVC_DONE_STATE);
 				break;
+
 			default:
 				_e("unknown service type %d", svc->type);
+				break;
 			}
 		}
 		break;
@@ -785,13 +788,16 @@ restart:
 			case SVC_TYPE_SERVICE:
 				svc_set_state(svc, SVC_RUNNING_STATE);
 				break;
+
 			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
 				svc_set_state(svc, SVC_STOPPING_STATE);
 				break;
+
 			default:
 				_e("unknown service type %d", svc->type);
+				break;
 			}
 		}
 		break;
