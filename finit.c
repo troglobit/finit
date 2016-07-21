@@ -107,12 +107,14 @@ static void networking(void)
 
 		/* Bring up all 'auto' interfaces */
 		while (fgets(buf, sizeof(buf), fp)) {
-			chomp(buf);
-			strip_line(buf);
+			char *cmd;
 
-			if (!strncmp(buf, "auto", 4)) {
-				memcpy(buf, "ifup", 4);
-				run_interactive(buf, "Bringing up interface %s", buf[5]);
+			chomp(buf);
+			cmd = strip_line(buf);
+
+			if (!strncmp(cmd, "auto", 4)) {
+				memcpy(cmd, "ifup", 4);
+				run_interactive(cmd, "Bringing up interface %s", &cmd[5]);
 				i++;
 			}
 		}
