@@ -224,7 +224,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
-pid_t run_getty(char *cmd, char *args[], int console)
+pid_t run_getty(char *cmd, char *args[], char *tty, int console)
 {
 	pid_t pid = fork();
 
@@ -232,28 +232,26 @@ pid_t run_getty(char *cmd, char *args[], int console)
 		int fd;
 		char c;
 
-		if (console) {
-			/* Detach from initial controlling TTY */
-			vhangup();
+		/* Detach from initial controlling TTY */
+		vhangup();
 
-			close(STDERR_FILENO);
-			close(STDOUT_FILENO);
-			close(STDIN_FILENO);
+		close(STDERR_FILENO);
+		close(STDOUT_FILENO);
+		close(STDIN_FILENO);
 
-			/* Attach TTY to console */
-			fd = open(CONSOLE, O_RDWR);
-			if (fd != STDIN_FILENO)
-				exit(1);
+		/* Attach TTY to console */
+		fd = open(tty, O_RDWR);
+		if (fd != STDIN_FILENO)
+			exit(1);
 
-			dup2(fd, STDIN_FILENO);
-			dup2(fd, STDOUT_FILENO);
-			dup2(fd, STDERR_FILENO);
+		dup2(fd, STDIN_FILENO);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
 
+		if (console)
 			prctl(PR_SET_NAME, "console", 0, 0, 0);
-		}
 
 		sig_unblock();
-
 		setsid();
 
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
@@ -267,20 +265,18 @@ pid_t run_getty(char *cmd, char *args[], int console)
 				continue;
 			}
 
-			if (console) {
-				(void)write(STDERR_FILENO, msg, sizeof(msg));
-				while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+			(void)write(STDERR_FILENO, msg, sizeof(msg));
+			while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
 					continue;
-			}
+
 			if (fexist(SYNC_STOPPED))
 				continue;
 
 			execv(cmd, args);
 		}
 
-		if (console)
-			close(fd);
-
+		close(fd);
+		vhangup();
 		exit(0);
 	}
 

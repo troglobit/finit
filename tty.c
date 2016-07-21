@@ -160,7 +160,7 @@ void tty_start(finit_tty_t *tty)
 	args[i] = NULL;
 
 	_d("Starting %s: %s on %s", is_console ? "console" : "TTY", cmd, tty->name);
-	tty->pid = run_getty(cmd, args, is_console);
+	tty->pid = run_getty(cmd, args, tty->name, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)

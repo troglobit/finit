@@ -81,7 +81,7 @@ void    set_hostname    (char **hostname);
 int     complete        (char *cmd, int pid);
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
-pid_t   run_getty       (char *cmd, char *args[], int console);
+pid_t   run_getty       (char *cmd, char *args[], char *tty, int console);
 int     run_parts       (char *dir, char *cmd);
 
 #endif /* FINIT_HELPERS_H_ */
