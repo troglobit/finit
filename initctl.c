@@ -352,7 +352,7 @@ static int show_status(char *arg)
 			else
 				name++;
 
-			printf("%-21.21s  %s\n", name, svc->desc);
+			printf("%-20.20s  %-21.21s\n", name, svc->desc);
 			continue;
 		}
 
