@@ -250,6 +250,8 @@ pid_t run_getty(char *cmd, char *args[], char *tty, int console)
 
 		if (console)
 			prctl(PR_SET_NAME, "console", 0, 0, 0);
+		else
+			prctl(PR_SET_NAME, "finit-getty", 0, 0, 0);
 
 		sig_unblock();
 		setsid();
