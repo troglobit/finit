@@ -65,18 +65,36 @@ int cond_set_path(const char *path, enum cond_state new)
 	return new != old;
 }
 
+/* Has condition in configuration and cond is allowed? */
+static int svc_has_cond(svc_t *svc)
+{
+	if (!svc->cond[0])
+		return 0;
+
+	switch (svc->type) {
+	case SVC_TYPE_SERVICE:
+	case SVC_TYPE_TASK:
+	case SVC_TYPE_RUN:
+		return 1;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static void cond_update(const char *name)
 {
 	svc_t *svc;
 
 	_d("%s", name);
+	if (!name)
+		return;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->type != SVC_TYPE_SERVICE  ||
-		    !svc->cond[0] ||
-		    (name && !cond_affects(name, svc->cond))) {
+		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
 			continue;
-		}
 
 		_d("%s: match <%s> %s", name, svc->cond, svc->cmd);
 		service_step(svc);
