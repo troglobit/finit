@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>		/* isblank() */
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
@@ -38,6 +39,23 @@
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
+
+char *strip_line(char *line)
+{
+	char *ptr;
+
+	/* Trim leading whitespace */
+	while (*line && isblank(*line))
+		line++;
+
+	/* Strip any comment at end of line */
+	ptr = line;
+	while (*ptr && *ptr != '#')
+		ptr++;
+	*ptr = 0;
+
+	return line;
+}
 
 static int encode(int lvl)
 {

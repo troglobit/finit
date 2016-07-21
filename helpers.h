@@ -61,6 +61,8 @@ do {								\
 #define   _e(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
 #define  _pe(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
 
+char   *strip_line      (char *line);
+
 void    runlevel_set    (int pre, int now);
 char   *runlevel_string (int levels);
 

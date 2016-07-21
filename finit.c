@@ -75,6 +75,8 @@ static void networking(void)
 {
 	size_t i;
 	glob_t gl;
+	FILE *fp;
+	char buf[160];
 
 	/* Setup kernel specific settings, e.g. allow broadcast ping, etc. */
 	glob("/run/sysctl.d/*.conf",           0, NULL, &gl);
@@ -86,19 +88,42 @@ static void networking(void)
 	glob("/etc/sysctl.conf",               GLOB_APPEND, NULL, &gl);
 	if (gl.gl_pathc > 0) {
 		for (i = 0; i < gl.gl_pathc; i++) {
-			char cmd[160];
-
-			snprintf(cmd, sizeof(cmd), "/sbin/sysctl -e -p %s >/dev/null", gl.gl_pathv[i]);
-			run(cmd);
+			snprintf(buf, sizeof(buf), "/sbin/sysctl -e -p %s >/dev/null", gl.gl_pathv[i]);
+			run(buf);
 		}
 		globfree(&gl);
 	}
 
-	/* Run user network start script, or fall back to at least loopback */
-	if (network)
+	/* Run user network start script if enabled */
+	if (network) {
 		run_interactive(network, "Starting networking: %s", network);
-	else
-		ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
+		return;
+	}
+
+	/* Debian/Ubuntu/Busybox interfaces file */
+	fp = fopen("/etc/network/interfaces", "r");
+	if (fp) {
+		i = 0;
+
+		/* Bring up all 'auto' interfaces */
+		while (fgets(buf, sizeof(buf), fp)) {
+			chomp(buf);
+			strip_line(buf);
+
+			if (!strncmp(buf, "auto", 4)) {
+				memcpy(buf, "ifup", 4);
+				run_interactive(buf, "Bringing up interface %s", buf[5]);
+				i++;
+			}
+		}
+
+		fclose(fp);
+		if (i)
+			return;
+	}
+
+	/* Fall back to bring up at least loopback */
+	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 }
 
 /* Requires /proc to be mounted */
