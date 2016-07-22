@@ -827,7 +827,22 @@ Building
 --------
 
 Finit comes with a traditional configure script to control features and
-optional plugins to enable.  Below are a few of the main switches to
+optional plugins to enable.  It does however depend on two external
+libraries that provide some frog DNA needed:
+
+- libuEv
+- libite (-lite)
+
+Like most free/open source software that uses `configure` they deafult
+to install to `/usr/local`.  However, some Linux distributions do no
+longer search that path for installed software, e.g. Fedora and Alpine
+Linux.  To get finit's configure script to find its dependencies you
+have to help the `pkg-config` tool a bit if you do not change the
+default prefix path:
+
+    PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure
+
+Below are a few of the main switches to
 configure:
 
 * `--disable-inetd`: Disable the built-in inetd server.
@@ -868,7 +883,11 @@ First, unpack the archive:
 Then configure, build and install:
 
 ```shell
-    $ ./configure && make
+    $ ./configure --enable-embedded --enable-rw-rootfs --enable-inetd-echo-plugin \
+                  --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
+                  --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
+                  --with-heading="Alpine Linux 3.4" --with-hostname=alpine
+    $ make
     .
     .
     .
