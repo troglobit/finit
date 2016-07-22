@@ -54,11 +54,37 @@ and the familiar [/etc/rc.local](#runparts--etcrclocal) are run.
 **Example /etc/finit.conf:**
 
 ```
+    # Fallback if /etc/hostname is missing
+    host myhostname
+    
+    # Devices to fsck at boot
+    check /dev/vda1
+    
+    # Runlevel to start after bootstrap, runlevel 'S'
+    runlevel 2
+    
+    # Network bringup, not needed if /etc/network/interfaces exist
+    #network service networking start
+    #network /sbin/ifup -a
+
+    # Services to be monitored and respawned as needed
     service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
     service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
     service [S12345] /sbin/klogd -n                              -- Kernel log daemon
     service    2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
     
+    # For multiple instances of the same service, add :ID somewhere between
+    # the service/run/task keyword and the command.
+    service :1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
+    service :2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
+
+    # Alternative method instead of below runparts, can also use /etc/rc.local
+    #task [S] /etc/init.d/keyboard-setup start -- Setting up preliminary keymap
+    #task [S] /etc/init.d/acpid start          -- Starting ACPI Daemon
+    #task [S] /etc/init.d/kbd start            -- Preparing console
+    #run [2] /etc/init.d/networking start      -- Start networking
+
+    # Inetd services to start on demand, with alternate ports and filtering
     inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
     inetd tftp/udp           wait [2345] /sbin/uftpd -i -y       -- TFTP daemon
     inetd time/udp           wait [2345] internal                -- UNIX rdate service
@@ -69,6 +95,10 @@ and the familiar [/etc/rc.local](#runparts--etcrclocal) are run.
     inetd 222/tcp@eth0     nowait [2345] /sbin/dropbear -i -R -F -- SSH service
     inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
     
+    # Run start scripts from this directory
+    # runparts /etc/start.d
+    
+    # Virtual consoles to start getty on
     tty [12345] /dev/tty1    115200 linux
     tty [12345] /dev/ttyAMA0 115200 vt100
 ```
