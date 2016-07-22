@@ -17,13 +17,13 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [/etc/finit.conf](#etcfinitconf)
-* [/etc/finit.d](#etcfinitd)
+* [/etc/finit.conf](doc/config.md#etcfinitconf)
+* [/etc/finit.d](doc/config.md#etcfinitd)
 * [Runparts & /etc/rc.local](#runparts--etcrclocal)
 * [Bootstrap](#bootstrap)
 * [Runlevels](#runlevels)
-* [Inetd](#inetd)
-* [Hooks, Callbacks & Plugins](#hooks-callbacks--plugins)
+* [Inetd](doc/inetd.md#inetd)
+* [Hooks, Callbacks & Plugins](doc/plugins.md#hooks-callbacks--plugins)
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
 * [Building](#building)
@@ -46,10 +46,11 @@ long boot times.  Finit reduces context switches and forking of shell
 scripts to provide a system bootstrap written entirely in C.
 
 There is no `/etc/init.d/rcS` script, or similar.  Instead configuration
-is read from the main [/etc/finit.conf](#etcfinitconf), which details
-kernel modules to load and bootstrap services to start.  After initial
-bootstrap, including setting up networking, [/etc/finit.d/](#etcfinitd)
-and the familiar [/etc/rc.local](#runparts--etcrclocal) are run.
+is read from the main [/etc/finit.conf](doc/config.md#etcfinitconf),
+which details kernel modules to load and bootstrap services to start.
+After initial bootstrap, including setting up networking,
+[/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
+[/etc/rc.local](#runparts--etcrclocal) are run.
 
 **Example /etc/finit.conf:**
 
@@ -117,8 +118,9 @@ Start, monitor and restart services should they fail.
 
 **Inetd**
 
-Finit comes with a built-in `inetd` server.  No need to maintain a
-separate config file for services that you want to start on demand.
+Finit comes with a built-in [inetd server](doc/inetd.md).  No need to
+maintain a separate config file for services that you want to start on
+demand.
 
 All inetd services started can be filtered per port and inbound
 interface, reducing the need for a full blown firewall.
@@ -131,6 +133,7 @@ Built-in optional inetd services:
 - discard RFC863
 - time (rdate) RFC868
 
+For more information, see [doc/inetd.md](doc/inetd.md).
 
 **Runlevels**
 
@@ -166,213 +169,7 @@ Extensions and functionality not purely related to what an `/sbin/init`
 needs to start a system are available as a set of plugins that either
 hook into the boot process or respond to various I/O.
 
-
-/etc/finit.conf
----------------
-
-Contrary to most other script based init alternatives ([SysV init][4],
-[upstart][6], [systemd][7], [OpenRC][8], etc.)  Finit reads its entire
-configuration from `/etc/finit.conf`.
-
-The command line arguments given in `/etc/finit.conf` to each service
-provide a default.  A plugin can be used to register a callback to a
-service and then modify the behavior to suit the current runlevel and
-system configuration.
-
-For instance, before starting a heavily resource intensive service like
-IPsec or OpenVPN, a callback can check if the outbound interface is up
-and has an IP address, or just check if the service is disabled — much
-like what a SysV init start script usually does.
-
-Syntax:
-
-* `check <DEV>`  
-  Run fsck on a file system before mounting it
-
-* `module <MODULE>`  
-  Load a kernel module, with optional arguments
-
-* `network <PATH>`  
-  Script or program to bring up networking, with optional arguments
-
-* `rlimit <hard|soft> RESOURCE <LIMIT|infinity>`  
-  Modify the specified resource's hard or soft limit to be the
-  specifed limit. `RESOURCE` is a lower-case string matching the
-  constants in `setrlimit(2)` with the `RLIMIT_` prefix
-  removed. E.g. to select `RLIMIT_CPU`, `RESOURCE` would be
-  `cpu`. `LIMIT` is an integer whose unit depends on the resource
-  being modified, see `setrlimit(2)` for more information. The special
-  limit `infinity` means the there should be no limit on the resource,
-  i.e. `RLIM_INFINITY` is passed to `setrlimit(2)`.
-
-```shell
-        # No process is allowed more than 8MB of address space
-        rlimit hard as 8388608
-
-        # Core dumps may be arbitrarily large
-        rlimit soft core infinity
-```
-
-* `runlevel <N>`  
-  N is the runlevel number 1-9, where 6 is reserved for reboot.  
-  Default is 2.
-
-* `run [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
-  One-shot command to run in sequence when entering a runlevel, with
-  optional arguments and description.  This command is guaranteed to be
-  completed before running the next command.
-
-* `task [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
-  One-shot like 'run', but starts in parallel with the next command
-
-* `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
-  Service, or daemon, to be monitored and automatically restarted if it
-  exits prematurely.  Please note that you often need to provide a
-  `--foreground` or `--no-background` argument to most daemons to
-  prevent them from forking off a sub-process in the background.
-
-```shell
-        service [2345] <svc/sbin/zebra> /sbin/ospfd -- OSPF daemon
-```
-
-  For a detailed description of conditions, and how to debug them,
-  see the [Finit Conditions](doc/conditions.md) document.
-
-* `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
-  Launch a daemon when a client initiates a connection on an Internet
-  port.  Available services are listed in the UNIX `/etc/services` file.
-  Finit can filter access to from a list of interfaces, `@iflist`, per
-  inetd service as well as listen to custom ports.
-
-```shell
-        inetd ftp/tcp	nowait	@root	/usr/sbin/uftpd -i -f
-        inetd tftp/udp	wait	@root	/usr/sbin/uftpd -i -t
-```
-
-  The following example listens to port 2323 for telnet connections and
-  only allows clients connecting from `eth0`:
-
-```shell
-        inetd 2323/tcp@eth0 nowait [2345] /sbin/telnetd -i -F
-```
-
-  The interface list, `@iflist`, is of the format `@iface,!iface,iface`,
-  where a single `!` means to deny access.  Notice how interfaces are
-  comma separated with no spaces.
-
-  The `inetd` directive can also have ` -- Optional Description`, only
-  Finit does not output this text on the console when launching inetd
-  services.  Instead this text is sent to syslog and also shown by the
-  `initctl` tool.  More on inetd below.
-
-* `runparts <DIR>`  
-  Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
-  files, or scripts, in the directory are called, in alphabetic order.
-
-  It can be beneficial to use `S01name`, `S02othername`, etc. if there
-  is a dependency order between the scripts.  Symlinks to existing
-  daemons can talso be used, but make sure they daemonize by default.
-
-  As the optional `/etc/rc.local` shell script, make sure that all your
-  services and programs either terminate or start in the background or
-  you will block Finit.
-
-* `include <CONF>`  
-  Include another configuration file.  Absolute path required.
-
-* `tty [LVLS] <DEV | /path/to/cmd [args]>`  
-  Start a getty on the given TTY device DEV, in the given runlevels.  If
-  no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
-  argument instead of a device path, a single shell is started on the
-  default console.  Useful for really bare-bones systems.
-  
-  It is also possible to supply the full command line, with arguments,
-  to your getty.  In this case finit will simply use that command.
-  
-  See `finit.h` for the `#define GETTY` that is called, along with the
-  default baud rate.
-
-  **Note:** BusyBox getty, used when Finit is built for embedded
-    systems, can take a `DEV` with *or* without `/dev/` prefix.  Make
-    sure to call the configure script with `--enable-embedded` if this
-	is what you want.
-
-* `console <DEV | /path/to/cmd [args]`  
-  Some embedded systems have a dedicated serial console/service port.
-  This command tells finit to not start getty directly, since there may
-  not be anyone there.  To save RAM and CPU finit instead displays a
-  friendly message and waits for the user to activate the console with a
-  key press before starting getty.  Finit also does some other magic and
-  changes the process name to "console".
-  
-  Like the `tty` command, the `console` command can also be used to
-  simply start a UNIX shell, e.g. `/bin/sh`.
-
-When running <kbd>make install</kbd> no default `/etc/finit.conf` will
-be installed since system requirements differ too much.  Try out the
-Debian 6.0 example `/usr/share/doc/finit/finit.conf` configuration that
-is capable of service monitoring SSH, sysklogd, gdm and a console getty!
-
-Every `run`, `task`, `service`, or `inetd` can also list the privileges
-the `/path/to/cmd` should be executed with.  Simply prefix the path with
-`[@USR[:GRP]]` like this:
-
-```shell
-    run [2345] @joe:users /usr/bin/logger "Hello world"
-```
-
-For multiple instances of the same command, e.g. a DHCP client or
-multiple web servers, add `:ID` somewhere between the `run`, `task`,
-`service` keyword and the command, like this:
-
-```shell
-    service :1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
-    service :2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
-```
-
-Without the `:ID` to the service the latter will overwrite the former
-and only the old web server would be started and supervised.
-
-The `run`, `task`, `service`, or `inetd` stanzas also allow the keyword
-`log` to redirect `stderr` and `stdout` of the application to syslog,
-using `logger`.
-
-
-/etc/finit.d
-------------
-
-Finit supports changes to the overall system configuration at runtime.
-For this purpose the (configurable) directory `/etc/finit.d` is used.
-Here you can put configuration file snippets, one per service if you
-like, which are all sourced automatically by finit at boot when loading
-the static configuration from `/etc/finit.conf`.  This is the default
-behavior, so no include directives are necessary.
-
-To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
-run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
-call `finit q`, but that has been deprecated with the `initctl` tool).
-Any service read from this directory is flagged as a dynamic service, so
-changes to or removal of `/etc/finit.d/*.conf` files, is detected.
-
-On `initctl reload` the following is checked for all services:
-
-- If a service's `.conf` file has been removed, or its conditions are no
-  longer satisifed, the service is stopped.
-- If the file is modified, or a service it depends on has been reloaded,
-  the service is reloaded (stopped and started).
-- If a new service is added it is automatically started — respecting
-  runlevels and return values from any callbacks.
-
-For more info on the different states of a service, see the separate
-document [Finit Services](doc/service.md).
-
-The `/etc/finit.d` directory was previously the default Finit `runparts`
-directory.  Finit no longer has a default `runparts`, so make sure to
-update your setup, or the finit configuration, accordingly.
-
-**Note:** Configurations read from `/etc/finit.d` are read *after*
-  initial bootstrap, runlevel S(1).  Hence, bootstrap services *must* be
-  in `/etc/finit.conf`!
+For more information, see [doc/plugins.md](doc/plugins.md).
 
 
 Runparts & /etc/rc.local
@@ -389,7 +186,8 @@ and `/etc/rc.local`, in that order if they exist.
 No configuration stanza in `/etc/finit.conf` is required for `rc.local`.
 If it exists and is an executable shell script, finit calls it at the
 very end of the boot, before calling the `HOOK_SYSTEM_UP`.  See more on
-hooks and the system bootstrap below.
+hooks in [doc/plugins.md](doc/plugins.md#hooks), and the system bootstrap
+below.
 
 
 Bootstrap
@@ -484,259 +282,6 @@ switch to runlevel 1, change all config files in the system, and touch
 all `.conf` files in `/etc/finit.d` before switching back to the
 previous runlevel again — that way Finit can both stop old services and
 start any new ones for you, without rebooting the system.
-
-
-Inetd
------
-
-A built-in *Internet Super Server* support was added in Finit v1.12 and
-v1.13, along with an internal `time` inetd service, RFC 868 (rdate).
-The latter is supplied as a plugin to illustrate how simple it is to
-extend finit with more internal inetd services.  Today more built-in
-services are available.
-
-> Please note, not all UNIX daemons are prepared to run as inetd services.
-> In the example below `sshd` also need the command line argument `-i`.
-
-The inetd support in finit is quite advanced.  Not only does it launch
-services on demand, it can do so on custom ports and also filter inbound
-traffic using a poor man's [TCP wrappers][].  The syntax is very similar
-to the traditional `/etc/inetd.conf`, yet keeping with the style of
-Finit:
-
-```shell
-    # Launch SSH on demand, in runlevels 2-5 as root
-    inetd ssh/tcp            nowait [2345] @root:root /usr/sbin/sshd -i
-```
-
-A more advanced example is listed below, please note the *incompatible
-syntax change* that was made between Finit v1.12 and v1.13 to support
-deny filters:
-
-```shell
-    # Start sshd if inbound connection on eth0, port 222, or
-    # inbound on eth1, port 22.  Ignore on other interfaces.
-    inetd 222/tcp@eth0       nowait [2345] /usr/sbin/sshd -i
-    inetd ssh/tcp@eth1,eth1  nowait [2345] /usr/sbin/sshd -i
-```
-	
-If `eth0` is your Internet interface you may want to avoid using the
-default port.  To run ssh on port 222, and all others on port 22:
-    
-```shell
-    inetd 222/tcp@eth0       nowait [2345] /usr/sbin/sshd -i
-    inetd ssh/tcp@*,!eth0    nowait [2345] /usr/sbin/sshd -i
-```
-
-Compared to Finit v1.12 you must *explicitly deny* access from `eth0`!
-
-To protect against looping attacks, the inetd server will refuse UDP
-service if the reply port corresponds to any internal service.  Similar
-to how the FreeBSD inetd operates.
-
-
-**Internal Services**
-
-Like the original `inetd`, Finit has a few standard services built-in.
-They are realized as plugins to provide a simple means of testing the
-inetd functionality stand-alone.  But this also provides both a useful
-network testing/availability, as well as a rudimentary time server for
-`rdate` clients.
-
-- echo
-- chargen
-- daytime
-- discard
-- time
-
-For security reasons they are all disabled by default and have to be
-enabled with both the `configure` script and a special `inetd` stanza in
-the `finit.conf` or `finit.d/*.conf` like this:
-
-```shell
-    inetd echo/udp           wait [2345] internal
-    inetd echo/tcp         nowait [2345] internal
-    inetd chargen/udp        wait [2345] internal
-    inetd chargen/tcp      nowait [2345] internal
-    inetd daytime/udp        wait [2345] internal
-    inetd daytime/tcp      nowait [2345] internal
-    inetd discard/udp        wait [2345] internal
-    inetd discard/tcp      nowait [2345] internal
-    inetd time/udp           wait [2345] internal
-    inetd time/tcp         nowait [2345] internal
-```
-
-Then call `rdate` from a remote machine (or use localhost):
-
-```shell
-    rdate -p  <IP>
-    rdate -up <IP>
-```
-
-Or `echoping` to reach the echo service:
-
-```shell
-    echoping -v  <IP>
-    echoping -uv <IP>
-```
-
-Or `echoping -d` to reach the discard service:
-
-```shell
-    echoping -dv  <IP>
-    echoping -duv <IP>
-```
-
-Or `echoping -c` to reach the chargen service:
-
-```shell
-    echoping -cv  <IP>
-    echoping -cuv <IP>
-```
-
-If you use `time/udp` you must use the standard rdate implementation and
-then call it with `rdate -up` to connect using UDP.  Without the `-p`
-argument rdate will try to set the system clock.  Please note that rdate
-has been deprecated by the NTP protocol and this plugin should only be
-used for testing or environments where NTP for some reason is blocked.
-Also, remember the UNIX year 2038 bug, or in the case of RFC 868 (and
-some NTP implementations), year 2036!
-
-**Note:** There is currently no verification that the same port is used
-  more than once.  So a standard `inetd http/tcp` service will clash
-  with an ssh entry for the same port `inetd 80/tcp` …
-
-
-Hooks, Callbacks & Plugins
---------------------------
-
-Finit provides only the bare necessities for starting and supervising
-processes, with an emphasis on *bare* — for your convenience it does
-however come with support for hooks, service callbacks and plugins that
-can used to extend finit with.
-
-### Plugins
-
-For your convenience a set of *optional* plugins are available:
-
-* *alsa-utils.so*: Restore and save ALSA sound settings on
-  startup/shutdown.  _Optional plugin._
-
-* *bootmisc.so*: Setup necessary files and system directories for, e.g.,
-  UTMP (tracks logins at boot).  This plugin is central to get a working
-  system and runs at `HOOK_BASEFS_UP`.  The `/var`, `/run`, and `/dev`
-  file systems must be writable for this plugin to work.
-
-  Note: On an embedded system both `/var` and `/run` can be `tmpfs` RAM
-  disks and `/dev` is usually a `devtmpfs`.  This must be defined in the
-  `/etc/fstab` file and in the Linux kernel config.
-
-* *dbus.so*: Setup and start system message bus, D-Bus, at boot.
-  _Optional plugin._
-
-* *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
-
-* *chargen.so*: RFC 864 plugin.  Start as inetd service, like time below.
-
-* *daytime.so*: RFC 867 plugin.  Start as inetd service, like time below.
-
-* *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
-
-* *hwclock.so*: Restore and save system clock from/to RTC on
-  startup/shutdown.
-
-* *initctl.so*: Extends finit with a traditional `initctl` functionality.
-
-* *lost.so*: Very simple `HOOK_SVC_LOST` example.  Logs process ID and
-  name to syslog.  _Optional plugin._
-
-* *netlink.so*: Listens to Linux kernel Netlink events for gateway and
-  interfaces.  These events are then sent to the Finit service monitor
-  for services that may want to be SIGHUP'ed on new default route or
-  interfaces going up/down.
-
-* *resolvconf.so*: Setup necessary files for `resolvconf` at startup.
-  _Optional plugin._
-
-* *time.so*: RFC 868 (rdate) plugin.  Start as inetd service.  Useful
-  for testing inetd filtering — BusyBox has an rdate (TCP) client.
-
-* *tty.so*: Watches `/dev`, using inotify, for new device nodes (TTY's)
-  to start/stop getty consoles on them on demand.  Useful when plugging
-  in a usb2serial converter to login to your embedded device.
-
-* *urandom.so*: Setup random seed at startup.
-
-* *x11-common.so*: Setup necessary files for X-Window.  _Optional plugin._
-
-Usually you want to hook into the boot process once, simple hook plugins
-like `bootmisc.so` are great for that purpose.  They are called at each
-hook point in the boot process, useful to insert some pre-bootstrap
-mechanisms, like generating configuration files, restoring HW device
-state, etc.  Available hook points are:
-
-### Bootstrap Hooks
-
-* `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
-  mounted — very early
-
-* `HOOK_BASEFS_UP`: All of `/etc/fstab` is mounted, swap is available
-  and default init signals are setup
-
-* `HOOK_NETWORK_UP`: System bootstrap, runlevel S, has completed and
-  networking is up (`lo` is up and the `network` script has run)
-
-* `HOOK_SVC_UP`: All services in the active runlevel has been launched
-
-* `HOOK_SYSTEM_UP`: All services *and* everything in `/etc/finit.d`
-  has been launched
-
-### Runtime Hooks
-
-* `HOOK_SVC_RECONF`: Called when the user has changed something in the
-  `/etc/finit.d` directory and issued `SIGHUP`.  The hook is called when
-  all modified/removed services have been stopped.  When the hook has
-  completed, Finit continues to start all modified and new services.
-
-* `HOOK_SVC_LOST`: Called when a process is lost.  When reconfiguring
-  services at runtime this hook may be called a lot.  However, it may be
-  a quite useful hook to monitor a system post bootstrap when no, or
-  few, services are expected to exit.  A default plugin `lost.so` is
-  available in the `plugins/` subdirectory as an example.
-
-  **NOTE:** This hook callback gets the lost PID as argument.
-
-* `HOOK_SVC_START`: Like `HOOK_SVC_LOST`, but called when a process is
-  started.  Same caveats apply.
-
-  **NOTE:** This hook callback gets the new PID as argument.
-
-* `HOOK_RUNLEVEL_CHANGE`: Called when the user has issued a runlevel
-  change.  The hook is called when services not matching the new
-  runlevel have been been stopped.  When the hook has completed, Finit
-  continues to start all services in the new runlevel.
-
-### Shutdown Hooks
-
-* `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
-  services are sent `SIGTERM`
-
-Plugins like `initctl.so` and `tty.so` extend finit by acting on events,
-they are called I/O plugins and are called from the finit main loop when
-`poll()` detects an event.  See the source code for `plugins/*.c` for
-more help and ideas.
-
-### Callbacks
-
-Callback plugins are called by finit right before a process is started,
-or restarted if it exits.  The callback runs as a separate process and
-receives a pointer to the `svc_t` of the service, with all command line
-parameters free to modify as needed.
-
-All the callback needs to do is respond with one of: `SVC_STOP (0)`
-tells Finit to *not* start the service, `SVC_START (1)` to start the
-service, or `SVC_RELOAD (2)` to have finit signal the process with
-`SIGHUP`.
 
 
 Rebooting & Halting
@@ -960,12 +505,8 @@ and proposed extensions.
 [3]:  http://smarden.org/runit/
 [4]:  http://en.wikipedia.org/wiki/Init
 [5]:  http://en.wikipedia.org/wiki/Runlevel
-[6]:  http://upstart.ubuntu.com/
-[7]:  http://www.freedesktop.org/wiki/Software/systemd/
-[8]:  http://www.gentoo.org/proj/en/base/openrc/
 [9]:  https://github.com/troglobit/troglos
 [10]: ftp://troglobit.com/finit/finit-3.0.tar.xz
-[TCP Wrappers]:     https://en.wikipedia.org/wiki/TCP_Wrapper
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
