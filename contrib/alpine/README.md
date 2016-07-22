@@ -25,10 +25,10 @@ The installation will skip setting up `/sbin/init`, because it already
 exists, and Alpine is hard coded to use it.  So you have to change the
 symlink yourself to point to `finit` instead of `/bin/busybox`.
 
-Before rebooting, make sure to install `/etc/finit.conf` and the glue
-`/etc/rc.local` from this directory -- check them both if they need to
-be tweaked for your installation, you may not run Dropbear SSH or speak
-Swedish ...
+Before rebooting, make sure to install [/etc/finit.conf](finit.conf) and
+the glue [/etc/rc.local](rc.local) from this directory -- check them
+both if they need to be tweaked for your installation, you may not run
+Dropbear SSH or speak Swedish ...
 
 [libuEv]: https://github.com/troglobit/libuev
 [libite]: https://github.com/troglobit/libite
