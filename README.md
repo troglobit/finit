@@ -11,7 +11,7 @@ Table of Contents
 * [Features](#features)
 * [/etc/finit.conf](#etcfinitconf)
 * [/etc/finit.d](#etcfinitd)
-* [Runparts & /etc/rc.local](#runparts---etc-rc-local)
+* [Runparts & /etc/rc.local](#runparts--etcrclocal)
 * [Bootstrap](#bootstrap)
 * [Runlevels](#runlevels)
 * [Inetd](#inetd)
@@ -33,20 +33,40 @@ The main focus of Finit is on small and embedded GNU/Linux systems, yet
 fully functional on standard server and desktop installations as well.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
-embedded systems this is quite resource intensive and leads to long boot
-times.  Finit reduces context switches and forking of shell scripts to
-provide a system bootstrap written entirely in C.
+embedded systems this is quite resource intensive and often leads to
+long boot times.  Finit reduces context switches and forking of shell
+scripts to provide a system bootstrap written entirely in C.
 
-There is no `/etc/init.d/rcS` script, or similar.  Instead Finit reads
-its configuration from [/etc/finit.conf](#etcfinitconf), which details
-kernel modules to load, programs to run, daemons to supervise, and inetd
-services to launch on demand.
+There is no `/etc/init.d/rcS` script, or similar.  Instead configuration
+is read from the main [/etc/finit.conf](#etcfinitconf), which details
+kernel modules to load and bootstrap services to start.  After initial
+bootstrap, including setting up networking, [/etc/finit.d/](#etcfinitd)
+and the familiar [/etc/rc.local](#runparts--etcrclocal) are run.
+
+**Example /etc/finit.conf:**
 
 ```
-    TBD: Add conf sample here, early!
+    service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
+    service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
+    service [S12345] /sbin/klogd -n                              -- Kernel log daemon
+    service    2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
+    
+    inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
+    inetd tftp/udp           wait [2345] /sbin/uftpd -i -y       -- TFTP daemon
+    inetd time/udp           wait [2345] internal                -- UNIX rdate service
+    inetd time/tcp         nowait [2345] internal                -- UNIX rdate service
+    inetd 3737/tcp         nowait [2345] internal.time           -- UNIX rdate service
+    inetd telnet/tcp       nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
+    inetd 2323/tcp         nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
+    inetd 222/tcp@eth0     nowait [2345] /sbin/dropbear -i -R -F -- SSH service
+    inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
+    
+    tty [12345] /dev/tty1    115200 linux
+    tty [12345] /dev/ttyAMA0 115200 vt100
 ```
 
-For an example of a full blown embedded Linux, see [TroglOS][9].
+For an example of a full blown embedded Linux, see [TroglOS][9] or the
+`contrib/` section with [Alpine Linux support](contrib/alpine/)
 
 
 Features
