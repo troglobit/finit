@@ -20,13 +20,13 @@ Table of Contents
 * [/etc/finit.conf](doc/config.md#etcfinitconf)
 * [/etc/finit.d](doc/config.md#etcfinitd)
 * [Runparts & /etc/rc.local](#runparts--etcrclocal)
-* [Bootstrap](#bootstrap)
+* [Bootstrap](doc/bootstrap.md#bootstrap)
 * [Runlevels](#runlevels)
 * [Inetd](doc/inetd.md#inetd)
 * [Hooks, Callbacks & Plugins](doc/plugins.md#hooks-callbacks--plugins)
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
-* [Building](#building)
+* [Building](doc/build.md#building)
 * [Running](#running)
 * [Debugging](#debugging)
 * [Origin & References](#origin--references)
@@ -43,13 +43,14 @@ fully functional on standard server and desktop installations as well.
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
 long boot times.  Finit reduces context switches and forking of shell
-scripts to provide a system bootstrap written entirely in C.
+scripts to provide a swift [system bootstrap](doc/bootstrap.md) written
+entirely in C.
 
 There is no `/etc/init.d/rcS` script, or similar.  Instead configuration
 is read from the main [/etc/finit.conf](doc/config.md#etcfinitconf),
 which details kernel modules to load and bootstrap services to start.
-After initial bootstrap, including setting up networking,
-[/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
+After initial [bootstrap](doc/bootstrap.md), including setting up
+networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
 [/etc/rc.local](#runparts--etcrclocal) are run.
 
 **Example /etc/finit.conf:**
@@ -186,51 +187,8 @@ and `/etc/rc.local`, in that order if they exist.
 No configuration stanza in `/etc/finit.conf` is required for `rc.local`.
 If it exists and is an executable shell script, finit calls it at the
 very end of the boot, before calling the `HOOK_SYSTEM_UP`.  See more on
-hooks in [doc/plugins.md](doc/plugins.md#hooks), and the system bootstrap
-below.
-
-
-Bootstrap
----------
-
-1. Populate `/dev`
-2. Parse `/etc/finit.conf`
-3. Load all `.so` plugins
-4. Remount/Pivot `/` to get R+W
-5. Call 1st level hooks, `HOOK_ROOTFS_UP`
-6. Mount `/etc/fstab` and swap, if available
-7. Cleanup stale files from `/tmp/*` et al
-8. Enable SysV init signals
-9. Call 2nd level hooks, `HOOK_BASEFS_UP`
-10. Start all 'S' runlevel tasks and services
-11. Load kernel parameters from `/etc/sysctl.conf`
-12. Set hostname and bring up loopback interface
-13. Call `network` script, if set in `/etc/finit.conf`
-14. Call 3rd level hooks, `HOOK_NETWORK_UP`
-15. Load all `*.conf` files in `/etc/finit.d/` and switch to the active
-    active runlevel, as set in `/etc/finit.conf`, default is 2.  Here is
-    where the rest of all tasks and inetd services are started.
-16. Call 4th level hooks, `HOOK_SVC_UP`
-17. If `runparts <DIR>` is set, [run-parts(8)][] is called on `<DIR>`
-18. Call `/etc/rc.local`, if it exists and is an executable shell script
-19. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
-20. Start TTYs defined in `/etc/finit.conf`, or rescue on `/dev/console`
-
-In (10) and (15) tasks and services defined in `/etc/finit.conf` are
-started.  Remember, all `service` and `task` stanzas are started in
-parallel and `run` in sequence, and in the order listed.  Hence, to
-emulate a SysV `/etc/init.d/rcS` one could write a long file with only
-`run` statements.
-
-Notice the five hook points that are called at various point in the
-bootstrap process.  This is where plugins can extend the boot in any way
-they please.
-
-For instance, at `HOOK_BASEFS_UP` a plugin could read an XML file from a
-USB stick, convert/copy its contents to the system's `/etc/` directory,
-well before all 'S' runlevel tasks are started.  This could be used with
-system images that are created read-only and all configuration is stored
-on external media.
+hooks in [doc/plugins.md](doc/plugins.md#hooks), and about the system
+bootstrap in [doc/bootstrap.md](doc/bootstrap.md).
 
 
 Runlevels
@@ -367,111 +325,23 @@ Dropbear SSH service will not be restarted if it is killed or exits.
     6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
 ```
 
-
-Building
---------
-
-Finit comes with a traditional configure script to control features and
-optional plugins to enable.  It does however depend on two external
-libraries that provide some frog DNA needed:
-
-- [libuEv][]
-- [libite][] (-lite)
-
-Like most free/open source software that uses `configure` they deafult
-to install to `/usr/local`.  However, some Linux distributions do no
-longer search that path for installed software, e.g. Fedora and Alpine
-Linux.  To get finit's configure script to find its dependencies you
-have to help the `pkg-config` tool a bit if you do not change the
-default prefix path:
-
-    PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure
-
-Below are a few of the main switches to
-configure:
-
-* `--disable-inetd`: Disable the built-in inetd server.
-
-* `--enable-embedded`: Target finit for BusyBox getty and mdev instead
-  of a standard Linux distribution with GNU tools and udev.
-
-* `--enable-rw-rootfs`: Most desktop and server systems boot with the
-  root file stystem read-only.  With this setting Finit will remount it
-  as read-write early at boot so the `bootmisc.so` plugin can run.
-  Usually not needed on embedded systems.
-
-* `--enable-static`: Build Finit statically.  The plugins will be
-  built-ins (.o files) and all external libraries, except the C library
-  will be linked statically.
-
-* `--enable-alsa-utils`: Enable the optional `alsa-utils.so` sound plugin.
-
-* `--enable-dbus`: Enable the optional D-Bus `dbus.so` plugin.
-
-* `--enable-lost`: Enable noisy example plugin for `HOOK_SVC_LOST`.
-
-* `--enable-resolvconf`: Enable the `resolvconf.so` optional plugin.
-
-* `--enable-x11-common`: Enable the optional X Window `x11-common.so` plugin.
-
-For more configure flags, see <kbd>./configure --help</kbd>
-
-**Example**
-
-First, unpack the archive:
-
-```shell
-    $ tar xf finit-3.0.tar.xz
-    $ cd finit-3.0/
-```
-
-Then configure, build and install:
-
-```shell
-    $ ./configure --enable-embedded --enable-rw-rootfs --enable-inetd-echo-plugin \
-                  --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
-                  --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
-                  --with-heading="Alpine Linux 3.4" --with-hostname=alpine
-    $ make
-    .
-    .
-    .
-    $ DESTDIR=/tmp/finit make install
-```
-
-In this example the [finit-3.0.tar.xz][10] archive is unpacked to the
-user's home directory, configured, built and installed to a temporary
-staging directory.  The environment variable `DESTDIR` controls the
-destination directory when installing, very useful for building binary
-standalone packages.
-
-To target an embedded Linux system, usally a system that use BusyBox
-tools instead of udev & C:o, add <kbd>--enable-embedded</kbd> to the
-configure command above.  This enables `mdev` instead of `udev` and the
-BusyBox `getty` syntax.  Remember to also change the Linux config to:
-
-    CONFIG_UEVENT_HELPER_PATH="/sbin/mdev"
-
-**Note:** If you run into problems starting Finit, take a look at
-  `finit.c`.  One of the most common problems is a custom Linux kernel
-  build that lack `CONFIG_DEVTMPFS`.  Another is too much cruft in the
-  system `/etc/fstab`.
-
-
 Running
 -------
 
-The default install does not setup finit as the system default
-`/sbin/init`, neither does it setup an initial `/etc/finit.conf`.
+Having successfully [built Finit](doc/build.md) it may now be time to
+take it for a test drive.  The `make install` attempts to set up finit
+as the system system init, `/sbin/init`, but this is usually a symlink
+pointing to the current init.
 
-It is assumed that users of finit are competent enough to either setup
-finit as their default `/sbin/init` or alter their respective GRUB,
-LOADLIN, LILO, U-Boot/Barebox or RedBoot boot loader configuration to
-give the kernel the following extra command line:
+So either change the symlink, or change your boot loader (GRUB, LOADLIN,
+LILO, U-Boot/Barebox or RedBoot) configuration to append the following
+to the kernel command line:
 
 ```shell
     init=/sbin/finit
 ```
+
+Remember to also set up an initial `/etc/finit.conf` before rebooting!
 
 ![Finit starting Debian 6.0](images/finit-screenshot.jpg "Finit screenshot")
 
@@ -506,15 +376,12 @@ and proposed extensions.
 [4]:  http://en.wikipedia.org/wiki/Init
 [5]:  http://en.wikipedia.org/wiki/Runlevel
 [9]:  https://github.com/troglobit/troglos
-[10]: ftp://troglobit.com/finit/finit-3.0.tar.xz
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
 [Joachim Nilsson]:  http://troglobit.com
 [GitHub]:           https://github.com/troglobit/finit
-[libuEv]:           https://github.com/troglobit/libuev
-[libite]:           https://github.com/troglobit/libite
 [Travis]:           https://travis-ci.org/troglobit/finit
 [Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
