@@ -830,8 +830,8 @@ Finit comes with a traditional configure script to control features and
 optional plugins to enable.  It does however depend on two external
 libraries that provide some frog DNA needed:
 
-- libuEv
-- libite (-lite)
+- [libuEv][]
+- [libite][] (-lite)
 
 Like most free/open source software that uses `configure` they deafult
 to install to `/usr/local`.  However, some Linux distributions do no
@@ -972,6 +972,8 @@ and proposed extensions.
 [Claudio Matsuoka]: https://github.com/cmatsuoka
 [Joachim Nilsson]:  http://troglobit.com
 [GitHub]:           https://github.com/troglobit/finit
+[libuEv]:           https://github.com/troglobit/libuev
+[libite]:           https://github.com/troglobit/libite
 [Travis]:           https://travis-ci.org/troglobit/finit
 [Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
