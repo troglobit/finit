@@ -228,7 +228,6 @@ void set_hostname(char **hostname)
 {
 	FILE *fp;
 
-	_d("Set hostname: %s", *hostname);
 	fp = fopen("/etc/hostname", "r");
 	if (fp) {
 		struct stat st;
