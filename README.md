@@ -37,8 +37,8 @@ Introduction
 
 Finit is a plugin-based init with [process supervision][1] similar to
 that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's [runit][3].
-The main focus of Finit is on small and embedded GNU/Linux systems, yet
-fully functional on standard server and desktop installations as well.
+The main focus of Finit is on small and embedded Linux systems, yet
+fully usable on server and desktop installations as well.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
@@ -46,10 +46,9 @@ long boot times.  Finit reduces context switches and forking of shell
 scripts to provide a swift [system bootstrap](doc/bootstrap.md) written
 entirely in C.
 
-There is no `/etc/init.d/rcS` script, or similar.  Instead configuration
-is read from the main [/etc/finit.conf](doc/config.md#etcfinitconf),
-which details kernel modules to load and bootstrap services to start.
-After initial [bootstrap](doc/bootstrap.md), including setting up
+Configuration is read from [/etc/finit.conf](doc/config.md#etcfinitconf)
+which details kernel modules to load, services and TTYs to start.  When
+initial [bootstrap](doc/bootstrap.md) is done, including setting up
 networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
 [/etc/rc.local](#runparts--etcrclocal) are run.
 
@@ -105,8 +104,9 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
     tty [12345] /dev/ttyAMA0 115200 vt100
 ```
 
-For an example of a full blown embedded Linux, see [TroglOS][9] or the
-`contrib/` section with [Alpine Linux support](contrib/alpine/)
+For an example of a full blown embedded Linux, see [TroglOS][9], or take
+a look at the `contrib/` section with [Alpine Linux](contrib/alpine/)
+support and more.
 
 
 Features
