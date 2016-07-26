@@ -95,11 +95,7 @@ int run(char *cmd)
 		}
 	}
 	args[i] = NULL;
-#if 0
-	_e("Splitting: '%s' =>", cmd);
-	for (i = 0; args[i]; i++)
-		_e("\t%s", args[i]);
-#endif
+
 	if (i == NUM_ARGS && args[i]) {
 		_e("Command too long: %s", cmd);
 		free(backup);
@@ -229,8 +225,13 @@ pid_t run_getty(char *cmd, char *args[], char *tty, int console)
 	pid_t pid = fork();
 
 	if (!pid) {
-		int fd;
+		int  i, fd;
 		char c;
+		struct sigaction sa;
+
+		/* Reset signal handlers that were set by the parent process */
+		for (i = 1; i < NSIG; i++)
+			DFLSIG(sa, i, 0);
 
 		/* Detach from initial controlling TTY */
 		vhangup();
