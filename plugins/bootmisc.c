@@ -84,12 +84,13 @@ static void setup(void *UNUSED(arg))
 #endif
 
 	_d("Setting up misc files ...");
+	makedir("/var/run/network",0755); /* Needed by Debian/Ubuntu ifupdown */
 	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
 	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
 	makedir("/var/run/quagga", 0755); /* Needed by Quagga */
 	makedir("/var/log/quagga", 0755); /* Needed by Quagga */
-	makedir("/var/run/sshd", 01755);  /* OpenSSH  */
-	makefifo("/dev/xconsole", 0640);  /* sysklogd */
+	makedir("/var/run/sshd",  01755); /* OpenSSH  */
+	makefifo("/dev/xconsole",  0640); /* sysklogd */
 	chown("/dev/xconsole", 0, getgroup("tty"));
 }
 
