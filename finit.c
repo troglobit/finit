@@ -107,16 +107,23 @@ static void networking(void)
 
 		/* Bring up all 'auto' interfaces */
 		while (fgets(buf, sizeof(buf), fp)) {
-			char *cmd;
+			char cmd[80];
+			char *line, *ifname = NULL;
 
 			chomp(buf);
-			cmd = strip_line(buf);
+			line = strip_line(buf);
 
-			if (!strncmp(cmd, "auto", 4)) {
-				memcpy(cmd, "ifup", 4);
-				run_interactive(cmd, "Bringing up interface %s", &cmd[5]);
-				i++;
-			}
+			if (!strncmp(line, "auto", 4))
+				ifname = &line[5];
+ 			if (!strncmp(line, "allow-hotplug", 13))
+				ifname = &line[14];
+
+			if (!ifname)
+				continue;
+
+			snprintf(cmd, 80, "/sbin/ifup %s", ifname);
+			run_interactive(cmd, "Bringing up interface %s", ifname);
+			i++;
 		}
 
 		fclose(fp);
