@@ -189,6 +189,13 @@ int main(int argc, char* argv[])
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
 
+#ifndef EMBEDDED_SYSTEM
+	if (!fismnt("/dev"))
+		mount("udev", "/dev", "devtmpfs", MS_RELATIME, "size=10%,nr_inodes=61156,mode=755");
+	else
+		run_interactive("/sbin/udevadm info --cleanup-db", "Cleaning up udev db");
+#endif
+
 	/* Some systems use /dev/pts */
 	makedir("/dev/pts", 0755);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
@@ -251,6 +258,10 @@ int main(int argc, char* argv[])
 #endif
 #ifdef SYSROOT
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+#endif
+
+#ifndef EMBEDDED_SYSTEM
+	run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 #endif
 
 	_d("Root FS up, calling hooks ...");
