@@ -1,0 +1,1 @@
+./configure --enable-x11-common-plugin --enable-dbus-plugin --enable-alsa-utils-plugin --enable-rw-rootfs --with-random-seed=/var/lib/urandom/random-seed --with-heading="Debian GNU/Linux 8.5" --with-hostname=debian
