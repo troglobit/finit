@@ -499,28 +499,10 @@ void conf_reload_dynamic(void)
 
 int conf_parse_config(void)
 {
-	int result;
-
 	username = strdup(DEFUSER);
 	hostname = strdup(DEFHOST);
 
-	result = parse_conf(FINIT_CONF);
-	if (!tty_num()) {
-		char *fallback = NULL;
-
-		if (console)
-			fallback = console;
-		else
-			fallback = strdup(FALLBACK_SHELL);
-
-		if (tty_register(fallback))
-			_pe("Failed registering fallback TTY");
-
-		if (!console)
-			free(fallback);
-	}
-
-	return result;
+	return parse_conf(FINIT_CONF);
 }
 
 /**
