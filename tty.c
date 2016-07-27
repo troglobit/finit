@@ -39,8 +39,8 @@ LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 int tty_register(char *line)
 {
 	tty_node_t *entry;
-	int         insert = 0, baud = 0;
-	char       *cmd, *dev;
+	int         insert = 0;
+	char       *cmd, *dev, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
 
 	if (!line) {
@@ -66,7 +66,7 @@ int tty_register(char *line)
 
 	cmd = strtok(NULL, " ");
 	if (cmd) {
-		baud = strtonum(cmd, 50, 4000000, NULL);
+		baud = strdup(cmd);
 		term = strtok(NULL, " ");
 	}
 
@@ -79,12 +79,10 @@ int tty_register(char *line)
 	}
 
 	entry->data.name = strdup(dev);
-	if (!baud)
-		baud = BAUDRATE;
 	entry->data.baud = baud;
 	entry->data.term = term ? strdup(term) : NULL;
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
-	_d("Registering tty %s at %d baud with term=%s on runlevels %s", dev, baud, term ?: "N/A", runlevels);
+	_d("Registering tty %s at %s baud with term=%s on runlevels %s", dev, baud ?: "NULL", term ?: "N/A", runlevels);
 
 	if (insert)
 		LIST_INSERT_HEAD(&tty_list, entry, link);
@@ -127,40 +125,43 @@ tty_node_t *tty_find_by_pid(pid_t pid)
 	return NULL;
 }
 
-void tty_start(finit_tty_t *tty)
+static char *canonicalize(char *tty)
 {
-	int i = 0, is_console = 0;
-	char *cmd, *arg;
-	char  line[FILENAME_MAX];
-	char *args[42];
+	struct stat st;
+	static char path[80];
 
-	if (tty->pid)
+	if (!tty)
+		return NULL;
+
+	strlcpy(path, tty, sizeof(path));
+	if (stat(path, &st)) {
+		snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
+		if (stat(path, &st))
+			return NULL;
+	}
+
+	if (!S_ISCHR(st.st_mode))
+		return NULL;
+
+	return path;
+}
+
+void tty_start(finit_tty_t *fitty)
+{
+	int is_console = 0;
+	char *tty;
+
+	if (fitty->pid)
 		return;
 
-	if (console && !strcmp(tty->name, console))
+	tty = canonicalize(fitty->name);
+	if (!tty)
+		return;
+
+	if (console && !strcmp(tty, console))
 		is_console = 1;
 
-	if (!strncmp(tty->name, _PATH_DEV, strlen(_PATH_DEV))) {
-#if   defined(GETTY_AGETTY)
-		snprintf(line, sizeof(line), "%s %s %d %s", GETTY, tty->name, tty->baud, tty->term ?: "");
-#elif defined(GETTY_BUSYBOX)
-		snprintf(line, sizeof(line), "%s %d %s %s", GETTY, tty->baud, tty->name, tty->term ?: "");
-#else
-		strlcpy(line, FALLBACK_SHELL, sizeof(line));
-		is_console = 1;
-#endif
-	} else {
-		strlcpy(line, tty->name, sizeof(line));
-		is_console = 1;
-	}
-	cmd = strtok(line, " ");
-	args[i++] = basename(cmd);
-	while ((arg = strtok(NULL, " ")))
-		args[i++] = arg;
-	args[i] = NULL;
-
-	_d("Starting %s: %s on %s", is_console ? "console" : "TTY", cmd, tty->name);
-	tty->pid = run_getty(cmd, args, tty->name, is_console);
+	fitty->pid = run_getty(tty, fitty->baud, fitty->term, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)

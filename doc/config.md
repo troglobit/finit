@@ -120,33 +120,21 @@ Syntax:
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
 
-* `tty [LVLS] <DEV | /path/to/cmd [args]>`  
+* `tty [LVLS] <DEV> [BAUD] [TERM]`  
   Start a getty on the given TTY device DEV, in the given runlevels.  If
-  no tty setting is given in `finit.conf`, or if `/bin/sh` is given as
-  argument instead of a device path, a single shell is started on the
-  default console.  Useful for really bare-bones systems.
-  
-  It is also possible to supply the full command line, with arguments,
-  to your getty.  In this case finit will simply use that command.
-  
-  See `finit.h` for the `#define GETTY` that is called, along with the
-  default baud rate.
+  no tty setting is given in `finit.conf` no login is possible.  Use the
+  `service` stanza to start a stand-alone shell for really bare bones
+  systems.
 
-  **Note:** BusyBox getty, used when Finit is built for embedded
-    systems, can take a `DEV` with *or* without `/dev/` prefix.  Make
-    sure to call the configure script with `--enable-embedded` if this
-	is what you want.
+  Finit comes with a lightweight built-in getty, which after it has
+  opened a TTY and the user has input a username, calls `/bin/login`
+  like any other getty.
 
-* `console <DEV | /path/to/cmd [args]`  
-  Some embedded systems have a dedicated serial console/service port.
-  This command tells finit to not start getty directly, since there may
-  not be anyone there.  To save RAM and CPU finit instead displays a
-  friendly message and waits for the user to activate the console with a
-  key press before starting getty.  Finit also does some other magic and
-  changes the process name to "console".
-  
-  Like the `tty` command, the `console` command can also be used to
-  simply start a UNIX shell, e.g. `/bin/sh`.
+* `console <DEV>`  
+  Use this, along with a matching `tty DEV` line, to mark this TTY as a
+  special "console" port with with `prctl()`.  Useful in use-cases when
+  all logins except the console must be stopped, e.g. when performing a
+  flash upgrade on an embedded system.
 
 When running <kbd>make install</kbd> no default `/etc/finit.conf` will
 be installed since system requirements differ too much.  Try out the

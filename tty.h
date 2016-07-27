@@ -32,7 +32,7 @@
 
 typedef struct {
 	char  *name;
-	int    baud;
+	char  *baud;
 	char  *term;
 	int    runlevels;
 

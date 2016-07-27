@@ -122,14 +122,8 @@ AC_ARG_WITH(random-seed,
 AS_IF([test "x$enable_embedded" = "xyes"],[
 	AC_DEFINE(EMBEDDED_SYSTEM, 1,                [Target an embedded system with BusyBox])
 	AC_DEFINE(SETUP_DEVFS,     "/sbin/mdev -s",  [Command to populate /dev])
-	AC_DEFINE(GETTY,           "/sbin/getty -L", [Command to start getty on login prompt])
-        AC_DEFINE(GETTY_BUSYBOX,   1,                [Use BusyBox getty call syntax])
-        AC_DEFINE(BAUDRATE,        115200,           [Default getty baudrate])
 	],[
-        AC_DEFINE(SETUP_DEVFS,     "/sbin/udevd --daemon", [Command to populate /dev])
-	AC_DEFINE(GETTY,           "/sbin/getty -8", [Command to start getty on login prompt])
-        AC_DEFINE(GETTY_AGETTY,    1,                [Use standard agetty call syntax])
-        AC_DEFINE(BAUDRATE,        38400,            [Default getty baudrate])])
+        AC_DEFINE(SETUP_DEVFS,     "/sbin/udevd --daemon", [Command to populate /dev])])
 
 AS_IF([test "x$enable_rw_rootfs" = "xyes"],[
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
