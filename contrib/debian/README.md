@@ -14,13 +14,13 @@ old SysV init, using [this HowTo][1], you may not need to do that, but
 for me it was easier — and also a great rebuttal to all the systemd
 haters out there (yeah, even though I speak for the alternative PID 1
 movement I don't hate systemd :P) it is possible to still run Debian
-without systemd!  Anyway, this text was based on that XP.
+without systemd!  Anyway, this text was based on that experience.
 
 Like the [Alpine HowTo](../alpine/), you need to install [libuEv][] and
 [libite][], but since this is Debian — which takes infinite care of its
 users ♥ ♥ ♥ we don't need to worry about `pkg-config`.
 
->> With Debian everything just works™!
+> With Debian everything just works!™
 
     debian:~/finit$ ./configure --enable-rw-rootfs --enable-dbus-plugin \
          --enable-x11-common-plugin --enable-alsa-utils-plugin          \
