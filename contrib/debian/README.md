@@ -18,25 +18,30 @@ without systemd!  Anyway, this text was based on that XP.
 
 Like the [Alpine HowTo](../alpine/), you need to install [libuEv][] and
 [libite][], but since this is Debian — which takes infinite care of its
-users ♥ ♥ ♥ — we don't need to worry about `pkg-config`.  With Debian
-everything just works™!
+users ♥ ♥ ♥ we don't need to worry about `pkg-config`.
 
-    joachim@debian:~/finit$ ./configure --enable-x11-common-plugin
-         --enable-dbus-plugin --enable-alsa-utils-plugin --enable-rw-rootfs
-	 --with-random-seed=/var/lib/urandom/random-seed
-	 --with-heading="Debian GNU/Linux 8.5" --with-hostname=debian
+>> With Debian everything just works™!
 
-Then simply install Finit.  Since `/sbin/init` already exists you need
-to add another entry to your GRUB config, in `/etc/grub.d/40_custom`,
-or add `init=/sbin/finit` to your kernel line everytime you boot.  Or,
-you could just change the symlink.
+    debian:~/finit$ ./configure --enable-rw-rootfs --enable-dbus-plugin \
+         --enable-x11-common-plugin --enable-alsa-utils-plugin          \
+         --with-random-seed=/var/lib/urandom/random-seed                \
+         --with-heading="Debian GNU/Linux 8.5" --with-hostname=debian
+
+Then simply install Finit.
+
+    debian:~/finit$ make && sudo make install
+
+Since `/sbin/init` already exists you need to add another entry to your
+GRUB config, in `/etc/grub.d/40_custom`, or add `init=/sbin/finit` to
+your kernel line everytime you boot.  Or, you could change the `/sbin`
+symlink, but that's on you.
 
 However, before rebooting, make sure to read up on the comments I've
 put in [/etc/finit.conf](finit.conf) install it and `start.d/` into
 `/etc` on your system — and possibly even check out more of the docu
 for details.
 
-Have fun!
+Have fun!  
  /Joachim ツ
 
 [1]: http://without-systemd.org/wiki/index.php/How_to_remove_systemd_from_a_Debian_jessie/sid_installation
