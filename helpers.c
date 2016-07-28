@@ -189,9 +189,10 @@ int print_result(int fail)
 	return fail;
 }
 
-int getuser(char *username)
+int getuser(char *username, char **home)
 {
 #ifdef ENABLE_STATIC
+	home = NULL;		/* XXX: Fixme */
 	return fgetint("/etc/passwd", "x:\n", username);
 #else
 	struct passwd *usr;
@@ -199,7 +200,8 @@ int getuser(char *username)
 	if (!username || (usr = getpwnam(username)) == NULL)
 		return -1;
 
-	return usr->pw_uid;
+	*home = usr->pw_dir;
+	return  usr->pw_uid;
 #endif
 }
 

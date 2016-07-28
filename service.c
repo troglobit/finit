@@ -151,10 +151,11 @@ static int service_start(svc_t *svc)
 	pid = fork();
 	if (pid == 0) {
 		int status;
+		char *home = NULL;
 #ifdef ENABLE_STATIC
 		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
 #else
-		int uid = getuser(svc->username);
+		int uid = getuser(svc->username, &home);
 #endif
 		char *args[MAX_NUM_SVC_ARGS];
 
@@ -165,6 +166,10 @@ static int service_start(svc_t *svc)
 			/* Set default path for regular users */
 			if (uid > 0)
 				setenv("PATH", _PATH_DEFPATH, 1);
+			if (home) {
+				setenv("HOME", home, 1);
+				chdir(home);
+			}
 		}
 
 		/* Serve copy of args to process in case it modifies them. */

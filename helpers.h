@@ -76,7 +76,7 @@ void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 int     start_process   (char *cmd, char *args[], int console);
 void    do_sleep        (unsigned int sec);
-int     getuser         (char *username);
+int     getuser         (char *username, char **home);
 int     getgroup        (char *group);
 void    set_hostname    (char **hostname);
 
