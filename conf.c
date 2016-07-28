@@ -377,6 +377,17 @@ static void parse_dynamic(char *line, time_t mtime)
 	}
 }
 
+static void tabstospaces(char *line)
+{
+	if (!line)
+		return;
+
+	for (int i = 0; line[i]; i++) {
+		if (line[i] == '\t')
+			line[i] = ' ';
+	}
+}
+
 static int parse_conf_dynamic(char *file, time_t mtime)
 {
 	FILE *fp = fopen(file, "r");
@@ -393,6 +404,7 @@ static int parse_conf_dynamic(char *file, time_t mtime)
 			continue;
 
 		chomp(line);
+		tabstospaces(line);
 		_d("dyn conf: %s", line);
 
 		parse_dynamic(line, mtime);
@@ -438,9 +450,11 @@ static int parse_conf(char *file)
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))
 			continue;
-		chomp(line);
 
+		chomp(line);
+		tabstospaces(line);
 		_d("conf: %s", line);
+
 		parse_static(line);
 		parse_dynamic(line, 0);
 	}
