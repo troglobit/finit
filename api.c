@@ -372,6 +372,11 @@ error:
 	return 1;
 }
 
+int api_exit(void)
+{
+	return  shutdown(api_watcher.fd, SHUT_RDWR) ||
+		close(api_watcher.fd);
+}
 
 /**
  * Local Variables:

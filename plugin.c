@@ -298,7 +298,7 @@ static void check_plugin_depends(plugin_t *plugin)
 }
 #endif	/* ENABLE_STATIC */
 
-int plugin_load_all(uev_ctx_t *ctx, char *path)
+int plugin_init(uev_ctx_t *ctx, char *path)
 {
 	int fail = 0;
 #ifndef ENABLE_STATIC
@@ -341,6 +341,14 @@ exit:
 		print_result(fail);
 
 	return fail;
+}
+
+void plugin_exit(void)
+{
+	plugin_t *p, *tmp;
+
+	PLUGIN_ITERATOR(p, tmp)
+		plugin_unregister(p);
 }
 
 /**

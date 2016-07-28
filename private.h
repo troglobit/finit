@@ -28,16 +28,23 @@
 #include "svc.h"
 #include "plugin.h"
 
-uev_ctx_t *ctx;			/* Main loop context */
+/*
+ * Main loop context
+ */
+uev_ctx_t *ctx;
 
 int       api_init         (uev_ctx_t *ctx);
+int       api_exit         (void);
+
 int       client           (int argc, char *argv[]);
 
 void      service_monitor  (pid_t lost);
 
 void      plugin_run_hook  (hook_point_t no, void *arg);
 void      plugin_run_hooks (hook_point_t no);
-int       plugin_load_all  (uev_ctx_t *ctx, char *path);
+
+int       plugin_init      (uev_ctx_t *ctx, char *path);
+void      plugin_exit      (void);
 
 #endif /* FINIT_PRIVATE_H_ */
 
