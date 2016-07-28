@@ -71,8 +71,8 @@ AC_ARG_WITH(heading,
 	[heading=$withval], [heading="$PACKAGE_NAME v$PACKAGE_VERSION"])
 
 AC_ARG_WITH(fifo,
-        AS_HELP_STRING([--with-fifo=FIFO], [FIFO for init/telinit clients, default /dev/initctl]),
-	[fifo=$withval], [fifo=/dev/initctl])
+        AS_HELP_STRING([--with-fifo=FIFO], [FIFO for init/telinit clients, default /var/run/initctl]),
+	[fifo=$withval], [fifo=/var/run/initctl])
 
 AC_ARG_WITH(plugindir,
         AS_HELP_STRING([--with-plugindir=DIR], [Finit plugin directory, default /lib/finit/plugins]),
@@ -145,7 +145,7 @@ AS_IF([test "x$enable_quiet" != "xno"],[
 ### With features ##############################################################################
 AS_IF([test "x$with_fifo" != "xno"],[
 	AS_IF([test "x$fifo" = "xyes"],[
-		    fifo='/dev/initctl'])])
+		    fifo='/var/run/initctl'])])
 AC_EXPAND_DIR(lurvig, "$fifo")
 AC_DEFINE_UNQUOTED(FINIT_FIFO, "$lurvig", [FIFO for old style init/telinit client programs])
 
