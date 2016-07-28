@@ -170,6 +170,11 @@ int main(int argc, char* argv[])
 		return client(argc, argv);
 
 	/*
+	 * Hello world.
+	 */
+	banner();
+
+	/*
 	 * Initial setup of signals, ignore all until we're up.
 	 */
 	sig_init();
@@ -216,11 +221,6 @@ int main(int argc, char* argv[])
 	 * Parse kernel parameters
 	 */
 	conf_parse_cmdline();
-
-	/*
-	 * Hello world.
-	 */
-	banner();
 
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
