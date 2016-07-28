@@ -88,18 +88,48 @@ void do_shutdown(int sig)
 	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);
 
-	sync();
-	sync();
-	_d("Unmounting file systems, remounting / read-only.");
-	run("/bin/umount -fa 2>/dev/null");
-	run("/bin/mount -n -o remount,ro / 2>/dev/null");
-	run("/sbin/swapoff -ea");
+	debug = 1;
+	plugin_exit();
+	api_exit();
+
+	/* Reap 'em */
+	while (waitpid(-1, NULL, WNOHANG) > 0)
+		;
+
+	/* Close all local non-console descriptors */
+	for (int fd = 3; fd < 128; fd++)
+		close(fd);
+
+	if (vfork()) {
+		/*
+		 * Put PID 1 aside and let child perform reboot/halt
+		 * kernel may exit child and we don't want to exit PID 1
+		 * ... causing "aiii killing init" during reboot ...
+		 */
+		return;
+	}
+
+	/* Unmount any tmpfs before unmounting swap ... */
+	run("/bin/umount -r -a");
+	run("/sbin/swapoff -e -a");
+
+	/* Now, unmount everything else ... err, just force it. */
+	run("/bin/umount -n -f -r -a");
+
+	/* We sit on / so we must remount it ro, try all the things! */
+	run("/bin/mount -n -o remount,ro -t dummytype dummydev /");
+	run("/bin/mount -n -o remount,ro dummydev /");
+	run("/bin/mount -n -o remount,ro /");
+
+	_e("PID %d: %s ...", getpid(), sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
+	do_sleep(5);
 
 	_d("%s.", sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
 	if (sig == SIGINT || sig == SIGUSR1)
 		reboot(RB_AUTOBOOT);
 
 	reboot(RB_POWER_OFF);
+	reboot(RB_HALT_SYSTEM);	/* Eh, what?  Should not get here ... */
 }
 
 /*
