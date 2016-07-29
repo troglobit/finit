@@ -115,7 +115,7 @@ void do_shutdown(shutop_t op)
 	_d("Sending SIGKILL to remaining processes.");
 	kill(-1, SIGKILL);
 
-	debug = 1;
+	/* Exit plugins and API gracefully */
 	plugin_exit();
 	api_exit();
 
@@ -147,9 +147,6 @@ void do_shutdown(shutop_t op)
 	run("/bin/mount -n -o remount,ro -t dummytype dummydev /");
 	run("/bin/mount -n -o remount,ro dummydev /");
 	run("/bin/mount -n -o remount,ro /");
-
-	_e("PID %d: %s ...", getpid(), op == SHUT_REBOOT ? "Rebooting" : "Halting");
-	do_sleep(5);
 
 	_d("%s.", op == SHUT_REBOOT ? "Rebooting" : "Halting");
 	if (op == SHUT_REBOOT)
