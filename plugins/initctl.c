@@ -39,6 +39,14 @@
 #include "../sig.h"
 #include "../service.h"
 
+/*
+ * Old-style SysV shutdown sends a setenv cmd INIT_HALT with "=HALT",
+ * "=POWERDOWN", or "" to cancel shutdown, before requesting change to
+ * runlevel 6 over the /dev/initctl FIFO.
+ */
+shutop_t halt = SHUT_DEFAULT;
+
+
 static void parse(void *arg, int fd, int events);
 
 static plugin_t plugin = {
@@ -58,7 +66,36 @@ static void fifo_open(void)
 	}
 }
 
-/* Standard reboot/shutdown utilities talk to init using /dev/initctl.
+/*
+ * We only handle INIT_HALT for differentiating between halt/poweroff
+ */
+static void set_env(char *data)
+{
+	const char *var = "INIT_HALT";
+
+	if (strncmp(data, var, strlen(var)))
+		return;
+	data += strlen(var);
+
+	/*
+	 * No value means unset env, in this case cancel shutdown.
+	 */
+	if (data[0] == 0) {
+		halt = SHUT_DEFAULT;
+		/* XXX: Cancel timer here, when we get support for timed shutdown */
+		return;
+	}
+
+	if (string_match(data, "=POWERDOWN"))
+		halt = SHUT_OFF;
+	if (string_match(data, "=HALT"))
+		halt = SHUT_HALT;
+
+	/* Now we wait for runlevel change, or cancelled shutdown */
+}
+
+/*
+ * Standard reboot/shutdown utilities talk to init using /dev/initctl.
  * We should check if the fifo was recreated and reopen it.
  */
 static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
@@ -92,8 +129,8 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 		case INIT_CMD_RUNLVL:
 			switch (rq.runlevel) {
 			case '0':
-				_d("Halting system (SIGUSR2)");
-				do_shutdown(SIGUSR2);
+				_d("Halting system (SIGUSR1 or SIGUSR2)");
+				do_shutdown(halt);
 				break;
 
 			case 's':
@@ -109,8 +146,8 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 				break;
 
 			case '6':
-				_d("Rebooting system (SIGUSR1)");
-				do_shutdown(SIGUSR1);
+				_d("Rebooting system (SIGTERM)");
+				do_shutdown(SHUT_REBOOT);
 				break;
 
 			default:
@@ -121,6 +158,10 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 
 		case INIT_CMD_RELOAD:
 			service_reload_dynamic();
+			break;
+
+		case INIT_CMD_SETENV:
+			set_env(rq.data);
 			break;
 
 		default:

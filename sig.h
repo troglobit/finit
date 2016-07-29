@@ -55,6 +55,11 @@
                 sigaction(sig, &sa, NULL);      \
         } while (0)
 
+/*
+ * For old-style /dev/initctl shutdown we default to halt
+ */
+#define SHUT_DEFAULT SHUT_HALT
+
 typedef enum {
 	SHUT_OFF,
 	SHUT_HALT,

@@ -39,20 +39,33 @@
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
 
-/* We reuse the INIT_CMD_ for the new initctl tool, but telinit only
- * supports changing runlevel and reloading the configuration. */
+/*
+ * We extend the INIT_CMD_ range for the new initctl tool, Finit only
+ * support changing runlevel, reloading the configuration and setenv
+ * with the old-style /dev/initctl FIFO.
+ */
 #define INIT_SOCKET             _PATH_VARRUN "finit.sock"
 #define INIT_MAGIC              0x03091969
+
+#define INIT_CMD_START          0
 #define INIT_CMD_RUNLVL         1
-#define INIT_CMD_DEBUG          2    /* Toggle Finit debug */
-#define INIT_CMD_RELOAD         3    /* Reload *.conf in /etc/finit.d/ */
-#define INIT_CMD_START_SVC      4
-#define INIT_CMD_STOP_SVC       5
-#define INIT_CMD_RELOAD_SVC     6    /* SIGHUP service */
-#define INIT_CMD_RESTART_SVC    7    /* STOP + START service */
-#define INIT_CMD_QUERY_INETD    8
-#define INIT_CMD_EMIT           9
-#define INIT_CMD_GET_RUNLEVEL   10
+#define INIT_CMD_POWERFAIL      2
+#define INIT_CMD_POWERFAILNOW   3
+#define INIT_CMD_POWEROK        4
+#define INIT_CMD_BSD            5
+#define INIT_CMD_SETENV         6
+#define INIT_CMD_UNSETENV       7
+
+/* Finit extensions over std SysV */
+#define INIT_CMD_DEBUG          8    /* Toggle Finit debug */
+#define INIT_CMD_RELOAD         9    /* Reload *.conf in /etc/finit.d/ */
+#define INIT_CMD_START_SVC      10
+#define INIT_CMD_STOP_SVC       11
+#define INIT_CMD_RELOAD_SVC     12   /* SIGHUP service */
+#define INIT_CMD_RESTART_SVC    13    /* STOP + START service */
+#define INIT_CMD_QUERY_INETD    14
+#define INIT_CMD_EMIT           15
+#define INIT_CMD_GET_RUNLEVEL   16
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 
