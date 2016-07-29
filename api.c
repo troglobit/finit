@@ -255,7 +255,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			switch (rq.runlevel) {
 			case '0':
 				_d("Halting system (SIGUSR2)");
-				do_shutdown(SIGUSR2);
+				do_shutdown(SHUT_OFF);
 				break;
 
 			case 's':
@@ -272,7 +272,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 			case '6':
 				_d("Rebooting system (SIGUSR1)");
-				do_shutdown(SIGUSR1);
+				do_shutdown(SHUT_REBOOT);
 				break;
 
 			default:

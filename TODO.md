@@ -18,6 +18,17 @@ very low dependency on external packages.
 General
 -------
 
+* Add halt/poweroff/shutdown symlinks to finit and convert reboot, but
+  only install symlinks if these tools don't already exist.
+* Add reboot, halt, poweroff commands to `initctl` tool
+* SysV init and systemd use SIGUSR1 to restart their FIFO/D-Bus.  Add
+  API restart to SIGHUP callback for the same functionality in Finit.
+* Add `finit.conf` support for UPS notification (SIGPWR) to start a task
+  using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
+* Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
+  i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
+  e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
+* Add `IFF_RUNNING` support to netlink plugin along `IFF_IUP`
 * Add compile-time support for running `/bin/sh` instead of `getty`
 * Add `!` or `[wait <pidfile>]` to service directive to let finit pause
   and wait for a pidfile before starting processes -- both at boot and

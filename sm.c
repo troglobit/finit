@@ -155,12 +155,12 @@ restart:
 		svc_clean_dynamic(service_unregister);
 
 		if (0 == runlevel) {
-			do_shutdown(SIGUSR2);
+			do_shutdown(SHUT_OFF);
 			sm->state = SM_RUNNING_STATE;
 			break;
 		}
 		if (6 == runlevel) {
-			do_shutdown(SIGUSR1);
+			do_shutdown(SHUT_REBOOT);
 			sm->state = SM_RUNNING_STATE;
 			break;
 		}

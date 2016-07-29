@@ -55,7 +55,13 @@
                 sigaction(sig, &sa, NULL);      \
         } while (0)
 
-void do_shutdown    (int sig);
+typedef enum {
+	SHUT_OFF,
+	SHUT_HALT,
+	SHUT_REBOOT
+} shutop_t;
+
+void do_shutdown    (shutop_t op);
 int  sig_stopped    (void);
 void sig_init       (void);
 void sig_unblock    (void);

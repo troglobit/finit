@@ -21,21 +21,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * The standard SysV init only responds to the following signals:
- *	 SIGHUP
- *	      Has the same effect as telinit q.
+ * Finit is often used on embedded and small Linux systems with BusyBox.
+ * For compatibility with its existing toolset (halt, poweroff, reboot),
+ * the following signals have been adopted:
  *
- *	 SIGUSR1
- *	      On receipt of this signals, init closes and re-opens  its	 control
- *	      fifo, /dev/initctl. Useful for bootscripts when /dev is remounted.
+ * SIGHUP
+ *      Same effect as init/telinit q, reloads *.conf in /etc/finit.d/
  *
- *	 SIGINT
- *	      Normally the kernel sends this signal to init when CTRL-ALT-DEL is
- *	      pressed. It activates the ctrlaltdel action.
+ * SIGUSR1
+ *      Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
+ *      processes, and unmounts all file systems.  Then tells kernel to
+ *      halt.  Most people these days want SIGUSR2 though.
  *
- *	 SIGWINCH
- *	      The kernel sends this signal when the KeyboardSignal key	is  hit.
- *	      It activates the kbrequest action.
+ *      (SysV init and systemd use this to re-open their FIFO/D-Bus.)
+ *
+ * SIGUSR2
+ *      Like SIGUSR1, but tell kernel to power-off the system, if ACPI
+ *      or similar exists to actually do this.  If the kernel fails
+ *      power-off, Finit falls back to halt.
+ *
+ *      (SysV init N/A, systemd dumps its internal state to log.)
+ *
+ * SIGTERM
+ *      Like SIGUSR1, but tell kernel to reboot the system when done.
+ *
+ *      (SysV init N/A, systemd rexecutes itself.)
+ *
+ * SIGINT
+ *      Sent from kernel when the CTRL-ALT-DEL key combo is pressed.
+ *      SysV init and systemd default to reboot with `shutdown -r`.
+ *      Finit currently forwards this to SIGTERM.
+ *
+ * SIGWINCH
+ *      Sent from kernel when the KeyboardSignal key is pressed.  Some
+ *      users bind keys, see loadkeys(1), to create consoles on demand.
+ *      Finit currently ignores this signal.
+ *
+ * SIGPWR
+ *      Sent from a power daemon, like powstatd(8), on changes to the
+ *      UPS status.  Traditionally SysV init read /etc/powerstatus and
+ *      acted on "OK", "FAIL", or "LOW" and then removed the file.
+ *      Finit currently forwards this to SIGUSR2.
  */
 
 #include <sched.h>
@@ -54,12 +80,13 @@
 #include "service.h"
 
 static int   stopped = 0;
-static uev_t sighup_watcher, sigint_watcher, sigpwr_watcher;
+static uev_t sigterm_watcher, sigusr1_watcher, sigusr2_watcher;
+static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
 static uev_t sigchld_watcher, sigsegv_watcher;
 static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
 
-void do_shutdown(int sig)
+void do_shutdown(shutop_t op)
 {
 	touch(SYNC_SHUTDOWN);
 
@@ -121,15 +148,18 @@ void do_shutdown(int sig)
 	run("/bin/mount -n -o remount,ro dummydev /");
 	run("/bin/mount -n -o remount,ro /");
 
-	_e("PID %d: %s ...", getpid(), sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
+	_e("PID %d: %s ...", getpid(), op == SHUT_REBOOT ? "Rebooting" : "Halting");
 	do_sleep(5);
 
-	_d("%s.", sig == SIGINT || sig == SIGUSR1 ? "Rebooting" : "Halting");
-	if (sig == SIGINT || sig == SIGUSR1)
+	_d("%s.", op == SHUT_REBOOT ? "Rebooting" : "Halting");
+	if (op == SHUT_REBOOT)
 		reboot(RB_AUTOBOOT);
 
-	reboot(RB_POWER_OFF);
-	reboot(RB_HALT_SYSTEM);	/* Eh, what?  Should not get here ... */
+	if (op == SHUT_OFF)
+		reboot(RB_POWER_OFF);
+
+	/* Also fallback if any of the other two fails */
+	reboot(RB_HALT_SYSTEM);
 }
 
 /*
@@ -142,11 +172,35 @@ static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 }
 
 /*
- * Shut down on INT PWR
+ * SIGINT: Should generate <sys/key/ctrlaltdel> condition, for now reboot
  */
-static void sigint_cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
+static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	do_shutdown(w->signo);
+	do_shutdown(SHUT_REBOOT);
+}
+
+/*
+ * SIGUSR1: BusyBox style halt
+ */
+static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+{
+	do_shutdown(SHUT_HALT);
+}
+
+/*
+ * SIGUSR2: BusyBox style poweroff
+ */
+static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+{
+	do_shutdown(SHUT_OFF);
+}
+
+/*
+ * SIGTERM: BusyBox style reboot
+ */
+static void sigterm_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+{
+	do_shutdown(SHUT_REBOOT);
 }
 
 /*
@@ -237,6 +291,9 @@ void sig_unblock(void)
 	sigaddset(&nmask, SIGSTOP);
 	sigaddset(&nmask, SIGTSTP);
 	sigaddset(&nmask, SIGCONT);
+	sigaddset(&nmask, SIGTERM);
+	sigaddset(&nmask, SIGUSR1);
+	sigaddset(&nmask, SIGUSR2);
 	sigprocmask(SIG_UNBLOCK, &nmask, NULL);
 
 	/* Reset signal handlers that were set by the parent process */
@@ -261,12 +318,10 @@ void sig_setup(uev_ctx_t *ctx)
 	uev_signal_init(ctx, &sigint_watcher, sigint_cb, NULL, SIGINT);
 	uev_signal_init(ctx, &sigpwr_watcher, sigint_cb, NULL, SIGPWR);
 
-	/* Ignore SIGUSR1/2 for now, only BusyBox init implements them as reboot+halt. */
-//	uev_signal_init(&ctx, &sigusr1_watcher, reopen_initctl_cb, NULL, SIGUSR1);
-//	uev_signal_init(&ctx, &sigusr2_watcher, pwrdwn_cb, NULL, SIGUSR2);
-
-	/* Init must ignore SIGTERM. May otherwise get false SIGTERM in forked children! */
-	IGNSIG(sa, SIGTERM, 0);
+	/* BusyBox init style signals for halt, power-off and reboot. */
+	uev_signal_init(ctx, &sigusr1_watcher, sigusr1_cb, NULL, SIGUSR1);
+	uev_signal_init(ctx, &sigusr2_watcher, sigusr2_cb, NULL, SIGUSR2);
+	uev_signal_init(ctx, &sigterm_watcher, sigterm_cb, NULL, SIGTERM);
 
 	/* Some C APIs may need SIGALRM for implementing timers. */
 	IGNSIG(sa, SIGALRM, 0);
@@ -285,8 +340,6 @@ void sig_setup(uev_ctx_t *ctx)
 	uev_signal_init(ctx, &sigtstp_watcher, sigstop_cb, NULL, SIGTSTP);
 	uev_signal_init(ctx, &sigcont_watcher, sigcont_cb, NULL, SIGCONT);
 
-	/* Disable CTRL-ALT-DELETE from kernel, we handle shutdown gracefully with SIGINT, above */
-	reboot(RB_DISABLE_CAD);
 	setsid();
 }
 
