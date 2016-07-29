@@ -1,6 +1,6 @@
 /* Save and restore ALSA sound settings using alsactl
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012-2016  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,26 +26,28 @@
 #include "../helpers.h"
 #include "../plugin.h"
 
+#define ALSACTL "/usr/sbin/alsactl"
+
 static void save(void *UNUSED(arg))
 {
-	_d("Saving sound settings ...");
-	run_interactive("/usr/sbin/alsactl -g store", "Saving sound settings");
+	if (fexist(ALSACTL)) {
+		_d("Saving sound settings ...");
+		run_interactive(ALSACTL " -g store", "Saving sound settings");
+	}
 }
 
 static void restore(void *UNUSED(arg))
 {
-	_d("Restoring sound settings ...");
-	run_interactive("/usr/sbin/alsactl -g restore", "Restoring sound settings");
+	if (fexist(ALSACTL)) {
+		_d("Restoring sound settings ...");
+		run_interactive(ALSACTL " -g restore", "Restoring sound settings");
+	}
 }
 
 static plugin_t plugin = {
 	.name = __FILE__,
-	.hook[HOOK_BASEFS_UP] = {
-		.cb  = restore
-	},
-	.hook[HOOK_SHUTDOWN] = {
-		.cb  = save
-	}
+	.hook[HOOK_BASEFS_UP] = { .cb  = restore },
+	.hook[HOOK_SHUTDOWN]  = { .cb  = save    }
 };
 
 PLUGIN_INIT(plugin_init)
