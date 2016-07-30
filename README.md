@@ -116,7 +116,6 @@ Features
 
 Start, monitor and restart services should they fail.
 
-
 **Inetd**
 
 Finit comes with a built-in [inetd server](doc/inetd.md).  No need to
@@ -135,6 +134,14 @@ Built-in optional inetd services:
 - time (rdate) RFC868
 
 For more information, see [doc/inetd.md](doc/inetd.md).
+
+**Getty**
+
+Finit also comes with a built-in Getty for Linux console TTYs.
+
+    # /etc/finit.conf
+    tty [12345] /dev/tty1    115200 linux
+    tty [12345] /dev/ttyAMA0 115200 vt100
 
 **Runlevels**
 
