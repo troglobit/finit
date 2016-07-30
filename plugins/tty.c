@@ -37,7 +37,6 @@
 static void watcher(void *arg, int fd, int events);
 
 static plugin_t plugin = {
-	.name = __FILE__,
 	.io = {
 		.cb    = watcher,
 		.flags = PLUGIN_IO_READ,
@@ -51,7 +50,7 @@ static void setup(void)
 
 	plugin.io.fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 	if (-1 == plugin.io.fd || inotify_add_watch(plugin.io.fd, "/dev", IN_CREATE | IN_DELETE) < 0)
-		_e("Failed starting TTY watcher: %s", strerror(errno));
+		_pe("Failed starting TTY watcher");
 }
 
 static void watcher(void *UNUSED(arg), int fd, int UNUSED(events))
@@ -90,6 +89,9 @@ PLUGIN_INIT(plugin_init)
 
 PLUGIN_EXIT(plugin_exit)
 {
+	if (plugin.io.fd)
+		close(plugin.io.fd);
+
 	plugin_unregister(&plugin);
 }
 
