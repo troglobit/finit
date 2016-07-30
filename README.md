@@ -137,10 +137,12 @@ For more information, see [doc/inetd.md](doc/inetd.md).
 
 **Getty**
 
-Finit also comes with a built-in Getty for Linux console TTYs.
+Finit also comes with a built-in Getty for Linux console TTYs.  It can
+parse `/etc/inittab` and set the speed.  Then `/bin/login` handles all
+nasty bits with PAM etc.
 
     # /etc/finit.conf
-    tty [12345] /dev/tty1    115200 linux
+    tty [12345] /dev/tty1    38400  linux
     tty [12345] /dev/ttyAMA0 115200 vt100
 
 **Runlevels**
