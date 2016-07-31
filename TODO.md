@@ -35,7 +35,6 @@ General
   and `RELOAD` on `STDOUT` from a script ... call it for example
   `.monitor=` in `svc_t` ... the script named as the basename of the
   service it monitors + `.sh`.
-* Add support for `/etc/sysctl.d`
 * Implement `initctl stop|start|restart|reload|status <SVC>` and
   `service <SVC> stop|start|restart|reload|status` on top
 * Add support for JSON output, or similar, from `initctl show`, e.g.

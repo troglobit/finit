@@ -11,7 +11,8 @@ Bootstrap
 8. Enable SysV init signals
 9. Call 2nd level hooks, `HOOK_BASEFS_UP`
 10. Start all 'S' runlevel tasks and services
-11. Load kernel parameters from `/etc/sysctl.conf`
+11. Load kernel params from `/etc/sysctl.d/*.conf`, `/etc/sysctl.conf`
+    et al. (Supports all locations that SysV init does.)
 12. Set hostname and bring up loopback interface
 13. Call `network` script, if set in `/etc/finit.conf`
 14. Call 3rd level hooks, `HOOK_NETWORK_UP`
