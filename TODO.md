@@ -30,10 +30,6 @@ General
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
 * Add `IFF_RUNNING` support to netlink plugin along `IFF_IUP`
-* Add compile-time support for running `/bin/sh` instead of `getty`
-* Add `!` or `[wait <pidfile>]` to service directive to let finit pause
-  and wait for a pidfile before starting processes -- both at boot and
-  when starting processes in a runlevel.
 * Allow process callbacks to be scripts.
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
   and `RELOAD` on `STDOUT` from a script ... call it for example
@@ -49,8 +45,6 @@ General
 * Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
   instead.  This is the de-facto practice.  But keep the check command
   for really low-end systems w/o `/etc/fstab`.
-* Add support for generic events (strings or ubus events) that are passed
-  verbatim (?) to the service stanza definitions.
 
 
 Init
