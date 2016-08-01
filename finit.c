@@ -93,8 +93,10 @@ static int fsck(int pass)
 
 		errno = 0;
 		if (stat(fs->fs_spec, &st) || !S_ISBLK(st.st_mode)) {
-			_d("Cannot fsck %s, not a block device: %s", fs->fs_spec, strerror(errno));
-			continue;
+			if (!string_match(fs->fs_spec, "UUID=") && !string_match(fs->fs_spec, "LABEL=")) {
+				_d("Cannot fsck %s, not a block device: %s", fs->fs_spec, strerror(errno));
+				continue;
+			}
 		}
 
 		snprintf(cmd, sizeof(cmd), "/sbin/fsck -C -a %s", fs->fs_spec);
