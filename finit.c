@@ -90,7 +90,7 @@ static int fsck(int pass)
 		char cmd[80];
 		struct stat st;
 
-		if (fs->fs_passno < pass)
+		if (fs->fs_passno != pass)
 			continue;
 
 		errno = 0;
