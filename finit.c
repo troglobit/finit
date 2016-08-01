@@ -100,7 +100,7 @@ static int fsck(int pass)
 		}
 
 		snprintf(cmd, sizeof(cmd), "/sbin/fsck -C -a %s", fs->fs_spec);
-		run_interactive(cmd, "Checking file system %s", fs->fs_spec);
+		run_interactive(cmd, "Checking filesystem %13.13s", fs->fs_spec);
 	}
 
 	endfsent();
@@ -223,6 +223,14 @@ int main(int argc, char* argv[])
 	ctx = &loop;
 
 	/*
+	 * Check file filesystems in /etc/fstab
+	 */
+	for (int pass = 1; pass < 10; pass++) {
+		if (fsck(pass))
+			break;
+	}
+
+	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
 	 */
 	chdir("/");
@@ -267,14 +275,6 @@ int main(int argc, char* argv[])
 		touch("/dev/mdev.log");
 #endif
 	run_interactive(SETUP_DEVFS, "Populating device tree");
-
-	/*
-	 * Check file filesystems in /etc/fstab
-	 */
-	for (int pass = 1; pass < 10; pass++) {
-		if (fsck(pass))
-			break;
-	}
 
 	/*
 	 * Load plugins first, finit.conf may contain references to
