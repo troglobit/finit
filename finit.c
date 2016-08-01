@@ -27,7 +27,9 @@
 #include <ctype.h>
 #include <glob.h>
 #include <dirent.h>
+#ifdef HAVE_FSTAB_H
 #include <fstab.h>
+#endif
 #include <mntent.h>
 #include <sys/mount.h>
 #include <sys/stat.h>		/* umask(), mkdir() */

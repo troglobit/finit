@@ -24,7 +24,8 @@ AC_PROG_INSTALL
 
 # Configuration.
 AC_HEADER_STDC
-AC_CHECK_FUNCS(strstr getopt)
+AC_CHECK_HEADERS(fstaby.h)
+AC_CHECK_FUNCS(strstr getopt getfsenty)
 
 # Check for uint[8,16,32]_t
 AC_TYPE_UINT8_T

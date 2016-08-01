@@ -254,6 +254,45 @@ void set_hostname(char **hostname)
 		sethostname(*hostname, strlen(*hostname));
 }
 
+#ifndef HAVE_GETFSENT
+static lfile_t *fstab = NULL;
+
+int setfsent(void)
+{
+	if (fstab)
+		lfclose(fstab);
+
+	fstab = lfopen("/etc/fstab", " \t\n");
+	if (!fstab)
+		return 0;
+
+	return 1;
+}
+
+struct fstab *getfsent(void)
+{
+	static struct fstab fs;
+
+	fs.fs_spec    = lftok(fstab);
+	fs.fs_file    = lftok(fstab);
+	fs.fs_vfstype = lftok(fstab);
+	fs.fs_mntops  = lftok(fstab);
+	fs.fs_type    = (const char *)lftok(fstab);
+	fs.fs_freq    = atoi(lftok(fstab) ?: 0);
+	fs.fs_passno  = atoi(lftok(fstab) ?: 0);
+
+	return &fs;
+}
+
+void endfsent(void)
+{
+	if (fstab)
+		lfclose(fstab);
+
+	fstab = NULL;
+}
+#endif	/* HAVE_GETFSENT */
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t

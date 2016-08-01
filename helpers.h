@@ -86,6 +86,22 @@ int     run_interactive (char *cmd, char *fmt, ...);
 pid_t   run_getty       (char *tty, char *speed, char *term, int console);
 int     run_parts       (char *dir, char *cmd);
 
+#ifndef HAVE_GETFSENT
+struct fstab {
+	char       *fs_spec;       /* block device name */
+	char       *fs_file;       /* mount point */
+	char       *fs_vfstype;    /* file-system type */
+	char       *fs_mntops;     /* mount options */
+	const char *fs_type;       /* rw/rq/ro/sw/xx option */
+	int         fs_freq;       /* dump frequency, in days */
+	int         fs_passno;     /* pass number on parallel dump */
+};
+
+int           setfsent(void);
+void          endfsent(void);
+struct fstab *getfsent(void);
+#endif	/* HAVE_GETFSENT */
+
 #endif /* FINIT_HELPERS_H_ */
 
 /**
