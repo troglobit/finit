@@ -27,7 +27,8 @@ like what a SysV init start script usually does.
 Syntax:
 
 * `check <DEV>`  
-  Run fsck on a file system before mounting it
+  Run fsck on a file system.  Only needed if not listed in `/etc/fstab`,
+  Finit 3.0 and later check all file systems automatically at boot.
 
 * `module <MODULE>`  
   Load a kernel module, with optional arguments

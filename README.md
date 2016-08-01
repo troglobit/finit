@@ -58,7 +58,7 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
     # Fallback if /etc/hostname is missing
     host myhostname
     
-    # Devices to fsck at boot
+    # Devices to fsck at boot, only needed if not in /etc/fstab
     check /dev/vda1
     
     # Runlevel to start after bootstrap, runlevel 'S'

@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <glob.h>
 #include <dirent.h>
+#include <fstab.h>
 #include <mntent.h>
 #include <sys/mount.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
@@ -67,6 +68,40 @@ static int banner(void)
 		return 0;
 
 	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, 66 - (int)strlen(buf), separator);
+
+	return 0;
+}
+
+/*
+ * Check all filesystems in /etc/fstab with a fs_passno > 0
+ */
+static int fsck(int pass)
+{
+	struct fstab *fs;
+
+	if (!setfsent()) {
+		_pe("Failed opening fstab");
+		return 1;
+	}
+
+	while ((fs = getfsent())) {
+		char cmd[80];
+		struct stat st;
+
+		if (fs->fs_passno < pass)
+			continue;
+
+		errno = 0;
+		if (stat(fs->fs_spec, &st) || !S_ISBLK(st.st_mode)) {
+			_d("Cannot fsck %s, not a block device: %s", fs->fs_spec, strerror(errno));
+			continue;
+		}
+
+		snprintf(cmd, sizeof(cmd), "/sbin/fsck -C -a %s", fs->fs_spec);
+		run_interactive(cmd, "Checking file system %s", fs->fs_spec);
+	}
+
+	endfsent();
 
 	return 0;
 }
@@ -230,6 +265,14 @@ int main(int argc, char* argv[])
 		touch("/dev/mdev.log");
 #endif
 	run_interactive(SETUP_DEVFS, "Populating device tree");
+
+	/*
+	 * Check file filesystems in /etc/fstab
+	 */
+	for (int pass = 1; pass < 10; pass++) {
+		if (fsck(pass))
+			break;
+	}
 
 	/*
 	 * Load plugins first, finit.conf may contain references to
