@@ -101,8 +101,8 @@ static int fsck(int pass)
 			}
 		}
 
-		snprintf(cmd, sizeof(cmd), "/sbin/fsck -C -a %s", fs->fs_spec);
-		run_interactive(cmd, "Checking filesystem %13.13s", fs->fs_spec);
+		snprintf(cmd, sizeof(cmd), "/sbin/fsck -a %s", fs->fs_spec);
+		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
 	endfsent();
