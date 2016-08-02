@@ -274,12 +274,15 @@ struct fstab *getfsent(void)
 	static struct fstab fs;
 
 	fs.fs_spec    = lftok(fstab);
+	if (fs.fs_spec == NULL)
+		return NULL;
+
 	fs.fs_file    = lftok(fstab);
 	fs.fs_vfstype = lftok(fstab);
 	fs.fs_mntops  = lftok(fstab);
-	fs.fs_type    = (const char *)lftok(fstab);
-	fs.fs_freq    = atoi(lftok(fstab) ?: 0);
-	fs.fs_passno  = atoi(lftok(fstab) ?: 0);
+	fs.fs_type    = "rw";
+	fs.fs_freq    = atoi(lftok(fstab) ?: "0");
+	fs.fs_passno  = atoi(lftok(fstab) ?: "0");
 
 	return &fs;
 }
