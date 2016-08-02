@@ -79,12 +79,16 @@ static int banner(void)
  */
 static int fsck(int pass)
 {
+	int save;
 	struct fstab *fs;
 
 	if (!setfsent()) {
 		_pe("Failed opening fstab");
 		return 1;
 	}
+
+	save = debug;
+	debug = 0;
 
 	while ((fs = getfsent())) {
 		char cmd[80];
@@ -105,6 +109,7 @@ static int fsck(int pass)
 		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
+	debug = save;
 	endfsent();
 
 	return 0;
