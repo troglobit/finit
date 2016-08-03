@@ -38,7 +38,8 @@ Introduction
 Finit is a plugin-based init with [process supervision][1] similar to
 that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's [runit][3].
 The main focus of Finit is on small and embedded Linux systems, yet
-fully usable on server and desktop installations as well.
+fully usable on server and desktop installations as well.  See the
+`contrib/` section for Debian and Alpine examples.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
@@ -105,8 +106,8 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
 ```
 
 For an example of a full blown embedded Linux, see [TroglOS][9], or take
-a look at the `contrib/` section with [Alpine Linux](contrib/alpine/)
-support and more.
+a look at the `contrib/` section with [Alpine Linux](contrib/alpine/),
+[Debian](contrib/debian/), support and more.
 
 
 Features
