@@ -276,6 +276,10 @@ static int do_cond(char *cmd)
 	return do_cond_show(NULL);
 }
 
+static int do_halt    (char *UNUSED(arg)) { return kill(1, SIGUSR1); }
+static int do_poweroff(char *UNUSED(arg)) { return kill(1, SIGUSR2); }
+static int do_reboot  (char *UNUSED(arg)) { return kill(1, SIGTERM); }
+
 static int show_version(char *UNUSED(arg))
 {
 	puts("v" PACKAGE_VERSION);
@@ -413,6 +417,9 @@ static int usage(int rc)
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
+		"  reboot                    Reboot system\n"
+		"  halt                      Halt system\n"
+		"  poweroff                  Halt and power off system\n"
 		"  version                   Show Finit version\n\n", __progname);
 
 	return rc;
@@ -431,6 +438,9 @@ int main(int argc, char *argv[])
 		{ "start",    do_start     },
 		{ "stop",     do_stop      },
 		{ "restart",  do_restart   },
+		{ "reboot",   do_reboot    },
+		{ "halt",     do_halt      },
+		{ "poweroff", do_poweroff  },
 		{ "version",  show_version },
 		{ NULL, NULL }
 	};
