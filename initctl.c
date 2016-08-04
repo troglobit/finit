@@ -199,7 +199,6 @@ static int do_cond_magic(char op, char *cond)
 
 static int do_cond_set  (char *cond) { return do_cond_magic('+', cond); }
 static int do_cond_clear(char *cond) { return do_cond_magic('-', cond); }
-static int do_cond_flux (char *cond) { return do_cond_magic('~', cond); }
 
 static int do_cond_show(char *UNUSED(arg))
 {
@@ -260,7 +259,6 @@ static int do_cond(char *cmd)
 	command_t command[] = {
 		{ "set",     do_cond_set   },
 		{ "clear",   do_cond_clear },
-		{ "flux",    do_cond_flux  },
 		{ "show",    do_cond_show  },
 		{ NULL, NULL }
 	};
@@ -411,7 +409,6 @@ static int usage(int rc)
 		"  status | show             Show status of services\n"
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
 		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
-		"  cond     flux  <COND>     Emulate flux condition     => ~COND\n"
 		"  cond     show             Show condition status\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
