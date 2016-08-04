@@ -39,7 +39,7 @@ Finit is a plugin-based init with [process supervision][1] similar to
 that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's [runit][3].
 The main focus of Finit is on small and embedded Linux systems, yet
 fully usable on server and desktop installations as well.  See the
-`contrib/` section for Debian and Alpine examples.
+[contrib section](contrib/) for Debian and Alpine examples.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
@@ -57,18 +57,11 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
 
 ```
     # Fallback if /etc/hostname is missing
-    host myhostname
-    
-    # Devices to fsck at boot, only needed if not in /etc/fstab
-    check /dev/vda1
+    host wopr
     
     # Runlevel to start after bootstrap, runlevel 'S'
     runlevel 2
     
-    # Network bringup, not needed if /etc/network/interfaces exist
-    #network service networking start
-    #network /sbin/ifup -a
-
     # Services to be monitored and respawned as needed
     service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
     service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
@@ -77,14 +70,13 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
     
     # For multiple instances of the same service, add :ID somewhere between
     # the service/run/task keyword and the command.
-    service :1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
-    service :2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
+    service :1 [2345] /sbin/merecat -n -p 80   /var/www -- Web server
+    service :2 [2345] /sbin/merecat -n -p 8080 /var/www -- Old web server
 
     # Alternative method instead of below runparts, can also use /etc/rc.local
     #task [S] /etc/init.d/keyboard-setup start -- Setting up preliminary keymap
     #task [S] /etc/init.d/acpid start          -- Starting ACPI Daemon
     #task [S] /etc/init.d/kbd start            -- Preparing console
-    #run [2] /etc/init.d/networking start      -- Start networking
 
     # Inetd services to start on demand, with alternate ports and filtering
     inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
@@ -100,7 +92,7 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
     # Run start scripts from this directory
     # runparts /etc/start.d
     
-    # Virtual consoles to start getty on
+    # Virtual consoles to start built-in getty on
     tty [12345] /dev/tty1    115200 linux
     tty [12345] /dev/ttyAMA0 115200 vt100
 ```
