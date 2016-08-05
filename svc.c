@@ -431,12 +431,16 @@ char *svc_status(svc_t *svc)
 		switch (svc->block) {
 		case SVC_BLOCK_NONE:
 			return "halted";
+
 		case SVC_BLOCK_MISSING:
 			return "missing";
+
 		case SVC_BLOCK_CRASHING:
-			return "crashing";
+			return "crashed";
+
 		case SVC_BLOCK_USER:
 			return "blocked";
+
 		case SVC_BLOCK_INETD_BUSY:
 			return "busy";
 		}
@@ -450,6 +454,7 @@ char *svc_status(svc_t *svc)
 		case SVC_TYPE_RUN:
 		case SVC_TYPE_TASK:
 			return "active";
+
 		default:
 			return "stopping";
 		}
@@ -472,9 +477,9 @@ const char *svc_dirtystr(svc_t *svc)
 {
 	if (svc_is_removed(svc))
 		return "removed";
-	else if (svc_is_updated(svc))
+	if (svc_is_updated(svc))
 		return "updated";
-	else if (svc_is_changed(svc))
+	if (svc_is_changed(svc))
 		return "UNKNOWN";
 
 	return "clean";
