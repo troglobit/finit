@@ -18,8 +18,9 @@ The current state depends on the two following conditions:
   blocked.  A service may be blocked for several reasons:
 
   - The user has manually stopped the service using `initctl stop JOB`
-  - The binary repeatedly dies after being started. I.e. keeps crashing.
-  - The binary is missing in the filesystem.
+  - The program exits immediately. I.e. keeps crashing (make sure to use
+    the 'run this service in the foreground' command line option)
+  - The binary is missing in the filesystem
 
 * `C`: Service conditions are satisfied:
 
