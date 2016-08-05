@@ -66,7 +66,7 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
     service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
     service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
     service [S12345] /sbin/klogd -n                              -- Kernel log daemon
-    service    2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
+    service   [2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
     
     # For multiple instances of the same service, add :ID somewhere between
     # the service/run/task keyword and the command.
