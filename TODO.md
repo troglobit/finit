@@ -39,10 +39,6 @@ General
 * Add support for JSON output, or similar, from `initctl show`, e.g.
   `initctl show --json`
 * Add PRE and POST hooks for when switching between runlevels
-* Make sure to install `queue.h` to `$(PREFIX)/include/finit/queue.h`
-* Move `finit.conf` "check" command to plugin which checks `/etc/fstab`
-  instead.  This is the de-facto practice.  But keep the check command
-  for really low-end systems w/o `/etc/fstab`.
 
 
 Init
@@ -113,7 +109,7 @@ Support for monitoring the health of the system and its processes.
   - If a process is not heard from within its subscribed period time
     reboot system or restart process.
   - Add client libwdt library, inspired by old Westermo API and the
-    [libwdt] API published in the [Fritz!Box source dump], take for
+    [libwdt][] API published in the [Fritz!Box source dump][], take for
     instance the `fritzbox7170-source-files-04.87-tar.gz` drop and see
     the `GPL-release_kernel.tgz` in `drivers/char/avm_new/` for the
     kernel driver, and the `LGPL-GPL-release_target_tools.tgz` in `wdt/`
@@ -138,8 +134,6 @@ Documentation
 
 * Write man pages for finit and `finit.conf`, steal from the excellent
   `pimd` man pages ...
-* Update Debian `finit.conf` example with runlevels, `tty/console` and
-  dependency handling for Debian 8 (the dreaded systemd release).
 * Add simple, *very* simple, `finit-simple.conf` example. To illustrate
   how close Finit3 still is to the original easy-to-use Finit0 :)
 
