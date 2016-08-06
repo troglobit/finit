@@ -1,6 +1,6 @@
 /* New client tool, complements old /dev/initctl API and telinit tool
  *
- * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2015-2016  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <time.h>
+#include <utmp.h>
 #include <lite/lite.h>
 
 #include "config.h"
@@ -280,6 +282,46 @@ static int do_halt    (char *UNUSED(arg)) { return kill(1, SIGUSR1); }
 static int do_poweroff(char *UNUSED(arg)) { return kill(1, SIGUSR2); }
 static int do_reboot  (char *UNUSED(arg)) { return kill(1, SIGTERM); }
 
+static int do_utmp_show(char *file)
+{
+	time_t sec;
+	struct utmp *ut;
+	struct tm *sectm;
+
+	int pid;
+	char id[sizeof(ut->ut_id)], user[sizeof(ut->ut_user)], when[80];
+
+	printf("%s =============================================================================================\n", file);
+	utmpname(file);
+
+	setutent();
+	while ((ut = getutent())) {
+		memset(id, 0, sizeof(id));
+		strncpy(id, ut->ut_id, sizeof(ut->ut_id));
+
+		memset(user, 0, sizeof(user));
+		strncpy(user, ut->ut_user, sizeof(ut->ut_user));
+
+		sec = ut->ut_tv.tv_sec;
+		sectm = localtime(&sec);
+		strftime(when, sizeof(when), "%F %T", sectm);
+
+		pid = ut->ut_pid;
+
+		printf("[%d] [%05d] [%-4.4s] [%-8.8s] [%-12.12s] [%-20.20s] [%-15.15s] [%-19.19s]\n",
+		       ut->ut_type, pid, id, user, ut->ut_line, ut->ut_host, "0.0.0.0", when);
+	}
+	endutent();
+
+	return 0;
+}
+
+static int do_utmp(char *UNUSED(cmd))
+{
+	return  do_utmp_show(_PATH_UTMP) ||
+		do_utmp_show(_PATH_WTMP);
+}
+
 static int show_version(char *UNUSED(arg))
 {
 	puts("v" PACKAGE_VERSION);
@@ -420,6 +462,7 @@ static int usage(int rc)
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
 		"  poweroff                  Halt and power off system\n"
+		"  utmp     show             Raw dump of UTMP/WTMP db\n"
 		"  version                   Show Finit version\n\n", __progname);
 
 	return rc;
@@ -441,6 +484,7 @@ int main(int argc, char *argv[])
 		{ "reboot",   do_reboot    },
 		{ "halt",     do_halt      },
 		{ "poweroff", do_poweroff  },
+		{ "halt",     do_utmp      },
 		{ "version",  show_version },
 		{ NULL, NULL }
 	};
