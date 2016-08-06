@@ -484,7 +484,7 @@ int main(int argc, char *argv[])
 		{ "reboot",   do_reboot    },
 		{ "halt",     do_halt      },
 		{ "poweroff", do_poweroff  },
-		{ "halt",     do_utmp      },
+		{ "utmp",     do_utmp      },
 		{ "version",  show_version },
 		{ NULL, NULL }
 	};
