@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+int utmp_set (int type, int pid, char *user);
+int utmp_set_runlevel(int pre, int now);
 int utmp_show(char *file);
 
 /**

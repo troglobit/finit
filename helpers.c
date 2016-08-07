@@ -31,14 +31,13 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdarg.h>
-#include <string.h>
 #include <sys/ioctl.h>
-#include <utmp.h>
 #include <lite/lite.h>
 
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
+#include "utmp-api.h"
 
 char *strip_line(char *line)
 {
@@ -57,24 +56,9 @@ char *strip_line(char *line)
 	return line;
 }
 
-static int encode(int lvl)
-{
-	if (!lvl) return 0;
-	return lvl + '0';
-}
-
 void runlevel_set(int pre, int now)
 {
-	struct utmp utent;
-
-	memset(&utent, 0, sizeof(utent));
-	utent.ut_type  = RUN_LVL;
-	utent.ut_pid   = (encode(pre) << 8) | (encode(now) & 0xFF);
-	strlcpy(utent.ut_user, "runlevel", sizeof(utent.ut_user));
-
-	setutent();
-	pututline(&utent);
-	endutent();
+	utmp_set_runlevel(pre, now);
 }
 
 /**

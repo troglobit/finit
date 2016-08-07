@@ -24,6 +24,35 @@
 #include <stdio.h>
 #include <time.h>
 #include <utmp.h>
+#include <lite/lite.h>
+
+int utmp_set(int type, int pid, char *user)
+{
+	int result;
+	struct utmp ut;
+
+	memset(&ut, 0, sizeof(ut));
+	ut.ut_type  = type;
+	ut.ut_pid   = pid;
+	strlcpy(ut.ut_user, user, sizeof(ut.ut_user));
+
+	setutent();
+	result = pututline(&ut) ? 0 : 1;;
+	endutent();
+
+	return result;
+}
+
+static int encode(int lvl)
+{
+	if (!lvl) return 0;
+	return lvl + '0';
+}
+
+int utmp_set_runlevel(int pre, int now)
+{
+	return utmp_set(RUN_LVL, (encode(pre) << 8) | (encode(now) & 0xFF), "runlevel"); 
+}
 
 int utmp_show(char *file)
 {
