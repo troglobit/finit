@@ -15,7 +15,8 @@ else
 finit_LDADD       += -ldl
 endif
 
-initctl_SOURCES    = initctl.c svc.c helpers.c cond.c
+initctl_SOURCES    = initctl.c svc.c svc.h helpers.c helpers.h cond.c cond.h \
+		     utmp-api.c utmp-api.h
 initctl_CFLAGS     = $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
