@@ -70,6 +70,9 @@ static void setup(void *UNUSED(arg))
 	touch("/var/log/wtmp");
 	chmod("/var/log/wtmp", 0664);
 	chown("/var/log/wtmp", 0, getgroup("utmp"));
+	touch("/var/log/btmp");
+	chmod("/var/log/btmp", 0600);
+	chown("/var/log/btmp", 0, getgroup("utmp"));
 	touch("/var/log/lastlog");
 	chmod("/var/log/lastlog", 0664);
 	chown("/var/log/lastlog", 0, getgroup("utmp"));
