@@ -21,9 +21,11 @@
  * THE SOFTWARE.
  */
 
-int utmp_set (int type, int pid, char *user);
+int utmp_set         (int type, int pid, char *user, char *line, char *id);
+int utmp_set_boot    (void);
+int utmp_set_halt    (void);
 int utmp_set_runlevel(int pre, int now);
-int utmp_show(char *file);
+int utmp_show        (char *file);
 
 /**
  * Local Variables:

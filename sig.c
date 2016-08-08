@@ -78,6 +78,7 @@
 #include "private.h"
 #include "sig.h"
 #include "service.h"
+#include "utmp-api.h"
 
 static int   stopped = 0;
 static uev_t sigterm_watcher, sigusr1_watcher, sigusr2_watcher;
@@ -104,6 +105,9 @@ void do_shutdown(shutop_t op)
 
 	/* Call all shutdown hooks before rebooting... */
 	plugin_run_hooks(HOOK_SHUTDOWN);
+
+	/* Update UTMP db */
+	utmp_set_halt();
 
 	/* Here is where we signal watchdogd to do a forced reset for us */
 	_d("Sending SIGTERM to all processes.");

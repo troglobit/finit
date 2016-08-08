@@ -42,8 +42,9 @@
 #include "plugin.h"
 #include "service.h"
 #include "sig.h"
-#include "tty.h"
 #include "sm.h"
+#include "tty.h"
+#include "utmp-api.h"
 
 int   debug     = 0;
 int   quiet     = QUIET_MODE;	/* Delayed disable of silent mode. */
@@ -268,6 +269,9 @@ int main(int argc, char* argv[])
 	if (fisdir("/run") && !fismnt("/run"))
 		mount("tmpfs", "/run", "tmpfs", MS_NODEV, "mode=0755,size=10%");
 	umask(022);
+
+	/* Set BOOT_TIME UTMP entry */
+	utmp_set_boot();
 
 	/*
 	 * Parse kernel parameters
