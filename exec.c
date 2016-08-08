@@ -32,8 +32,9 @@
 #include <lite/lite.h>
 
 #include "finit.h"
-#include "sig.h"
 #include "helpers.h"
+#include "sig.h"
+#include "utmp-api.h"
 
 #define NUM_ARGS    16
 
@@ -104,6 +105,9 @@ int run(char *cmd)
 		/* Reset signal handlers that were set by the parent process */
 		for (i = 1; i < NSIG; i++)
 			DFLSIG(sa, i, 0);
+
+		/* Set INIT_PROCESS UTMP entry */
+		utmp_set_init(ttyname(0), 0);
 
 		/* Always redirect stdio for run() */
 		fp = fopen("/dev/null", "w");
@@ -216,12 +220,16 @@ int getty(char *tty, char *baud, char *term);
 
 pid_t run_getty(char *tty, char *speed, char *term, int console)
 {
-	pid_t pid = fork();
+	pid_t pid;
 
+	pid = fork();
 	if (!pid) {
 		/* Reset signal handlers that were set by the parent process */
 		sig_unblock();
 		setsid();
+
+		/* Set INIT_PROCESS UTMP entry */
+		utmp_set_init(tty, 0);
 
 		if (console)
 			prctl(PR_SET_NAME, "console", 0, 0, 0);

@@ -28,7 +28,7 @@
 #include <sys/utsname.h>
 #include <lite/lite.h>
 
-int utmp_set(int type, int pid, char *user, char *line, char *id)
+int utmp_set(int type, int pid, char *line, char *id, char *user)
 {
 	int result;
 	struct utmp ut;
@@ -48,9 +48,12 @@ int utmp_set(int type, int pid, char *user, char *line, char *id)
 	memset(&ut, 0, sizeof(ut));
 	ut.ut_type  = type;
 	ut.ut_pid   = pid;
-	strlcpy(ut.ut_user, user, sizeof(ut.ut_user));
-	strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
-	strlcpy(ut.ut_id, id, sizeof(ut.ut_id));
+	if (user)
+		strlcpy(ut.ut_user, user, sizeof(ut.ut_user));
+	if (line)
+		strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
+	if (id)
+		strlcpy(ut.ut_id, id, sizeof(ut.ut_id));
 	if (!uname(&uts))
 		strncpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
 	ut.ut_tv.tv_sec = time(NULL);
@@ -64,6 +67,41 @@ int utmp_set(int type, int pid, char *user, char *line, char *id)
 	return result;
 }
 
+int utmp_set_boot(void)
+{
+	return utmp_set(BOOT_TIME, 0, NULL, NULL, "reboot");
+}
+
+int utmp_set_halt(void)
+{
+	return utmp_set(RUN_LVL, 0, NULL, NULL, "shutdown");
+}
+
+int utmp_set_init(char *tty, char *id)
+{
+	char *line;
+
+	if (!tty)
+		line = "";
+	else if (!strncmp(tty, "/dev/", 5))
+		line = tty + 5;
+	else
+		line = tty;
+
+	if (!id) {
+		id = line;
+		if (!strncmp(id, "pts/", 4))
+			id += 4;
+	}
+
+	return utmp_set(INIT_PROCESS, getpid(), line, id, NULL);
+}
+
+int utmp_set_dead(int pid)
+{
+	return utmp_set(DEAD_PROCESS, pid, NULL, NULL, NULL);
+}
+
 static int encode(int lvl)
 {
 	if (!lvl) return 0;
@@ -73,16 +111,6 @@ static int encode(int lvl)
 int utmp_set_runlevel(int pre, int now)
 {
 	return utmp_set(RUN_LVL, (encode(pre) << 8) | (encode(now) & 0xFF), "runlevel", NULL, NULL);
-}
-
-int utmp_set_boot(void)
-{
-	return utmp_set(BOOT_TIME, 0, "reboot", NULL, NULL);
-}
-
-int utmp_set_halt(void)
-{
-	return utmp_set(RUN_LVL, 0, "shutdown", NULL, NULL);
 }
 
 int utmp_show(char *file)
