@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <utmp.h>
+#include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <lite/lite.h>
 
@@ -98,6 +99,8 @@ int utmp_show(char *file)
 
 	setutent();
 	while ((ut = getutent())) {
+		char addr[64];
+
 		memset(id, 0, sizeof(id));
 		strncpy(id, ut->ut_id, sizeof(ut->ut_id));
 
@@ -109,9 +112,13 @@ int utmp_show(char *file)
 		strftime(when, sizeof(when), "%F %T", sectm);
 
 		pid = ut->ut_pid;
+		if (ut->ut_addr_v6[1] || ut->ut_addr_v6[2] || ut->ut_addr_v6[3])
+			inet_ntop(AF_INET6, ut->ut_addr_v6, addr, sizeof(addr));
+		else
+			inet_ntop(AF_INET, &ut->ut_addr, addr, sizeof(addr));
 
 		printf("[%d] [%05d] [%-4.4s] [%-8.8s] [%-12.12s] [%-20.20s] [%-15.15s] [%-19.19s]\n",
-		       ut->ut_type, pid, id, user, ut->ut_line, ut->ut_host, "0.0.0.0", when);
+		       ut->ut_type, pid, id, user, ut->ut_line, ut->ut_host, addr, when);
 	}
 	endutent();
 

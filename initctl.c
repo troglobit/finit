@@ -26,6 +26,7 @@
 #include <glob.h>
 #include <paths.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <lite/lite.h>
