@@ -55,6 +55,8 @@ int utmp_set(int type, int pid, char *user, char *line, char *id)
 	ut.ut_tv.tv_sec = time(NULL);
 
 	setutent();
+	while (getutent())
+		;
 	result = pututline(&ut) ? 0 : 1;;
 	endutent();
 

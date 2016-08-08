@@ -270,9 +270,6 @@ int main(int argc, char* argv[])
 		mount("tmpfs", "/run", "tmpfs", MS_NODEV, "mode=0755,size=10%");
 	umask(022);
 
-	/* Set BOOT_TIME UTMP entry */
-	utmp_set_boot();
-
 	/*
 	 * Parse kernel parameters
 	 */

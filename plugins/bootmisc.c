@@ -22,21 +22,19 @@
  */
 
 #include <string.h>
-#include <utmp.h>
 #include <lite/lite.h>
 
 #include "../config.h"
 #include "../finit.h"
 #include "../helpers.h"
 #include "../plugin.h"
+#include "../utmp-api.h"
 
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
 static void setup(void *UNUSED(arg))
 {
-	struct utmp entry;
-
 	_d("Setting up FHS structure in /var ...");
 	makedir("/var/cache",      0755);
 	makedir("/var/games",      0755);
@@ -77,8 +75,8 @@ static void setup(void *UNUSED(arg))
 	chmod("/var/log/lastlog", 0664);
 	chown("/var/log/lastlog", 0, getgroup("utmp"));
 
-	_d("Setting initial runlevel 'S', bootstrap ...");
-	runlevel_set(0, 0);	/* Bootstrap 'S' */
+	/* Set BOOT_TIME UTMP entry */
+	utmp_set_boot();
 
 #ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
 	touch("/etc/network/run/ifstate");
