@@ -31,14 +31,12 @@
 
 static void setup(void *UNUSED(arg))
 {
-#ifdef HAVE_DBUS
 	_d("Starting D-Bus ...");
 	makedir("/var/run/dbus", 0755);
 	makedir("/var/lock/subsys/messagebus", 0755);
 	run("dbus-uuidgen --ensure");
 	erase("/var/run/dbus/pid");
 	run_interactive("dbus-daemon --system", "Starting D-Bus");
-#endif
 }
 
 static plugin_t plugin = {
