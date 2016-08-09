@@ -46,14 +46,14 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 	}
 
 	memset(&ut, 0, sizeof(ut));
-	ut.ut_type  = type;
-	ut.ut_pid   = pid;
+	ut.ut_type = type;
+	ut.ut_pid  = pid;
 	if (user)
-		strlcpy(ut.ut_user, user, sizeof(ut.ut_user));
+		strncpy(ut.ut_user, user, sizeof(ut.ut_user));
 	if (line)
-		strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
+		strncpy(ut.ut_line, line, sizeof(ut.ut_line));
 	if (id)
-		strlcpy(ut.ut_id, id, sizeof(ut.ut_id));
+		strncpy(ut.ut_id, id, sizeof(ut.ut_id));
 	if (!uname(&uts))
 		strncpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
 	ut.ut_tv.tv_sec = time(NULL);
