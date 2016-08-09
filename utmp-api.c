@@ -110,7 +110,7 @@ static int encode(int lvl)
 
 int utmp_set_runlevel(int pre, int now)
 {
-	return utmp_set(RUN_LVL, (encode(pre) << 8) | (encode(now) & 0xFF), "runlevel", NULL, NULL);
+	return utmp_set(RUN_LVL, (encode(pre) << 8) | (encode(now) & 0xFF), NULL, NULL, "runlevel");
 }
 
 int utmp_show(char *file)
