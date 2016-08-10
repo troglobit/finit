@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <err.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <glob.h>
@@ -278,9 +279,17 @@ static int do_cond(char *cmd)
 	return do_cond_show(NULL);
 }
 
-static int do_halt    (char *UNUSED(arg)) { return kill(1, SIGUSR1); }
-static int do_poweroff(char *UNUSED(arg)) { return kill(1, SIGUSR2); }
-static int do_reboot  (char *UNUSED(arg)) { return kill(1, SIGTERM); }
+static int do_signal(int signo, const char *msg)
+{
+	if (kill(1, signo))
+		err(1, "Failed signalling init to %s", msg);
+
+	return 0;
+}
+
+static int do_halt    (char *UNUSED(arg)) { return do_signal(SIGUSR1, "halt");      }
+static int do_poweroff(char *UNUSED(arg)) { return do_signal(SIGUSR2, "power off"); }
+static int do_reboot  (char *UNUSED(arg)) { return do_signal(SIGTERM, "reboot");    }
 
 static int do_utmp(char *UNUSED(cmd))
 {
