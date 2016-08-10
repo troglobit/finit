@@ -26,6 +26,7 @@
 #include <getopt.h>
 #include <glob.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
