@@ -205,6 +205,7 @@ static int fismnt(char *dir)
 int main(int argc, char* argv[])
 {
 	int err;
+	char *devfsd;
 	uev_ctx_t loop;
 
 	/*
@@ -247,12 +248,14 @@ int main(int argc, char* argv[])
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
 
-#ifndef EMBEDDED_SYSTEM
+	/*
+	 * Some non-embedded systems without an initramfs may not have /dev mounted yet
+	 * If they do, check if system has udevadm and perform cleanup from initramfs
+	 */
 	if (!fismnt("/dev"))
 		mount("udev", "/dev", "devtmpfs", MS_RELATIME, "size=10%,nr_inodes=61156,mode=755");
-	else
+	else if (fexist("/sbin/udevadm"))
 		run_interactive("/sbin/udevadm info --cleanup-db", "Cleaning up udev db");
-#endif
 
 	/* Some systems use /dev/pts */
 	makedir("/dev/pts", 0755);
@@ -278,11 +281,18 @@ int main(int argc, char* argv[])
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
-#ifdef EMBEDDED_SYSTEM
-	if (debug)
-		touch("/dev/mdev.log");
-#endif
-	run_interactive(SETUP_DEVFS, "Populating device tree");
+	if (fexist("/sbin/mdev")) {
+		/* Embedded Linux systems usually have BusyBox mdev */
+		if (debug)
+			touch("/dev/mdev.log");
+		devfsd = "/sbin/mdev -s";
+	} else {
+		if (fexist("/sbin/udevd"))
+			devfsd = "/sbin/udevd --daemon";
+		else
+			devfsd = "/lib/systemd/systemd-udevd --daemon";
+	}
+	run_interactive(devfsd, "Populating device tree");
 
 	/*
 	 * Load plugins first, finit.conf may contain references to
@@ -311,9 +321,9 @@ int main(int argc, char* argv[])
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 
-#ifndef EMBEDDED_SYSTEM
-	run_interactive("/lib/udev/udev-finish", "Finalizing udev");
-#endif
+	/* Debian has this little script to copy generated rules while the system was read-only */
+	if (fexist("/lib/udev/udev-finish"))
+		run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 
 	_d("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);

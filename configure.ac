@@ -37,11 +37,8 @@ PKG_CHECK_MODULES([uev],  [libuev >= 1.4.0])
 PKG_CHECK_MODULES([lite], [libite >= 1.5.0])
 
 # Check for configured Finit features
-AC_ARG_ENABLE(embedded,
-        AS_HELP_STRING([--enable-embedded], [Embedded defaults, BusBox getty, mdev etc.]))
-
 AC_ARG_ENABLE(rw-rootfs,
-        AS_HELP_STRING([--enable-rw-rootfs], [Remount / as read-write at boot, not for embedded]))
+        AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]))
 
 AC_ARG_ENABLE(silent,
         AS_HELP_STRING([--enable-silent], [Completely silent operation, not even boot messages]))
@@ -120,12 +117,6 @@ AC_ARG_WITH(random-seed,
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defautls
-AS_IF([test "x$enable_embedded" = "xyes"],[
-	AC_DEFINE(EMBEDDED_SYSTEM, 1,                [Target an embedded system with BusyBox])
-	AC_DEFINE(SETUP_DEVFS,     "/sbin/mdev -s",  [Command to populate /dev])
-	],[
-        AC_DEFINE(SETUP_DEVFS,     "/sbin/udevd --daemon", [Command to populate /dev])])
-
 AS_IF([test "x$enable_rw_rootfs" = "xyes"],[
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
