@@ -24,6 +24,7 @@ initctl_LDADD      = $(lite_LIBS)
 reboot_SOURCES     = reboot.c
 
 INIT_LNKS          = telinit init
+REBOOT_LNKS        = shutdown halt suspend
 SUBDIRS            = plugins
 doc_DATA           = README.md LICENSE finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf
@@ -41,7 +42,7 @@ endif
 # Compat hook
 install-dev: install-pkgincludeHEADERS
 
-# Hook in install to add finit --> telinit symlink(s)
+# Hook in install to add finit and reboot symlink(s)
 install-exec-hook:
 	@for file in $(INIT_LNKS); do				\
 		lnk=$(DESTDIR)$(sbindir)/$$file;		\
@@ -51,6 +52,18 @@ install-exec-hook:
 			$(LN_S) finit $$lnk;			\
 		fi;						\
 	done
+	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
+		echo "Non-finit reboot, skipping.";		\
+	else							\
+		for file in $(REBOOT_LNKS); do			\
+			link=$(DESTDIR)$(sbindir)/$$file;	\
+			if [ -e $$link ]; then			\
+				echo "$$link exists, skipping.";\
+			else					\
+				$(LN_S) reboot $$link;		\
+			fi;					\
+		done;						\
+	fi
 
 uninstall-hook:
 	@for file in $(INIT_LNKS); do				\
@@ -61,6 +74,16 @@ uninstall-hook:
 		fi;						\
 		$(RM) $(DESTDIR)$(sbindir)/$$file;		\
 	done
+	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
+		echo "Non-finit reboot, skipping uninstall.";	\
+	else							\
+		for file in $(REBOOT_LNKS); do			\
+			if [ "`readlink $$file`" != "reboot" ]; \
+				then continue; 			\
+			fi;					\
+			$(RM) $(DESTDIR)$(sbindir)/$$file;	\
+		done;						\
+	fi
 
 # Target to run when building a release
 release: dist
