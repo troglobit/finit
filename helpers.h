@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>		/* strerror() */
 #include <syslog.h>
+#include <sys/types.h>
 
 #define DO_LOG(level, fmt, args...)				\
 do {								\

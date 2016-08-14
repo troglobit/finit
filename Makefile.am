@@ -1,8 +1,8 @@
 ACLOCAL_AMFLAGS    = -I m4
 sbin_PROGRAMS      = finit initctl reboot
-finit_SOURCES      = finit.c api.c client.c conf.c exec.c getty.c helpers.c \
-		     mount.c pid.c sig.c svc.c service.c plugin.c tty.c	    \
-		     cond.c cond-w.c sm.c utmp-api.c utmp-api.h
+finit_SOURCES      = finit.c api.c client.c cond.c cond-w.c conf.c exec.c \
+		     getty.c helpers.c mdadm.c mount.c pid.c plugin.c     \
+		     service.c sig.c svc.c sm.c tty.c utmp-api.c utmp-api.h
 pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h plugin.h svc.h
 if INETD
 finit_SOURCES     += inetd.c

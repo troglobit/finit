@@ -86,6 +86,7 @@ static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
 static uev_t sigchld_watcher, sigsegv_watcher;
 static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
+void mdadm_wait(void);
 void unmount_tmpfs(void);
 void unmount_regular(void);
 
@@ -155,7 +156,8 @@ void do_shutdown(shutop_t op)
 	run("/bin/mount -n -o remount,ro dummydev /");
 	run("/bin/mount -n -o remount,ro /");
 
-	/* XXX: Call mdadm to mark RAID array(s) as clean before halting. */
+	/* Call mdadm to mark any RAID array(s) as clean before halting. */
+	mdadm_wait();
 
 	_d("%s.", op == SHUT_REBOOT ? "Rebooting" : "Halting");
 	if (op == SHUT_REBOOT)
