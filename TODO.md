@@ -20,6 +20,8 @@ General
 
 * Add halt/poweroff/shutdown symlinks to finit and convert reboot, but
   only install symlinks if these tools don't already exist.
+* Step state machine at shutdown instead of killing, same as shifting to
+  runlevel 0 or 6, then call external (newly installed?) tool to reboot.
 * Add support for timed shutdown in Finit, including cancelled shutdown.
 * SysV init and systemd use SIGUSR1 to restart their FIFO/D-Bus.  Add
   API restart to SIGHUP callback for the same functionality in Finit.
