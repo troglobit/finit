@@ -25,8 +25,8 @@ reboot_SOURCES     = reboot.c
 
 SYMLINK            = telinit init
 SUBDIRS            = plugins
-doc_DATA           = README.md LICENSE finit.conf services
-EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf services
+doc_DATA           = README.md LICENSE finit.conf
+EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf
 AM_CPPFLAGS        = -U_FORTIFY_SOURCE
 AM_CPPFLAGS       += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 

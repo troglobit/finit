@@ -1,7 +1,12 @@
 #!/bin/sh
 # Alternative boot method for other distributions than Debian 6.0
-# Place this file in a /etc/finit.d/ directory. At boot finit will
-# run all files, using its built-in run_parts(), in that directory.
+# Place this file in a /etc/start.d/ directory and add the following
+# line to /etc/finit.conf:
+#
+# runparts /etc/start.d
+#
+# At boot finit will run all files, using its built-in run_parts(),
+# in that directory.
 #
 # Here we chain load Debian /etc/rcS.d and /etc/rc2.d directories
 # in sequence using the standard run-parts tool.
