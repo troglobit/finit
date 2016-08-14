@@ -138,8 +138,6 @@ int main(int argc, char *argv[])
 	translate();
 
 	if (force) {
-		sync();
-
 		switch (cmd) {
 		case CMD_REBOOT:
 			c = reboot(RB_AUTOBOOT);
