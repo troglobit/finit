@@ -101,4 +101,7 @@ endif
 # Clean up .la files installed by libtool despite being in -module mode
 install-exec-hook:
 	@(cd $(DESTDIR)$(pkglibdir) && $(RM) $(pkglib_LTLIBRARIES))
+
+uninstall-hook:
+	@(cd $(DESTDIR)$(pkglibdir) && for file in $(pkglib_LTLIBRARIES); do $(RM) `basename $$file .la`.so; done)
 endif
