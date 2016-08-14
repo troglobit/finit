@@ -86,6 +86,9 @@ static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
 static uev_t sigchld_watcher, sigsegv_watcher;
 static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
+void unmount_tmpfs(void);
+void unmount_regular(void);
+
 
 void do_shutdown(shutop_t op)
 {
@@ -141,16 +144,18 @@ void do_shutdown(shutop_t op)
 	}
 
 	/* Unmount any tmpfs before unmounting swap ... */
-	run("/bin/umount -r -a");
+	unmount_tmpfs();
 	run("/sbin/swapoff -e -a");
 
-	/* Now, unmount everything else ... err, just force it. */
-	run("/bin/umount -n -f -r -a");
+	/* ... unmount remaining regular file systems. */
+	unmount_regular();
 
 	/* We sit on / so we must remount it ro, try all the things! */
 	run("/bin/mount -n -o remount,ro -t dummytype dummydev /");
 	run("/bin/mount -n -o remount,ro dummydev /");
 	run("/bin/mount -n -o remount,ro /");
+
+	/* XXX: Call mdadm to mark RAID array(s) as clean before halting. */
 
 	_d("%s.", op == SHUT_REBOOT ? "Rebooting" : "Halting");
 	if (op == SHUT_REBOOT)
