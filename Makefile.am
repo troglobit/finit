@@ -23,7 +23,7 @@ initctl_LDADD      = $(lite_LIBS)
 
 reboot_SOURCES     = reboot.c
 
-SYMLINK            = telinit init
+INIT_LNKS          = telinit init
 SUBDIRS            = plugins
 doc_DATA           = README.md LICENSE finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf
@@ -43,18 +43,22 @@ install-dev: install-pkgincludeHEADERS
 
 # Hook in install to add finit --> telinit symlink(s)
 install-exec-hook:
-	@for file in $(SYMLINK); do				\
-		link=$(DESTDIR)$(sbindir)/$$file;		\
-		if [ -e $$link ]; then				\
-			echo "Skipping $$link exists already.";	\
+	@for file in $(INIT_LNKS); do				\
+		lnk=$(DESTDIR)$(sbindir)/$$file;		\
+		if [ -e $$lnk ]; then				\
+			echo "Skipping $$lnk exists already.";	\
 		else						\
-			$(LN_S) finit $$link;			\
+			$(LN_S) finit $$lnk;			\
 		fi;						\
 	done
 
 uninstall-hook:
-	@for file in $(SYMLINK); do				\
-		test "`readlink $$link`" = "finit" || continue;	\
+	@for file in $(INIT_LNKS); do				\
+		lnk=`readlink $(DESTDIR)$(sbindir)/$$file`;	\
+		if [ "$$lnk" != "finit" ]; then			\
+			echo "Skipping non-finit $$file.";	\
+			continue;				\
+		fi;						\
 		$(RM) $(DESTDIR)$(sbindir)/$$file;		\
 	done
 
