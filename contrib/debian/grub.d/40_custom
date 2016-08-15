@@ -4,12 +4,11 @@ exec tail -n +3 $0
 # menu entries you want to add after this comment.  Be careful not to change
 # the 'exec tail' line above.
 
-menuentry 'Debian GNU/Linux with Finit' --class debian --class gnu-linux --class gnu --class os --user {
+menuentry '$MENU with Finit' --class $TYPE --class gnu-linux --class gnu --class os --user {
 	insmod gzio
 	insmod part_msdos
 	insmod ext2
-	set root='(hd0,0)'
-	search --no-floppy --fs-uuid --set=root  05831a47-bf7c-4812-9cb2-818537aa68fc
-	linux	/vmlinuz root=UUID=05831a47-bf7c-4812-9cb2-818537aa68fc ro quiet init=/sbin/finit
+	search --no-floppy --fs-uuid --set=root $BOOT
+	linux	/vmlinuz root=UUID=$ROOT ro quiet init=/sbin/finit
 	initrd	/initrd.img
 }

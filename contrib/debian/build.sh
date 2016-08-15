@@ -24,7 +24,7 @@ echo
 	--with-heading="Debian GNU/Linux 8.5" --with-hostname=jessie               \
 	--enable-inetd-echo-plugin --enable-inetd-chargen-plugin                   \
 	--enable-inetd-daytime-plugin --enable-inetd-discard-plugin                \
-	--enable-inetd-time-plugin 
+	--enable-inetd-time-plugin
 
 if [ $? -ne 0 ]; then
     echo
