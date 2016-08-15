@@ -11,7 +11,8 @@ look for libraries and header files there.  So the `PKG_CONFIG_LIBDIR`
 environment variable has to be used:
 
     alpine:~/finit# PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure \
-        --enable-embedded --enable-rw-rootfs --enable-inetd-echo-plugin    \
+        --enable-rw-rootfs            --enable-x11-common-plugin           \
+        --enable-alsa-utils-plugin    --enable-inetd-echo-plugin           \
         --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin        \
         --enable-inetd-discard-plugin --enable-inetd-time-plugin           \
         --with-heading="Alpine Linux 3.4" --with-hostname=alpine
