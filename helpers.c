@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <lite/lite.h>
+#include <lite/conio.h>
 
 #include "finit.h"
 #include "helpers.h"

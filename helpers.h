@@ -43,20 +43,6 @@ do {								\
 #define FLOG_ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
 #define FLOG_PERROR(fmt, args...) DO_LOG(LOG_CRIT, fmt ". Error %d: %s", ##args, errno, strerror(errno))
 
-
-/* Esc[2JEsc[1;1H          Clear screen and move cursor to 1,1 (upper left) pos. */
-#define clrscr()           fputs("\e[2J\e[1;1H", stderr)
-/* Esc[K                   Erases from the current cursor position to the end of the current line. */
-#define clreol()           fputs("\e[K", stderr)
-/* Esc[2K                  Erases the entire current line. */
-#define delline()          fputs("\e[2K", stderr)
-/* Esc[Line;ColumnH        Moves the cursor to the specified position (coordinates) */
-#define gotoxy(x,y)        fprintf(stderr, "\e[%d;%dH", y, x)
-/* Esc[?25l (lower case L) Hide Cursor */
-#define hidecursor()       fputs("\e[?25l", stderr)
-/* Esc[?25h (lower case H) Show Cursor */
-#define showcursor()       fputs("\e[?25h", stderr)
-
 #define echo(fmt, args...) do {              fprintf(stderr,                    fmt "\n", ##args); } while (0)
 #define   _d(fmt, args...) do { if (debug) { fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } } while (0)
 #define   _e(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
