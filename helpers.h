@@ -25,15 +25,25 @@
 #ifndef FINIT_HELPERS_H_
 #define FINIT_HELPERS_H_
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>		/* strerror() */
 #include <syslog.h>
 #include <sys/types.h>
 
-#define echo(fmt, args...) do {              fprintf(stderr,                    fmt "\n", ##args); } while (0)
-#define   _d(fmt, args...) do { if (debug) { fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } } while (0)
-#define   _e(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
-#define  _pe(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt ". Error %d: %s\n", __FILE__, __func__, ##args, errno, strerror(errno)); } while (0)
+/*
+ * Error and debug messages
+ *
+ * Use of logit() is preferred, but these are guaranteed to display on
+ * /dev/console as well.  Useful for critical errors and early debug.
+ */
+#define   _l(prio, fmt, args...) do { if (_slup) warnx(fmt "\n", ##args); logit(prio, fmt, ##args); } while (0)
+#define   _m(prio, fmt, args...) do { _l(prio, "finit:%s:%s() - " fmt, __FILE__, __func__, ##args); } while (0)
+#define   _d(fmt, args...)  do { if (debug) { _m(LOG_DEBUG, fmt, ##args); } } while (0)
+#define   _e(fmt, args...)  do { _m(LOG_ERR, fmt, ##args); } while (0)
+#define  _pe(fmt, args...)  do { _m(LOG_ERR, fmt ". Error %d: %s", ##args, errno, strerror(errno)); } while (0)
+
+extern int _slup;		/* INTERNAL: Is syslog up yet? */
 
 char   *strip_line      (char *line);
 

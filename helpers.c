@@ -39,6 +39,8 @@
 #include "private.h"
 #include "utmp-api.h"
 
+int _slup = 0;			/* INTERNAL: Is syslog up yet? */
+
 char *strip_line(char *line)
 {
 	char *ptr;
@@ -183,18 +185,17 @@ int print_result(int fail)
 void logit(int prio, const char *fmt, ...)
 {
     va_list    ap;
-    static int active = 0;
 
     va_start(ap, fmt);
-    if (!active && !fexist("/dev/log")) {
+    if (!_slup && !fexist("/dev/log")) {
 	    vfprintf(stderr, fmt, ap);
 	    va_end(ap);
 	    return;
     }
 
-    if (!active) {
+    if (!_slup) {
 	    openlog("finit", LOG_PID, LOG_DAEMON);
-	    active = 1;
+	    _slup = 1;
     }
 
     vsyslog(prio, fmt, ap);
