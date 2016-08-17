@@ -152,7 +152,6 @@ static int service_start(svc_t *svc)
 	pid = fork();
 	if (pid == 0) {
 		int status;
-		char id[5];
 		char *home = NULL;
 #ifdef ENABLE_STATIC
 		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
@@ -160,10 +159,6 @@ static int service_start(svc_t *svc)
 		int uid = getuser(svc->username, &home);
 #endif
 		char *args[MAX_NUM_SVC_ARGS];
-
-		/* Set INIT_PROCESS UTMP entry */
-		snprintf(id, sizeof(id), "%d", svc->job);
-		utmp_set_init(ttyname(0), id);
 
 		/* Set desired user */
 		if (uid >= 0) {
@@ -666,9 +661,6 @@ void service_monitor(pid_t lost)
 {
 	svc_t *svc;
 	char pidfile[MAX_ARG_LEN];
-
-	/* Set DEAD_PROCESS UTMP entry */
-	utmp_set_dead(lost);
 
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;

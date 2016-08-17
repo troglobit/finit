@@ -31,6 +31,7 @@
 #include "conf.h"
 #include "helpers.h"
 #include "tty.h"
+#include "utmp-api.h"
 
 LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
@@ -197,6 +198,9 @@ int tty_respawn(pid_t pid)
 
 	if (!entry)
 		return 0;
+
+	/* Set DEAD_PROCESS UTMP entry */
+	utmp_set_dead(pid);
 
 	/* Clear PID to be able to respawn it. */
 	entry->data.pid = 0;

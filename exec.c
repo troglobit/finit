@@ -106,9 +106,6 @@ int run(char *cmd)
 		for (i = 1; i < NSIG; i++)
 			DFLSIG(sa, i, 0);
 
-		/* Set INIT_PROCESS UTMP entry */
-		utmp_set_init(ttyname(0), 0);
-
 		/* Always redirect stdio for run() */
 		fp = fopen("/dev/null", "w");
 		if (fp) {
