@@ -173,6 +173,34 @@ int print_result(int fail)
 	return fail;
 }
 
+/*
+ * Log to stderr until syslogd has started, then openlog() and continue
+ * logging as a regular daemon.
+ *
+ * TODO: Log to /dev/kmsg instead of stderr until syslogd has started
+ *       Need to convert facility+prio => "<VAL> msg"
+ */
+void logit(int prio, const char *fmt, ...)
+{
+    va_list    ap;
+    static int active = 0;
+
+    va_start(ap, fmt);
+    if (!active && !fexist("/dev/log")) {
+	    vfprintf(stderr, fmt, ap);
+	    va_end(ap);
+	    return;
+    }
+
+    if (!active) {
+	    openlog("finit", LOG_PID, LOG_DAEMON);
+	    active = 1;
+    }
+
+    vsyslog(prio, fmt, ap);
+    va_end(ap);
+}
+
 int getuser(char *username, char **home)
 {
 #ifdef ENABLE_STATIC

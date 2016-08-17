@@ -277,7 +277,7 @@ int getty(char *tty, char *baud, char *UNUSED(term))
 	if (baud) {
 		speed = do_parse_speed(baud);
 		if (speed == B0) {
-			FLOG_ERROR("TTY %s: Invalid speed %s", tty, baud);
+			logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
 			return 1;
 		}
 	}

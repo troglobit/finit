@@ -30,19 +30,6 @@
 #include <syslog.h>
 #include <sys/types.h>
 
-#define DO_LOG(level, fmt, args...)				\
-do {								\
-	openlog("finit", LOG_CONS | LOG_PID, LOG_DAEMON);	\
-	syslog(level, fmt, ##args);				\
-	closelog();						\
-} while (0)
-
-#define FLOG_DEBUG(fmt, args...)  DO_LOG(LOG_DEBUG, fmt, ##args)
-#define FLOG_INFO(fmt, args...)   DO_LOG(LOG_INFO, fmt, ##args)
-#define FLOG_WARN(fmt, args...)   DO_LOG(LOG_WARNING, fmt, ##args)
-#define FLOG_ERROR(fmt, args...)  DO_LOG(LOG_CRIT, fmt, ##args)
-#define FLOG_PERROR(fmt, args...) DO_LOG(LOG_CRIT, fmt ". Error %d: %s", ##args, errno, strerror(errno))
-
 #define echo(fmt, args...) do {              fprintf(stderr,                    fmt "\n", ##args); } while (0)
 #define   _d(fmt, args...) do { if (debug) { fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } } while (0)
 #define   _e(fmt, args...) do {              fprintf(stderr, "finit:%s:%s() - " fmt "\n", __FILE__, __func__, ##args); } while (0)
@@ -61,6 +48,9 @@ void    procname_set    (char *name, char *args[]);
 void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
+
+void    logit           (int prio, const char *fmt, ...);
+
 int     start_process   (char *cmd, char *args[], int console);
 void    do_sleep        (unsigned int sec);
 int     getuser         (char *username, char **home);

@@ -685,7 +685,7 @@ void service_monitor(pid_t lost)
 	snprintf(pidfile, sizeof(pidfile), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
 	if (remove(pidfile)) {
 		if (errno != ENOENT)
-			FLOG_PERROR("Failed removing service %s pidfile %s", basename(svc->cmd), pidfile);
+			logit(LOG_CRIT, "Failed removing service %s pidfile %s", basename(svc->cmd), pidfile);
 	}
 
 	/* No longer running, update books. */

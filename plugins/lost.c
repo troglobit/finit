@@ -34,7 +34,7 @@ static void lost_pid(void *arg)
 	if (!svc)
 		return;
 
-	FLOG_INFO("Lost PID %u, svc %s", pid, svc->cmd);
+	logit(LOG_INFO, "Lost PID %u, svc %s", pid, svc->cmd);
 }
 
 static plugin_t plugin = {

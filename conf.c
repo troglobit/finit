@@ -125,7 +125,7 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	ptr[i] = 0;
 
 	if (i >= sizeof(svc->cond)) {
-		FLOG_WARN("Too long event list in declaration of %s: %s", svc->cmd, ptr);
+		logit(LOG_WARNING, "Too long event list in declaration of %s: %s", svc->cmd, ptr);
 		return;
 	}
 
@@ -212,10 +212,10 @@ void conf_parse_rlimit(char *line)
 	return;
 
 fail:
-	FLOG_WARN("rlimit: Failed setting rlimit %s", name->name ? : "unknown");
+	logit(LOG_WARNING, "rlimit: Failed setting rlimit %s", name->name ? : "unknown");
 	return;
 error:
-	FLOG_WARN("rlimit: parse error");
+	logit(LOG_WARNING, "rlimit: parse error");
 }
 
 static void parse_static(char *line)
