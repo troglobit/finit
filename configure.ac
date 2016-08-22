@@ -117,80 +117,80 @@ AC_ARG_WITH(random-seed,
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defautls
-AS_IF([test "x$enable_rw_rootfs" = "xyes"],[
+AS_IF([test "x$enable_rw_rootfs" = "xyes"], [
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
-AS_IF([test "x$enable_silent" = "xyes"],[
+AS_IF([test "x$enable_silent" = "xyes"], [
         AC_DEFINE(SILENT_MODE,  1, [Completely silent operation, not even boot messages])
-	],[
+	], [
 	AC_DEFINE(SILENT_MODE,  0, [Normal output, default])])
 
 ### Disable features ###########################################################################
-AS_IF([test "x$enable_inetd" != "xno"],enable_inetd="yes",[
+AS_IF([test "x$enable_inetd" != "xno"], enable_inetd="yes", [
 	AC_DEFINE(INETD_DISABLED,  1, [Disable built-in inetd])])
 
-AS_IF([test "x$enable_quiet" != "xno"],[
+AS_IF([test "x$enable_quiet" != "xno"], [
         AC_DEFINE(QUIET_MODE,  0, [Will print stopping/starting/etc messages at runtime])
-	],[
+	], [
 	AC_DEFINE(QUIET_MODE,  1, [Silent at runtime, after initial boot, default])])
 
 ### With features ##############################################################################
-AS_IF([test "x$with_fifo" != "xno"],[
-	AS_IF([test "x$fifo" = "xyes"],[
+AS_IF([test "x$with_fifo" != "xno"], [
+	AS_IF([test "x$fifo" = "xyes"], [
 		    fifo='/var/run/initctl'])])
 AC_EXPAND_DIR(lurvig, "$fifo")
 AC_DEFINE_UNQUOTED(FINIT_FIFO, "$lurvig", [FIFO for old style init/telinit client programs])
 
-AS_IF([test "x$with_config" != "xno"],[
-	AS_IF([test "x$config" = "xyes"],[
+AS_IF([test "x$with_config" != "xno"], [
+	AS_IF([test "x$config" = "xyes"], [
 		conf=$sysconfdir/finit.conf])])
 AC_EXPAND_DIR(lurvig, "$conf")
 AC_DEFINE_UNQUOTED(FINIT_CONF, "$lurvig", [Main Finit configuration file, default /etc/finit.conf])
 
-AS_IF([test "x$with_rcsd" != "xno"],[
-	AS_IF([test "x$rcsd" = "xyes"],[
+AS_IF([test "x$with_rcsd" != "xno"], [
+	AS_IF([test "x$rcsd" = "xyes"], [
 		rcsd=$sysconfdir/finit.d])])
 AC_EXPAND_DIR(lurvig, "$rcsd")
 AC_DEFINE_UNQUOTED(FINIT_RCSD, "$lurvig", [Finit rcS.d/, default /etc/finit.d])
 
-AS_IF([test "x$with_rc_local" != "xno"],[
-	AS_IF([test "x$rclocal" = "xyes"],[
+AS_IF([test "x$with_rc_local" != "xno"], [
+	AS_IF([test "x$rclocal" = "xyes"], [
 		rclocal=$sysconfdir/rc.local])])
 AC_EXPAND_DIR(lurvig, "$rclocal")
 AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$lurvig", [Compat SysV /etc/rc.local file to run last at boot.])
 
-AS_IF([test "x$with_heading" != "xno"],[
-	AS_IF([test "x$heading" = "xyes"],[
+AS_IF([test "x$with_heading" != "xno"], [
+	AS_IF([test "x$heading" = "xyes"], [
 		heading="$PACKAGE_NAME v$PACKAGE_VERSION"])])
 AC_DEFINE_UNQUOTED(INIT_HEADING, "$heading", [Displayed by Finit at boot])
 
-AS_IF([test "x$with_console" != "xno"],[
-	AS_IF([test "x$console" = "xyes"],[
+AS_IF([test "x$with_console" != "xno"], [
+	AS_IF([test "x$console" = "xyes"], [
 		console=/dev/console])])
 AC_DEFINE_UNQUOTED(CONSOLE, "$console", [Default console to use])
 
-AS_IF([test "x$with_shell" != "xno"],[
-	AS_IF([test "x$shell" = "xyes"],[
+AS_IF([test "x$with_shell" != "xno"], [
+	AS_IF([test "x$shell" = "xyes"], [
 		shell=/bin/sh])])
 AC_DEFINE_UNQUOTED(FALLBACK_SHELL, "$shell", [Used if no login getty])
 
-AS_IF([test "x$with_username" != "xno"],[
-	AS_IF([test "x$username" = "xyes"],[
+AS_IF([test "x$with_username" != "xno"], [
+	AS_IF([test "x$username" = "xyes"], [
 		username=root])])
 AC_DEFINE_UNQUOTED(DEFUSER, "$username", [Used for startx .conf option])
 
-AS_IF([test "x$with_hostname" != "xno"],[
-	AS_IF([test "x$hostname" = "xyes"],[
+AS_IF([test "x$with_hostname" != "xno"], [
+	AS_IF([test "x$hostname" = "xyes"], [
 		hostname=noname])])
 AC_DEFINE_UNQUOTED(DEFHOST, "$hostname", [For /etc/hostname])
 
-AS_IF([test "x$with_runlevel" != "xno"],[
-	AS_IF([test "x$runlevel" = "xyes"],[
+AS_IF([test "x$with_runlevel" != "xno"], [
+	AS_IF([test "x$runlevel" = "xyes"], [
 		AC_DEFINE_UNQUOTED(RUNLEVEL, 2, [Default runlevel to start after S])])
 	AC_DEFINE_UNQUOTED(RUNLEVEL, $runlevel, [Runlevel to start after S])])
 
-AS_IF([test "x$with_random_seed" != "xno"],[
-	AS_IF([test "x$random_seed" = "xyes"],[
+AS_IF([test "x$with_random_seed" != "xno"], [
+	AS_IF([test "x$random_seed" = "xyes"], [
 		random_seed=/var/lib/misc/random-seed])
 	AC_EXPAND_DIR(lurvig, "$random_seed")
 	AC_DEFINE_UNQUOTED(RANDOMSEED, "$lurvig", [Improve random at boot by seeding it with sth from before.])])
