@@ -62,6 +62,7 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 	while (getutent())
 		;
 	result = pututline(&ut) ? 0 : 1;;
+	updwtmp(_PATH_WTMP, &ut);
 	endutent();
 
 	return result;
