@@ -33,6 +33,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "sig.h"
+#include "utmp-api.h"
 
 #ifndef _PATH_LOGIN
 #define _PATH_LOGIN  "/bin/login"
@@ -305,7 +306,7 @@ int getty(char *tty, char *baud, char *UNUSED(term))
 	sigaction(SIGQUIT, &sa, NULL);
 
 	stty(fd, speed);
-//	do_utmp();
+	utmp_set_login(tty, NULL);
 
 	do_getty(tty, name, sizeof(name));
 	return do_login(name);

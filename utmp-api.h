@@ -25,6 +25,7 @@ int utmp_set         (int type, int pid, char *line, char *id, char *user);
 int utmp_set_boot    (void);
 int utmp_set_halt    (void);
 int utmp_set_init    (char *tty, char *id);
+int utmp_set_login   (char *tty, char *id);
 int utmp_set_dead    (int pid);
 int utmp_set_runlevel(int pre, int now);
 int utmp_show        (char *file);
