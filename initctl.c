@@ -294,8 +294,8 @@ static int do_reboot  (char *UNUSED(arg)) { return do_signal(SIGTERM, "reboot");
 
 static int do_utmp(char *UNUSED(cmd))
 {
-	return  utmp_show(_PATH_UTMP) ||
-		utmp_show(_PATH_WTMP);
+	return  utmp_show(_PATH_WTMP) ||
+		utmp_show(_PATH_UTMP);
 }
 
 static int show_version(char *UNUSED(arg))
