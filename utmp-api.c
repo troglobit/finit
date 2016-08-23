@@ -78,7 +78,7 @@ int utmp_set_halt(void)
 	return utmp_set(RUN_LVL, 0, NULL, NULL, "shutdown");
 }
 
-static int set_getty(int type, char *tty, char *id)
+static int set_getty(int type, char *tty, char *id, char *user)
 {
 	char *line;
 
@@ -95,17 +95,17 @@ static int set_getty(int type, char *tty, char *id)
 			id += 4;
 	}
 
-	return utmp_set(type, getpid(), line, id, NULL);
+	return utmp_set(type, getpid(), line, id, user);
 }
 
 int utmp_set_init(char *tty, char *id)
 {
-	return set_getty(INIT_PROCESS, tty, id);
+	return set_getty(INIT_PROCESS, tty, id, NULL);
 }
 
 int utmp_set_login(char *tty, char *id)
 {
-	return set_getty(LOGIN_PROCESS, tty, id);
+	return set_getty(LOGIN_PROCESS, tty, id, "LOGIN");
 }
 
 int utmp_set_dead(int pid)
