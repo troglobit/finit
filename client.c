@@ -31,34 +31,66 @@
 
 #include "finit.h"
 
-static int do_send(int cmd, int runlevel)
+static int do_send(struct init_request *rq)
 {
-	int fd;
+	static int fd = -1;
 	int result = 255;
 	ssize_t len;
+
+	if (fd == -1) {
+		if (!fexist(FINIT_FIFO)) {
+			fprintf(stderr, "%s does not support %s!\n", __progname, FINIT_FIFO);
+			return 1;
+		}
+
+		fd = open(FINIT_FIFO, O_RDWR);
+		if (-1 == fd) {
+			perror("Failed opening " FINIT_FIFO);
+			return 1;
+		}
+	}
+
+	len = write(fd, rq, sizeof(*rq));
+	if (sizeof(*rq) == len)
+		result = 0;
+
+	return result;
+}
+
+static int do_reload(void)
+{
 	struct init_request rq = {
 		.magic    = INIT_MAGIC,
-		.cmd      = cmd,
+		.cmd      = INIT_CMD_RELOAD,
+	};
+
+	return do_send(&rq);
+}
+
+static int set_env(int runlevel)
+{
+	struct init_request rq = {
+		.magic    = INIT_MAGIC,
+		.cmd      = INIT_CMD_SETENV,
+	};
+
+	if (runlevel == 0) {
+		strlcpy(rq.data, "INIT_HALT=POWERDOWN", sizeof(rq.data));
+		return do_send(&rq);
+	}
+
+	return 0;
+}
+
+static int set_runlevel(int runlevel)
+{
+	struct init_request rq = {
+		.magic    = INIT_MAGIC,
+		.cmd      = INIT_CMD_RUNLVL,
 		.runlevel = runlevel,
 	};
 
-	if (!fexist(FINIT_FIFO)) {
-		fprintf(stderr, "%s does not support %s!\n", __progname, FINIT_FIFO);
-		return 1;
-	}
-
-	fd = open(FINIT_FIFO, O_RDWR);
-	if (-1 == fd) {
-		perror("Failed opening " FINIT_FIFO);
-		return 1;
-	}
-
-	len = write(fd, &rq, sizeof(rq));
-	if (sizeof(rq) == len)
-		result = 0;
-	close(fd);
-
-	return result;
+	return set_env(runlevel) || do_send(&rq);
 }
 
 /* telinit q | telinit <0-9> */
@@ -66,11 +98,17 @@ static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS] [q | Q | 0-9]\n\n"
 		"Options:\n"
-		"  -h, --help            This help text\n\n"
-		"  -V, --version         Show Finit version\n\n"
+		"  -h, --help      This help text\n\n"
+		"  -V, --version   Show Finit version\n\n"
 		"Commands:\n"
-		"  q | Q                 Reload *.conf in /etc/finit.d/, like SIGHUP\n"
-		"  0 - 9                 Change runlevel: 0 halt, 6 reboot\n\n", __progname);
+		"  0               Power-off the system, same as initctl poweroff\n"
+		"  6               Reboot the system, same as initctl reboot\n"
+		"  2, 3, 4, 5      Change runlevel. Starts services in new runlevel, stops any\n"
+		"                  services in prev. runlevel that are not allowed in new.\n"
+		"  q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or\n"
+		"                  sending SIGHUP to PID 1\n"
+		"  1, s, S         Enter system rescue mode, runlevel 1\n"
+		"\n", __progname);
 
 	return rc;
 }
@@ -99,12 +137,14 @@ int client(int argc, char *argv[])
 	if (optind < argc) {
 		int req = (int)argv[optind][0];
 
-		/* Compat: 'init <0-9>' */
 		if (isdigit(req))
-			return do_send(INIT_CMD_RUNLVL, req);
+			return set_runlevel(req);
 
 		if (req == 'q' || req == 'Q')
-			return do_send(INIT_CMD_RELOAD, 0);
+			return do_reload();
+
+		if (req == 's' || req == 'S')
+			return set_runlevel(1);
 	}
 
 	return usage(1);
