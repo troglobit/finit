@@ -135,7 +135,6 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 
 			case 's':
 			case 'S':
-				_d("Cannot enter bootstrap after boot ...");
 				rq.runlevel = '1';
 				/* Fall through to regular processing */
 
