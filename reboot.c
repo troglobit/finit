@@ -87,7 +87,7 @@ static int usage(int rc)
 	fprintf(stderr, "Usage: %s [OPTIONS]\n\n"
 		"Options:\n"
 		"  -h, --help      This help text\n"
-		"  -f, --force     Force unsafe %s now\n"
+		"  -f, --force     Force unsafe %s now, do not contact the init system.\n"
 		"      --halt      Halt system, regardless of how the command is called.\n"
 		"  -p, --poweroff  Power-off system, regardless of how the command is called.\n"
 		"      --reboot    Reboot system, regardless of how the command is called.\n"
