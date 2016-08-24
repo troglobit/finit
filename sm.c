@@ -154,6 +154,12 @@ restart:
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 
+		/* Disable login in single-user mode as well as shutdown/reboot */
+		if (runlevel == 1 || runlevel == 0 || runlevel == 6)
+			touch("/etc/nologin");
+		else
+			erase("/etc/nologin");
+
 		if (0 == runlevel) {
 			do_shutdown(SHUT_OFF);
 			sm->state = SM_RUNNING_STATE;
@@ -164,11 +170,6 @@ restart:
 			sm->state = SM_RUNNING_STATE;
 			break;
 		}
-
-		if (runlevel == 1)
-			touch("/etc/nologin");	/* Disable login in single-user mode */
-		else
-			erase("/etc/nologin");
 
 		/* No TTYs run at bootstrap, they have a delayed start. */
 		if (prevlevel > 0)
