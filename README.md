@@ -1,11 +1,11 @@
 ```
-                      _______  __    _____  ___    __  ___________  _______
-                     /"     "||" \  (\"   \|"  \  |" \("     _   ")/" __   )
-                    (: ______)||  | |.\\   \    | ||  |)__/  \\__/(__/ _) ./
-                     \/    |  |:  | |: \.   \\  | |:  |   \\_ /       /  //
-                     // ___)  |.  | |.  \    \. | |.  |   |.  |    __ \_ \\
-                    (:  (     /\  |\|    \    \ | /\  |\  \:  |   (: \__) :\
-                     \__/    (__\_|_)\___|\____\)(__\_|_)  \__|    \_______) ... Yes, we need a new logo!
+                 _______  __    _____  ___    __  ___________  _______
+                /"     "||" \  (\"   \|"  \  |" \("     _   ")/" __   )
+               (: ______)||  | |.\\   \    | ||  |)__/  \\__/(__/ _) ./
+                \/    |  |:  | |: \.   \\  | |:  |   \\_ /       /  //
+                // ___)  |.  | |.  \    \. | |.  |   |.  |    __ \_ \\
+               (:  (     /\  |\|    \    \ | /\  |\  \:  |   (: \__) :\
+                \__/    (__\_|_)\___|\____\)(__\_|_)  \__|    \_______) ... Yes, we need a new logo!
 ```
 
 Fast init for Linux
@@ -35,11 +35,11 @@ Table of Contents
 Introduction
 ------------
 
-Finit is a plugin-based init with [process supervision][1] similar to
-that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's [runit][3].
-The main focus of Finit is on small and embedded Linux systems, yet
-fully usable on server and desktop installations as well.  See the
-[contrib section](contrib/) for Debian and Alpine examples.
+Finit is an EeePC inspired Fastinit clone with [process supervision][1]
+similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
+[runit][3].  The focus of Finit is on small and embedded Linux systems,
+yet it si fully usable on server and desktop installations as well.  
+See the [contrib section](contrib/) for Debian and Alpine examples.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
