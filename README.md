@@ -38,7 +38,7 @@ Introduction
 Finit is an EeePC inspired Fastinit clone with [process supervision][1]
 similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
 [runit][3].  The focus of Finit is on small and embedded Linux systems,
-yet it si fully usable on server and desktop installations as well.  
+although it is fully usable on server and desktop installations as well.
 See the [contrib section](contrib/) for Debian and Alpine examples.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
