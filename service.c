@@ -571,7 +571,9 @@ recreate:
 			_e("Out of memory, cannot register service %s", cmd);
 			return errno = ENOMEM;
 		}
-	} else {
+	}
+#ifndef INETD_DISABLED
+	else {
 		if (svc_is_inetd(svc) && type != SVC_TYPE_INETD) {
 			_d("Service was previously inetd, deregistering ...");
 			inetd_del(&svc->inetd);
@@ -579,6 +581,7 @@ recreate:
 			goto recreate;
 		}
 	}
+#endif
 
 	svc->log = log;
 	if (desc)
