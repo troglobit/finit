@@ -38,6 +38,8 @@
 
 #define NUM_ARGS    16
 
+int getty(char *tty, char *baud, char *term, char *user);
+
 
 /* Wait for process completion, returns status of waitpid(2) syscall */
 int complete(char *cmd, int pid)
@@ -213,8 +215,6 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
-int getty(char *tty, char *baud, char *term);
-
 pid_t run_getty(char *tty, char *speed, char *term, int console)
 {
 	pid_t pid;
@@ -233,7 +233,7 @@ pid_t run_getty(char *tty, char *speed, char *term, int console)
 		else
 			prctl(PR_SET_NAME, "finit-getty", 0, 0, 0);
 
-		_exit(getty(tty, speed, term));
+		_exit(getty(tty, speed, term, NULL));
 	}
 
 	return pid;

@@ -268,7 +268,7 @@ static speed_t do_parse_speed(char *baud)
 	return B0;
 }
 
-int getty(char *tty, char *baud, char *UNUSED(term))
+int getty(char *tty, char *baud, char *UNUSED(term), char *user)
 {
 	int fd;
 	char name[30];
@@ -308,7 +308,11 @@ int getty(char *tty, char *baud, char *UNUSED(term))
 	stty(fd, speed);
 	utmp_set_login(tty, NULL);
 
-	do_getty(tty, name, sizeof(name));
+	if (!user)
+		do_getty(tty, name, sizeof(name));
+	else
+		strlcpy(name, user, sizeof(name));
+
 	return do_login(name);
 }
 
