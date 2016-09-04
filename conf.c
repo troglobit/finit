@@ -157,7 +157,7 @@ static const struct rlimit_name rlimit_names[] = {
 	{ "sigpending", RLIMIT_SIGPENDING },
 	{ "stack",      RLIMIT_STACK      },
 
-	{ NULL }
+	{ NULL, 0 }
 };
 
 void conf_parse_rlimit(char *line)
