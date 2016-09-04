@@ -321,7 +321,7 @@ void inetd_stop(inetd_t *inetd)
 	}
 }
 
-static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
+static struct servent *getent_service(char *service, char *proto)
 {
 #ifdef ENABLE_STATIC
 	int service_num;
@@ -334,11 +334,44 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 		lfs.s_proto = NULL;
 		if (!strcmp("tcp", proto) || !strcmp("udp", proto))
 			lfs.s_proto = proto;
-		*sv = &lfs;
+
+		return  &lfs;
 	}
+
+	return NULL;
 #else
-	*sv = getservbyname(service, proto);
+	return getservbyname(service, proto);
 #endif
+}
+
+static struct protoent *getent_proto(char *proto)
+{
+#ifdef ENABLE_STATIC
+		int proto_num;
+		static struct protoent lfp;
+
+		proto_num = fgetint("/etc/protocols", " \n\t", proto);
+		if (proto_num > 0) {
+			lfp.p_name  = proto;
+			lfp.p_proto = proto_num;
+
+			return &lfp;
+		}
+
+		return NULL;
+#else
+		return getprotobyname(proto);
+#endif
+}
+
+static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
+{
+	if (!fexist("/etc/services") || !fexist("/etc/protocols")) {
+		_w("Cannot register inetd %s/%s, system missing /etc/services or /etc/protocols", service, proto);
+		return errno = ECANCELED;
+	}
+
+	*sv = getent_service(service, proto);
 	if (!*sv) {
 		const char *errstr;
 		static struct servent s;
@@ -360,19 +393,7 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 	}
 
 	if (pv && (*sv)->s_proto) {
-#ifdef ENABLE_STATIC
-		int proto_num;
-		static struct protoent lfp;
-
-		proto_num = fgetint("/etc/protocols", " \n\t", (*sv)->s_proto);
-		if (proto_num > 0) {
-			lfp.p_name  = proto;
-			lfp.p_proto = proto_num;
-		}
-		*pv = &lfp;
-#else
-		*pv = getprotobyname((*sv)->s_proto);
-#endif
+		*pv = getent_proto((*sv)->s_proto);
 		if (!*pv) {
 			_e("Cannot find proto %s, skipping.", (*sv)->s_proto);
 			return errno = EINVAL;
