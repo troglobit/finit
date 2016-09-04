@@ -306,6 +306,7 @@ int getty(char *tty, char *baud, char *UNUSED(term), char *user)
 	sigaction(SIGQUIT, &sa, NULL);
 
 	stty(fd, speed);
+	close(fd);
 	utmp_set_login(tty, NULL);
 
 	if (!user)
