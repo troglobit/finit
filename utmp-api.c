@@ -49,13 +49,13 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 	ut.ut_type = type;
 	ut.ut_pid  = pid;
 	if (user)
-		strncpy(ut.ut_user, user, sizeof(ut.ut_user));
+		strlcpy(ut.ut_user, user, sizeof(ut.ut_user));
 	if (line)
-		strncpy(ut.ut_line, line, sizeof(ut.ut_line));
+		strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
 	if (id)
-		strncpy(ut.ut_id, id, sizeof(ut.ut_id));
+		strlcpy(ut.ut_id, id, sizeof(ut.ut_id));
 	if (!uname(&uts))
-		strncpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
+		strlcpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
 	ut.ut_tv.tv_sec = time(NULL);
 
 	setutent();
@@ -141,10 +141,10 @@ int utmp_show(char *file)
 		char addr[64];
 
 		memset(id, 0, sizeof(id));
-		strncpy(id, ut->ut_id, sizeof(ut->ut_id));
+		strlcpy(id, ut->ut_id, sizeof(ut->ut_id));
 
 		memset(user, 0, sizeof(user));
-		strncpy(user, ut->ut_user, sizeof(ut->ut_user));
+		strlcpy(user, ut->ut_user, sizeof(ut->ut_user));
 
 		sec = ut->ut_tv.tv_sec;
 		sectm = localtime(&sec);
