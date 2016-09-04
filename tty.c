@@ -75,8 +75,12 @@ int tty_register(char *line)
 	if (!entry) {
 		insert = 1;
 		entry = calloc(1, sizeof(*entry));
-		if (!entry)
+		if (!entry) {
+			if (baud)
+				free(baud);
+
 			return errno = ENOMEM;
+		}
 	}
 
 	entry->data.name = strdup(dev);
