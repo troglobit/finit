@@ -37,6 +37,10 @@ PKG_CHECK_MODULES([uev],  [libuev >= 1.4.0])
 PKG_CHECK_MODULES([lite], [libite >= 1.5.0])
 
 # Check for configured Finit features
+AC_ARG_ENABLE(emergency_shell,
+	AS_HELP_STRING([--enable-emergency-shell], [Experimental emergency fallback at boot.
+	                Only use this for debugging very early boot problems with Finit.]))
+
 AC_ARG_ENABLE(rw-rootfs,
         AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]))
 
@@ -117,6 +121,9 @@ AC_ARG_WITH(random-seed,
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defautls
+AS_IF([test "x$enable_emergency_shell" = "xyes"], [
+        AC_DEFINE(EMERGENCY_SHELL,  1, [Fork off init and let PID 1 wait and start /bin/sh if init crashes.])])
+
 AS_IF([test "x$enable_rw_rootfs" = "xyes"], [
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 

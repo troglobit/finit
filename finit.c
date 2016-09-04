@@ -33,6 +33,7 @@
 #include <mntent.h>
 #include <sys/mount.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
+#include <sys/wait.h>
 #include <lite/lite.h>
 
 #include "finit.h"
@@ -202,6 +203,33 @@ static int fismnt(char *dir)
 	return found;
 }
 
+/*
+ * If everything goes south we can use this to give the operator an
+ * emergency shell to debug the problem -- Finit should not crash!
+ */
+static void emergency_shell(void)
+{
+#ifdef EMERGENCY_SHELL
+	pid_t pid;
+
+	pid = fork();
+	if (pid) {
+		waitpid(pid, NULL, 0);
+		fprintf(stderr, "\n=> Embarrassingly, Finit has crashed.  Check /dev/kmsg for details.\n");
+		fprintf(stderr, "=> For more, remove 'quiet' and add '--debug' to the kernel command line.\n\n");
+
+		/*
+		 * Become session leader and set controlling TTY
+		 * to enable Ctrl-C and job control in shell.
+		 */
+		setsid();
+		ioctl(STDIN_FILENO, TIOCSCTTY, 1);
+
+		execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
+	}
+#endif /* EMERGENCY_SHELL */
+}
+
 int main(int argc, char* argv[])
 {
 	int err;
@@ -214,6 +242,11 @@ int main(int argc, char* argv[])
 	 */
 	if (getpid() != 1)
 		return client(argc, argv);
+
+	/*
+	 * In case of emergency.
+	 */
+	emergency_shell();
 
 	/*
 	 * Hello world.
