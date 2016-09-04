@@ -41,7 +41,7 @@ static void create(char *path, mode_t mode, uid_t uid, gid_t gid)
  */
 static void setup(void *UNUSED(arg))
 {
-	gid_t gid;
+	int gid;
 
 	_d("Setting up FHS structure in /var ...");
 	makedir("/var/cache",      0755);
