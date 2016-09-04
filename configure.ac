@@ -47,7 +47,7 @@ AC_ARG_ENABLE(inetd,
         AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]))
 
 AC_ARG_ENABLE(quiet,
-        AS_HELP_STRING([--disable-quiet], [Disable quiet mode, default: silent after boot]))
+        AS_HELP_STRING([--disable-quiet], [Default Finit obeys the kernel quiet option]))
 
 # Check for extra plugins to enable
 enable_all_plugins=auto
