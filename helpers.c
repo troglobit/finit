@@ -188,7 +188,18 @@ void logit(int prio, const char *fmt, ...)
 
     va_start(ap, fmt);
     if (!_slup && !fexist("/dev/log")) {
-	    vfprintf(stderr, fmt, ap);
+	    FILE *fp;
+
+	    fp = fopen("/dev/kmsg", "w");
+	    if (fp) {
+		    fprintf(fp, "<%d>finit[1]: ", LOG_DAEMON | prio);
+		    vfprintf(fp, fmt, ap);
+		    fclose(fp);
+	    } else {
+		    fprintf(stderr, "Failed opening /dev/kmsg for appending ...\n");
+	    }
+	    if (prio <= LOG_ERR)
+		    vfprintf(stderr, fmt, ap);
 	    va_end(ap);
 	    return;
     }
