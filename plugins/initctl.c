@@ -46,14 +46,17 @@
  */
 shutop_t halt = SHUT_DEFAULT;
 
-
 static void parse(void *arg, int fd, int events);
+static void setup(void *arg);
 
 static plugin_t plugin = {
 	.name = __FILE__,
 	.io = {
 		.cb    = parse,
 		.flags = PLUGIN_IO_READ,
+	},
+	.hook[HOOK_BASEFS_UP] = {
+		.cb    = setup
 	},
 };
 
@@ -173,12 +176,17 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 	fifo_open();
 }
 
-PLUGIN_INIT(plugin_init)
+/* Must run after the base FS is up, needs /run, or /var/run */
+static void setup(void *UNUSED(arg))
 {
 	_d("Setting up %s", FINIT_FIFO);
 	makefifo(FINIT_FIFO, 0600);
 
 	fifo_open();
+}
+
+PLUGIN_INIT(plugin_init)
+{
 	plugin_register(&plugin);
 }
 
