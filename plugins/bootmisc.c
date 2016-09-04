@@ -30,6 +30,12 @@
 #include "../plugin.h"
 #include "../utmp-api.h"
 
+static void create(char *path, mode_t mode, uid_t uid, gid_t gid)
+{
+	if (touch(path) || chmod(path, mode) || chown(path, uid, gid))
+		_w("Failed creating %s properl.", path);
+}
+
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
@@ -72,18 +78,13 @@ static void setup(void *UNUSED(arg))
 	if (gid < 0)
 		gid = 0;
 
-	touch("/var/run/utmp");
-	chmod("/var/run/utmp", 0664);
-	chown("/var/run/utmp", 0, gid);
-	touch("/var/log/wtmp");
-	chmod("/var/log/wtmp", 0664);
-	chown("/var/log/wtmp", 0, gid);
-	touch("/var/log/btmp");
-	chmod("/var/log/btmp", 0600);
-	chown("/var/log/btmp", 0, gid);
-	touch("/var/log/lastlog");
-	chmod("/var/log/lastlog", 0664);
-	chown("/var/log/lastlog", 0, gid);
+	/*
+	 * UTMP actually needs multiple db files
+	 */
+	create("/var/run/utmp",    0644, 0, gid); /* Currently logged in */
+	create("/var/log/wtmp",    0644, 0, gid); /* Login history       */
+	create("/var/log/btmp",    0600, 0, gid); /* Failed logins       */
+	create("/var/log/lastlog", 0644, 0, gid);
 
 	/* Set BOOT_TIME UTMP entry */
 	utmp_set_boot();
