@@ -35,6 +35,8 @@
  */
 static void setup(void *UNUSED(arg))
 {
+	gid_t gid;
+
 	_d("Setting up FHS structure in /var ...");
 	makedir("/var/cache",      0755);
 	makedir("/var/games",      0755);
@@ -61,19 +63,27 @@ static void setup(void *UNUSED(arg))
 	makedir("/var/tmp",        0755);
 	makedir("/var/empty",      0755);
 
+	/*
+	 * If /etc/group or "utmp" group is missing,
+	 * default to "root"/"wheel" group
+	 */
 	_d("Setting up necessary UTMP files ...");
+	gid = getgroup("utmp");
+	if (gid < 0)
+		gid = 0;
+
 	touch("/var/run/utmp");
 	chmod("/var/run/utmp", 0664);
-	chown("/var/run/utmp", 0, getgroup("utmp"));
+	chown("/var/run/utmp", 0, gid);
 	touch("/var/log/wtmp");
 	chmod("/var/log/wtmp", 0664);
-	chown("/var/log/wtmp", 0, getgroup("utmp"));
+	chown("/var/log/wtmp", 0, gid);
 	touch("/var/log/btmp");
 	chmod("/var/log/btmp", 0600);
-	chown("/var/log/btmp", 0, getgroup("utmp"));
+	chown("/var/log/btmp", 0, gid);
 	touch("/var/log/lastlog");
 	chmod("/var/log/lastlog", 0664);
-	chown("/var/log/lastlog", 0, getgroup("utmp"));
+	chown("/var/log/lastlog", 0, gid);
 
 	/* Set BOOT_TIME UTMP entry */
 	utmp_set_boot();
