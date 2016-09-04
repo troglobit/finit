@@ -268,7 +268,7 @@ static int service_start(svc_t *svc)
 			if (strlen(arg) < (sizeof(buf) - strlen(buf)))
 				strcat(buf, arg);
 		}
-		_e("Starting %s: %s", svc->cmd, buf);
+		_d("Starting %s: %s", svc->cmd, buf);
 	}
 
 	svc->pid = pid;
@@ -548,7 +548,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 			plugin = plugin_find(ps);
 			if (!plugin || !plugin->inetd.cmd) {
-				_e("Inetd service %s has no internal plugin, skipping.", service);
+				_w("Inetd service %s has no internal plugin, skipping.", service);
 				return errno = ENOENT;
 			}
 		}

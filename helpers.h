@@ -38,8 +38,9 @@
  * /dev/console as well.  Useful for critical errors and early debug.
  */
 #define   _l(prio, fmt, args...) do { if (_slup) warnx(fmt, ##args); logit(prio, fmt "\n", ##args); } while (0)
-#define   _m(prio, fmt, args...) do { _l(prio, "finit:%s:%s() - " fmt, __FILE__, __func__, ##args); } while (0)
+#define   _m(prio, fmt, args...) do { _l(prio, "%s() - " fmt, __func__, ##args); } while (0)
 #define   _d(fmt, args...)  do { if (debug) { _m(LOG_DEBUG, fmt, ##args); } } while (0)
+#define   _w(fmt, args...)  do { _m(LOG_WARNING, fmt, ##args); } while (0)
 #define   _e(fmt, args...)  do { _m(LOG_ERR, fmt, ##args); } while (0)
 #define  _pe(fmt, args...)  do { _m(LOG_ERR, fmt ". Error %d: %s", ##args, errno, strerror(errno)); } while (0)
 
