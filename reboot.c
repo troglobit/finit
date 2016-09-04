@@ -183,6 +183,7 @@ int main(int argc, char *argv[])
 		c = kill(1, SIGUSR2);
 		break;
 
+	case CMD_SUSPEND:
 	case CMD_UNKNOWN:
 		errx(1, "Invalid command");
 		break;
