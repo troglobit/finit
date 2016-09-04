@@ -37,7 +37,7 @@
  * Use of logit() is preferred, but these are guaranteed to display on
  * /dev/console as well.  Useful for critical errors and early debug.
  */
-#define   _l(prio, fmt, args...) do { if (_slup) warnx(fmt "\n", ##args); logit(prio, fmt, ##args); } while (0)
+#define   _l(prio, fmt, args...) do { if (_slup) warnx(fmt, ##args); logit(prio, fmt "\n", ##args); } while (0)
 #define   _m(prio, fmt, args...) do { _l(prio, "finit:%s:%s() - " fmt, __FILE__, __func__, ##args); } while (0)
 #define   _d(fmt, args...)  do { if (debug) { _m(LOG_DEBUG, fmt, ##args); } } while (0)
 #define   _e(fmt, args...)  do { _m(LOG_ERR, fmt, ##args); } while (0)
