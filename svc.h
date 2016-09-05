@@ -102,7 +102,8 @@ typedef struct svc {
 	inetd_t        inetd;
 	int            stdin_fd;
 
-	int log;
+	/* Set for services we need to redirect stdout/stderr to syslog */
+	int            log;
 
 	/* Identity */
 	char	       username[MAX_USER_LEN];

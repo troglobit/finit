@@ -51,7 +51,8 @@ static char *trim_ext(char *name)
 
 	if (name) {
 		ptr = strstr(name, ".so");
-		if (!ptr) ptr = strstr(name, ".c");
+		if (!ptr)
+			ptr = strstr(name, ".c");
 		if (ptr)
 			*ptr = 0;
 	}

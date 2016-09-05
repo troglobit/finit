@@ -98,7 +98,7 @@ static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS] [q | Q | 0-9]\n\n"
 		"Options:\n"
-		"  -h, --help      This help text\n\n"
+		"  -h, --help      This help text\n"
 		"  -V, --version   Show Finit version\n\n"
 		"Commands:\n"
 		"  0               Power-off the system, same as initctl poweroff\n"

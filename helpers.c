@@ -192,7 +192,7 @@ void logit(int prio, const char *fmt, ...)
 
 	    fp = fopen("/dev/kmsg", "w");
 	    if (fp) {
-		    fprintf(fp, "<%d>finit[1]: ", LOG_DAEMON | prio);
+		    fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
 		    vfprintf(fp, fmt, ap);
 		    fclose(fp);
 	    } else {
