@@ -28,6 +28,18 @@
 #include <sys/utsname.h>
 #include <lite/lite.h>
 
+
+static void utmp_strncpy(char *dst, const char *src, size_t dlen)
+{
+	size_t i;
+
+	for (i = 0; i < dlen && src[i]; i++)
+		dst[i] = src[i];
+
+	if (i < dlen)
+		dst[i] = 0;
+}
+
 int utmp_set(int type, int pid, char *line, char *id, char *user)
 {
 	int result;
@@ -49,13 +61,13 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 	ut.ut_type = type;
 	ut.ut_pid  = pid;
 	if (user)
-		strlcpy(ut.ut_user, user, sizeof(ut.ut_user));
+		utmp_strncpy(ut.ut_user, user, sizeof(ut.ut_user));
 	if (line)
-		strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
+		utmp_strncpy(ut.ut_line, line, sizeof(ut.ut_line));
 	if (id)
-		strlcpy(ut.ut_id, id, sizeof(ut.ut_id));
+		utmp_strncpy(ut.ut_id, id, sizeof(ut.ut_id));
 	if (!uname(&uts))
-		strlcpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
+		utmp_strncpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
 	ut.ut_tv.tv_sec = time(NULL);
 
 	setutent();
@@ -131,7 +143,7 @@ int utmp_show(char *file)
 	struct tm *sectm;
 
 	int pid;
-	char id[sizeof(ut->ut_id)], user[sizeof(ut->ut_user)], when[80];
+	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
 
 	printf("%s =============================================================================================\n", file);
 	utmpname(file);
@@ -141,10 +153,10 @@ int utmp_show(char *file)
 		char addr[64];
 
 		memset(id, 0, sizeof(id));
-		strlcpy(id, ut->ut_id, sizeof(ut->ut_id));
+		strlcpy(id, ut->ut_id, sizeof(id));
 
 		memset(user, 0, sizeof(user));
-		strlcpy(user, ut->ut_user, sizeof(ut->ut_user));
+		strlcpy(user, ut->ut_user, sizeof(user));
 
 		sec = ut->ut_tv.tv_sec;
 		sectm = localtime(&sec);
