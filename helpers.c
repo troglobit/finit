@@ -197,9 +197,9 @@ void logit(int prio, const char *fmt, ...)
 		    fclose(fp);
 	    } else {
 		    fprintf(stderr, "Failed opening /dev/kmsg for appending ...\n");
+		    if (prio <= LOG_ERR)
+			    vfprintf(stderr, fmt, ap);
 	    }
-	    if (prio <= LOG_ERR)
-		    vfprintf(stderr, fmt, ap);
 	    va_end(ap);
 	    return;
     }
