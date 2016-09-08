@@ -35,7 +35,12 @@
 #include "helpers.h"
 #include "plugin.h"
 
-#define is_io_plugin(p) ((p)->io.cb && (p)->io.fd >= 0)
+#define is_io_plugin(p) ((p)->io.cb && (p)->io.fd > 0)
+#define SEARCH_PLUGIN(str)						\
+	PLUGIN_ITERATOR(p, tmp) {					\
+		if (!strcmp(p->name, str))				\
+			return p;					\
+	}
 
 static char *plugpath = NULL; /* Set by first load. */
 static TAILQ_HEAD(plugin_head, plugin) plugins  = TAILQ_HEAD_INITIALIZER(plugins);
@@ -127,14 +132,6 @@ int plugin_unregister(plugin_t *plugin)
 	return 0;
 }
 
-
-//		_d("Comparing %s against plugin %s", str, p->name);
-#define SEARCH_PLUGIN(str)						\
-	PLUGIN_ITERATOR(p, tmp) {					\
-		if (!strcmp(p->name, str))				\
-			return p;					\
-	}
-
 /**
  * plugin_find - Find a plugin by name
  * @name: With or without path, or .so extension
@@ -168,9 +165,9 @@ plugin_t *plugin_find(char *name)
 		char path[CMD_SIZE];
 
 		noext = strcmp(name + strlen(name) - 3, ".so");
-		snprintf (path, sizeof(path), "%s%s%s%s", plugpath,
-			  fisslashdir(plugpath) ? "" : "/",
-			  name, noext ? ".so" : "");
+		snprintf(path, sizeof(path), "%s%s%s%s", plugpath,
+			 fisslashdir(plugpath) ? "" : "/",
+			 name, noext ? ".so" : "");
 
 		SEARCH_PLUGIN(path);
 	}
@@ -217,21 +214,29 @@ static void generic_io_cb(uev_t *w, void *arg, int events)
 	}
 }
 
+int plugin_io_init(plugin_t *p)
+{
+	if (!is_io_plugin(p))
+		return 0;
+
+	_d("Initializing plugin %s for I/O", basename(p->name));
+	if (uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags)) {
+		_e("Failed setting up I/O plugin %s", basename(p->name));
+		return 1;
+	}
+
+	return 0;
+}
+
 /* Setup any I/O callbacks for plugins that use them */
-static int init_plugins(uev_ctx_t *ctx)
+static int init_plugins(uev_ctx_t *UNUSED(ctx))
 {
 	int fail = 0;
 	plugin_t *p, *tmp;
 
 	PLUGIN_ITERATOR(p, tmp) {
-		if (!is_io_plugin(p))
-			continue;
-
-		_d("Initializing plugin %s for I/O", basename(p->name));
-		if (uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags)) {
-			_e("Failed setting up I/O plugin %s", basename(p->name));
+		if (plugin_io_init(p))
 			fail++;
-		}
 	}
 
 	return fail;
