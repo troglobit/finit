@@ -70,12 +70,12 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 		utmp_strncpy(ut.ut_host, uts.release, sizeof(ut.ut_host));
 	ut.ut_tv.tv_sec = time(NULL);
 
-	setutent();
-	while (getutent())
-		;
-	result = pututline(&ut) ? 0 : 1;;
+	if (type != DEAD_PROCESS) {
+		setutent();
+		result = pututline(&ut) ? 0 : 1;;
+		endutent();
+	}
 	updwtmp(_PATH_WTMP, &ut);
-	endutent();
 
 	return result;
 }
