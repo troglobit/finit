@@ -114,13 +114,13 @@ void do_shutdown(shutop_t op)
 	utmp_set_halt();
 
 	/* Here is where we signal watchdogd to do a forced reset for us */
-	_d("Sending SIGTERM to all processes.");
+	_d("Sending SIGTERM to all processes");
 	kill(-1, SIGTERM);
 
 	/* Wait for WDT to timeout, should be no more than ~1 sec. */
 	do_sleep(2);
 
-	_d("Sending SIGKILL to remaining processes.");
+	_d("Sending SIGKILL to remaining processes");
 	kill(-1, SIGKILL);
 
 	/* Exit plugins and API gracefully */
@@ -159,7 +159,7 @@ void do_shutdown(shutop_t op)
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
 
-	_d("%s.", op == SHUT_REBOOT ? "Rebooting" : "Halting");
+	_d("%s", op == SHUT_REBOOT ? "Rebooting" : "Halting");
 	if (op == SHUT_REBOOT)
 		reboot(RB_AUTOBOOT);
 

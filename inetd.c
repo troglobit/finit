@@ -38,7 +38,7 @@
 	do {									\
 		int val = 1;							\
 		if (setsockopt(sd, level, opt, &val, sizeof(val)) < 0)		\
-			logit(LOG_CRIT, "Failed enabling %s on %s service.",	\
+			logit(LOG_CRIT, "Failed enabling %s on %s service",	\
 			      #opt, inetd->name);				\
 	} while (0);
 
@@ -126,7 +126,7 @@ static int get_stdin(svc_t *svc)
 	}
 
 	if (!inetd_is_allowed(&svc->inetd, ifname)) {
-		logit(LOG_INFO, "Service %s on %s:%d is not allowed.", svc->inetd.name, ifname, svc->inetd.port);
+		logit(LOG_INFO, "Service %s on %s:%d is not allowed", svc->inetd.name, ifname, svc->inetd.port);
 		if (svc->inetd.type == SOCK_STREAM)
 			close(stdin);
 
@@ -226,7 +226,7 @@ static int spawn_socket(inetd_t *inetd)
 	struct sockaddr_in s;
 
 	if (!inetd->type) {
-		logit(LOG_CRIT, "Skipping invalid inetd service %s", inetd->name);
+		logit(LOG_CRIT, "Invalid inetd service %s, skipping ...", inetd->name);
 		return -EINVAL;
 	}
 
@@ -383,11 +383,11 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 			s.s_proto = proto;
 
 		if (errstr || !s.s_proto) {
-			_e("Invalid/unknown inetd service, cannot create custom entry.");
+			_e("Invalid/unknown inetd service, cannot create custom entry");
 			return errno = EINVAL;
 		}
 
-		_d("Creating cutom inetd service %s/%s.", service, proto);
+		_d("Creating cutom inetd service %s/%s", service, proto);
 		s.s_port = htons(s.s_port);
 		*sv = &s;
 	}
@@ -395,7 +395,7 @@ static int getent(char *service, char *proto, struct servent **sv, struct protoe
 	if (pv && (*sv)->s_proto) {
 		*pv = getent_proto((*sv)->s_proto);
 		if (!*pv) {
-			_e("Cannot find proto %s, skipping.", (*sv)->s_proto);
+			_e("Cannot find proto %s, skipping ...", (*sv)->s_proto);
 			return errno = EINVAL;
 		}
 	}
@@ -470,7 +470,7 @@ int inetd_allow(inetd_t *inetd, char *ifname)
 
 	filter = inetd_filter_match(inetd, ifname);
 	if (filter) {
-		_d("Filter %s for inetd %s already exists, skipping.", ifname, inetd->name);
+		_d("Filter %s for inetd %s already exists, skipping ...", ifname, inetd->name);
 		return 0;
 	}
 
@@ -500,7 +500,7 @@ int inetd_deny(inetd_t *inetd, char *ifname)
 
 	filter = find_filter(inetd, ifname);
 	if (filter) {
-		_d("%s filter %s for inetd %s already exists, cannot set deny filter for same, skipping.",
+		_d("%s filter %s for inetd %s already exists, cannot set deny filter for same, skipping ...",
 		   filter->deny ? "Deny" : "Allow", ifname, inetd->name);
 		return 1;
 	}

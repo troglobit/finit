@@ -48,9 +48,9 @@ int complete(char *cmd, int pid)
 
 	if (waitpid(pid, &status, 0) == -1) {
 		if (errno == EINTR)
-			_e("Caught unblocked signal waiting for %s, aborting.", cmd);
+			_e("Caught unblocked signal waiting for %s, aborting", cmd);
 		else if (errno == ECHILD)
-			_e("Caught SIGCHLD waiting for %s, aborting.", cmd);
+			_e("Caught SIGCHLD waiting for %s, aborting", cmd);
 		else
 			_e("Failed starting %s, error %d: %s", cmd, errno, strerror (errno));
 

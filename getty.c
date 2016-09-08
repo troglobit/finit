@@ -57,7 +57,7 @@ static int readch(char *tty)
 	}
 
 	if (st < 0)
-		errx(1, "getty: %s: read error.", tty);
+		errx(1, "getty: %s: read error", tty);
 
 	return ch1 & 0xFF;
 }

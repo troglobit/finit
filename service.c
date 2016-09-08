@@ -476,7 +476,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	plugin_t *plugin = NULL;
 
 	if (!line) {
-		_e("Invalid input argument.");
+		_e("Invalid input argument");
 		return errno = EINVAL;
 	}
 
@@ -489,7 +489,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	cmd = strtok(line, " ");
 	if (!cmd) {
 	incomplete:
-		_e("Incomplete service, cannot register.");
+		_e("Incomplete service, cannot register");
 		return errno = ENOENT;
 	}
 
@@ -548,7 +548,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 
 			plugin = plugin_find(ps);
 			if (!plugin || !plugin->inetd.cmd) {
-				_w("Inetd service %s has no internal plugin, skipping.", service);
+				_w("Inetd service %s has no internal plugin, skipping ...", service);
 				return errno = ENOENT;
 			}
 		}
@@ -628,7 +628,7 @@ recreate:
 			name = plugin->name;
 
 		if (inetd_new(&svc->inetd, name, service, proto, forking, svc)) {
-			_e("Failed registering new inetd service %s.", service);
+			_e("Failed registering new inetd service %s", service);
 			return svc_del(svc);
 		}
 
@@ -636,7 +636,7 @@ recreate:
 		inetd_flush(&svc->inetd);
 
 		if (!ifaces) {
-			_d("No specific iface listed for %s, allowing ANY.", service);
+			_d("No specific iface listed for %s, allowing ANY", service);
 			inetd_allow(&svc->inetd, NULL);
 		} else {
 			for (iface = strtok(ifaces, ","); iface; iface = strtok(NULL, ",")) {

@@ -45,14 +45,14 @@ int tty_register(char *line)
 	char       *runlevels = NULL, *term = NULL;
 
 	if (!line) {
-		_e("Invalid input argument.");
+		_e("Invalid input argument");
 		return errno = EINVAL;
 	}
 
 	cmd = strtok(line, " ");
 	if (!cmd) {
 	incomplete:
-		_e("Incomplete tty, cannot register.");
+		_e("Incomplete tty, cannot register");
 		return errno = EINVAL;
 	}
 

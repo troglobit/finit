@@ -87,7 +87,7 @@ int plugin_register(plugin_t *plugin)
 
 	/* Already registered? */
 	if (plugin_find(plugin->name)) {
-		_d("... %s already loaded.", plugin->name);
+		_d("... %s already loaded", plugin->name);
 		free(plugin->name);
 
 		return 0;
@@ -282,7 +282,7 @@ static int load_one(char *path, char *name)
 
 	plugin = TAILQ_LAST(&plugins, plugin_head);
 	if (!plugin) {
-		_e("Plugin %s failed to register, unloading from memory.", sofile);
+		_e("Plugin %s failed to register, unloading from memory", sofile);
 		dlclose(handle);
 		return 1;
 	}

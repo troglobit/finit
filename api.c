@@ -246,7 +246,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 		}
 
 		if (rq.magic != INIT_MAGIC || len != sizeof(rq)) {
-			_e("Invalid initctl request.");
+			_e("Invalid initctl request");
 			break;
 		}
 
@@ -321,7 +321,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_ACK:
-			_d("Client failed reading ACK.");
+			_d("Client failed reading ACK");
 			goto leave;
 
 		default:
@@ -335,7 +335,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			rq.cmd = INIT_CMD_ACK;
 		len = write(sd, &rq, sizeof(rq));
 		if (len != sizeof(rq))
-			_d("Failed sending ACK/NACK back to client.");
+			_d("Failed sending ACK/NACK back to client");
 	}
 
 leave:
