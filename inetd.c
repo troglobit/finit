@@ -166,7 +166,7 @@ static void socket_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 	}
 
 	if (!svc->inetd.forking) {
-		svc->block = SVC_BLOCK_INETD_BUSY;
+		svc_busy(svc);
 		service_step(svc);
 	}
 
@@ -311,7 +311,7 @@ void inetd_stop(inetd_t *inetd)
 
 		/* For dgram inetd services we block the parent SVC
 		 * and halt the watcher, so don't close the socket! */
-		if (inetd->svc->block != SVC_BLOCK_INETD_BUSY) {
+		if (!svc_is_busy(inetd->svc)) {
 			_d("Shutting down inet socket %d ...", inetd->watcher.fd);
 			if (inetd->type == SOCK_STREAM)
 				shutdown(inetd->watcher.fd, SHUT_RDWR);
@@ -684,7 +684,7 @@ int inetd_new(inetd_t *inetd, char *name, char *service, char *proto, int forkin
 
 int inetd_del(inetd_t *inetd)
 {
-	inetd->svc->block = 0;
+	svc_unblock(inetd->svc);
 	inetd_stop(inetd);
 
 	return inetd_flush(inetd);

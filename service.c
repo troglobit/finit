@@ -58,10 +58,13 @@ static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
  */
 int service_enabled(svc_t *svc)
 {
-	if (!svc ||
-	    !svc_in_runlevel(svc, runlevel) ||
-	    svc_is_removed(svc) ||
-	    svc->block != SVC_BLOCK_NONE)
+	if (!svc)
+		return 0;
+
+	if (!svc_in_runlevel(svc, runlevel))
+		return 0;
+
+	if (svc_is_removed(svc) || svc_is_blocked(svc))
 		return 0;
 
 	return 1;
@@ -117,7 +120,7 @@ static int service_start(svc_t *svc)
 			print_result(1);
 		}
 
-		svc->block = SVC_BLOCK_MISSING;
+		svc_missing(svc);
 		return 1;
 	}
 
@@ -309,8 +312,7 @@ static int service_stop(svc_t *svc)
 
 #ifndef INETD_DISABLED
 	if (svc_is_inetd(svc)) {
-		int do_print = runlevel != 1 && !silent &&
-			svc->block != SVC_BLOCK_INETD_BUSY;
+		int do_print = runlevel != 1 && !silent && !svc_is_busy(svc);
 
 		if (do_print)
 			print_desc("Stopping ", svc->desc);
@@ -733,8 +735,8 @@ restart:
 	case SVC_DONE_STATE:
 #ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
-			if (svc->inetd.svc->block == SVC_BLOCK_INETD_BUSY) {
-				svc->inetd.svc->block = 0;
+			if (svc_is_busy(svc)) {
+				svc_unblock(svc->inetd.svc);
 				service_step(svc->inetd.svc);
 			}
 			service_unregister(svc);
@@ -772,7 +774,7 @@ restart:
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
 			if (*restart_counter >= RESPAWN_MAX) {
 				_e("%s keeps crashing, not restarting", svc->desc);
-				svc->block = SVC_BLOCK_CRASHING;
+				svc_crashing(svc);
 				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 			}

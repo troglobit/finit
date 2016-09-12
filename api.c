@@ -115,15 +115,17 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 
 static int service_block(svc_t *svc)
 {
-	svc->block = SVC_BLOCK_USER;
+	svc_block(svc);
 	service_step(svc);
+
 	return 0;
 }
 
 static int service_unblock(svc_t *svc)
 {
-	svc->block = SVC_BLOCK_NONE;
+	svc_unblock(svc);
 	service_step(svc);
+
 	return 0;
 }
 

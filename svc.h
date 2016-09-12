@@ -187,6 +187,14 @@ static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD  
 static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
 static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
 
+static inline int  svc_is_blocked  (svc_t *svc) { return svc->block != SVC_BLOCK_NONE; }
+static inline int  svc_is_busy     (svc_t *svc) { return svc->block == SVC_BLOCK_INETD_BUSY; }
+static inline void svc_unblock     (svc_t *svc) { svc->block = SVC_BLOCK_NONE; }
+static inline void svc_block       (svc_t *svc) { svc->block = SVC_BLOCK_USER; }
+static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_INETD_BUSY; }
+static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
+static inline void svc_crashing    (svc_t *svc) { svc->block = SVC_BLOCK_CRASHING; }
+
 #endif	/* FINIT_SVC_H_ */
 
 /**
