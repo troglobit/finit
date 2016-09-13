@@ -65,6 +65,7 @@ typedef enum {
 	SVC_BLOCK_CRASHING,
 	SVC_BLOCK_USER,
 	SVC_BLOCK_INETD_BUSY,
+	SVC_BLOCK_RESTARTING,
 } svc_block_t;
 
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
@@ -123,6 +124,11 @@ typedef struct svc {
 	int	       dynamic_stop;
 	int	       private;
 	svc_cmd_t    (*cb)(struct svc *svc, int event, void *event_arg);
+
+	/* Used to forcefully kill services that won't shutdown on
+	 * termination and to delay restarts of crashing services. */
+	uev_t          timer;
+	void           (*timer_cb)(struct svc *svc);
 } svc_t;
 
 typedef struct svc_map svc_map_t;

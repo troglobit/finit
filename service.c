@@ -68,6 +68,63 @@ int service_enabled(svc_t *svc)
 }
 
 /**
+ * service_timeout_cb - libuev callback wrapper for service timeouts
+ *
+ * Calls the callback registered with the call to
+ * service_timeout_after().
+ */
+static void service_timeout_cb(uev_t *w, void *_svc, int events)
+{
+	svc_t *svc = _svc;
+
+	(void)(w);
+	(void)(events);
+	svc->timer_cb(svc);
+}
+
+/**
+ * service_timeout_after - Call a function after some time has elapsed
+ * @param svc      Service to use as argument to the callback
+ * @param timeout  Timeout, in milliseconds
+ * @param cb       Callback function
+ *
+ * After @param timeout milliseconds has elapsed, calls @param cb with
+ * @param svc as the argument.
+ *
+ * @return 0 on success, non-zero on error.
+ */
+static int service_timeout_after(svc_t *svc, int timeout,
+				 void (*cb)(svc_t *svc))
+{
+	if (svc->timer_cb)
+		return -EBUSY;
+
+	svc->timer_cb = cb;
+	return uev_timer_init(ctx, &svc->timer, service_timeout_cb,
+			      svc, timeout, 0);
+}
+
+/**
+ * service_timeout_cancel - Cancel timeout associated with service
+ * @param svc      Service whose timeout to cancel
+ *
+ * If a timeout is associated with @param svc, cancel it.
+ *
+ * @return 0 on success, non-zero on error.
+ */
+static int service_timeout_cancel(svc_t *svc)
+{
+	int err;
+
+	if (!svc->timer_cb)
+		return 0;
+
+	err = uev_timer_stop(&svc->timer);
+	svc->timer_cb = NULL;
+	return err;
+}
+
+/**
  * service_stop_is_done - Have all stopped services been collected?
  *
  * Returns:
@@ -291,6 +348,27 @@ static int service_start(svc_t *svc)
 		print_result(result);
 
 	return 0;
+}
+
+/**
+ * service_kill - Forcefully terminate a service
+ * @param svc  Service to kill
+ *
+ * Called when a service refuses to terminate gracefully.
+ */
+static void service_kill(svc_t *svc)
+{
+	service_timeout_cancel(svc);
+
+	if (runlevel != 1 && !silent)
+		print_desc("Killing ", svc->desc);
+
+	_d("Sending SIGKILL to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
+	kill(svc->pid, SIGKILL);
+
+	/* Let SIGKILLs stand out, show result as [WARN] */
+	if (runlevel != 1 && !silent)
+		print(2, NULL);
 }
 
 /**
@@ -697,11 +775,52 @@ void service_monitor(pid_t lost)
 	sm_step(&sm);
 }
 
+static void service_retry(svc_t *svc)
+{
+	int *restart_counter = (int *)&svc->restart_counter;
+	int timeout;
+	service_timeout_cancel(svc);
+
+	if (svc->state != SVC_HALTED_STATE ||
+	    svc->block != SVC_BLOCK_RESTARTING) {
+		_d("%s not crashing anymore", svc->desc);
+		*restart_counter = 0;
+		return;
+	}
+
+	if (*restart_counter >= RESPAWN_MAX) {
+		_e("%s keeps crashing, not restarting", svc->desc);
+		svc->block = SVC_BLOCK_CRASHING;
+		*restart_counter = 0;
+		service_step(svc);
+		return;
+	}
+
+	(*restart_counter)++;
+
+	_d("%s crashed, trying to start it again, attempt %d",
+	   svc->desc, *restart_counter);
+
+	svc->block = SVC_BLOCK_NONE;
+	service_step(svc);
+
+	/* Wait 2s for the first 5 respawns, then back off to 5s */
+	timeout = ((*restart_counter) <= (RESPAWN_MAX / 2)) ? 2000 : 5000;
+	service_timeout_after(svc, timeout, service_retry);
+	return;
+}
+
 static void svc_set_state(svc_t *svc, svc_state_t new)
 {
 	svc_state_t *state = (svc_state_t *)&svc->state;
 
 	*state = new;
+
+	/* if the PID isn't collected within 3s, kill it! */
+	if (*state == SVC_STOPPING_STATE) {
+		service_timeout_cancel(svc);
+		service_timeout_after(svc, 3000, service_kill);
+	}
 }
 
 void service_step(svc_t *svc)
@@ -725,7 +844,6 @@ restart:
 
 	switch(svc->state) {
 	case SVC_HALTED_STATE:
-		*restart_counter = 0;
 		if (enabled)
 			svc_set_state(svc, SVC_READY_STATE);
 		break;
@@ -747,6 +865,9 @@ restart:
 
 	case SVC_STOPPING_STATE:
 		if (!svc->pid) {
+			/* PID was collected normally, no need to kill it */
+			service_timeout_cancel(svc);
+
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
 			case SVC_TYPE_INETD:
@@ -770,13 +891,6 @@ restart:
 		if (!enabled) {
 			svc_set_state(svc, SVC_HALTED_STATE);
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
-			if (*restart_counter >= RESPAWN_MAX) {
-				_e("%s keeps crashing, not restarting", svc->desc);
-				svc->block = SVC_BLOCK_CRASHING;
-				svc_set_state(svc, SVC_HALTED_STATE);
-				break;
-			}
-
 			/* wait until all processes has been stopped before continuing... */
 			if (sm_is_in_teardown(&sm))
 				break;
@@ -818,10 +932,13 @@ restart:
 		}
 
 		if (!svc->pid && !svc_is_inetd(svc)) {
-			(*restart_counter)++;
-			/* TODO: There should be an async wait here
-			 * before moving back to READY */
-			svc_set_state(svc, SVC_READY_STATE);
+			svc->block = SVC_BLOCK_RESTARTING;
+			svc_set_state(svc, SVC_HALTED_STATE);
+
+			/* Restart directly after the first crash,
+			 * then retry after 2s. */
+			_d("delayed restart of %s", svc->desc);
+			service_timeout_after(svc, 1, service_retry);
 			break;
 		}
 
