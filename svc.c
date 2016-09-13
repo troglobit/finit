@@ -443,6 +443,9 @@ char *svc_status(svc_t *svc)
 
 		case SVC_BLOCK_INETD_BUSY:
 			return "busy";
+
+		case SVC_BLOCK_RESTARTING:
+			return "restart";
 		}
 
 	case SVC_DONE_STATE:
