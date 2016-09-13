@@ -109,20 +109,6 @@ int plugin_unregister(plugin_t *plugin)
 #ifndef ENABLE_STATIC
 	TAILQ_REMOVE(&plugins, plugin, link);
 
-	if (plugin->svc.cb) {
-		svc_t *svc;
-
-		/* Unregister plugin callback for all matching services */
-		for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-			if (strcmp(svc->cmd, plugin->name))
-				continue;
-
-			svc->cb           = NULL;
-			svc->dynamic      = 0;
-			svc->dynamic_stop = 0;
-		}
-	}
-
 	_d("%s exiting ...", plugin->name);
 	free(plugin->name);
 #else

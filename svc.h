@@ -33,11 +33,7 @@
 #include "inetd.h"
 #include "helpers.h"
 
-typedef enum {
-	SVC_STOP = 0,		/* Disabled */
-	SVC_START,		/* Enabled */
-	SVC_RELOAD		/* Enabled, needs restart */
-} svc_cmd_t;
+typedef int svc_cmd_t;
 
 typedef enum {
 	SVC_TYPE_FREE       = 0,	/* Free to allocate */
@@ -113,16 +109,6 @@ typedef struct svc {
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
-
-	/* For external plugins. If @cb is set, a plugin is loaded.
-	 * @dynamic:	  Set by plugins that want dynamic events.
-	 * @dynamic_stop: Set by plugins that allow dyn. events to stop it as well.
-	 * @private:	  Can be used freely by plugin, e.g., to store "states".
-	 */
-	int	       dynamic;
-	int	       dynamic_stop;
-	int	       private;
-	svc_cmd_t    (*cb)(struct svc *svc, int event, void *event_arg);
 } svc_t;
 
 typedef struct svc_map svc_map_t;

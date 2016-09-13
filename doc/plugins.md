@@ -1,10 +1,11 @@
-Hooks, Callbacks & Plugins
-==========================
+Hooks & Plugins
+===============
 
-Finit provides only the bare necessities for starting and supervising
-processes, with an emphasis on *bare* — for your convenience it does
-however come with support for hooks, service callbacks and plugins that
-can used to extend finit with.
+Finit can be extended to add general functionality in the form of I/O
+monitors, built-in inetd services, or hook plugins.
+
+The following sections detail existing plugins and hook points.  For
+more information, see the plugins listed below.
 
 
 Plugins
@@ -122,20 +123,6 @@ Plugins like `initctl.so` and `tty.so` extend finit by acting on events,
 they are called I/O plugins and are called from the finit main loop when
 `poll()` detects an event.  See the source code for `plugins/*.c` for
 more help and ideas.
-
-
-Callbacks
----------
-
-Callback plugins are called by finit right before a process is started,
-or restarted if it exits.  The callback runs as a separate process and
-receives a pointer to the `svc_t` of the service, with all command line
-parameters free to modify as needed.
-
-All the callback needs to do is respond with one of: `SVC_STOP (0)`
-tells Finit to *not* start the service, `SVC_START (1)` to start the
-service, or `SVC_RELOAD (2)` to have finit signal the process with
-`SIGHUP`.
 
 
 <!--

@@ -100,13 +100,6 @@ typedef struct plugin {
 	 * NOTE: Must match cmd for services or inetd plugins! */
 	char *name;
 
-	/* Service callback to be called once per lap of runloop. */
-	struct {
-		int dynamic;      /* Callback wants external events as well. */
-		int dynamic_stop; /* Callback allows dynamic events to stop. */
-		svc_cmd_t (*cb)(svc_t *svc, int event, void *event_arg);
-	} svc;
-
 	/* List of hook callbacks. */
 	struct {
 		void  *arg;      /* Optional argument to callback func. */
