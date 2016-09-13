@@ -29,6 +29,10 @@
 
 #include "svc.h"
 
+#ifndef PLUGIN_PATH		/* Fallback for --enable-static builds */
+#define PLUGIN_PATH "/dev/null"
+#endif
+
 #define PLUGIN_DEP_MAX  10
 #define PLUGIN_IO_READ  UEV_READ
 #define PLUGIN_IO_WRITE UEV_WRITE
