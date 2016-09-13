@@ -3,6 +3,38 @@ Change Log
 
 All relevant changes are documented in this file.
 
+[3.0][UNRELEASED] - 2016-XX-YY
+------------------------------
+
+### Changes
+
+* Manage service states based on user defined conditions
+* Manage dependencies between services, w/ conditions (pidfile plugin)
+* Manage service dependenceis on network events (netlink plugin)
+* Support for dynamically reloading Finit configuration at runtime
+* Refactor to use GNU configure and build system
+* New hooks for for detecting lost and started services (lost plugin)
+* External libraries, libuEv and libite, now build requirements
+* Early logging support to `/dev/kmsg` instead of console
+* Support for redirecting stdout/stderr of services to syslog
+* Support for managing resource limits for Finit and its processes
+* Add optional built-in inetd services: echo server, chargen, etc.
+* Add simple built-in getty
+* Greatly improved accounting support, both UTMP and WTMP fixes+features
+* Improved udev support, on non-embedded systems
+* Improvide shutdown and file-system unmount support (Debian)
+* Added `--enable-emergency-shell` (configure) fallback debug mode
+* Support SysV init `/etc/rc.local`
+* Inetd protection against UDP looping attacks
+* Support systems with `/run` instead of `/var/run` (bootmisc plugin)
+* Adopted BusyBox init signals for halt/reboot/poweroff
+* SysV init compat support for reboot (setenv)
+* Compat support for musl libc
+* Add OpenRC-like support for sysctl.d/*.conf
+* Add support for Debian/BusyBox `/etc/network/interfaces`
+* Add support for running fsck on file systems in `/etc/fstab`
+* Added example configs + HowTos for Debian (Jessie) and Alpine Linux
+
 
 [2.4][] - 2015-12-04
 --------------------
