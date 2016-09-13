@@ -42,7 +42,7 @@ static void utmp_strncpy(char *dst, const char *src, size_t dlen)
 
 int utmp_set(int type, int pid, char *line, char *id, char *user)
 {
-	int result;
+	int result = 0;
 	struct utmp ut;
 	struct utsname uts;
 
@@ -72,7 +72,7 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 
 	if (type != DEAD_PROCESS) {
 		setutent();
-		result = pututline(&ut) ? 0 : 1;;
+		result += pututline(&ut) ? 0 : 1;
 		endutent();
 	}
 	updwtmp(_PATH_WTMP, &ut);
