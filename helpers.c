@@ -127,6 +127,7 @@ void print(int action, const char *fmt, ...)
 	va_list ap;
 	const char success[] = " \e[1m[ OK ]\e[0m\n";
 	const char failure[] = " \e[7m[FAIL]\e[0m\n";
+	const char warning[] = " \e[7m[WARN]\e[0m\n";
 	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
 	const char dots[] = " .....................................................................";
 
@@ -156,6 +157,10 @@ void print(int action, const char *fmt, ...)
 
 	case 1:
 		write(STDERR_FILENO, failure, sizeof(failure));
+		break;
+
+	case 2:
+		write(STDERR_FILENO, warning, sizeof(warning));
 		break;
 
 	default:

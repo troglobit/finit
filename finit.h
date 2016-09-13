@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <lite/lite.h>
+#include <uev/uev.h>
 
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
@@ -90,6 +91,8 @@ extern char  *hostname;
 extern char  *username;
 extern char  *runparts;
 extern char  *console;
+extern uev_ctx_t *ctx;
+
 extern char  *__progname;
 
 #endif /* FINIT_H_ */
