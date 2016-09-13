@@ -71,16 +71,19 @@ typedef enum {
 #define MAX_NUM_SVC      64	     /* Enough? */
 #define MAX_NUM_SVC_ARGS 32
 
-/* Default enable for all services, can be stopped by means
+/*
+ * Default enable for all services, can be stopped by means
  * of issuing an initctl call. E.g.
- *   initctl <stop|start|restart> service */
+ *
+ *   initctl <stop|start|restart> service
+ */
 typedef struct svc {
 	/* Instance specifics */
 	int            job, id;	       /* JOB:ID */
 
 	/* Service details */
 	pid_t	       pid;
-	const svc_state_t    state;	       /* Paused, Reloading, Restart, Running, ... */
+	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;
 	time_t	       mtime;	       /* Modification time for .conf from /etc/finit.d/ */
 	const int      dirty;	       /* Set if old mtime != new mtime  => reloaded,
@@ -92,7 +95,7 @@ typedef struct svc {
 	char           cond[MAX_ARG_LEN];
 
 	/* Incremented for each restart by service monitor. */
-	const unsigned int   restart_counter;
+	const unsigned int restart_counter;
 
 	/* For inetd services */
 	inetd_t        inetd;
@@ -153,21 +156,21 @@ void	  svc_clean_dynamic    (void (*cb)(svc_t *));
 int	  svc_clean_bootstrap  (svc_t *svc);
 
 char     *svc_status           (svc_t *svc);
-int       svc_next_id          (char *cmd);
+int       svc_next_id          (char  *cmd);
 int       svc_is_unique        (svc_t *svc);
 
-static inline int svc_in_runlevel(svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
-static inline int svc_has_sighup(svc_t *svc) { return svc &&  0 != svc->sighup; }
+static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
+static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }
 
-static inline void svc_starting   (svc_t *svc) { svc->starting = 1;         }
-static inline void svc_started    (svc_t *svc) { svc->starting = 0;         }
-static inline int  svc_is_starting(svc_t *svc) { return 0 != svc->starting; }
+static inline void svc_starting    (svc_t *svc) { svc->starting = 1;         }
+static inline void svc_started     (svc_t *svc) { svc->starting = 0;         }
+static inline int  svc_is_starting (svc_t *svc) { return 0 != svc->starting; }
 
-static inline int svc_is_dynamic(svc_t *svc) { return svc &&  0 != svc->mtime; }
-static inline int svc_is_removed(svc_t *svc) { return svc && -1 == svc->dirty; }
-static inline int svc_is_changed(svc_t *svc) { return svc &&  0 != svc->dirty; }
-static inline int svc_is_updated(svc_t *svc) { return svc &&  1 == svc->dirty; }
-const char       *svc_dirtystr  (svc_t *svc);
+static inline int svc_is_dynamic   (svc_t *svc) { return svc &&  0 != svc->mtime; }
+static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
+static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
+static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }
+const char       *svc_dirtystr     (svc_t *svc);
 
 static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
 static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
@@ -181,7 +184,7 @@ static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_INETD_B
 static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
 static inline void svc_crashing    (svc_t *svc) { svc->block = SVC_BLOCK_CRASHING; }
 
-#endif	/* FINIT_SVC_H_ */
+#endif /* FINIT_SVC_H_ */
 
 /**
  * Local Variables:
