@@ -97,10 +97,6 @@ AC_ARG_WITH(console,
         AS_HELP_STRING([--with-console=DEV], [Console to use, default: /dev/console]),
 	[console=$withval], [console=/dev/console])
 
-AC_ARG_WITH(shell,
-        AS_HELP_STRING([--with-shell=PATH], [Fallback shell to use, default: /bin/sh]),
-	[shell=$withval], [shell=/bin/sh])
-
 AC_ARG_WITH(username,
         AS_HELP_STRING([--with-username=USER], [User for 'startx' .conf option, default: root]),
 	[username=$withval], [username=root])
@@ -175,11 +171,6 @@ AS_IF([test "x$with_console" != "xno"], [
 	AS_IF([test "x$console" = "xyes"], [
 		console=/dev/console])])
 AC_DEFINE_UNQUOTED(CONSOLE, "$console", [Default console to use])
-
-AS_IF([test "x$with_shell" != "xno"], [
-	AS_IF([test "x$shell" = "xyes"], [
-		shell=/bin/sh])])
-AC_DEFINE_UNQUOTED(FALLBACK_SHELL, "$shell", [Used if no login getty])
 
 AS_IF([test "x$with_username" != "xno"], [
 	AS_IF([test "x$username" = "xyes"], [
