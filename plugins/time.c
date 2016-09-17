@@ -71,14 +71,14 @@ static int send_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, sockle
 {
 	char *now;
 
-	now = rfctime(buf, &len);
+	now = rfctime(buf, (size_t *)&len);
 	if (!now)
 		return -1;	/* On error, close connection. */
 
 	return sendto(sd, now, len, MSG_DONTWAIT, sa, sa_len);
 }
 
-static int cb(int type)
+static int cb(int UNUSED(type))
 {
 	int sd = STDIN_FILENO;
 	char buf[BUFSIZ];
