@@ -49,6 +49,7 @@ typedef struct tty_node {
 int	    tty_register    (char *line);
 tty_node_t *tty_find	    (char *dev);
 size_t	    tty_num	    (void);
+size_t      tty_num_active  (void);
 tty_node_t *tty_find_by_pid (pid_t pid);
 void	    tty_start	    (finit_tty_t *tty);
 void	    tty_stop	    (finit_tty_t *tty);

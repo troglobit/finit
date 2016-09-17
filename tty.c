@@ -118,6 +118,19 @@ size_t tty_num(void)
 	return num;
 }
 
+size_t tty_num_active(void)
+{
+	size_t num = 0;
+	tty_node_t *entry;
+
+	LIST_FOREACH(entry, &tty_list, link) {
+		if (entry->data.pid)
+			num++;
+	}
+
+	return num;
+}
+
 tty_node_t *tty_find_by_pid(pid_t pid)
 {
 	tty_node_t *entry;
