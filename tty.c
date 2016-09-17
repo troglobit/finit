@@ -23,6 +23,8 @@
  */
 
 #include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <lite/lite.h>
 
@@ -34,6 +36,7 @@
 #include "utmp-api.h"
 
 LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
+static pid_t fallback = 0;
 
 
 /* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] */
@@ -208,13 +211,54 @@ int tty_enabled(finit_tty_t *tty, int runlevel)
 	return 0;
 }
 
-/* TTY monitor, called by service_monitor() */
+/*
+ * Fallback shell if no TTYs are active
+ */
+int tty_fallback(pid_t lost)
+{
+#ifdef FALLBACK_SHELL
+	if (lost == 1) {
+		if (fallback) {
+			_d("Stopping fallback shell");
+			kill(fallback, SIGKILL);
+			fallback = 0;
+		}
+
+		return 0;
+	}
+
+	if (fallback != lost || tty_num_active()) {
+		_d("Not starting fallback (%d) shell, lost pid %d", fallback, lost);
+		return 0;
+	}
+
+	_d("Starting fallback shell");
+	fallback = fork();
+	if (fallback)
+		return 1;
+
+	/*
+	 * Become session leader and set controlling TTY
+	 * to enable Ctrl-C and job control in shell.
+	 */
+	setsid();
+	ioctl(STDIN_FILENO, TIOCSCTTY, 1);
+
+	_exit(execl(_PATH_BSHELL, _PATH_BSHELL, NULL));
+#endif /* FALLBACK_SHELL */
+
+	return 0;
+}
+
+/*
+ * TTY monitor, called by service_monitor()
+ */
 int tty_respawn(pid_t pid)
 {
 	tty_node_t *entry = tty_find_by_pid(pid);
 
 	if (!entry)
-		return 0;
+		return tty_fallback(pid);
 
 	/* Set DEAD_PROCESS UTMP entry */
 	utmp_set_dead(pid);
@@ -241,6 +285,9 @@ void tty_runlevel(int runlevel)
 		else
 			tty_start(&entry->data);
 	}
+
+	/* Start fallback shell if enabled && no TTYs */
+	tty_fallback(tty_num_active() > 0 ? 1 : 0);
 }
 
 /**
