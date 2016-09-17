@@ -35,8 +35,8 @@
 #include "tty.h"
 #include "utmp-api.h"
 
-LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 static pid_t fallback = 0;
+static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
 
 /* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] */
