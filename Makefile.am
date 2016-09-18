@@ -36,7 +36,7 @@ initctl_LDADD      = $(lite_LIBS)
 reboot_SOURCES     = reboot.c
 
 INIT_LNKS          = telinit init
-REBOOT_LNKS        = shutdown halt suspend
+REBOOT_LNKS        = shutdown halt poweroff suspend
 SUBDIRS            = plugins
 doc_DATA           = README.md LICENSE finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf
