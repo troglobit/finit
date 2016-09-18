@@ -39,13 +39,6 @@
 #include "../sig.h"
 #include "../service.h"
 
-/*
- * Old-style SysV shutdown sends a setenv cmd INIT_HALT with "=HALT",
- * "=POWERDOWN", or "" to cancel shutdown, before requesting change to
- * runlevel 6 over the /dev/initctl FIFO.
- */
-shutop_t halt = SHUT_DEFAULT;
-
 static void parse(void *arg, int fd, int events);
 static void setup(void *arg);
 
@@ -99,11 +92,15 @@ static void set_env(char *data)
 }
 
 /*
- * Standard reboot/shutdown utilities talk to init using /dev/initctl.
+ * Standard reboot/shutdown utilities talk to init using /run/initctl.
  * We should check if the fifo was recreated and reopen it.
+ *
+ * For SysV compatibility the default is to halt the system when issuing
+ * `init 0`, unless INIT_HALT=POWERDOWN, as performed by the SysV utils.
  */
 static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 {
+	int lvl;
 	struct init_request rq;
 
 	while (1) {
@@ -132,25 +129,17 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 		switch (rq.cmd) {
 		case INIT_CMD_RUNLVL:
 			switch (rq.runlevel) {
-			case '0':
-				_d("Halting system (SIGUSR1 or SIGUSR2)");
-				do_shutdown(halt);
-				break;
-
 			case 's':
 			case 'S':
 				rq.runlevel = '1';
 				/* Fall through to regular processing */
 
-			case '1'...'5':
-			case '7'...'9':
+			case '0'...'9':
 				_d("Setting new runlevel %c", rq.runlevel);
-				service_runlevel(rq.runlevel - '0');
-				break;
-
-			case '6':
-				_d("Rebooting system (SIGTERM)");
-				do_shutdown(SHUT_REBOOT);
+				lvl = rq.runlevel - '0';
+				if (lvl == 6)
+					halt = SHUT_REBOOT;
+				service_runlevel(lvl);
 				break;
 
 			default:

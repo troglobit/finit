@@ -217,9 +217,14 @@ static int do_handle_emit(char *buf, size_t len)
 	return result;
 }
 
+/*
+ * In contrast to the SysV compat handling in plugins/initctl.c, when
+ * `initctl runlevel 0` is issued we default to POWERDOWN the system
+ * instead of just halting.
+ */
 static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 {
-	int sd;
+	int sd, lvl;
 	struct init_request rq;
 
 	sd = accept(w->fd, NULL, NULL);
@@ -255,26 +260,19 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 		switch (rq.cmd) {
 		case INIT_CMD_RUNLVL:
 			switch (rq.runlevel) {
-			case '0':
-				_d("Halting system (SIGUSR2)");
-				do_shutdown(SHUT_OFF);
-				break;
-
 			case 's':
 			case 'S':
-				_d("Cannot enter bootstrap after boot ...");
-				rq.runlevel = '1';
+				rq.runlevel = '1'; /* Single user mode */
 				/* Fall through to regular processing */
 
-			case '1'...'5':
-			case '7'...'9':
+			case '0'...'9':
 				_d("Setting new runlevel %c", rq.runlevel);
-				service_runlevel(rq.runlevel - '0');
-				break;
-
-			case '6':
-				_d("Rebooting system (SIGUSR1)");
-				do_shutdown(SHUT_REBOOT);
+				lvl = rq.runlevel - '0';
+				if (lvl == 0)
+					halt = SHUT_OFF;
+				if (lvl == 6)
+					halt = SHUT_REBOOT;
+				service_runlevel(lvl);
 				break;
 
 			default:

@@ -66,6 +66,8 @@ typedef enum {
 	SHUT_REBOOT
 } shutop_t;
 
+extern shutop_t halt;
+
 void do_shutdown    (shutop_t op);
 int  sig_stopped    (void);
 void sig_init       (void);

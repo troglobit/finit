@@ -80,6 +80,13 @@
 #include "service.h"
 #include "utmp-api.h"
 
+/*
+ * Old-style SysV shutdown sends a setenv cmd INIT_HALT with "=HALT",
+ * "=POWERDOWN", or "" to cancel shutdown, before requesting change to
+ * runlevel 6 over the /dev/initctl FIFO.  See plugins/initctl.c
+ */
+shutop_t halt = SHUT_DEFAULT;
+
 static int   stopped = 0;
 static uev_t sigterm_watcher, sigusr1_watcher, sigusr2_watcher;
 static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
@@ -184,7 +191,8 @@ static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	do_shutdown(SHUT_REBOOT);
+	halt = SHUT_REBOOT;
+	service_runlevel(6);
 }
 
 /*
@@ -192,7 +200,8 @@ static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	do_shutdown(SHUT_HALT);
+	halt = SHUT_HALT;
+	service_runlevel(0);
 }
 
 /*
@@ -200,7 +209,8 @@ static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	do_shutdown(SHUT_OFF);
+	halt = SHUT_OFF;
+	service_runlevel(0);
 }
 
 /*
@@ -208,7 +218,8 @@ static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigterm_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
-	do_shutdown(SHUT_REBOOT);
+	halt = SHUT_REBOOT;
+	service_runlevel(6);
 }
 
 /*

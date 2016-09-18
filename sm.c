@@ -160,13 +160,14 @@ restart:
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 
-		if (0 == runlevel) {
-			do_shutdown(SHUT_OFF);
-			sm->state = SM_RUNNING_STATE;
-			break;
-		}
-		if (6 == runlevel) {
-			do_shutdown(SHUT_REBOOT);
+		/*
+		 * "I've seen things you people wouldn't believe.  Attack ships on fire off
+		 *  the shoulder of Orion.  I watched C-beams glitter in the dark near the
+		 *  Tannhäuser Gate.  All those .. moments .. will be lost in time, like
+		 *  tears ... in ... rain."
+		 */
+		if (runlevel == 0 || runlevel == 6) {
+			do_shutdown(halt);
 			sm->state = SM_RUNNING_STATE;
 			break;
 		}
