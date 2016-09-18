@@ -33,6 +33,7 @@ static void setup(void *UNUSED(arg))
 {
 	_d("Starting D-Bus ...");
 	makedir("/var/run/dbus", 0755);
+	makedir("/var/lock/subsys", 0755);
 	makedir("/var/lock/subsys/messagebus", 0755);
 	run("dbus-uuidgen --ensure");
 	erase("/var/run/dbus/pid");
