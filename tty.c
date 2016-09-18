@@ -35,7 +35,9 @@
 #include "tty.h"
 #include "utmp-api.h"
 
+#ifdef FALLBACK_SHELL
 static pid_t fallback = 0;
+#endif
 static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
 
@@ -214,7 +216,7 @@ int tty_enabled(finit_tty_t *tty, int runlevel)
 /*
  * Fallback shell if no TTYs are active
  */
-int tty_fallback(pid_t lost)
+int tty_fallback(pid_t UNUSED(lost))
 {
 #ifdef FALLBACK_SHELL
 	if (lost == 1) {
