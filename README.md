@@ -351,7 +351,7 @@ to the kernel command line:
 
 Remember to also set up an initial `/etc/finit.conf` before rebooting!
 
-![Finit starting Debian 6.0](images/finit-screenshot.jpg "Finit screenshot")
+![Finit starting TroglOS](images/finit3-screenshot.png "Finit screenshot")
 
 
 Debugging
