@@ -127,6 +127,12 @@ restart:
 		_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
 		runlevel_set(prevlevel, runlevel);
 
+		/* Disable login in single-user mode as well as shutdown/reboot */
+		if (runlevel == 1 || runlevel == 0 || runlevel == 6)
+			touch("/etc/nologin");
+		else
+			erase("/etc/nologin");
+
 		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
 		conf_reload_dynamic();
 
@@ -153,12 +159,6 @@ restart:
 
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
-
-		/* Disable login in single-user mode as well as shutdown/reboot */
-		if (runlevel == 1 || runlevel == 0 || runlevel == 6)
-			touch("/etc/nologin");
-		else
-			erase("/etc/nologin");
 
 		if (0 == runlevel) {
 			do_shutdown(SHUT_OFF);
