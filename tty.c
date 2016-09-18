@@ -216,7 +216,7 @@ int tty_enabled(finit_tty_t *tty, int runlevel)
 /*
  * Fallback shell if no TTYs are active
  */
-int tty_fallback(pid_t UNUSED(lost))
+int tty_fallback(pid_t lost)
 {
 #ifdef FALLBACK_SHELL
 	if (lost == 1) {
@@ -247,6 +247,8 @@ int tty_fallback(pid_t UNUSED(lost))
 	ioctl(STDIN_FILENO, TIOCSCTTY, 1);
 
 	_exit(execl(_PATH_BSHELL, _PATH_BSHELL, NULL));
+#else
+	(void)lost;
 #endif /* FALLBACK_SHELL */
 
 	return 0;
