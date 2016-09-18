@@ -38,8 +38,8 @@ Introduction
 Finit is an EeePC inspired Fastinit clone with [process supervision][1]
 similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
 [runit][3].  The focus of Finit is on small and embedded Linux systems,
-although it is fully usable on server and desktop installations as well.
-See the [contrib section](contrib/) for Debian and Alpine examples.
+although fully usable on server and desktop installations as well.  See
+the [contrib section](contrib/) for Debian and Alpine Linux examples.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
@@ -140,26 +140,26 @@ nasty bits with PAM etc.
 
 **Runlevels**
 
-Runlevels are optional in Finit, but support for [SysV runlevels][5] is
-available if needed.  All services in runlevel S(1) are started first,
-followed by the desired run-time runlevel.  Runlevel S can be started in
-sequence by using `run [S] cmd`.  Changing runlevels at runtime is done
-like any other init, e.g. <kbd>init 4</kbd>
+Support for SysV init-style [runlevels][5] is available, in the same
+minimal style as everything else in Finit.  The `[2345]` syntax can be
+applied to service, task, run, inetd, and TTY stanzas.
+
+All services in runlevel S(1) are started first, followed by the desired
+run-time runlevel.  Runlevel S can be started in sequence by using `run
+[S] cmd`.  Changing runlevels at runtime is done like any other init,
+e.g. <kbd>init 4</kbd>, but also using the more advanced `intictl` tool.
 
 
 **Plugins**
 
-Finit plugins can be *callbacks*, *boot hooks* into different stages of
-the boot process, or *pure extensions*.  Plugins are written in C and
-compiled into a dynamic library that is loaded automatically by finit at
-boot.  A basic set of plugins that extend and modify the basic behavior
-are bundled in the `plugins/` directory.
+Plugins can be used to *extend* the functionality of Finit, *hook into*
+different stages of the boot process and at runtime, and act as *pure
+extensions*.  Plugins are written in C and compiled into a dynamic
+library that is loaded automatically by finit at boot.  A basic set of
+plugins are bundled in the `plugins/` directory.
 
 Capabilities:
 
-- **Task/Run/Service callbacks**  
-  Modify service arguments, override service monitor's decisions to
-  start/stop/reload a service.
 - **Hooks**  
   Hook into the boot at predefined points to extend Finit
 - **I/O**  
@@ -178,7 +178,7 @@ For more information, see [doc/plugins.md](doc/plugins.md).
 Runparts & /etc/rc.local
 ------------------------
 
-At the end of the boot, when networking and all services are up, finit
+At the end of the boot, when networking and all services are up, Finit
 calls its built-in [run-parts(8)][] on the `runparts <DIR>` directory,
 and `/etc/rc.local`, in that order if they exist.
 
@@ -280,24 +280,29 @@ the following signals have been adopted:
   Finit currently forwards this to `SIGUSR2`.
 
 Finit also listens to the classic SysV init FIFO, which used to be
-located in `/dev` but these days default to `/run/initctl`.  So existing
-tools like, `poweroff`, `halt`, `reboot`, and `shutdown` work as
-expected.  Support for this old-style handling is implemented in the
+located in `/dev` but these days default to `/run/initctl`.  Hence,
+existing tools like, `poweroff`, `halt`, `reboot`, and `shutdown` work
+as expected.  Support for this old-style handling is implemented in the
 optional `initctl.so` plugin and can be accessed with the traditional
 `telinit` command line tool, symlinked to `finit`.  Hence, if finit is
 your system init, then `init q` will work as the UNIX beards intended.
 
 ```shell
-    ~ $ telinit
+    ~ # telinit -h
     Usage: telinit [OPTIONS] [q | Q | 0-9]
     
     Options:
-      -h, --help            This help text
-      -v, --version         Show Finit version
+      -h, --help      This help text
+      -V, --version   Show Finit version
     
     Commands:
-      q | Q           Reload *.conf in /etc/finit.d/, like SIGHUP
-      0 - 9           Change runlevel: 0 halt, 6 reboot
+      0               Power-off the system, same as initctl poweroff
+      6               Reboot the system, same as initctl reboot
+      2, 3, 4, 5      Change runlevel. Starts services in new runlevel, stops any
+                      services in prev. runlevel that are not allowed in new.
+      q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or
+                      sending SIGHUP to PID 1
+      1, s, S         Enter system rescue mode, runlevel 1
 ```
 
 
@@ -385,12 +390,16 @@ Debugging
 ---------
 
 Add `finit_debug`, or `--debug`, to the kernel command line to enable
-debug messages.  See the output from `configure --help` for more on
-how to assist debugging.
+debug messages.
 
 ```shell
-    init=/sbin/finit --debug
+    append="init=/sbin/finit --debug"
 ```
+
+To debug startup issues, in particular issues with getty/login, try
+`configure --enable-fallback-shell`.  When no TTYs are detected, and
+Finit is configured with this option, Finit will try to start a bare
+`/bin/sh` on the boot console.
 
 
 Origin & References
