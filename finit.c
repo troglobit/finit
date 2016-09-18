@@ -373,7 +373,7 @@ int main(int argc, char* argv[])
 	umask(0022);
 
 	/* Cleanup of stale files, if any still linger on. */
-	run_interactive("rm -rf /tmp/* /var/run/* /var/lock/*", "Cleaning up temporary directories");
+	run_interactive("rm -rf /tmp/* /tmp/.??* /var/run/* /var/lock/*", "Cleaning up temporary directories");
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
