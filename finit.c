@@ -325,7 +325,12 @@ int main(int argc, char* argv[])
 		else
 			devfsd = "/lib/systemd/systemd-udevd --daemon";
 	}
+
 	run_interactive(devfsd, "Populating device tree");
+	if (fexist("/sbin/udevadm")) {
+		run_interactive("/sbin/udevadm trigger --action=add --type=subsystems", "Trigger subsystems");
+		run_interactive("/sbin/udevadm trigger --action=add --type=devices", "Trigger devices");
+	}
 
 	/*
 	 * Load plugins first, finit.conf may contain references to
