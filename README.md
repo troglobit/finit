@@ -210,7 +210,7 @@ are used, and even more commonly, only the default runlevel is used.
 To specify an allowed set of runlevels for a `service`, `run` command,
 `task`, or `tty`, add `[NNN]` to your `/etc/finit.conf`, like this:
 
-```shell
+```
     service [S12345] /sbin/syslogd -n -x     -- System log daemon
     run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
     task    [S]      /etc/init.d/kbd start   -- Preparing console
@@ -247,47 +247,21 @@ start any new ones for you, without rebooting the system.
 Rebooting & Halting
 -------------------
 
-Finit is often used on embedded and small Linux systems with BusyBox.
-For compatibility with its existing toolset (halt, poweroff, reboot),
-the following signals have been adopted:
+Traditionally, rebooting and halting a UNIX system is done by changing
+its runlevel.  Finit comes with its own tooling providing: `shutdown`,
+`reboot`, `poweroff`, and `suspend`, but also the traditional `init` and
+`telinit`, as well as a more modern `initctl` tool, detailed in the next
+section.
 
-* `SIGUSR1`  
-  Same effect as `finit q`, reloads all *.conf files in `/etc/finit.d/`
-* `SIGUSR1`  
-  Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
-  processes, and unmounts all file systems.  Then tells kernel to
-  halt.  Most people these days want SIGUSR2 though.
+For compatibility reasons Finit listens to the same set of signals as
+BusyBox init.  This is not 100% compatible with SysV init, but clearly
+the more common combination for Finit.  For more details, see
+[doc/signals.md](doc/signals.md).
 
-  SysV init and systemd use this to re-open their FIFO/D-Bus.
-* `SIGUSR2`  
-  Like SIGUSR1, but tell kernel to power-off the system, if ACPI
-  or similar exists to actually do this.  If the kernel fails
-  power-off, Finit falls back to halt.
- 
-  SysV init N/A, systemd dumps its internal state to log.
-* `SIGTERM`  
-  Like `SIGUSR1`, but tell kernel to reboot the system when done.
- 
-  SysV init N/A, systemd rexecutes itself.
-* `SIGINT`  
-  Sent from kernel when the CTRL-ALT-DEL key combo is pressed.
-  SysV init and systemd default to reboot with `shutdown -r`.  
-  Finit currently forwards this to `SIGTERM`.
-* `SIGPWR`  
-  Sent from a power daemon, like `powstatd(8)`, on changes to the
-  UPS status.  Traditionally SysV init read /etc/powerstatus and
-  acted on "OK", "FAIL", or "LOW" and then removed the file.  
-  Finit currently forwards this to `SIGUSR2`.
+Finit also listens to the classic SysV init FIFO, used by `telinit`.
+Support for this is implemented by the `initctl.so` plugin.  Hence,
+`telinit q` will work as the UNIX beards intended.
 
-Finit also listens to the classic SysV init FIFO, which used to be
-located in `/dev` but these days default to `/run/initctl`.  Hence,
-existing tools like, `poweroff`, `halt`, `reboot`, and `shutdown` work
-as expected.  Support for this old-style handling is implemented in the
-optional `initctl.so` plugin and can be accessed with the traditional
-`telinit` command line tool, symlinked to `finit`.  Hence, if finit is
-your system init, then `init q` will work as the UNIX beards intended.
-
-```shell
     ~ # telinit -h
     Usage: telinit [OPTIONS] [q | Q | 0-9]
     
@@ -303,7 +277,6 @@ your system init, then `init q` will work as the UNIX beards intended.
       q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or
                       sending SIGHUP to PID 1
       1, s, S         Enter system rescue mode, runlevel 1
-```
 
 
 Commands & Status
@@ -313,7 +286,6 @@ Finit also implements a more modern API to query status, and start/stop
 services, called `initctl`.  Unlike `telinit` the `initctl` tool does
 not return until the given command has fully completed.
 
-```shell
     ~ $ initctl -h
     Usage: initctl [OPTIONS] <COMMAND>
     
@@ -337,21 +309,17 @@ not return until the given command has fully completed.
       restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
       reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name
       version                   Show Finit version
-```
 
-The `<!>` notation to a service stanza can be used empty, then it will
-apply to `reload` and `runlevel` commands.  I.e., when a service's
-`.conf` file has been changed Finit will stop and start it instead.  If
-a service does *not* have `<!>` declared, the service will be reloaded
-(`SIGHUP`:ed) in the `START` phase instead.  The latter is the preferred
-behaviour, but not all daemons support this, unfortunately.
+For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
+file must be used to tell Finit to stop and start it on `reload` and
+`runlevel` changes.  If `<>` holds more [conditions](doc/conditions.md),
+these will also affect how a service is maintained.
 
-**Note:** even though it is possible to start services not belonging to
+**Note:** even though it is possible to start services not belonging in
 the current runlevel these services will not be respawned automatically
 by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
 Dropbear SSH service will not be restarted if it is killed or exits.
 
-```shell
     ~ $ initctl status -v
     1       running  476     [S12345]   /sbin/watchdog -T 16 -t 2 -F /dev/watchdog
     2       running  477     [S12345]   /sbin/syslogd -n -b 3 -D
@@ -363,7 +331,7 @@ Dropbear SSH service will not be restarted if it is killed or exits.
     5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
     6:1       inetd  0       [345]      /sbin/dropbear allow eth0:222
     6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
-```
+
 
 Running
 -------
@@ -378,7 +346,7 @@ LILO, U-Boot/Barebox or RedBoot) configuration to append the following
 to the kernel command line:
 
 ```shell
-    init=/sbin/finit
+    append="init=/sbin/finit"
 ```
 
 Remember to also set up an initial `/etc/finit.conf` before rebooting!
