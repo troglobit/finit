@@ -1,11 +1,8 @@
-![Finit3 Logotype](images/finit3.png "Finit: Fast Init")
-
-Fast init for Linux
-===================
-[![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
+<p align="center"><img src="images/finit3.png" alt="Finit: Fast Init" /></p>
 
 Table of Contents
 -----------------
+[![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 * [Introduction](#introduction)
 * [Features](#features)
@@ -27,11 +24,15 @@ Table of Contents
 Introduction
 ------------
 
-Finit is an EeePC inspired Fastinit clone with [process supervision][1]
+Finit is an EeePC Fastinit inspired clone with [process supervision][1]
 similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
-[runit][3].  The focus of Finit is on small and embedded Linux systems,
-although fully usable on server and desktop installations as well.  See
-the [contrib section](contrib/) for Debian and Alpine Linux examples.
+[runit][3].  It also supports free-form conditions based on events, e.g.
+triggering on PID file creation, Netlink events like a default route or
+interfaces coming up, or even custom events.  Similar to [systemd][6].
+
+Finit focuses on small and embedded Linux systems, although fully usable
+on servers and desktops as well.  See the [contrib section](contrib/)
+for Debian and Alpine Linux examples.
 
 Traditional [SysV init][4] style systems are scripted.  For low-resource
 embedded systems this is quite resource intensive and often leads to
@@ -379,6 +380,7 @@ and proposed extensions.
 [3]:  http://smarden.org/runit/
 [4]:  http://en.wikipedia.org/wiki/Init
 [5]:  http://en.wikipedia.org/wiki/Runlevel
+[6]:  https://www.freedesktop.org/wiki/Software/systemd/
 [9]:  https://github.com/troglobit/troglos
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
