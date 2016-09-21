@@ -1,6 +1,4 @@
-<div float="right">
-![Finit3 Logotype](images/finit3.png "Finit - Fast Init")
-</div>
+![Finit3 Logotype](images/finit3.png "Finit: Fast Init")
 
 Fast init for Linux
 ===================
