@@ -197,7 +197,7 @@ void conf_parse_rlimit(char *line)
 	} else {
 		const char *err = NULL;
 
-		new = strtonum(tok, 0, 2 << 31, &err);
+		new = strtonum(tok, 0, (long long)2 << 31, &err);
 		if (err)
 			goto fail;
 	}
