@@ -701,7 +701,7 @@ recreate:
 			name = plugin->name;
 
 		if (inetd_new(&svc->inetd, name, service, proto, forking, svc)) {
-			_e("Failed registering new inetd service %s", service);
+			_e("Failed registering new inetd service %s/%s", service, proto);
 			return svc_del(svc);
 		}
 
