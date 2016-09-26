@@ -166,6 +166,9 @@ The `run`, `task`, `service`, or `inetd` stanzas also allow the keyword
 `log` to redirect `stderr` and `stdout` of the application to syslog,
 using `logger`.
 
+Worth noting is that conditions is allowed for all these stanzas.  For a
+detailed description, see the [Conditions](conditions.md) document.
+
 
 /etc/finit.d
 ------------
