@@ -321,9 +321,8 @@ void inetd_stop(inetd_t *inetd)
 	}
 }
 
-static struct servent *getent_service(char *service, char *proto)
+static struct servent *fallback_service(char *service, char *proto)
 {
-#ifdef ENABLE_STATIC
 	int service_num;
 	static struct servent lfs;
 
@@ -339,29 +338,50 @@ static struct servent *getent_service(char *service, char *proto)
 	}
 
 	return NULL;
+}
+
+static struct servent *getent_service(char *service, char *proto)
+{
+	struct servent *ent;
+
+#ifdef ENABLE_STATIC
+	ent = fallback_service(service, proto);
 #else
-	return getservbyname(service, proto);
+	ent = getservbyname(service, proto);
+	if (!ent)
+		ent = fallback_service(service, proto);
 #endif
+	return ent;
+}
+
+static struct protoent *fallback_proto(char *proto)
+{
+	int proto_num;
+	static struct protoent lfp;
+
+	proto_num = fgetint("/etc/protocols", " \n\t", proto);
+	if (proto_num > 0) {
+		lfp.p_name  = proto;
+		lfp.p_proto = proto_num;
+
+		return &lfp;
+	}
+
+	return NULL;
 }
 
 static struct protoent *getent_proto(char *proto)
 {
+	struct protoent *ent;
+
 #ifdef ENABLE_STATIC
-		int proto_num;
-		static struct protoent lfp;
-
-		proto_num = fgetint("/etc/protocols", " \n\t", proto);
-		if (proto_num > 0) {
-			lfp.p_name  = proto;
-			lfp.p_proto = proto_num;
-
-			return &lfp;
-		}
-
-		return NULL;
+	ent = fallback_proto(proto);
 #else
-		return getprotobyname(proto);
+	ent = getprotobyname(proto);
+	if (!ent)
+		ent = fallback_proto(proto);
 #endif
+	return ent;
 }
 
 static int getent(char *service, char *proto, struct servent **sv, struct protoent **pv)
