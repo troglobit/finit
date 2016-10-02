@@ -105,8 +105,8 @@ int run(char *cmd)
 		struct sigaction sa;
 
 		/* Reset signal handlers that were set by the parent process */
-		for (i = 1; i < NSIG; i++)
-			DFLSIG(sa, i, 0);
+		sig_unblock();
+		setsid();
 
 		/* Always redirect stdio for run() */
 		fp = fopen("/dev/null", "w");
