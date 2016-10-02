@@ -34,13 +34,10 @@
 static void setup(void *UNUSED(arg))
 {
 	_d("Setting up the resolver ...");
-	mkpath("/etc/resolvconf", 0755);
-	mkpath("/etc/resolvconf/run", 0755);
-	mkpath("/dev/shm/network", 0755);
-	mkpath("/dev/shm/resolvconf/interface", 0755);
-	mkpath("/var/run/resolvconf", 0755);
+	mkpath("/etc/resolvconf",               0755);
+	mkpath("/etc/resolvconf/run",           0755);
+	mkpath("/var/run/resolvconf",           0755);
 	mkpath("/var/run/resolvconf/interface", 0755);
-	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
 
 	touch("/etc/resolvconf/run/enable-updates");
 	chdir("/etc/resolvconf/run/interface");
