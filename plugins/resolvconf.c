@@ -27,43 +27,25 @@
 #include "../helpers.h"
 #include "../plugin.h"
 
+/*
+ * No need to clean up files in /etc/resolvconf/run/interface/*
+ * this is already taken care of by bootclean
+ */
 static void setup(void *UNUSED(arg))
 {
-#ifdef USE_ETC_RESOLVCONF_RUN
-	DIR *dir;
-	struct dirent *d;
-#endif
-
 	_d("Setting up the resolver ...");
-#ifdef USE_ETC_RESOLVCONF_RUN
-	makepath("/dev/shm/network");
-	makepath("/dev/shm/resolvconf/interface");
-
-	if ((dir = opendir("/etc/resolvconf/run/interface")) != NULL) {
-		while ((d = readdir(dir)) != NULL) {
-			if (isalnum(d->d_name[0]))
-				continue;
-			snprintf(line, sizeof(line),
-				 "/etc/resolvconf/run/interface/%s", d->d_name);
-			unlink(line);
-		}
-
-		closedir(dir);
-	}
-#endif
-
-#ifdef USE_VAR_RUN_RESOLVCONF
-	makepath("/var/run/resolvconf/interface");
+	mkpath("/etc/resolvconf", 0755);
+	mkpath("/etc/resolvconf/run", 0755);
+	mkpath("/dev/shm/network", 0755);
+	mkpath("/dev/shm/resolvconf/interface", 0755);
+	mkpath("/var/run/resolvconf", 0755);
+	mkpath("/var/run/resolvconf/interface", 0755);
 	symlink("../../../etc/resolv.conf", "/var/run/resolvconf/resolv.conf");
-#endif
 
-#ifdef USE_ETC_RESOLVCONF_RUN
 	touch("/etc/resolvconf/run/enable-updates");
-
 	chdir("/etc/resolvconf/run/interface");
 	run_parts("/etc/resolvconf/update.d", "-i");
 	chdir("/");
-#endif /* USE_ETC_RESOLVCONF_RUN */
 }
 
 static plugin_t plugin = {
