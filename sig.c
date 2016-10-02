@@ -159,7 +159,7 @@ void do_shutdown(shutop_t op)
 	unmount_regular();
 
 	/* We sit on / so we must remount it ro, try all the things! */
-	run("sync");
+	sync();
 	run("/bin/mount -n -o remount,ro -t dummytype dummydev /");
 	run("/bin/mount -n -o remount,ro dummydev /");
 	run("/bin/mount -n -o remount,ro /");
