@@ -100,9 +100,7 @@ int run(char *cmd)
 
 	pid = fork();
 	if (0 == pid) {
-		int i;
 		FILE *fp;
-		struct sigaction sa;
 
 		/* Reset signal handlers that were set by the parent process */
 		sig_unblock();
