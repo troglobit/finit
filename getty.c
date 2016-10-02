@@ -76,8 +76,9 @@ static void stty(int fd, speed_t speed)
 
 	tcflush(fd, TCIOFLUSH);
 
-	/* Clear screen -- disabled until we decide on config to disable/enable */
-	//print("\033[r\033[H\033[J");
+	/* Clear screen in silent mode */
+	if (silent)
+		print("\033[r\033[H\033[J");
 }
 
 
