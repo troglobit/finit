@@ -118,9 +118,11 @@ static int fsck(int pass)
 	return 0;
 }
 
-static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED(tflag), struct FTW *UNUSED(ftwbuf))
+static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED(tflag), struct FTW *ftwbuf)
 {
-	_d("Removing %s", fpath);
+	if (ftwbuf->level == 0)
+		return 1;
+
 	remove(fpath);
 
 	return 0;
