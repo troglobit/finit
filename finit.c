@@ -268,6 +268,13 @@ int main(int argc, char* argv[])
 		return client(argc, argv);
 
 	/*
+	 * The trigger call to udevadm later on screws up the console
+	 * XXX: Yes, this is an ugly workaround, please fix me.
+	 */
+	if (fexist("/sbin/udevadm"))
+		silent = 1;
+
+	/*
 	 * In case of emergency.
 	 */
 	emergency_shell();
@@ -352,8 +359,9 @@ int main(int argc, char* argv[])
 
 	run_interactive(devfsd, "Populating device tree");
 	if (fexist("/sbin/udevadm")) {
-		run_interactive("/sbin/udevadm trigger --action=add --type=subsystems", "Trigger subsystems");
-		run_interactive("/sbin/udevadm trigger --action=add --type=devices", "Trigger devices");
+		run("/sbin/udevadm trigger --action=add --type=subsystems");
+		run("/sbin/udevadm trigger --action=add --type=devices");
+		run("/sbin/udevadm settle --timeout=120");
 	}
 
 	/*
