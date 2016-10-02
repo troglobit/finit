@@ -37,6 +37,8 @@ static void setup(void *UNUSED(arg))
 #endif
 	char line[LINE_SIZE];
 
+	umask(0);
+
 	makedir("/var/run/console", 01777);
 	snprintf(line, sizeof(line), "/var/run/console/%s", username);
 	touch(line);
@@ -54,6 +56,8 @@ static void setup(void *UNUSED(arg))
 
 	if (fexist("/sbin/restorecon"))
 		run("/sbin/restorecon /tmp/.ICE-unix /tmp/.X11-unix");
+
+	umask(022);
 }
 
 static plugin_t plugin = {

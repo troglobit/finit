@@ -31,6 +31,8 @@
 
 static void setup(void *UNUSED(arg))
 {
+	umask(0);
+
 	_d("Starting D-Bus ...");
 	makedir("/var/run/dbus", 0755);
 	makedir("/var/lock/subsys", 0755);
@@ -38,6 +40,8 @@ static void setup(void *UNUSED(arg))
 	run("dbus-uuidgen --ensure");
 	erase("/var/run/dbus/pid");
 	run_interactive("dbus-daemon --system", "Starting D-Bus");
+
+	umask(022);
 }
 
 static plugin_t plugin = {

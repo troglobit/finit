@@ -43,6 +43,8 @@ static void setup(void *UNUSED(arg))
 {
 	int gid;
 
+	umask(0);
+
 	_d("Setting up FHS structure in /var ...");
 	makedir("/var/cache",      0755);
 	makedir("/var/games",      0755);
@@ -104,6 +106,8 @@ static void setup(void *UNUSED(arg))
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
 	makefifo("/dev/xconsole",  0640); /* sysklogd */
 	chown("/dev/xconsole", 0, getgroup("tty"));
+
+	umask(022);
 }
 
 static plugin_t plugin = {
