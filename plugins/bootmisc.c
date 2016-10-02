@@ -62,7 +62,6 @@ static void setup(void *UNUSED(arg))
 		makedir("/var/lock",       1777);
 		makedir("/var/run",        0755);
 	}
-	makedir("/var/lock/subsys",0755); /* Needed by D-Bus plugin */
 	makedir("/var/log",        0755);
 	makedir("/var/mail",       0755);
 	makedir("/var/opt",        0755);
