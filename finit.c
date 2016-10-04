@@ -123,7 +123,7 @@ static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED
 	if (ftwbuf->level == 0)
 		return 1;
 
-	remove(fpath);
+	(void)remove(fpath);
 
 	return 0;
 }
