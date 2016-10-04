@@ -268,13 +268,6 @@ int main(int argc, char* argv[])
 		return client(argc, argv);
 
 	/*
-	 * The trigger call to udevadm later on screws up the console
-	 * XXX: Yes, this is an ugly workaround, please fix me.
-	 */
-	if (fexist("/sbin/udevadm"))
-		silent = 1;
-
-	/*
 	 * In case of emergency.
 	 */
 	emergency_shell();
