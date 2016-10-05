@@ -326,6 +326,32 @@ Dropbear SSH service will not be restarted if it is killed or exits.
     6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
 
 
+Requirements
+------------
+
+Finit is capable of running on both desktop/server systems with udev and
+embedded systems that usually come with BusyBox mdev.  Finit probes for
+them at runtime and expects `/dev/` to be writable, usually `devtmpfs`.
+It is also possible to run on a statically set up `/dev` if needed.  It
+is however not a good idea to have both udev and mdev installed at the
+same time, this will lead to unpredictable results.
+
+At boot Finit calls either `mdev` or `udevd` to populate `/dev`, this is
+done slightly differently and on systems with udev you might want to add
+the following one-shot task early in your `/etc/finit.conf`:
+
+    run [S] /sbin/udevadm settle --timeout=120 -- Waiting for udev
+
+Finit has a built-in Getty for TTYs, but requires a working `/bin/login`
+or `/bin/sh`, if no TTYs are configured in `/etc/finit.conf`.
+
+For a fully operational system `/var`, `/run` and `/tmp` must be set up
+properly in `/etc/fstab` -- which is iterated over at boot.
+
+The built-in Inetd requires `/etc/services` and `/etc/protocols` to work
+with port names rather than numbers.
+
+
 Running
 -------
 
