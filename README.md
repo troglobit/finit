@@ -16,6 +16,7 @@ Table of Contents
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
 * [Building](doc/build.md#building)
+* [Requirements](#requirements)
 * [Running](#running)
 * [Debugging](#debugging)
 * [Origin & References](#origin--references)
