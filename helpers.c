@@ -181,11 +181,8 @@ int print_result(int fail)
 }
 
 /*
- * Log to stderr until syslogd has started, then openlog() and continue
- * logging as a regular daemon.
- *
- * TODO: Log to /dev/kmsg instead of stderr until syslogd has started
- *       Need to convert facility+prio => "<VAL> msg"
+ * Log to /dev/kmsg until syslogd has started, then openlog()
+ * and continue logging as a regular daemon.
  */
 void logit(int prio, const char *fmt, ...)
 {
