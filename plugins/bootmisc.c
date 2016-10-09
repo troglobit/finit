@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <ftw.h>
 #include <string.h>
 #include <lite/lite.h>
 
@@ -36,6 +37,30 @@ static void create(char *path, mode_t mode, uid_t uid, gid_t gid)
 		_w("Failed creating %s properl.", path);
 }
 
+static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED(tflag), struct FTW *ftwbuf)
+{
+	if (ftwbuf->level == 0)
+		return 1;
+
+	_e("Removing %s ...", fpath);
+	(void)remove(fpath);
+
+	return 0;
+}
+
+static void bootclean(void)
+{
+	char *dir[] = {
+		"/tmp/",
+		"/var/run/",
+		"/var/lock/",
+		NULL
+	};
+
+	for (int i = 0; dir[i]; i++)
+		nftw(dir[i], do_clean, 20, FTW_DEPTH);
+}
+
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
@@ -43,9 +68,11 @@ static void setup(void *UNUSED(arg))
 {
 	int gid;
 
-	umask(0);
+	/* Cleanup stale files, if any still linger on. */
+	bootclean();
 
 	_d("Setting up FHS structure in /var ...");
+	umask(0);
 	makedir("/var/cache",      0755);
 	makedir("/var/games",      0755);
 	makedir("/var/lib",        0755);
