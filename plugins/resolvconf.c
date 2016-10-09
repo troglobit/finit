@@ -28,7 +28,7 @@
 #include "../plugin.h"
 
 /*
- * No need to clean up files in /etc/resolvconf/run/interface/*
+ * No need to clean up files in /etc/resolvconf/run/interface/
  * this is already taken care of by bootclean
  */
 static void setup(void *UNUSED(arg))
