@@ -1,4 +1,5 @@
 AM_LDFLAGS          = -module -avoid-version -shared
+AM_CFLAGS           = -W -Wall -Wextra -std=gnu99
 AM_CPPFLAGS         = -U_FORTIFY_SOURCE
 AM_CPPFLAGS        += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 AM_CPPFLAGS        += $(lite_CFLAGS)
