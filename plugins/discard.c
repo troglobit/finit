@@ -27,7 +27,7 @@
 
 #include "../plugin.h"
 
-static int cb(int type)
+static int cb(int UNUSED(type))
 {
 	int sd = STDIN_FILENO;
 	char buf[BUFSIZ];
