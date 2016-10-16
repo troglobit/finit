@@ -114,9 +114,6 @@ void do_shutdown(shutop_t op)
 		}
 	}
 
-	/* Call all shutdown hooks before rebooting... */
-	plugin_run_hooks(HOOK_SHUTDOWN);
-
 	/* Update UTMP db */
 	utmp_set_halt();
 

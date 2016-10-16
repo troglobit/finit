@@ -486,6 +486,11 @@ void service_reload_dynamic(void)
  */
 void service_runlevel(int newlevel)
 {
+	if (newlevel == 0 || newlevel == 6) {
+		/* Call all shutdown hooks before rebooting... */
+		plugin_run_hooks(HOOK_SHUTDOWN);
+	}
+
 	sm_set_runlevel(&sm, newlevel);
 	sm_step(&sm);
 }
