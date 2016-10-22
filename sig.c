@@ -64,6 +64,7 @@
  *      Finit currently forwards this to SIGUSR2.
  */
 
+#include <dirent.h>
 #include <sched.h>
 #include <string.h>		/* strerror() */
 #include <sys/reboot.h>
@@ -97,6 +98,47 @@ void mdadm_wait(void);
 void unmount_tmpfs(void);
 void unmount_regular(void);
 
+/*
+ * Kernel threads have no cmdline so fgets() returns NULL for them.  We
+ * also skip "special" processes, e.g. mdadm/mdmon or watchdogd that must
+ * not be stopped here, for various reasons.
+ *
+ * https://www.freedesktop.org/wiki/Software/systemd/RootStorageDaemons/
+ */
+void do_kill(int signo)
+{
+	DIR *dirp;
+
+	dirp = opendir("/proc");
+	if (dirp) {
+		struct dirent *d;
+
+		while ((d = readdir(dirp))) {
+			int pid;
+			FILE *fp;
+			char file[80] = "";
+
+			if (d->d_type != DT_DIR)
+				continue;
+
+			pid = atoi(d->d_name);
+			if (!pid)
+				continue;
+
+			snprintf(file, sizeof(file), "/proc/%s/cmdline", d->d_name);
+			fp = fopen(file, "r");
+			if (!fp)
+				continue;
+
+			if (fgets(file, sizeof(file), fp)) {
+				if (file[0] != '@')
+					kill(pid, signo);
+			}
+			fclose(fp);
+		}
+		closedir(dirp);
+	}
+}
 
 void do_shutdown(shutop_t op)
 {
@@ -117,15 +159,13 @@ void do_shutdown(shutop_t op)
 	/* Update UTMP db */
 	utmp_set_halt();
 
-	/* Here is where we signal watchdogd to do a forced reset for us */
-	_d("Sending SIGTERM to all processes");
-	kill(-1, SIGTERM);
-
-	/* Wait for WDT to timeout, should be no more than ~1 sec. */
+	/*
+	 * Tell all remaining non-monitored processes to exit, give them
+	 * some time to exit gracefully, 2 sec is customary.
+	 */
+	do_kill(SIGTERM);
 	do_sleep(2);
-
-	_d("Sending SIGKILL to remaining processes");
-	kill(-1, SIGKILL);
+	do_kill(SIGKILL);
 
 	/* Exit plugins and API gracefully */
 	plugin_exit();
