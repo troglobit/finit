@@ -63,7 +63,7 @@
 #define INIT_CMD_START_SVC      10
 #define INIT_CMD_STOP_SVC       11
 #define INIT_CMD_RELOAD_SVC     12   /* SIGHUP service */
-#define INIT_CMD_RESTART_SVC    13    /* STOP + START service */
+#define INIT_CMD_RESTART_SVC    13   /* STOP + START service */
 #define INIT_CMD_QUERY_INETD    14
 #define INIT_CMD_EMIT           15
 #define INIT_CMD_GET_RUNLEVEL   16

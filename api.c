@@ -317,7 +317,6 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 
 		case INIT_CMD_GET_RUNLEVEL:
 			rq.runlevel = runlevel;
-			result = 0;
 			break;
 
 		case INIT_CMD_ACK:
