@@ -65,7 +65,6 @@
  */
 
 #include <dirent.h>
-#include <sched.h>
 #include <string.h>		/* strerror() */
 #include <sys/reboot.h>
 #include <sys/wait.h>
@@ -146,15 +145,6 @@ void do_shutdown(shutop_t op)
 
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
-
-	/* If we enabled terse mode at boot, restore to previous setting at shutdown */
-	if (quiet) {
-		silent = SILENT_MODE;
-		if (!silent) {
-			sched_yield();
-			fputs("\n", stderr);
-		}
-	}
 
 	/* Update UTMP db */
 	utmp_set_halt();
