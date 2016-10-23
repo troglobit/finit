@@ -344,6 +344,7 @@ leave:
 int api_init(uev_ctx_t *ctx)
 {
 	int sd;
+	mode_t oldmask;
 	struct sockaddr_un sun = {
 		.sun_family = AF_UNIX,
 		.sun_path   = INIT_SOCKET,
@@ -356,17 +357,20 @@ int api_init(uev_ctx_t *ctx)
 	}
 
 	erase(INIT_SOCKET);
+	oldmask = umask(0077);
 	if (-1 == bind(sd, (struct sockaddr*)&sun, sizeof(sun)))
 		goto error;
 
 	if (-1 == listen(sd, 10))
 		goto error;
 
+	umask(oldmask);
 	if (!uev_io_init(ctx, &api_watcher, cb, NULL, sd, UEV_READ))
 		return 0;
 
 error:
 	_pe("Failed intializing API socket");
+	umask(oldmask);
 	close(sd);
 	return 1;
 }
