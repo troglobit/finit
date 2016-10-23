@@ -194,6 +194,15 @@ void do_shutdown(shutop_t op)
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
 
+	/* Wait here until the WDT reboots, or timeout */
+	if (wdogpid) {
+		int timeout = 10;
+
+		print(kill(wdogpid, SIGPWR) == 1, "Pending watchdog reboot");
+		while (timeout--)
+			do_sleep(1);
+	}
+
 	_d("%s", op == SHUT_REBOOT ? "Rebooting" : "Halting");
 	if (op == SHUT_REBOOT)
 		reboot(RB_AUTOBOOT);

@@ -50,6 +50,7 @@
 int   debug     = 0;
 int   quiet     = QUIET_MODE;	/* Delayed disable of silent mode. */
 int   silent    = SILENT_MODE;	/* Completely silent, including boot */
+int   wdogpid   = 0;		/* No watchdog by default */
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;

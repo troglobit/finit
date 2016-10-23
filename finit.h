@@ -67,6 +67,7 @@
 #define INIT_CMD_QUERY_INETD    14
 #define INIT_CMD_EMIT           15
 #define INIT_CMD_GET_RUNLEVEL   16
+#define INIT_CMD_WDOG_HELLO     128  /* Watchdog register and hello */
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 
@@ -81,6 +82,7 @@ struct init_request {
 extern int    debug;
 extern int    quiet;
 extern int    silent;
+extern int    wdogpid;
 extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;

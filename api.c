@@ -323,6 +323,19 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			_d("Client failed reading ACK");
 			goto leave;
 
+		case INIT_CMD_WDOG_HELLO:
+			if (rq.runlevel <= 0) {
+				result = 1;
+				break;
+			}
+
+			if (wdogpid > 0 && wdogpid != rq.runlevel) {
+				kill(wdogpid, SIGTERM);
+				do_sleep(1);
+			}
+			wdogpid = rq.runlevel;
+			break;
+
 		default:
 			_d("Unsupported cmd: %d", rq.cmd);
 			break;
