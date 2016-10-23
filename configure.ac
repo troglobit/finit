@@ -50,6 +50,9 @@ AC_ARG_ENABLE(rw-rootfs,
 AC_ARG_ENABLE(silent,
         AS_HELP_STRING([--enable-silent], [Completely silent operation, not even boot messages]))
 
+AC_ARG_ENABLE(watchdog,
+        AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]))
+
 AC_ARG_ENABLE(inetd,
         AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]))
 
@@ -134,6 +137,9 @@ AS_IF([test "x$enable_silent" = "xyes"], [
 	], [
 	AC_DEFINE(SILENT_MODE,  0, [Normal output, default])])
 
+AS_IF([test "x$enable_watchdog" = "xyes"], [
+        AC_DEFINE(BUILTIN_WATCHDOG,  1, [Enable built-in watchdog, kicks on /dev/watchdog])])
+
 ### Disable features ###########################################################################
 AS_IF([test "x$enable_inetd" != "xno"], enable_inetd="yes", [
 	AC_DEFINE(INETD_DISABLED,  1, [Disable built-in inetd])])
@@ -200,8 +206,9 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 	AC_DEFINE_UNQUOTED(RANDOMSEED, "$lurvig", [Improve random at boot by seeding it with sth from before.])])
 
 # Control build with automake flags
-AM_CONDITIONAL(STATIC, [test "x$enable_static" = "xyes"])
-AM_CONDITIONAL(INETD, [test "x$enable_inetd" = "xyes"])
+AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
+AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
+AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
 
 # Generate all files
 AC_OUTPUT

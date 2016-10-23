@@ -19,6 +19,9 @@ pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h plugin.h svc.h
 if INETD
 finit_SOURCES     += inetd.c	inetd.h
 endif
+if WATCHDOGD
+finit_SOURCES     += watchdog.c	watchdog.h
+endif
 
 finit_CFLAGS       = -W -Wall -Wextra -std=gnu99 $(lite_CFLAGS) $(uev_CFLAGS)
 finit_LDADD        = $(lite_LIBS) $(uev_LIBS)

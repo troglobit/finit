@@ -46,6 +46,7 @@
 #include "sm.h"
 #include "tty.h"
 #include "utmp-api.h"
+#include "watchdog.h"
 
 int   debug     = 0;
 int   quiet     = QUIET_MODE;	/* Delayed disable of silent mode. */
@@ -342,6 +343,11 @@ int main(int argc, char* argv[])
 	 * Parse /etc/finit.conf, main configuration file
 	 */
 	conf_parse_config();
+
+	/*
+	 * Start built-in watchdog as soon as possible, if enabled
+	 */
+	watchdog(argv[0]);
 
 	/* Set hostname as soon as possible, for syslog et al. */
 	set_hostname(&hostname);
