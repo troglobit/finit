@@ -210,6 +210,7 @@ void do_shutdown(shutop_t op)
  */
 static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
+	_d("...");
 	/* INIT_CMD_RELOAD: 'init q', 'initctl reload', and SIGHUP */
 	service_reload_dynamic();
 }
@@ -219,6 +220,7 @@ static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
+	_d("...");
 	halt = SHUT_REBOOT;
 	service_runlevel(6);
 }
@@ -228,6 +230,7 @@ static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
+	_d("...");
 	halt = SHUT_HALT;
 	service_runlevel(0);
 }
@@ -237,6 +240,7 @@ static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
+	_d("...");
 	halt = SHUT_OFF;
 	service_runlevel(0);
 }
@@ -246,6 +250,7 @@ static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
  */
 static void sigterm_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 {
+	_d("...");
 	halt = SHUT_REBOOT;
 	service_runlevel(6);
 }
