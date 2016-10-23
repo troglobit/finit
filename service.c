@@ -42,11 +42,8 @@
 #include "tty.h"
 #include "utmp-api.h"
 
-#define RESPAWN_MAX    10	        /* Prevent endless respawn of faulty services. */
+#define RESPAWN_MAX    10	/* Prevent endless respawn of faulty services. */
 
-#ifndef INETD_DISABLED
-static svc_t *find_inetd_svc     (char *path, char *service, char *proto);
-#endif
 
 /**
  * service_enabled - Should the service run?
@@ -649,7 +646,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		}
 
 		/* Check if known inetd, then add ifnames for filtering only. */
-		svc = find_inetd_svc(cmd, service, proto);
+		svc = inetd_find_svc(cmd, service, proto);
 		if (svc)
 			goto inetd_setup;
 
@@ -1031,25 +1028,6 @@ void service_step_all(int types)
 		service_step(svc);
 	}
 }
-
-#ifndef INETD_DISABLED
-static svc_t *find_inetd_svc(char *path, char *service, char *proto)
-{
-	svc_t *svc;
-
-	for (svc = svc_inetd_iterator(1); svc; svc = svc_inetd_iterator(0)) {
-		if (strncmp(path, svc->cmd, strlen(svc->cmd)))
-			continue;
-
-		if (inetd_match(&svc->inetd, service, proto)) {
-			_d("Found a matching inetd svc for %s %s %s", path, service, proto);
-			return svc;
-		}
-	}
-
-	return NULL;
-}
-#endif
 
 /**
  * Local Variables:

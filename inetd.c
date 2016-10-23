@@ -635,6 +635,23 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 	return 0;
 }
 
+svc_t *inetd_find_svc(char *path, char *service, char *proto)
+{
+	svc_t *svc;
+
+	for (svc = svc_inetd_iterator(1); svc; svc = svc_inetd_iterator(0)) {
+		if (strncmp(path, svc->cmd, strlen(svc->cmd)))
+			continue;
+
+		if (inetd_match(&svc->inetd, service, proto)) {
+			_d("Found a matching inetd svc for %s %s %s", path, service, proto);
+			return svc;
+		}
+	}
+
+	return NULL;
+}
+
 /*
  * This function is called to add a new, unique, inetd service.  When an
  * ifname is given as argument this means *only* run service on this
