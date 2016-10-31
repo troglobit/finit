@@ -146,11 +146,11 @@ e.g. <kbd>init 4</kbd>, but also using the more advanced `intictl` tool.
 
 **Plugins**
 
-Plugins can be used to *extend* the functionality of Finit, *hook into*
-different stages of the boot process and at runtime, and act as *pure
-extensions*.  Plugins are written in C and compiled into a dynamic
-library that is loaded automatically by finit at boot.  A basic set of
-plugins are bundled in the `plugins/` directory.
+Plugins can *extend* the functionality of Finit and *hook into* the
+different stages of the boot process and at runtime.  Plugins are
+written in C and compiled into a dynamic library loaded automatically by
+finit at boot.  A basic set of plugins are bundled in the `plugins/`
+directory.
 
 Capabilities:
 

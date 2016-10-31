@@ -340,16 +340,13 @@ static void parse_dynamic(char *line, time_t mtime)
 	if (MATCH_CMD(line, "#", x))
 		return;
 
-	/* Monitored daemon, will be respawned on exit, as
-	 * long as the (optional) service callback returns
-	 * non-zero */
+	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
 		service_register(SVC_TYPE_SERVICE, x, mtime, NULL);
 		return;
 	}
 
-	/* One-shot task, will not be respawned. Only runs if
-	 * the (optional) service callback returns true */
+	/* One-shot task, will not be respawned */
 	if (MATCH_CMD(line, "task ", x)) {
 		service_register(SVC_TYPE_TASK, x, mtime, NULL);
 		return;
