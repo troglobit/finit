@@ -70,16 +70,17 @@ int service_enabled(svc_t *svc)
 
 /**
  * service_timeout_cb - libuev callback wrapper for service timeouts
+ * @w:      Watcher
+ * @arg:    Callback argument, from init
+ * @events: Error, or ready to read/write (N/A for relative timers)
  *
  * Calls the callback registered with the call to
  * service_timeout_after().
  */
-static void service_timeout_cb(uev_t *w, void *_svc, int events)
+static void service_timeout_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
 {
-	svc_t *svc = _svc;
+	svc_t *svc = arg;
 
-	(void)(w);
-	(void)(events);
 	svc->timer_cb(svc);
 }
 
@@ -94,15 +95,13 @@ static void service_timeout_cb(uev_t *w, void *_svc, int events)
  *
  * @return 0 on success, non-zero on error.
  */
-static int service_timeout_after(svc_t *svc, int timeout,
-				 void (*cb)(svc_t *svc))
+static int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc))
 {
 	if (svc->timer_cb)
 		return -EBUSY;
 
 	svc->timer_cb = cb;
-	return uev_timer_init(ctx, &svc->timer, service_timeout_cb,
-			      svc, timeout, 0);
+	return uev_timer_init(ctx, &svc->timer, service_timeout_cb, svc, timeout, 0);
 }
 
 /**
@@ -122,24 +121,8 @@ static int service_timeout_cancel(svc_t *svc)
 
 	err = uev_timer_stop(&svc->timer);
 	svc->timer_cb = NULL;
+
 	return err;
-}
-
-/**
- * service_stop_is_done - Have all stopped services been collected?
- *
- * Returns:
- * 1, if all stopped services have been collected. 0 otherwise.
- */
-int service_stop_is_done(void)
-{
-	svc_t *svc;
-
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0))
-		if (svc->state == SVC_STOPPING_STATE)
-			return 0;
-
-	return 1;
 }
 
 static int is_norespawn(void)
@@ -736,6 +719,7 @@ recreate:
 
 	/* New, recently modified or unchanged ... used on reload. */
 	svc_check_dirty(svc, mtime);
+
 	return 0;
 }
 
@@ -784,8 +768,9 @@ void service_monitor(pid_t lost)
 
 static void service_retry(svc_t *svc)
 {
-	int *restart_counter = (int *)&svc->restart_counter;
 	int timeout;
+	int *restart_counter = (int *)&svc->restart_counter;
+
 	service_timeout_cancel(svc);
 
 	if (svc->state != SVC_HALTED_STATE ||
@@ -797,7 +782,7 @@ static void service_retry(svc_t *svc)
 
 	if (*restart_counter >= RESPAWN_MAX) {
 		_e("%s keeps crashing, not restarting", svc->desc);
-		svc->block = SVC_BLOCK_CRASHING;
+		svc_crashing(svc);
 		*restart_counter = 0;
 		service_step(svc);
 		return;
@@ -805,16 +790,13 @@ static void service_retry(svc_t *svc)
 
 	(*restart_counter)++;
 
-	_d("%s crashed, trying to start it again, attempt %d",
-	   svc->desc, *restart_counter);
-
-	svc->block = SVC_BLOCK_NONE;
+	_d("%s crashed, trying to start it again, attempt %d", svc->desc, *restart_counter);
+	svc_unblock(svc);
 	service_step(svc);
 
 	/* Wait 2s for the first 5 respawns, then back off to 5s */
 	timeout = ((*restart_counter) <= (RESPAWN_MAX / 2)) ? 2000 : 5000;
 	service_timeout_after(svc, timeout, service_retry);
-	return;
 }
 
 static void svc_set_state(svc_t *svc, svc_state_t new)
@@ -832,14 +814,11 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 
 void service_step(svc_t *svc)
 {
-	/* These fields are marked as const in svc_t, only this
-	 * function is allowed to modify them */
+	int err;
 	int *restart_counter = (int *)&svc->restart_counter;
-
 	svc_cmd_t enabled;
 	svc_state_t old_state;
 	cond_state_t cond;
-	int err;
 
 restart:
 	old_state = svc->state;
@@ -849,7 +828,7 @@ restart:
 	   svc_status(svc), enabled ? "en" : "dis", svc_dirtystr(svc),
 	   condstr(cond_get_agg(svc->cond)));
 
-	switch(svc->state) {
+	switch (svc->state) {
 	case SVC_HALTED_STATE:
 		if (enabled)
 			svc_set_state(svc, SVC_READY_STATE);
@@ -939,11 +918,13 @@ restart:
 		}
 
 		if (!svc->pid && !svc_is_inetd(svc)) {
-			svc->block = SVC_BLOCK_RESTARTING;
+			svc_restarting(svc);
 			svc_set_state(svc, SVC_HALTED_STATE);
 
-			/* Restart directly after the first crash,
-			 * then retry after 2s. */
+			/*
+			 * Restart directly after the first crash,
+			 * then retry after 2 sec
+			 */
 			_d("delayed restart of %s", svc->desc);
 			service_timeout_after(svc, 1, service_retry);
 			break;
@@ -1019,14 +1000,7 @@ restart:
 
 void service_step_all(int types)
 {
-	svc_t *svc;
-
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (!(svc->type & types))
-			continue;
-
-		service_step(svc);
-	}
+	svc_foreach_type(types, service_step);
 }
 
 /**

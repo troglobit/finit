@@ -146,7 +146,7 @@ restart:
 	case SM_RUNLEVEL_WAIT_STATE:
 		/* Need to wait for any services to stop? If so, exit early
 		 * and perform second stage from service_monitor later. */
-		if (!service_stop_is_done())
+		if (!svc_stop_completed())
 			break;
 
 		/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
@@ -196,7 +196,7 @@ restart:
 	case SM_RELOAD_WAIT_STATE:
 		/* Need to wait for any services to stop? If so, exit early
 		 * and perform second stage from service_monitor later. */
-		if (!service_stop_is_done())
+		if (!svc_stop_completed())
 			break;
 
 		sm->in_teardown = 0;

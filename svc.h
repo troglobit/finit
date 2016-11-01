@@ -114,8 +114,10 @@ typedef struct svc {
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
 
-	/* Used to forcefully kill services that won't shutdown on
-	 * termination and to delay restarts of crashing services. */
+	/*
+	 * Used to forcefully kill services that won't shutdown on
+	 * termination and to delay restarts of crashing services.
+	 */
 	uev_t          timer;
 	void           (*timer_cb)(struct svc *svc);
 } svc_t;
@@ -153,6 +155,9 @@ svc_t    *svc_job_iterator     (int first, int job);
 
 void	  svc_foreach	       (void (*cb)(svc_t *));
 void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
+void      svc_foreach_type     (int types, void (*cb)(svc_t *));
+
+int       svc_stop_completed   (void);
 
 void	  svc_mark_dynamic     (void);
 void	  svc_check_dirty      (svc_t *svc, time_t mtime);
@@ -188,6 +193,7 @@ static inline void svc_unblock     (svc_t *svc) { svc->block = SVC_BLOCK_NONE; }
 static inline void svc_block       (svc_t *svc) { svc->block = SVC_BLOCK_USER; }
 static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_INETD_BUSY; }
 static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
+static inline void svc_restarting  (svc_t *svc) { svc->block = SVC_BLOCK_RESTARTING; }
 static inline void svc_crashing    (svc_t *svc) { svc->block = SVC_BLOCK_CRASHING; }
 
 #endif /* FINIT_SVC_H_ */

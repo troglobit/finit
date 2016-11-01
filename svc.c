@@ -262,6 +262,44 @@ void svc_foreach_dynamic(void (*cb)(svc_t *))
 
 
 /**
+ * svc_foreach_type - Run a callback for each matching type
+ * @types: Mask of service types
+ * @cb:    Callback to run for each matching type
+ */
+void svc_foreach_type(int types, void (*cb)(svc_t *))
+{
+	svc_t *svc;
+
+	if (!cb)
+		return;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!(svc->type & types))
+			continue;
+
+		cb(svc);
+	}
+}
+
+
+/**
+ * svc_stop_completed - Have all stopped services been collected?
+ *
+ * Returns:
+ * 1, if all stopped services have been collected. 0 otherwise.
+ */
+int svc_stop_completed(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0))
+		if (svc->state == SVC_STOPPING_STATE)
+			return 0;
+
+	return 1;
+}
+
+/**
  * svc_find - Find a service object by its full path name
  * @cmd: Full path name, e.g., /sbin/syslogd
  *
