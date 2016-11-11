@@ -43,16 +43,16 @@ typedef enum {
 
 static cmd_t cmd = CMD_UNKNOWN;
 static char *msg = NULL;
-extern char *__progname;
+extern char *prognm;
 
 static void translate(void)
 {
 	if (cmd == CMD_UNKNOWN) {
-		if (!strcmp(__progname, "halt") || !strcmp(__progname, "shutdown"))
+		if (!strcmp(prognm, "halt") || !strcmp(prognm, "shutdown"))
 			cmd = CMD_HALT;
-		else if (!strcmp(__progname, "poweroff"))
+		else if (!strcmp(prognm, "poweroff"))
 			cmd = CMD_POWEROFF;
-		else if (!strcmp(__progname, "suspend"))
+		else if (!strcmp(prognm, "suspend"))
 			cmd = CMD_SUSPEND;
 		else
 			cmd = CMD_REBOOT;
@@ -91,9 +91,22 @@ static int usage(int rc)
 		"      --halt      Halt system, regardless of how the command is called.\n"
 		"  -p, --poweroff  Power-off system, regardless of how the command is called.\n"
 		"      --reboot    Reboot system, regardless of how the command is called.\n"
-		"\n", __progname, msg);
+		"\n", prognm, msg);
 
 	return rc;
+}
+
+static char *progname(char *arg0)
+{
+       char *nm;
+
+       nm = strrchr(arg0, '/');
+       if (nm)
+	       nm++;
+       else
+	       nm = arg0;
+
+       return nm;
 }
 
 int main(int argc, char *argv[])
@@ -111,6 +124,7 @@ int main(int argc, char *argv[])
 	/* Initial command taken from program name */
 	translate();
 
+	prognm = progname(argv[0]);
 	while ((c = getopt_long(argc, argv, "h?fHpr", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'h':
