@@ -43,7 +43,7 @@ typedef enum {
 
 static cmd_t cmd = CMD_UNKNOWN;
 static char *msg = NULL;
-extern char *prognm;
+static char *prognm;
 
 static void translate(void)
 {
