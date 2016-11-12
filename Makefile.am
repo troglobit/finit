@@ -68,7 +68,7 @@ install-exec-hook:
 		fi;						\
 	done
 	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
-		echo "Non-finit reboot, skipping.";		\
+		echo "Non-finit reboot, skipping install.";	\
 	else							\
 		for file in $(REBOOT_LNKS); do			\
 			link=$(DESTDIR)$(sbindir)/$$file;	\
