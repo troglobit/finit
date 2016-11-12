@@ -122,9 +122,9 @@ int main(int argc, char *argv[])
 	};
 
 	/* Initial command taken from program name */
+	prognm = progname(argv[0]);
 	translate();
 
-	prognm = progname(argv[0]);
 	while ((c = getopt_long(argc, argv, "h?fHpr", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'h':
