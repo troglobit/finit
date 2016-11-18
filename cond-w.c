@@ -89,14 +89,11 @@ static void cond_update(const char *name)
 	svc_t *svc;
 
 	_d("%s", name);
-	if (!name)
-		return;
-
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
 			continue;
 
-		_d("%s: match <%s> %s", name, svc->cond, svc->cmd);
+		_d("%s: match <%s> %s", name ?: "nil", svc->cond, svc->cmd);
 		service_step(svc);
 	}
 }
