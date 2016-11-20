@@ -331,6 +331,7 @@ int main(int argc, char* argv[])
 	if (fexist("/sbin/udevadm")) {
 		run("/sbin/udevadm trigger --action=add --type=subsystems");
 		run("/sbin/udevadm trigger --action=add --type=devices");
+		run("/sbin/udevadm settle --timeout=120");
 	}
 
 	/*
