@@ -22,6 +22,7 @@
  */
 
 #include <ftw.h>
+#include <mntent.h>
 #include <string.h>
 #include <lite/lite.h>
 
@@ -30,6 +31,28 @@
 #include "../helpers.h"
 #include "../plugin.h"
 #include "../utmp-api.h"
+
+static int is_tmpfs(char *dir)
+{
+	int tmpfs = 0;
+	FILE *fp;
+	struct mntent *mnt;
+
+	fp = setmntent("/proc/mounts", "r");
+	if (!fp)
+		return 0;	/* Dunno, maybe not */
+
+	while ((mnt = getmntent(fp))) {
+		if (!strcmp(dir, mnt->mnt_dir))
+			break;
+	}
+
+	if (mnt && !strcmp("tmpfs", mnt->mnt_type))
+		tmpfs = 1;
+	endmntent(fp);
+
+	return tmpfs;
+}
 
 static void create(char *path, mode_t mode, uid_t uid, gid_t gid)
 {
@@ -48,6 +71,7 @@ static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED
 	return 0;
 }
 
+/* We can safely skip tmpfs, nothing to clean from previous boot there */
 static void bootclean(void)
 {
 	char *dir[] = {
@@ -57,8 +81,12 @@ static void bootclean(void)
 		NULL
 	};
 
-	for (int i = 0; dir[i]; i++)
+	for (int i = 0; dir[i]; i++) {
+		if (is_tmpfs(dir[i]))
+			continue;
+
 		nftw(dir[i], do_clean, 20, FTW_DEPTH);
+	}
 }
 
 /*
