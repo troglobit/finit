@@ -32,39 +32,23 @@
 #include "../plugin.h"
 #include "../utmp-api.h"
 
-/* Resolve symbolic links */
-static char *desym(char *dir)
-{
-	static char path[80];	/* Should be enough for our use-case */
-	struct stat st;
-
-	if (stat(dir, &st))
-		return NULL;
-
-	if (S_ISLNK(st.st_mode)) {
-		if (-1 == readlink(dir, path, sizeof(path)))
-			return NULL;
-
-		return desym(path);
-	}
-
-	return dir;
-}
-
-static int is_tmpfs(char *dir)
+static int is_tmpfs(char *path)
 {
 	int tmpfs = 0;
 	FILE *fp;
+	char *dir;
 	struct mntent *mnt;
 
-	/* If /var/run is a symlink, check what it resolves to */
-	dir = desym(dir);
+	/* If path is a symlink, check what it resolves to */
+	dir = realpath(path, NULL);
 	if (!dir)
 		return 0;	/* Outlook not so good */
 
 	fp = setmntent("/proc/mounts", "r");
-	if (!fp)
+	if (!fp) {
+		free(dir);
 		return 0;	/* Dunno, maybe not */
+	}
 
 	while ((mnt = getmntent(fp))) {
 		if (!strcmp(dir, mnt->mnt_dir))
@@ -73,7 +57,9 @@ static int is_tmpfs(char *dir)
 
 	if (mnt && !strcmp("tmpfs", mnt->mnt_type))
 		tmpfs = 1;
+
 	endmntent(fp);
+	free(dir);
 
 	return tmpfs;
 }
