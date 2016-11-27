@@ -90,7 +90,7 @@ shutop_t halt = SHUT_DEFAULT;
 static int   stopped = 0;
 static uev_t sigterm_watcher, sigusr1_watcher, sigusr2_watcher;
 static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
-static uev_t sigchld_watcher, sigsegv_watcher;
+static uev_t sigchld_watcher;
 static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
 void mdadm_wait(void);
@@ -282,15 +282,6 @@ static void sigchld_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 }
 
 /*
- * SIGSEGV: mostly if service callbacks segfault
- */
-static void sigsegv_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
-{
-	_e("PID %d caused a segfault!\n", getpid());
-	exit(-1);
-}
-
-/*
  * SIGSTOP/SIGTSTP: Paused by user or netflash
  */
 static void sigstop_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
@@ -392,9 +383,6 @@ void sig_setup(uev_ctx_t *ctx)
 
 	/* After initial bootstrap of Finit we call the service monitor to reap children */
 	uev_signal_init(ctx, &sigchld_watcher, sigchld_cb, NULL, SIGCHLD);
-
-	/* Trap SIGSEGV in case service callbacks crash */
-	uev_signal_init(ctx, &sigsegv_watcher, sigsegv_cb, NULL, SIGSEGV);
 
 	/* Stopping init is a bit tricky. */
 	uev_signal_init(ctx, &sigstop_watcher, sigstop_cb, NULL, SIGSTOP);

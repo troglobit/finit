@@ -185,7 +185,7 @@ static int service_start(svc_t *svc)
 	/* Declare we're waiting for svc to create its pidfile */
 	svc_starting(svc);
 
-	/* Block sigchild while forking.  */
+	/* Block SIGCHLD while forking.  */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
