@@ -38,6 +38,7 @@
 #include "cond.h"
 #include "helpers.h"
 #include "service.h"
+#include "util.h"
 #include "utmp-api.h"
 
 #define _PATH_COND _PATH_VARRUN "finit/cond/"
@@ -439,7 +440,7 @@ static int usage(int rc)
 		"  halt                      Halt system\n"
 		"  poweroff                  Halt and power off system\n"
 		"  utmp     show             Raw dump of UTMP/WTMP db\n"
-		"  version                   Show Finit version\n\n", __progname);
+		"  version                   Show Finit version\n\n", prognm);
 
 	return rc;
 }
@@ -471,6 +472,7 @@ int main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
+	progname(argv[0]);
 	while ((c = getopt_long(argc, argv, "dh?v", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'h':

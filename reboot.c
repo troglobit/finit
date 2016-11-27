@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/reboot.h>
+#include "util.h"
 
 #ifndef RB_SW_SUSPEND /* Since Linux 2.5.18, but not in GLIBC until 2.19 */
 #define RB_SW_SUSPEND	0xd000fce2
@@ -43,7 +44,6 @@ typedef enum {
 
 static cmd_t cmd = CMD_UNKNOWN;
 static char *msg = NULL;
-static char *prognm;
 
 static void translate(void)
 {
@@ -96,19 +96,6 @@ static int usage(int rc)
 	return rc;
 }
 
-static char *progname(char *arg0)
-{
-       char *nm;
-
-       nm = strrchr(arg0, '/');
-       if (nm)
-	       nm++;
-       else
-	       nm = arg0;
-
-       return nm;
-}
-
 int main(int argc, char *argv[])
 {
 	int c, force = 0;
@@ -122,7 +109,7 @@ int main(int argc, char *argv[])
 	};
 
 	/* Initial command taken from program name */
-	prognm = progname(argv[0]);
+	progname(argv[0]);
 	translate();
 
 	while ((c = getopt_long(argc, argv, "h?fHpr", long_options, NULL)) != EOF) {

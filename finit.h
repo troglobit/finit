@@ -95,8 +95,6 @@ extern char  *runparts;
 extern char  *console;
 extern uev_ctx_t *ctx;
 
-extern char  *__progname;
-
 #endif /* FINIT_H_ */
 
 /**

@@ -30,6 +30,7 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "util.h"
 
 static int do_send(struct init_request *rq)
 {
@@ -39,7 +40,7 @@ static int do_send(struct init_request *rq)
 
 	if (fd == -1) {
 		if (!fexist(FINIT_FIFO)) {
-			fprintf(stderr, "%s does not support %s!\n", __progname, FINIT_FIFO);
+			fprintf(stderr, "%s does not support %s!\n", prognm, FINIT_FIFO);
 			return 1;
 		}
 
@@ -108,7 +109,7 @@ static int usage(int rc)
 		"  q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or\n"
 		"                  sending SIGHUP to PID 1\n"
 		"  1, s, S         Enter system rescue mode, runlevel 1\n"
-		"\n", __progname);
+		"\n", prognm);
 
 	return rc;
 }
@@ -123,6 +124,7 @@ int client(int argc, char *argv[])
 	};
 
 	silent = 1;
+	progname(argv[0]);
 	while ((c = getopt_long(argc, argv, "h?v", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'v':

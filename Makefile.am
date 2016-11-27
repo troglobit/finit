@@ -14,6 +14,7 @@ finit_SOURCES      = api.c					\
 		     sm.c	sm.h				\
 		     svc.c	svc.h				\
 		     tty.c	tty.h				\
+		     util.c	util.h				\
 		     utmp-api.c	utmp-api.h
 pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h plugin.h svc.h
 if INETD
@@ -32,11 +33,11 @@ finit_LDADD       += -ldl
 endif
 
 initctl_SOURCES    = initctl.c svc.c svc.h helpers.c helpers.h cond.c cond.h \
-		     utmp-api.c utmp-api.h
+		     util.c util.h utmp-api.c utmp-api.h
 initctl_CFLAGS     = $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
-reboot_SOURCES     = reboot.c
+reboot_SOURCES     = reboot.c util.c util.h
 
 INIT_LNKS          = telinit init
 REBOOT_LNKS        = shutdown halt poweroff suspend
