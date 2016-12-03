@@ -141,13 +141,14 @@ AS_IF([test "x$enable_watchdog" = "xyes"], [
         AC_DEFINE(BUILTIN_WATCHDOG,  1, [Enable built-in watchdog, kicks on /dev/watchdog])])
 
 ### Disable features ###########################################################################
-AS_IF([test "x$enable_inetd" != "xno"], enable_inetd="yes", [
+AS_IF([test "x$enable_inetd" != "xno"],
+	enable_inetd="yes", [
 	AC_DEFINE(INETD_DISABLED,  1, [Disable built-in inetd])])
 
 AS_IF([test "x$enable_quiet" != "xno"], [
-        AC_DEFINE(QUIET_MODE,  0, [Will print stopping/starting/etc messages at runtime])
+	AC_DEFINE(QUIET_MODE,  1, [Silent, after initial boot, no stopping/starting messages.  Default: 1])
 	], [
-	AC_DEFINE(QUIET_MODE,  1, [Silent at runtime, after initial boot, default])])
+	AC_DEFINE(QUIET_MODE,  0, [Silent, after initial boot, no stopping/starting messages.  Default: 1])])
 
 ### With features ##############################################################################
 AS_IF([test "x$with_fifo" != "xno"], [
