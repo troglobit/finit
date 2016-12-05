@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <strings.h>
-#include <lite/lite.h>
 
 #include "finit.h"
 #include "svc.h"
