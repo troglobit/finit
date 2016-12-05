@@ -30,25 +30,32 @@
 #define NAME    "chargen"
 #define PATTERN "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "
 
-static char *generator(char *buf, size_t len)
+static char *generator(char *buf, size_t buflen)
 {
-	size_t num;
+	size_t num, len, width = 72;
 	static size_t pos = 0;
 	const char pattern[] = PATTERN;
 
-	len = 72;
+	if (buflen < width)
+		width = buflen;
+
+	len = width;
+	if (len + 3 > buflen)
+		len = buflen - 3;
 	if (pos + len > sizeof(pattern)) {
 		num = sizeof(pattern) - pos;
 		len -= num;
 	} else {
-		num = 72;
+		num = width;
+		if (num + 3 > buflen)
+			num = buflen - 3;
 		len = 0;
 	}
 
-	strncpy(&buf[0], &pattern[pos], num--);
+	strncpy(buf, &pattern[pos], num--);
 	if (len++)
 		strncpy(&buf[num], pattern, len);
-	strcat(buf, "\r\n");
+	strlcat(buf, "\r\n", width);
 
 	if (++pos >= sizeof(pattern) - 1)
 		pos = 0;
