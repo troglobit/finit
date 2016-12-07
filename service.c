@@ -840,7 +840,7 @@ restart:
 	case SVC_DONE_STATE:
 #ifndef INETD_DISABLED
 		if (svc_is_inetd_conn(svc)) {
-			if (svc_is_busy(svc)) {
+			if (svc_is_busy(svc->inetd.svc)) {
 				svc_unblock(svc->inetd.svc);
 				service_step(svc->inetd.svc);
 			}
