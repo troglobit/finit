@@ -890,23 +890,7 @@ restart:
 			}
 
 			svc_mark_clean(svc);
-
-			switch (svc->type) {
-			case SVC_TYPE_INETD:
-			case SVC_TYPE_SERVICE:
-				svc_set_state(svc, SVC_RUNNING_STATE);
-				break;
-
-			case SVC_TYPE_INETD_CONN:
-			case SVC_TYPE_TASK:
-			case SVC_TYPE_RUN:
-				svc_set_state(svc, SVC_STOPPING_STATE);
-				break;
-
-			default:
-				_e("unknown service type %d", svc->type);
-				break;
-			}
+			svc_set_state(svc, SVC_RUNNING_STATE);
 		}
 		break;
 
@@ -917,17 +901,25 @@ restart:
 			break;
 		}
 
-		if (!svc->pid && !svc_is_inetd(svc)) {
-			svc_restarting(svc);
-			svc_set_state(svc, SVC_HALTED_STATE);
+		if (!svc->pid) {
+			if (svc_is_daemon(svc)) {
+				svc_restarting(svc);
+				svc_set_state(svc, SVC_HALTED_STATE);
 
-			/*
-			 * Restart directly after the first crash,
-			 * then retry after 2 sec
-			 */
-			_d("delayed restart of %s", svc->desc);
-			service_timeout_after(svc, 1, service_retry);
-			break;
+				/*
+				 * Restart directly after the first crash,
+				 * then retry after 2 sec
+				 */
+				_d("delayed restart of %s", svc->desc);
+				service_timeout_after(svc, 1, service_retry);
+				break;
+			}
+
+			/* Collected inetd connection, drive it to stopping */
+			if (svc_is_inetd_conn(svc)) {
+				svc_set_state(svc, SVC_STOPPING_STATE);
+				break;
+			}
 		}
 
 		cond = cond_get_agg(svc->cond);
