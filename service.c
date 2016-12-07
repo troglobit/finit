@@ -559,6 +559,9 @@ int service_register(int type, char *line, time_t mtime, char *username)
 	if (desc) {
 		*desc = 0;
 		desc += 3;
+
+		while (*desc && isblank(*desc))
+			desc++;
 	}
 
 	cmd = strtok(line, " ");
