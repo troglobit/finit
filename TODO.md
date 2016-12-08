@@ -55,11 +55,14 @@ to achieve compatibility would be to add a plugin to finit which reads
 Inetd
 -----
 
-Add support for throttling connections.
-
-Optimize interface filtering by using socket filter.  The functions
-`inet_*_peek()` and `inetd_is_allowed()` used for interace filtering
-should be possible to rewrite as socket filters.
+* Add support for throttling connections.
+* Optimize interface filtering by using socket filter.  The functions
+  `inet_*_peek()` and `inetd_is_allowed()` used for interace filtering
+  should be possible to rewrite as socket filters.
+* Optimize HTTP/HTTPS inetd connections by adding basic support for the
+  `inetd` variant `redir http/tcp@eth0 nowait [2345] 127.0.0.1:8080`,
+  which would reduce the overhead of spawn the web server on each HTTP
+  connection, yet still provide a means of filtering access per iface.
 
 
 Crond
