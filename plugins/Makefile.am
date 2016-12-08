@@ -6,7 +6,7 @@ AM_CPPFLAGS        += $(lite_CFLAGS)
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = bootmisc.c hwclock.c initctl.c pidfile.c tty.c urandom.c
+libplug_la_SOURCES  = bootmisc.c hwclock.c initctl.c pidfile.c procps.c tty.c urandom.c
 
 if BUILD_ALSA_UTILS_PLUGIN
 libplug_la_SOURCES += alsa-utils.c
@@ -51,7 +51,7 @@ libplug_la_SOURCES += resolvconf.c
 endif
 
 else
-pkglib_LTLIBRARIES  = bootmisc.la hwclock.la initctl.la pidfile.la tty.la urandom.la
+pkglib_LTLIBRARIES  = bootmisc.la hwclock.la initctl.la pidfile.la procps.la tty.la urandom.la
 
 if BUILD_ALSA_UTILS_PLUGIN
 pkglib_LTLIBRARIES += alsa-utils.la
