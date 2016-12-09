@@ -22,6 +22,7 @@
  */
 
 #include <paths.h>
+#include <signal.h>
 #include <sys/un.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
