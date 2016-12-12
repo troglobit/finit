@@ -77,7 +77,7 @@ static void stty(int fd, speed_t speed)
 	tcflush(fd, TCIOFLUSH);
 
 	/* Disable modem specific flags */
-	term.c_cflag     &= (0|CSTOPB|PARENB|PARODD);
+	term.c_cflag     &= ~(0|CSTOPB|PARENB|PARODD);
 	term.c_cflag     &= ~CRTSCTS;
 	term.c_cflag     |= CLOCAL;
 
