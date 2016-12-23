@@ -23,6 +23,7 @@
  */
 
 #include <signal.h>
+#include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -169,6 +170,28 @@ static char *canonicalize(char *tty)
 	return path;
 }
 
+int tty_check(char *dev)
+{
+	int fd;
+	struct termios c;
+
+	if (access(dev, F_OK))
+		return 1;
+
+	fd = open(dev, O_RDONLY);
+	if (-1 == fd)
+		return 1;
+
+	/* XXX: Add check for errno == EIO? */
+	if (tcgetattr(fd, &c)) {
+		close(fd);
+		return 1;
+	}
+	close(fd);
+
+	return 0;
+}
+
 void tty_start(finit_tty_t *fitty)
 {
 	int is_console = 0;
@@ -183,6 +206,9 @@ void tty_start(finit_tty_t *fitty)
 
 	if (console && !strcmp(tty, console))
 		is_console = 1;
+
+	if (tty_check(tty))
+		return;
 
 	fitty->pid = run_getty(tty, fitty->baud, fitty->term, is_console);
 }
