@@ -8,6 +8,23 @@ All relevant changes are documented in this file.
 
 ### Changes
 
+#### -rc2
+* Support for a fallback shell on console if none of the configured TTYs
+  can be started
+* All debug messages to console when Finit `--debug` is enabled
+* Prevent login, by touching `/etc/nologin`, during runlevel changes
+* A more orderly shutdown.  On reboot/halt/poweroff Finit now properly
+  goes to runlevel 0/6 to first stop all processes.
+* Perform sync before remounting as read-only, at shutdown
+* Clean up `/tmp`, `/var/run`, and `/var/lock` at boot on systems which
+  have these directories on persistent storage
+* Call udev triggers at boot, on systems with udev
+* Add missing `/var/lock/subsys` directory for dbus
+* Add support for `poweroff`
+* Add support for a built-in miniature watchdog daemon
+* Remove GLIBC:isms like `__progname`
+
+#### -rc1
 * Manage service states based on user defined conditions
 * Manage dependencies between services, w/ conditions (pidfile plugin)
 * Manage service dependenceis on network events (netlink plugin)
