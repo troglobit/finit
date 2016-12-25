@@ -197,18 +197,24 @@ void tty_start(finit_tty_t *fitty)
 	int is_console = 0;
 	char *tty;
 
-	if (fitty->pid)
+	if (fitty->pid) {
+		_d("%s: TTY already active", fitty->name);
 		return;
+	}
 
 	tty = canonicalize(fitty->name);
-	if (!tty)
+	if (!tty) {
+		_d("%s: Cannot find TTY device: %s", fitty->name, strerror(errno));
 		return;
+	}
 
 	if (console && !strcmp(tty, console))
 		is_console = 1;
 
-	if (tty_check(tty))
+	if (tty_check(tty)) {
+		_d("%s: Not a valid TTY: %s", tty, strerror(errno));
 		return;
+	}
 
 	fitty->pid = run_getty(tty, fitty->baud, fitty->term, is_console);
 }
