@@ -133,7 +133,7 @@ Syntax:
 
 * `console <DEV>`  
   Use this, along with a matching `tty DEV` line, to mark this TTY as a
-  special "console" port with with `prctl()`.  Useful in use-cases when
+  special "console" port with `prctl()`.  Useful in use-cases when
   all logins except the console must be stopped, e.g. when performing a
   flash upgrade on an embedded system.
 
