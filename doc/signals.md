@@ -6,7 +6,7 @@ Though Finit comes with its own tools for (poweroff, halt, reboot), for
 compatibility with the existing BusyBox toolset the following signals
 have been adopted:
 
-* `SIGUSR1`  
+* `SIGHUP`  
   Same effect as `finit q`, reloads all *.conf files in `/etc/finit.d/`
 * `SIGUSR1`  
   Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
