@@ -91,7 +91,7 @@ int run(char *cmd)
 	}
 	args[i] = NULL;
 
-	if (i == NUM_ARGS && args[i]) {
+	if (i == NUM_ARGS && arg) {
 		_e("Command too long: %s", cmd);
 		free(backup);
 		errno = EOVERFLOW;
