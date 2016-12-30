@@ -360,7 +360,7 @@ static void parse_dynamic(char *line, time_t mtime)
 
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		service_register(SVC_TYPE_INETD, x, mtime, NULL);
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);

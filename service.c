@@ -174,7 +174,7 @@ static int service_start(svc_t *svc)
 			print_desc("", svc->desc);
 	}
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {
 		result = inetd_start(&svc->inetd);
 		if (!silent)
@@ -221,7 +221,7 @@ static int service_start(svc_t *svc)
 		args[i] = NULL;
 
 		/* Redirect inetd socket to stdin for connection */
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		if (svc_is_inetd_conn(svc)) {
 			dup2(svc->stdin_fd, STDIN_FILENO);
 			close(svc->stdin_fd);
@@ -287,7 +287,7 @@ static int service_start(svc_t *svc)
 		else
 			status = execv(svc->cmd, args); /* XXX: Maybe use execve() to be able to launch scripts? */
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		if (svc_is_inetd_conn(svc)) {
 			if (svc->inetd.type == SOCK_STREAM) {
 				close(STDIN_FILENO);
@@ -315,7 +315,7 @@ static int service_start(svc_t *svc)
 
 	svc->pid = pid;
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
 			close(svc->stdin_fd);
 #endif
@@ -370,7 +370,7 @@ static int service_stop(svc_t *svc)
 	if (!svc)
 		return 1;
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {
 		int do_print = runlevel != 1 && !silent && !svc_is_busy(svc);
 
@@ -542,7 +542,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 {
 	int i = 0;
 	int id = 1;		/* Default to ID:1 */
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	int forking = 0;
 #endif
 	int log = 0;
@@ -581,7 +581,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 			cond = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
 			id = atoi(&cmd[1]);
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		else if (!strncasecmp(cmd, "nowait", 6))
 			forking = 1;
 		else if (!strncasecmp(cmd, "wait", 4))
@@ -612,7 +612,7 @@ int service_register(int type, char *line, time_t mtime, char *username)
 		*proto++ = 0;
 	}
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	/* Find plugin that provides a callback for this inetd service */
 	if (type == SVC_TYPE_INETD) {
 		if (!strncasecmp(cmd, "internal", 8)) {
@@ -651,7 +651,7 @@ recreate:
 			return errno = ENOMEM;
 		}
 	}
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	else {
 		if (svc_is_inetd(svc) && type != SVC_TYPE_INETD) {
 			_d("Service was previously inetd, deregistering ...");
@@ -692,7 +692,7 @@ recreate:
 
 	conf_parse_cond(svc, cond);
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {
 		char *iface, *name = service;
 
@@ -839,7 +839,7 @@ restart:
 		break;
 
 	case SVC_DONE_STATE:
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		if (svc_is_inetd_conn(svc)) {
 			if (svc_is_busy(svc->inetd.svc)) {
 				svc_unblock(svc->inetd.svc);

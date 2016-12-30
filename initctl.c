@@ -377,7 +377,7 @@ static int show_status(char *arg)
 			continue;
 		}
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		if (svc_is_inetd(svc)) {
 			char *info;
 			struct init_request rq = {
@@ -401,7 +401,7 @@ static int show_status(char *arg)
 			printf("%s %s\n", svc->cmd, info);
 		}
 		else
-#endif /* !INETD_DISABLED */
+#endif /* INETD_ENABLED */
 		{
 			int i;
 

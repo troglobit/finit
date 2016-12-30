@@ -140,7 +140,7 @@ static int do_start  (char *buf, size_t len) { return call(service_unblock, buf,
 static int do_pause  (char *buf, size_t len) { return call(service_block,   buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 static int do_query_inetd(char *buf, size_t len)
 {
 	int id = 1;
@@ -164,7 +164,7 @@ static int do_query_inetd(char *buf, size_t len)
 
 	return inetd_filter_str(&svc->inetd, buf, len);
 }
-#endif /* !INETD_DISABLED */
+#endif /* INETD_ENABLED */
 
 typedef struct {
 	char *event;
@@ -305,7 +305,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
-#ifndef INETD_DISABLED
+#ifdef INETD_ENABLED
 		case INIT_CMD_QUERY_INETD:
 			result = do_query_inetd(rq.data, sizeof(rq.data));
 			break;
