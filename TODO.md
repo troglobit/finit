@@ -38,8 +38,8 @@ General
   `service <SVC> stop|start|restart|reload|status` on top
 * Add support for JSON output, or similar, from `initctl show`, e.g.
   `initctl show --json`
-* Improve output of `initctl show SVC`, list service uptime, last
-  ten relevant logs, etc. Similar to `systemctl show SVC`
+* Improve `initctl show SVC` output.  Add service uptime, last ten SVC
+  logs/history (historian), etc. Similar to `systemctl show SVC`
 * Add PRE and POST hooks for when switching between runlevels
 
 
