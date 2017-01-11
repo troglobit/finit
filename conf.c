@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <lite/lite.h>
+#include <sys/time.h>
 
 #include "finit.h"
 #include "cond.h"
@@ -293,7 +294,7 @@ static void parse_static(char *line)
 	}
 
 	if (MATCH_CMD(line, "startx ", x)) {
-		service_register(SVC_TYPE_SERVICE, strip_line(x), 0, username);
+		service_register(SVC_TYPE_SERVICE, strip_line(x), NULL, username);
 		return;
 	}
 
@@ -332,7 +333,7 @@ static void parse_static(char *line)
 	}
 }
 
-static void parse_dynamic(char *line, time_t mtime)
+static void parse_dynamic(char *line, struct timeval *mtime)
 {
 	char *x;
 
@@ -385,7 +386,7 @@ static void tabstospaces(char *line)
 	}
 }
 
-static int parse_conf_dynamic(char *file, time_t mtime)
+static int parse_conf_dynamic(char *file, struct timeval *mtime)
 {
 	FILE *fp = fopen(file, "r");
 
@@ -453,7 +454,7 @@ static int parse_conf(char *file)
 		_d("conf: %s", line);
 
 		parse_static(line);
-		parse_dynamic(line, 0);
+		parse_dynamic(line, NULL);
 	}
 
 	fclose(fp);
@@ -481,6 +482,7 @@ void conf_reload_dynamic(void)
 		char *name = e[i]->d_name;
 		char  path[CMD_SIZE];
 		struct stat st;
+		struct timeval mtime;
 
 		snprintf(path, sizeof(path), "%s/%s", dir, name);
 
@@ -498,7 +500,8 @@ void conf_reload_dynamic(void)
 			continue;
 		}
 
-		parse_conf_dynamic(path, st.st_mtime);
+		TIMESPEC_TO_TIMEVAL(&mtime, &st.st_mtim);
+		parse_conf_dynamic(path, &mtime);
 	}
 
 	while (num--)

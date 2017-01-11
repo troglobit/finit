@@ -28,7 +28,7 @@
 #include "svc.h"
 
 void	  service_runlevel	 (int newlevel);
-int	  service_register	 (int type, char *line, time_t mtime, char *username);
+int	  service_register	 (int type, char *line, struct timeval *mtime, char *username);
 void      service_unregister     (svc_t *svc);
 int       service_enabled	 (svc_t *svc);
 
