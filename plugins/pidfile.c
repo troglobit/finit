@@ -30,6 +30,7 @@
 #include "../cond.h"
 #include "../helpers.h"
 #include "../plugin.h"
+#include "../service.h"
 
 struct context {
 	int fd;
@@ -88,16 +89,28 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 static void pidfile_reconf(void *_null)
 {
 	static char name[MAX_ARG_LEN];
-
 	svc_t *svc;
 	(void)(_null);
+	int restart = 0;
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->state == SVC_RUNNING_STATE && !svc_is_changed(svc) && !svc_is_starting(svc)) {
+	do {
+		restart = 0;
+
+		for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 			snprintf(name, MAX_ARG_LEN, "svc%s", svc->cmd);
-			cond_set_path(cond_path(name), COND_ON);
+			if (svc->state == SVC_RUNNING_STATE &&
+			    !svc_is_changed(svc) &&
+			    !svc_is_starting(svc) &&
+			    cond_get(name) != COND_ON) {
+				cond_set_path(cond_path(name), COND_ON);
+				restart = 1;
+			}
 		}
-	}
+
+		if (restart)
+			service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+
+	} while (restart);
 }
 
 static void pidfile_init(void *arg)
