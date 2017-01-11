@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <strings.h>
+#include <sys/time.h>
 
 #include "finit.h"
 #include "svc.h"
@@ -172,7 +173,7 @@ svc_t *svc_dynamic_iterator(int first)
 	svc_t *svc;
 
 	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
-		if (svc->mtime)
+		if (svc->mtime.tv_sec)
 			return svc;
 	}
 
@@ -415,13 +416,15 @@ void svc_mark_clean(svc_t *svc)
 	*((int *)&svc->dirty) = 0;
 }
 
-void svc_check_dirty(svc_t *svc, time_t mtime)
+void svc_check_dirty(svc_t *svc, struct timeval *mtime)
 {
-	if (svc->mtime != mtime)
+	if (mtime && timercmp(&svc->mtime, mtime, !=))
 		svc_mark_dirty(svc);
 	else
 		svc_mark_clean(svc);
-	svc->mtime = mtime;
+
+	svc->mtime.tv_sec = mtime ? mtime->tv_sec : 0;
+	svc->mtime.tv_usec = mtime ? mtime->tv_usec : 0;
 }
 
 /**

@@ -538,7 +538,7 @@ void service_runlevel(int newlevel)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int service_register(int type, char *line, time_t mtime, char *username)
+int service_register(int type, char *line, struct timeval *mtime, char *username)
 {
 	int i = 0;
 	int id = 1;		/* Default to ID:1 */
