@@ -69,7 +69,7 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 			continue;
 
 		/* TODO FIXME XXX WKZ check that pid is controlled by finit */
-		
+
 		_d("%s: match %s", basename, svc->cmd);
 		snprintf(cond, sizeof(cond), "svc%s", svc->cmd);
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY)) {
@@ -160,7 +160,7 @@ PLUGIN_EXIT(plugin_exit)
 {
 	inotify_rm_watch(pidfile_ctx.fd, pidfile_ctx.wd);
 	close(pidfile_ctx.fd);
-	
+
 	plugin_unregister(&plugin);
 }
 
