@@ -207,8 +207,7 @@ int main(int argc, char *argv[])
 
 	if (c)
 		err(1, "Failed signalling init to %s", msg);
-	else
-		sleep(2);
+	do_sleep(2);
 
 	return 0;
 }
