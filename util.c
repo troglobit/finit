@@ -36,6 +36,13 @@ char *progname(char *arg0)
        return prognm;
 }
 
+void do_sleep(unsigned int sec)
+{
+	while ((sec = sleep(sec)))
+		;
+}
+
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t

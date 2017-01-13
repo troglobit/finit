@@ -248,13 +248,6 @@ int getgroup(char *group)
 #endif
 }
 
-/* Signal safe sleep ... we get a lot of SIGCHLD at reboot */
-void do_sleep(unsigned int sec)
-{
-	while ((sec = sleep(sec)))
-		;
-}
-
 void set_hostname(char **hostname)
 {
 	FILE *fp;
