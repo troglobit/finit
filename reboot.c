@@ -45,14 +45,17 @@ typedef enum {
 static cmd_t cmd = CMD_UNKNOWN;
 static char *msg = NULL;
 
-static void translate(void)
+static void transform(char *nm)
 {
+	if (!nm)
+		nm = prognm;
+
 	if (cmd == CMD_UNKNOWN) {
-		if (!strcmp(prognm, "halt") || !strcmp(prognm, "shutdown"))
+		if (!strcmp(nm, "halt") || !strcmp(nm, "shutdown"))
 			cmd = CMD_HALT;
-		else if (!strcmp(prognm, "poweroff"))
+		else if (!strcmp(nm, "poweroff"))
 			cmd = CMD_POWEROFF;
-		else if (!strcmp(prognm, "suspend"))
+		else if (!strcmp(nm, "suspend"))
 			cmd = CMD_SUSPEND;
 		else
 			cmd = CMD_REBOOT;
@@ -109,8 +112,7 @@ int main(int argc, char *argv[])
 	};
 
 	/* Initial command taken from program name */
-	progname(argv[0]);
-	translate();
+	transform(progname(argv[0]));
 
 	while ((c = getopt_long(argc, argv, "h?fHpr", long_options, NULL)) != EOF) {
 		switch(c) {
@@ -140,7 +142,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Check for any overrides */
-	translate();
+	transform(NULL);
 
 	if (force) {
 		switch (cmd) {
