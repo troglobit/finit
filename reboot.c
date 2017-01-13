@@ -85,6 +85,11 @@ static void transform(char *nm)
 	}
 }
 
+static void sig(int signo)
+{
+	(void)signo;		/* NOP */
+}
+
 static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS]\n\n"
@@ -143,6 +148,9 @@ int main(int argc, char *argv[])
 
 	/* Check for any overrides */
 	transform(NULL);
+
+	/* Catch and ignore SIGTERM on halt/poweroff */
+	signal(SIGTERM, sig);
 
 	if (force) {
 		switch (cmd) {
