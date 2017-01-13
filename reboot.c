@@ -195,6 +195,11 @@ int main(int argc, char *argv[])
 		break;
 
 	case CMD_SUSPEND:
+		/*
+		 * Only initctl supports suspend, we avoid adding
+		 * another signal to finit for compat reasons.
+		 */
+
 	case CMD_UNKNOWN:
 		errx(1, "Invalid command");
 		break;
