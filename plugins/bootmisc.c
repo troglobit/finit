@@ -70,9 +70,9 @@ static void create(char *path, mode_t mode, uid_t uid, gid_t gid)
 		_w("Failed creating %s properl.", path);
 }
 
-static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED(tflag), struct FTW *ftwbuf)
+static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED(tflag), struct FTW *ftw)
 {
-	if (ftwbuf->level == 0)
+	if (ftw->level == 0)
 		return 1;
 
 	_d("Removing %s ...", fpath);
