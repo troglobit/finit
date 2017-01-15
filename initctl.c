@@ -161,9 +161,57 @@ static int do_svc(int cmd, char *arg)
 
 static int do_emit   (char *arg) { return do_svc(INIT_CMD_EMIT,        arg); }
 static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD,      arg); }
-static int do_start  (char *arg) { return do_svc(INIT_CMD_START_SVC,   arg); }
-static int do_stop   (char *arg) { return do_svc(INIT_CMD_STOP_SVC,    arg); }
-static int do_restart(char *arg) { return do_svc(INIT_CMD_RESTART_SVC, arg); }
+
+static int missing(char *job, int id)
+{
+	char idstr[10] = "";
+
+	if (!job)
+		job = "";
+	if (id > 1)
+		snprintf(idstr, sizeof(idstr), ":%d", id);
+
+	if (verbose)
+		fprintf(stderr, "No such service %s%s\n", job, idstr);
+
+	return 1;
+}
+
+/*
+ * This is a wrapper for do_svc() that adds a simple sanity check of
+ * the service(s) provided as argument.  If a service does not exist
+ * we make sure to return an error code.
+ */
+static int do_startstop(int cmd, char *arg)
+{
+	int ret;
+	char *svcs;
+
+	if (!arg) {
+		fprintf(stderr, "Usage: initctl %s <JOB|NAME>[:ID]",
+			cmd == INIT_CMD_START_SVC ? "start" :
+			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
+		return 1;
+	}
+
+	svcs = strdup(arg);
+	if (!svcs) {
+		perror("Failed validating service(s) name");
+		return 1;
+	}
+
+	/* Include \0 in len, needed by parser */
+	ret = svc_parse_jobstr(svcs, strlen(svcs) + 1, NULL, missing);
+	free(svcs);
+	if (ret)
+		return ret;
+
+	return do_svc(cmd, arg);
+}
+
+static int do_start  (char *arg) { return do_startstop(INIT_CMD_START_SVC,   arg); }
+static int do_stop   (char *arg) { return do_startstop(INIT_CMD_STOP_SVC,    arg); }
+static int do_restart(char *arg) { return do_startstop(INIT_CMD_RESTART_SVC, arg); }
 
 static void show_cond_one(const char *_conds)
 {
