@@ -139,36 +139,37 @@ static inline svc_t *finit_svc_connect(void)
 	return (svc_t *)ptr;
 }
 
-svc_t    *svc_new              (char *cmd, int id, int type);
-int	  svc_del	       (svc_t *svc);
+svc_t      *svc_new                (char *cmd, int id, int type);
+int	    svc_del	           (svc_t *svc);
 
-svc_t	 *svc_find	       (char *cmd, int id);
-svc_t	 *svc_find_by_pid      (pid_t pid);
-svc_t	 *svc_find_by_jobid    (int job, int id);
-svc_t	 *svc_find_by_nameid   (char *name, int id);
+svc_t	   *svc_find	           (char *cmd, int id);
+svc_t	   *svc_find_by_pid        (pid_t pid);
+svc_t	   *svc_find_by_jobid      (int job, int id);
+svc_t	   *svc_find_by_nameid     (char *name, int id);
 
-svc_t	 *svc_iterator	       (int first);
-svc_t	 *svc_inetd_iterator   (int first);
-svc_t	 *svc_dynamic_iterator (int first);
-svc_t	 *svc_named_iterator   (int first, char *cmd);
-svc_t    *svc_job_iterator     (int first, int job);
+svc_t	   *svc_iterator	   (int first);
+svc_t	   *svc_inetd_iterator     (int first);
+svc_t	   *svc_dynamic_iterator   (int first);
+svc_t	   *svc_named_iterator     (int first, char *cmd);
+svc_t      *svc_job_iterator       (int first, int job);
 
-void	  svc_foreach	       (void (*cb)(svc_t *));
-void	  svc_foreach_dynamic  (void (*cb)(svc_t *));
-void      svc_foreach_type     (int types, void (*cb)(svc_t *));
+void	    svc_foreach	           (void (*cb)(svc_t *));
+void	    svc_foreach_dynamic    (void (*cb)(svc_t *));
+void        svc_foreach_type       (int types, void (*cb)(svc_t *));
 
-int       svc_stop_completed   (void);
+int         svc_stop_completed     (void);
 
-void	  svc_mark_dynamic     (void);
-void	  svc_check_dirty      (svc_t *svc, struct timeval *mtime);
-void	  svc_mark_dirty       (svc_t *svc);
-void	  svc_mark_clean       (svc_t *svc);
-void	  svc_clean_dynamic    (void (*cb)(svc_t *));
-int	  svc_clean_bootstrap  (svc_t *svc);
+void	    svc_mark_dynamic       (void);
+void	    svc_check_dirty        (svc_t *svc, struct timeval *mtime);
+void	    svc_mark_dirty         (svc_t *svc);
+void	    svc_mark_clean         (svc_t *svc);
+void	    svc_clean_dynamic      (void (*cb)(svc_t *));
+int	    svc_clean_bootstrap    (svc_t *svc);
 
-char     *svc_status           (svc_t *svc);
-int       svc_next_id          (char  *cmd);
-int       svc_is_unique        (svc_t *svc);
+char       *svc_status             (svc_t *svc);
+const char *svc_dirtystr           (svc_t *svc);
+int         svc_next_id            (char  *cmd);
+int         svc_is_unique          (svc_t *svc);
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }
@@ -181,7 +182,6 @@ static inline int svc_is_dynamic   (svc_t *svc) { return svc &&  0 != svc->mtime
 static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
 static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }
-const char       *svc_dirtystr     (svc_t *svc);
 
 static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
 static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
