@@ -34,6 +34,7 @@
 #include "conf.h"
 #include "helpers.h"
 #include "tty.h"
+#include "util.h"
 #include "utmp-api.h"
 
 #ifdef FALLBACK_SHELL

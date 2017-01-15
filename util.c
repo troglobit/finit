@@ -22,6 +22,7 @@
  */
 
 #include <string.h>
+#include <unistd.h>
 
 char *prognm = NULL;
 

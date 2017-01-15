@@ -40,6 +40,7 @@
 #include "plugin.h"
 #include "sig.h"
 #include "service.h"
+#include "util.h"
 
 uev_t api_watcher;
 

@@ -78,6 +78,7 @@
 #include "private.h"
 #include "sig.h"
 #include "service.h"
+#include "util.h"
 #include "utmp-api.h"
 
 /*
