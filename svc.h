@@ -171,6 +171,8 @@ const char *svc_dirtystr           (svc_t *svc);
 int         svc_next_id            (char  *cmd);
 int         svc_is_unique          (svc_t *svc);
 
+int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, int));
+
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }
 

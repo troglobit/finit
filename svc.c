@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>		/* isdigit() */
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/time.h>
@@ -29,6 +30,7 @@
 #include "finit.h"
 #include "svc.h"
 #include "helpers.h"
+#include "util.h"
 
 /* Each svc_t needs a unique job# */
 static int jobcounter = 1;
@@ -565,6 +567,76 @@ int svc_is_unique(svc_t *svc)
 	return unique;
 }
 
+/*
+ * Used by api.c (to start/stop/restart) and initctl.c (for input validation)
+ */
+int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, int))
+{
+	int result = 0;
+	char *input, *token, *pos;
+
+	input = sanitize(str, len);
+	if (!input)
+		return -1;
+
+	token = strtok_r(input, " ", &pos);
+	while (token) {
+		int id = 1;
+		svc_t *svc;
+		char *ptr = strchr(token, ':');
+
+		if (isdigit(token[0])) {
+			int job = atonum(token);
+
+			if (!ptr) {
+				svc = svc_job_iterator(1, job);
+				if (!svc && not_found)
+					result += not_found(NULL, job);
+
+				while (svc) {
+					if (found)
+						result += found(svc);
+					svc = svc_job_iterator(0, job);
+				}
+			} else {
+				*ptr++ = 0;
+				id  = atonum(ptr);
+				job = atonum(token);
+
+				svc = svc_find_by_jobid(job, id);
+				if (!svc && not_found)
+					result += not_found(token, id);
+				else if (found)
+					result += found(svc);
+			}
+		} else {
+			if (!ptr) {
+				svc = svc_named_iterator(1, token);
+				if (!svc && not_found)
+					result += not_found(token, id);
+
+				while (svc) {
+					if (found)
+						result += found(svc);
+					svc = svc_named_iterator(0, token);
+				}
+			} else {
+				*ptr++ = 0;
+				id  = atonum(ptr);
+
+				svc = svc_find_by_nameid(token, id);
+				if (!svc && not_found)
+					result += not_found(token, id);
+				else if (found)
+					result += found(svc);
+			}
+		}
+
+		token = strtok_r(NULL, " ", &pos);
+	}
+
+	return result;
+}
 
 /**
  * Local Variables:

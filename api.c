@@ -45,50 +45,7 @@ uev_t api_watcher;
 
 static int call(int (*action)(svc_t *), char *buf, size_t len)
 {
-	int result = 0;
-	char *input, *token, *pos;
-
-	input = sanitize(buf, len);
-	if (!input)
-		return -1;
-
-	token = strtok_r(input, " ", &pos);
-	while (token) {
-		svc_t *svc;
-		char *ptr = strchr(token, ':');
-
-		if (isdigit(token[0])) {
-			int job = atonum(token);
-
-			if (!ptr) {
-				svc = svc_job_iterator(1, job);
-				while (svc) {
-					result += action(svc);
-					svc = svc_job_iterator(0, job);
-				}
-			} else {
-				*ptr++ = 0;
-				job = atonum(token);
-				result += action(svc_find_by_jobid(job, atonum(ptr)));
-			}
-
-		} else {
-			if (!ptr) {
-				svc = svc_named_iterator(1, token);
-				while (svc) {
-					result += action(svc);
-					svc = svc_named_iterator(0, token);
-				}
-			} else {
-				*ptr++ = 0;
-				result += action(svc_find_by_nameid(token, atonum(ptr)));
-			}
-		}
-
-		token = strtok_r(NULL, " ", &pos);
-	}
-
-	return result;
+	return svc_parse_jobstr(buf, len, action, NULL);
 }
 
 static int service_block(svc_t *svc)
