@@ -30,6 +30,7 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "util.h"
 #include "watchdog.h"
 
 int running  = 1;
