@@ -116,6 +116,9 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 
 static int service_block(svc_t *svc)
 {
+	if (!svc)
+		return 1;
+
 	svc_block(svc);
 	service_step(svc);
 
@@ -124,6 +127,9 @@ static int service_block(svc_t *svc)
 
 static int service_unblock(svc_t *svc)
 {
+	if (!svc)
+		return 1;
+
 	svc_unblock(svc);
 	service_step(svc);
 
@@ -132,8 +138,12 @@ static int service_unblock(svc_t *svc)
 
 static int service_restart(svc_t *svc)
 {
+	if (!svc)
+		return 1;
+
 	svc_mark_dirty(svc);
 	service_step(svc);
+
 	return 0;
 }
 
