@@ -129,6 +129,22 @@ static int toggle_debug(char *UNUSED(arg))
 	return do_send(&rq, sizeof(rq));
 }
 
+static int do_log(char *svc)
+{
+	char cmd[128];
+	char *logfile = "/var/log/messages";
+
+	if (!svc || !svc[0])
+		svc = "finit";
+
+	if (!fexist(logfile))
+		logfile = "/var/log/syslog";
+
+	snprintf(cmd, sizeof(cmd), "cat %s | grep %s | tail -10", logfile, svc);
+
+	return system(cmd);
+}
+
 static int do_runlevel(char *arg)
 {
 	struct init_request rq = {
@@ -475,6 +491,7 @@ static int usage(int rc)
 		"Commands:\n"
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
+		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
 		"  reload                    Reload *.conf in /etc/finit.d and activate changes\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status | show             Show status of services\n"
@@ -498,6 +515,7 @@ int main(int argc, char *argv[])
 	int c;
 	command_t command[] = {
 		{ "debug",    toggle_debug },
+		{ "log",      do_log       },
 		{ "reload",   do_reload    },
 		{ "runlevel", do_runlevel  },
 		{ "status",   show_status  },
