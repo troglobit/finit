@@ -275,7 +275,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 				silent = 0;
 			else
 				silent = quiet ? 1 : SILENT_MODE;
-			_e("Debug mode %s", debug ? "enabled" : "disabled");
+			logit(LOG_INFO, "Debug mode %s", debug ? "enabled" : "disabled");
 			break;
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */
