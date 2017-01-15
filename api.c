@@ -22,7 +22,6 @@
  */
 
 #include <errno.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,28 +42,6 @@
 #include "util.h"
 
 uev_t api_watcher;
-
-/* Allowed characters in job/id/name */
-static int isallowed(int ch)
-{
-	return isprint(ch);
-}
-
-/* Sanitize user input, make sure to NUL terminate. */
-static char *sanitize(char *arg, size_t len)
-{
-	size_t i = 0;
-
-	while (isallowed(arg[i]) && i < len)
-		i++;
-
-	if (i + 1 < len) {
-		arg[i + 1] = 0;
-		return arg;
-	}
-
-	return NULL;
-}
 
 static int call(int (*action)(svc_t *), char *buf, size_t len)
 {

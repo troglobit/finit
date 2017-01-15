@@ -28,6 +28,7 @@ extern char *prognm;
 
 char *progname(char *arg0);
 void  do_sleep(unsigned int sec);
+char *sanitize(char *arg, size_t len);
 
 #endif /* FINIT_UTIL_H_ */
 

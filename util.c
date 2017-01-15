@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>		/* isprint() */
 #include <string.h>
 #include <unistd.h>
 
@@ -43,6 +44,30 @@ void do_sleep(unsigned int sec)
 		;
 }
 
+/* Allowed characters in job/id/name */
+static int isallowed(int ch)
+{
+	return isprint(ch);
+}
+
+/* Sanitize user input, make sure to NUL terminate. */
+char *sanitize(char *arg, size_t len)
+{
+	size_t i = 0;
+
+	while (isallowed(arg[i]) && i < len)
+		i++;
+
+	if (i + 1 < len) {
+		arg[i + 1] = 0;
+		return arg;
+	}
+
+	if (i > 1 && arg[i] == 0)
+		return arg;
+
+	return NULL;
+}
 
 /**
  * Local Variables:
