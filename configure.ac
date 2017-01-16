@@ -39,10 +39,10 @@ PKG_CHECK_MODULES([lite], [libite >= 1.8.2])
 # Check for configured Finit features
 AC_ARG_ENABLE(emergency_shell,
 	AS_HELP_STRING([--enable-emergency-shell], [Experimental emergency fallback at boot.
-	                Only use this for debugging very early boot problems with Finit.]))
+	                Use only for debugging very early boot problems with Finit]))
 
 AC_ARG_ENABLE(fallback_shell,
-        AS_HELP_STRING([--enable-fallback-shell], [Start a shell if no TTYs can start.]))
+        AS_HELP_STRING([--enable-fallback-shell], [Start a shell if no TTYs can start]))
 
 AC_ARG_ENABLE(rw-rootfs,
         AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]))
