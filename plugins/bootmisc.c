@@ -26,11 +26,11 @@
 #include <string.h>
 #include <lite/lite.h>
 
-#include "../config.h"
-#include "../finit.h"
-#include "../helpers.h"
-#include "../plugin.h"
-#include "../utmp-api.h"
+#include "config.h"
+#include "finit.h"
+#include "helpers.h"
+#include "plugin.h"
+#include "utmp-api.h"
 
 static int is_tmpfs(char *path)
 {

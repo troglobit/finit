@@ -23,7 +23,7 @@
 
 #include <glob.h>
 #include <lite/lite.h>
-#include "../plugin.h"
+#include "plugin.h"
 
 static void setup(void *UNUSED(arg))
 {

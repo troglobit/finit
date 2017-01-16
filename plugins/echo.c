@@ -25,7 +25,7 @@
 #include <unistd.h>		/* STDIN_FILENO */
 #include <sys/socket.h>
 
-#include "../plugin.h"
+#include "plugin.h"
 
 #define NAME "echo"
 

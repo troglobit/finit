@@ -21,9 +21,9 @@
  * THE SOFTWARE.
  */
 
-#include "../finit.h"
-#include "../svc.h"
-#include "../plugin.h"
+#include "finit.h"
+#include "svc.h"
+#include "plugin.h"
 
 static void lost_pid(void *arg)
 {

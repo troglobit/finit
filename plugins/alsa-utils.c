@@ -22,9 +22,9 @@
  */
 
 #include <lite/lite.h>
-#include "../finit.h"
-#include "../helpers.h"
-#include "../plugin.h"
+#include "finit.h"
+#include "helpers.h"
+#include "plugin.h"
 
 #define ALSACTL "/usr/sbin/alsactl"
 

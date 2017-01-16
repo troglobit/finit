@@ -27,10 +27,10 @@
 #include <sys/types.h>
 #include <lite/lite.h>
 
-#include "../config.h"
-#include "../finit.h"
-#include "../helpers.h"
-#include "../plugin.h"
+#include "config.h"
+#include "finit.h"
+#include "helpers.h"
+#include "plugin.h"
 
 static void setup(void *UNUSED(arg))
 {

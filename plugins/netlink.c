@@ -25,10 +25,10 @@
 #include <linux/rtnetlink.h>
 #include <unistd.h>
 
-#include "../finit.h"
-#include "../cond.h"
-#include "../helpers.h"
-#include "../plugin.h"
+#include "finit.h"
+#include "cond.h"
+#include "helpers.h"
+#include "plugin.h"
 
 static int nlmsg_validate(struct nlmsghdr *nh, size_t len)
 {

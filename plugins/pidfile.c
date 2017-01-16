@@ -26,11 +26,11 @@
 
 #include <sys/inotify.h>
 
-#include "../finit.h"
-#include "../cond.h"
-#include "../helpers.h"
-#include "../plugin.h"
-#include "../service.h"
+#include "finit.h"
+#include "cond.h"
+#include "helpers.h"
+#include "plugin.h"
+#include "service.h"
 
 struct context {
 	int fd;

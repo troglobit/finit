@@ -2,9 +2,9 @@ AC_INIT(Finit, 3.0-rc2, https://github.com/troglobit/finit/issues, finit, http:/
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz subdir-objects])
 AM_SILENT_RULES([yes])
 
-AC_CONFIG_SRCDIR([finit.c])
+AC_CONFIG_SRCDIR([src/finit.c])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile plugins/Makefile])
+AC_CONFIG_FILES([Makefile plugins/Makefile src/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/plugin.m4])
