@@ -2,3 +2,5 @@
 finit
 initctl
 reboot
+Makefile
+Makefile.in
