@@ -24,7 +24,7 @@
 #include <libgen.h>
 #include <lite/lite.h>
 #include <stdio.h>
-#include <utime.h>
+#include <sys/stat.h>
 
 #include "finit.h"
 #include "cond.h"
@@ -50,7 +50,7 @@ int cond_set_path(const char *path, enum cond_state new)
 			return 0;
 		}
 		touch(path);
-		utime(path, NULL);
+		utimensat(0, path, NULL, 0);
 		break;
 
 	case COND_OFF:
