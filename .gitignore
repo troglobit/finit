@@ -3,14 +3,14 @@
 *.so
 *.gz
 *.map
+.deps/*
+.libs/*
 configure
 Makefile
 Makefile.in
-/.deps/*
-/.libs/*
-/finit
-/initctl
-/reboot
+/.config
+/.stamp
+/.unpacked
 /config.h
 /config.mk
 /GPATH
@@ -30,6 +30,5 @@ Makefile.in
 /install-sh
 /libtool
 /ltmain.sh
-
 /missing
 /stamp-h1
