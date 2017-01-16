@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <ftw.h>
 #include <libgen.h>
 #include <lite/lite.h>
 #include <stdio.h>
@@ -123,6 +124,34 @@ void cond_reload(void)
 
 	cond_update(NULL);
 }
+
+
+static int reassert(const char *fpath, const struct stat *UNUSED(sb), int tflg, struct FTW *ftw)
+{
+	char *nm;
+
+	if (ftw->level == 0)
+		return 1;
+
+	if (tflg != FTW_F)
+		return 0;
+
+	nm = (char *)fpath + sizeof(COND_PATH);
+	_d("Reasserting %s => %s", fpath, nm);
+	cond_set(nm);
+
+	return 0;
+}
+/*
+ * Used only by netlink plugin atm.
+ * type: is a one of svc/, net/, etc.
+ */
+void cond_reassert(const char *type)
+{
+	_d("%s", type);
+	nftw(cond_path(type), reassert, 20, FTW_DEPTH);
+}
+
 
 /**
  * Local Variables:

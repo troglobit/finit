@@ -186,8 +186,16 @@ static void nl_callback(void *UNUSED(arg), int sd, int UNUSED(events))
 	}
 }
 
+static void nl_reconf(void *_null)
+{
+	(void)_null;
+
+	cond_reassert("net/");
+}
+
 static plugin_t plugin = {
 	.name = __FILE__,
+	.hook[HOOK_SVC_RECONF] = { .cb = nl_reconf },
 	.io = {
 		.cb    = nl_callback,
 		.flags = PLUGIN_IO_READ,
