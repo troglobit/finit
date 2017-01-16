@@ -37,6 +37,12 @@ struct context {
 	int wd;
 };
 
+static char *mkcond(char *buf, size_t len, char *nm)
+{
+	snprintf(buf, len, "svc%s%s", nm[0] != '/' ? "/" : "", nm);
+	return buf;
+}
+
 static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 {
 	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
@@ -71,7 +77,7 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
 		/* TODO FIXME XXX WKZ check that pid is controlled by finit */
 
 		_d("%s: match %s", basename, svc->cmd);
-		snprintf(cond, sizeof(cond), "svc%s", svc->cmd);
+		mkcond(cond, sizeof(cond), svc->cmd);
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY)) {
 			svc_started(svc);
 			cond_set(cond);
@@ -88,7 +94,7 @@ static void pidfile_callback(void *UNUSED(arg), int fd, int UNUSED(events))
  */
 static void pidfile_reconf(void *_null)
 {
-	static char name[MAX_ARG_LEN];
+	static char cond[MAX_ARG_LEN];
 	svc_t *svc;
 	(void)(_null);
 	int restart = 0;
@@ -97,12 +103,12 @@ static void pidfile_reconf(void *_null)
 		restart = 0;
 
 		for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-			snprintf(name, MAX_ARG_LEN, "svc%s", svc->cmd);
+			mkcond(cond, sizeof(cond), svc->cmd);
 			if (svc->state == SVC_RUNNING_STATE &&
 			    !svc_is_changed(svc) &&
 			    !svc_is_starting(svc) &&
-			    cond_get(name) != COND_ON) {
-				cond_set_path(cond_path(name), COND_ON);
+			    cond_get(cond) != COND_ON) {
+				cond_set_path(cond_path(cond), COND_ON);
 				restart = 1;
 			}
 		}
