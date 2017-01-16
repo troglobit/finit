@@ -135,6 +135,7 @@ static struct context pidfile_ctx;
  * so the bootmisc plugin must run first.
  */
 static plugin_t plugin = {
+	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP]  = { .arg = &pidfile_ctx, .cb = pidfile_init },
 	.hook[HOOK_SVC_RECONF] = { .cb = pidfile_reconf },
 	.io = {
