@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <lite/lite.h>
+#include <ftw.h>
 
 #include "config.h"
 #include "finit.h"
@@ -269,34 +270,42 @@ static int do_cond_magic(char op, char *cond)
 static int do_cond_set  (char *cond) { return do_cond_magic('+', cond); }
 static int do_cond_clear(char *cond) { return do_cond_magic('-', cond); }
 
+
+static int
+dump_one_cond(const char *fpath, const struct stat *sb,
+	      int tflag, struct FTW *ftwbuf)
+{
+	int len;
+
+	if (tflag != FTW_F)
+		return 0;
+
+	if (!strcmp(fpath, _PATH_COND"reconf"))
+		return 0;
+
+	len = strlen(_PATH_COND);
+	printf("%-30s %s\n", &fpath[len], condstr(cond_get_path(fpath)));
+
+	return 0;
+}
+
+static int do_cond_dump(char *UNUSED(arg))
+{
+	printf("Condition                      Status)\n");
+	printf("===============================================================================\n");	
+
+	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
+		_e("Failed parse %s", _PATH_COND);
+		return 1;
+	}
+
+	return 0;
+}
+
 static int do_cond_show(char *UNUSED(arg))
 {
 	svc_t *svc;
 	enum cond_state cond;
-
-	if (verbose) {
-		glob_t gl;
-
-		printf("Asserted conditions (taken from %s)\n", _PATH_COND);
-		printf("===============================================================================\n");
-
-		if (!glob(_PATH_COND "*/*/*", 0, NULL, &gl)) {
-			size_t i;
-
-			for (i = 0; i < gl.gl_pathc; i++) {
-				char *cond, *name = gl.gl_pathv[i];
-				struct stat st;
-
-				if (stat(name, &st) || S_ISDIR(st.st_mode))
-					continue;
-
-				cond = name + strlen(_PATH_COND);
-				printf("\t%s\n", cond);
-			}
-			globfree(&gl);
-		}
-		puts("");
-	}
 
 	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
 	printf("===============================================================================\n");
@@ -329,6 +338,7 @@ static int do_cond(char *cmd)
 		{ "set",     do_cond_set   },
 		{ "clear",   do_cond_clear },
 		{ "show",    do_cond_show  },
+		{ "dump",    do_cond_dump  },
 		{ NULL, NULL }
 	};
 
@@ -498,6 +508,7 @@ static int usage(int rc)
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
 		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
 		"  cond     show             Show condition status\n"
+		"  cond     dump             Show all conditions and their status\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
