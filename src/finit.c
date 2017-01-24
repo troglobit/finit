@@ -77,6 +77,28 @@ static int banner(void)
 	return 0;
 }
 
+/* Requires /proc to be mounted */
+static int fismnt(char *dir)
+{
+	FILE *fp;
+	int found = 0;
+	struct mntent *mnt;
+
+	fp = setmntent("/proc/mounts", "r");
+	if (!fp)
+		return 0;	/* Dunno, maybe not */
+
+	while ((mnt = getmntent(fp))) {
+		if (!strcmp(mnt->mnt_dir, dir)) {
+			found = 1;
+			break;
+		}
+	}
+	endmntent(fp);
+
+	return found;
+}
+
 /*
  * Check all filesystems in /etc/fstab with a fs_passno > 0
  */
@@ -164,28 +186,6 @@ static void networking(void)
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 }
 
-/* Requires /proc to be mounted */
-static int fismnt(char *dir)
-{
-	FILE *fp;
-	int found = 0;
-	struct mntent *mnt;
-
-	fp = setmntent("/proc/mounts", "r");
-	if (!fp)
-		return 0;	/* Dunno, maybe not */
-
-	while ((mnt = getmntent(fp))) {
-		if (!strcmp(mnt->mnt_dir, dir)) {
-			found = 1;
-			break;
-		}
-	}
-	endmntent(fp);
-
-	return found;
-}
-
 /*
  * If everything goes south we can use this to give the operator an
  * emergency shell to debug the problem -- Finit should not crash!
@@ -247,14 +247,6 @@ int main(int argc, char* argv[])
 	ctx = &loop;
 
 	/*
-	 * Check file filesystems in /etc/fstab
-	 */
-	for (int pass = 1; pass < 10; pass++) {
-		if (fsck(pass))
-			break;
-	}
-
-	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
 	 */
 	chdir("/");
@@ -262,6 +254,14 @@ int main(int argc, char* argv[])
 	mount("none", "/proc", "proc", 0, NULL);
 	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
+
+	/*
+	 * Check file filesystems in /etc/fstab
+	 */
+	for (int pass = 1; pass < 10; pass++) {
+		if (fsck(pass))
+			break;
+	}
 
 	/*
 	 * Some non-embedded systems without an initramfs may not have /dev mounted yet
