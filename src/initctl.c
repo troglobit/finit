@@ -272,8 +272,8 @@ static int do_cond_clear(char *cond) { return do_cond_magic('-', cond); }
 
 
 static int
-dump_one_cond(const char *fpath, const struct stat *sb,
-	      int tflag, struct FTW *ftwbuf)
+dump_one_cond(const char *fpath, const struct stat *UNUSED(sb),
+	      int tflag, struct FTW *UNUSED(ftwbuf))
 {
 	int len;
 
