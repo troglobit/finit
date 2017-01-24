@@ -130,6 +130,11 @@ static int fsck(int pass)
 			}
 		}
 
+		if (fismnt(fs->fs_file)) {
+			_d("Skipping fsck of %s, already mounted on %s.", fs->fs_spec, fs->fs_file);
+			continue;
+		}
+
 		snprintf(cmd, sizeof(cmd), "/sbin/fsck -a %s", fs->fs_spec);
 		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
