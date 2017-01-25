@@ -56,6 +56,9 @@ AC_ARG_ENABLE(watchdog,
 AC_ARG_ENABLE(inetd,
         AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]))
 
+AC_ARG_ENABLE(logrotate,
+        AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]))
+
 AC_ARG_ENABLE(quiet,
         AS_HELP_STRING([--disable-quiet], [Default Finit obeys the kernel quiet option]))
 
@@ -144,6 +147,9 @@ AS_IF([test "x$enable_watchdog" = "xyes"], [
 AS_IF([test "x$enable_inetd" != "xno"], [
 	enable_inetd="yes"
 	AC_DEFINE(INETD_ENABLED,  1, [Enable built-in inetd])])
+
+AS_IF([test "x$enable_logrotate" != "xno"], [
+	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
 
 AS_IF([test "x$enable_quiet" != "xno"], [
 	AC_DEFINE(QUIET_MODE,  1, [Silent, after initial boot, no stopping/starting messages.  Default: 1])

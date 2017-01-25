@@ -21,6 +21,9 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
+#include <paths.h>
 #include <stdio.h>
 #include <time.h>
 #include <utmp.h>
@@ -28,6 +31,14 @@
 #include <sys/utsname.h>
 #include <lite/lite.h>
 
+#include "helpers.h"
+
+#ifndef _PATH_BTMP
+#define _PATH_BTMP "/var/log/btmp"
+#endif
+
+#define MAX_NO 2
+#define MAX_SZ 100 * 1024
 
 static void utmp_strncpy(char *dst, const char *src, size_t dlen)
 {
@@ -38,6 +49,62 @@ static void utmp_strncpy(char *dst, const char *src, size_t dlen)
 
 	if (i < dlen)
 		dst[i] = 0;
+}
+
+#ifdef LOGROTATE_ENABLED
+static int logrotate(char *file, int num, off_t sz)
+{
+	struct stat st;
+
+	if (stat(file, &st))
+		return 1;
+
+	if (sz > 0 && S_ISREG(st.st_mode) && st.st_size > sz) {
+		if (num > 0) {
+			size_t len = strlen(file) + 3 + 1;
+			char   ofile[len];
+			char   nfile[len];
+
+			while (num) {
+				snprintf(ofile, len, "%s.%d", file, num - 1);
+				snprintf(nfile, len, "%s.%d", file, num--);
+
+				/* May fail because ofile doesn't exist yet, ignore. */
+				(void)rename(ofile, nfile);
+			}
+
+			rename(file, nfile);
+			create(file, st.st_mode, st.st_uid, st.st_gid);
+		} else {
+			truncate(file, 0);
+		}
+	}
+
+	return 0;
+}
+#endif /* LOGROTATE_ENABLED */
+
+/*
+ * Rotate /var/log/wtmp (+ btmp?) and /run/utmp
+ *
+ * Useful on systems with no logrotate daemon, e.g. BusyBox based
+ * systems where syslogd rotates its own log files only.
+ */
+void utmp_logrotate(void)
+{
+#ifdef LOGROTATE_ENABLED
+	int i;
+	char *files[] = {
+		_PATH_UTMP,
+		_PATH_WTMP,
+		_PATH_BTMP,
+		_PATH_LASTLOG,
+		NULL
+	};
+
+	for (i = 0; files[i]; i++)
+		logrotate(files[i], MAX_NO, MAX_SZ);
+#endif /* LOGROTATE_ENABLED */
 }
 
 int utmp_set(int type, int pid, char *line, char *id, char *user)
@@ -75,6 +142,8 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 		result += pututline(&ut) ? 0 : 1;
 		endutent();
 	}
+
+	utmp_logrotate();
 	updwtmp(_PATH_WTMP, &ut);
 
 	return result;
