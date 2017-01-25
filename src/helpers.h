@@ -30,6 +30,7 @@
 #include <string.h>		/* strerror() */
 #include <syslog.h>
 #include <sys/types.h>
+#include <lite/lite.h>
 
 /*
  * Error and debug messages
@@ -53,8 +54,6 @@ char   *runlevel_string (int levels);
 
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);
-
-void    procname_set    (char *name, char *args[]);
 
 void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
@@ -88,6 +87,12 @@ int           setfsent(void);
 void          endfsent(void);
 struct fstab *getfsent(void);
 #endif	/* HAVE_GETFSENT */
+
+static inline void create(char *path, mode_t mode, uid_t uid, gid_t gid)
+{
+	if (touch(path) || chmod(path, mode) || chown(path, uid, gid))
+		_w("Failed creating %s properly.", path);
+}
 
 #endif /* FINIT_HELPERS_H_ */
 
