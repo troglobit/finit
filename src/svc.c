@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <err.h>
 #include <ctype.h>		/* isdigit() */
 #include <stdlib.h>
 #include <strings.h>
@@ -42,7 +43,7 @@ static svc_t *__connect_shm(void)
 	if (!list) {
 		/* This should never happen, but if it does we're probably
 		 * knee-deep in more serious problems already... */
-		_e("Failed connecting to shared memory, error %d: %s", errno, strerror(errno));
+		warn("Failed connecting to shared memory, error %d", errno);
 		abort();
 	}
 
@@ -313,10 +314,8 @@ svc_t *svc_find(char *cmd, int id)
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->id == id && !strncmp(svc->cmd, cmd, strlen(svc->cmd))) {
-			_d("Found a matching svc for %s", cmd);
+		if (svc->id == id && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
 			return svc;
-		}
 	}
 
 	return NULL;
