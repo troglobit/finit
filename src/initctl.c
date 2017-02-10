@@ -407,8 +407,11 @@ int utmp_show(char *file)
 	return 0;
 }
 
-static int do_utmp(char *UNUSED(cmd))
+static int do_utmp(char *file)
 {
+	if (file)
+		return utmp_show(file);
+
 	return  utmp_show(_PATH_WTMP) ||
 		utmp_show(_PATH_UTMP);
 }
