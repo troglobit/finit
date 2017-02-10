@@ -50,7 +50,6 @@ extern int _slup;		/* INTERNAL: Is syslog up yet? */
 char   *strip_line      (char *line);
 
 void    runlevel_set    (int pre, int now);
-char   *runlevel_string (int levels);
 
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);

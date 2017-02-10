@@ -63,42 +63,6 @@ void runlevel_set(int pre, int now)
 	utmp_set_runlevel(pre, now);
 }
 
-/**
- * runlevel_string - Convert a bit encoded runlevel to .conf syntax
- * @levels: Bit encoded runlevels
- *
- * Returns:
- * Pointer to string on the form [2345]
- */
-char *runlevel_string(int levels)
-{
-	int i, pos = 1;
-	static char lvl[20];
-
-	memset(lvl, 0, sizeof(lvl));
-	lvl[0] = '[';
-
-	for (i = 0; i < 10; i++) {
-		if (ISSET(levels, i)) {
-			if (runlevel == i)
-				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
-
-			if (i == 0)
-				lvl[pos++] = 'S';
-			else
-				lvl[pos++] = '0' + i;
-
-			if (runlevel == i)
-				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
-		}
-	}
-
-	lvl[pos++] = ']';
-	lvl[pos]   = 0;
-
-	return lvl;
-}
-
 static int print_timestamp(void)
 {
 #if defined(CONFIG_PRINTK_TIME)

@@ -379,6 +379,42 @@ static int show_version(char *UNUSED(arg))
 	return 0;
 }
 
+/**
+ * runlevel_string - Convert a bit encoded runlevel to .conf syntax
+ * @levels: Bit encoded runlevels
+ *
+ * Returns:
+ * Pointer to string on the form [2345]
+ */
+char *runlevel_string(int runlevel, int levels)
+{
+	int i, pos = 1;
+	static char lvl[20];
+
+	memset(lvl, 0, sizeof(lvl));
+	lvl[0] = '[';
+
+	for (i = 0; i < 10; i++) {
+		if (ISSET(levels, i)) {
+			if (runlevel == i)
+				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
+
+			if (i == 0)
+				lvl[pos++] = 'S';
+			else
+				lvl[pos++] = '0' + i;
+
+			if (runlevel == i)
+				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
+		}
+	}
+
+	lvl[pos++] = ']';
+	lvl[pos]   = 0;
+
+	return lvl;
+}
+
 /* In verbose mode we skip the header and each service description.
  * This in favor of having all info on one line so a machine can more
  * easily parse it. */
@@ -433,7 +469,7 @@ static int show_status(char *arg)
 		else
 			printf("%-6d  ", svc->pid);
 
-		lvls = runlevel_string(svc->runlevels);
+		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
 			printf("%-18.18s  ", lvls);
 		else
