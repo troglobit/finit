@@ -33,6 +33,8 @@ int utmp_set_dead    (int pid);
 int utmp_set_runlevel(int pre, int now);
 int utmp_show        (char *file);
 
+void runlevel_set    (int pre, int now);
+
 #endif /* FINIT_UTMP_API_H_ */
 
 /**

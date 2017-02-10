@@ -58,11 +58,6 @@ char *strip_line(char *line)
 	return line;
 }
 
-void runlevel_set(int pre, int now)
-{
-	utmp_set_runlevel(pre, now);
-}
-
 static int print_timestamp(void)
 {
 #if defined(CONFIG_PRINTK_TIME)

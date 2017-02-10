@@ -205,44 +205,9 @@ int utmp_set_runlevel(int pre, int now)
 	return utmp_set(RUN_LVL, (encode(pre) << 8) | (encode(now) & 0xFF), NULL, NULL, "runlevel");
 }
 
-int utmp_show(char *file)
+void runlevel_set(int pre, int now)
 {
-	time_t sec;
-	struct utmp *ut;
-	struct tm *sectm;
-
-	int pid;
-	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
-
-	printf("%s =============================================================================================\n", file);
-	utmpname(file);
-
-	setutent();
-	while ((ut = getutent())) {
-		char addr[64];
-
-		memset(id, 0, sizeof(id));
-		strlcpy(id, ut->ut_id, sizeof(id));
-
-		memset(user, 0, sizeof(user));
-		strlcpy(user, ut->ut_user, sizeof(user));
-
-		sec = ut->ut_tv.tv_sec;
-		sectm = localtime(&sec);
-		strftime(when, sizeof(when), "%F %T", sectm);
-
-		pid = ut->ut_pid;
-		if (ut->ut_addr_v6[1] || ut->ut_addr_v6[2] || ut->ut_addr_v6[3])
-			inet_ntop(AF_INET6, ut->ut_addr_v6, addr, sizeof(addr));
-		else
-			inet_ntop(AF_INET, &ut->ut_addr, addr, sizeof(addr));
-
-		printf("[%d] [%05d] [%-4.4s] [%-8.8s] [%-12.12s] [%-20.20s] [%-15.15s] [%-19.19s]\n",
-		       ut->ut_type, pid, id, user, ut->ut_line, ut->ut_host, addr, when);
-	}
-	endutent();
-
-	return 0;
+	utmp_set_runlevel(pre, now);
 }
 
 /**
