@@ -24,7 +24,6 @@
 #include "config.h"
 
 #include <paths.h>
-#include <stdio.h>
 #include <time.h>
 #include <utmp.h>
 #include <arpa/inet.h>

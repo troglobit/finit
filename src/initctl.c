@@ -22,25 +22,25 @@
  */
 
 #include <err.h>
+#include <ftw.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <glob.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
+#include <time.h>
+#include <utmp.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <lite/lite.h>
-#include <ftw.h>
 
 #include "config.h"
 #include "finit.h"
 #include "cond.h"
-#include "helpers.h"
 #include "service.h"
 #include "util.h"
-#include "utmp-api.h"
 
 #define _PATH_COND _PATH_VARRUN "finit/cond/"
 
@@ -295,7 +295,7 @@ static int do_cond_dump(char *UNUSED(arg))
 	printf("===============================================================================\n");	
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
-		_e("Failed parse %s", _PATH_COND);
+		warnx("Failed parsing %s", _PATH_COND);
 		return 1;
 	}
 
