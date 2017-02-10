@@ -36,7 +36,7 @@
 #define _PATH_BTMP "/var/log/btmp"
 #endif
 
-#define MAX_NO 2
+#define MAX_NO 5
 #define MAX_SZ 100 * 1024
 
 static void utmp_strncpy(char *dst, const char *src, size_t dlen)
@@ -51,8 +51,15 @@ static void utmp_strncpy(char *dst, const char *src, size_t dlen)
 }
 
 #ifdef LOGROTATE_ENABLED
+/*
+ * This function triggers a log rotates of @file when size >= @sz bytes
+ * At most @num old versions are kept and by default it starts gzipping
+ * .2 and older log files.  If gzip is not available in $PATH then @num
+ * files are kept uncompressed.
+ */
 static int logrotate(char *file, int num, off_t sz)
 {
+	int cnt;
 	struct stat st;
 
 	if (stat(file, &st))
@@ -60,16 +67,35 @@ static int logrotate(char *file, int num, off_t sz)
 
 	if (sz > 0 && S_ISREG(st.st_mode) && st.st_size > sz) {
 		if (num > 0) {
-			size_t len = strlen(file) + 3 + 1;
+			size_t len = strlen(file) + 10 + 1;
 			char   ofile[len];
 			char   nfile[len];
 
-			while (num) {
-				snprintf(ofile, len, "%s.%d", file, num - 1);
-				snprintf(nfile, len, "%s.%d", file, num--);
+			/* First age zipped log files */
+			for (cnt = num; cnt > 2; cnt--) {
+				snprintf(ofile, len, "%s.%d.gz", file, cnt - 1);
+				snprintf(nfile, len, "%s.%d.gz", file, cnt);
 
 				/* May fail because ofile doesn't exist yet, ignore. */
 				(void)rename(ofile, nfile);
+			}
+
+			for (cnt = num; cnt > 0; cnt--) {
+				snprintf(ofile, len, "%s.%d", file, cnt - 1);
+				snprintf(nfile, len, "%s.%d", file, cnt);
+
+				/* May fail because ofile doesn't exist yet, ignore. */
+				(void)rename(ofile, nfile);
+
+				if (cnt == 2 && fexist(nfile)) {
+					size_t len = 5 + strlen(nfile) + 1;
+					char cmd[len];
+
+					snprintf(cmd, len, "gzip %s", nfile);
+					run(cmd);
+
+					remove(nfile);
+				}
 			}
 
 			rename(file, nfile);
