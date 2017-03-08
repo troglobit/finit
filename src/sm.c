@@ -34,6 +34,7 @@
 #include "sig.h"
 #include "tty.h"
 #include "sm.h"
+#include "utmp-api.h"
 
 sm_t sm;
 
