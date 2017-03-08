@@ -91,8 +91,10 @@ the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
     tty [12345] /dev/ttyAMA0 115200 vt100
 ```
 
-The `service` stanza, described in full in [doc/config.md](doc/config.md),
-has the following components:
+The `service` stanza, as well as `task`, `run`, `inetd` and others are
+described in full in [doc/config.md](doc/config.md).  Here's a quick
+overview of some of the most common components needed to start a UNIX
+daemon:
 
 ```
     service [LVLS] <COND> /path/to/daemon ARGS -- Some text
@@ -105,9 +107,11 @@ has the following components:
 	 `------------------------------------------------ Monitored application
 ```
 
-Many of the components are optional.  What is required, however, is for the
-daemon *not to fork* to and detach itself.  This is usually an `-n` or `-f`
-argument to the application.
+Some components are optional.  It is important to note, however, is for
+the daemon *not to fork* and detach itself from the controlling TTY.
+This is usually an `-n` or `-f` argument to the application.  If the
+daemon detaches itself, Finit cannot monitor it and will instead try to
+restart it.
 
 For an example of a full blown embedded Linux, see [TroglOS][9], or take
 a look at the `contrib/` section with [Alpine Linux](contrib/alpine/),
