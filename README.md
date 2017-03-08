@@ -91,7 +91,7 @@ the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
     tty [12345] /dev/ttyAMA0 115200 vt100
 ```
 
-The `service` stanza, described in full in [config.md][doc/config.md],
+The `service` stanza, described in full in [config.md](doc/config.md),
 has the following components:
 
 ```
