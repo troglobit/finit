@@ -76,6 +76,13 @@ Syntax:
         service [2345] <svc/sbin/zebra> /sbin/ospfd -- OSPF daemon
 ```
 
+  The `[2345]` is the runlevels `ospfd` is allowed to run in, they are
+  optional and default to level 2-5 if left out.
+  
+  The `<...>` is the condition for starting `ospfd`.  In this example
+  Finit waits for another service, `/sbin/zebra`, to have created its
+  PID file in `/var/run/zebra.pid` before starting `ospfd`.
+
   For a detailed description of conditions, and how to debug them,
   see the [Finit Conditions](conditions.md) document.
 

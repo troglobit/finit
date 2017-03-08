@@ -43,9 +43,9 @@ entirely in C.
 
 Configuration is read from [/etc/finit.conf](doc/config.md#etcfinitconf)
 which details kernel modules to load, services and TTYs to start.  When
-initial [bootstrap](doc/bootstrap.md) is done, including setting up
-networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
-[/etc/rc.local](#runparts--etcrclocal) are run.
+the initial [bootstrap](doc/bootstrap.md) is done, including setting up
+networking, all services in [/etc/finit.d/](doc/config.md#etcfinitd) and
+the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
 
 **Example /etc/finit.conf:**
 
@@ -90,6 +90,24 @@ networking, [/etc/finit.d/](doc/config.md#etcfinitd) and the familiar
     tty [12345] /dev/tty1    115200 linux
     tty [12345] /dev/ttyAMA0 115200 vt100
 ```
+
+The `service` stanza, described in full in [config.md][doc/config.md],
+has the following components:
+
+```
+    service [LVLS] <COND> /path/to/daemon ARGS -- Some text
+    ^       ^      ^      ^               ^       ^
+	|       |      |      |               |        `-- Optional description
+	|       |      |      |                `---------- Daemon arguments
+	|       |      |       `-------------------------- Path to daemon
+	|       |       `--------------------------------- Optional conditions
+	|        `---------------------------------------- Optional Runlevels
+	 `------------------------------------------------ Monitored application
+```
+
+Many of the components are optional.  What is required, however, is for the
+daemon *not to fork* to and detach itself.  This is usually an `-n` or `-f`
+argument to the application.
 
 For an example of a full blown embedded Linux, see [TroglOS][9], or take
 a look at the `contrib/` section with [Alpine Linux](contrib/alpine/),
