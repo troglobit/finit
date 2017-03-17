@@ -22,9 +22,6 @@ configure:
 
 * `--disable-inetd`: Disable the built-in inetd server.
 
-* `--enable-embedded`: Target finit for BusyBox getty and mdev instead
-  of a standard Linux distribution with GNU tools and udev.
-
 * `--enable-rw-rootfs`: Most desktop and server systems boot with the
   root file stystem read-only.  With this setting Finit will remount it
   as read-write early at boot so the `bootmisc.so` plugin can run.
@@ -58,7 +55,7 @@ First, unpack the archive:
 Then configure, build and install:
 
 ```shell
-    $ ./configure --enable-embedded --enable-rw-rootfs --enable-inetd-echo-plugin \
+    $ ./configure --enable-rw-rootfs            --enable-inetd-echo-plugin        \
                   --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
                   --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
                   --with-heading="Alpine Linux 3.4" --with-hostname=alpine
@@ -75,10 +72,10 @@ staging directory.  The environment variable `DESTDIR` controls the
 destination directory when installing, very useful for building binary
 standalone packages.
 
-To target an embedded Linux system, usally a system that use BusyBox
-tools instead of udev & C:o, add <kbd>--enable-embedded</kbd> to the
-configure command above.  This enables `mdev` instead of `udev` and the
-BusyBox `getty` syntax.  Remember to also change the Linux config to:
+Finit 3.0 and later can detect if it runs on an embedded system, or a
+system that use BusyBox tools instead of udev & C:o.  On such systems
+`mdev` instead of `udev` is used.  However, remember to also change the
+Linux config to:
 
     CONFIG_UEVENT_HELPER_PATH="/sbin/mdev"
 
