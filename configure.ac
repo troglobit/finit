@@ -32,6 +32,20 @@ AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
+# runtime progs for src/initctl.c:L144
+# should be this AC_MSG_ERROR ?
+AC_CHECK_PROG([grep],[grep],[yes],[no])
+AM_CONDITIONAL([FOUND_GREP], [test "x$grep" = xyes])
+AM_COND_IF([FOUND_GREP],,[AC_MSG_WARN([initclt: required runtime program 'grep' not found.])])
+
+AC_CHECK_PROG([cat],[cat],[yes],[no])
+AM_CONDITIONAL([FOUND_CAT], [test "x$cat" = xyes])
+AM_COND_IF([FOUND_CAT],,[AC_MSG_WARN([initctl: required runtime program 'cat' not found.])])
+
+AC_CHECK_PROG([tail],[tail],[yes],[no])
+AM_CONDITIONAL([FOUND_TAIL], [test "x$tail" = xyes])
+AM_COND_IF([FOUND_TAIL],,[AC_MSG_WARN([initctl: required runtime program 'tail' not found.])])
+
 # Check for required libraries
 PKG_CHECK_MODULES([uev],  [libuev >= 1.5.2])
 PKG_CHECK_MODULES([lite], [libite >= 1.8.2])
