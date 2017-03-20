@@ -257,8 +257,9 @@ int main(int argc, char* argv[])
 	chdir("/");
 	umask(0);
 	mount("none", "/proc", "proc", 0, NULL);
-	mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 	mount("none", "/sys", "sysfs", 0, NULL);
+	if (fisdir("/proc/bus/usb"))
+		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 
 	/*
 	 * Check file filesystems in /etc/fstab
