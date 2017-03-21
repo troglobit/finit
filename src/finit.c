@@ -155,36 +155,39 @@ static void networking(void)
 		return;
 	}
 
-	/* Debian/Ubuntu/Busybox interfaces file */
-	fp = fopen("/etc/network/interfaces", "r");
-	if (fp) {
-		int i = 0;
-		char buf[160];
+	/* Debian/Ubuntu/Busybox/RH/Suse */
+	if (fexist("/sbin/ifup")) {
+		/* interfaces file */
+		fp = fopen("/etc/network/interfaces", "r");
+		if (fp) {
+			int i = 0;
+			char buf[160];
 
-		/* Bring up all 'auto' interfaces */
-		while (fgets(buf, sizeof(buf), fp)) {
-			char cmd[80];
-			char *line, *ifname = NULL;
+			/* Bring up all 'auto' interfaces */
+			while (fgets(buf, sizeof(buf), fp)) {
+				char cmd[80];
+				char *line, *ifname = NULL;
 
-			chomp(buf);
-			line = strip_line(buf);
+				chomp(buf);
+				line = strip_line(buf);
 
-			if (!strncmp(line, "auto", 4))
-				ifname = &line[5];
- 			if (!strncmp(line, "allow-hotplug", 13))
-				ifname = &line[14];
+				if (!strncmp(line, "auto", 4))
+					ifname = &line[5];
+				if (!strncmp(line, "allow-hotplug", 13))
+					ifname = &line[14];
 
-			if (!ifname)
-				continue;
+				if (!ifname)
+					continue;
 
-			snprintf(cmd, 80, "/sbin/ifup %s", ifname);
-			run_interactive(cmd, "Bringing up interface %s", ifname);
-			i++;
+				snprintf(cmd, 80, "/sbin/ifup %s", ifname);
+				run_interactive(cmd, "Bringing up interface %s", ifname);
+				i++;
+			}
+
+			fclose(fp);
+			if (i)
+				return;
 		}
-
-		fclose(fp);
-		if (i)
-			return;
 	}
 
 	/* Fall back to bring up at least loopback */
