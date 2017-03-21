@@ -252,6 +252,11 @@ int main(int argc, char* argv[])
 	ctx = &loop;
 
 	/*
+	 * Set the PATH early to something sane
+	 */
+	setenv("PATH", _PATH_STDPATH, 1);
+
+	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
 	 */
 	chdir("/");
@@ -339,9 +344,6 @@ int main(int argc, char* argv[])
 
 	/* Set hostname as soon as possible, for syslog et al. */
 	set_hostname(&hostname);
-
-	/* Set default PATH, for uid 0 */
-	setenv("PATH", _PATH_STDPATH, 1);
 
 	/*
 	 * Mount filesystems
