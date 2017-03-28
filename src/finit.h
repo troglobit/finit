@@ -36,6 +36,16 @@
 #include <lite/lite.h>
 #include <uev/uev.h>
 
+/* just in case */
+#ifndef _PATH_STDPATH
+#define _PATH_STDPATH   "/usr/bin:/bin:/usr/sbin:/sbin"
+#endif
+
+#ifndef _PATH_VARRUN
+#define _PATH_VARRUN    "/var/run/"
+#endif
+
+
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
