@@ -573,7 +573,7 @@ int inetd_match(inetd_t *inetd, char *service, char *proto)
 	if (getent(service, proto, &sv, &pv))
 		return 0;
 
-	if (inetd->proto == ntohs(pv->p_proto) &&
+	if (inetd->proto == pv->p_proto &&
 	    inetd->port  == ntohs(sv->s_port))
 		return 1;
 
