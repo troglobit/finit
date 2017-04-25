@@ -8,6 +8,12 @@ libraries that provide some frog DNA needed:
 - [libuEv][]
 - [libite][] (-lite)
 
+and has the following runtime depends:
+
+- grep
+- cat
+- tail
+
 Like most free/open source software that uses `configure` they deafult
 to install to `/usr/local`.  However, some Linux distributions do no
 longer search that path for installed software, e.g. Fedora and Alpine
