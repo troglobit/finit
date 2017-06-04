@@ -99,12 +99,12 @@ daemon:
 ```
     service [LVLS] <COND> /path/to/daemon ARGS -- Some text
     ^       ^      ^      ^               ^       ^
-	|       |      |      |               |        `-- Optional description
-	|       |      |      |                `---------- Daemon arguments
-	|       |      |       `-------------------------- Path to daemon
-	|       |       `--------------------------------- Optional conditions
-	|        `---------------------------------------- Optional Runlevels
-	 `------------------------------------------------ Monitored application
+    |       |      |      |               |        `-- Optional description
+    |       |      |      |                `---------- Daemon arguments
+    |       |      |       `-------------------------- Path to daemon
+    |       |       `--------------------------------- Optional conditions
+    |        `---------------------------------------- Optional Runlevels
+     `------------------------------------------------ Monitored application
 ```
 
 Some components are optional.  It is important to note, however, is for
