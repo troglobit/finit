@@ -2,7 +2,7 @@
 
 Table of Contents
 -----------------
-[![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
+[![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 * [Introduction](#introduction)
 * [Features](#features)
@@ -437,6 +437,8 @@ and proposed extensions.
 [Claudio Matsuoka]: https://github.com/cmatsuoka
 [Joachim Nilsson]:  http://troglobit.com
 [GitHub]:           https://github.com/troglobit/finit
+[License]:          https://en.wikipedia.org/wiki/MIT_License
+[License Badge]:    https://img.shields.io/badge/License-MIT-yellow.svg
 [Travis]:           https://travis-ci.org/troglobit/finit
 [Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
