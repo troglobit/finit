@@ -12,7 +12,10 @@ finit is to be a replacement for:
 * watchdogd
 
 A small and simple replacement, primarily for embedded systems, with a
-very low dependency on external packages.
+low dependency on external packages.  A compliant software is one that
+can run as a damon in the foreground.  If it can also touch its PID file
+after a reconfiguration (`initctl reload`), the Finit dependency system
+can also be used.
 
 
 General
