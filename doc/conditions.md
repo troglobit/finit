@@ -77,7 +77,10 @@ creates the file `/var/run/netd.pid`, and the condition `svc/sbin/netd`
 is satisfied.  When the file is removed, the condition is cleared.
 
 The full path to the dependency is needed by finit to match the PID file
-to a monitored process.
+to a monitored process.  In essence, Finit expects monitored services to
+touch their PID files when they have reloaded their configuration files.
+Some services do not support `SIGHUP` and are instead restarted, which
+also results in the PID file being touched (re-created).
 
 Built-in conditions:
 
