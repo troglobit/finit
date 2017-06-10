@@ -7,8 +7,9 @@ Table of Contents
 * [/etc/finit.conf](#etcfinitconf)
 * [/etc/finit.d](#etcfinitd)
 
-/etc/finit.conf
----------------
+
+Introduction
+------------
 
 Contrary to most other script based init alternatives (SysV [init][],
 [upstart][], [systemd][], [OpenRC][], etc.)  Finit relies on its main
@@ -23,6 +24,17 @@ For instance, before starting a heavily resource intensive service like
 IPsec or OpenVPN, a callback can check if the outbound interface is up
 and has an IP address, or just check if the service is disabled — much
 like what a SysV init start script usually does.
+
+* `/etc/finit.conf`: main configuration file, read only once at boot
+* `/etc/finit.d/*.conf`: snippets, usually one service per file
+
+Only the `/etc/finit.d/*.conf` files are possible to reload at runtime,
+so usually only bootstrap (runlevel 'S') services are declared in the
+`/etc/finit.conf` file.
+
+
+/etc/finit.conf
+---------------
 
 Syntax:
 
