@@ -39,28 +39,36 @@ PKG_CHECK_MODULES([lite], [libite >= 1.8.2])
 # Check for configured Finit features
 AC_ARG_ENABLE(emergency_shell,
 	AS_HELP_STRING([--enable-emergency-shell], [Experimental emergency fallback at boot.
-	                Use only for debugging very early boot problems with Finit]))
+	                Use only for debugging very early boot problems with Finit]),,[
+	enable_emergency_shell=no])
 
 AC_ARG_ENABLE(fallback_shell,
-        AS_HELP_STRING([--enable-fallback-shell], [Start a shell if no TTYs can start]))
+        AS_HELP_STRING([--enable-fallback-shell], [Start a shell if no TTYs can start]),,[
+	enable_fallback_shell=no])
 
 AC_ARG_ENABLE(rw-rootfs,
-        AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]))
+        AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]),,[
+	enable_rw_rootfs=no])
 
 AC_ARG_ENABLE(silent,
-        AS_HELP_STRING([--enable-silent], [Completely silent operation, not even boot messages]))
+        AS_HELP_STRING([--enable-silent], [Completely silent operation, not even boot messages]),,[
+	enable_silent=no])
 
 AC_ARG_ENABLE(watchdog,
-        AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]))
+        AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
+	enable_watchdog=no])
 
 AC_ARG_ENABLE(inetd,
-        AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]))
+        AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]),,[
+	enable_inetd=yes])
 
 AC_ARG_ENABLE(logrotate,
-        AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]))
+        AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
+	enable_logrotate=yes])
 
 AC_ARG_ENABLE(quiet,
-        AS_HELP_STRING([--disable-quiet], [Default Finit obeys the kernel quiet option]))
+        AS_HELP_STRING([--disable-quiet], [Silent after boot, default follows kernel quiet]),,[
+	enable_quiet=yes])
 
 # Check for extra plugins to enable
 enable_all_plugins=auto
@@ -160,26 +168,26 @@ AS_IF([test "x$enable_quiet" != "xno"], [
 AS_IF([test "x$with_fifo" != "xno"], [
 	AS_IF([test "x$fifo" = "xyes"], [
 		    fifo='/var/run/initctl'])])
-AC_EXPAND_DIR(lurvig, "$fifo")
-AC_DEFINE_UNQUOTED(FINIT_FIFO, "$lurvig", [FIFO for old style init/telinit client programs])
+AC_EXPAND_DIR(fifo_path, "$fifo")
+AC_DEFINE_UNQUOTED(FINIT_FIFO, "$fifo_path", [FIFO for old style init/telinit client programs])
 
 AS_IF([test "x$with_config" != "xno"], [
 	AS_IF([test "x$config" = "xyes"], [
 		conf=$sysconfdir/finit.conf])])
-AC_EXPAND_DIR(lurvig, "$conf")
-AC_DEFINE_UNQUOTED(FINIT_CONF, "$lurvig", [Main Finit configuration file, default /etc/finit.conf])
+AC_EXPAND_DIR(conf_path, "$conf")
+AC_DEFINE_UNQUOTED(FINIT_CONF, "$conf_path", [Main Finit configuration file, default /etc/finit.conf])
 
 AS_IF([test "x$with_rcsd" != "xno"], [
 	AS_IF([test "x$rcsd" = "xyes"], [
 		rcsd=$sysconfdir/finit.d])])
-AC_EXPAND_DIR(lurvig, "$rcsd")
-AC_DEFINE_UNQUOTED(FINIT_RCSD, "$lurvig", [Finit rcS.d/, default /etc/finit.d])
+AC_EXPAND_DIR(rcsd_path, "$rcsd")
+AC_DEFINE_UNQUOTED(FINIT_RCSD, "$rcsd_path", [Finit rcS.d/, default /etc/finit.d])
 
 AS_IF([test "x$with_rc_local" != "xno"], [
 	AS_IF([test "x$rclocal" = "xyes"], [
 		rclocal=$sysconfdir/rc.local])])
-AC_EXPAND_DIR(lurvig, "$rclocal")
-AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$lurvig", [Compat SysV /etc/rc.local file to run last at boot.])
+AC_EXPAND_DIR(rclocal_path, "$rclocal")
+AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$rclocal_path", [Compat SysV /etc/rc.local file to run last at boot.])
 
 AS_IF([test "x$with_heading" != "xno"], [
 	AS_IF([test "x$heading" = "xyes"], [
@@ -209,8 +217,8 @@ AS_IF([test "x$with_runlevel" != "xno"], [
 AS_IF([test "x$with_random_seed" != "xno"], [
 	AS_IF([test "x$random_seed" = "xyes"], [
 		random_seed=/var/lib/misc/random-seed])
-	AC_EXPAND_DIR(lurvig, "$random_seed")
-	AC_DEFINE_UNQUOTED(RANDOMSEED, "$lurvig", [Improve random at boot by seeding it with sth from before.])])
+	AC_EXPAND_DIR(random_path, "$random_seed")
+	AC_DEFINE_UNQUOTED(RANDOMSEED, "$random_path", [Improve random at boot by seeding it with sth from before.])])
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
@@ -219,3 +227,47 @@ AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
 
 # Generate all files
 AC_OUTPUT
+
+cat <<EOF
+
+------------------ Summary ------------------
+ $PACKAGE_NAME version $PACKAGE_VERSION
+  Prefix................: $prefix
+  Sysconfdir............: `eval echo $sysconfdir`
+  Localstatedir.........: `eval echo $localstatedir`
+  FIFO path.............: $fifo_path
+  Finit config file.....: $conf_path
+  Finit config.d path...: $rcsd_path
+  Compat rc.local path..: $rclocal_path
+  Random seed path......: $random_path
+  C Compiler............: $CC $CFLAGS $CPPFLAGS $LDFLAGS $LIBS
+  Linker................: $LD $LLDP_LDFLAGS $LLDP_BIN_LDFLAGS $LDFLAGS $LIBS
+
+Behavior:
+  Boot heading..........: $heading
+  Plugins...............: $plugins
+
+Optional features:
+  Built-in inetd........: $enable_inetd
+  Built-in watchdogd....: $enable_watchdog
+  Built-in logrotate....: $enable_logrotate
+  Emergency shell.......: $enable_emergency_shell
+  Fallback shell........: $enable_fallback_shell
+  Remount / RW at boot..: $enable_rw_rootfs
+  Silent mode...........: $enable_silent
+  Quiet mode............: $enable_quiet
+  Default console dev...: $console
+  Default user..........: $username
+  Default hostname......: $hostname
+  Default runlevel......: $runlevel
+
+------------- Compiler version --------------
+$($CC --version || true)
+-------------- Linker version ---------------
+$($LD --version || true)
+---------------------------------------------
+
+Check the above options and compile with:
+ ${MAKE-make}
+
+EOF
