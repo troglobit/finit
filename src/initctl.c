@@ -21,11 +21,12 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <err.h>
 #include <ftw.h>
 #include <ctype.h>
 #include <getopt.h>
-#include <glob.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
@@ -36,9 +37,9 @@
 #include <sys/un.h>
 #include <lite/lite.h>
 
-#include "config.h"
 #include "finit.h"
 #include "cond.h"
+#include "serv.h"
 #include "service.h"
 #include "util.h"
 
@@ -53,6 +54,7 @@ int debug    = 0;
 int verbose  = 0;
 int silent   = 1;		/* For helpers.c */
 int runlevel = 0;
+
 
 static int do_send(struct init_request *rq, ssize_t len)
 {
@@ -584,16 +586,24 @@ static int usage(int rc)
 		"  reload                    Reload *.conf in /etc/finit.d and activate changes\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  status | show             Show status of services\n"
+		"\n"
+		"  list                      List all .conf in /etc/finit.d/\n"
+		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
+		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
+		"\n"
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
 		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Show all conditions and their status\n"
+		"\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
+		"\n"
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
 		"  poweroff                  Halt and power off system\n"
+		"\n"
 		"  utmp     show             Raw dump of UTMP/WTMP db\n"
 		"  version                   Show Finit version\n\n", prognm);
 
@@ -610,6 +620,11 @@ int main(int argc, char *argv[])
 		{ "runlevel", do_runlevel  },
 		{ "status",   show_status  },
 		{ "show",     show_status  }, /* Convenience alias */
+
+		{ "list",     serv_list    },
+		{ "enable",   serv_enable  },
+		{ "disable",  serv_disable },
+
 		{ "cond",     do_cond      },
 		{ "start",    do_start     },
 		{ "stop",     do_stop      },
