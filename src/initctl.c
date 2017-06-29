@@ -652,7 +652,8 @@ int main(int argc, char *argv[])
 
 		while (optind < argc) {
 			strlcat(arg, argv[optind++], sizeof(arg));
-			strlcat(arg, " ", sizeof(arg));
+			if (optind < argc)
+				strlcat(arg, " ", sizeof(arg));
 		}
 
 		for (c = 0; command[c].cmd; c++) {
