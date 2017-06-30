@@ -31,7 +31,7 @@ General
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
-* Add `IFF_RUNNING` support to netlink plugin along `IFF_IUP`
+* Add `IFF_RUNNING` support to netlink plugin along `IFF_UP`
 * Allow process callbacks to be scripts.
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
   and `RELOAD` on `STDOUT` from a script ... call it for example
@@ -44,6 +44,13 @@ General
 * Improve `initctl show SVC` output.  Add service uptime, last ten SVC
   logs/history (historian), etc. Similar to `systemctl show SVC`
 * Add PRE and POST hooks for when switching between runlevels
+* [Solaris SMF][] (Service Management Facility) has some interesting
+  features that may be well worth looking into adopting:
+  
+         svcs enable -rt svc:/network/ssh:default
+  
+  That is: (r)esolve dependencies and only enable ssh (t)emporary
+  in the default runlevel when networking is available.
 
 
 Init
@@ -108,8 +115,9 @@ Documentation
   how close Finit3 still is to the original easy-to-use Finit0 :)
 
 
-[libwdt]:                http://www.wehavemorefun.de/fritzbox/Libwdt.so
+[libwdt]: http://www.wehavemorefun.de/fritzbox/Libwdt.so
 [Fritz!Box source dump]: ftp://ftp.avm.de/fritz.box/fritzbox.fon_wlan_7170/x_misc/opensrc/
+[Solaris SMF]: http://www.oracle.com/technetwork/articles/servers-storage-admin/intro-smf-basics-s11-1729181.html
 
 <!--
   -- Local Variables:
