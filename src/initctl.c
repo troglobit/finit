@@ -574,40 +574,49 @@ static int show_status(char *arg)
 
 static int usage(int rc)
 {
-	fprintf(stderr, "Usage: %s [OPTIONS] <COMMAND>\n\n"
+	fprintf(stderr,
+		"Usage: %s [OPTIONS] <COMMAND>\n"
+		"\n"
 		"Options:\n"
 		"  -d, --debug               Debug initctl (client)\n"
 		"  -v, --verbose             Verbose output\n"
-		"  -h, --help                This help text\n\n"
+		"  -h, --help                This help text\n"
+		"\n"
 		"Commands:\n"
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
-		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
-		"  reload                    Reload *.conf in /etc/finit.d and activate changes\n"
-		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
-		"  status | show             Show status of services\n"
+		"  version                   Show Finit version\n"
 		"\n"
 		"  list                      List all .conf in /etc/finit.d/\n"
 		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
 		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
+		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
 		"\n"
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
 		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Show all conditions and their status\n"
 		"\n"
+		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
+		"  status | show             Show status of services\n"
 		"\n"
+		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
 		"  poweroff                  Halt and power off system\n"
 		"\n"
 		"  utmp     show             Raw dump of UTMP/WTMP db\n"
-		"  version                   Show Finit version\n\n", prognm);
+		"\n", prognm);
 
 	return rc;
+}
+
+static int do_help(char *arg)
+{
+	return usage(0);
 }
 
 int main(int argc, char *argv[])
@@ -615,25 +624,29 @@ int main(int argc, char *argv[])
 	int c;
 	command_t command[] = {
 		{ "debug",    toggle_debug },
-		{ "log",      do_log       },
-		{ "reload",   do_reload    },
-		{ "runlevel", do_runlevel  },
-		{ "status",   show_status  },
-		{ "show",     show_status  }, /* Convenience alias */
+		{ "help",     do_help      },
+		{ "version",  show_version },
 
 		{ "list",     serv_list    },
 		{ "enable",   serv_enable  },
 		{ "disable",  serv_disable },
+		{ "reload",   do_reload    },
 
 		{ "cond",     do_cond      },
+
+		{ "log",      do_log       },
 		{ "start",    do_start     },
 		{ "stop",     do_stop      },
 		{ "restart",  do_restart   },
+		{ "status",   show_status  },
+		{ "show",     show_status  }, /* Convenience alias */
+
+		{ "runlevel", do_runlevel  },
 		{ "reboot",   do_reboot    },
 		{ "halt",     do_halt      },
 		{ "poweroff", do_poweroff  },
+
 		{ "utmp",     do_utmp      },
-		{ "version",  show_version },
 		{ NULL, NULL }
 	};
 	struct option long_options[] = {
