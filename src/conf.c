@@ -49,7 +49,8 @@ void conf_parse_cmdline(void)
 	fp = fopen("/proc/cmdline", "r");
 	if (fp) {
 		fgets(line, sizeof(line), fp);
-		_d("Kernel command line: %s", line);
+		chomp(line);
+		_d("%s", line);
 
 		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
 			debug = 1;
