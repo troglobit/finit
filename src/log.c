@@ -29,6 +29,7 @@
 #include "finit.h"
 #include "log.h"
 
+static int loglevel = LOG_NOTICE;
 
 void log_toggle_debug(void)
 {
@@ -37,7 +38,26 @@ void log_toggle_debug(void)
 		silent = 0;
 	else
 		silent = quiet ? 1 : SILENT_MODE;
-	logit(LOG_INFO, "Debug mode %s", debug ? "enabled" : "disabled");
+
+	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
+}
+
+static void early_logit(int prio, const char *fmt, va_list ap)
+{
+	FILE *fp;
+
+	fp = fopen("/dev/kmsg", "w");
+	if (fp) {
+		if (debug)
+			prio = LOG_ERR;
+
+		fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
+		vfprintf(fp, fmt, ap);
+		fclose(fp);
+	} else {
+		if (debug || prio <= LOG_ERR)
+			vfprintf(stderr, fmt, ap);
+	}
 }
 
 /*
@@ -46,37 +66,24 @@ void log_toggle_debug(void)
  */
 void logit(int prio, const char *fmt, ...)
 {
-    va_list ap;
-    static int _slup = 0;
+	va_list ap;
+	static int up = 0;
 
-    va_start(ap, fmt);
-    if (!_slup && !fexist("/dev/log")) {
-	    FILE *fp;
+	va_start(ap, fmt);
+	if (!up) {
+		if (!fexist("/dev/log")) {
+			early_logit(prio, fmt, ap);
+			goto done;
+		}
 
-	    fp = fopen("/dev/kmsg", "w");
-	    if (fp) {
-		    if (debug)
-			    prio = LOG_ERR;
+		openlog("finit", LOG_PID, LOG_DAEMON);
+		setlogmask(LOG_UPTO(loglevel));
+		up = 1;
+	}
 
-		    fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
-		    vfprintf(fp, fmt, ap);
-		    fclose(fp);
-	    } else {
-		    fprintf(stderr, "Failed opening /dev/kmsg for appending ...\n");
-		    if (debug || prio <= LOG_ERR)
-			    vfprintf(stderr, fmt, ap);
-	    }
-	    va_end(ap);
-	    return;
-    }
-
-    if (!_slup) {
-	    openlog("finit", LOG_PID, LOG_DAEMON);
-	    _slup = 1;
-    }
-
-    vsyslog(prio, fmt, ap);
-    va_end(ap);
+	vsyslog(prio, fmt, ap);
+done:
+	va_end(ap);
 }
 
 /**
