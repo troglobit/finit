@@ -478,29 +478,52 @@ void conf_reload_dynamic(void)
 
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {
-		_d("No files found in %s, skipping ...", dir);
+		_d("Skipping %s, no files found ...", dir);
 		return;
 	}
 
 	for (i = 0; i < num; i++) {
 		char *name = e[i]->d_name;
 		char  path[CMD_SIZE];
+		size_t len;
 		struct stat st;
 		struct timeval mtime;
 
 		snprintf(path, sizeof(path), "%s/%s", dir, name);
 
-		/* Check that it's an actual file ... */
-		if (stat(path, &st)) {
-			_d("Cannot even read .conf file %s, skipping ...", path);
+		/* Check that it's an actual file ... beyond any symlinks */
+		if (lstat(path, &st)) {
+			_d("Skipping %s, cannot access: %s", path, strerror(errno));
 			continue;
 		}
-		if (S_ISEXEC(st.st_mode) || S_ISDIR(st.st_mode))
+
+		/* Skip directories */
+		if (S_ISDIR(st.st_mode)) {
+			_d("Skipping directory %s", path);
 			continue;
+		}
+
+		/* Check for dangling symlinks */
+		if (S_ISLNK(st.st_mode)) {
+			char *rp;
+
+			rp = realpath(path, NULL);
+			if (!rp) {
+				/*
+				 * XXX: Prune from rcsd?
+				 * XXX: Possibly temporary service from last boot
+				 */
+				logit(LOG_WARNING, "Skipping %s, dangling symlink: %s", path, strerror(errno));
+				continue;
+			}
+
+			free(rp);
+		}
 
 		/* Check that file ends with '.conf' */
-		if (strcmp(&path[strlen(path) - 5], ".conf")) {
-			_d("File %s is not a .conf, skipping ... ", path);
+		len = strlen(path);
+		if (len < 6 || strcmp(&path[len - 5], ".conf")) {
+			_d("Skipping %s, not a valid .conf ... ", path);
 			continue;
 		}
 
