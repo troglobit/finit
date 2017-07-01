@@ -43,6 +43,7 @@
 
 extern int _slup;		/* INTERNAL: Is syslog up yet? */
 
+void    log_toggle_debug(void);
 void    logit           (int prio, const char *fmt, ...);
 
 #endif /* FINIT_LOG_H_ */

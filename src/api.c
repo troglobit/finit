@@ -36,6 +36,7 @@
 #include "cond.h"
 #include "conf.h"
 #include "helpers.h"
+#include "log.h"
 #include "plugin.h"
 #include "sig.h"
 #include "service.h"
@@ -227,12 +228,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_DEBUG:
-			debug = !debug;
-			if (debug)
-				silent = 0;
-			else
-				silent = quiet ? 1 : SILENT_MODE;
-			logit(LOG_INFO, "Debug mode %s", debug ? "enabled" : "disabled");
+			log_toggle_debug();
 			break;
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */

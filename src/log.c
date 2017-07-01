@@ -29,6 +29,16 @@
 #include "log.h"
 
 
+void log_toggle_debug(void)
+{
+	debug = !debug;
+	if (debug)
+		silent = 0;
+	else
+		silent = quiet ? 1 : SILENT_MODE;
+	logit(LOG_INFO, "Debug mode %s", debug ? "enabled" : "disabled");
+}
+
 /*
  * Log to /dev/kmsg until syslogd has started, then openlog()
  * and continue logging as a regular daemon.
