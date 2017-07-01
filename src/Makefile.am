@@ -41,9 +41,9 @@ else
 finit_LDADD       += -ldl
 endif
 
-initctl_SOURCES    = initctl.c svc.c svc.h cond.c cond.h \
-		     util.c util.h
-initctl_CFLAGS     = $(lite_CFLAGS)
+initctl_SOURCES    = initctl.c serv.c serv.h svc.c svc.h \
+		     cond.c cond.h util.c util.h
+initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
 reboot_SOURCES     = reboot.c util.c util.h

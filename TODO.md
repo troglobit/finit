@@ -51,6 +51,8 @@ General
   
   That is: (r)esolve dependencies and only enable ssh (t)emporary
   in the default runlevel when networking is available.
+* `initctl add /sbin/service -n -- Service description`, for details
+  https://github.com/troglobit/finit/issues/69#issuecomment-287907610
 
 
 Init
