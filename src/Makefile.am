@@ -26,7 +26,7 @@ finit_SOURCES      = api.c					\
 		     tty.c	tty.h				\
 		     util.c	util.h				\
 		     utmp-api.c	utmp-api.h
-pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h plugin.h svc.h
+pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h log.h plugin.h svc.h
 if INETD
 finit_SOURCES     += inetd.c	inetd.h
 endif
