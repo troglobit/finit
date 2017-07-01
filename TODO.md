@@ -44,6 +44,8 @@ General
 * Improve `initctl show SVC` output.  Add service uptime, last ten SVC
   logs/history (historian), etc. Similar to `systemctl show SVC`
 * Add PRE and POST hooks for when switching between runlevels
+* `initctl add /sbin/service -n -- Service description`, for details
+  https://github.com/troglobit/finit/issues/69#issuecomment-287907610
 
 
 Init
