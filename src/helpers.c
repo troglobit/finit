@@ -39,8 +39,6 @@
 #include "private.h"
 #include "utmp-api.h"
 
-int _slup = 0;			/* INTERNAL: Is syslog up yet? */
-
 char *strip_line(char *line)
 {
 	char *ptr;

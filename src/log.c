@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <lite/lite.h>
@@ -46,6 +47,7 @@ void log_toggle_debug(void)
 void logit(int prio, const char *fmt, ...)
 {
     va_list ap;
+    static int _slup = 0;
 
     va_start(ap, fmt);
     if (!_slup && !fexist("/dev/log")) {

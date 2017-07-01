@@ -24,24 +24,21 @@
 #ifndef FINIT_LOG_H_
 #define FINIT_LOG_H_
 
-#include <err.h>
-#include <string.h>		/* strerror() */
 #include <syslog.h>
 
 /*
- * Error and debug messages
+ * Developer error and debug messages, otherwise --> use logit() <--
+ *                                                   ~~~~~~~~~~~
+ * All of these prepend the function, so only use for critical warnings
+ * errors and debug messages.  For all other user messages, see logit()
  *
- * Use of logit() is preferred, but these are guaranteed to display on
- * /dev/console as well.  Useful for critical errors and early debug.
+ * The default log level is LOG_NOTICE.  To toggle LOG_DEBUG messages,
+ * use `initctl debug` or add `--debug` to the kernel cmdline.
  */
-#define   _l(prio, fmt, args...) do { if (_slup) warnx(fmt, ##args); logit(prio, fmt "\n", ##args); } while (0)
-#define   _m(prio, fmt, args...) do { _l(prio, "%s() - " fmt, __func__, ##args); } while (0)
-#define   _d(fmt, args...)  do { if (debug) { _m(LOG_DEBUG, fmt, ##args); } } while (0)
-#define   _w(fmt, args...)  do { _m(LOG_WARNING, fmt, ##args); } while (0)
-#define   _e(fmt, args...)  do { _m(LOG_ERR, fmt, ##args); } while (0)
-#define  _pe(fmt, args...)  do { _m(LOG_ERR, fmt ". Error %d: %s", ##args, errno, strerror(errno)); } while (0)
-
-extern int _slup;		/* INTERNAL: Is syslog up yet? */
+#define  _d(fmt, args...) logit(LOG_DEBUG,   "%s():" fmt, __func__, ##args)
+#define  _w(fmt, args...) logit(LOG_WARNING, "%s():" fmt, __func__, ##args)
+#define  _e(fmt, args...) logit(LOG_ERR,     "%s():" fmt, __func__, ##args)
+#define _pe(fmt, args...) logit(LOG_ERR,     "%s():" fmt ": %m", __func__, ##args)
 
 void    log_toggle_debug(void);
 void    logit           (int prio, const char *fmt, ...);
