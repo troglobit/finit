@@ -388,13 +388,15 @@ static void tabstospaces(char *line)
 
 static int parse_conf_dynamic(char *file, struct timeval *mtime)
 {
-	FILE *fp = fopen(file, "r");
+	FILE *fp;
 
+	fp = fopen(file, "r");
 	if (!fp) {
 		_pe("Failed opening %s", file);
 		return 1;
 	}
 
+	_d("Parsing %s", file);
 	while (!feof(fp)) {
 		char line[LINE_SIZE] = "";
 
@@ -403,7 +405,7 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 
 		chomp(line);
 		tabstospaces(line);
-		_d("dyn conf: %s", line);
+		_d("%s", line);
 
 		parse_dynamic(line, mtime);
 	}
@@ -445,13 +447,15 @@ static int parse_conf(char *file)
 
 	if (!silent)
 		print(0, "Loading %sconfiguration", line);
+
+	_d("Parsing %s", file);
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))
 			continue;
 
 		chomp(line);
 		tabstospaces(line);
-		_d("conf: %s", line);
+		_d("%s", line);
 
 		parse_static(line);
 		parse_dynamic(line, NULL);
