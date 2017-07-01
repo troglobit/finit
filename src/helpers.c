@@ -139,44 +139,6 @@ int print_result(int fail)
 	return fail;
 }
 
-/*
- * Log to /dev/kmsg until syslogd has started, then openlog()
- * and continue logging as a regular daemon.
- */
-void logit(int prio, const char *fmt, ...)
-{
-    va_list    ap;
-
-    va_start(ap, fmt);
-    if (!_slup && !fexist("/dev/log")) {
-	    FILE *fp;
-
-	    fp = fopen("/dev/kmsg", "w");
-	    if (fp) {
-		    if (debug)
-			    prio = LOG_ERR;
-
-		    fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
-		    vfprintf(fp, fmt, ap);
-		    fclose(fp);
-	    } else {
-		    fprintf(stderr, "Failed opening /dev/kmsg for appending ...\n");
-		    if (debug || prio <= LOG_ERR)
-			    vfprintf(stderr, fmt, ap);
-	    }
-	    va_end(ap);
-	    return;
-    }
-
-    if (!_slup) {
-	    openlog("finit", LOG_PID, LOG_DAEMON);
-	    _slup = 1;
-    }
-
-    vsyslog(prio, fmt, ap);
-    va_end(ap);
-}
-
 int getuser(char *username, char **home)
 {
 #ifdef ENABLE_STATIC
