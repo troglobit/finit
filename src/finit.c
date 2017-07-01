@@ -152,44 +152,43 @@ static void networking(void)
 	/* Run user network start script if enabled */
 	if (network) {
 		run_interactive(network, "Starting networking: %s", network);
-		return;
+		goto done;
 	}
 
 	/* Debian/Ubuntu/Busybox/RH/Suse */
-	if (fexist("/sbin/ifup")) {
-		/* interfaces file */
-		fp = fopen("/etc/network/interfaces", "r");
-		if (fp) {
-			int i = 0;
-			char buf[160];
+	if (!fexist("/sbin/ifup"))
+		goto done;
 
-			/* Bring up all 'auto' interfaces */
-			while (fgets(buf, sizeof(buf), fp)) {
-				char cmd[80];
-				char *line, *ifname = NULL;
+	fp = fopen("/etc/network/interfaces", "r");
+	if (fp) {
+		int i = 0;
+		char buf[160];
 
-				chomp(buf);
-				line = strip_line(buf);
+		/* Bring up all 'auto' interfaces */
+		while (fgets(buf, sizeof(buf), fp)) {
+			char cmd[80];
+			char *line, *ifname = NULL;
 
-				if (!strncmp(line, "auto", 4))
-					ifname = &line[5];
-				if (!strncmp(line, "allow-hotplug", 13))
-					ifname = &line[14];
+			chomp(buf);
+			line = strip_line(buf);
 
-				if (!ifname)
-					continue;
+			if (!strncmp(line, "auto", 4))
+				ifname = &line[5];
+			if (!strncmp(line, "allow-hotplug", 13))
+				ifname = &line[14];
 
-				snprintf(cmd, 80, "/sbin/ifup %s", ifname);
-				run_interactive(cmd, "Bringing up interface %s", ifname);
-				i++;
-			}
+			if (!ifname)
+				continue;
 
-			fclose(fp);
-			if (i)
-				return;
+			snprintf(cmd, 80, "/sbin/ifup %s", ifname);
+			run_interactive(cmd, "Bringing up interface %s", ifname);
+			i++;
 		}
+
+		fclose(fp);
 	}
 
+done:
 	/* Fall back to bring up at least loopback */
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
 }
