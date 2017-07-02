@@ -32,6 +32,14 @@
 
 static int loglevel = LOG_NOTICE;
 
+void log_init(int qit, int dbg)
+{
+	if (dbg)
+		debug = 1;
+	if (!dbg && qit)
+		quiet = 1;
+}
+
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
 void log_exit(void)
 {
