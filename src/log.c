@@ -104,17 +104,16 @@ static void early_logit(int prio, const char *fmt, va_list ap)
 {
 	FILE *fp;
 
+	if (!debug && prio > loglevel)
+		return;
+
 	fp = fopen("/dev/kmsg", "w");
 	if (fp) {
-		if (debug)
-			prio = LOG_ERR;
-
 		fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
 		vfprintf(fp, fmt, ap);
 		fclose(fp);
 	} else {
-		if (debug || prio <= LOG_ERR)
-			vfprintf(stderr, fmt, ap);
+		vfprintf(stderr, fmt, ap);
 	}
 }
 
