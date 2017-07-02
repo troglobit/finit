@@ -92,7 +92,7 @@ typedef struct svc {
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
-	svc_block_t    block;	       /* Reason that this service is currently blocked */
+	svc_block_t    block;	       /* Reason that this service is currently stopped */
 	char           cond[MAX_ARG_LEN];
 
 	/* Incremented for each restart by service monitor. */
@@ -192,7 +192,8 @@ static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE
 static inline int  svc_is_blocked  (svc_t *svc) { return svc->block != SVC_BLOCK_NONE; }
 static inline int  svc_is_busy     (svc_t *svc) { return svc->block == SVC_BLOCK_BUSY; }
 static inline void svc_unblock     (svc_t *svc) { svc->block = SVC_BLOCK_NONE; }
-static inline void svc_block       (svc_t *svc) { svc->block = SVC_BLOCK_USER; }
+#define            svc_start(svc)  svc_unblock(svc)
+static inline void svc_stop        (svc_t *svc) { svc->block = SVC_BLOCK_USER; }
 static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_BUSY; }
 static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
 static inline void svc_restarting  (svc_t *svc) { svc->block = SVC_BLOCK_RESTARTING; }

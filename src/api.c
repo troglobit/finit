@@ -49,23 +49,23 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 	return svc_parse_jobstr(buf, len, action, NULL);
 }
 
-static int service_block(svc_t *svc)
+static int service_stop(svc_t *svc)
 {
 	if (!svc)
 		return 1;
 
-	svc_block(svc);
+	svc_stop(svc);
 	service_step(svc);
 
 	return 0;
 }
 
-static int service_unblock(svc_t *svc)
+static int service_start(svc_t *svc)
 {
 	if (!svc)
 		return 1;
 
-	svc_unblock(svc);
+	svc_start(svc);
 	service_step(svc);
 
 	return 0;
@@ -82,8 +82,8 @@ static int service_restart(svc_t *svc)
 	return 0;
 }
 
-static int do_start  (char *buf, size_t len) { return call(service_unblock, buf, len); }
-static int do_pause  (char *buf, size_t len) { return call(service_block,   buf, len); }
+static int do_start  (char *buf, size_t len) { return call(service_start,   buf, len); }
+static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
 #ifdef INETD_ENABLED
@@ -240,7 +240,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_STOP_SVC:
-			result = do_pause(rq.data, sizeof(rq.data));
+			result = do_stop(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:

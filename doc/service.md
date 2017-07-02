@@ -14,8 +14,9 @@ state.
 The current state depends on the two following conditions:
 
 * `E`: Service enabled. In order for `E` to be satisfied, the service
-  must be allowed to run in the current runlevel and must not be
-  blocked.  A service may be blocked for several reasons:
+  must be allowed to run in the current runlevel and not be stopped.
+  
+  A service may be stopped, or blocked, for several reasons:
 
   - The user has manually stopped the service using `initctl stop JOB`
   - The program exits immediately. I.e. keeps crashing (make sure to use

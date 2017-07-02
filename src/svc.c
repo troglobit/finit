@@ -480,7 +480,7 @@ char *svc_status(svc_t *svc)
 			return "crashed";
 
 		case SVC_BLOCK_USER:
-			return "blocked";
+			return "stopped";
 
 		case SVC_BLOCK_BUSY:
 			return "busy";
