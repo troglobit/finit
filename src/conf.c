@@ -450,8 +450,7 @@ static int parse_conf(char *file)
 		strcat(line, " ");
 	}
 
-	if (!silent)
-		print(0, "Loading %sconfiguration", line);
+	print(0, "Loading %sconfiguration", line);
 
 	_d("Parsing %s", file);
 	while (!feof(fp)) {

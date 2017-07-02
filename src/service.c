@@ -150,14 +150,7 @@ static int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!fexist(svc->cmd) && !svc->inetd.cmd) {
-		if (!silent) {
-			char msg[80];
-
-			snprintf(msg, sizeof(msg), "Service %s does not exist!", svc->cmd);
-			print_desc("", msg);
-			print_result(1);
-		}
-
+		print(1, "Service %s does not exist!", svc->cmd);
 		svc_missing(svc);
 		return 1;
 	}
@@ -166,20 +159,14 @@ static int service_start(svc_t *svc)
 	if (is_norespawn())
 		return 1;
 
-	if (!silent) {
-		if (svc_is_daemon(svc) || svc_is_inetd(svc))
-			print_desc("Starting ", svc->desc);
-		else
-			print_desc("", svc->desc);
-	}
+	if (svc_is_daemon(svc) || svc_is_inetd(svc))
+		print_desc("Starting ", svc->desc);
+	else
+		print_desc("", svc->desc);
 
 #ifdef INETD_ENABLED
-	if (svc_is_inetd(svc)) {
-		result = inetd_start(&svc->inetd);
-		if (!silent)
-			print_result(result);
-		return result;
-	}
+	if (svc_is_inetd(svc))
+		return print_result(inetd_start(&svc->inetd));
 #endif
 
 	/* Declare we're waiting for svc to create its pidfile */
@@ -316,7 +303,7 @@ static int service_start(svc_t *svc)
 
 #ifdef INETD_ENABLED
 	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
-			close(svc->stdin_fd);
+		close(svc->stdin_fd);
 #endif
 
 	plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
@@ -328,10 +315,7 @@ static int service_start(svc_t *svc)
 	
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 
-	if (!silent)
-		print_result(result);
-
-	return 0;
+	return print_result(result);
 }
 
 /**
@@ -344,14 +328,14 @@ static void service_kill(svc_t *svc)
 {
 	service_timeout_cancel(svc);
 
-	if (runlevel != 1 && !silent)
+	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
 	_d("Sending SIGKILL to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	kill(svc->pid, SIGKILL);
 
 	/* Let SIGKILLs stand out, show result as [WARN] */
-	if (runlevel != 1 && !silent)
+	if (runlevel != 1)
 		print(2, NULL);
 }
 
@@ -371,7 +355,7 @@ static int service_stop(svc_t *svc)
 
 #ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {
-		int do_print = runlevel != 1 && !silent && !svc_is_busy(svc);
+		int do_print = runlevel != 1 && !svc_is_busy(svc);
 
 		if (do_print)
 			print_desc("Stopping ", svc->desc);
@@ -392,13 +376,13 @@ static int service_stop(svc_t *svc)
 	if (SVC_TYPE_SERVICE != svc->type)
 		return 0;
 
-	if (runlevel != 1 && !silent)
+	if (runlevel != 1)
 		print_desc("Stopping ", svc->desc);
 
 	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
 
-	if (runlevel != 1 && !silent)
+	if (runlevel != 1)
 		print_result(res);
 
 	return res;
@@ -416,8 +400,6 @@ static int service_stop(svc_t *svc)
  */
 static int service_restart(svc_t *svc)
 {
-	int err;
-
 	/* Ignore if finit is SIGSTOP'ed */
 	if (is_norespawn())
 		return 1;
@@ -431,18 +413,13 @@ static int service_restart(svc_t *svc)
 		return 1;
 	}
 
-	if (!silent)
-		print_desc("Restarting ", svc->desc);
+	print_desc("Restarting ", svc->desc);
 
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
 	svc_starting(svc);
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
-	err = kill(svc->pid, SIGHUP);
-
-	if (!silent)
-		print_result(err);
-	return err;
+	return print_result(kill(svc->pid, SIGHUP));
 }
 
 /**

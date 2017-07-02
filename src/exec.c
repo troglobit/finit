@@ -161,7 +161,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 		return 1;
 	}
 
-	if (!silent && fmt) {
+	if (fmt) {
 		va_start(ap, fmt);
 		vsnprintf(line, sizeof(line), fmt, ap);
 		va_end(ap);
@@ -193,7 +193,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 		}
 	}
 
-	if (!silent && fmt)
+	if (fmt)
 		print_result(status);
 
 	/* Dump any results of cmd on stderr after we've printed [ OK ] or [FAIL]  */

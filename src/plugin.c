@@ -311,8 +311,7 @@ static int load_plugins(char *path)
 	DIR *dp;
 	struct dirent *entry;
 
-	if (!silent)
-		print_desc("Loading plugins", NULL);
+	print_desc("Loading plugins", NULL);
 
 	dp = opendir(path);
 	if (!dp) {
@@ -336,9 +335,7 @@ static int load_plugins(char *path)
 #else
 static int load_plugins(char *UNUSED(path))
 {
-	if (!silent)
-		print_desc("Initializing plugins", NULL);
-
+	print_desc("Initializing plugins", NULL);
 	return 0;
 }
 #endif	/* ENABLE_STATIC */
@@ -350,10 +347,7 @@ int plugin_init(uev_ctx_t *ctx, char *path)
 	if (!load_plugins(path))
 	    fail = init_plugins(ctx);
 
-	if (!silent)
-		print_result(fail);
-
-	return fail;
+	return print_result(fail);
 }
 
 void plugin_exit(void)
