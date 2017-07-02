@@ -228,7 +228,7 @@ static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
 			break;
 
 		case INIT_CMD_DEBUG:
-			log_toggle_debug();
+			log_debug();
 			break;
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */

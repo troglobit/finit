@@ -31,7 +31,7 @@
 
 static int loglevel = LOG_NOTICE;
 
-void log_toggle_debug(void)
+void log_debug(void)
 {
 	debug = !debug;
 	if (debug)
