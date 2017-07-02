@@ -43,7 +43,7 @@ static int parse_conf(char *file);
 
 void conf_parse_cmdline(void)
 {
-	int dbg = 0, qit = 0;
+	int dbg = 0;
 	FILE *fp;
 
 	fp = fopen("/proc/cmdline", "r");
@@ -57,13 +57,10 @@ void conf_parse_cmdline(void)
 		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
 			dbg = 1;
 
-		if (strstr(line, "quiet"))
-			qit = 1;
-
 		fclose(fp);
 	}
 
-	log_init(qit, dbg);
+	log_init(dbg);
 }
 
 /* Convert optional "[!123456789S]" string into a bitmask */

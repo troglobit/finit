@@ -66,10 +66,6 @@ AC_ARG_ENABLE(logrotate,
         AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
 	enable_logrotate=yes])
 
-AC_ARG_ENABLE(quiet,
-        AS_HELP_STRING([--disable-quiet], [Silent after boot, default follows kernel quiet]),,[
-	enable_quiet=yes])
-
 # Check for extra plugins to enable
 enable_all_plugins=auto
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
@@ -158,11 +154,6 @@ AS_IF([test "x$enable_inetd" != "xno"], [
 
 AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
-
-AS_IF([test "x$enable_quiet" != "xno"], [
-	AC_DEFINE(QUIET_MODE,  1, [Silent, after initial boot, no stopping/starting messages.  Default: 1])
-	], [
-	AC_DEFINE(QUIET_MODE,  0, [Silent, after initial boot, no stopping/starting messages.  Default: 1])])
 
 ### With features ##############################################################################
 AS_IF([test "x$with_fifo" != "xno"], [
@@ -255,7 +246,6 @@ Optional features:
   Fallback shell........: $enable_fallback_shell
   Remount / RW at boot..: $enable_rw_rootfs
   Silent mode...........: $enable_silent
-  Quiet mode............: $enable_quiet
   Default console dev...: $console
   Default user..........: $username
   Default hostname......: $hostname

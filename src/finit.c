@@ -202,7 +202,7 @@ static void emergency_shell(void)
 	if (pid) {
 		waitpid(pid, NULL, 0);
 		fprintf(stderr, "\n=> Embarrassingly, Finit has crashed.  Check /dev/kmsg for details.\n");
-		fprintf(stderr, "=> For more, remove 'quiet' and add '--debug' to the kernel command line.\n\n");
+		fprintf(stderr,   "=> To debug, add '--debug' to the kernel command line.\n\n");
 
 		/*
 		 * Become session leader and set controlling TTY

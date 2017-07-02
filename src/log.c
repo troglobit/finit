@@ -32,27 +32,22 @@
 
 static int up       = 0;
 static int debug    = 0;
-static int quiet    = QUIET_MODE;	/* Delayed disable of silent mode. */
 static int silent   = SILENT_MODE;	/* Completely silent, including boot */
 static int loglevel = LOG_NOTICE;
 
-void log_init(int qit, int dbg)
+void log_init(int dbg)
 {
 	if (dbg)
 		debug = 1;
-	if (!dbg && qit)
-		quiet = 1;
 }
 
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
 void log_exit(void)
 {
-	if (quiet) {
-		silent = SILENT_MODE;
-		if (!silent) {
-			sched_yield();
-			fputs("\n", stderr);
-		}
+	silent = SILENT_MODE;
+	if (!silent) {
+		sched_yield();
+		fputs("\n", stderr);
 	}
 }
 
@@ -72,10 +67,10 @@ void log_open(void)
 
 void log_silent(void)
 {
-	if (quiet && !debug)
-		silent = 1;
-	else
+	if (debug)
 		silent = 0;
+	else
+		silent = 1;
 }
 
 int log_is_silent(void)
@@ -89,10 +84,10 @@ void log_debug(void)
 	debug = !debug;
 
 	if (debug) {
-		silent = 0;
+		silent   = 0;
 		loglevel = LOG_DEBUG;
 	} else {
-		silent = quiet ? 1 : SILENT_MODE;
+		silent   = SILENT_MODE;
 		loglevel = LOG_NOTICE;
 	}
 	log_open();
