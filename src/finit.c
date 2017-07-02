@@ -47,7 +47,6 @@
 #include "utmp-api.h"
 #include "watchdog.h"
 
-int   debug     = 0;
 int   quiet     = QUIET_MODE;	/* Delayed disable of silent mode. */
 int   silent    = SILENT_MODE;	/* Completely silent, including boot */
 int   wdogpid   = 0;		/* No watchdog by default */
@@ -112,8 +111,8 @@ static int fsck(int pass)
 		return 1;
 	}
 
-	save = debug;
-	debug = 0;
+	if ((save = log_is_debug()))
+		log_debug();
 
 	while ((fs = getfsent())) {
 		char cmd[80];
@@ -139,7 +138,8 @@ static int fsck(int pass)
 		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
-	debug = save;
+	if (save)
+		log_debug();
 	endfsent();
 
 	return 0;
@@ -311,7 +311,7 @@ int main(int argc, char* argv[])
 	 */
 	if (fexist("/sbin/mdev")) {
 		/* Embedded Linux systems usually have BusyBox mdev */
-		if (debug)
+		if (log_is_debug())
 			touch("/dev/mdev.log");
 		devfsd = "/sbin/mdev -s";
 	} else {

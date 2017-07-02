@@ -255,7 +255,7 @@ static int service_start(svc_t *svc)
 			dup2(fd, STDOUT_FILENO);
 			dup2(fd, STDERR_FILENO);
 			close(fd);
-		} else if (debug) {
+		} else if (log_is_debug()) {
 			int fd;
 
 			fd = open(CONSOLE, O_WRONLY | O_APPEND);
@@ -286,7 +286,7 @@ static int service_start(svc_t *svc)
 			waitpid(pid, NULL, 0);
 
 		exit(status);
-	} else if (debug) {
+	} else if (log_is_debug()) {
 		char buf[CMD_SIZE] = "";
 
 		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++) {

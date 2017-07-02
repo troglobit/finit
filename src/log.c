@@ -30,6 +30,7 @@
 #include "finit.h"
 #include "log.h"
 
+static int debug    = 0;
 static int loglevel = LOG_NOTICE;
 
 void log_init(int qit, int dbg)
@@ -61,6 +62,11 @@ void log_debug(void)
 		silent = quiet ? 1 : SILENT_MODE;
 
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
+}
+
+int log_is_debug(void)
+{
+	return debug;
 }
 
 static void early_logit(int prio, const char *fmt, va_list ap)

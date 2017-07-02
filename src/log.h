@@ -44,6 +44,8 @@ void    log_init        (int qit, int dbg);
 void    log_exit        (void);
 
 void    log_debug       (void);
+int     log_is_debug    (void);
+
 void    logit           (int prio, const char *fmt, ...);
 
 #endif /* FINIT_LOG_H_ */

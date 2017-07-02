@@ -171,7 +171,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 
 	/* Redirect output from cmd to a tempfile */
 	fp = tempfile();
-	if (fp && !debug) {
+	if (fp && !log_is_debug()) {
 		oldout = dup(STDOUT_FILENO);
 		olderr = dup(STDERR_FILENO);
 		dup2(fileno(fp), STDOUT_FILENO);
@@ -182,7 +182,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	status = run(cmd);
 
 	/* Restore stderr/stdout */
-	if (fp && !debug) {
+	if (fp && !log_is_debug()) {
 		if (oldout >= 0) {
 			dup2(oldout, STDOUT_FILENO);
 			close(oldout);
@@ -197,7 +197,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 		print_result(status);
 
 	/* Dump any results of cmd on stderr after we've printed [ OK ] or [FAIL]  */
-	if (fp && !debug) {
+	if (fp && !log_is_debug()) {
 		size_t len, written;
 
 		rewind(fp);
