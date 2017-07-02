@@ -40,6 +40,8 @@
 #define  _e(fmt, args...) logit(LOG_ERR,     "%s():" fmt "\n", __func__, ##args)
 #define _pe(fmt, args...) logit(LOG_ERR,     "%s():" fmt ": %m\n", __func__, ##args)
 
+void    log_exit        (void);
+
 void    log_debug       (void);
 void    logit           (int prio, const char *fmt, ...);
 

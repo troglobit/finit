@@ -125,6 +125,12 @@ restart:
 		runlevel     = sm->newlevel;
 		sm->newlevel = -1;
 
+		/* Restore terse mode and run hooks before shutdown */
+		if (runlevel == 0 || runlevel == 6) {
+			log_exit();
+			plugin_run_hooks(HOOK_SHUTDOWN);
+		}
+
 		_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
 		runlevel_set(prevlevel, runlevel);
 

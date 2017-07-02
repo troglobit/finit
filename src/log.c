@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include <sched.h>		/* sched_yield() */
 #include <stdio.h>
 #include <stdarg.h>
 #include <lite/lite.h>
@@ -30,6 +31,18 @@
 #include "log.h"
 
 static int loglevel = LOG_NOTICE;
+
+/* If we enabled terse mode at boot, restore to previous setting at shutdown */
+void log_exit(void)
+{
+	if (quiet) {
+		silent = SILENT_MODE;
+		if (!silent) {
+			sched_yield();
+			fputs("\n", stderr);
+		}
+	}
+}
 
 void log_debug(void)
 {
