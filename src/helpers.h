@@ -50,6 +50,7 @@ char   *strip_line      (char *line);
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);
 
+void    printv          (const char *fmt, va_list ap);
 void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);

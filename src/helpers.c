@@ -77,31 +77,39 @@ static int print_timestamp(void)
 	return 0;
 }
 
-void print(int action, const char *fmt, ...)
+void printv(const char *fmt, va_list ap)
 {
 	char buf[80];
 	size_t len;
+	const char dots[] = " .....................................................................";
+
+	if (!fmt || log_is_silent())
+		return;
+
+	len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	delline();
+	print_timestamp();
+
+	write(STDERR_FILENO, "\r", 1);
+	write(STDERR_FILENO, buf, len);
+	write(STDERR_FILENO, dots, 60 - len); /* pad with dots. */
+}
+
+void print(int action, const char *fmt, ...)
+{
 	va_list ap;
 	const char success[] = " \e[1m[ OK ]\e[0m\n";
 	const char failure[] = " \e[7m[FAIL]\e[0m\n";
 	const char warning[] = " \e[7m[WARN]\e[0m\n";
 	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
-	const char dots[] = " .....................................................................";
 
 	if (log_is_silent())
 		return;
 
 	if (fmt) {
 		va_start(ap, fmt);
-		len = vsnprintf(buf, sizeof(buf), fmt, ap);
+		printv(fmt, ap);
 		va_end(ap);
-
-		delline();
-		print_timestamp();
-
-		write(STDERR_FILENO, "\r", 1);
-		write(STDERR_FILENO, buf, len);
-		write(STDERR_FILENO, dots, 60 - len); /* pad with dots. */
 	}
 
 	switch (action) {

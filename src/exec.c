@@ -153,7 +153,6 @@ int run_interactive(char *cmd, char *fmt, ...)
 {
 	int status, oldout = 1, olderr = 2;
 	char line[LINE_SIZE];
-	va_list ap;
 	FILE *fp;
 
 	if (!cmd) {
@@ -162,11 +161,11 @@ int run_interactive(char *cmd, char *fmt, ...)
 	}
 
 	if (fmt) {
-		va_start(ap, fmt);
-		vsnprintf(line, sizeof(line), fmt, ap);
-		va_end(ap);
+		va_list ap;
 
-		print_desc("", line);
+		va_start(ap, fmt);
+		printv(fmt, ap);
+		va_end(ap);
 	}
 
 	/* Redirect output from cmd to a tempfile */
