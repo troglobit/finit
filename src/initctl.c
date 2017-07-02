@@ -52,7 +52,6 @@ typedef struct {
 
 int debug    = 0;
 int verbose  = 0;
-int silent   = 1;		/* For helpers.c */
 int runlevel = 0;
 
 
@@ -672,7 +671,6 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
-	silent = !verbose;
 
 	if (optind < argc) {
 		char *cmd = argv[optind++];

@@ -123,7 +123,6 @@ int client(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	silent = 1;
 	progname(argv[0]);
 	while ((c = getopt_long(argc, argv, "h?v", long_options, NULL)) != EOF) {
 		switch(c) {
