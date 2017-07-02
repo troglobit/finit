@@ -30,6 +30,7 @@
 #include "finit.h"
 #include "log.h"
 
+static int up       = 0;
 static int debug    = 0;
 static int quiet    = QUIET_MODE;	/* Delayed disable of silent mode. */
 static int silent   = SILENT_MODE;	/* Completely silent, including boot */
@@ -55,6 +56,20 @@ void log_exit(void)
 	}
 }
 
+void log_open(void)
+{
+	int opts = LOG_PID;
+
+	closelog();
+
+	if (debug)
+		opts |= LOG_CONS | LOG_PERROR;
+	openlog("finit", opts, LOG_DAEMON);
+	setlogmask(LOG_UPTO(loglevel));
+
+	up = 1;
+}
+
 void log_silent(void)
 {
 	if (quiet && !debug)
@@ -68,13 +83,19 @@ int log_is_silent(void)
 	return silent;
 }
 
+/* Toggle debug mode */
 void log_debug(void)
 {
 	debug = !debug;
-	if (debug)
+
+	if (debug) {
 		silent = 0;
-	else
+		loglevel = LOG_DEBUG;
+	} else {
 		silent = quiet ? 1 : SILENT_MODE;
+		loglevel = LOG_NOTICE;
+	}
+	log_open();
 
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
 }
@@ -109,7 +130,6 @@ static void early_logit(int prio, const char *fmt, va_list ap)
 void logit(int prio, const char *fmt, ...)
 {
 	va_list ap;
-	static int up = 0;
 
 	va_start(ap, fmt);
 	if (!up) {
@@ -118,9 +138,7 @@ void logit(int prio, const char *fmt, ...)
 			goto done;
 		}
 
-		openlog("finit", LOG_PID, LOG_DAEMON);
-		setlogmask(LOG_UPTO(loglevel));
-		up = 1;
+		log_open();
 	}
 
 	vsyslog(prio, fmt, ap);
