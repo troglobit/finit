@@ -121,7 +121,7 @@ exit:
 	return result;
 }
 
-static int toggle_debug(char *UNUSED(arg))
+static int toggle_debug(char *arg)
 {
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
@@ -271,10 +271,7 @@ static int do_cond_magic(char op, char *cond)
 static int do_cond_set  (char *cond) { return do_cond_magic('+', cond); }
 static int do_cond_clear(char *cond) { return do_cond_magic('-', cond); }
 
-
-static int
-dump_one_cond(const char *fpath, const struct stat *UNUSED(sb),
-	      int tflag, struct FTW *UNUSED(ftwbuf))
+static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
 	int len;
 
@@ -290,7 +287,7 @@ dump_one_cond(const char *fpath, const struct stat *UNUSED(sb),
 	return 0;
 }
 
-static int do_cond_dump(char *UNUSED(arg))
+static int do_cond_dump(char *arg)
 {
 	printf("Condition                      Status)\n");
 	printf("===============================================================================\n");	
@@ -303,7 +300,7 @@ static int do_cond_dump(char *UNUSED(arg))
 	return 0;
 }
 
-static int do_cond_show(char *UNUSED(arg))
+static int do_cond_show(char *arg)
 {
 	svc_t *svc;
 	enum cond_state cond;
@@ -364,9 +361,9 @@ static int do_signal(int signo, const char *msg)
 	return 0;
 }
 
-static int do_halt    (char *UNUSED(arg)) { return do_signal(SIGUSR1, "halt");      }
-static int do_poweroff(char *UNUSED(arg)) { return do_signal(SIGUSR2, "power off"); }
-static int do_reboot  (char *UNUSED(arg)) { return do_signal(SIGTERM, "reboot");    }
+static int do_halt    (char *arg) { return do_signal(SIGUSR1, "halt");      }
+static int do_poweroff(char *arg) { return do_signal(SIGUSR2, "power off"); }
+static int do_reboot  (char *arg) { return do_signal(SIGTERM, "reboot");    }
 
 int utmp_show(char *file)
 {
@@ -417,7 +414,7 @@ static int do_utmp(char *file)
 		utmp_show(_PATH_UTMP);
 }
 
-static int show_version(char *UNUSED(arg))
+static int show_version(char *arg)
 {
 	puts("v" PACKAGE_VERSION);
 	return 0;

@@ -78,7 +78,7 @@ static int send_peer(int sd, char *buf, ssize_t len, struct sockaddr *sa, sockle
 	return sendto(sd, now, len, MSG_DONTWAIT, sa, sa_len);
 }
 
-static int cb(int UNUSED(type))
+static int cb(int type)
 {
 	int sd = STDIN_FILENO;
 	char buf[BUFSIZ];

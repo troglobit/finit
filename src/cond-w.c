@@ -126,7 +126,7 @@ void cond_reload(void)
 }
 
 
-static int reassert(const char *fpath, const struct stat *UNUSED(sb), int tflg, struct FTW *ftw)
+static int reassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)
 {
 	char *nm;
 

@@ -215,7 +215,7 @@ int plugin_io_init(plugin_t *p)
 }
 
 /* Setup any I/O callbacks for plugins that use them */
-static int init_plugins(uev_ctx_t *UNUSED(ctx))
+static int init_plugins(uev_ctx_t *ctx)
 {
 	int fail = 0;
 	plugin_t *p, *tmp;
@@ -333,7 +333,7 @@ static int load_plugins(char *path)
 	return fail;
 }
 #else
-static int load_plugins(char *UNUSED(path))
+static int load_plugins(char *path)
 {
 	print_desc("Initializing plugins", NULL);
 	return 0;

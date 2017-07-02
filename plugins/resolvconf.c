@@ -31,7 +31,7 @@
  * No need to clean up files in /etc/resolvconf/run/interface/
  * this is already taken care of by bootclean
  */
-static void setup(void *UNUSED(arg))
+static void setup(void *arg)
 {
 	_d("Setting up the resolver ...");
 	mkpath("/etc/resolvconf",               0755);

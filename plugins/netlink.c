@@ -163,7 +163,7 @@ static void nl_link(struct nlmsghdr *nlmsg)
 	}
 }
 
-static void nl_callback(void *UNUSED(arg), int sd, int UNUSED(events))
+static void nl_callback(void *arg, int sd, int events)
 {
 	ssize_t len;
 	static char buf[4096];

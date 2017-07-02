@@ -53,7 +53,7 @@ static void setup(void)
 		_pe("Failed starting TTY watcher");
 }
 
-static void watcher(void *UNUSED(arg), int fd, int UNUSED(events))
+static void watcher(void *arg, int fd, int events)
 {
 	int len = 0;
 	char buf[EVENT_SIZE], name[42];

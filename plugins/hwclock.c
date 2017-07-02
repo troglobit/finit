@@ -27,14 +27,14 @@
 #include "helpers.h"
 #include "plugin.h"
 
-static void save(void *UNUSED(arg))
+static void save(void *arg)
 {
 	_d("Saving system clock to RTC ...");
 	/* -w,--systohc, -u,--utc */
 	run_interactive("/sbin/hwclock -w -u", "Saving system time (UTC) to RTC");
 }
 
-static void restore(void *UNUSED(arg))
+static void restore(void *arg)
 {
 	_d("Restoring system clock from RTC ...");
 	/* -s,--hctosys, -u,--utc */

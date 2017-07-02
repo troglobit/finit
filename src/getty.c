@@ -290,7 +290,7 @@ static speed_t do_parse_speed(char *baud)
 	return B0;
 }
 
-int getty(char *tty, char *baud, char *UNUSED(term), char *user)
+int getty(char *tty, char *baud, char *term, char *user)
 {
 	int fd;
 	char name[30];

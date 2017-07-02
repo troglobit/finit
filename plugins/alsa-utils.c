@@ -28,7 +28,7 @@
 
 #define ALSACTL "/usr/sbin/alsactl"
 
-static void save(void *UNUSED(arg))
+static void save(void *arg)
 {
 	if (fexist(ALSACTL)) {
 		_d("Saving sound settings ...");
@@ -36,7 +36,7 @@ static void save(void *UNUSED(arg))
 	}
 }
 
-static void restore(void *UNUSED(arg))
+static void restore(void *arg)
 {
 	if (fexist(ALSACTL)) {
 		_d("Restoring sound settings ...");

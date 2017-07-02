@@ -98,7 +98,7 @@ static void set_env(char *data)
  * For SysV compatibility the default is to halt the system when issuing
  * `init 0`, unless INIT_HALT=POWERDOWN, as performed by the SysV utils.
  */
-static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
+static void parse(void *arg, int fd, int events)
 {
 	int lvl;
 	struct init_request rq;
@@ -167,7 +167,7 @@ static void parse(void *UNUSED(arg), int fd, int UNUSED(events))
 }
 
 /* Must run after the base FS is up, needs /run, or /var/run */
-static void setup(void *UNUSED(arg))
+static void setup(void *arg)
 {
 	_d("Setting up %s", FINIT_FIFO);
 	makefifo(FINIT_FIFO, 0600);

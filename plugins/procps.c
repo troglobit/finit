@@ -25,7 +25,7 @@
 #include <lite/lite.h>
 #include "plugin.h"
 
-static void setup(void *UNUSED(arg))
+static void setup(void *arg)
 {
 	size_t i;
 	glob_t gl;

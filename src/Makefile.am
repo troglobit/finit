@@ -34,7 +34,8 @@ if WATCHDOGD
 finit_SOURCES     += watchdog.c	watchdog.h
 endif
 
-finit_CFLAGS       = -W -Wall -Wextra -std=gnu99 $(lite_CFLAGS) $(uev_CFLAGS)
+finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
 finit_LDADD        = $(lite_LIBS) $(uev_LIBS)
 if STATIC
 finit_LDADD       += plugins/libplug.la
@@ -44,7 +45,8 @@ endif
 
 initctl_SOURCES    = initctl.c serv.c serv.h svc.c svc.h \
 		     cond.c cond.h util.c util.h
-initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter $(lite_CFLAGS)
+initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter
+initctl_CFLAGS    += $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
 reboot_SOURCES     = reboot.c util.c util.h

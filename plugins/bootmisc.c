@@ -64,7 +64,7 @@ static int is_tmpfs(char *path)
 	return tmpfs;
 }
 
-static int do_clean(const char *fpath, const struct stat *UNUSED(sb), int UNUSED(tflag), struct FTW *ftw)
+static int do_clean(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftw)
 {
 	if (ftw->level == 0)
 		return 1;
@@ -96,7 +96,7 @@ static void bootclean(void)
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
-static void setup(void *UNUSED(arg))
+static void setup(void *arg)
 {
 	int gid;
 

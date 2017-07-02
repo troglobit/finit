@@ -77,7 +77,7 @@ int service_enabled(svc_t *svc)
  * Calls the callback registered with the call to
  * service_timeout_after().
  */
-static void service_timeout_cb(uev_t *UNUSED(w), void *arg, int UNUSED(events))
+static void service_timeout_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = arg;
 

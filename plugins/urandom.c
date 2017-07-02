@@ -32,7 +32,7 @@
 #include "helpers.h"
 #include "plugin.h"
 
-static void setup(void *UNUSED(arg))
+static void setup(void *arg)
 {
 #ifdef RANDOMSEED
 	if (!fexist(RANDOMSEED)) {
@@ -65,7 +65,7 @@ static void setup(void *UNUSED(arg))
 #endif
 }
 
-static void save(void *UNUSED(arg))
+static void save(void *arg)
 {
 #ifdef RANDOMSEED
 	umask(077);

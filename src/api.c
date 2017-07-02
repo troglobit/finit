@@ -168,7 +168,7 @@ static int do_handle_emit(char *buf, size_t len)
  * `initctl runlevel 0` is issued we default to POWERDOWN the system
  * instead of just halting.
  */
-static void cb(uev_t *w, void *UNUSED(arg), int UNUSED(events))
+static void cb(uev_t *w, void *arg, int events)
 {
 	int sd, lvl;
 	struct init_request rq;

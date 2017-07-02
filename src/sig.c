@@ -221,7 +221,7 @@ void do_shutdown(shutop_t op)
 /*
  * Reload .conf files in /etc/finit.d/
  */
-static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sighup_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
 	/* INIT_CMD_RELOAD: 'init q', 'initctl reload', and SIGHUP */
@@ -231,7 +231,7 @@ static void sighup_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGINT: Should generate <sys/key/ctrlaltdel> condition, for now reboot
  */
-static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigint_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
 	halt = SHUT_REBOOT;
@@ -241,7 +241,7 @@ static void sigint_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGUSR1: BusyBox style halt
  */
-static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigusr1_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
 	halt = SHUT_HALT;
@@ -251,7 +251,7 @@ static void sigusr1_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGUSR2: BusyBox style poweroff
  */
-static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigusr2_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
 	halt = SHUT_OFF;
@@ -261,7 +261,7 @@ static void sigusr2_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGTERM: BusyBox style reboot
  */
-static void sigterm_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigterm_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
 	halt = SHUT_REBOOT;
@@ -271,7 +271,7 @@ static void sigterm_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGCHLD: one of our children has died
  */
-static void sigchld_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigchld_cb(uev_t *w, void *arg, int events)
 {
 	pid_t pid;
 
@@ -288,7 +288,7 @@ static void sigchld_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGSTOP/SIGTSTP: Paused by user or netflash
  */
-static void sigstop_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigstop_cb(uev_t *w, void *arg, int events)
 {
 	touch(SYNC_STOPPED);
 	stopped++;
@@ -297,7 +297,7 @@ static void sigstop_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
 /*
  * SIGCONT: Restart service monitor
  */
-static void sigcont_cb(uev_t *UNUSED(w), void *UNUSED(arg), int UNUSED(events))
+static void sigcont_cb(uev_t *w, void *arg, int events)
 {
 	stopped = 0;
 	erase(SYNC_STOPPED);
@@ -314,7 +314,7 @@ int sig_stopped(void)
 /*
  * Inital signal setup - ignore everything but SIGCHLD until we're capable of responding
  */
-static void chld_handler(int UNUSED(sig), siginfo_t *UNUSED(info), void *UNUSED(ctx))
+static void chld_handler(int sig, siginfo_t *info, void *ctx)
 {
 	/* NOP */
 }
