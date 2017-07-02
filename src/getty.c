@@ -99,7 +99,7 @@ static void stty(int fd, speed_t speed)
 	tcsetattr(fd, TCSANOW, &term);
 
 	/* Clear screen in silent mode */
-	if (silent)
+	if (log_is_silent())
 		print("\033[r\033[H\033[J");
 }
 

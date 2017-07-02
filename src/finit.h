@@ -89,8 +89,6 @@ struct init_request {
 	char	data[368];
 };
 
-extern int    quiet;
-extern int    silent;
 extern int    wdogpid;
 extern int    runlevel;
 extern int    cfglevel;

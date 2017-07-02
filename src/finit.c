@@ -47,8 +47,6 @@
 #include "utmp-api.h"
 #include "watchdog.h"
 
-int   quiet     = QUIET_MODE;	/* Delayed disable of silent mode. */
-int   silent    = SILENT_MODE;	/* Completely silent, including boot */
 int   wdogpid   = 0;		/* No watchdog by default */
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
@@ -63,17 +61,15 @@ char *console   = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
-static int banner(void)
+static void banner(void)
 {
 	char buf[42] = INIT_HEADING;
 	const char separator[] = "========================================================================";
 
-	if (silent)
-		return 0;
+	if (log_is_silent())
+		return;
 
 	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, 66 - (int)strlen(buf), separator);
-
-	return 0;
 }
 
 /* Requires /proc to be mounted */
@@ -422,8 +418,7 @@ int main(int argc, char* argv[])
 	tty_runlevel(runlevel);
 
 	/* Enable silent mode, if selected */
-	if (quiet && !debug)
-		silent = 1;
+	log_silent();
 
 	/* Start new initctl API responder */
 	api_init(&loop);

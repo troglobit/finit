@@ -88,7 +88,7 @@ void print(int action, const char *fmt, ...)
 	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
 	const char dots[] = " .....................................................................";
 
-	if (silent)
+	if (log_is_silent())
 		return;
 
 	if (fmt) {

@@ -31,6 +31,8 @@
 #include "log.h"
 
 static int debug    = 0;
+static int quiet    = QUIET_MODE;	/* Delayed disable of silent mode. */
+static int silent   = SILENT_MODE;	/* Completely silent, including boot */
 static int loglevel = LOG_NOTICE;
 
 void log_init(int qit, int dbg)
@@ -51,6 +53,19 @@ void log_exit(void)
 			fputs("\n", stderr);
 		}
 	}
+}
+
+void log_silent(void)
+{
+	if (quiet && !debug)
+		silent = 1;
+	else
+		silent = 0;
+}
+
+int log_is_silent(void)
+{
+	return silent;
 }
 
 void log_debug(void)
