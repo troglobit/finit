@@ -181,16 +181,16 @@ void do_shutdown(shutop_t op)
 
 	/* Unmount any tmpfs before unmounting swap ... */
 	unmount_tmpfs();
-	run("/sbin/swapoff -e -a");
+	run("swapoff -e -a");
 
 	/* ... unmount remaining regular file systems. */
 	unmount_regular();
 
 	/* We sit on / so we must remount it ro, try all the things! */
 	sync();
-	run("/bin/mount -n -o remount,ro -t dummytype dummydev /");
-	run("/bin/mount -n -o remount,ro dummydev /");
-	run("/bin/mount -n -o remount,ro /");
+	run("mount -n -o remount,ro -t dummytype dummydev /");
+	run("mount -n -o remount,ro dummydev /");
+	run("mount -n -o remount,ro /");
 
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();

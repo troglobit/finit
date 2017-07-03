@@ -130,7 +130,7 @@ static int fsck(int pass)
 			continue;
 		}
 
-		snprintf(cmd, sizeof(cmd), "/sbin/fsck -a %s", fs->fs_spec);
+		snprintf(cmd, sizeof(cmd), "fsck -a %s", fs->fs_spec);
 		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
@@ -347,7 +347,7 @@ int main(int argc, char* argv[])
 	 * Mount filesystems
 	 */
 #ifdef REMOUNT_ROOTFS
-	run("/bin/mount -n -o remount,rw /");
+	run("mount -n -o remount,rw /");
 #endif
 #ifdef SYSROOT
 	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
@@ -361,10 +361,10 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_ROOTFS_UP);
 
 	umask(0);
-	if (run_interactive("/bin/mount -na", "Mounting filesystems"))
+	if (run_interactive("mount -na", "Mounting filesystems"))
 		plugin_run_hooks(HOOK_MOUNT_ERROR);
 
-	run("/sbin/swapon -ea");
+	run("swapon -ea");
 	umask(0022);
 
 	/* Base FS up, enable standard SysV init signals */

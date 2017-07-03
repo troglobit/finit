@@ -31,14 +31,14 @@ static void save(void *arg)
 {
 	_d("Saving system clock to RTC ...");
 	/* -w,--systohc, -u,--utc */
-	run_interactive("/sbin/hwclock -w -u", "Saving system time (UTC) to RTC");
+	run_interactive("hwclock -w -u", "Saving system time (UTC) to RTC");
 }
 
 static void restore(void *arg)
 {
 	_d("Restoring system clock from RTC ...");
 	/* -s,--hctosys, -u,--utc */
-	run_interactive("/sbin/hwclock -s -u", "Restoring system clock (UTC) from RTC");
+	run_interactive("hwclock -s -u", "Restoring system clock (UTC) from RTC");
 }
 
 static plugin_t plugin = {

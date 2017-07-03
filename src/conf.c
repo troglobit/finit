@@ -231,7 +231,7 @@ static void parse_static(char *line)
 	if (MATCH_CMD(line, "check ", x)) {
 		char *dev = strip_line(x);
 
-		strcpy(cmd, "/sbin/fsck -C -a ");
+		strcpy(cmd, "fsck -C -a ");
 		strlcat(cmd, dev, sizeof(cmd));
 		run_interactive(cmd, "Checking file system %s", dev);
 
@@ -253,7 +253,7 @@ static void parse_static(char *line)
 	if (MATCH_CMD(line, "module ", x)) {
 		char *mod = strip_line(x);
 
-		strcpy(cmd, "/sbin/modprobe ");
+		strcpy(cmd, "modprobe ");
 		strlcat(cmd, mod, sizeof(cmd));
 		run_interactive(cmd, "Loading kernel module %s", mod);
 
@@ -263,7 +263,7 @@ static void parse_static(char *line)
 	if (MATCH_CMD(line, "mknod ", x)) {
 		char *dev = strip_line(x);
 
-		strcpy(cmd, "/bin/mknod ");
+		strcpy(cmd, "mknod ");
 		strlcat(cmd, dev, sizeof(cmd));
 		run_interactive(cmd, "Creating device node %s", dev);
 

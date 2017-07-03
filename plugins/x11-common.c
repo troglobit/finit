@@ -47,7 +47,7 @@ static void setup(void *arg)
 	if ((fd = open("/var/run/console/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
 		write(fd, username, strlen(username));
 		close(fd);
-		run("/sbin/pam_console_apply");
+		run("pam_console_apply");
 	}
 #endif
 
