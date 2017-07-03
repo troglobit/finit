@@ -34,11 +34,11 @@ addons:
 
 install:
   - wget https://github.com/troglobit/libuev/releases/download/v1.5.2/libuev-1.5.2.tar.xz
-  - wget https://github.com/troglobit/libite/releases/download/v1.8.2/libite-1.8.2.tar.xz
+  - wget https://github.com/troglobit/libite/releases/download/v1.9.1/libite-1.9.1.tar.xz
   - tar xf libuev-1.5.2.tar.xz
-  - tar xf libite-1.8.2.tar.xz
+  - tar xf libite-1.9.1.tar.xz
   - (cd libuev-1.5.2 && ./configure --prefix=/tmp && make && make install-strip)
-  - (cd libite-1.8.2 && ./configure --prefix=/tmp && make && make install-strip)
+  - (cd libite-1.9.1 && ./configure --prefix=/tmp && make && make install-strip)
 
 # Custom build script for the time being, no "make test" yet
 script:
