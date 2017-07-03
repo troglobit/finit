@@ -21,8 +21,6 @@ can also be used.
 General
 -------
 
-* Add halt/poweroff/shutdown symlinks to finit and convert reboot, but
-  only install symlinks if these tools don't already exist.
 * Add support for timed shutdown in Finit, including cancelled shutdown.
 * SysV init and systemd use SIGUSR1 to restart their FIFO/D-Bus.  Add
   API restart to SIGHUP callback for the same functionality in Finit.
@@ -32,7 +30,7 @@ General
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
 * Add `IFF_RUNNING` support to netlink plugin along `IFF_UP`
-* Allow process callbacks to be scripts.
+* Allow scripts, instead of C code, as process callbacks
 * Add support for a pipe/popen where we can listen for `STOP`, `START`
   and `RELOAD` on `STDOUT` from a script ... call it for example
   `.monitor=` in `svc_t` ... the script named as the basename of the
@@ -43,7 +41,6 @@ General
   `initctl show --json`
 * Improve `initctl show SVC` output.  Add service uptime, last ten SVC
   logs/history (historian), etc. Similar to `systemctl show SVC`
-* Add PRE and POST hooks for when switching between runlevels
 * [Solaris SMF][] (Service Management Facility) has some interesting
   features that may be well worth looking into adopting:
   
@@ -52,6 +49,7 @@ General
   That is: (r)esolve dependencies and only enable ssh (t)emporary
   in the default runlevel when networking is available.
 * `initctl add /sbin/service -n -- Service description`, for details
+  see above [Solaris SMF][] featuer, issue #55 and issue #69,
   https://github.com/troglobit/finit/issues/69#issuecomment-287907610
 
 
