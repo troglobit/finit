@@ -152,7 +152,7 @@ static void networking(void)
 	}
 
 	/* Debian/Ubuntu/Busybox/RH/Suse */
-	if (!fexist("/sbin/ifup"))
+	if (!whichp("ifup"))
 		goto done;
 
 	fp = fopen("/etc/network/interfaces", "r");
@@ -176,7 +176,7 @@ static void networking(void)
 			if (!ifname)
 				continue;
 
-			snprintf(cmd, 80, "/sbin/ifup %s", ifname);
+			snprintf(cmd, 80, "ifup %s", ifname);
 			run_interactive(cmd, "Bringing up interface %s", ifname);
 			i++;
 		}
@@ -278,8 +278,8 @@ int main(int argc, char* argv[])
 	 */
 	if (!fismnt("/dev"))
 		mount("udev", "/dev", "devtmpfs", MS_RELATIME, "size=10%,nr_inodes=61156,mode=755");
-	else if (fexist("/sbin/udevadm"))
-		run_interactive("/sbin/udevadm info --cleanup-db", "Cleaning up udev db");
+	else if (whichp("udevadm"))
+		run_interactive("udevadm info --cleanup-db", "Cleaning up udev db");
 
 	/* Some systems use /dev/pts */
 	makedir("/dev/pts", 0755);
@@ -305,23 +305,23 @@ int main(int argc, char* argv[])
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
-	if (fexist("/sbin/mdev")) {
+	if (whichp("mdev")) {
 		/* Embedded Linux systems usually have BusyBox mdev */
 		if (log_is_debug())
 			touch("/dev/mdev.log");
-		devfsd = "/sbin/mdev -s";
+		devfsd = "mdev -s";
 	} else {
-		if (fexist("/sbin/udevd"))
-			devfsd = "/sbin/udevd --daemon";
+		if (whichp("udevd"))
+			devfsd = "udevd --daemon";
 		else
 			devfsd = "/lib/systemd/systemd-udevd --daemon";
 	}
 
 	run_interactive(devfsd, "Populating device tree");
-	if (fexist("/sbin/udevadm")) {
-		run("/sbin/udevadm trigger --action=add --type=subsystems");
-		run("/sbin/udevadm trigger --action=add --type=devices");
-		run("/sbin/udevadm settle --timeout=120");
+	if (whichp("udevadm")) {
+		run("udevadm trigger --action=add --type=subsystems");
+		run("udevadm trigger --action=add --type=devices");
+		run("udevadm settle --timeout=120");
 	}
 
 	/*

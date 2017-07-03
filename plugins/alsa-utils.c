@@ -26,11 +26,11 @@
 #include "helpers.h"
 #include "plugin.h"
 
-#define ALSACTL "/usr/sbin/alsactl"
+#define ALSACTL "alsactl"
 
 static void save(void *arg)
 {
-	if (fexist(ALSACTL)) {
+	if (whichp(ALSACTL)) {
 		_d("Saving sound settings ...");
 		run_interactive(ALSACTL " -g store", "Saving sound settings");
 	}
@@ -38,7 +38,7 @@ static void save(void *arg)
 
 static void restore(void *arg)
 {
-	if (fexist(ALSACTL)) {
+	if (whichp(ALSACTL)) {
 		_d("Restoring sound settings ...");
 		run_interactive(ALSACTL " -g restore", "Restoring sound settings");
 	}

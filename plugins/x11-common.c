@@ -54,8 +54,8 @@ static void setup(void *arg)
 	makedir("/tmp/.X11-unix", 01777);
 	makedir("/tmp/.ICE-unix", 01777);
 
-	if (fexist("/sbin/restorecon"))
-		run("/sbin/restorecon /tmp/.ICE-unix /tmp/.X11-unix");
+	if (whichp("restorecon"))
+		run("restorecon /tmp/.ICE-unix /tmp/.X11-unix");
 
 	umask(022);
 }

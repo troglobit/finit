@@ -148,16 +148,16 @@ static int service_start(svc_t *svc)
 	if (!svc)
 		return 1;
 
+	/* Ignore if finit is SIGSTOP'ed */
+	if (is_norespawn())
+		return 1;
+
 	/* Don't try and start service if it doesn't exist. */
-	if (!fexist(svc->cmd) && !svc->inetd.cmd) {
+	if (!whichp(svc->cmd) && !svc->inetd.cmd) {
 		print(1, "Service %s does not exist!", svc->cmd);
 		svc_missing(svc);
 		return 1;
 	}
-
-	/* Ignore if finit is SIGSTOP'ed */
-	if (is_norespawn())
-		return 1;
 
 	if (svc_is_daemon(svc) || svc_is_inetd(svc))
 		print_desc("Starting ", svc->desc);
@@ -284,7 +284,6 @@ static int service_start(svc_t *svc)
 #endif
 		if (svc->log)
 			waitpid(pid, NULL, 0);
-
 		exit(status);
 	} else if (log_is_debug()) {
 		char buf[CMD_SIZE] = "";
