@@ -408,7 +408,7 @@ int utmp_show(char *file)
 
 static int do_utmp(char *file)
 {
-	if (file)
+	if (fexist(file))
 		return utmp_show(file);
 
 	return  utmp_show(_PATH_WTMP) ||
