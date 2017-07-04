@@ -62,6 +62,9 @@ char *console   = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
+/*
+ * Show user configured banner before service bootstrap progress
+ */
 static void banner(void)
 {
 	char *buf = INIT_HEADING;

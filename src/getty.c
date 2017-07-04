@@ -215,7 +215,8 @@ static void do_getty(char *tty, char *name, size_t len)
 	name[len - 1] = 0;
 }
 
-/* Execute the login(1) command with the current
+/*
+ * Execute the login(1) command with the current
  * username as its argument. It will reply to the
  * calling user by typing "Password: "...
  */
