@@ -50,7 +50,7 @@ initctl_CFLAGS    += $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
 reboot_SOURCES     = reboot.c util.c util.h
-reboot_CFLAGS     += $(lite_CFLAGS)
+reboot_CFLAGS      = $(lite_CFLAGS)
 reboot_LDADD       = $(lite_LIBS)
 
 INIT_LNKS          = telinit init
