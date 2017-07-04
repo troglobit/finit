@@ -28,9 +28,9 @@
 #include <stdio.h>
 #include <lite/lite.h>
 
-#define SCREEN_WIDTH 80		/* Calculate screen width as well, later */
+#define SCREEN_WIDTH screen_width()
 #include <lite/conio.h>
-
+#include "util.h"
 
 static const char *cwd;
 static const char *available = FINIT_RCSD "/available";
