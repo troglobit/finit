@@ -24,11 +24,18 @@
 #ifndef FINIT_UTIL_H_
 #define FINIT_UTIL_H_
 
+#define SCREEN_WIDTH screen_cols
+#include <lite/conio.h>
+
+extern int   screen_rows;
+extern int   screen_cols;
 extern char *prognm;
 
 char *progname     (char *arg0);
 void  do_sleep     (unsigned int sec);
 char *sanitize     (char *arg, size_t len);
+
+void  screen_init  (void);
 int   screen_width (void);
 
 #endif /* FINIT_UTIL_H_ */

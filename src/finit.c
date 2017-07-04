@@ -44,6 +44,7 @@
 #include "sig.h"
 #include "sm.h"
 #include "tty.h"
+#include "util.h"
 #include "utmp-api.h"
 #include "watchdog.h"
 
@@ -227,6 +228,9 @@ int main(int argc, char* argv[])
 	 */
 	if (getpid() != 1)
 		return client(argc, argv);
+
+	/* Set up canvas */
+	screen_init();
 
 	/*
 	 * In case of emergency.

@@ -32,7 +32,10 @@
 #include <termios.h>
 #endif
 
-char *prognm = NULL;
+int   screen_setup = -1;
+int   screen_rows  = 24;
+int   screen_cols  = 80;
+char *prognm       = NULL;
 
 char *progname(char *arg0)
 {
@@ -77,13 +80,15 @@ char *sanitize(char *arg, size_t len)
 }
 
 #define ESC "\033"
-int screen_width(void)
+void screen_init(void)
 {
-	int ret = 80;
 #ifdef HAVE_TERMIOS_H
 	char buf[42];
 	struct termios tc, saved;
 	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
+
+	if (screen_setup != -1)
+		return;
 
 	memset(buf, 0, sizeof(buf));
 	tcgetattr(STDERR_FILENO, &tc);
@@ -96,14 +101,29 @@ int screen_width(void)
 	if (poll(&fd, 1, 300) > 0) {
 		int row, col;
 
-		if (scanf(ESC "[%d;%dR", &row, &col) == 2)
-			ret = col;
+		if (scanf(ESC "[%d;%dR", &row, &col) == 2) {
+			screen_rows  = row;
+			screen_cols  = col;
+			screen_setup = 1;
+		}
 	}
 
 	fprintf(stderr, ESC "8");
 	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
 #endif
-	return ret;
+
+	if (screen_cols > 132)
+		screen_cols = 132;
+}
+
+int screen_width(void)
+{
+	screen_init();
+
+	if (screen_cols < 1)
+		return 80;
+
+	return screen_cols;
 }
 
 /**

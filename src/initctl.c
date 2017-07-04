@@ -37,9 +37,6 @@
 #include <sys/un.h>
 #include <lite/lite.h>
 
-#define SCREEN_WIDTH screen_width()
-#include <lite/conio.h>
-
 #include "finit.h"
 #include "cond.h"
 #include "serv.h"
@@ -662,6 +659,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	screen_init();
 	if (optind < argc) {
 		char *cmd = argv[optind++];
 		char  arg[120] = "";

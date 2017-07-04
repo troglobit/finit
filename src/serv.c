@@ -28,8 +28,6 @@
 #include <stdio.h>
 #include <lite/lite.h>
 
-#define SCREEN_WIDTH screen_width()
-#include <lite/conio.h>
 #include "util.h"
 
 static const char *cwd;

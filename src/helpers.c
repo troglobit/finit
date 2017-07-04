@@ -32,12 +32,13 @@
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <lite/lite.h>
-#include <lite/conio.h>
 
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
+#include "util.h"
 #include "utmp-api.h"
+
 
 char *strip_line(char *line)
 {
@@ -79,7 +80,7 @@ static int print_timestamp(void)
 
 void printv(const char *fmt, va_list ap)
 {
-	char buf[80];
+	char buf[SCREEN_WIDTH];
 	size_t len;
 	const char dots[] = " .....................................................................";
 
