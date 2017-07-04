@@ -29,6 +29,8 @@
 #include <lite/lite.h>
 
 #define SCREEN_WIDTH 80		/* Calculate screen width as well, later */
+#include <lite/conio.h>
+
 
 static const char *cwd;
 static const char *available = FINIT_RCSD "/available";
@@ -66,7 +68,6 @@ static void do_list(const char *heading, const char *path)
 	int width;
 	size_t i;
 	glob_t gl;
-	char h[SCREEN_WIDTH] = "===============================================================================";
 
 	pushd(path);
 	if (glob("*.conf", 0, NULL, &gl)) {
@@ -77,9 +78,7 @@ static void do_list(const char *heading, const char *path)
 	if (gl.gl_pathc <= 0)
 		goto done;
 
-	num = snprintf(h, sizeof(h) - 1, "%s", path);
-	h[num] = ' ';
-	puts(h);
+	printheader(NULL, path, 0);
 
 	width = calc_width(gl.gl_pathv, gl.gl_pathc);
 	num = SCREEN_WIDTH / width;

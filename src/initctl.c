@@ -37,6 +37,9 @@
 #include <sys/un.h>
 #include <lite/lite.h>
 
+#define SCREEN_WIDTH 80		/* Calculate screen width as well, later */
+#include <lite/conio.h>
+
 #include "finit.h"
 #include "cond.h"
 #include "serv.h"
@@ -289,8 +292,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 
 static int do_cond_dump(char *arg)
 {
-	printf("Condition                      Status)\n");
-	printf("===============================================================================\n");	
+	printheader(NULL, "Condition                      Status", 0);
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		warnx("Failed parsing %s", _PATH_COND);
@@ -305,8 +307,7 @@ static int do_cond_show(char *arg)
 	svc_t *svc;
 	enum cond_state cond;
 
-	printf("PID     Service               Status  Condition (+ on, ~ flux, - off)\n");
-	printf("===============================================================================\n");
+	printheader(NULL, "PID     Service               Status  Condition (+ on, ~ flux, - off)", 0);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		if (!svc->cond[0])
@@ -374,7 +375,7 @@ int utmp_show(char *file)
 	int pid;
 	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
 
-	printf("%s =============================================================================================\n", file);
+	printheader(NULL, file, 0);
 	utmpname(file);
 
 	setutent();
@@ -491,10 +492,8 @@ static int show_status(char *arg)
 		return 0;
 	}
 
-	if (!verbose) {
-		printf("#      Status   PID     Runlevels   Service               Description\n");
-		printf("===============================================================================\n");
-	}
+	if (!verbose)
+		printheader(NULL, "#      Status   PID     Runlevels   Service               Description", 0);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		char jobid[10], args[512] = "", *lvls;
