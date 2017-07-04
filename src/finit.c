@@ -64,13 +64,14 @@ uev_ctx_t *ctx  = NULL;		/* Main loop context */
 
 static void banner(void)
 {
-	char buf[42] = INIT_HEADING;
-	const char separator[] = "========================================================================";
+	char *buf = INIT_HEADING;
+	char separator[SCREEN_WIDTH];
 
 	if (log_is_silent())
 		return;
 
-	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, 66 - (int)strlen(buf), separator);
+	memset(separator, '=', sizeof(separator));
+	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, SCREEN_WIDTH - (int)strlen(buf) - 2, separator);
 }
 
 /* Requires /proc to be mounted */

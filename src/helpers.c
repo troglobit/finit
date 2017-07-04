@@ -57,52 +57,55 @@ char *strip_line(char *line)
 	return line;
 }
 
-static int print_timestamp(void)
+static size_t print_timestamp(char *buf, size_t len)
 {
 #if defined(CONFIG_PRINTK_TIME)
-	FILE * uptimefile;
-	float num1, num2;
-	char uptime_str[30];
+	FILE *fp;
+	float stamp, dummy;
 
-	if((uptimefile = fopen("/proc/uptime", "r")) == NULL)
-		return 1;
+	fp = fopen("/proc/uptime", "r");
+	if (!fp)
+		return;
 
-	fgets(uptime_str, 20, uptimefile);
-	fclose(uptimefile);
+	fgets(buf, len, fp);
+	fclose(fp);
 
-	sscanf(uptime_str, "%f %f", &num1, &num2);
-	sprintf(uptime_str, "[ %.6f ]", num1);
-
-	write(STDERR_FILENO, uptime_str, strlen(uptime_str));
-#endif
+	sscanf(buf, "%f %f", &stamp, &dummy);
+	return snprintf(buf, len, "[ %.6f ]", stamp);
+#else
 	return 0;
+#endif
 }
 
 void printv(const char *fmt, va_list ap)
 {
 	char buf[SCREEN_WIDTH];
 	size_t len;
-	const char dots[] = " .....................................................................";
 
 	if (!fmt || log_is_silent())
 		return;
 
-	len = vsnprintf(buf, sizeof(buf), fmt, ap);
 	delline();
-	print_timestamp();
 
-	write(STDERR_FILENO, "\r", 1);
-	write(STDERR_FILENO, buf, len);
-	write(STDERR_FILENO, dots, 60 - len); /* pad with dots. */
+	memset(buf, 0, sizeof(buf));
+	len = print_timestamp(buf, sizeof(buf));
+	vsnprintf(&buf[len], sizeof(buf) - len, fmt, ap);
+
+	len = strlen(buf);
+	buf[len++] = ' ';
+	for (int i = (int)len; i < (SCREEN_WIDTH - 8); i++)
+		buf[i] = '.';	/* pad with dots. */
+
+	fprintf(stderr, "\r%s ", buf);
 }
 
 void print(int action, const char *fmt, ...)
 {
 	va_list ap;
-	const char success[] = " \e[1m[ OK ]\e[0m\n";
-	const char failure[] = " \e[7m[FAIL]\e[0m\n";
-	const char warning[] = " \e[7m[WARN]\e[0m\n";
-	const char pending[] = " \e[1m[ \\/ ]\e[0m\n";
+	const char success[] = "\e[1m[ OK ]\e[0m\n";
+	const char failure[] = "\e[7m[FAIL]\e[0m\n";
+	const char warning[] = "\e[7m[WARN]\e[0m\n";
+	const char pending[] = "\e[1m[ \\/ ]\e[0m\n";
 
 	if (log_is_silent())
 		return;
