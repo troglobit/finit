@@ -21,9 +21,16 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
 #include <ctype.h>		/* isprint() */
 #include <string.h>
 #include <unistd.h>
+
+#ifdef HAVE_TERMIOS_H		/* for screen_width() */
+#include <poll.h>
+#include <stdio.h>
+#include <termios.h>
+#endif
 
 char *prognm = NULL;
 
@@ -67,6 +74,36 @@ char *sanitize(char *arg, size_t len)
 		return arg;
 
 	return NULL;
+}
+
+#define ESC "\033"
+int screen_width(void)
+{
+	int ret = 80;
+#ifdef HAVE_TERMIOS_H
+	char buf[42];
+	struct termios tc, saved;
+	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
+
+	memset(buf, 0, sizeof(buf));
+	tcgetattr(STDERR_FILENO, &tc);
+	saved = tc;
+	tc.c_cflag |= (CLOCAL | CREAD);
+	tc.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+	tcsetattr(STDERR_FILENO, TCSANOW, &tc);
+	fprintf(stderr, ESC "7" ESC "[r" ESC "[999;999H" ESC "[6n");
+
+	if (poll(&fd, 1, 300) > 0) {
+		int row, col;
+
+		if (scanf(ESC "[%d;%dR", &row, &col) == 2)
+			ret = col;
+	}
+
+	fprintf(stderr, ESC "8");
+	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
+#endif
+	return ret;
 }
 
 /**

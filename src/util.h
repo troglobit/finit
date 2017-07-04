@@ -1,6 +1,6 @@
 /* Misc. shared utility functions for initctl, reboot and finit
  *
- * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2016-2017  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,10 @@
 
 extern char *prognm;
 
-char *progname(char *arg0);
-void  do_sleep(unsigned int sec);
-char *sanitize(char *arg, size_t len);
+char *progname     (char *arg0);
+void  do_sleep     (unsigned int sec);
+char *sanitize     (char *arg, size_t len);
+int   screen_width (void);
 
 #endif /* FINIT_UTIL_H_ */
 
