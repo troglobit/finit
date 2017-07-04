@@ -53,7 +53,6 @@ typedef struct {
 	int  (*cb)(char *arg);
 } command_t;
 
-int debug    = 0;
 int verbose  = 0;
 int runlevel = 0;
 
@@ -573,7 +572,6 @@ static int usage(int rc)
 		"Usage: %s [OPTIONS] <COMMAND>\n"
 		"\n"
 		"Options:\n"
-		"  -d, --debug               Debug initctl (client)\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
 		"\n"
@@ -652,15 +650,11 @@ int main(int argc, char *argv[])
 	};
 
 	progname(argv[0]);
-	while ((c = getopt_long(argc, argv, "dh?v", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "h?v", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'h':
 		case '?':
 			return usage(0);
-
-		case 'd':
-			debug = 1;
-			break;
 
 		case 'v':
 			verbose = 1;
