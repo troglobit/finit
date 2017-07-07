@@ -39,6 +39,9 @@ void log_init(int dbg)
 {
 	if (dbg)
 		debug = 1;
+
+	if (debug)
+		loglevel = LOG_DEBUG;
 }
 
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
