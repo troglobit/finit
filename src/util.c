@@ -32,7 +32,6 @@
 #include <termios.h>
 #endif
 
-int   screen_setup = -1;
 int   screen_rows  = 24;
 int   screen_cols  = 80;
 char *prognm       = NULL;
@@ -79,51 +78,56 @@ char *sanitize(char *arg, size_t len)
 	return NULL;
 }
 
-#define ESC "\033"
-void screen_init(void)
+static void initscr(int *row, int *col)
 {
-#ifdef HAVE_TERMIOS_H
-	char buf[42];
+	if (!row || !col)
+		return;
+
+#if defined(TCSANOW) && defined(POLLIN)
 	struct termios tc, saved;
 	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
 
-	if (screen_setup != -1)
-		return;
-
-	memset(buf, 0, sizeof(buf));
+	/* Disable echo to terminal while probing */
 	tcgetattr(STDERR_FILENO, &tc);
 	saved = tc;
 	tc.c_cflag |= (CLOCAL | CREAD);
 	tc.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 	tcsetattr(STDERR_FILENO, TCSANOW, &tc);
-	fprintf(stderr, ESC "7" ESC "[r" ESC "[999;999H" ESC "[6n");
 
-	if (poll(&fd, 1, 300) > 0) {
-		int row, col;
+	/*
+	 * Save cursor pos+attr
+	 * Diable top+bottom margins
+	 * Set cursor at the far bottom,right pos
+	 * Query term for resulting pos
+	 */
+	fprintf(stderr, "\e7" "\e[r" "\e[999;999H" "\e[6n");
 
-		if (scanf(ESC "[%d;%dR", &row, &col) == 2) {
-			screen_rows  = row;
-			screen_cols  = col;
-			screen_setup = 1;
-		}
+	/*
+	 * Wait here for terminal to echo back \e[row,lineR ...
+	 */
+	if (poll(&fd, 1, 300) <= 0 || scanf("\e[%d;%dR", row, col) != 2) {
+		*row = 24;
+		*col = 80;
 	}
 
-	fprintf(stderr, ESC "8");
-	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
-#endif
+	/*
+	 * Restore above saved cursor pos+attr
+	 */
+	fprintf(stderr, "\e8");
 
-	if (screen_cols > 132)
-		screen_cols = 132;
+	/* Restore terminal */
+	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
+
+	return;
+#else
+	*row = 24;
+	*col = 80;
+#endif
 }
 
-int screen_width(void)
+void screen_init(void)
 {
-	screen_init();
-
-	if (screen_cols < 1)
-		return 80;
-
-	return screen_cols;
+	initscr(&screen_rows, &screen_cols);
 }
 
 /**
