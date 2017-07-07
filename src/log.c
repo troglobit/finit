@@ -112,6 +112,9 @@ static void early_logit(int prio, const char *fmt, va_list ap)
 		fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
 		vfprintf(fp, fmt, ap);
 		fclose(fp);
+
+		if (debug)
+			vfprintf(stderr, fmt, ap);
 	} else {
 		vfprintf(stderr, fmt, ap);
 	}
