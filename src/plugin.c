@@ -163,6 +163,17 @@ plugin_t *plugin_find(char *name)
 }
 
 /* Private daemon API *******************************************************/
+int plugin_exists(hook_point_t no)
+{
+	plugin_t *p, *tmp;
+
+	PLUGIN_ITERATOR(p, tmp) {
+		if (p->hook[no].cb)
+			return 1;
+	}
+
+	return 0;
+}
 
 /* Some hooks are called with a fixed argument, like HOOK_SVC_LOST */
 void plugin_run_hook(hook_point_t no, void *arg)
