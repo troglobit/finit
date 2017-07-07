@@ -49,46 +49,46 @@ the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
 
 **Example /etc/finit.conf:**
 
-```
-    # Fallback if /etc/hostname is missing
-    host wopr
-    
-    # Runlevel to start after bootstrap, runlevel 'S'
-    runlevel 2
-    
-    # Services to be monitored and respawned as needed
-    service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
-    service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
-    service [S12345] /sbin/klogd -n                              -- Kernel log daemon
-    service   [2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
-    
-    # For multiple instances of the same service, add :ID somewhere between
-    # the service/run/task keyword and the command.
-    service :1 [2345] /sbin/merecat -n -p 80   /var/www -- Web server
-    service :2 [2345] /sbin/merecat -n -p 8080 /var/www -- Old web server
+```conf
+# Fallback if /etc/hostname is missing
+host wopr
 
-    # Alternative method instead of below runparts, can also use /etc/rc.local
-    #task [S] /etc/init.d/keyboard-setup start -- Setting up preliminary keymap
-    #task [S] /etc/init.d/acpid start          -- Starting ACPI Daemon
-    #task [S] /etc/init.d/kbd start            -- Preparing console
+# Runlevel to start after bootstrap, runlevel 'S'
+runlevel 2
 
-    # Inetd services to start on demand, with alternate ports and filtering
-    inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
-    inetd tftp/udp           wait [2345] /sbin/uftpd -i -y       -- TFTP daemon
-    inetd time/udp           wait [2345] internal                -- UNIX rdate service
-    inetd time/tcp         nowait [2345] internal                -- UNIX rdate service
-    inetd 3737/tcp         nowait [2345] internal.time           -- UNIX rdate service
-    inetd telnet/tcp       nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
-    inetd 2323/tcp         nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
-    inetd 222/tcp@eth0     nowait [2345] /sbin/dropbear -i -R -F -- SSH service
-    inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
-    
-    # Run start scripts from this directory
-    # runparts /etc/start.d
-    
-    # Virtual consoles to start built-in getty on
-    tty [12345] /dev/tty1    115200 linux
-    tty [12345] /dev/ttyAMA0 115200 vt100
+# Services to be monitored and respawned as needed
+service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
+service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
+service [S12345] /sbin/klogd -n                              -- Kernel log daemon
+service   [2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
+
+# For multiple instances of the same service, add :ID somewhere between
+# the service/run/task keyword and the command.
+service :1 [2345] /sbin/merecat -n -p 80   /var/www -- Web server
+service :2 [2345] /sbin/merecat -n -p 8080 /var/www -- Old web server
+
+# Alternative method instead of below runparts, can also use /etc/rc.local
+#task [S] /etc/init.d/keyboard-setup start -- Setting up preliminary keymap
+#task [S] /etc/init.d/acpid start          -- Starting ACPI Daemon
+#task [S] /etc/init.d/kbd start            -- Preparing console
+
+# Inetd services to start on demand, with alternate ports and filtering
+inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
+inetd tftp/udp           wait [2345] /sbin/uftpd -i -y       -- TFTP daemon
+inetd time/udp           wait [2345] internal                -- UNIX rdate service
+inetd time/tcp         nowait [2345] internal                -- UNIX rdate service
+inetd 3737/tcp         nowait [2345] internal.time           -- UNIX rdate service
+inetd telnet/tcp       nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
+inetd 2323/tcp         nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
+inetd 222/tcp@eth0     nowait [2345] /sbin/dropbear -i -R -F -- SSH service
+inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
+
+# Run start scripts from this directory
+# runparts /etc/start.d
+
+# Virtual consoles to start built-in getty on
+tty [12345] /dev/tty1    115200 linux
+tty [12345] /dev/ttyAMA0 115200 vt100
 ```
 
 The `service` stanza, as well as `task`, `run`, `inetd` and others are
@@ -97,14 +97,14 @@ overview of some of the most common components needed to start a UNIX
 daemon:
 
 ```
-    service [LVLS] <COND> /path/to/daemon ARGS -- Some text
-    ^       ^      ^      ^               ^       ^
-    |       |      |      |               |        `-- Optional description
-    |       |      |      |                `---------- Daemon arguments
-    |       |      |       `-------------------------- Path to daemon
-    |       |       `--------------------------------- Optional conditions
-    |        `---------------------------------------- Optional Runlevels
-     `------------------------------------------------ Monitored application
+service [LVLS] <COND> /path/to/daemon ARGS -- Some text
+^       ^      ^      ^               ^       ^
+|       |      |      |               |        `-- Optional description
+|       |      |      |                `---------- Daemon arguments
+|       |      |       `-------------------------- Path to daemon
+|       |       `--------------------------------- Optional conditions
+|        `---------------------------------------- Optional Runlevels
+ `------------------------------------------------ Monitored application
 ```
 
 Some components are optional.  It is important to note, however, is for
@@ -150,9 +150,11 @@ Finit also comes with a built-in Getty for Linux console TTYs.  It can
 parse `/etc/inittab` and set the speed.  Then `/bin/login` handles all
 nasty bits with PAM etc.
 
-    # /etc/finit.conf
-    tty [12345] /dev/tty1    38400  linux
-    tty [12345] /dev/ttyAMA0 115200 vt100
+```conf
+# /etc/finit.conf
+tty [12345] /dev/tty1    38400  linux
+tty [12345] /dev/ttyAMA0 115200 vt100
+```
 
 **Runlevels**
 
@@ -199,7 +201,7 @@ calls its built-in [run-parts(8)][] on the `runparts <DIR>` directory,
 and `/etc/rc.local`, in that order if they exist.
 
 ```shell
-    runparts /etc/rc.d/
+runparts /etc/rc.d/
 ```
 
 No configuration stanza in `/etc/finit.conf` is required for `rc.local`.
@@ -226,17 +228,17 @@ are used, and even more commonly, only the default runlevel is used.
 To specify an allowed set of runlevels for a `service`, `run` command,
 `task`, or `tty`, add `[NNN]` to your `/etc/finit.conf`, like this:
 
-```
-    service [S12345] /sbin/syslogd -n -x     -- System log daemon
-    run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
-    task    [S]      /etc/init.d/kbd start   -- Preparing console
-    service [S12345] /sbin/klogd -n -x       -- Kernel log daemon
-    tty     [12345]  /dev/tty1
-    tty     [2]      /dev/tty2
-    tty     [2]      /dev/tty3
-    tty     [2]      /dev/tty4
-    tty     [2]      /dev/tty5
-    tty     [2]      /dev/tty6
+```conf
+service [S12345] /sbin/syslogd -n -x     -- System log daemon
+run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
+task    [S]      /etc/init.d/kbd start   -- Preparing console
+service [S12345] /sbin/klogd -n -x       -- Kernel log daemon
+tty     [12345]  /dev/tty1
+tty     [2]      /dev/tty2
+tty     [2]      /dev/tty3
+tty     [2]      /dev/tty4
+tty     [2]      /dev/tty5
+tty     [2]      /dev/tty6
 ```
 
 In this example syslogd is first started, in parallel, and then acpid is
@@ -278,21 +280,23 @@ Finit also listens to the classic SysV init FIFO, used by `telinit`.
 Support for this is implemented by the `initctl.so` plugin.  Hence,
 `telinit q` will work as the UNIX beards intended.
 
-    ~ # telinit -h
-    Usage: telinit [OPTIONS] [q | Q | 0-9]
-    
-    Options:
-      -h, --help      This help text
-      -V, --version   Show Finit version
-    
-    Commands:
-      0               Power-off the system, same as initctl poweroff
-      6               Reboot the system, same as initctl reboot
-      2, 3, 4, 5      Change runlevel. Starts services in new runlevel, stops any
-                      services in prev. runlevel that are not allowed in new.
-      q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or
-                      sending SIGHUP to PID 1
-      1, s, S         Enter system rescue mode, runlevel 1
+```shell
+~ # telinit -h
+Usage: telinit [OPTIONS] [q | Q | 0-9]
+
+Options:
+  -h, --help      This help text
+  -V, --version   Show Finit version
+
+Commands:
+  0               Power-off the system, same as initctl poweroff
+  6               Reboot the system, same as initctl reboot
+  2, 3, 4, 5      Change runlevel. Starts services in new runlevel, stops any
+                  services in prev. runlevel that are not allowed in new.
+  q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or
+                  sending SIGHUP to PID 1
+  1, s, S         Enter system rescue mode, runlevel 1
+```
 
 
 Commands & Status
@@ -302,29 +306,31 @@ Finit also implements a more modern API to query status, and start/stop
 services, called `initctl`.  Unlike `telinit` the `initctl` tool does
 not return until the given command has fully completed.
 
-    ~ $ initctl -h
-    Usage: initctl [OPTIONS] <COMMAND>
-    
-    Options:
-      -d, --debug               Debug initctl (client)
-      -v, --verbose             Verbose output
-      -h, --help                This help text
-    
-    Commands:
-      debug                     Toggle Finit (daemon) debug
-      help                      This help text
-      reload                    Reload *.conf in /etc/finit.d/ and activate changes
-      runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
-      status | show             Show status of services
-      cond     set   <COND>     Set (assert) condition     => +COND
-      cond     clear <COND>     Clear (deassert) condition => -COND
-      cond     flux  <COND>     Emulate flux condition     => ~COND
-      cond     show             Show condition status
-      start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
-      stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
-      restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
-      reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name
-      version                   Show Finit version
+```shell
+~ $ initctl -h
+Usage: initctl [OPTIONS] <COMMAND>
+
+Options:
+  -d, --debug               Debug initctl (client)
+  -v, --verbose             Verbose output
+  -h, --help                This help text
+
+Commands:
+  debug                     Toggle Finit (daemon) debug
+  help                      This help text
+  reload                    Reload *.conf in /etc/finit.d/ and activate changes
+  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
+  status | show             Show status of services
+  cond     set   <COND>     Set (assert) condition     => +COND
+  cond     clear <COND>     Clear (deassert) condition => -COND
+  cond     flux  <COND>     Emulate flux condition     => ~COND
+  cond     show             Show condition status
+  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
+  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
+  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
+  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name
+  version                   Show Finit version
+```
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
 file must be used to tell Finit to stop and start it on `reload` and
@@ -336,17 +342,19 @@ the current runlevel these services will not be respawned automatically
 by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
 Dropbear SSH service will not be restarted if it is killed or exits.
 
-    ~ $ initctl status -v
-    1       running  476     [S12345]   /sbin/watchdog -T 16 -t 2 -F /dev/watchdog
-    2       running  477     [S12345]   /sbin/syslogd -n -b 3 -D
-    3       running  478     [S12345]   /sbin/klogd -n
-    4:1       inetd  0       [2345]     internal time allow *:37
-    4:2       inetd  0       [2345]     internal time allow *:37
-    4:3       inetd  0       [2345]     internal 3737 allow *:3737
-    5:1       inetd  0       [2345]     /sbin/telnetd allow *:23 deny eth0,eth1
-    5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
-    6:1       inetd  0       [345]      /sbin/dropbear allow eth0:222
-    6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
+```shell
+~ $ initctl status -v
+1       running  476     [S12345]   /sbin/watchdog -T 16 -t 2 -F /dev/watchdog
+2       running  477     [S12345]   /sbin/syslogd -n -b 3 -D
+3       running  478     [S12345]   /sbin/klogd -n
+4:1       inetd  0       [2345]     internal time allow *:37
+4:2       inetd  0       [2345]     internal time allow *:37
+4:3       inetd  0       [2345]     internal 3737 allow *:3737
+5:1       inetd  0       [2345]     /sbin/telnetd allow *:23 deny eth0,eth1
+5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
+6:1       inetd  0       [345]      /sbin/dropbear allow eth0:222
+6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
+```
 
 
 Requirements
@@ -363,7 +371,9 @@ At boot Finit calls either `mdev` or `udevd` to populate `/dev`, this is
 done slightly differently and on systems with udev you might want to add
 the following one-shot task early in your `/etc/finit.conf`:
 
-    run [S] /sbin/udevadm settle --timeout=120 -- Waiting for udev
+```conf
+run [S] /sbin/udevadm settle --timeout=120 -- Waiting for udev
+```
 
 Finit has a built-in Getty for TTYs, but requires a working `/bin/login`
 or `/bin/sh`, if no TTYs are configured in `/etc/finit.conf`.
@@ -388,7 +398,7 @@ LILO, U-Boot/Barebox or RedBoot) configuration to append the following
 to the kernel command line:
 
 ```shell
-    append="init=/sbin/finit"
+append="init=/sbin/finit"
 ```
 
 Remember to also set up an initial `/etc/finit.conf` before rebooting!
@@ -403,7 +413,7 @@ Add `finit_debug`, or `--debug`, to the kernel command line to enable
 debug messages.
 
 ```shell
-    append="init=/sbin/finit --debug"
+append="init=/sbin/finit --debug"
 ```
 
 To debug startup issues, in particular issues with getty/login, try
