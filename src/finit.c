@@ -223,6 +223,7 @@ static void emergency_shell(void)
 
 int main(int argc, char* argv[])
 {
+	int ret;
 	char *devfsd;
 	uev_ctx_t loop;
 
@@ -240,11 +241,6 @@ int main(int argc, char* argv[])
 	 * In case of emergency.
 	 */
 	emergency_shell();
-
-	/*
-	 * Hello world.
-	 */
-	banner();
 
 	/*
 	 * Initial setup of signals, ignore all until we're up.
@@ -271,6 +267,25 @@ int main(int argc, char* argv[])
 	mount("none", "/sys", "sysfs", 0, NULL);
 	if (fisdir("/proc/bus/usb"))
 		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
+
+	/*
+	 * Parse kernel parameters, including log_init()
+	 */
+	conf_parse_cmdline();
+
+	/*
+	 * Load plugins early, finit.conf may contain references to
+	 * features implemented by plugins.
+	 */
+	ret = plugin_init(&loop, PLUGIN_PATH);
+
+	/*
+	 * Hello world.
+	 */
+	banner();
+
+	/* Show results after banner() */
+	print(ret, "Loading plugins");
 
 	/*
 	 * Check file filesystems in /etc/fstab
@@ -306,11 +321,6 @@ int main(int argc, char* argv[])
 	umask(022);
 
 	/*
-	 * Parse kernel parameters
-	 */
-	conf_parse_cmdline();
-
-	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
 	if (whichp("mdev")) {
@@ -331,12 +341,6 @@ int main(int argc, char* argv[])
 		run("udevadm trigger --action=add --type=devices");
 		run("udevadm settle --timeout=120");
 	}
-
-	/*
-	 * Load plugins first, finit.conf may contain references to
-	 * features implemented by plugins.
-	 */
-	plugin_init(&loop, PLUGIN_PATH);
 
 	/*
 	 * Parse /etc/finit.conf, main configuration file

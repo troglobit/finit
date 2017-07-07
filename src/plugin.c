@@ -322,8 +322,6 @@ static int load_plugins(char *path)
 	DIR *dp;
 	struct dirent *entry;
 
-	print_desc("Loading plugins", NULL);
-
 	dp = opendir(path);
 	if (!dp) {
 		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
@@ -358,7 +356,7 @@ int plugin_init(uev_ctx_t *ctx, char *path)
 	if (!load_plugins(path))
 	    fail = init_plugins(ctx);
 
-	return print_result(fail);
+	return fail;
 }
 
 void plugin_exit(void)
