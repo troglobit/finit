@@ -70,6 +70,11 @@ static void banner(void)
 	char *buf = INIT_HEADING;
 	char separator[SCREEN_WIDTH];
 
+	if (plugin_exists(HOOK_BANNER)) {
+		plugin_run_hooks(HOOK_BANNER);
+		return;
+	}
+
 	if (log_is_silent())
 		return;
 
