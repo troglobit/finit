@@ -431,11 +431,11 @@ int main(int argc, char* argv[])
 	/* Hooks that should run at the very end */
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 
+	/* Enable silent mode before starting TTYs */
+	log_silent();
+
 	/* Start TTYs */
 	tty_runlevel(runlevel);
-
-	/* Enable silent mode, if selected */
-	log_silent();
 
 	/* Start new initctl API responder */
 	api_init(&loop);
