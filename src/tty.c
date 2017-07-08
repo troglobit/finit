@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>		/* isdigit() */
 #include <signal.h>
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -48,7 +49,7 @@ int tty_register(char *line)
 {
 	tty_node_t *entry;
 	int         insert = 0;
-	char       *cmd, *dev, *baud = NULL;
+	char       *tok, *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
 
 	if (!line) {
@@ -56,45 +57,39 @@ int tty_register(char *line)
 		return errno = EINVAL;
 	}
 
-	cmd = strtok(line, " ");
-	if (!cmd) {
-	incomplete:
+	tok = strtok(line, " ");
+	while (tok) {
+		if (tok[0] == '[')
+			runlevels = &tok[0];
+		else if (tok[0] == '/')
+			dev = tok;
+		else if (isdigit(tok[0]))
+			baud = tok;
+		else
+			term = tok;
+
+		tok = strtok(NULL, " ");
+	}
+
+	if (!dev) {
 		_e("Incomplete tty, cannot register");
 		return errno = EINVAL;
-	}
-
-	if (cmd[0] == '[') {	/* [runlevels] */
-		runlevels = &cmd[0];
-		dev = strtok(NULL, " ");
-		if (!dev)
-			goto incomplete;
-	} else {
-		dev = cmd;
-	}
-
-	cmd = strtok(NULL, " ");
-	if (cmd) {
-		baud = strdup(cmd);
-		term = strtok(NULL, " ");
 	}
 
 	entry = tty_find(dev);
 	if (!entry) {
 		insert = 1;
 		entry = calloc(1, sizeof(*entry));
-		if (!entry) {
-			if (baud)
-				free(baud);
-
+		if (!entry)
 			return errno = ENOMEM;
-		}
 	}
 
 	entry->data.name = strdup(dev);
-	entry->data.baud = baud;
+	entry->data.baud = baud ? strdup(baud) : NULL;
 	entry->data.term = term ? strdup(term) : NULL;
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
-	_d("Registering tty %s at %s baud with term=%s on runlevels %s", dev, baud ?: "NULL", term ?: "N/A", runlevels);
+	_d("Registering tty %s at %s baud with term=%s on runlevels %s",
+	   dev, baud ?: "NULL", term ?: "N/A", runlevels ?: "[2-5]");
 
 	if (insert)
 		LIST_INSERT_HEAD(&tty_list, entry, link);
