@@ -44,11 +44,11 @@ static pid_t fallback = 0;
 static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
 
-/* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] */
+/* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear] */
 int tty_register(char *line)
 {
 	tty_node_t *entry;
-	int         insert = 0;
+	int         insert = 0, noclear = 0;
 	char       *tok, *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
 
@@ -65,6 +65,8 @@ int tty_register(char *line)
 			dev = tok;
 		else if (isdigit(tok[0]))
 			baud = tok;
+		else if (!strcmp(tok, "noclear"))
+			noclear = 1;
 		else
 			term = tok;
 
@@ -87,6 +89,7 @@ int tty_register(char *line)
 	entry->data.name = strdup(dev);
 	entry->data.baud = baud ? strdup(baud) : NULL;
 	entry->data.term = term ? strdup(term) : NULL;
+	entry->data.noclear = noclear;
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
 	_d("Registering tty %s at %s baud with term=%s on runlevels %s",
 	   dev, baud ?: "NULL", term ?: "N/A", runlevels ?: "[2-5]");
@@ -212,7 +215,7 @@ void tty_start(finit_tty_t *tty)
 		return;
 	}
 
-	tty->pid = run_getty(dev, tty->baud, tty->term, is_console);
+	tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)

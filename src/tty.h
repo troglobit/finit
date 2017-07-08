@@ -34,6 +34,7 @@ typedef struct {
 	char  *name;
 	char  *baud;
 	char  *term;
+	int    noclear;
 	int    runlevels;
 
 	int    pid;

@@ -136,7 +136,7 @@ Syntax:
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
 
-* `tty [LVLS] <DEV> [BAUD] [TERM]`  
+* `tty [LVLS] <DEV> [BAUD] [TERM] [noclear]`
   Start a getty on the given TTY device DEV, in the given runlevels.  If
   no tty setting is given in `finit.conf` no login is possible.  Use the
   `service` stanza to start a stand-alone shell for really bare bones

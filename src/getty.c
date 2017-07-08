@@ -63,7 +63,7 @@ static int readch(char *tty)
 	return ch1 & 0xFF;
 }
 
-static void stty(int fd, speed_t speed)
+static void stty(int fd, speed_t speed, int noclear)
 {
 	struct termios term;
 
@@ -98,9 +98,8 @@ static void stty(int fd, speed_t speed)
 	term.c_cc[VERASE] = CERASE;
 	tcsetattr(fd, TCSANOW, &term);
 
-	/* Clear screen in silent mode */
-	if (log_is_silent())
-		print("\033[r\033[H\033[J");
+	if (!noclear)
+		print("\e[r\e[H\e[J");
 }
 
 /*
@@ -291,7 +290,7 @@ static speed_t do_parse_speed(char *baud)
 	return B0;
 }
 
-int getty(char *tty, char *baud, char *term, char *user)
+int getty(char *tty, char *baud, char *term, int noclear, char *user)
 {
 	int fd;
 	char name[30];
@@ -328,7 +327,7 @@ int getty(char *tty, char *baud, char *term, char *user)
 	sa.sa_handler = _exit;
 	sigaction(SIGQUIT, &sa, NULL);
 
-	stty(fd, speed);
+	stty(fd, speed, noclear);
 	close(fd);
 	utmp_set_login(tty, NULL);
 
