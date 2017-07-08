@@ -308,19 +308,6 @@ static void parse_static(char *line)
 			cfglevel = 2; /* Fallback */
 		return;
 	}
-
-	/* TODO: Make console & tty dynamically loadable from /etc/finit.d */
-	if (MATCH_CMD(line, "console ", x)) {
-		if (console) free(console);
-		console = strdup(strip_line(x));
-		return;
-	}
-
-	/* TODO: Make console & tty dynamically loadable from /etc/finit.d */
-	if (MATCH_CMD(line, "tty ", x)) {
-		tty_register(strip_line(x));
-		return;
-	}
 }
 
 static void parse_dynamic(char *line, struct timeval *mtime)
@@ -361,6 +348,17 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 
 	if (MATCH_CMD(line, "rlimit ", x)) {
 		conf_parse_rlimit(x);
+		return;
+	}
+
+	if (MATCH_CMD(line, "console ", x)) {
+		if (console) free(console);
+		console = strdup(strip_line(x));
+		return;
+	}
+
+	if (MATCH_CMD(line, "tty ", x)) {
+		tty_register(strip_line(x));
 		return;
 	}
 }
