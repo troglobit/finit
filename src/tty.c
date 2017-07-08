@@ -193,31 +193,31 @@ int tty_check(char *dev)
 	return 0;
 }
 
-void tty_start(finit_tty_t *fitty)
+void tty_start(finit_tty_t *tty)
 {
 	int is_console = 0;
-	char *tty;
+	char *dev;
 
-	if (fitty->pid) {
-		_d("%s: TTY already active", fitty->name);
+	if (tty->pid) {
+		_d("%s: TTY already active", tty->name);
 		return;
 	}
 
-	tty = canonicalize(fitty->name);
-	if (!tty) {
-		_d("%s: Cannot find TTY device: %s", fitty->name, strerror(errno));
+	dev = canonicalize(tty->name);
+	if (!dev) {
+		_d("%s: Cannot find TTY device: %s", tty->name, strerror(errno));
 		return;
 	}
 
-	if (console && !strcmp(tty, console))
+	if (console && !strcmp(dev, console))
 		is_console = 1;
 
-	if (tty_check(tty)) {
-		_d("%s: Not a valid TTY: %s", tty, strerror(errno));
+	if (tty_check(dev)) {
+		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
 		return;
 	}
 
-	fitty->pid = run_getty(tty, fitty->baud, fitty->term, is_console);
+	tty->pid = run_getty(dev, tty->baud, tty->term, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)
