@@ -254,7 +254,6 @@ int tty_fallback(pid_t lost)
 #ifdef FALLBACK_SHELL
 	if (lost == 1) {
 		if (fallback) {
-			_d("Stopping fallback shell");
 			kill(fallback, SIGKILL);
 			fallback = 0;
 		}
@@ -262,12 +261,9 @@ int tty_fallback(pid_t lost)
 		return 0;
 	}
 
-	if (fallback != lost || tty_num_active()) {
-		_d("Not starting fallback (%d) shell, lost pid %d", fallback, lost);
+	if (fallback != lost || tty_num_active())
 		return 0;
-	}
 
-	_d("Starting fallback shell");
 	fallback = fork();
 	if (fallback)
 		return 1;
