@@ -226,18 +226,6 @@ static void parse_static(char *line)
 	char *x;
 	char cmd[CMD_SIZE];
 
-	/* Do this before mounting / read-write
-	 * XXX: Move to plugin which checks /etc/fstab instead */
-	if (MATCH_CMD(line, "check ", x)) {
-		char *dev = strip_line(x);
-
-		strcpy(cmd, "fsck -C -a ");
-		strlcat(cmd, dev, sizeof(cmd));
-		run_interactive(cmd, "Checking file system %s", dev);
-
-		return;
-	}
-
 	if (MATCH_CMD(line, "user ", x)) {
 		if (username) free(username);
 		username = strdup(strip_line(x));

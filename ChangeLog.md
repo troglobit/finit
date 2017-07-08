@@ -8,6 +8,10 @@ All relevant changes are documented in this file.
 
 ### Changes
 
+#### -rc3
+* Removed `finit.conf` option `check DEV`, replaced entirely by automated
+  call to `fsck` for each device listed in `/etc/fstab`
+
 #### -rc2
 * Support for a fallback shell on console if none of the configured TTYs
   can be started

@@ -38,10 +38,6 @@ so usually only bootstrap (runlevel 'S') services are declared in the
 
 Syntax:
 
-* `check <DEV>`  
-  Run fsck on a file system.  Only needed if not listed in `/etc/fstab`,
-  Finit 3.0 and later check all file systems automatically at boot.
-
 * `module <MODULE>`  
   Load a kernel module, with optional arguments
 
