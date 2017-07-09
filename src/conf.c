@@ -514,6 +514,7 @@ void conf_reload_dynamic(void)
 			continue;
 		}
 
+		stat(path, &st);
 		TIMESPEC_TO_TIMEVAL(&mtime, &st.st_mtim);
 		parse_conf_dynamic(path, &mtime);
 	}
