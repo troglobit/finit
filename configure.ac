@@ -50,9 +50,9 @@ AC_ARG_ENABLE(rw-rootfs,
         AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]),,[
 	enable_rw_rootfs=no])
 
-AC_ARG_ENABLE(silent,
-        AS_HELP_STRING([--enable-silent], [Completely silent operation, not even boot messages]),,[
-	enable_silent=no])
+AC_ARG_ENABLE(progress,
+        AS_HELP_STRING([--enable-progress], [Pre Finit v3 bootup progress and heading]),,[
+	enable_progress=no])
 
 AC_ARG_ENABLE(watchdog,
         AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
@@ -139,10 +139,10 @@ AS_IF([test "x$enable_fallback_shell" = "xyes"], [
 AS_IF([test "x$enable_rw_rootfs" = "xyes"], [
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
-AS_IF([test "x$enable_silent" = "xyes"], [
-        AC_DEFINE(SILENT_MODE,  1, [Completely silent operation, not even boot messages])
+AS_IF([test "x$enable_progress" = "xyes"], [
+        AC_DEFINE(SILENT_MODE,  0, [Pre Finit v3 bootup messages and heading])
 	], [
-	AC_DEFINE(SILENT_MODE,  0, [Normal output, default])])
+	AC_DEFINE(SILENT_MODE,  1, [Completely silent until login prompt])])
 
 AS_IF([test "x$enable_watchdog" = "xyes"], [
         AC_DEFINE(BUILTIN_WATCHDOG,  1, [Enable built-in watchdog, kicks on /dev/watchdog])])
@@ -245,7 +245,7 @@ Optional features:
   Emergency shell.......: $enable_emergency_shell
   Fallback shell........: $enable_fallback_shell
   Remount / RW at boot..: $enable_rw_rootfs
-  Silent mode...........: $enable_silent
+  Traditional progress..: $enable_progress
   Default console dev...: $console
   Default user..........: $username
   Default hostname......: $hostname
