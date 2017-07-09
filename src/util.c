@@ -25,12 +25,7 @@
 #include <ctype.h>		/* isprint() */
 #include <string.h>
 #include <unistd.h>
-
-#ifdef HAVE_TERMIOS_H		/* for screen_width() */
-#include <poll.h>
-#include <stdio.h>
-#include <termios.h>
-#endif
+#include "util.h"
 
 int   screen_rows  = 24;
 int   screen_cols  = 80;
@@ -76,53 +71,6 @@ char *sanitize(char *arg, size_t len)
 		return arg;
 
 	return NULL;
-}
-
-static void initscr(int *row, int *col)
-{
-	if (!row || !col)
-		return;
-
-#if defined(TCSANOW) && defined(POLLIN)
-	struct termios tc, saved;
-	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
-
-	/* Disable echo to terminal while probing */
-	tcgetattr(STDERR_FILENO, &tc);
-	saved = tc;
-	tc.c_cflag |= (CLOCAL | CREAD);
-	tc.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-	tcsetattr(STDERR_FILENO, TCSANOW, &tc);
-
-	/*
-	 * Save cursor pos+attr
-	 * Diable top+bottom margins
-	 * Set cursor at the far bottom,right pos
-	 * Query term for resulting pos
-	 */
-	fprintf(stderr, "\e7" "\e[r" "\e[999;999H" "\e[6n");
-
-	/*
-	 * Wait here for terminal to echo back \e[row,lineR ...
-	 */
-	if (poll(&fd, 1, 300) <= 0 || scanf("\e[%d;%dR", row, col) != 2) {
-		*row = 24;
-		*col = 80;
-	}
-
-	/*
-	 * Restore above saved cursor pos+attr
-	 */
-	fprintf(stderr, "\e8");
-
-	/* Restore terminal */
-	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
-
-	return;
-#else
-	*row = 24;
-	*col = 80;
-#endif
 }
 
 void screen_init(void)

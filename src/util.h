@@ -24,12 +24,19 @@
 #ifndef FINIT_UTIL_H_
 #define FINIT_UTIL_H_
 
-#define SCREEN_WIDTH screen_cols
-#include <lite/conio.h>
+#include "config.h"
+#ifdef HAVE_TERMIOS_H		/* for screen_width() */
+#include <poll.h>
+#include <stdio.h>
+#include <termios.h>
+#endif
 
 extern int   screen_rows;
 extern int   screen_cols;
 extern char *prognm;
+
+#define SCREEN_WIDTH screen_cols
+#include <lite/conio.h>
 
 char *progname     (char *arg0);
 void  do_sleep     (unsigned int sec);
