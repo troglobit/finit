@@ -358,7 +358,7 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 	}
 
 	if (MATCH_CMD(line, "tty ", x)) {
-		tty_register(strip_line(x));
+		tty_register(strip_line(x), mtime);
 		return;
 	}
 }
@@ -462,6 +462,7 @@ void conf_reload_dynamic(void)
 
 	/* Mark and sweep */
 	svc_mark_dynamic();
+	tty_mark();
 
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {

@@ -43,9 +43,48 @@ static pid_t fallback = 0;
 #endif
 static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
+void tty_mark(void)
+{
+	tty_node_t *tty;
+
+	LIST_FOREACH(tty, &tty_list, link) {
+		if (tty->mtime.tv_sec)
+			tty->dirty = -1;
+	}
+}
+
+void tty_check(tty_node_t *tty, struct timeval *mtime)
+{
+	if (mtime && timercmp(&tty->mtime, mtime, !=))
+		tty->dirty = 1;	/* Modified, restart */
+	else
+		tty->dirty = 0;	/* Not modified */
+
+	/* Update mtime, if given */
+	tty->mtime.tv_sec  = mtime ? mtime->tv_sec  : 0;
+	tty->mtime.tv_usec = mtime ? mtime->tv_usec : 0;
+}
+
+void tty_sweep(void)
+{
+	tty_node_t *tty, *tmp;
+
+	LIST_FOREACH_SAFE(tty, &tty_list, link, tmp) {
+		if (tty->mtime.tv_sec && tty->dirty) {
+			_d("TTY %s dirty, stopping ...", tty->data.name);
+			tty_stop(&tty->data);
+
+			if (tty->dirty == -1) {
+				_d("TTY %s removed, cleaning up.", tty->data.name);
+				LIST_REMOVE(tty, link);
+				tty_unregister(tty);
+			}
+		}
+	}
+}
 
 /* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear] */
-int tty_register(char *line)
+int tty_register(char *line, struct timeval *mtime)
 {
 	tty_node_t *entry;
 	int         insert = 0, noclear = 0;
@@ -53,7 +92,7 @@ int tty_register(char *line)
 	char       *runlevels = NULL, *term = NULL;
 
 	if (!line) {
-		_e("Invalid input argument");
+		_e("Missing argument");
 		return errno = EINVAL;
 	}
 
@@ -96,6 +135,27 @@ int tty_register(char *line)
 
 	if (insert)
 		LIST_INSERT_HEAD(&tty_list, entry, link);
+
+	tty_check(entry, mtime);
+	_d("TTY %s is %sdirty", dev, entry->dirty ? "" : "NOT ");
+
+	return 0;
+}
+
+int tty_unregister(tty_node_t *tty)
+{
+	if (!tty) {
+		_e("Missing argument");
+		return errno = EINVAL;
+	}
+
+	if (tty->data.name)
+		free(tty->data.name);
+	if (tty->data.baud)
+		free(tty->data.baud);
+	if (tty->data.term)
+		free(tty->data.term);
+	free(tty);
 
 	return 0;
 }
@@ -169,7 +229,7 @@ static char *canonicalize(char *tty)
 	return path;
 }
 
-int tty_check(char *dev)
+static int tty_exist(char *dev)
 {
 	int fd;
 	struct termios c;
@@ -210,7 +270,7 @@ void tty_start(finit_tty_t *tty)
 	if (console && !strcmp(dev, console))
 		is_console = 1;
 
-	if (tty_check(dev)) {
+	if (tty_exist(dev)) {
 		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
 		return;
 	}
@@ -307,6 +367,25 @@ int tty_respawn(pid_t pid)
 		tty_start(&entry->data);
 
 	return 1;
+}
+
+/*
+ * Called after reload of /etc/finit.d/, stop/start TTYs
+ */
+void tty_reload(void)
+{
+	tty_node_t *tty;
+
+	tty_sweep();
+
+	LIST_FOREACH(tty, &tty_list, link) {
+		if (!tty_enabled(&tty->data))
+			tty_stop(&tty->data);
+		else
+			tty_start(&tty->data);
+
+		tty->dirty = 0;
+	}
 }
 
 /* Start all TTYs that exist in the system and are allowed at this runlevel */

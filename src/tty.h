@@ -43,11 +43,22 @@ typedef struct {
 typedef struct tty_node {
 	LIST_ENTRY(tty_node) link;
 	finit_tty_t data;
+
+	/* XXX: Yes, TTYs should be refactored into a separate SVC type. */
+	struct timeval mtime;          /* Modification time for .conf from /etc/finit.d/ */
+	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,
+					* or -1 when marked for removal */
 } tty_node_t;
 
 //extern LIST_HEAD(, tty_node) tty_list;
 
-int	    tty_register    (char *line);
+void	    tty_mark	    (void);
+void	    tty_check	    (tty_node_t *tty, struct timeval *mtime);
+void	    tty_sweep	    (void);
+
+int	    tty_register    (char *line, struct timeval *mtime);
+int	    tty_unregister  (tty_node_t *tty);
+
 tty_node_t *tty_find	    (char *dev);
 size_t	    tty_num	    (void);
 size_t      tty_num_active  (void);
@@ -56,6 +67,7 @@ void	    tty_start	    (finit_tty_t *tty);
 void	    tty_stop	    (finit_tty_t *tty);
 int	    tty_enabled	    (finit_tty_t *tty);
 int	    tty_respawn	    (pid_t pid);
+void	    tty_reload      (void);
 void	    tty_runlevel    (void);
 
 #endif /* FINIT_TTY_H_ */
