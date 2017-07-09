@@ -223,9 +223,13 @@ void tty_stop(finit_tty_t *tty)
 	if (!tty->pid)
 		return;
 
+	/*
+	 * XXX: TTY handling should be refactored to regular services,
+	 * XXX: that way we could rely on the state machine to properly
+	 * XXX: send SIGTERM, wait for max 2 sec to collect PID before
+	 * XXX: sending SIGKILL.
+	 */
 	_d("Stopping TTY %s", tty->name);
-	kill(tty->pid, SIGTERM);
-	do_sleep(2);
 	kill(tty->pid, SIGKILL);
 	waitpid(tty->pid, NULL, 0);
 	tty->pid = 0;
