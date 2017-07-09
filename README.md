@@ -151,7 +151,6 @@ up the TTY, optionally clearing it, and waits for user input before
 handing over to `/bin/login`, which handles all nasty bits with PAM etc.
 
 ```conf
-# /etc/finit.conf
 tty [12345] /dev/tty1    38400  linux
 tty [12345] /dev/ttyAMA0 115200 vt100 noclear
 ```
@@ -419,7 +418,8 @@ append="init=/sbin/finit --debug"
 To debug startup issues, in particular issues with getty/login, try
 `configure --enable-fallback-shell`.  When no TTYs are detected, and
 Finit is configured with this option, Finit will try to start a bare
-`/bin/sh` on the boot console.
+`/bin/sh` on the boot console.  Remember, this is only for debugging
+and would leave your production system potentially wide open.
 
 
 Origin & References

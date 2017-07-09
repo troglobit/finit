@@ -136,15 +136,20 @@ Syntax:
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
 
-* `tty [LVLS] <DEV> [BAUD] [TERM] [noclear]`
-  Start a getty on the given TTY device DEV, in the given runlevels.  If
-  no tty setting is given in `finit.conf` no login is possible.  Use the
-  `service` stanza to start a stand-alone shell for really bare bones
-  systems.
+* `tty [LVLS] <DEV> [BAUD] [TERM] [noclear]`  
+  Start the built-in getty on the given TTY device DEV, in the given
+  runlevels.  Default baud rate is `38400`.
 
-  Finit comes with a lightweight built-in getty, which after it has
-  opened a TTY and the user has input a username, calls `/bin/login`
-  like any other getty.
+```conf
+        tty [12345] /dev/ttyAMA0 115200 noclear
+```
+
+  On really bare bones systems Finit offers a fallback shell, but one
+  can also use the `service` stanza to start a stand-alone shell:
+
+```shell
+        configure --enable-fallback-shell
+```
 
 * `console <DEV>`  
   Use this, along with a matching `tty DEV` line, to mark this TTY as a
