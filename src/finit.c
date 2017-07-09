@@ -434,8 +434,8 @@ int main(int argc, char* argv[])
 	/* Enable silent mode before starting TTYs */
 	log_silent();
 
-	/* Start TTYs */
-	tty_runlevel(runlevel);
+	/* Delayed start of TTYs at bootstrap */
+	tty_runlevel();
 
 	/* Start new initctl API responder */
 	api_init(&loop);

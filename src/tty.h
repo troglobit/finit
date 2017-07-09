@@ -54,9 +54,9 @@ size_t      tty_num_active  (void);
 tty_node_t *tty_find_by_pid (pid_t pid);
 void	    tty_start	    (finit_tty_t *tty);
 void	    tty_stop	    (finit_tty_t *tty);
-int	    tty_enabled	    (finit_tty_t *tty, int runlevel);
+int	    tty_enabled	    (finit_tty_t *tty);
 int	    tty_respawn	    (pid_t pid);
-void	    tty_runlevel    (int runlevel);
+void	    tty_runlevel    (void);
 
 #endif /* FINIT_TTY_H_ */
 

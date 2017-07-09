@@ -72,7 +72,7 @@ static void watcher(void *arg, int fd, int events)
 
 		snprintf(name, sizeof(name), "/dev/%s", notified->name);
 		entry = tty_find(name);
-		if (entry && tty_enabled(&entry->data, runlevel)) {
+		if (entry && tty_enabled(&entry->data)) {
 			if (notified->mask & IN_CREATE)
 				tty_start(&entry->data);
 			else if (entry->data.pid)

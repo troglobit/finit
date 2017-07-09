@@ -235,7 +235,7 @@ void tty_stop(finit_tty_t *tty)
 	tty->pid = 0;
 }
 
-int tty_enabled(finit_tty_t *tty, int runlevel)
+int tty_enabled(finit_tty_t *tty)
 {
 	if (!tty)
 		return 0;
@@ -301,7 +301,7 @@ int tty_respawn(pid_t pid)
 	/* Clear PID to be able to respawn it. */
 	entry->data.pid = 0;
 
-	if (!tty_enabled(&entry->data, runlevel))
+	if (!tty_enabled(&entry->data))
 		tty_stop(&entry->data);
 	else
 		tty_start(&entry->data);
@@ -310,12 +310,12 @@ int tty_respawn(pid_t pid)
 }
 
 /* Start all TTYs that exist in the system and are allowed at this runlevel */
-void tty_runlevel(int runlevel)
+void tty_runlevel(void)
 {
 	tty_node_t *entry;
 
 	LIST_FOREACH(entry, &tty_list, link) {
-		if (!tty_enabled(&entry->data, runlevel))
+		if (!tty_enabled(&entry->data))
 			tty_stop(&entry->data);
 		else
 			tty_start(&entry->data);

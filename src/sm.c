@@ -181,7 +181,7 @@ restart:
 
 		/* No TTYs run at bootstrap, they have a delayed start. */
 		if (prevlevel > 0)
-			tty_runlevel(runlevel);
+			tty_runlevel();
 
 		sm->state = SM_RUNNING_STATE;
 		break;
