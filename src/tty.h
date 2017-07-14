@@ -67,7 +67,7 @@ void	    tty_start	    (finit_tty_t *tty);
 void	    tty_stop	    (finit_tty_t *tty);
 int	    tty_enabled	    (finit_tty_t *tty);
 int	    tty_respawn	    (pid_t pid);
-void	    tty_reload      (void);
+void	    tty_reload      (char *dev);
 void	    tty_runlevel    (void);
 
 #endif /* FINIT_TTY_H_ */

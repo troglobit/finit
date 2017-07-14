@@ -374,9 +374,19 @@ int tty_respawn(pid_t pid)
 /*
  * Called after reload of /etc/finit.d/, stop/start TTYs
  */
-void tty_reload(void)
+void tty_reload(char *dev)
 {
 	tty_node_t *tty;
+
+	if (dev) {
+		tty = tty_find(dev);
+		if (!tty)
+			logit(LOG_WARNING, "No TTY registered for %s", dev);
+		else
+			tty_action(tty);
+
+		return;
+	}
 
 	tty_sweep();
 

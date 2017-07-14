@@ -196,7 +196,7 @@ restart:
 		sm->in_teardown = 1;
 		cond_reload();
 		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
-		tty_reload();
+		tty_reload(NULL);
 
 		sm->state = SM_RELOAD_WAIT_STATE;
 		break;
