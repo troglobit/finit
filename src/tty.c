@@ -343,26 +343,30 @@ int tty_fallback(pid_t lost)
 	return 0;
 }
 
+static void tty_action(tty_node_t *tty)
+{
+	if (!tty_enabled(&tty->data))
+		tty_stop(&tty->data);
+	else
+		tty_start(&tty->data);
+}
+
 /*
  * TTY monitor, called by service_monitor()
  */
 int tty_respawn(pid_t pid)
 {
-	tty_node_t *entry = tty_find_by_pid(pid);
+	tty_node_t *tty = tty_find_by_pid(pid);
 
-	if (!entry)
+	if (!tty)
 		return tty_fallback(pid);
 
 	/* Set DEAD_PROCESS UTMP entry */
 	utmp_set_dead(pid);
 
 	/* Clear PID to be able to respawn it. */
-	entry->data.pid = 0;
-
-	if (!tty_enabled(&entry->data))
-		tty_stop(&entry->data);
-	else
-		tty_start(&entry->data);
+	tty->data.pid = 0;
+	tty_action(tty);
 
 	return 1;
 }
@@ -377,11 +381,7 @@ void tty_reload(void)
 	tty_sweep();
 
 	LIST_FOREACH(tty, &tty_list, link) {
-		if (!tty_enabled(&tty->data))
-			tty_stop(&tty->data);
-		else
-			tty_start(&tty->data);
-
+		tty_action(tty);
 		tty->dirty = 0;
 	}
 }
@@ -389,14 +389,10 @@ void tty_reload(void)
 /* Start all TTYs that exist in the system and are allowed at this runlevel */
 void tty_runlevel(void)
 {
-	tty_node_t *entry;
+	tty_node_t *tty;
 
-	LIST_FOREACH(entry, &tty_list, link) {
-		if (!tty_enabled(&entry->data))
-			tty_stop(&entry->data);
-		else
-			tty_start(&entry->data);
-	}
+	LIST_FOREACH(tty, &tty_list, link)
+		tty_action(tty);
 
 	/* Start fallback shell if enabled && no TTYs */
 	tty_fallback(tty_num_active() > 0 ? 1 : 0);
