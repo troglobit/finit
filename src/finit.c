@@ -202,6 +202,14 @@ done:
 /*
  * If everything goes south we can use this to give the operator an
  * emergency shell to debug the problem -- Finit should not crash!
+ *
+ * Note: Only use this for debugging a new Finit setup, don't use
+ *       this in production since it gives a root shell to anyone
+ *       if Finit crashes.
+ *
+ * This emergency shell steps in to prevent "Aieee, PID 1 crashed"
+ * messages from the kernel, which usually results in a reboot, so
+ * that the operator instead can debug the problem.
  */
 static void emergency_shell(void)
 {
@@ -210,7 +218,15 @@ static void emergency_shell(void)
 
 	pid = fork();
 	if (pid) {
-		waitpid(pid, NULL, 0);
+		while (1) {
+			pid_t id;
+
+			/* Reap 'em (prevents Zombies) */
+			id = waitpid(-1, NULL, WNOHANG);
+			if (id == pid)
+				break;
+		}
+
 		fprintf(stderr, "\n=> Embarrassingly, Finit has crashed.  Check /dev/kmsg for details.\n");
 		fprintf(stderr,   "=> To debug, add '--debug' to the kernel command line.\n\n");
 
