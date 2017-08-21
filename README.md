@@ -346,9 +346,8 @@ Dropbear SSH service will not be restarted if it is killed or exits.
 1       running  476     [S12345]   /sbin/watchdog -T 16 -t 2 -F /dev/watchdog
 2       running  477     [S12345]   /sbin/syslogd -n -b 3 -D
 3       running  478     [S12345]   /sbin/klogd -n
-4:1       inetd  0       [2345]     internal time allow *:37
-4:2       inetd  0       [2345]     internal time allow *:37
-4:3       inetd  0       [2345]     internal 3737 allow *:3737
+4:1       inetd  0       [2345]     internal time allow *:37,!eth0
+4:2       inetd  0       [2345]     internal time allow eth0:3737
 5:1       inetd  0       [2345]     /sbin/telnetd allow *:23 deny eth0,eth1
 5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
 6:1       inetd  0       [345]      /sbin/dropbear allow eth0:222
