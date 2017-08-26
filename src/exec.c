@@ -212,30 +212,40 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
+static void prepare_tty(char *tty, char *procname, int console)
+{
+	/* Reset signal handlers that were set by the parent process */
+	sig_unblock();
+	setsid();
+
+	/* Set INIT_PROCESS UTMP entry */
+	utmp_set_init(tty, 0);
+
+	if (console)
+		procname = "console";
+	prctl(PR_SET_NAME, procname, 0, 0, 0);
+}
+
 pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
 {
 	pid_t pid;
 
 	pid = fork();
 	if (!pid) {
-		/* Reset signal handlers that were set by the parent process */
-		sig_unblock();
-		setsid();
-
-		/* Set INIT_PROCESS UTMP entry */
-		utmp_set_init(tty, 0);
-
-		if (console)
-			prctl(PR_SET_NAME, "console", 0, 0, 0);
-		else
-			prctl(PR_SET_NAME, "finit-getty", 0, 0, 0);
-
+		prepare_tty(tty, "finit-getty", console);
 		_exit(getty(tty, speed, term, noclear, NULL));
 	}
 
 	return pid;
 }
+		/* Reset signal handlers that were set by the parent process */
 
+
+
+	}
+
+	return pid;
+}
 
 int run_parts(char *dir, char *cmd)
 {
