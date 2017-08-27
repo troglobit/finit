@@ -107,7 +107,7 @@ void tty_sweep(void)
 int tty_register(char *line, struct timeval *mtime)
 {
 	tty_node_t *entry;
-	int         i, num = 0, insert = 0, noclear = 0;
+	int         i, num = 1, insert = 0, noclear = 0;
 	char       *tok, *cmd = NULL, *args[10];
 	char             *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
@@ -122,19 +122,30 @@ int tty_register(char *line, struct timeval *mtime)
 		/* External getty */
 		cmd = tok;
 
-		tok = strtok(line, " ");
-		while (tok) {
-			if (tok[0] == '[') {
-				runlevels = &tok[0];
-			} else if (tok[0] == '/' && tok != cmd) {
-				dev = strdup(tok);
-				args[num++] = tok;
-			} else {
-				args[num++] = tok;
+		for (tok = strtok(line, " "); tok; tok = strtok(NULL, " ")) {
+			if (cmd == tok) {
+				cmd = strdup(tok);
+				continue;
 			}
 
-			tok = strtok(NULL, " ");
+			if (tok[0] == '[') {
+				runlevels = &tok[0];
+				continue;
+			}
+
+			if (tok[0] == '/' && tok != cmd)
+				dev = strdup(tok);
+
+			args[num++] = strdup(tok);
 		}
+
+		cmd = strdup(cmd);
+		tok = strrchr(cmd, '/');
+		if (!tok)
+			tok = cmd;
+		else
+			tok++;
+		args[0] = strdup(tok);
 	} else {
 		/* Built-in getty */
 		tok = strtok(line, " ");
