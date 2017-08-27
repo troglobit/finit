@@ -285,12 +285,12 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int console)
 
 			(void)write(STDERR_FILENO, msg, sizeof(msg));
 			while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
-					continue;
+				continue;
 
 			if (fexist(SYNC_STOPPED))
 				continue;
 
-			execv(cmd, args);
+			_exit(execv(cmd, args));
 		}
 
 		close(fd);
