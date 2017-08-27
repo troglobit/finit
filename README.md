@@ -86,9 +86,14 @@ inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
 # Run start scripts from this directory
 # runparts /etc/start.d
 
-# Virtual consoles to start built-in getty on
-tty [12345] /dev/tty1    115200 linux
+# Virtual consoles run BusyBox getty
+tty [12345] /sbin/getty -L 115200 /dev/tty1 linux
+tty [12345] /sbin/getty -L 115200 /dev/tty2 linux
+tty [12345] /sbin/getty -L 115200 /dev/tty3 linux
+
+# Use built-in getty for serial port and USB serial
 tty [12345] /dev/ttyAMA0 115200 vt100
+tty [12345] /dev/ttyUSB0 115200 vt100
 ```
 
 The `service` stanza, as well as `task`, `run`, `inetd` and others are

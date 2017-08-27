@@ -83,12 +83,33 @@ void tty_sweep(void)
 	}
 }
 
-/* tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear] */
+/**
+ * tty_register - Register a getty on a device
+ * @line:  Configuration, text after initial "tty"
+ * @mtime: Modification time, to propagate to lower layers
+ *
+ * A Finit tty line can use the internal getty implementation or an
+ * external one, like the BusyBox getty for instance.  This function
+ * determines which one to use based on a leading '/dev' prefix.  If
+ * a leading '/dev' is encountered the remaining options must be in
+ * the following sequence:
+ *
+ *     tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear]
+ *
+ * Otherwise the leading prefix must be the full path to an existing
+ * getty implementation, with it's arguments following:
+ *
+ *     tty [!1-9,S] </path/to/getty> [ARGS]
+ *
+ * Different getty implementations prefer the TTY device argument in
+ * different order, so take care to investigate this first.
+ */
 int tty_register(char *line, struct timeval *mtime)
 {
 	tty_node_t *entry;
-	int         insert = 0, noclear = 0;
-	char       *tok, *dev = NULL, *baud = NULL;
+	int         i, num = 1, insert = 0, noclear = 0;
+	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
+	char             *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
 
 	if (!line) {
@@ -96,24 +117,58 @@ int tty_register(char *line, struct timeval *mtime)
 		return errno = EINVAL;
 	}
 
-	tok = strtok(line, " ");
-	while (tok) {
-		if (tok[0] == '[')
-			runlevels = &tok[0];
-		else if (tok[0] == '/')
-			dev = tok;
-		else if (isdigit(tok[0]))
-			baud = tok;
-		else if (!strcmp(tok, "noclear"))
-			noclear = 1;
-		else
-			term = tok;
+	tok = strchr(line, '/');
+	if (tok && strncmp(tok, "/dev", 4)) {
+		/* External getty */
+		cmd = tok;
 
-		tok = strtok(NULL, " ");
+		for (tok = strtok(line, " "); tok; tok = strtok(NULL, " ")) {
+			if (cmd == tok) {
+				cmd = strdup(tok);
+				continue;
+			}
+
+			if (tok[0] == '[') {
+				runlevels = &tok[0];
+				continue;
+			}
+
+			if (tok[0] == '/' && tok != cmd)
+				dev = strdup(tok);
+
+			args[num++] = strdup(tok);
+			if (num >= TTY_MAX_ARGS)
+				break;
+		}
+
+		cmd = strdup(cmd);
+		tok = strrchr(cmd, '/');
+		if (!tok)
+			tok = cmd;
+		else
+			tok++;
+		args[0] = strdup(tok);
+	} else {
+		/* Built-in getty */
+		tok = strtok(line, " ");
+		while (tok) {
+			if (tok[0] == '[')
+				runlevels = &tok[0];
+			else if (tok[0] == '/')
+				dev = strdup(tok);
+			else if (isdigit(tok[0]))
+				baud = tok;
+			else if (!strcmp(tok, "noclear"))
+				noclear = 1;
+			else
+				term = tok;
+
+			tok = strtok(NULL, " ");
+		}
 	}
 
 	if (!dev) {
-		_e("Incomplete tty, cannot register");
+		_e("Incomplete tty, no device given, cannot register.");
 		return errno = EINVAL;
 	}
 
@@ -121,15 +176,24 @@ int tty_register(char *line, struct timeval *mtime)
 	if (!entry) {
 		insert = 1;
 		entry = calloc(1, sizeof(*entry));
-		if (!entry)
+		if (!entry) {
+			free(dev);
 			return errno = ENOMEM;
+		}
 	}
 
-	entry->data.name = strdup(dev);
+	entry->data.name = dev;
 	entry->data.baud = baud ? strdup(baud) : NULL;
 	entry->data.term = term ? strdup(term) : NULL;
 	entry->data.noclear = noclear;
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
+
+	/* External getty */
+	entry->data.cmd  = cmd;
+	for (i = 0; i < num && i < TTY_MAX_ARGS; i++)
+		entry->data.args[i] = args[i];
+	entry->data.args[++i] = NULL;
+
 	_d("Registering tty %s at %s baud with term=%s on runlevels %s",
 	   dev, baud ?: "NULL", term ?: "N/A", runlevels ?: "[2-5]");
 
@@ -155,6 +219,15 @@ int tty_unregister(tty_node_t *tty)
 		free(tty->data.baud);
 	if (tty->data.term)
 		free(tty->data.term);
+	if (tty->data.cmd) {
+		int i;
+
+		free(tty->data.cmd);
+		for (i = 0; tty->data.args[i] && i < TTY_MAX_ARGS; i++) {
+			free(tty->data.args[i]);
+			tty->data.args[i] = NULL;
+		}
+	}
 	free(tty);
 
 	return 0;
@@ -275,7 +348,10 @@ void tty_start(finit_tty_t *tty)
 		return;
 	}
 
-	tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, is_console);
+	if (!tty->cmd)
+		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, is_console);
+	else
+		tty->pid = run_getty2(dev, tty->cmd, tty->args, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)

@@ -137,11 +137,22 @@ Syntax:
   Include another configuration file.  Absolute path required.
 
 * `tty [LVLS] <DEV> [BAUD] [TERM] [noclear]`  
-  Start the built-in getty on the given TTY device DEV, in the given
-  runlevels.  Default baud rate is `38400`.
+  `tty [LVLS] <CMD> <ARGS>`  
+  The first variant of this option uses the built-in getty on the given
+  TTY device DEV, in the given runlevels.  Default baud rate is `38400`.
 
+  **Example:**
 ```conf
         tty [12345] /dev/ttyAMA0 115200 noclear
+```
+
+  The second variant is for using an external getty, like agetty or the
+  BusyBox getty.  There are no default settings for this variant, but a
+  word of caution: *you have give the absolute path to the TTY*.
+
+  **Example:**
+```conf
+        tty [12345] /sbin/getty -L 115200 /dev/ttyAMA0 vt100
 ```
 
   On really bare bones systems Finit offers a fallback shell, but one

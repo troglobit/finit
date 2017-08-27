@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 
+#define TTY_MAX_ARGS 16
 #define EVENT_SIZE ((sizeof(struct inotify_event) + NAME_MAX + 1))
 
 typedef struct {
@@ -36,6 +37,9 @@ typedef struct {
 	char  *term;
 	int    noclear;
 	int    runlevels;
+
+	char  *cmd;		/* NULL when running built-in getty */
+	char  *args[TTY_MAX_ARGS];
 
 	int    pid;
 } finit_tty_t;

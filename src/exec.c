@@ -27,6 +27,7 @@
 #include <ctype.h>		/* isdigit() */
 #include <dirent.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
 #include <lite/lite.h>
@@ -212,30 +213,93 @@ int run_interactive(char *cmd, char *fmt, ...)
 	return status;
 }
 
+static void prepare_tty(char *tty, char *procname, int console)
+{
+	/* Reset signal handlers that were set by the parent process */
+	sig_unblock();
+	setsid();
+
+	/* Set INIT_PROCESS UTMP entry */
+	utmp_set_init(tty, 0);
+
+	if (console)
+		procname = "console";
+	prctl(PR_SET_NAME, procname, 0, 0, 0);
+}
+
 pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
 {
 	pid_t pid;
 
 	pid = fork();
 	if (!pid) {
-		/* Reset signal handlers that were set by the parent process */
-		sig_unblock();
-		setsid();
-
-		/* Set INIT_PROCESS UTMP entry */
-		utmp_set_init(tty, 0);
-
-		if (console)
-			prctl(PR_SET_NAME, "console", 0, 0, 0);
-		else
-			prctl(PR_SET_NAME, "finit-getty", 0, 0, 0);
-
+		prepare_tty(tty, "finit-getty", console);
 		_exit(getty(tty, speed, term, noclear, NULL));
 	}
 
 	return pid;
 }
 
+pid_t run_getty2(char *tty, char *cmd, char *args[], int console)
+{
+	pid_t pid;
+
+	pid = fork();
+	if (!pid) {
+		int  i, fd;
+		struct sigaction sa;
+
+		/* Reset signal handlers that were set by the parent process */
+		for (i = 1; i < NSIG; i++)
+			DFLSIG(sa, i, 0);
+
+		/* Detach from initial controlling TTY */
+		vhangup();
+
+		close(STDERR_FILENO);
+		close(STDOUT_FILENO);
+		close(STDIN_FILENO);
+
+		/* Attach TTY to console */
+		fd = open(tty, O_RDWR);
+		if (fd != STDIN_FILENO)
+			exit(1);
+
+		dup2(fd, STDIN_FILENO);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+
+		prepare_tty(tty, "getty", console);
+
+		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
+			_pe("Failed TIOCSCTTY");
+
+		while (!fexist(SYNC_SHUTDOWN)) {
+			char c;
+			static const char msg[] = "\nPlease press Enter to activate this console.";
+
+			if (fexist(SYNC_STOPPED)) {
+				sleep(1);
+				continue;
+			}
+
+			(void)write(STDERR_FILENO, msg, sizeof(msg));
+			while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+				continue;
+
+			if (fexist(SYNC_STOPPED))
+				continue;
+
+			_exit(execv(cmd, args));
+		}
+
+		close(fd);
+		vhangup();
+		exit(0);
+	}
+
+	return pid;
+}
 
 int run_parts(char *dir, char *cmd)
 {
