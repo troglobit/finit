@@ -37,6 +37,9 @@ typedef struct {
 	int    noclear;
 	int    runlevels;
 
+	char  *cmd;		/* NULL when running built-in getty */
+	char  *args[10];
+
 	int    pid;
 } finit_tty_t;
 
