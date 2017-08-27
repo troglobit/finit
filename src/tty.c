@@ -108,7 +108,7 @@ int tty_register(char *line, struct timeval *mtime)
 {
 	tty_node_t *entry;
 	int         i, num = 1, insert = 0, noclear = 0;
-	char       *tok, *cmd = NULL, *args[10];
+	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
 	char             *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
 
@@ -137,6 +137,8 @@ int tty_register(char *line, struct timeval *mtime)
 				dev = strdup(tok);
 
 			args[num++] = strdup(tok);
+			if (num >= TTY_MAX_ARGS)
+				break;
 		}
 
 		cmd = strdup(cmd);
@@ -188,7 +190,7 @@ int tty_register(char *line, struct timeval *mtime)
 
 	/* External getty */
 	entry->data.cmd  = cmd;
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num && i < TTY_MAX_ARGS; i++)
 		entry->data.args[i] = args[i];
 	entry->data.args[++i] = NULL;
 
@@ -217,6 +219,15 @@ int tty_unregister(tty_node_t *tty)
 		free(tty->data.baud);
 	if (tty->data.term)
 		free(tty->data.term);
+	if (tty->data.cmd) {
+		int i;
+
+		free(tty->data.cmd);
+		for (i = 0; tty->data.args[i] && i < TTY_MAX_ARGS; i++) {
+			free(tty->data.args[i]);
+			tty->data.args[i] = NULL;
+		}
+	}
 	free(tty);
 
 	return 0;
