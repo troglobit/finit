@@ -43,6 +43,27 @@ static pid_t fallback = 0;
 #endif
 static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
+static char *canonicalize(char *tty)
+{
+	struct stat st;
+	static char path[80];
+
+	if (!tty)
+		return NULL;
+
+	strlcpy(path, tty, sizeof(path));
+	if (stat(path, &st)) {
+		snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
+		if (stat(path, &st))
+			return NULL;
+	}
+
+	if (!S_ISCHR(st.st_mode))
+		return NULL;
+
+	return path;
+}
+
 void tty_mark(void)
 {
 	tty_node_t *tty;
@@ -107,7 +128,8 @@ void tty_sweep(void)
 int tty_register(char *line, struct timeval *mtime)
 {
 	tty_node_t *entry;
-	int         i, num = 1, insert = 0, noclear = 0;
+	int         insert = 0, noclear = 0;
+	size_t      i, num = 0;
 	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
 	char             *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
@@ -116,61 +138,73 @@ int tty_register(char *line, struct timeval *mtime)
 		_e("Missing argument");
 		return errno = EINVAL;
 	}
+	fprintf(stderr, "Parsing TTY line: %s\n", line);
 
-	tok = strchr(line, '/');
-	if (tok && strncmp(tok, "/dev", 4)) {
-		/* External getty */
-		cmd = tok;
+	/*
+	 * Split line in separate arguments.  For an external getty
+	 * this is used with execv(), for the built-in it simplifies
+	 * further translation.
+	 */
+	tok = strtok(line, " \t");
+	while (tok && num < NELEMS(args)) {
+		args[num++] = tok;
+		tok = strtok(NULL, " \t");
+	}
 
-		for (tok = strtok(line, " "); tok; tok = strtok(NULL, " ")) {
-			if (cmd == tok) {
-				cmd = strdup(tok);
-				continue;
-			}
+	/* Iterate over all args, figure out if built-in or external */
+	for (i = 0; i < num; i++) {
+		if (!dev && !cmd) {
+			if (args[i][0] == '[')
+				runlevels = line;
+			if (!strncmp(args[i], "/dev", 4))
+				dev = args[i];
+			if (!strncmp(args[i], "tty", 3))
+				dev = args[i];
+			if (!access(args[i], X_OK))
+				cmd = strdup(args[i]);
 
-			if (tok[0] == '[') {
-				runlevels = &tok[0];
-				continue;
-			}
-
-			if (tok[0] == '/' && tok != cmd)
-				dev = strdup(tok);
-
-			args[num++] = strdup(tok);
-			if (num >= TTY_MAX_ARGS)
-				break;
+			/* The first arg must be one of the above */
+			continue;
 		}
 
-		cmd = strdup(cmd);
-		tok = strrchr(cmd, '/');
-		if (!tok)
-			tok = cmd;
-		else
-			tok++;
-		args[0] = strdup(tok);
-	} else {
-		/* Built-in getty */
-		tok = strtok(line, " ");
-		while (tok) {
-			if (tok[0] == '[')
-				runlevels = &tok[0];
-			else if (tok[0] == '/')
-				dev = strdup(tok);
-			else if (isdigit(tok[0]))
+		/* Built-in getty args */
+		if (dev) {
+			if (isdigit(args[i][0]))
 				baud = tok;
-			else if (!strcmp(tok, "noclear"))
+			else if (!strcmp(args[i], "noclear"))
 				noclear = 1;
 			else
 				term = tok;
+		}
 
-			tok = strtok(NULL, " ");
+		/* External getty, figure out the device */
+		if (cmd) {
+			if (!strncmp(args[i], "/dev", 4)) {
+				dev = args[i];
+				break;
+			}
+
+			if (!strncmp(args[i], "tty", 3)) {
+				dev = args[i];
+				break;
+			}
 		}
 	}
 
 	if (!dev) {
-		_e("Incomplete tty, no device given, cannot register.");
+	error:
+		_e("Incomplete or non-existing TTY device given, cannot register.");
+		if (cmd)
+			free(cmd);
+
 		return errno = EINVAL;
 	}
+
+	/* Ensure all getty (built-in + external) are registered with absolute path */
+	dev = canonicalize(dev);
+	if (!dev)
+		goto error;
+	dev = strdup(dev);
 
 	entry = tty_find(dev);
 	if (!entry) {
@@ -189,13 +223,24 @@ int tty_register(char *line, struct timeval *mtime)
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
 
 	/* External getty */
-	entry->data.cmd  = cmd;
-	for (i = 0; i < num && i < TTY_MAX_ARGS; i++)
-		entry->data.args[i] = args[i];
-	entry->data.args[++i] = NULL;
+	if (cmd) {
+		int j = 0;
 
-	_d("Registering tty %s at %s baud with term=%s on runlevels %s",
-	   dev, baud ?: "NULL", term ?: "N/A", runlevels ?: "[2-5]");
+		tok = strrchr(cmd, '/');
+		if (!tok)
+			tok = cmd;
+		else
+			tok++;
+		entry->data.cmd = cmd;
+		args[1] = strdup(tok);
+
+		for (i = 1; i < num; i++)
+			entry->data.args[j++] = strdup(args[i]);
+		entry->data.args[++j] = NULL;
+	}
+
+	_d("Registering %s getty on TTY %s at %s baud with term %s on runlevels %s",
+	   cmd ? "external" : "built-in", dev, baud ?: "NULL", term ?: "N/A", runlevels ?: "[2-5]");
 
 	if (insert)
 		LIST_INSERT_HEAD(&tty_list, entry, link);
@@ -279,27 +324,6 @@ tty_node_t *tty_find_by_pid(pid_t pid)
 	}
 
 	return NULL;
-}
-
-static char *canonicalize(char *tty)
-{
-	struct stat st;
-	static char path[80];
-
-	if (!tty)
-		return NULL;
-
-	strlcpy(path, tty, sizeof(path));
-	if (stat(path, &st)) {
-		snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
-		if (stat(path, &st))
-			return NULL;
-	}
-
-	if (!S_ISCHR(st.st_mode))
-		return NULL;
-
-	return path;
 }
 
 static int tty_exist(char *dev)
