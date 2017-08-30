@@ -36,6 +36,7 @@ static void setup(void *arg)
 	int fd;
 #endif
 	char line[LINE_SIZE];
+	const char *username = "nobody";
 
 	umask(0);
 

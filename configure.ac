@@ -110,10 +110,6 @@ AC_ARG_WITH(console,
         AS_HELP_STRING([--with-console=DEV], [Console to use, default: /dev/console]),
 	[console=$withval], [console=/dev/console])
 
-AC_ARG_WITH(username,
-        AS_HELP_STRING([--with-username=USER], [User for 'startx' .conf option, default: root]),
-	[username=$withval], [username=root])
-
 AC_ARG_WITH(hostname,
         AS_HELP_STRING([--with-hostname=NAME], [If /etc/hostname is missing, default: noname]),
 	[hostname=$withval], [hostname=noname])
@@ -190,11 +186,6 @@ AS_IF([test "x$with_console" != "xno"], [
 		console=/dev/console])])
 AC_DEFINE_UNQUOTED(CONSOLE, "$console", [Default console to use])
 
-AS_IF([test "x$with_username" != "xno"], [
-	AS_IF([test "x$username" = "xyes"], [
-		username=root])])
-AC_DEFINE_UNQUOTED(DEFUSER, "$username", [Used for startx .conf option])
-
 AS_IF([test "x$with_hostname" != "xno"], [
 	AS_IF([test "x$hostname" = "xyes"], [
 		hostname=noname])])
@@ -247,7 +238,6 @@ Optional features:
   Remount / RW at boot..: $enable_rw_rootfs
   Traditional progress..: $enable_progress
   Default console dev...: $console
-  Default user..........: $username
   Default hostname......: $hostname
   Default runlevel......: $runlevel
 

@@ -54,7 +54,6 @@ int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
 char *sdown     = NULL;
 char *network   = NULL;
-char *username  = NULL;
 char *hostname  = NULL;
 char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;

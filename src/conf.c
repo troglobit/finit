@@ -226,12 +226,6 @@ static void parse_static(char *line)
 	char *x;
 	char cmd[CMD_SIZE];
 
-	if (MATCH_CMD(line, "user ", x)) {
-		if (username) free(username);
-		username = strdup(strip_line(x));
-		return;
-	}
-
 	if (MATCH_CMD(line, "host ", x)) {
 		if (hostname) free(hostname);
 		hostname = strdup(strip_line(x));
@@ -280,11 +274,6 @@ static void parse_static(char *line)
 		}
 
 		parse_conf(cmd);
-		return;
-	}
-
-	if (MATCH_CMD(line, "startx ", x)) {
-		service_register(SVC_TYPE_SERVICE, strip_line(x), NULL, username);
 		return;
 	}
 
@@ -529,7 +518,6 @@ void conf_reload_dynamic(void)
 
 int conf_parse_config(void)
 {
-	username = strdup(DEFUSER);
 	hostname = strdup(DEFHOST);
 
 	return parse_conf(FINIT_CONF);
