@@ -51,7 +51,7 @@ the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
 
 ```conf
 # Fallback if /etc/hostname is missing
-host wopr
+host default
 
 # Runlevel to start after bootstrap, runlevel 'S'
 runlevel 2
@@ -64,13 +64,13 @@ service   [2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEE
 
 # For multiple instances of the same service, add :ID somewhere between
 # the service/run/task keyword and the command.
-service :1 [2345] /sbin/merecat -n -p 80   /var/www -- Web server
-service :2 [2345] /sbin/merecat -n -p 8080 /var/www -- Old web server
+service :1 [2345] /sbin/merecat -n -p 80   /var/www          -- Web server
+service :2 [2345] /sbin/merecat -n -p 8080 /var/www          -- Old web server
 
 # Alternative method instead of below runparts, can also use /etc/rc.local
-#task [S] /etc/init.d/keyboard-setup start -- Setting up preliminary keymap
-#task [S] /etc/init.d/acpid start          -- Starting ACPI Daemon
-#task [S] /etc/init.d/kbd start            -- Preparing console
+#task [S] /etc/init.d/keyboard-setup start                   -- Setting up preliminary keymap
+#task [S] /etc/init.d/acpid start                            -- Starting ACPI Daemon
+#task [S] /etc/init.d/kbd start                              -- Preparing console
 
 # Inetd services to start on demand, with alternate ports and filtering
 inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
@@ -92,8 +92,8 @@ tty [12345] /sbin/getty -L 115200 /dev/tty2 linux
 tty [12345] /sbin/getty -L 115200 /dev/tty3 linux
 
 # Use built-in getty for serial port and USB serial
-tty [12345] /dev/ttyAMA0 115200 vt100
-tty [12345] /dev/ttyUSB0 115200 vt100
+tty [12345] /dev/ttyAMA0 115200
+tty [12345] /dev/ttyUSB0 115200
 ```
 
 The `service` stanza, as well as `task`, `run`, `inetd` and others are
