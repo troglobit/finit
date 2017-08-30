@@ -138,7 +138,6 @@ int tty_register(char *line, struct timeval *mtime)
 		_e("Missing argument");
 		return errno = EINVAL;
 	}
-	fprintf(stderr, "Parsing TTY line: %s\n", line);
 
 	/*
 	 * Split line in separate arguments.  For an external getty
