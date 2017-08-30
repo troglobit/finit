@@ -87,7 +87,8 @@ static void stty(int fd, speed_t speed, int noclear)
 	term.c_iflag      = ICRNL|IXON|IXOFF;
 	term.c_oflag      = OPOST|ONLCR;
 	term.c_cflag     |= CS8|CREAD|HUPCL|CBAUDEX;
-	term.c_lflag     |= ISIG|ICANON|ECHO|ECHOE|ECHOK|ECHOKE;
+	term.c_lflag     |= ICANON|ECHO|ECHOE|ECHOK|ECHOKE;
+	term.c_lflag     &= ~ISIG;
 
 	/* Reset special characters to defaults */
 	term.c_cc[VINTR]  = CTRL('C');
@@ -320,13 +321,17 @@ int getty(char *tty, char *baud, char *term, int noclear, char *user)
 		warn("Failed TIOCSCTTY");
 
 	/*
-	 * Don't let QUIT dump core.
+	 * Ignore a few signals, needed to prevent Ctrl-C at login:
+	 * prompt and to prevent QUIT from dumping core.
 	 */
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
-	sa.sa_handler = _exit;
+	sa.sa_flags   = SA_RESTART;
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGHUP,  &sa, NULL);
+	sigaction(SIGINT,  &sa, NULL);
 	sigaction(SIGQUIT, &sa, NULL);
 
+	/* Set up TTY */
 	stty(fd, speed, noclear);
 	close(fd);
 	utmp_set_login(tty, NULL);
