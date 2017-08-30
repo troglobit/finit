@@ -240,7 +240,34 @@ pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
 	return pid;
 }
 
-pid_t run_getty2(char *tty, char *cmd, char *args[], int console)
+static int activate_console(int nowait)
+{
+	if (nowait)
+		return 1;
+
+	while (!fexist(SYNC_SHUTDOWN)) {
+		char c;
+		static const char msg[] = "\nPlease press Enter to activate this console.";
+
+		if (fexist(SYNC_STOPPED)) {
+			sleep(5);
+			continue;
+		}
+
+		(void)write(STDERR_FILENO, msg, sizeof(msg));
+		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+			continue;
+
+		if (fexist(SYNC_STOPPED))
+			continue;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+pid_t run_getty2(char *tty, char *cmd, char *args[], int nowait, int console)
 {
 	pid_t pid;
 
@@ -274,24 +301,8 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int console)
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 			_pe("Failed TIOCSCTTY");
 
-		while (!fexist(SYNC_SHUTDOWN)) {
-			char c;
-			static const char msg[] = "\nPlease press Enter to activate this console.";
-
-			if (fexist(SYNC_STOPPED)) {
-				sleep(1);
-				continue;
-			}
-
-			(void)write(STDERR_FILENO, msg, sizeof(msg));
-			while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
-				continue;
-
-			if (fexist(SYNC_STOPPED))
-				continue;
-
+		if (activate_console(nowait))
 			_exit(execv(cmd, args));
-		}
 
 		close(fd);
 		vhangup();

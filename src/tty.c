@@ -115,12 +115,12 @@ void tty_sweep(void)
  * a leading '/dev' is encountered the remaining options must be in
  * the following sequence:
  *
- *     tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear]
+ *     tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear] [nowait]
  *
  * Otherwise the leading prefix must be the full path to an existing
  * getty implementation, with it's arguments following:
  *
- *     tty [!1-9,S] </path/to/getty> [ARGS]
+ *     tty [!1-9,S] </path/to/getty> [ARGS] [noclear] [nowait]
  *
  * Different getty implementations prefer the TTY device argument in
  * different order, so take care to investigate this first.
@@ -128,7 +128,7 @@ void tty_sweep(void)
 int tty_register(char *line, struct timeval *mtime)
 {
 	tty_node_t *entry;
-	int         insert = 0, noclear = 0;
+	int         insert = 0, noclear = 0, nowait = 0;
 	size_t      i, num = 0;
 	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
 	char             *dev = NULL, *baud = NULL;
@@ -146,12 +146,19 @@ int tty_register(char *line, struct timeval *mtime)
 	 */
 	tok = strtok(line, " \t");
 	while (tok && num < NELEMS(args)) {
-		args[num++] = tok;
+		if (!strcmp(tok, "noclear"))
+			noclear = 1;
+		else if (!strcmp(tok, "nowait"))
+			nowait = 1;
+		else
+			args[num++] = tok;
+
 		tok = strtok(NULL, " \t");
 	}
 
-	/* Iterate over all args, figure out if built-in or external */
+	/* Iterate over all args */
 	for (i = 0; i < num; i++) {
+		/* First, figure out if built-in or external */
 		if (!dev && !cmd) {
 			if (args[i][0] == '[')
 				runlevels = line;
@@ -168,25 +175,26 @@ int tty_register(char *line, struct timeval *mtime)
 
 		/* Built-in getty args */
 		if (dev) {
-			if (isdigit(args[i][0]))
+			if (isdigit(args[i][0])) {
 				baud = tok;
-			else if (!strcmp(args[i], "noclear"))
-				noclear = 1;
-			else
+				continue;
+			}
+
+			/*
+			 * Last arg, if not anything else, is the value
+			 * to be used for the TERM environment variable.
+			 */
+			if (i + 1 == num)
 				term = tok;
 		}
 
 		/* External getty, figure out the device */
 		if (cmd) {
-			if (!strncmp(args[i], "/dev", 4)) {
+			if (!strncmp(args[i], "/dev", 4))
 				dev = args[i];
-				break;
-			}
 
-			if (!strncmp(args[i], "tty", 3)) {
+			if (!strncmp(args[i], "tty", 3))
 				dev = args[i];
-				break;
-			}
 		}
 	}
 
@@ -219,6 +227,7 @@ int tty_register(char *line, struct timeval *mtime)
 	entry->data.baud = baud ? strdup(baud) : NULL;
 	entry->data.term = term ? strdup(term) : NULL;
 	entry->data.noclear = noclear;
+	entry->data.nowait  = nowait;
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
 
 	/* External getty */
@@ -374,7 +383,7 @@ void tty_start(finit_tty_t *tty)
 	if (!tty->cmd)
 		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, is_console);
 	else
-		tty->pid = run_getty2(dev, tty->cmd, tty->args, is_console);
+		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->nowait, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)
