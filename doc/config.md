@@ -147,12 +147,12 @@ Syntax:
 ```
 
   The second variant is for using an external getty, like agetty or the
-  BusyBox getty.  There are no default settings for this variant, but a
-  word of caution: *you have give the absolute path to the TTY*.
+  BusyBox getty.  There are no default settings for this variant.
 
   **Example:**
 ```conf
-        tty [12345] /sbin/getty -L 115200 /dev/ttyAMA0 vt100
+        tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
+        tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100
 ```
 
   On really bare bones systems Finit offers a fallback shell, but one
