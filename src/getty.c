@@ -40,6 +40,7 @@
 #define _PATH_LOGIN  "/bin/login"
 #endif
 
+#define CTL(x)   ((x) ^ 0100)
 #define print(s) (void)write(STDOUT_FILENO, s, strlen(s))
 
 
@@ -203,6 +204,14 @@ static void do_getty(char *tty, char *name, size_t len)
 
 		np = name;
 		while ((ch = readch(tty)) != '\n') {
+			if (ch == CTL('U')) {
+				while (np > name) {
+					(void)write(1, "\b \b", 3);
+					np--;
+				}
+				continue;
+			}
+
 			if (np < name + len)
 				*np++ = ch;
 		}
