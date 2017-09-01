@@ -64,7 +64,7 @@ static int readch(char *tty)
 	return ch1 & 0xFF;
 }
 
-static void stty(int fd, speed_t speed, int noclear)
+static void stty(int fd, speed_t speed)
 {
 	struct termios term;
 
@@ -99,9 +99,6 @@ static void stty(int fd, speed_t speed, int noclear)
 	term.c_cc[VKILL]  = CTRL('U');
 	term.c_cc[VERASE] = CERASE;
 	tcsetattr(fd, TCSANOW, &term);
-
-	if (!noclear)
-		print("\e[r\e[H\e[J");
 }
 
 /*
@@ -300,7 +297,7 @@ static speed_t do_parse_speed(char *baud)
 	return B0;
 }
 
-int getty(char *tty, char *baud, char *term, int noclear, char *user)
+int getty(char *tty, char *baud, char *term, char *user)
 {
 	int fd;
 	char name[30];
@@ -341,7 +338,7 @@ int getty(char *tty, char *baud, char *term, int noclear, char *user)
 	sigaction(SIGQUIT, &sa, NULL);
 
 	/* Set up TTY */
-	stty(fd, speed, noclear);
+	stty(fd, speed);
 	close(fd);
 	utmp_set_login(tty, NULL);
 

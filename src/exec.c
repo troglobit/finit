@@ -39,7 +39,7 @@
 
 #define NUM_ARGS    16
 
-int getty(char *tty, char *baud, char *term, int noclear, char *user);
+int getty(char *tty, char *baud, char *term, char *user);
 
 
 /* Wait for process completion, returns status of waitpid(2) syscall */
@@ -234,7 +234,7 @@ pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
 	pid = fork();
 	if (!pid) {
 		prepare_tty(tty, "finit-getty", console);
-		_exit(getty(tty, speed, term, noclear, NULL));
+		_exit(getty(tty, speed, term, NULL));
 	}
 
 	return pid;
