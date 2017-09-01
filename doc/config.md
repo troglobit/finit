@@ -136,30 +136,49 @@ Syntax:
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
 
-* `tty [LVLS] <DEV> [BAUD] [TERM] [noclear]`  
-  `tty [LVLS] <CMD> <ARGS>`  
+* `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [TERM]`  
+  `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`  
   The first variant of this option uses the built-in getty on the given
   TTY device DEV, in the given runlevels.  Default baud rate is `38400`.
 
   **Example:**
 ```conf
-        tty [12345] /dev/ttyAMA0 115200 noclear
+        tty [12345] /dev/ttyAMA0 115200 noclear vt220
 ```
 
   The second variant is for using an external getty, like agetty or the
-  BusyBox getty.  There are no default settings for this variant.
+  BusyBox getty.
+  
+  By default both variants *clear* the TTY and *wait* for the user to
+  press enter before starting getty.
 
   **Example:**
 ```conf
         tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
-        tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100
+        tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100 nowait
 ```
 
-  On really bare bones systems Finit offers a fallback shell, but one
-  can also use the `service` stanza to start a stand-alone shell:
+  The `noclear` option disables clearing the TTY after each session.
+  Clearing the TTY when a user logs out is usually preferable.
+  
+  The `nowait` option disables the `press Enter to activate console`
+  message before actually starting the getty program.  On small and
+  embedded systems running multiple unused getty wastes both memory
+  and CPU cycles, so `wait` is the preferred default.
+
+  Notice the ordering, the `TERM` option to the built-in getty must be
+  the last argument.
+
+  On really bare bones systems Finit offers a fallback shell:
 
 ```shell
         configure --enable-fallback-shell
+```
+
+  One can also use the `service` stanza to start a stand-alone shell:
+
+```conf
+        service [12345] /bin/sh -l
 ```
 
 * `console <DEV>`  
