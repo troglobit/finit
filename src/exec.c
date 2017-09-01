@@ -227,8 +227,11 @@ static void prepare_tty(char *tty, char *procname, int console)
 	prctl(PR_SET_NAME, procname, 0, 0, 0);
 }
 
-static int activate_console(int nowait)
+static int activate_console(int noclear, int nowait)
 {
+	if (!noclear)
+		(void)write(STDERR_FILENO, "\e[r\e[H\e[J", 9);
+
 	if (nowait)
 		return 1;
 
@@ -254,20 +257,21 @@ static int activate_console(int nowait)
 	return 0;
 }
 
-pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
+pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait, int console)
 {
 	pid_t pid;
 
 	pid = fork();
 	if (!pid) {
 		prepare_tty(tty, "finit-getty", console);
-		_exit(getty(tty, speed, term, NULL));
+		if (activate_console(noclear, nowait))
+			_exit(getty(tty, speed, term, NULL));
 	}
 
 	return pid;
 }
 
-pid_t run_getty2(char *tty, char *cmd, char *args[], int nowait, int console)
+pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, int console)
 {
 	pid_t pid;
 
@@ -301,7 +305,7 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int nowait, int console)
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 			_pe("Failed TIOCSCTTY");
 
-		if (activate_console(nowait))
+		if (activate_console(noclear, nowait))
 			_exit(execv(cmd, args));
 
 		close(fd);

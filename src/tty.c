@@ -381,9 +381,9 @@ void tty_start(finit_tty_t *tty)
 	}
 
 	if (!tty->cmd)
-		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, is_console);
+		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, is_console);
 	else
-		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->nowait, is_console);
+		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, is_console);
 }
 
 void tty_stop(finit_tty_t *tty)
