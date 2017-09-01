@@ -227,19 +227,6 @@ static void prepare_tty(char *tty, char *procname, int console)
 	prctl(PR_SET_NAME, procname, 0, 0, 0);
 }
 
-pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
-{
-	pid_t pid;
-
-	pid = fork();
-	if (!pid) {
-		prepare_tty(tty, "finit-getty", console);
-		_exit(getty(tty, speed, term, NULL));
-	}
-
-	return pid;
-}
-
 static int activate_console(int nowait)
 {
 	if (nowait)
@@ -265,6 +252,19 @@ static int activate_console(int nowait)
 	}
 
 	return 0;
+}
+
+pid_t run_getty(char *tty, char *speed, char *term, int noclear, int console)
+{
+	pid_t pid;
+
+	pid = fork();
+	if (!pid) {
+		prepare_tty(tty, "finit-getty", console);
+		_exit(getty(tty, speed, term, NULL));
+	}
+
+	return pid;
 }
 
 pid_t run_getty2(char *tty, char *cmd, char *args[], int nowait, int console)
