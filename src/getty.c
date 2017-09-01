@@ -341,6 +341,8 @@ int getty(char *tty, char *baud, char *term, char *user)
 	stty(fd, speed);
 	close(fd);
 	utmp_set_login(tty, NULL);
+	if (term)
+		setenv("TERM", term, 1);
 
 	if (!user)
 		do_getty(tty, name, sizeof(name));
