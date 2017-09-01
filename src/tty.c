@@ -115,7 +115,7 @@ void tty_sweep(void)
  * a leading '/dev' is encountered the remaining options must be in
  * the following sequence:
  *
- *     tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [TERM] [noclear] [nowait]
+ *     tty [!1-9,S] <DEV> [BAUD[,BAUD,...]] [noclear] [nowait] [TERM]
  *
  * Otherwise the leading prefix must be the full path to an existing
  * getty implementation, with it's arguments following:
@@ -176,7 +176,7 @@ int tty_register(char *line, struct timeval *mtime)
 		/* Built-in getty args */
 		if (dev) {
 			if (isdigit(args[i][0])) {
-				baud = tok;
+				baud = args[i];
 				continue;
 			}
 
@@ -185,7 +185,7 @@ int tty_register(char *line, struct timeval *mtime)
 			 * to be used for the TERM environment variable.
 			 */
 			if (i + 1 == num)
-				term = tok;
+				term = args[i];
 		}
 
 		/* External getty, figure out the device */
