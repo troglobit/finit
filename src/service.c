@@ -44,6 +44,7 @@
 
 #define RESPAWN_MAX    10	/* Prevent endless respawn of faulty services. */
 
+static void svc_set_state(svc_t *svc, svc_state_t new);
 
 /**
  * service_enabled - Should the service run?
@@ -311,7 +312,10 @@ static int service_start(svc_t *svc)
 
 	if (SVC_TYPE_RUN == svc->type) {
 		result = WEXITSTATUS(complete(svc->cmd, pid));
-		svc->pid = 0;
+		if (!svc_clean_bootstrap(svc)) {
+			svc->pid = 0;
+			svc_set_state(svc, SVC_STOPPING_STATE);
+		}
 	}
 	
 	sigprocmask(SIG_SETMASK, &omask, NULL);
