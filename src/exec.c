@@ -224,14 +224,14 @@ int exec_runtask(char *cmd, char *args[])
 		NULL
 	};
 
-	for (i = 0; args[i]; i++) {
+	strlcat(buf, cmd, sizeof(buf));
+	for (i = 1; args[i]; i++) {
+		strlcat(buf, " ", sizeof(buf));
 		strlcat(buf, args[i], sizeof(buf));
-		if (args[i + 1])
-			strlcat(buf, " ", sizeof(buf));
 	}
 	logit(LOG_DEBUG, "Calling %s %s", _PATH_BSHELL, buf);
 
-	return execve(_PATH_BSHELL, argv, __environ);
+	return execvp(_PATH_BSHELL, argv);
 }
 
 static void prepare_tty(char *tty, char *procname, int console)
