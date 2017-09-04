@@ -255,16 +255,27 @@ service.
 
 Again, tasks and services are started in parallel, while run commands
 are called in the order listed and subsequent commands are not started
-until a run command has completed.
+until a run command has completed.  Also, task and run commands are run
+in a shell, so pipes and redirects can be used.
+
+The following examples illustrate this.  Bootstrap task and run commands
+are also removed when they have completed, `initctl show` will not list
+them.
+
+```conf
+    task [S] echo "foo" | cat >/tmp/bar
+    run  [S] echo "$HOME" >/tmp/secret
+```
 
 Switching between runlevels can be done by calling init with a single
-argument, e.g. <kbd>init 5</kbd> switches to runlevel 5.  When changing
-runlevels Finit also automatically reloads all `.conf` files in the
-`/etc/finit.d/` directory.  So if you want to set a new system config,
-switch to runlevel 1, change all config files in the system, and touch
-all `.conf` files in `/etc/finit.d` before switching back to the
-previous runlevel again — that way Finit can both stop old services and
-start any new ones for you, without rebooting the system.
+argument, e.g. <kbd>init 5</kbd>, or using `initctl runlevel 5`, both
+switch to runlevel 5.  When changing runlevels Finit also automatically
+reloads all `.conf` files in the `/etc/finit.d/` directory.  So if you
+want to set a new system config, switch to runlevel 1, change all config
+files in the system, and touch all `.conf` files in `/etc/finit.d`
+before switching back to the previous runlevel again — that way Finit
+can both stop old services and start any new ones for you, without
+rebooting the system.
 
 
 Rebooting & Halting
