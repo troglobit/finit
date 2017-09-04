@@ -45,6 +45,7 @@ typedef enum {
 } svc_type_t;
 
 #define SVC_TYPE_ANY          (-1)
+#define SVC_TYPE_RUNTASK      (6)
 
 typedef enum {
 	SVC_HALTED_STATE = 0,	/* Not allowed in runlevel, or not enabled. */
