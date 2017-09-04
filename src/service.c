@@ -714,8 +714,10 @@ void service_monitor(pid_t lost)
 		return;
 	}
 
-	if (!prevlevel && svc_clean_bootstrap(svc))
+	if (svc_clean_bootstrap(svc)) {
+		_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
 		return;
+	}
 
 	_d("collected %s(%d)", svc->cmd, lost);
 
