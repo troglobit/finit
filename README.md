@@ -92,8 +92,8 @@ tty [12345] /sbin/getty -L 115200 /dev/tty2 linux
 tty [12345] /sbin/getty -L 115200 /dev/tty3 linux
 
 # Use built-in getty for serial port and USB serial
-tty [12345] /dev/ttyAMA0 115200
-tty [12345] /dev/ttyUSB0 115200
+tty [12345] /dev/ttyAMA0 115200 noclear nowait
+tty [12345] /dev/ttyUSB0 115200 noclear
 ```
 
 The `service` stanza, as well as `task`, `run`, `inetd` and others are
@@ -156,8 +156,8 @@ up the TTY, optionally clearing it, and waits for user input before
 handing over to `/bin/login`, which handles all nasty bits with PAM etc.
 
 ```conf
-tty [12345] /dev/tty1    38400  linux
-tty [12345] /dev/ttyAMA0 115200 vt100 noclear
+tty [12345] /dev/tty1    38400  nowait  linux
+tty [12345] /dev/ttyAMA0 115200 noclear vt100
 ```
 
 **Runlevels**
@@ -237,6 +237,7 @@ service [S12345] /sbin/syslogd -n -x     -- System log daemon
 run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
 task    [S]      /etc/init.d/kbd start   -- Preparing console
 service [S12345] /sbin/klogd -n -x       -- Kernel log daemon
+
 tty     [12345]  /dev/tty1
 tty     [2]      /dev/tty2
 tty     [2]      /dev/tty3
