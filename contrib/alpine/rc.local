@@ -1,2 +1,2 @@
 #!/bin/sh
-zcat /etc/keymap/sv-latin1.bmap.gz | loadkmap
+zcat /etc/keymap/se.bmap.gz | loadkmap
