@@ -440,9 +440,10 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 	svc_t *svc = svc_dynamic_iterator(1);
 
 	while (svc) {
-		if (svc->dirty == -1 && cb)
+		if (svc->dirty == -1 && cb) {
 			cb(svc);
-
+			svc_mark_clean(svc);
+		}
 		svc = svc_dynamic_iterator(0);
 	}
 }
