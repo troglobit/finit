@@ -7,7 +7,7 @@ fi
 
 PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure				\
 		 --enable-rw-rootfs            --enable-progress		\
-                 --enable-x11-common-plugin					\
+                 --enable-dbus-plugin          --enable-x11-common-plugin	\
 		 --enable-alsa-utils-plugin    --enable-inetd-echo-plugin	\
 		 --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin	\
 		 --enable-inetd-discard-plugin --enable-inetd-time-plugin	\
