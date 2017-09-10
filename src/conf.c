@@ -232,16 +232,6 @@ static void parse_static(char *line)
 		return;
 	}
 
-	if (MATCH_CMD(line, "module ", x)) {
-		char *mod = strip_line(x);
-
-		strcpy(cmd, "modprobe ");
-		strlcat(cmd, mod, sizeof(cmd));
-		run_interactive(cmd, "Loading kernel module %s", mod);
-
-		return;
-	}
-
 	if (MATCH_CMD(line, "mknod ", x)) {
 		char *dev = strip_line(x);
 
@@ -306,6 +296,17 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 	/* Skip comments, i.e. lines beginning with # */
 	if (MATCH_CMD(line, "#", x))
 		return;
+
+	/* Kernel module to load at bootstrap */
+	if (MATCH_CMD(line, "module ", x)) {
+		char *mod = strip_line(x);
+
+		strcpy(cmd, "modprobe ");
+		strlcat(cmd, mod, sizeof(cmd));
+		run_interactive(cmd, "Loading kernel module %s", mod);
+
+		return;
+	}
 
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
