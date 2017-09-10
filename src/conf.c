@@ -300,8 +300,12 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 
 	/* Kernel module to load at bootstrap */
 	if (MATCH_CMD(line, "module ", x)) {
-		char *mod = strip_line(x);
+		char *mod;
 
+		if (runlevel != 0)
+			return;
+
+		mod = strip_line(x);
 		strcpy(cmd, "modprobe ");
 		strlcat(cmd, mod, sizeof(cmd));
 		run_interactive(cmd, "Loading kernel module %s", mod);
