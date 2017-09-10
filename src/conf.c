@@ -292,6 +292,7 @@ static void parse_static(char *line)
 static void parse_dynamic(char *line, struct timeval *mtime)
 {
 	char *x;
+	char cmd[CMD_SIZE];
 
 	/* Skip comments, i.e. lines beginning with # */
 	if (MATCH_CMD(line, "#", x))
