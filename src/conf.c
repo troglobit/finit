@@ -443,7 +443,7 @@ static int parse_conf(char *file)
 }
 
 /* Reload all *.conf in /etc/finit.d/ */
-void conf_reload_dynamic(void)
+int conf_reload_dynamic(void)
 {
 	int i, num;
 	char *dir = rcsd;
@@ -456,7 +456,7 @@ void conf_reload_dynamic(void)
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {
 		_d("Skipping %s, no files found ...", dir);
-		return;
+		return 1;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -514,13 +514,15 @@ void conf_reload_dynamic(void)
 	free(e);
 
 	set_hostname(&hostname);
+
+	return 0;
 }
 
 int conf_parse_config(void)
 {
 	hostname = strdup(DEFHOST);
 
-	return parse_conf(FINIT_CONF);
+	return parse_conf(FINIT_CONF) || conf_reload_dynamic();
 }
 
 /**
