@@ -336,17 +336,20 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 		return;
 	}
 
+	/* Read resource limits */
 	if (MATCH_CMD(line, "rlimit ", x)) {
 		conf_parse_rlimit(x);
 		return;
 	}
 
+	/* Special TTY console powers */
 	if (MATCH_CMD(line, "console ", x)) {
 		if (console) free(console);
 		console = strdup(strip_line(x));
 		return;
 	}
 
+	/* Regular or serial TTYs to run getty */
 	if (MATCH_CMD(line, "tty ", x)) {
 		tty_register(strip_line(x), mtime);
 		return;
