@@ -1,27 +1,20 @@
 HowTo: Finit on Alpine Linux 3.4-3.6
 ====================================
 
-Mini HowTo using Finit to boot an Alpine Linux system.  It is assumed
-that the user has already installed a compiler, C library header files,
-and other tools needed to build a GNU configure based project.
+HowTo use Finit to boot an Alpine Linux system.  It is assumed that the
+user has already installed make, a compiler, C library header files, and
+other tools needed to build a GNU configure based project.
 
-To start with you need to first install [libuEv][] and [libite][], by
-default they install to `/usr/local` and Alpine's `pkg-config` does not
-look for libraries and header files there.  So the `PKG_CONFIG_LIBDIR`
-environment variable must be used:
+To start with you need to first install [libuEv][] and [libite][].  They
+default to install to `/usr/local`, but unlike Debian and Ubuntu based
+distros, Alpine's `pkg-config` does not look for libraries and header
+files there.  So the `PKG_CONFIG_LIBDIR` environment variable must be
+used, or change the install prefix to `/usr`.
 
-    alpine:~/finit# PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure \
-        --enable-rw-rootfs            --enable-progress                    \
-        --enable-dbus-plugin          --enable-x11-common-plugin           \
-        --enable-alsa-utils-plugin    --enable-inetd-echo-plugin           \
-        --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin        \
-        --enable-inetd-discard-plugin --enable-inetd-time-plugin           \
-        --with-heading="Alpine Linux 3.6" --with-hostname=alpine
+The bundled `build.sh` script can be used to configure and build finit:
 
-The plugins are optional, but you may need D-Bus and X11 if you want to
-run X-Window, the other configure flags are however required.
-
-    alpine:~/finit# make all install
+    alpine:~/finit# ./contrib/alpine/build.sh
+    alpine:~/finit# make install
 
 The installation skips `/sbin/init`, because it already exists, and
 Alpine is hard coded to use it.  So you have to change the symlink
@@ -32,11 +25,11 @@ yourself to point to `finit` instead of `/bin/busybox`.
     alpine:/sbin# ln -s finit init
 
 Before rebooting, make sure to set up a [/etc/finit.conf](finit.conf),
-and [/etc/finit.d/](finit.d) for your services, possibly also an
-[/etc/rc.local](rc.local) for one-shot set up and initialization like
-keyboard language etc.  You can use the files in this directory as
-templates -- check them both if they need to be tweaked for your
-installation, you may not run Dropbear SSH or speak Swedish ...
+and [/etc/finit.d/](finit.d) for your services.  Samples are included in
+this directory.  Notice the symlinks in `/etc/finit.d/`, you can create
+them yourself or add them at runtime using `initctl enable SERVICE`.
+You can also use a standard [/etc/rc.local](rc.local) for one-shot set
+up and initialization like keyboard language etc.
 
 [libuEv]: https://github.com/troglobit/libuev
 [libite]: https://github.com/troglobit/libite

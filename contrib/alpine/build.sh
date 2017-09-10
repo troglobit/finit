@@ -5,6 +5,8 @@ if [ ! -f configure -a -f autogen.sh ]; then
    ./autogen.sh
 fi
 
+# The plugins are optional, but you may need D-Bus and X11 if you want
+# to run X-Window, the other configure flags are however required.
 PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure				\
 		 --enable-rw-rootfs            --enable-progress		\
                  --enable-dbus-plugin          --enable-x11-common-plugin	\
