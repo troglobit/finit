@@ -68,11 +68,20 @@ Syntax:
 
 * `run [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
   One-shot command to run in sequence when entering a runlevel, with
-  optional arguments and description.  This command is guaranteed to be
-  completed before running the next command.
+  optional arguments and description.
+  
+  `run` commands are guaranteed to be completed before running the next
+  command.  Highly useful if true serialization is needed.
 
 * `task [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
-  One-shot like 'run', but starts in parallel with the next command
+  One-shot like 'run', but starts in parallel with the next command.
+  
+  Both `run` and `task` commands are run in a shell, so pipes and
+  redirects can be freely used:
+
+```shell
+        task [s] echo "foo" | cat >/tmp/bar
+```
 
 * `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
   Service, or daemon, to be monitored and automatically restarted if it
