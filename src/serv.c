@@ -64,7 +64,8 @@ static void do_list(const char *heading, const char *path)
 {
 	int num;
 	int width;
-	size_t i;
+	char buf[SCREEN_WIDTH];
+	size_t i, len;
 	glob_t gl;
 
 	pushd(path);
@@ -76,7 +77,12 @@ static void do_list(const char *heading, const char *path)
 	if (gl.gl_pathc <= 0)
 		goto done;
 
-	printheader(NULL, path, 0);
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s :: %s ", heading, path);
+	len = strlen(buf);
+	for (size_t i = len; i < (sizeof(buf) - 1); i++)
+		buf[i] = '-';
+	printf("\e[1m%s\e[0m\n", buf);
 
 	width = calc_width(gl.gl_pathv, gl.gl_pathc);
 	num = SCREEN_WIDTH / width;
@@ -99,11 +105,11 @@ done:
 int serv_list(char *arg)
 {
 	if (fisdir(available))
-		do_list("Available", available);
+		do_list("AVAILABLE", available);
 	if (fisdir(enabled))
-		do_list("Enabled", enabled);
-	else if (fisdir(FINIT_RCSD))
-		do_list("Always enabled", FINIT_RCSD);
+		do_list("ENABLED  ", enabled);
+	if (fisdir(FINIT_RCSD))
+		do_list("ENABLED  ", FINIT_RCSD);
 
 	return 0;
 }
