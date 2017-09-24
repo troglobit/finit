@@ -41,11 +41,14 @@ long boot times.  Finit reduces context switches and forking of shell
 scripts to provide a swift [system bootstrap](doc/bootstrap.md) written
 entirely in C.
 
-Configuration is read from [/etc/finit.conf](doc/config.md#etcfinitconf)
-which details kernel modules to load, services and TTYs to start.  When
-the initial [bootstrap](doc/bootstrap.md) is done, including setting up
-networking, all services in [/etc/finit.d/](doc/config.md#etcfinitd) and
-the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
+The system configuration can be read from either the traditional single
+file, [/etc/finit.conf](doc/config.md#etcfinitconf) and/or from small
+per-service files in [/etc/finit.d/](doc/config.md#etcfinitd).  These
+files detail kernel modules to load, bootstrap tasks, services and TTYs
+to start.  When initial [bootstrap](doc/bootstrap.md) is done, including
+setting up networking, all services the configured runlevel are started,
+followed by running the familiar [/etc/rc.local](#runparts--etcrclocal)
+script.
 
 **Example /etc/finit.conf:**
 
@@ -53,7 +56,7 @@ the familiar [/etc/rc.local](#runparts--etcrclocal) are started.
 # Fallback if /etc/hostname is missing
 host default
 
-# Runlevel to start after bootstrap, runlevel 'S'
+# Runlevel to start after bootstrap, 'S', default: 2
 runlevel 2
 
 # Services to be monitored and respawned as needed
