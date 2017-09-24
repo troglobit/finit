@@ -93,7 +93,7 @@ void printv(const char *fmt, va_list ap)
 
 	len = strlen(buf);
 	buf[len++] = ' ';
-	for (int i = (int)len; i < (SCREEN_WIDTH - 8); i++)
+	for (size_t i = len; i < (sizeof(buf) - 8); i++)
 		buf[i] = '.';	/* pad with dots. */
 
 	fprintf(stderr, "\r%s ", buf);
