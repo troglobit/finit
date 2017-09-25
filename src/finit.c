@@ -363,7 +363,8 @@ int main(int argc, char* argv[])
 	}
 
 	/*
-	 * Parse /etc/finit.conf, main configuration file
+	 * Parse /etc/finit.conf and all /etc/finit.d/*.conf to figure
+	 * out how to bootstrap the system.
 	 */
 	conf_parse_config();
 
