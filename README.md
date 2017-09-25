@@ -6,13 +6,12 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [/etc/finit.conf](doc/config.md#etcfinitconf)
-* [/etc/finit.d](doc/config.md#etcfinitd)
-* [Runparts & /etc/rc.local](#runparts--etcrclocal)
 * [Bootstrap](doc/bootstrap.md#bootstrap)
 * [Runlevels](#runlevels)
-* [Inetd](doc/inetd.md#inetd)
-* [Hooks, Callbacks & Plugins](doc/plugins.md#hooks-callbacks--plugins)
+* [Syntax](doc/config.md#syntax)
+  * [Inetd](doc/inetd.md#inetd)
+  * [Runparts & /etc/rc.local](#runparts--etcrclocal)
+  * [Hooks, Callbacks & Plugins](doc/plugins.md#hooks-callbacks--plugins)
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
 * [Building](doc/build.md#building)
@@ -468,6 +467,10 @@ and proposed extensions.
 [5]:  http://en.wikipedia.org/wiki/Runlevel
 [6]:  https://www.freedesktop.org/wiki/Software/systemd/
 [9]:  https://github.com/troglobit/troglos
+[init]:             http://en.wikipedia.org/wiki/Init
+[upstart]:          http://upstart.ubuntu.com/
+[systemd]:          http://www.freedesktop.org/wiki/Software/systemd/
+[openrc]:           http://www.gentoo.org/proj/en/base/openrc/
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
