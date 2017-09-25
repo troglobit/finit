@@ -4,39 +4,49 @@ Configuration
 Table of Contents
 -----------------
 
-* [/etc/finit.conf](#etcfinitconf)
-* [/etc/finit.d](#etcfinitd)
+* [Introduction](#introduction)
+* [Syntax](#syntax)
+* [Limitations](#limitations)
+  * [/etc/finit.conf](#etcfinitconf)
+  * [/etc/finit.d](#etcfinitd)
 
 
 Introduction
 ------------
 
-Contrary to most other script based init alternatives (SysV [init][],
-[upstart][], [systemd][], [OpenRC][], etc.)  Finit relies on its main
-configuration file `/etc/finit.conf` and `/etc/finit.d/`.
+Finit can be configured using only the original `/etc/finit.conf` file
+or in combination with `/etc/finit.d/*.conf`.  Finit 3 can even start a
+system using only /etc/finit.d/*.conf`, highly useful for package-based
+Linux distributions -- each package can provide its own "script" file.
 
-The command line arguments given in `/etc/finit.conf` to each service
-provide a default.  A plugin can be used to register a callback to a
-service and then modify the behavior to suit the current runlevel and
-system configuration.
+- `/etc/finit.conf`: main configuration file, read only once at boot
+- `/etc/finit.d/*.conf`: snippets, usually one service per file
 
-For instance, before starting a heavily resource intensive service like
-IPsec or OpenVPN, a callback can check if the outbound interface is up
-and has an IP address, or just check if the service is disabled — much
-like what a SysV init start script usually does.
+Not all configuration directives are available in `/etc/finit.d/*.conf`
+and some directives are only available at bootstrap, runlevel `S`, see
+the section [Limitations](#limitations) below for details.
 
-* `/etc/finit.conf`: main configuration file, read only once at boot
-* `/etc/finit.d/*.conf`: snippets, usually one service per file
+To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
+run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
+call `finit q`, but that has been deprecated with the `initctl` tool).
+Any service read from this directory is flagged as a dynamic service, so
+changes to or removal of `/etc/finit.d/*.conf` files, is detected.
 
-Only the `/etc/finit.d/*.conf` files are possible to reload at runtime,
-so usually only bootstrap (runlevel 'S') services are declared in the
-`/etc/finit.conf` file.
+On `initctl reload` the following is checked for all services:
+
+- If a service's `.conf` file has been removed, or its conditions are no
+  longer satisifed, the service is stopped.
+- If the file is modified, or a service it depends on has been reloaded,
+  the service is reloaded (stopped and started).
+- If a new service is added it is automatically started — respecting
+  runlevels and return values from any callbacks.
+
+For more info on the different states of a service, see the separate
+document [Finit Services](service.md).
 
 
-/etc/finit.conf
----------------
-
-Syntax:
+Syntax
+------
 
 * `module <MODULE>`  
   Load a kernel module, with optional arguments
@@ -229,46 +239,49 @@ Worth noting is that conditions is allowed for all these stanzas.  For a
 detailed description, see the [Conditions](conditions.md) document.
 
 
-/etc/finit.d
-------------
+Limitations
+-----------
 
-Finit supports changes to the overall system configuration at runtime.
-For this purpose the (configurable) directory `/etc/finit.d` is used.
-Here you can put configuration file snippets, one per service if you
-like, which are all sourced automatically by finit at boot when loading
-the static configuration from `/etc/finit.conf`.  This is the default
-behavior, so no include directives are necessary.
+To understand the limitations of `finit.conf` vs `finit.d` it is useful
+to picture the different phases of the system: bootstrap, runtime, and
+shutdown.
 
-To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
-run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
-call `finit q`, but that has been deprecated with the `initctl` tool).
-Any service read from this directory is flagged as a dynamic service, so
-changes to or removal of `/etc/finit.d/*.conf` files, is detected.
+### /etc/finit.conf
 
-On `initctl reload` the following is checked for all services:
+Started out as the only way to boot a system, later on runlevels for
+runtime was added.  Hence, system hostname, network bringup and shutdown
+are natural parts to control in this file:
 
-- If a service's `.conf` file has been removed, or its conditions are no
-  longer satisifed, the service is stopped.
-- If the file is modified, or a service it depends on has been reloaded,
-  the service is reloaded (stopped and started).
-- If a new service is added it is automatically started — respecting
-  runlevels and return values from any callbacks.
+- `host`
+- `mkdod`
+- `network`
+- `runparts`
+- `include`
+- `shtudown`
+- `runlevel`
+- ... and all configuration stanzas from `/etc/finit.d` below
 
-For more info on the different states of a service, see the separate
-document [Finit Services](service.md).
+### /etc/finit.d
 
-The `/etc/finit.d` directory was previously the default Finit `runparts`
-directory.  Finit no longer has a default `runparts`, so make sure to
-update your setup, or the finit configuration, accordingly.
+Support for partial `.conf` files in `/etc/finit.d` was added to handle
+changes of the system configuration at runtime.  It does *not support*
+the above `finit.conf` settings described above.
 
-**Note:** Configurations read from `/etc/finit.d` are read *after*
-  initial bootstrap, runlevel S(1).  Hence, bootstrap services *must* be
-  in `/etc/finit.conf`!
+Supported stanzas are:
 
-[init]:         http://en.wikipedia.org/wiki/Init
-[upstart]:      http://upstart.ubuntu.com/
-[systemd]:      http://www.freedesktop.org/wiki/Software/systemd/
-[openrc]:       http://www.gentoo.org/proj/en/base/openrc/
+- `module`, but only in runlevel `S`
+- `service`
+- `task`
+- `run`
+- `inetd`
+- `rlimit`
+- `tty`
+- `console`
+
+**NOTE:*** The `/etc/finit.d` directory was previously the default Finit
+  `runparts` directory.  Finit no longer has a default `runparts`, make
+  sure to update your setup, or the finit configuration, accordingly.
+
 [run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 
 <!--
