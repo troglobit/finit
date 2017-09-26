@@ -45,7 +45,7 @@ endif
 
 initctl_SOURCES    = initctl.c serv.c serv.h svc.c svc.h \
 		     cond.c cond.h util.c util.h
-initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter
+initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 initctl_CFLAGS    += $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
