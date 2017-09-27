@@ -106,15 +106,16 @@ service [LVLS] <COND> /path/to/daemon ARGS -- Some text
  `------------------------------------------------ Monitored application
 ```
 
-Some components are optional.  It is important to note, however, is for
-the daemon *not to fork* and detach itself from the controlling TTY.
-This is usually an `-n` or `-f` argument to the application.  If the
-daemon detaches itself, Finit cannot monitor it and will instead try to
-restart it.
+Some components are optional: runlevel(s), condition(s) and description,
+making it easy to create simple start scripts and still possible for more
+advanced uses as well:
 
-For an example of a full blown embedded Linux, see [TroglOS][9], or take
-a look at the `contrib/` section with [Alpine Linux](contrib/alpine/),
-[Debian](contrib/debian/), support and more.
+    service /usr/sbin/sshd -D
+
+**Note:** Make sure daemons *do not* fork and detach themselves from the
+  controlling TTY, usually an `-n` or `-f` flag, or `-D as in the case
+  of OpenSSH above..  If it detaches itself, Finit cannot monitor it and
+  will instead try to restart it.
 
 
 Features
