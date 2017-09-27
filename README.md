@@ -444,8 +444,8 @@ kernel usually reboots: `configure --enable-emergency-shell`.  However,
 the behavior of Finit is severely limited when this is enabled, so use
 it only for debugging start up issues when Finit crashes.
 
-**NOTE:** Both of these configure options *should not* be enabled for
-production systems since they can potentially give a user root access.
+**NOTE:** Neither of these two configure options should be enabled on
+  production systems since they can potentially give a user root access.
 
 
 Origin & References
