@@ -15,9 +15,9 @@ Table of Contents
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
 * [Building](doc/build.md#building)
+  * [Running](doc/build.md#running)
+  * [Debugging](doc/build.md#debugging)
 * [Requirements](#requirements)
-* [Running](#running)
-* [Debugging](#debugging)
 * [Origin & References](#origin--references)
 
 
@@ -33,7 +33,7 @@ on server and desktop systems as well.  For working examples, see the
 [contrib/](contrib/) section where both [Debian](contrib/debian/) and
 up to date [Alpine Linux](contrib/alpine/) tutorials can be found.
 
-The screenshot shows [TroglOS][9], a small embedded Linux, booting.
+The screenshot shows [TroglOS][9], a small embedded Linux.
 
 ![Finit starting TroglOS](images/finit3-screenshot.png "Finit screenshot")
 
@@ -396,50 +396,6 @@ properly in `/etc/fstab` -- which is iterated over at boot.
 
 The built-in Inetd requires `/etc/services` and `/etc/protocols` to work
 with port names rather than numbers.
-
-
-Running
--------
-
-Having successfully [built Finit](doc/build.md) it may now be time to
-take it for a test drive.  The `make install` attempts to set up finit
-as the system system init, `/sbin/init`, but this is usually a symlink
-pointing to the current init.
-
-So either change the symlink, or change your boot loader (GRUB, LOADLIN,
-LILO, U-Boot/Barebox or RedBoot) configuration to append the following
-to the kernel command line:
-
-```shell
-append="init=/sbin/finit"
-```
-
-Remember to also set up an initial `/etc/finit.conf` before rebooting!
-
-
-Debugging
----------
-
-Add `finit_debug`, or `--debug`, to the kernel command line to enable
-debug messages.
-
-```shell
-append="init=/sbin/finit --debug"
-```
-
-To debug startup issues, in particular issues with getty/login, try
-`configure --enable-fallback-shell`.  When no TTYs are detected, and
-Finit is configured with this option, Finit will try to start a bare
-`/bin/sh` on the boot console.  Remember, this is only for debugging
-and would leave your production system potentially wide open.
-
-There is also a rescue shell available, in case Finit crashes and the
-kernel usually reboots: `configure --enable-emergency-shell`.  However,
-the behavior of Finit is severely limited when this is enabled, so use
-it only for debugging start up issues when Finit crashes.
-
-**NOTE:** Neither of these two configure options should be enabled on
-  production systems since they can potentially give a user root access.
 
 
 Origin & References
