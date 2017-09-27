@@ -28,9 +28,12 @@ Finit is a simple alternative to [SysV init][4] and [systemd][6].  It
 was reverse engineered from the [EeePC fastinit][] ten years ago by
 [Claudio Matsuoka][] — "gaps filled with frog DNA …"
 
-Ths focus is on small and embedded systems, although fully usable on
-server and desktop systems as well.  See the [contrib section](contrib/)
-for Debian and Alpine Linux examples.
+Focus is on small and embedded systems, although Finit is fully usable
+on server and desktop systems as well.  For working examples, see the
+[contrib/](contrib/) section where both [Debian](contrib/debian/) and
+up to date [Alpine Linux](contrib/alpine/) tutorials can be found.
+
+The screenshot shows [TroglOS][9], a small embedded Linux, booting.
 
 ![Finit starting TroglOS](images/finit3-screenshot.png "Finit screenshot")
 
