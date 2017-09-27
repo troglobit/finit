@@ -24,32 +24,24 @@ Table of Contents
 Introduction
 ------------
 
-Finit is an EeePC Fastinit inspired clone with [process supervision][1]
-similar to that of D.J. Bernstein's [daemontools][2] and Gerrit Pape's
-[runit][3].  It also supports free-form conditions based on events, e.g.
-triggering on PID file creation, Netlink events like a default route or
-interfaces coming up, or even custom events.  Similar to [systemd][6].
+Finit is a simple alternative to [SysV init][4] and [systemd][6].  It
+was reverse engineered from the [EeePC fastinit][] ten years ago by
+[Claudio Matsuoka][] — "gaps filled with frog DNA …"
 
-Finit focuses on small and embedded Linux systems, although fully usable
-on servers and desktops as well.  See the [contrib section](contrib/)
+Ths focus is on small and embedded systems, although fully usable on
+server and desktop systems as well.  See the [contrib section](contrib/)
 for Debian and Alpine Linux examples.
 
-Traditional [SysV init][4] style systems are scripted.  For low-resource
-embedded systems this is quite resource intensive and often leads to
-long boot times.  Finit reduces context switches and forking of shell
-scripts to provide a swift [system bootstrap](doc/bootstrap.md) written
-entirely in C.
+![Finit starting TroglOS](images/finit3-screenshot.png "Finit screenshot")
 
-The system configuration can be read from either the traditional single
-file, [/etc/finit.conf](doc/config.md#etcfinitconf) and/or from small
-per-service files in [/etc/finit.d/](doc/config.md#etcfinitd).  These
-files detail kernel modules to load, bootstrap tasks, services and TTYs
-to start.  When initial [bootstrap](doc/bootstrap.md) is done, including
-setting up networking, all services the configured runlevel are started,
-followed by running the familiar [/etc/rc.local](#runparts--etcrclocal)
-script.
 
-**Example /etc/finit.conf:**
+Example
+-------
+
+This example `/etc/finit.conf` can also be split up in multiple `.conf`
+files in `/etc/finit.d`.  Available, but not yet enabled, services can
+be placed in `/etc/finit.d/available` and enabled by an operator using
+the `initctl` tool.
 
 ```conf
 # Fallback if /etc/hostname is missing
@@ -420,8 +412,6 @@ append="init=/sbin/finit"
 
 Remember to also set up an initial `/etc/finit.conf` before rebooting!
 
-![Finit starting TroglOS](images/finit3-screenshot.png "Finit screenshot")
-
 
 Debugging
 ---------
@@ -483,9 +473,3 @@ and proposed extensions.
 [Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
 [Coverity Status]:  https://scan.coverity.com/projects/3545/badge.svg
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
