@@ -31,15 +31,15 @@ configure:
   built-ins (.o files) and all external libraries, except the C library
   will be linked statically.
 
-* `--enable-alsa-utils`: Enable the optional `alsa-utils.so` sound plugin.
+* `--enable-alsa-utils-plugin`: Enable the optional `alsa-utils.so` sound plugin.
 
-* `--enable-dbus`: Enable the optional D-Bus `dbus.so` plugin.
+* `--enable-dbus-plugin`: Enable the optional D-Bus `dbus.so` plugin.
 
-* `--enable-lost`: Enable noisy example plugin for `HOOK_SVC_LOST`.
+* `--enable-lost-plugin`: Enable noisy example plugin for `HOOK_SVC_LOST`.
 
-* `--enable-resolvconf`: Enable the `resolvconf.so` optional plugin.
+* `--enable-resolvconf-plugin`: Enable the `resolvconf.so` optional plugin.
 
-* `--enable-x11-common`: Enable the optional X Window `x11-common.so` plugin.
+* `--enable-x11-common-plugin`: Enable the optional X Window `x11-common.so` plugin.
 
 For more configure flags, see <kbd>./configure --help</kbd>
 
