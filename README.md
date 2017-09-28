@@ -128,6 +128,7 @@ Features
 
 Start, monitor and restart services should they fail.
 
+
 **Inetd**
 
 Finit comes with a built-in [inetd server](doc/inetd.md).  No need to
@@ -147,16 +148,22 @@ Built-in optional inetd services:
 
 For more information, see [doc/inetd.md](doc/inetd.md).
 
+
 **Getty**
 
-Finit comes with a built-in Getty for basic Linux console TTYs.  It sets
-up the TTY, optionally clearing it, and waits for user input before
-handing over to `/bin/login`, which handles all nasty bits with PAM etc.
+Finit supports external getty but also comes with a limited built-in
+Getty, useful for really small systems.  A getty sets up the TTY and
+waits for user input before handing over to `/bin/login`, which is
+responsible for handling the actual authentication.
 
 ```conf
 tty [12345] /dev/tty1    38400  nowait  linux
 tty [12345] /dev/ttyAMA0 115200 noclear vt100
+tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
 ```
+
+For more information, see [doc/config.md](doc/config.md#syntax).
+
 
 **Runlevels**
 
