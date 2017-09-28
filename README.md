@@ -115,6 +115,12 @@ advanced uses as well:
 
     service /usr/sbin/sshd -D
 
+Dependencies are handled using [conditions](doc/conditions.md).  On of
+the most common conditions is to wait for basic networking to become
+available:
+
+    service <net/route/default> /usr/sbin/nginx -- High performace HTTP server
+
 **Note:** Make sure daemons *do not* fork and detach themselves from the
   controlling TTY, usually an `-n` or `-f` flag, or `-D as in the case
   of OpenSSH above..  If it detaches itself, Finit cannot monitor it and
