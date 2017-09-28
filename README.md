@@ -1,4 +1,7 @@
-<p align="center"><img src="images/finit3.png" alt="Finit: Fast Init" /></p>
+Fast Init for Linux
+===================
+
+<img align="right" src="images/finit3.png" alt="Finit: Fast Init">
 
 Table of Contents
 -----------------
