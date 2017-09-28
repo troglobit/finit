@@ -36,6 +36,8 @@ both the `svc/sbin/setupd` *and* `svc/sbin/zebra` conditions are
 satisfied.  An `svc` condition is satisfied by the corresponding
 service's pidfile being created.
 
+Conditions also stops services when a condition no longer is asserted.
+
 
 Triggering
 ----------
