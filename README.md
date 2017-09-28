@@ -1,11 +1,6 @@
-Fast Init for Linux
-===================
+[![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 <img align="right" src="images/finit3.png" alt="Finit: Fast Init">
-
-Table of Contents
------------------
-[![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 * [Introduction](#introduction)
 * [Features](#features)
