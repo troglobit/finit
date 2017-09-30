@@ -68,8 +68,8 @@ service :2 [2345] /sbin/merecat -n -p 8080 /var/www          -- Old web server
 #task [S] /etc/init.d/kbd start                              -- Preparing console
 
 # Inetd services to start on demand, with alternate ports and filtering
-inetd ftp/tcp          nowait [2345] /sbin/uftpd -i -f       -- FTP daemon
-inetd tftp/udp           wait [2345] /sbin/uftpd -i -y       -- TFTP daemon
+inetd ftp/tcp          nowait [2345] /sbin/in.ftpd           -- FTP daemon
+inetd tftp/udp           wait [2345] /sbin/in.tftpd          -- TFTP daemon
 inetd time/udp           wait [2345] internal                -- UNIX rdate service
 inetd time/tcp         nowait [2345] internal                -- UNIX rdate service
 inetd 3737/tcp         nowait [2345] internal.time           -- UNIX rdate service
@@ -120,7 +120,7 @@ available:
     service <net/route/default> /usr/sbin/nginx -- High performace HTTP server
 
 **Note:** Make sure daemons *do not* fork and detach themselves from the
-  controlling TTY, usually an `-n` or `-f` flag, or `-D as in the case
+  controlling TTY, usually an `-n` or `-f` flag, or `-D` as in the case
   of OpenSSH above..  If it detaches itself, Finit cannot monitor it and
   will instead try to restart it.
 
