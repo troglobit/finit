@@ -25,6 +25,7 @@
 #ifndef FINIT_HELPERS_H_
 #define FINIT_HELPERS_H_
 
+#include <stdarg.h>
 #include <sys/types.h>
 #include <lite/lite.h>
 #include "log.h"
