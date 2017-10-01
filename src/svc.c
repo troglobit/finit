@@ -43,13 +43,16 @@ static svc_t *__connect_shm(void)
 
 	list = finit_svc_connect();
 	if (!list) {
+		if (workaround)
+			return workaround;
+
 		/* Linux not built with CONFIG_SYSVIPC, or libc does not support shmat()/shmget() */
 		if (ENOSYS == errno)
 			warn("Kernel does support SYSV shmat() IPC, error %d", errno);
 
 		/* Try to prevent PID 1 from aborting, issue #81 */
 		if (getpid() == 1) {
-			warn("Implementing PID 1 workaround, initctl tool will not work ...");
+			warnx("Implementing PID 1 workaround, initctl tool will not work ...");
 			if (!workaround)
 				workaround = calloc(MAX_NUM_SVC, sizeof(svc_t));
 
