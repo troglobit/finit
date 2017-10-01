@@ -21,6 +21,9 @@ can also be used.
 General
 -------
 
+* Remove shm, let `initctl` call `api.c` for each `svc_t` instead of
+  opening up the inner parts of PID 1 to other processes.  Also, this
+  would prevent issues like #81 from happening.
 * Add support for timed shutdown in Finit, including cancelled shutdown.
 * SysV init and systemd use SIGUSR1 to restart their FIFO/D-Bus.  Add
   API restart to SIGHUP callback for the same functionality in Finit.
