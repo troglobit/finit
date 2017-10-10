@@ -23,10 +23,14 @@ it installed so it can locate the uEv and lite libraries.
 
 > With Debian everything just works!™
 
+... just make sure to
+
+    root@debian:~# apt install initscripts console-setup
+
 The following build and install script can be used to configure, build,
 install and set up your system to run Finit:
 
-    debian:~/finit$ contrib/debian/build.sh
+    user@debian:~/finit$ contrib/debian/build.sh
 
 Since `/sbin/init` already exists on your system the script creates
 another entry in your GRUB config, in `/etc/grub.d/40_custom`, where
