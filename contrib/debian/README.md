@@ -1,9 +1,9 @@
-HowTo: Finit on Debian Jessie
-=============================
+HowTo: Finit on Debian GNU/Linux
+================================
 
-Mini HowTo using Finit to boot Debian GNU/Linux 8.5 (Jessie).  It is
-assumed that the user has already installed a compiler, C library header
-files, and other tools needed to build a GNU configure based project.
+HowTo use Finit to boot a Debian GNU/Linux system.  It is assumed that
+the user has already installed a compiler, C library header files, and
+other tools needed to build a GNU configure based project.
 
 Also, Finit has only been verified to work with the Debian *Server* ed.
 I.e., during install — skip GNOME and other X stuff to get a plain and

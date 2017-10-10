@@ -11,24 +11,28 @@ echo
 echo "*** Configuring Finit for Debian"
 
 if [ ! -e configure ]; then
-    echo "    The configure script is missing, maybe you're using a GIT checkout?"
-    echo "    Attempting to run the autogen.sh script, you need these tools:"
+    echo "    The configure script is missing, maybe you're using a version from GIT?"
+    echo "    Attempting to run the autogen.sh script, you will need these tools:"
     echo "    autoconf, automake, libtool, pkg-config ..."
     echo
     ./autogen.sh
 fi
 echo
 
-./configure --enable-rw-rootfs --enable-dbus-plugin --enable-x11-common-plugin     \
-	--enable-alsa-utils-plugin --with-random-seed=/var/lib/urandom/random-seed \
-	--with-heading="Debian GNU/Linux 8.5" --with-hostname=jessie               \
-	--enable-inetd-echo-plugin --enable-inetd-chargen-plugin                   \
-	--enable-inetd-daytime-plugin --enable-inetd-discard-plugin                \
-	--enable-inetd-time-plugin
+# The plugins are optional, but you may need D-Bus and X11 if you want
+# to run X-Window, the other configure flags are however required.
+./configure									\
+    --enable-rw-rootfs                --enable-progress				\
+    --enable-dbus-plugin              --enable-x11-common-plugin		\
+    --enable-alsa-utils-plugin        --enable-inetd-echo-plugin		\
+    --enable-inetd-chargen-plugin     --enable-inetd-daytime-plugin		\
+    --enable-inetd-discard-plugin     --enable-inetd-time-plugin		\
+    --with-random-seed=/var/lib/urandom/random-seed				\
+    --with-heading="Debian GNU/Linux" --with-hostname="stretch"
 
 if [ $? -ne 0 ]; then
     echo
-    echo "*** Configure script failed, have you installed libuEV and libite?"
+    echo "*** Configure script failed, have you installed libuEv and libite?"
     echo
     exit 1
 fi
