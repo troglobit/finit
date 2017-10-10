@@ -121,6 +121,7 @@ static void nl_link(struct nlmsghdr *nlmsg)
 				 * New interface has appearad, or interface flags has changed.
 				 * Check ifi_flags here to see if the interface is UP/DOWN
 				 */
+				_d("%s: New link, ifi_change 0x%x", ifname, i->ifi_change);
 				if (i->ifi_change & IFF_UP) {
 					snprintf(msg, sizeof(msg), "net/%s/up", ifname);
 
@@ -141,6 +142,7 @@ static void nl_link(struct nlmsghdr *nlmsg)
 
 			case RTM_DELLINK:
 				/* NOTE: Interface has dissapeared, not link down ... */
+				_d("%s: Delete link", ifname);
 				snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
 				cond_clear(msg);
 				break;
