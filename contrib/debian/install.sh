@@ -14,19 +14,17 @@ fi
 grep -q Debian os-release 2>/dev/null
 if [ $? -eq 0 ]; then
     cd ../..
-elif [ ! -e finit.c ]; then
+elif [ ! -e autogen.sh ]; then
     echo "Please run this script from the Finit base directory."
     exit 1
 fi
 
-echo "Install Finit on Debian 8 (jessie)"
+echo "Install Finit on Debian GNU/Linux"
 echo "========================================================================"
 echo "/sbin/finit           - PID 1"
 echo "/lib/finit/plugins/*  - All enabled Finit plugins"
-echo "/etc/finit.conf       - Instead of units or /etc/init.d Finit can have"
-echo "                        one config for your system.  Or you can split"
-echo "                        it in service(s) per file in /etc/finit.d/"
-echo "/etc/start.d/         - Simple Debian setup scripts run with run-parts(8)"
+echo "/etc/finit.conf       - Finit configuration file"
+echo "/etc/finit.d/         - Finit services"
 echo "/etc/grub.d/40_custom - Add menu entry to the Grub boot loader"
 echo
 read -p "Do you want to continue (y/N)? " yorn
