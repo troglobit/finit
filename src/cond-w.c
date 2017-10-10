@@ -125,7 +125,6 @@ void cond_reload(void)
 	cond_update(NULL);
 }
 
-
 static int reassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)
 {
 	char *nm;
@@ -142,6 +141,7 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
 
 	return 0;
 }
+
 /*
  * Used only by netlink plugin atm.
  * type: is a one of svc/, net/, etc.
