@@ -1,0 +1,5 @@
+# Here we use XDM since it has few dependencies (relatively speaking).
+# It is also an example of a service without a -- description.
+# service [3] /usr/sbin/lightdm -- X-Window Display Manager
+# service [3] /usr/sbin/lxdm -- Lightweight Login Manager
+service [3] /usr/bin/xdm -nodaemon
