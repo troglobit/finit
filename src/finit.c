@@ -407,7 +407,8 @@ int main(int argc, char* argv[])
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
-	 * Initalize finit state machine and start all bootstrap tasks, no network available!
+	 * Initalize state machine and start all bootstrap tasks
+	 * NOTE: no network available!
 	 */
 	sm_init(&sm);
 	sm_step(&sm);
