@@ -13,6 +13,7 @@ used, or change the install prefix to `/usr`.
 
 The bundled `build.sh` script can be used to configure and build finit:
 
+    alpine:~# cd finit
     alpine:~/finit# ./contrib/alpine/build.sh
     alpine:~/finit# make install
 
@@ -26,10 +27,10 @@ yourself to point to `finit` instead of `/bin/busybox`.
 
 Before rebooting, make sure to set up a [/etc/finit.conf](finit.conf),
 and [/etc/finit.d/](finit.d) for your services.  Samples are included in
-this directory.  Notice the symlinks in `/etc/finit.d/`, you can create
-them yourself or add them at runtime using `initctl enable SERVICE`.
-You can also use a standard [/etc/rc.local](rc.local) for one-shot set
-up and initialization like keyboard language etc.
+this directory.  Notice the symlinks in `/etc/finit.d/`, which can be
+created at runtime using `initctl enable SERVICE`.  You can also use a
+standard [/etc/rc.local](rc.local) for one-shot tasks and initialization
+like keyboard language etc.
 
 [libuEv]: https://github.com/troglobit/libuev
 [libite]: https://github.com/troglobit/libite

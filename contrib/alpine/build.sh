@@ -1,7 +1,13 @@
 #!/bin/sh -e
 
-if [ ! -f configure -a -f autogen.sh ]; then
-   echo "Building from GIT, creating configure script ..."
+echo
+echo "*** Configuring Finit for Alpine Linux"
+
+if [ ! -e configure ]; then
+    echo "    The configure script is missing, maybe you're using a version from GIT?"
+    echo "    Attempting to run the autogen.sh script, you will need these tools:"
+    echo "    autoconf, automake, libtool, pkg-config ..."
+    echo
    ./autogen.sh
 fi
 
@@ -15,4 +21,19 @@ PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure				\
 		 --enable-inetd-discard-plugin --enable-inetd-time-plugin	\
 		 --with-heading="Alpine Linux 3.6" --with-hostname=alpine
 
+echo
+echo "*** Building ..."
+echo
 make
+
+if [ $? -ne 0 ]; then
+    echo
+    echo "*** The build failed for some reason"
+    echo
+    exit 1
+fi
+
+echo
+echo "*** Done"
+echo
+
