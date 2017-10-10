@@ -19,6 +19,7 @@ elif [ ! -e autogen.sh ]; then
     exit 1
 fi
 
+echo
 echo "Install Finit on Debian GNU/Linux"
 echo "========================================================================"
 echo "/sbin/finit           - PID 1"
