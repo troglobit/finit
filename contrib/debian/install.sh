@@ -1,7 +1,5 @@
 #!/bin/sh
-
-SYMLINKS="start.d/*"
-FILES="finit.conf"
+FILES="finit.conf finit.d"
 
 if [ "x`id -u`" != "x0" ]; then
     echo
@@ -35,12 +33,8 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     echo "Installing Finit files ..."
     make install
     cd `dirname $0`
-    mkdir -p /etc/start.d
     for file in $FILES; do
 	install -vbD $file /etc/$file
-    done
-    for link in $SYMLINKS; do
-	cp -va $link /etc/$link
     done
     echo "Setting up a GRUB boot entry ..."
     MENU=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/menuentry '\([^']*\).*/\1/"`
