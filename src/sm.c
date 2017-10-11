@@ -95,7 +95,7 @@ void sm_step(sm_t *sm)
 restart:
 	old_state = sm->state;
 
-	_e("state: %s", sm_status(sm->state));
+	_d("state: %s", sm_status(sm->state));
 
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
@@ -158,7 +158,7 @@ restart:
 		 */
 		svc = svc_stop_completed();
 		if (svc) {
-			_e("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
+			_d("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
 			break;
 		}
 
@@ -216,7 +216,7 @@ restart:
 		 */
 		svc = svc_stop_completed();
 		if (svc) {
-			_e("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
+			_d("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
 			break;
 		}
 
@@ -240,11 +240,8 @@ restart:
 		break;
 	}
 
-	if (sm->state != old_state) {
-		_e("state: %s --> %s, another step ...", sm_status(old_state), sm_status(sm->state));
+	if (sm->state != old_state)
 		goto restart;
-	}
-	_e("stepped --> %s", sm_status(sm->state));
 }
 
 /**
