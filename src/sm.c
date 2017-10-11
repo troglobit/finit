@@ -94,7 +94,7 @@ void sm_step(sm_t *sm)
 restart:
 	old_state = sm->state;
 
-	_d("state: %s", sm_status(sm));
+	_e("state: %s", sm_status(sm));
 
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
