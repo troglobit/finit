@@ -512,6 +512,7 @@ static int show_status(char *arg)
 			printf("%-10.10s  ", lvls);
 
 		if (!verbose) {
+			int adj = screen_cols - 58;
 			char *name = strrchr(svc->cmd, '/');
 
 			if (!name)
@@ -519,7 +520,7 @@ static int show_status(char *arg)
 			else
 				name++;
 
-			printf("%-20.20s  %-21.21s\n", name, svc->desc);
+			printf("%-20.20s  %-*.*s\n", name, adj, adj, svc->desc);
 			continue;
 		}
 
