@@ -46,9 +46,9 @@ void sm_init(sm_t *sm)
 	sm->in_teardown = 0;
 }
 
-static char *sm_status(sm_t *sm)
+static char *sm_status(sm_state_t state)
 {
-	switch (sm->state) {
+	switch (state) {
 	case SM_BOOTSTRAP_STATE:
 		return "bootstrap";
 
@@ -94,7 +94,7 @@ void sm_step(sm_t *sm)
 restart:
 	old_state = sm->state;
 
-	_e("state: %s", sm_status(sm));
+	_e("state: %s", sm_status(sm->state));
 
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
@@ -225,8 +225,10 @@ restart:
 	}
 
 	if (sm->state != old_state) {
+		_e("state: %s --> %s, another step ...", sm_status(old_state), sm_status(sm->state));
 		goto restart;
 	}
+	_e("stepped --> %s", sm_status(sm->state));
 }
 
 /**
