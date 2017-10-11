@@ -307,20 +307,19 @@ void svc_foreach_type(int types, void (*cb)(svc_t *))
  * svc_stop_completed - Have all stopped services been collected?
  *
  * Returns:
- * 1, if all stopped services have been collected. 0 otherwise.
+ * %NULL if all stopped services have been collected, otherwise a
+ * pointer to the first svc_t waiting to be collected.
  */
-int svc_stop_completed(void)
+svc_t *svc_stop_completed(void)
 {
 	svc_t *svc;
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
-		if (svc->state == SVC_STOPPING_STATE) {
-			_e("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
-			return 0;
-		}
+		if (svc->state == SVC_STOPPING_STATE)
+			return svc;
 	}
 
-	return 1;
+	return NULL;
 }
 
 /**

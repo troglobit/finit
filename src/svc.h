@@ -158,7 +158,7 @@ void	    svc_foreach	           (void (*cb)(svc_t *));
 void	    svc_foreach_dynamic    (void (*cb)(svc_t *));
 void        svc_foreach_type       (int types, void (*cb)(svc_t *));
 
-int         svc_stop_completed     (void);
+svc_t	   *svc_stop_completed	   (void);
 
 void	    svc_mark_dynamic       (void);
 void	    svc_check_dirty        (svc_t *svc, struct timeval *mtime);
