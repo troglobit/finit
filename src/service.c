@@ -720,7 +720,7 @@ void service_monitor(pid_t lost)
 
 	if (svc_clean_bootstrap(svc)) {
 		_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
-		return;
+		goto done;
 	}
 
 	_d("collected %s(%d)", svc->cmd, lost);
@@ -736,6 +736,7 @@ void service_monitor(pid_t lost)
 	svc->pid = 0;
 	service_step(svc);
 
+done:
 	sm_step(&sm);
 }
 
