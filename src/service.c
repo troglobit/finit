@@ -718,11 +718,6 @@ void service_monitor(pid_t lost)
 		return;
 	}
 
-	if (svc_clean_bootstrap(svc)) {
-		_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
-		goto done;
-	}
-
 	_d("collected %s(%d)", svc->cmd, lost);
 
 	/* Try removing PID file (in case service does not clean up after itself) */
@@ -736,7 +731,10 @@ void service_monitor(pid_t lost)
 	svc->pid = 0;
 	service_step(svc);
 
-done:
+	/* Clean out any bootstrap tasks, they've had their time in the sun. */
+	if (svc_clean_bootstrap(svc))
+		_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
+
 	sm_step(&sm);
 }
 
