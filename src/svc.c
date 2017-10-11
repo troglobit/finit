@@ -313,9 +313,12 @@ int svc_stop_completed(void)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0))
-		if (svc->state == SVC_STOPPING_STATE)
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (svc->state == SVC_STOPPING_STATE) {
+			_e("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
 			return 0;
+		}
+	}
 
 	return 1;
 }
