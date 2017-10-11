@@ -188,10 +188,8 @@ static void nl_callback(void *arg, int sd, int events)
 	}
 }
 
-static void nl_reconf(void *_null)
+static void nl_reconf(void *arg)
 {
-	(void)_null;
-
 	cond_reassert("net/");
 }
 
