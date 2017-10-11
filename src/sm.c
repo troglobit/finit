@@ -196,8 +196,10 @@ restart:
 		/* First reload all *.conf in /etc/finit.d/ */
 		conf_reload_dynamic();
 
-		/* Then, mark all affected service conditions as in-flux and
-		 * let all affected services move to WAITING/HALTED */
+		/*
+		 * Then, mark all affected service conditions as in-flux and
+		 * let all affected services move to WAITING/HALTED
+		 */
 		_d("Stopping services services not allowed after reconf ...");
 		sm->in_teardown = 1;
 		cond_reload();
