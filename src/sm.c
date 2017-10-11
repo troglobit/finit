@@ -151,8 +151,10 @@ restart:
 		break;
 
 	case SM_RUNLEVEL_WAIT_STATE:
-		/* Need to wait for any services to stop? If so, exit early
-		 * and perform second stage from service_monitor later. */
+		/*
+		 * Need to wait for any services to stop? If so, exit early
+		 * and perform second stage from service_monitor later.
+		 */
 		if (!svc_stop_completed())
 			break;
 
@@ -202,8 +204,10 @@ restart:
 		break;
 
 	case SM_RELOAD_WAIT_STATE:
-		/* Need to wait for any services to stop? If so, exit early
-		 * and perform second stage from service_monitor later. */
+		/*
+		 * Need to wait for any services to stop? If so, exit early
+		 * and perform second stage from service_monitor later.
+		 */
 		if (!svc_stop_completed())
 			break;
 
