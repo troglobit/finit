@@ -89,6 +89,7 @@ int sm_is_in_teardown(sm_t *sm)
 
 void sm_step(sm_t *sm)
 {
+	svc_t *svc;
 	sm_state_t old_state;
 
 restart:
@@ -155,8 +156,11 @@ restart:
 		 * Need to wait for any services to stop? If so, exit early
 		 * and perform second stage from service_monitor later.
 		 */
-		if (!svc_stop_completed())
+		svc = svc_stop_completed();
+		if (svc) {
+			_e("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
 			break;
+		}
 
 		/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
 		_d("All services have been stoppped, calling runlevel change hooks ...");
@@ -208,8 +212,11 @@ restart:
 		 * Need to wait for any services to stop? If so, exit early
 		 * and perform second stage from service_monitor later.
 		 */
-		if (!svc_stop_completed())
+		svc = svc_stop_completed();
+		if (svc) {
+			_e("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
 			break;
+		}
 
 		sm->in_teardown = 0;
 		/* Cleanup stale services */
