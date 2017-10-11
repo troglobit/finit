@@ -230,6 +230,9 @@ restart:
 		_d("Calling reconf hooks ...");
 		plugin_run_hooks(HOOK_SVC_RECONF);
 
+		/* Done, lift reconf condition */
+		cond_reassert(NULL);
+
 		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
 		_d("Reconfiguration done");
 
