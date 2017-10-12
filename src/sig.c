@@ -206,15 +206,15 @@ void do_shutdown(shutop_t op)
 				do_sleep(1);
 		}
 
-		_d("Rebooting ...");
+		_e("Rebooting ...");
 		reboot(RB_AUTOBOOT);
 	} else if (op == SHUT_OFF) {
-		_d("Powering down ...");
+		_e("Powering down ...");
 		reboot(RB_POWER_OFF);
 	}
 
 	/* Also fallback if any of the other two fails */
-	_d("Halting ...");
+	_e("Halting ...");
 	reboot(RB_HALT_SYSTEM);
 }
 
