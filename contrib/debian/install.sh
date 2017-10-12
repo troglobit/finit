@@ -42,6 +42,12 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     ROOT=`grep root=UUID /boot/grub/grub.cfg |head -1 |sed 's/.*UUID=\([a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*\).*/\1/'`
     cat grub.d/40_custom | sed "s,\$BOOT,$BOOT,;s,\$ROOT,$ROOT,;s,\$TYPE,$TYPE,;s,\$MENU,$MENU," >/etc/grub.d/40_custom
     update-grub
+
+    echo
+    echo "*** Done"
+    echo
 else
-    echo "Aborting install."
+    echo
+    echo "*** Aborting install."
+    echo
 fi
