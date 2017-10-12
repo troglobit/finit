@@ -136,7 +136,7 @@ and as soon as it comes back up again `ntpd` is restarted automatically.
 
 **Note:** Make sure daemons *do not* fork and detach themselves from the
   controlling TTY, usually an `-n` or `-f` flag, or `-D` as in the case
-  of OpenSSH above..  If it detaches itself, Finit cannot monitor it and
+  of OpenSSH above.  If it detaches itself, Finit cannot monitor it and
   will instead try to restart it.
 
 
