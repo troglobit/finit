@@ -29,10 +29,13 @@ However, since `/sbin/init` already exists on your system the script
 creates another entry in your GRUB config, in `/etc/grub.d/40_custom`,
 where `init=/sbin/finit` is added to your kernel line.
 
-Before rebooting, read up on [/etc/finit.conf](finit.conf) and the new
-`/etc/finit.d/*.conf` work.  The build + install script above provides
-the bare necessities, enabling a few `.conf` files.  See `initctl list`
-after boot for a list of enabled and available services.
+Before rebooting, check the default [/etc/finit.conf](finit.conf) and
+`/etc/finit.d/*.conf` files.  The build + install script above provides
+a few sample `.conf` files. See `initctl list` after boot for a list of
+enabled and available services.
+
+You can also use a standard [/etc/rc.local](rc.local) for one-shot tasks
+and initialization like keyboard language etc.
 
 Have fun!  
  /Joachim ツ
