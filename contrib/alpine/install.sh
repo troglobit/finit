@@ -35,16 +35,14 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     done
     cp -va finit.d /etc/
 
-    echo "*** Done"
     read -p "*** Install Finit as the system default Init (y/N)? " yorn
     if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
 	echo "*** Updating /sbin/init symlink --> finit ..."
 	cd /sbin
 	rm init
 	ln -s finit init
-	cd -
-	echo "*** Done"
     fi
+    echo "*** Done"
     echo
 else
     echo
