@@ -119,6 +119,21 @@ available:
 
     service <net/route/default> /usr/sbin/nginx -- High performace HTTP server
 
+Here is another example where we instruct Finit to not start BusyBox
+`ntpd` until `syslogd` has started properly.  Finit waits for `syslogd`
+to create its PID file, by default `/var/run/syslogd.pid`.
+
+    service [2345] log <svc/sbin/syslogd> /usr/sbin/ntpd -n -N -p pool.ntp.org
+    service [S12345] /sbin/syslogd -n -- Syslog daemon
+
+A service, or task, can have multiple dependencies listed.  Here we wait
+for *both* `syslogd` to have started and basic networking to be up:
+
+    service [2345] log <svc/sbin/syslogd,net/route/default> /usr/sbin/ntpd -n -N -p pool.ntp.org
+
+If either condition fails, e.g. loss of networking, `ntpd` is stopped
+and as soon as it comes back up again `ntpd` is restarted automatically.
+
 **Note:** Make sure daemons *do not* fork and detach themselves from the
   controlling TTY, usually an `-n` or `-f` flag, or `-D` as in the case
   of OpenSSH above..  If it detaches itself, Finit cannot monitor it and
