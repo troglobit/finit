@@ -15,11 +15,20 @@ The bundled `build.sh` script can be used to configure and build finit:
 
     alpine:~# cd finit
     alpine:~/finit# ./contrib/alpine/build.sh
+
+Then run the `install.sh` script to install all files, including the
+sample `finit.conf` and `finit.d/*.conf` files.  More on that below.
+
     alpine:~/finit# ./contrib/alpine/install.sh
 
-The installation skips `/sbin/init`, because it already exists, and
-Alpine is hard coded to use it.  So you have to change the symlink
-yourself to point to `finit` instead of `/bin/busybox`.
+The install script is non-destructive by default, you have to answer
+*Yes* twice to set up Finit as the system default init.  Pay close
+attention to the last question:
+
+    *** Install Finit as the system default Init (y/N)?
+
+If you answer `No`, simply by pressing enter, you can change the symlink
+yourself later on, to point to `finit` instead of `/bin/busybox`:
 
     alpine:~/finit# cd /sbin
     alpine:/sbin# rm init
