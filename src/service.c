@@ -569,7 +569,7 @@ int service_register(int type, char *line, struct timeval *mtime, char *username
 
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel > 0 && !ISOTHER(levels, 0)) {
-		_e("Skipping %s, bootstrap is completed.", cmd);
+		_d("Skipping %s, bootstrap is completed.", cmd);
 		return 0;
 	}
 
