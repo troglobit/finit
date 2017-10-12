@@ -15,7 +15,7 @@ The bundled `build.sh` script can be used to configure and build finit:
 
     alpine:~# cd finit
     alpine:~/finit# ./contrib/alpine/build.sh
-    alpine:~/finit# make install
+    alpine:~/finit# ./contrib/alpine/install.sh
 
 The installation skips `/sbin/init`, because it already exists, and
 Alpine is hard coded to use it.  So you have to change the symlink
