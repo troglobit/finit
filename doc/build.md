@@ -132,9 +132,3 @@ it only for debugging start up issues when Finit crashes.
 [1]:       ftp://troglobit.com/finit/finit-3.0.tar.xz
 [libuEv]:  https://github.com/troglobit/libuev
 [libite]:  https://github.com/troglobit/libite
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

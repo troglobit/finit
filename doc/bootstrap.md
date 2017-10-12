@@ -45,9 +45,3 @@ on external media.
 
 
 [run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

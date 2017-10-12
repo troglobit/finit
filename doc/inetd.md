@@ -123,9 +123,3 @@ some NTP implementations), year 2036!
 
 
 [TCP Wrappers]:     https://en.wikipedia.org/wiki/TCP_Wrapper
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

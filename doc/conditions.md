@@ -159,9 +159,3 @@ Therefore, any plugin that supplies Finit with conditions must ensure
 that their state is updated after each reconfiguration.  This can be
 done by binding to the `HOOK_SVC_RECONF` hook.  For an example of how
 to do this, see `plugins/pidfile.c`.
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

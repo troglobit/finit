@@ -123,10 +123,3 @@ Plugins like `initctl.so` and `tty.so` extend finit by acting on events,
 they are called I/O plugins and are called from the finit main loop when
 `poll()` detects an event.  See the source code for `plugins/*.c` for
 more help and ideas.
-
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

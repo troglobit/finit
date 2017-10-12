@@ -33,9 +33,3 @@ have been adopted:
   UPS status.  Traditionally SysV init read /etc/powerstatus and
   acted on "OK", "FAIL", or "LOW" and then removed the file.  
   Finit currently forwards this to `SIGUSR2`.
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

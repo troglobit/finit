@@ -31,9 +31,3 @@ The current state depends on the two following conditions:
 
 For a detailed description of conditions, and how to debug them,
 see the [Finit Conditions](conditions.md) document.
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

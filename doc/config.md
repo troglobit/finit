@@ -283,9 +283,3 @@ Supported stanzas are:
   sure to update your setup, or the finit configuration, accordingly.
 
 [run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->

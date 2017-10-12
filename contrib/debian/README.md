@@ -39,9 +39,3 @@ Have fun!
 
 [libuEv]: https://github.com/troglobit/libuev
 [libite]: https://github.com/troglobit/libite
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
