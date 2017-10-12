@@ -512,7 +512,7 @@ int service_register(int type, char *line, struct timeval *mtime, char *username
 #ifdef INETD_ENABLED
 	int forking = 0;
 #endif
-	int log = 0;
+	int log = 0, levels = 0;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
@@ -565,6 +565,12 @@ int service_register(int type, char *line, struct timeval *mtime, char *username
 		cmd = strtok(NULL, " ");
 		if (!cmd)
 			goto incomplete;
+	}
+
+	levels = conf_parse_runlevels(runlevels);
+	if (runlevel > 0 && !ISOTHER(levels, 0)) {
+		_e("Skipping %s, bootstrap is completed.", cmd);
+		return 0;
 	}
 
 	/* Example: inetd ssh/tcp@eth0,eth1 or 222/tcp@eth2 */
@@ -654,7 +660,7 @@ recreate:
 		svc->args[i][0] = 0;
 	}
 
-	svc->runlevels = conf_parse_runlevels(runlevels);
+	svc->runlevels = levels;
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	conf_parse_cond(svc, cond);
