@@ -142,7 +142,8 @@ restart:
 			erase("/etc/nologin");
 
 		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
-		conf_reload_dynamic();
+		if (runlevel != 0 && runlevel != 6)
+			conf_reload_dynamic();
 
 		_d("Stopping services services not allowed in new runlevel ...");
 		sm->in_teardown = 1;
