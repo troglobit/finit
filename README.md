@@ -159,11 +159,11 @@ interface, reducing the need for a full blown firewall.
 
 Built-in optional inetd services:
 
-- echo RFC862
-- chargen RFC864
-- daytime RFC867
-- discard RFC863
-- time (rdate) RFC868
+- echo [RFC862][]
+- chargen [RFC864][]
+- daytime [RFC867][]
+- discard [RFC863][]
+- time (rdate) [RFC868][]
 
 For more information, see [doc/inetd.md](doc/inetd.md).
 
@@ -443,6 +443,11 @@ and proposed extensions.
 [5]:  http://en.wikipedia.org/wiki/Runlevel
 [6]:  https://www.freedesktop.org/wiki/Software/systemd/
 [9]:  https://github.com/troglobit/troglos
+[RFC862]:           https://tools.ietf.org/html/rfc862
+[RFC863]:           https://tools.ietf.org/html/rfc863
+[RFC864]:           https://tools.ietf.org/html/rfc864
+[RFC867]:           https://tools.ietf.org/html/rfc867
+[RFC868]:           https://tools.ietf.org/html/rfc868
 [init]:             http://en.wikipedia.org/wiki/Init
 [upstart]:          http://upstart.ubuntu.com/
 [systemd]:          http://www.freedesktop.org/wiki/Software/systemd/
