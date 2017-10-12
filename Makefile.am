@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS    = -I m4
 SUBDIRS            = plugins src
-doc_DATA           = README.md LICENSE finit.conf
-EXTRA_DIST         = README.md LICENSE ChangeLog.md finit.conf
+doc_DATA           = README.md LICENSE contrib/finit.conf
+EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
 
 # Compat hook
 install-dev:
