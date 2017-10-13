@@ -1,9 +1,9 @@
 HowTo: Finit on Alpine Linux 3.4-3.6
 ====================================
 
-HowTo use Finit to boot an Alpine Linux system.  It is assumed that the
-user has already installed make, a compiler, C library header files, and
-other tools needed to build a GNU configure based project.
+HowTo use Finit to boot an [Alpine Linux][] system.  It is assumed that
+the user has already installed make, a compiler, C library header files,
+and other tools needed to build a GNU configure based project.
 
 To start with you need to first install [libuEv][] and [libite][].  They
 default to install to `/usr/local`, but unlike Debian and Ubuntu based
@@ -43,3 +43,4 @@ like keyboard language etc.
 
 [libuEv]: https://github.com/troglobit/libuev
 [libite]: https://github.com/troglobit/libite
+[Alpine Linux]: https://www.alpinelinux.org/
