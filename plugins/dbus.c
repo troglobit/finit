@@ -31,14 +31,23 @@
 
 static void setup(void *arg)
 {
+	if (!whichp("dbus-daemon")) {
+		_d("Skipping D-Bus plugin, dbus-daemon is not installed.");
+		return;
+	}
+
 	umask(0);
 
 	_d("Starting D-Bus ...");
 	makedir("/var/run/dbus", 0755);
 	makedir("/var/lock/subsys", 0755);
 	makedir("/var/lock/subsys/messagebus", 0755);
-	run("dbus-uuidgen --ensure");
+	if (whichp("dbus-uuidgen"))
+		run("dbus-uuidgen --ensure");
+
+	/* Clean up from any previous pre-bootstrap run */
 	erase("/var/run/dbus/pid");
+
 	run_interactive("dbus-daemon --system", "Starting D-Bus");
 
 	umask(022);
