@@ -11,13 +11,15 @@ distros, Alpine's `pkg-config` does not look for libraries and header
 files there.  So the `PKG_CONFIG_LIBDIR` environment variable must be
 used, or change the install prefix to `/usr`.
 
-The bundled `build.sh` script can be used to configure and build finit:
+The bundled [build.sh](build.sh) script can be used to configure and
+build finit:
 
     alpine:~# cd finit
     alpine:~/finit# ./contrib/alpine/build.sh
 
-Then run the `install.sh` script to install all files, including the
-sample `finit.conf` and `finit.d/*.conf` files.  More on that below.
+Then run the [install.sh](install.sh) script to install all necessary
+files, including the sample `finit.conf` and `finit.d/*.conf` files.
+More on that below.
 
     alpine:~/finit# ./contrib/alpine/install.sh
 
@@ -35,11 +37,11 @@ yourself later on, to point to `finit` instead of `/bin/busybox`:
     alpine:/sbin# ln -s finit init
 
 Before rebooting, make sure to set up a [/etc/finit.conf](finit.conf),
-and [/etc/finit.d/](finit.d) for your services.  Samples are included in
-this directory.  Notice the symlinks in `/etc/finit.d/`, which can be
-created at runtime using `initctl enable SERVICE`.  You can also use a
-standard [/etc/rc.local](rc.local) for one-shot tasks and initialization
-like keyboard language etc.
+and [/etc/finit.d/](finit.d/) for your services.  Samples are included
+in this directory.  Notice the symlinks in `/etc/finit.d/`, which can be
+managed by the operator at runtime using `initctl enable SERVICE`.  You
+can also use a standard [/etc/rc.local](rc.local) for one-shot tasks and
+initialization like keyboard language etc.
 
 [libuEv]: https://github.com/troglobit/libuev
 [libite]: https://github.com/troglobit/libite
