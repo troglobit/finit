@@ -31,7 +31,7 @@ on server and desktop systems as well.  For working examples, see the
 up to date [Alpine Linux](contrib/alpine/) tutorials can be found.
 
 ![Alpine screenshot](images/alpine-screenshot.png)  
-The screenshot shows [Alpine Linux](contrib/alpine/).
+The screenshot shows [Alpine Linux](https://www.alpinelinux.org/).
 
 
 Example
