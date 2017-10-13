@@ -30,9 +30,8 @@ on server and desktop systems as well.  For working examples, see the
 [contrib/](contrib/) section where both [Debian](contrib/debian/) and
 up to date [Alpine Linux](contrib/alpine/) tutorials can be found.
 
-The screenshot shows [TroglOS][9], a small embedded Linux.
-
-![Finit starting TroglOS](images/finit3-screenshot.png "Finit screenshot")
+![Alpine screenshot](images/alpine-screenshot.png)  
+The screenshot shows [Alpine Linux](contrib/alpine/).
 
 
 Example
