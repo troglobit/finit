@@ -254,7 +254,7 @@ are used, and even more commonly, only the default runlevel is used.
 To specify an allowed set of runlevels for a `service`, `run` command,
 `task`, or `tty`, add `[NNN]` to your `/etc/finit.conf`, like this:
 
-```conf
+```
 service [S12345] /sbin/syslogd -n -x     -- System log daemon
 run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
 task    [S]      /etc/init.d/kbd start   -- Preparing console
@@ -284,9 +284,9 @@ The following examples illustrate this.  Bootstrap task and run commands
 are also removed when they have completed, `initctl show` will not list
 them.
 
-```conf
-    task [S] echo "foo" | cat >/tmp/bar
-    run  [S] echo "$HOME" >/tmp/secret
+```
+task [S] echo "foo" | cat >/tmp/bar
+run  [S] echo "$HOME" >/tmp/secret
 ```
 
 Switching between runlevels can be done by calling init with a single
