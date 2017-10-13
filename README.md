@@ -42,7 +42,7 @@ files in `/etc/finit.d`.  Available, but not yet enabled, services can
 be placed in `/etc/finit.d/available` and enabled by an operator using
 the [initctl](#commands--status) tool.
 
-```conf
+```ApacheConf
 # Fallback if /etc/hostname is missing
 host default
 
