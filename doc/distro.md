@@ -12,8 +12,8 @@ By default Finit uses the following directories for configuration files:
       :
 ```
 
-To enable a standard (non-bootstrap) service one simply drops a small
-configuration file in `/etc/finit.d/`.  This works fine on system that
+To enable a service one simply drops a small configuration file in the
+`/etc/finit.d/` directory.  This practice works will with systems that
 keep disabled services elsewhere, or generates them as needed from some
 other tool.
 
@@ -65,7 +65,7 @@ To enable a service like `sshd.conf`, above, use
 
     initctl enable sshd
 
-The `.conf` suffix is not needed, `initctl` adds it implicitly if it's
+The `.conf` suffix is not needed, `initctl` adds it implicitly if it is
 missing.  The `disable` command works in a similar fashion.
 
 Note, however, that `initctl` only operates on symlinks and it always
