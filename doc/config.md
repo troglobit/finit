@@ -1,9 +1,6 @@
 Configuration
 =============
 
-Table of Contents
------------------
-
 * [Introduction](#introduction)
 * [Syntax](#syntax)
 * [Limitations](#limitations)
@@ -244,13 +241,14 @@ Limitations
 
 To understand the limitations of `finit.conf` vs `finit.d` it is useful
 to picture the different phases of the system: bootstrap, runtime, and
-shutdown.
+shutdown.  The `finit.conf` file can be used for all possible settings,
+but `finit.d/*.conf` can only be used for runtime settings.
 
 ### /etc/finit.conf
 
-Started out as the only way to boot a system, later on runlevels for
-runtime was added.  Hence, system hostname, network bringup and shutdown
-are natural parts to control in this file:
+This file was the only way to set up and boot a system using Finit.  It
+is used for pre-runtime settings like system hostname, network bringup
+and shutdown:
 
 - `host`
 - `mkdod`
@@ -265,9 +263,7 @@ are natural parts to control in this file:
 
 Support for partial `.conf` files in `/etc/finit.d` was added to handle
 changes of the system configuration at runtime.  It does *not support*
-the above `finit.conf` settings described above.
-
-Supported stanzas are:
+the above `finit.conf` settings described above, only the following:
 
 - `module`, but only in runlevel `S`
 - `service`
