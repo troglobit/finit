@@ -7,11 +7,12 @@ compatibility with the existing BusyBox toolset the following signals
 have been adopted:
 
 * `SIGHUP`  
-  Same effect as `finit q`, reloads all *.conf files in `/etc/finit.d/`
+  Same effect as `finit q`, `init q`, or `initctl reload`, reloads all
+  *.conf files in `/etc/finit.d/`
 * `SIGUSR1`  
-  Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
-  processes, and unmounts all file systems.  Then tells kernel to
-  halt.  Most people these days want SIGUSR2 though.
+  Calls shutdown hooks, including `HOOK_SHUTDOWN`, stopping all running
+  processes, and unmounts all file systems.  Then tells kernel to halt.
+  Most people these days want `SIGUSR2` though.
 
   SysV init and systemd use this to re-open their FIFO/D-Bus.
 * `SIGUSR2`  
