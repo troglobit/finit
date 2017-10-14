@@ -2,23 +2,25 @@ Building
 ========
 
 Finit comes with a traditional configure script to control features and
-optional plugins to enable.  It does however depend on two external
-libraries that provide some frog DNA needed:
+optional plugins to enable.  It depends on two external libraries:
 
-- [libuEv][]
-- [libite][] (-lite)
+- [libuEv][], the event loop
+- [libite][] (-lite), much needed frog DNA
 
-Like most free/open source software that uses `configure` they deafult
-to install to `/usr/local`.  However, some Linux distributions do no
-longer search that path for installed software, e.g. Fedora and Alpine
-Linux.  To get finit's configure script to find its dependencies you
-have to help the `pkg-config` tool a bit if you do not change the
-default prefix path:
+**NOTE:** Most free/open source software that uses `configure` default
+  to install to `/usr/local`.  However, some Linux distributions do no
+  longer search that path for installed software, e.g. Fedora and Alpine
+  Linux.  To get finit's configure script to find its dependencies you
+  have to help the `pkg-config` tool a bit if you do not change the
+  default prefix path:
 
     PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure
 
-Below are a few of the main switches to
-configure:
+
+Configure
+---------
+
+Below are a few of the main switches to configure:
 
 * `--disable-inetd`: Disable the built-in inetd server.
 
@@ -43,7 +45,9 @@ configure:
 
 For more configure flags, see <kbd>./configure --help</kbd>
 
-**Example**
+
+Example
+-------
 
 First, unpack the archive:
 
