@@ -2,7 +2,8 @@ Bootstrap
 =========
 
 1. Populate `/dev`
-2. Parse `/etc/finit.conf`
+2. Parse `/etc/finit.conf` and kernel command line  
+   Add `--debug` to kernel command line to enable Finit debug mode
 3. Load all `.so` plugins
 4. Remount/Pivot `/` to get R+W
 5. Call 1st level hooks, `HOOK_ROOTFS_UP`
@@ -25,7 +26,7 @@ Bootstrap
 17. If `runparts <DIR>` is set, [run-parts(8)][] is called on `<DIR>`
 18. Call `/etc/rc.local`, if it exists and is an executable shell script
 19. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
-20. Start TTYs defined in `/etc/finit.conf`, or rescue on `/dev/console`
+20. Start all configured TTYs, or a rescue shell on `/dev/console`
 
 In (10) and (15) tasks and services defined in `/etc/finit.conf` are
 started.  Remember, all `service` and `task` stanzas are started in
