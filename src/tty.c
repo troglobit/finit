@@ -53,9 +53,15 @@ static char *canonicalize(char *tty)
 
 	strlcpy(path, tty, sizeof(path));
 	if (stat(path, &st)) {
+		if (!strncmp(path, _PATH_DEV, strlen(_PATH_DEV))) {
+		unavailable:
+			_d("TTY %s not available at the moment, registering anyway.", path);
+			return path;
+		}
+
 		snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
 		if (stat(path, &st))
-			return NULL;
+			goto unavailable;
 	}
 
 	if (!S_ISCHR(st.st_mode))
