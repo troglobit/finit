@@ -1,6 +1,12 @@
 Hooks & Plugins
 ===============
 
+* [Plugins](#plugins)
+* [Hooks](#hooks)
+  * [Bootstrap Hooks](#bootstrap-hooks)
+  * [Runtime Hooks](#runtime-hooks)
+  * [Shutdown Hooks](#shutdown-hooks)
+
 Finit can be extended to add general functionality in the form of I/O
 monitors, built-in inetd services, or hook plugins.
 
