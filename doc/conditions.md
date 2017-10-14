@@ -4,9 +4,6 @@ Finit Conditions
 ![The service state machine](svc-machine.png "The service state machine")
 
 
-Table of Contents
------------------
-
 * [Introduction](#introduction)
 * [Triggering](#triggering)
 * [Built-in Conditions](#built-in--conditions)
@@ -17,9 +14,13 @@ Table of Contents
 Introduction
 ------------
 
-In addition to declaring allowed runlevels per service, it is also
-possible to declare user-defined conditions as dependencies.  Conditions
-are specified within angle brackets (<>) in the service stanza.
+Conditions are a new addition to Finit, introduced in v3, with the
+intention of providing a mechanism for common synchronization problems.
+For example: do not start this service until another process has
+started, or until basic network access is available.
+
+Conditions are similaar to declaring runlevels per service.  They are
+specified within angle brackets `<>` in a `service`/`task`/`run` stanza.
 Multiple conditions may be specified separated by comma.  Conditions are
 AND'ed during evaluation, i.e. all conditions must be satisfied in order
 for a service to run.
@@ -34,9 +35,11 @@ for a service to run.
 In this example the Network monitor daemon `netd` is not started until
 both the `svc/sbin/setupd` *and* `svc/sbin/zebra` conditions are
 satisfied.  An `svc` condition is satisfied by the corresponding
-service's pidfile being created.
+service's PID file being created.
 
-Conditions also stops services when a condition no longer is asserted.
+**NOTE:** Conditions also stop services when a condition is no longer
+  asserted.  I.e., if the Zebra process above stops or restarts, netd
+  will also stop or restart.
 
 
 Triggering
