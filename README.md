@@ -1,3 +1,4 @@
+<img align="right" src="images/finit3.png" alt="Finit: Fast Init">
 <img align="right" src="images/finit.jpg" alt="Finit: Fast Init">
 
 * [Introduction](#introduction)
