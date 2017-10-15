@@ -363,6 +363,8 @@ int main(int argc, char* argv[])
 				_pe("Failed registering %s", cmd);
 				udev = 0;
 			}
+
+			free(cmd);
 		}
 	}
 
