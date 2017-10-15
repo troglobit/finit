@@ -456,7 +456,7 @@ void service_runlevel(int newlevel)
 /**
  * service_register - Register service, task or run commands
  * @type:     %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
- * @line:     A complete command line with -- separated description text
+ * @svcline:  A complete command line with -- separated description text
  * @mtime:    The modification time if service is loaded from /etc/finit.d
  *
  * This function is used to register commands to be run on different
@@ -504,7 +504,7 @@ void service_runlevel(int newlevel)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int service_register(int type, char *line, struct timeval *mtime)
+int service_register(int type, char *svcline, struct timeval *mtime)
 {
 	int i = 0;
 	int id = 1;		/* Default to ID:1 */
@@ -512,16 +512,20 @@ int service_register(int type, char *line, struct timeval *mtime)
 	int forking = 0;
 #endif
 	int log = 0, levels = 0;
-	char *username = NULL;
+	char *username = NULL, *line;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
-	if (!line) {
+	if (!svcline) {
 		_e("Invalid input argument");
 		return errno = EINVAL;
 	}
+
+	line = strdup(svcline);
+	if (!line)
+		return 1;
 
 	desc = strstr(line, "-- ");
 	if (desc) {
@@ -535,7 +539,8 @@ int service_register(int type, char *line, struct timeval *mtime)
 	cmd = strtok(line, " ");
 	if (!cmd) {
 	incomplete:
-		_e("Incomplete service, cannot register");
+		_e("Incomplete service '%s', cannot register", svcline);
+		free(line);
 		return errno = ENOENT;
 	}
 
@@ -570,6 +575,7 @@ int service_register(int type, char *line, struct timeval *mtime)
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel > 0 && !ISOTHER(levels, 0)) {
 		_d("Skipping %s, bootstrap is completed.", cmd);
+		free(line);
 		return 0;
 	}
 
@@ -601,6 +607,7 @@ int service_register(int type, char *line, struct timeval *mtime)
 			plugin = plugin_find(ps);
 			if (!plugin || !plugin->inetd.cmd) {
 				_w("Inetd service %s has no internal plugin, skipping ...", service);
+				free(line);
 				return errno = ENOENT;
 			}
 		}
@@ -674,6 +681,7 @@ recreate:
 
 		if (inetd_new(&svc->inetd, name, service, proto, forking, svc)) {
 			_e("Failed registering new inetd service %s/%s", service, proto);
+			free(line);
 			return svc_del(svc);
 		}
 
@@ -696,6 +704,7 @@ recreate:
 
 	/* New, recently modified or unchanged ... used on reload. */
 	svc_check_dirty(svc, mtime);
+	free(line);
 
 	return 0;
 }
