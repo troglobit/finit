@@ -512,7 +512,7 @@ int service_register(int type, char *line, struct timeval *mtime)
 	int forking = 0;
 #endif
 	int log = 0, levels = 0;
-	char *username;
+	char *username = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
