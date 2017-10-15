@@ -265,7 +265,17 @@ static int service_start(svc_t *svc)
 				dup2(fd, STDERR_FILENO);
 				close(fd);
 			}
+		} else {
+			FILE *fp;
+
+			fp = fopen("/dev/null", "w");
+			if (fp) {
+				dup2(fileno(fp), STDOUT_FILENO);
+				dup2(fileno(fp), STDERR_FILENO);
+			}
+			fclose(fp);
 		}
+
 	logger_err:
 		sig_unblock();
 
