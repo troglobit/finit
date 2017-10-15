@@ -243,8 +243,7 @@ static void emergency_shell(void)
 
 int main(int argc, char* argv[])
 {
-	int ret;
-	char *devfsd;
+	int ret, udev = 0;
 	uev_ctx_t loop;
 
 	/*
@@ -347,19 +346,24 @@ int main(int argc, char* argv[])
 		/* Embedded Linux systems usually have BusyBox mdev */
 		if (log_is_debug())
 			touch("/dev/mdev.log");
-		devfsd = "mdev -s";
-	} else {
-		if (whichp("udevd"))
-			devfsd = "udevd --daemon";
-		else
-			devfsd = "/lib/systemd/systemd-udevd --daemon";
-	}
 
-	run_interactive(devfsd, "Populating device tree");
-	if (whichp("udevadm")) {
-		run("udevadm trigger --action=add --type=subsystems");
-		run("udevadm trigger --action=add --type=devices");
-		run("udevadm settle --timeout=120");
+		run_interactive("mdev -s", "Populating device tree");
+	} else {
+		char *cmd;
+		char line[80];
+
+		cmd = which("udevd");
+		if (!cmd)
+			cmd = which("/lib/systemd/systemd-udevd");
+		if (cmd) {
+			udev = 1;
+
+			snprintf(line, sizeof(line), "[12345] %s -- Device event manager daemon", cmd);
+			if (service_register(SVC_TYPE_SERVICE, line, NULL)) {
+				_pe("Failed registering %s", cmd);
+				udev = 0;
+			}
+		}
 	}
 
 	/*
@@ -412,6 +416,13 @@ int main(int argc, char* argv[])
 	 */
 	sm_init(&sm);
 	sm_step(&sm);
+
+	/* On udev systems we can now talk to udevd */
+	if (udev && whichp("udevadm")) {
+		run("udevadm trigger --action=add --type=subsystems");
+		run("udevadm trigger --action=add --type=devices");
+		run("udevadm settle --timeout=120");
+	}
 
 	/*
 	 * Network stuff
