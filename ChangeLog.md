@@ -3,18 +3,50 @@ Change Log
 
 All relevant changes are documented in this file.
 
-[3.0][UNRELEASED] - 2016-XX-YY
+[3.0][UNRELEASED] - 2017-10-YY
 ------------------------------
+
+Major release, support for conditions/dependencies between services,
+optional built-in watchdog daemon, optional built-in getty, optional
+built-in standard inetd services like echo server, chargen, datetime,
+etc.  Native support for `/etc/network/interfaces`, overhauled new
+configure based build system, logging to `/dev/kmsg` before syslogd has
+started, improved support for Linux distributions, ...
 
 ### Changes
 
-#### -rc3
+* Added basic code of conduct covenant to project
+* Added contribution guidelines document
 * Removed `finit.conf` option `check DEV`, replaced entirely by automated
   call to `fsck` for each device listed in `/etc/fstab`
+* Removed deprecated and confusing `startx` and `user` settings.  It is
+  strongly recommended to instead use xdm/gdb/lightdm etc.
+* Add support for `initctl log <SVC>`, shows last 10 lines from syslog
+* Add `initctl cond dump` for debugging conditions
+* Ensure plugins always have a default name, file name
+* Reorganization, move all source files to a `src/` sub-directory
+* Add support for `initctl <list|enable|disable> <SVC>`, much needed by
+  distributions.  See [doc/distro.md](doc/distro.md) for details
+* Remove `UNUSED()` macro, mentioned here because it may have been used
+  by external plugin developers.  Set `-Wno-unused-parameter` instead
+* New table headings in `initctl`, using `top` style inverted text
+* Allow `initctl show` to use full screen width for service descriptions
+* New `HOOK_BANNER` for plugins to override the default `banner()`
+* Allow loading TTYs from `/etc/finit.d`
+* Improvements to built-in getty, ignore signals like `SIGINT`,
+  `SIGHUP`, support Ctrl-U to erase to beginning of line
+* Add TTY `nowait` and `noclear` options
+* Allow using both built-in getty and external getty:  
 
-#### -rc2
+        tty [12345] /dev/ttyAMA0    115200              noclear vt220
+        tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
+        tty [12345] /sbin/agetty -L ttyAMA0 115200      vt100 nowait
+
+* Silent boot is now the default, use `--enable-progress` to get the old
+  Finit style process progress.  I.e., `--enable-silent` is no more
+* Support for `configure --enable-emergency-shell`, debug-only mode
 * Support for a fallback shell on console if none of the configured TTYs
-  can be started
+  can be started, `configure --enable-fallback-shell`
 * All debug messages to console when Finit `--debug` is enabled
 * Prevent login, by touching `/etc/nologin`, during runlevel changes
 * A more orderly shutdown.  On reboot/halt/poweroff Finit now properly
@@ -27,11 +59,9 @@ All relevant changes are documented in this file.
 * Add support for `poweroff`
 * Add support for a built-in miniature watchdog daemon
 * Remove GLIBC:isms like `__progname`
-
-#### -rc1
 * Manage service states based on user defined conditions
 * Manage dependencies between services, w/ conditions (pidfile plugin)
-* Manage service dependenceis on network events (netlink plugin)
+* Manage service dependencies on network events (netlink plugin)
 * Support for dynamically reloading Finit configuration at runtime
 * Refactor to use GNU configure and build system
 * New hooks for for detecting lost and started services (lost plugin)
@@ -43,8 +73,7 @@ All relevant changes are documented in this file.
 * Add simple built-in getty
 * Greatly improved accounting support, both UTMP and WTMP fixes+features
 * Improved udev support, on non-embedded systems
-* Improvide shutdown and file-system unmount support (Debian)
-* Added `--enable-emergency-shell` (configure) fallback debug mode
+* Improved shutdown and file-system unmount support (Debian)
 * Support SysV init `/etc/rc.local`
 * Inetd protection against UDP looping attacks
 * Support systems with `/run` instead of `/var/run` (bootmisc plugin)
@@ -54,7 +83,39 @@ All relevant changes are documented in this file.
 * Add OpenRC-like support for sysctl.d/*.conf
 * Add support for Debian/BusyBox `/etc/network/interfaces`
 * Add support for running fsck on file systems in `/etc/fstab`
-* Added example configs + HowTos for Debian (Jessie) and Alpine Linux
+* Added example configs + HowTos for Debian and Alpine Linux
+  to support latest releases of both distributions
+* Lots of documentation updates
+
+### Fixes
+
+* Fix race-condition at configuration reload due to too low resolution.  
+  Thanks to Mattias Walström, Westermo
+* Fix to handle long process (PID) dependency chains, re-run reconf
+  callback until no more applications are in flux.  
+  Thanks to Mattias Walström, Westermo
+* Clear `reconf` condition when `initctl reload` has finished
+* Skip automatic reload of `/etc/finit.d/*.conf` files when changing
+  runlevel to halt or reboot
+* Fix issue #54: Allow halt and poweroff commands even if watchdog is enabled
+* Fix issue #56: Check existence of device before trying to start getty
+* Fix issue #60: `initctl` should display error and return error code
+  for non-existing services should the operator try to start/stop them.
+* Fix issue #61: Reassert `net/*` conditions after `initctl reload`
+* Fix issue #64: Skip `fsck` on already mounted devices
+* Fix issue #66: Log rotate and gzip `/var/log/wtmp`, created by Finit
+* Fix issue #72: Check `ifup` exists before trying to bring up networking,
+  also set `$PATH` earlier to simplify `run()` et al -- no longer any need
+  to use absolute paths for system tools called from Finit.  Thanks to crazy
+* Fix issue #73: Remove double `ntohl()` in inetd handling, prevents matches.  
+  Thanks to Petrus Hellgren, Westermo
+* Fix issue #76: Reap zombie processes in emergency shell mode
+* Fix issue #80: FTBFS on Arch Linux, missing `stdarg.h` in `helpers.h`,
+  thanks to Jörg Krause
+* Fix issue #81: Workaround for systems w/o SYSV shm IPC support in kernel
+* Always collect bootstrap-only tasks when done, we will never re-run them.
+  Also, make sure to never reload bootstrap-only tasks at runtime
+* Remove two second block (!) of Finit when stopping TTYs
 
 
 [2.4][] - 2015-12-04
@@ -536,6 +597,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/2.4...HEAD
+[3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
 [2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
 [2.3]: https://github.com/troglobit/finit/compare/2.2...2.3
 [2.2]: https://github.com/troglobit/finit/compare/2.1...2.2
