@@ -88,8 +88,7 @@ static void stty(int fd, speed_t speed)
 	term.c_iflag      = ICRNL|IXON|IXOFF;
 	term.c_oflag      = OPOST|ONLCR;
 	term.c_cflag     |= CS8|CREAD|HUPCL|CBAUDEX;
-	term.c_lflag     |= ICANON|ECHO|ECHOE|ECHOK|ECHOKE;
-	term.c_lflag     &= ~ISIG;
+	term.c_lflag     |= ICANON|ISIG|ECHO|ECHOE|ECHOK|ECHOKE;
 
 	/* Reset special characters to defaults */
 	term.c_cc[VINTR]  = CTRL('C');
