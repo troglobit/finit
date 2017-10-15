@@ -28,11 +28,16 @@
 #include "config.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "service.h"
+
+#define DAEMON "dbus-daemon"
+#define ARGS   " --nofork --system"
+#define DESC   " -- D-Bus message bus daemon"
 
 static void setup(void *arg)
 {
-	if (!whichp("dbus-daemon")) {
-		_d("Skipping D-Bus plugin, dbus-daemon is not installed.");
+	if (!whichp(DAEMON)) {
+		_d("Skipping D-Bus plugin, %s is not installed.", DAEMON);
 		return;
 	}
 
@@ -47,8 +52,8 @@ static void setup(void *arg)
 
 	/* Clean up from any previous pre-bootstrap run */
 	erase("/var/run/dbus/pid");
-
-	run_interactive("dbus-daemon --system", "Starting D-Bus");
+	if (service_register(SVC_TYPE_SERVICE, "[S12345] " DAEMON ARGS DESC, NULL))
+		_pe("Failed registering %s", DAEMON);
 
 	umask(022);
 }
