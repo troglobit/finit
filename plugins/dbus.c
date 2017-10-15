@@ -60,6 +60,7 @@ static void setup(void *arg)
 	snprintf(line, sizeof(line), "[S12345] %s %s -- %s", cmd, ARGS, DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, NULL))
 		_pe("Failed registering %s", DAEMON);
+	free(cmd);
 
 	umask(022);
 }
