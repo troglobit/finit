@@ -32,7 +32,7 @@
 
 #define DAEMON "dbus-daemon"
 #define ARGS   "--nofork --system"
-#define DESC   "-- D-Bus message bus daemon"
+#define DESC   "D-Bus message bus daemon"
 
 static void setup(void *arg)
 {
@@ -57,7 +57,7 @@ static void setup(void *arg)
 	erase("/var/run/dbus/pid");
 
 	/* Register service with Finit */
-	snprintf(line, sizeof(line), "[S12345] %s %s -- %s", DAEMON, ARGS, DESC);
+	snprintf(line, sizeof(line), "[S12345] %s %s -- %s", cmd, ARGS, DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, NULL))
 		_pe("Failed registering %s", DAEMON);
 
