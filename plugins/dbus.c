@@ -1,6 +1,6 @@
 /* Setup and start system message bus, D-Bus
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012-2017  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,8 @@ static void setup(void *arg)
 
 	/* Clean up from any previous pre-bootstrap run */
 	erase("/var/run/dbus/pid");
+
+	/* Register service with Finit */
 	if (service_register(SVC_TYPE_SERVICE, "[S12345] " DAEMON ARGS DESC, NULL))
 		_pe("Failed registering %s", DAEMON);
 
