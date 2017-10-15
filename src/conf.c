@@ -315,26 +315,26 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
-		service_register(SVC_TYPE_SERVICE, x, mtime, NULL);
+		service_register(SVC_TYPE_SERVICE, x, mtime);
 		return;
 	}
 
 	/* One-shot task, will not be respawned */
 	if (MATCH_CMD(line, "task ", x)) {
-		service_register(SVC_TYPE_TASK, x, mtime, NULL);
+		service_register(SVC_TYPE_TASK, x, mtime);
 		return;
 	}
 
 	/* Like task but waits for completion, useful w/ [S] */
 	if (MATCH_CMD(line, "run ", x)) {
-		service_register(SVC_TYPE_RUN, x, mtime, NULL);
+		service_register(SVC_TYPE_RUN, x, mtime);
 		return;
 	}
 
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
 #ifdef INETD_ENABLED
-		service_register(SVC_TYPE_INETD, x, mtime, NULL);
+		service_register(SVC_TYPE_INETD, x, mtime);
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
 #endif

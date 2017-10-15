@@ -458,7 +458,6 @@ void service_runlevel(int newlevel)
  * @type:     %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
  * @line:     A complete command line with -- separated description text
  * @mtime:    The modification time if service is loaded from /etc/finit.d
- * @username: Optional username to run service as, or %NULL to run as root
  *
  * This function is used to register commands to be run on different
  * system runlevels with optional username.  The @type argument details
@@ -505,7 +504,7 @@ void service_runlevel(int newlevel)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int service_register(int type, char *line, struct timeval *mtime, char *username)
+int service_register(int type, char *line, struct timeval *mtime)
 {
 	int i = 0;
 	int id = 1;		/* Default to ID:1 */
@@ -513,6 +512,7 @@ int service_register(int type, char *line, struct timeval *mtime, char *username
 	int forking = 0;
 #endif
 	int log = 0, levels = 0;
+	char *username;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
