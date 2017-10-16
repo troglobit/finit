@@ -337,14 +337,13 @@ static int do_cond(char *cmd)
 		{ NULL, NULL }
 	};
 
-	arg = strpbrk(cmd, " ");
-	if (arg) {
-		*arg = 0;
+	arg = strpbrk(cmd, " \0");
+	if (arg)
+		*arg++ = 0;
 
-		for (c = 0; command[c].cmd; c++) {
-			if (!strcmp(command[c].cmd, cmd))
-				return command[c].cb(arg);
-		}
+	for (c = 0; command[c].cmd; c++) {
+		if (!strcmp(command[c].cmd, cmd))
+			return command[c].cb(arg);
 	}
 
 	return do_cond_show(NULL);
