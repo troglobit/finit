@@ -281,14 +281,14 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 		return 0;
 
 	len = strlen(_PATH_COND);
-	printf("%-30s %s\n", &fpath[len], condstr(cond_get_path(fpath)));
+	printf("%-28s  %s\n", &fpath[len], condstr(cond_get_path(fpath)));
 
 	return 0;
 }
 
 static int do_cond_dump(char *arg)
 {
-	printheader(NULL, "CONDITION                      STATUS", 0);
+	printheader(NULL, "CONDITION                     STATUS", 0);
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		warnx("Failed parsing %s", _PATH_COND);
