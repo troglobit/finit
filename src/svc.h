@@ -166,6 +166,7 @@ void	    svc_mark_dirty         (svc_t *svc);
 void	    svc_mark_clean         (svc_t *svc);
 void	    svc_clean_dynamic      (void (*cb)(svc_t *));
 int	    svc_clean_bootstrap    (svc_t *svc);
+void	    svc_prune_bootstrap	   (void);
 
 char       *svc_status             (svc_t *svc);
 const char *svc_dirtystr           (svc_t *svc);

@@ -486,6 +486,23 @@ int svc_clean_bootstrap(svc_t *svc)
 	return 0;
 }
 
+/**
+ * svc_prune_bootstrap - Prune any remaining bootstrap tasks
+ *
+ * This function cleans up all bootstrap tasks that have not yet been
+ * collected, or that never even ran in bootstrap.  All other instances
+ * when svc_clean_bootstrap() is called are when a service is collected.
+ */
+void svc_prune_bootstrap(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!svc->pid)
+			svc_clean_bootstrap(svc);
+	}
+}
+
 char *svc_status(svc_t *svc)
 {
 	switch (svc->state) {

@@ -440,6 +440,9 @@ int main(int argc, char* argv[])
 	 */
 	service_runlevel(cfglevel);
 
+	/* Clean up bootstrap-only tasks/services that never started */
+	svc_prune_bootstrap();
+
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 
