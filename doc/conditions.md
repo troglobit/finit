@@ -15,17 +15,20 @@ Introduction
 
 Conditions are a new addition to Finit, introduced in v3, with the
 intention of providing a mechanism for common synchronization problems.
-For example: do not start this service until another process has
-started, or until basic network access is available.
+For example:
 
-Conditions are similaar to declaring runlevels per service.  They are
-specified within angle brackets `<>` in a `service`/`task`/`run` stanza.
-Multiple conditions may be specified separated by comma.  Conditions are
-AND'ed during evaluation, i.e. all conditions must be satisfied in order
-for a service to run.
+- *"do not start this service until another process has started"*, or
+- *"do not starty until basic network access is available"*
+
+Conditions are similar in syntax to declaring runlevels per service.
+They are specified within angle brackets `<>` and can be applied to any
+of the `service`, `task`, or `run` stanza.  Multiple conditions may be
+specified separated by comma.  Multiple conditions are logically AND'ed
+during evaluation, i.e. all conditions must be satisfied in order for a
+service to run.
 
 
-**Example:**
+### Example
 
 ```shell
     service [2345] <svc/sbin/setupd,svc/sbin/zebra> /sbin/netd -- Network monitor
@@ -44,8 +47,9 @@ service's PID file being created.
 Triggering
 ----------
 
-Conditions are triggered either by plugins or by using the `cond`
-command of the `initctl` control tool.
+Conditions are triggered by built-in plugins, but can for debugging
+purposes also be controlled using the `cond set` and `cond clear`
+sub-commands to the `initctl` control tool:
 
 * `initctl cond set your/cond/here`
 
@@ -57,34 +61,33 @@ command of the `initctl` control tool.
 
 Conditions retain their current state until the next reconfiguration or
 runlevel change.  At that point all set conditions transition into the
-`flux` state, meaning the condition's state is unknown.  (See
-[Internals](#internals) for the rationale behind this.)  Thus, after a
-reconfiguration it is up to the "owner" of the condition to convey the
-new (or possibly unchanged) state of it.
+`flux` state, meaning the condition's state is unknown.  (For more info
+on this, see [Internals](#internals).)  Thus, after a reconfiguration it
+is up to the "owner" of the condition to convey the new (or possibly
+unchanged) state of it.
 
 
 Built-in Conditions
 -------------------
 
 Finit is distributed with a `pidfile` and `netlink` plugin.  If enabled,
-the `pidfile` plugin watches `/var/run/` for PID files created by
+the `pidfile` plugin watches `/var/run/` for PID files created by the
 monitored services, and sets a corresponding condition in the `svc/`
 namespace.  Similarily, the `netlink` plugin provides basic conditions
 for when an interface is brought up/down and when a default route
-(gateway) is set.
+(gateway) is set, in the `net/` namespace.
 
 With the example listed above, finit does not start the `/sbin/netd`
 daemon until `setupd` and `zebra` has started *and* created their PID
-files.  Which they do when they completed their main tasks of setting up
-VLANs, bridge, interfaces, etc.  When `netd` in turn starts up it
-creates the file `/var/run/netd.pid`, and the condition `svc/sbin/netd`
-is satisfied.  When the file is removed, the condition is cleared.
+files.  Which they do when they have completed their initial set up and
+are ready to receive signals.
 
 The full path to the dependency is needed by finit to match the PID file
-to a monitored process.  In essence, Finit expects monitored services to
-touch their PID files when they have reloaded their configuration files.
-Some services do not support `SIGHUP` and are instead restarted, which
-also results in the PID file being touched (re-created).
+to a monitored process.  Finit expects monitored services to touch their
+PID files, i.e. update the mtime, when they reload their configuration
+files after a `SIGHUP`.  Some services do not support `SIGHUP` and are
+instead restarted, which is a crude but effective way to have the PID
+file touched (re-created).
 
 Built-in conditions:
 
@@ -93,7 +96,9 @@ Built-in conditions:
 - `net/<IFNAME>/exist`
 - `net/<IFNAME>/up`
 
-Note: `up` is administratively up, `IFF_UP`, not link up, `IFF_RUNNING`.
+**Note:** `up` means administratively up, the interface flag `IFF_UP`,
+  not link up, `IFF_RUNNING`.  This latter conditions is currently not
+  implemented by the `plugins/netlink.c` plugin.
 
 
 Debugging
@@ -134,14 +139,21 @@ Then watch the console for the debug messages and then check the output
 from `initctl cond show` again.  (The client will likely have failed to
 start, but at least the condition is now satisfied.)
 
+There is also the `initctl cond dump` command, which dumps all known
+conditions and their current status.
+
 
 Internals
 ---------
 
+Conditions are implemented as simple files in the file system, in the
+`/var/run/finit/cond/` sub-directory.  Use the `initctl cond set/clear`
+commands to add/remove files in this hierarchy.
+
 A condition is always in one of three states:
 
-* `on` (+): The condition is asserted.
-* `off` (-): The condition is deasserted.
+* `  on` (+): The condition is asserted.
+* ` off` (-): The condition is deasserted.
 * `flux` (~): The conditions state is unknown.
 
 All conditions that have not explicitly been set are interpreted as
