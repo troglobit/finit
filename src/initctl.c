@@ -263,8 +263,12 @@ static void show_cond_one(const char *_conds)
 
 static int do_cond_magic(char op, char *cond)
 {
-	cond[0] = op;
-	return do_emit(cond);
+	char event[368];	/* sizeof(init_request.data) */
+
+	event[0] = op;
+	strlcpy(&event[1], cond, sizeof(event) - 1);
+
+	return do_emit(event);
 }
 
 static int do_cond_set  (char *cond) { return do_cond_magic('+', cond); }
