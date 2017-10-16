@@ -445,6 +445,8 @@ char *runlevel_string(int runlevel, int levels)
 
 			if (runlevel == i)
 				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
+		} else {
+			lvl[pos++] = '-';
 		}
 	}
 
