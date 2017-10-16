@@ -64,7 +64,7 @@ static void do_list(const char *heading, const char *path)
 {
 	int num;
 	int width;
-	char buf[SCREEN_WIDTH];
+ 	char buf[screen_cols];
 	size_t i, len;
 	glob_t gl;
 
@@ -85,8 +85,8 @@ static void do_list(const char *heading, const char *path)
 	printf("\e[1m%s\e[0m\n", buf);
 
 	width = calc_width(gl.gl_pathv, gl.gl_pathc);
-	num = SCREEN_WIDTH / width;
-	if ((num - 1) * 2 + num * width > SCREEN_WIDTH)
+	num = (screen_cols - 2) / width;
+	if ((num - 1) * 2 + num * width > screen_cols)
 		num--;
 
 	for (i = 0; i < gl.gl_pathc; i++) {
