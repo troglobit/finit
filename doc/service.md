@@ -27,7 +27,7 @@ The current state depends on the two following conditions:
 
   - `on` (+): The condition is asserted.
   - `off` (-): The condition is deasserted.
-  - `flux` (~): The conditions state is unknown.
+  - `flux` (~): The condition state is unknown.
 
 For a detailed description of conditions, and how to debug them,
 see the [Finit Conditions](conditions.md) document.

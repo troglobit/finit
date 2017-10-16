@@ -3,7 +3,6 @@ Finit Conditions
 
 ![The service state machine](svc-machine.png "The service state machine")
 
-
 * [Introduction](#introduction)
 * [Triggering](#triggering)
 * [Built-in Conditions](#built-in--conditions)

@@ -588,7 +588,7 @@ static int usage(int rc)
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
 		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
 		"  cond     show             Show condition status\n"
-		"  cond     dump             Show all conditions and their status\n"
+		"  cond     dump             Dump all conditions and their status\n"
 		"\n"
 		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
