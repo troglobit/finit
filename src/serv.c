@@ -63,6 +63,7 @@ static int calc_width(char *arr[], size_t len)
 static void do_list(const char *heading, const char *path)
 {
 	int num;
+	int prev;
 	int width;
  	char buf[screen_cols];
 	size_t i, len;
@@ -89,11 +90,17 @@ static void do_list(const char *heading, const char *path)
 	if ((num - 1) * 2 + num * width > screen_cols)
 		num--;
 
+	prev = 0;
 	for (i = 0; i < gl.gl_pathc; i++) {
-		if (i > 0 && !(i % num))
+		if (i > 0 && !(i % num)) {
 			puts("");
+			prev = 0;
+		}
 
-		printf("%-*s  ", width, gl.gl_pathv[i]);
+		if (prev)
+			printf("  ");
+		printf("%-*s", width, gl.gl_pathv[i]);
+		prev++;
 	}
 	puts("\n");
 
