@@ -1,6 +1,6 @@
 /* New client tool, complements old /dev/initctl API and telinit tool
  *
- * Copyright (c) 2015-2016  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2015-2017  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -422,7 +422,8 @@ static int show_version(char *arg)
  * @levels: Bit encoded runlevels
  *
  * Returns:
- * Pointer to string on the form [2345]
+ * Pointer to string on the form [2345], may be up to 12 chars long,
+ * plus escape sequences for highlighting current runlevel.
  */
 char *runlevel_string(int runlevel, int levels)
 {
@@ -489,7 +490,7 @@ static int show_status(char *arg)
 	}
 
 	if (!verbose)
-		printheader(NULL, "#      STATUS   PID     RUNLEVELS   SERVICE               DESCRIPTION", 0);
+		printheader(NULL, "#      STATUS   PID     RUNLEVELS     SERVICE               DESCRIPTION", 0);
 
 	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
 		char jobid[10], args[512] = "", *lvls;
@@ -507,12 +508,12 @@ static int show_status(char *arg)
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
-			printf("%-18.18s  ", lvls);
+			printf("%-20.20s  ", lvls);
 		else
-			printf("%-10.10s  ", lvls);
+			printf("%-12.12s  ", lvls);
 
 		if (!verbose) {
-			int adj = screen_cols - 58;
+			int adj = screen_cols - 60;
 			char *name = strrchr(svc->cmd, '/');
 
 			if (!name)
