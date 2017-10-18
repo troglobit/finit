@@ -479,6 +479,7 @@ int conf_reload_dynamic(void)
 
 		/* Check that it's an actual file ... beyond any symlinks */
 		if (lstat(path, &st)) {
+		lost:
 			_d("Skipping %s, cannot access: %s", path, strerror(errno));
 			continue;
 		}
@@ -513,7 +514,9 @@ int conf_reload_dynamic(void)
 			continue;
 		}
 
-		stat(path, &st);
+		if (stat(path, &st))
+			goto lost; /* Weird, lost file between here and lstat() */
+
 		TIMESPEC_TO_TIMEVAL(&mtime, &st.st_mtim);
 		parse_conf_dynamic(path, &mtime);
 	}
