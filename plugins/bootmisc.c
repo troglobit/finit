@@ -170,13 +170,13 @@ static void setup(void *arg)
 	chown("/dev/xconsole", 0, gid);
 
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
-	uid = getuser("uuid", NULL);
+	uid = getuser("uuidd", NULL);
 	if (uid >= 0) {
-		gid = getgroup("uuid");
+		gid = getgroup("uuidd");
 		if (gid < 0)
 			gid = 0;
-		makedir("/var/run/uuid", 0755);
-		chown("/var/run/uuid", uid, gid);
+		makedir("/var/run/uuidd", 0755);
+		chown("/var/run/uuidd", uid, gid);
 	}
 
 	umask(022);
