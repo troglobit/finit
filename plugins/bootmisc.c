@@ -98,7 +98,7 @@ static void bootclean(void)
  */
 static void setup(void *arg)
 {
-	int gid;
+	int uid, gid;
 
 	/* Cleanup stale files, if any still linger on. */
 	bootclean();
@@ -164,6 +164,15 @@ static void setup(void *arg)
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
 	makefifo("/dev/xconsole",  0640); /* sysklogd */
 	chown("/dev/xconsole", 0, getgroup("tty"));
+
+	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
+	uid = getuser("uuid", NULL);
+	if (uid >= 0) {
+		gid = getgroup("uuid");
+		if (gid < 0)
+			gid = 0;
+		makedir("/var/run/uuid", uid, gid);
+	}
 
 	umask(022);
 }
