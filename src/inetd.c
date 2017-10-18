@@ -155,13 +155,16 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	 */
 	if (fcntl(stdin, F_SETFL, fcntl(stdin, F_GETFL, 0) & ~O_NONBLOCK) < 0) {
 		logit(LOG_CRIT, "Failed disabling non-blocking on %s socket", svc->cmd);
+		if (svc->inetd.type == SOCK_STREAM)
+			close(stdin);
 		return;
 	}
 
 	task = svc_new(svc->cmd, svc->inetd.next_id++, SVC_TYPE_INETD_CONN);
 	if (!task) {
-		logit(LOG_CRIT, "%s: Unable to allocate service for inetd client",
-			   svc->cmd);
+		logit(LOG_CRIT, "%s: Unable to allocate service for inetd client", svc->cmd);
+		if (svc->inetd.type == SOCK_STREAM)
+			close(stdin);
 		return;
 	}
 
