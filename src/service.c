@@ -184,12 +184,14 @@ static int service_start(svc_t *svc)
 		char *home = NULL;
 #ifdef ENABLE_STATIC
 		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
+		int gid = 0;
 #else
 		int uid = getuser(svc->username, &home);
+		int gid = getgroup(svc->group);
 #endif
 		char *args[MAX_NUM_SVC_ARGS];
 
-		/* Set desired user */
+		/* Set desired user+group */
 		if (uid >= 0) {
 			setuid(uid);
 
@@ -201,6 +203,9 @@ static int service_start(svc_t *svc)
 				chdir(home);
 			}
 		}
+
+		if (gid >= 0)
+			setgid(gid);
 
 		/* Serve copy of args to process in case it modifies them. */
 		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
