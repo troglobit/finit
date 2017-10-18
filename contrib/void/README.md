@@ -1,5 +1,5 @@
-HowTo: Finit on Void Linux 3.4-3.6
-====================================
+HowTo: Finit on Void Linux
+==========================
 
 HowTo use Finit to boot an [Void Linux][] system.  It is assumed that
 the user has already installed make, a compiler, C library header files,
