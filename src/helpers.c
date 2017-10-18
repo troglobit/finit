@@ -160,7 +160,8 @@ int getuser(char *username, char **home)
 	if (!username || (usr = getpwnam(username)) == NULL)
 		return -1;
 
-	*home = usr->pw_dir;
+	if (home)
+		*home = usr->pw_dir;
 	return  usr->pw_uid;
 #endif
 }
