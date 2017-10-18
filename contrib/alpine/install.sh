@@ -11,12 +11,12 @@ fi
 if [ -e alpine-release ]; then
     cd ../..
 elif [ ! -e autogen.sh ]; then
-    echo "Please run this script from the Finit base directory."
+    echo "*** Please run this script from the Finit base directory."
     exit 1
 fi
 
 echo
-echo "Install Finit on Alpine Linux"
+echo "*** Install Finit on Alpine Linux"
 echo "========================================================================"
 echo "/sbin/finit           - PID 1"
 echo "/lib/finit/plugins/*  - All enabled Finit plugins"

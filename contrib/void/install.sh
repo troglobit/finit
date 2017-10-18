@@ -11,12 +11,12 @@ fi
 if [ -e xbps ]; then
     cd ../..
 elif [ ! -e autogen.sh ]; then
-    echo "Please run this script from the Finit base directory."
+    echo "*** Please run this script from the Finit base directory."
     exit 1
 fi
 
 echo
-echo "Install Finit on Void Linux"
+echo "*** Install Finit on Void Linux"
 echo "========================================================================"
 echo "/sbin/finit           - PID 1"
 echo "/lib/finit/plugins/*  - All enabled Finit plugins"

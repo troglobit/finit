@@ -12,12 +12,12 @@ grep -q Debian os-release 2>/dev/null
 if [ $? -eq 0 ]; then
     cd ../..
 elif [ ! -e autogen.sh ]; then
-    echo "Please run this script from the Finit base directory."
+    echo "*** Please run this script from the Finit base directory."
     exit 1
 fi
 
 echo
-echo "Install Finit on Debian GNU/Linux"
+echo "*** Install Finit on Debian GNU/Linux"
 echo "========================================================================"
 echo "/sbin/finit           - PID 1"
 echo "/lib/finit/plugins/*  - All enabled Finit plugins"
@@ -35,7 +35,7 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     install -vbD finit.conf /etc/finit.conf
     cp -va finit.d /etc/
 
-    echo "Setting up a GRUB boot entry ..."
+    echo "*** Setting up a GRUB boot entry ..."
     MENU=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/menuentry '\([^']*\).*/\1/"`
     TYPE=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/.*' --class \([a-z]*\).*/\1/"`
     BOOT=`grep set=root /boot/grub/grub.cfg |head -1 |sed 's/.* \([a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*\).*/\1/'`
