@@ -162,8 +162,12 @@ static void setup(void *arg)
 	makedir("/var/run/quagga", 0755); /* Needed by Quagga */
 	makedir("/var/log/quagga", 0755); /* Needed by Quagga */
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
+
+	gid = getgroup("tty");
+	if (gid < 0)
+		gid = 0;
 	makefifo("/dev/xconsole",  0640); /* sysklogd */
-	chown("/dev/xconsole", 0, getgroup("tty"));
+	chown("/dev/xconsole", 0, gid);
 
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
 	uid = getuser("uuid", NULL);
