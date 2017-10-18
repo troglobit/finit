@@ -243,6 +243,8 @@ static void emergency_shell(void)
 
 int main(int argc, char* argv[])
 {
+	char *path;
+	char cmd[256];
 	int ret, udev = 0;
 	uev_ctx_t loop;
 
@@ -342,41 +344,45 @@ int main(int argc, char* argv[])
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 */
-	if (whichp("mdev")) {
+	path = which("mdev");
+	if (path) {
 		/* Embedded Linux systems usually have BusyBox mdev */
 		if (log_is_debug())
 			touch("/dev/mdev.log");
 
-		run_interactive("mdev -s", "Populating device tree");
+		snprintf(cmd, sizeof(cmd), "%s -s", path);
 	} else {
-		char *cmd;
-		char line[256];
-
-		cmd = which("udevd");
-		if (!cmd)
-			cmd = which("/lib/systemd/systemd-udevd");
-		if (cmd) {
+		/* Desktop and server distros usually have a variant of udev */
+		path = which("udevd");
+		if (!path)
+			path = which("/lib/systemd/systemd-udevd");
+		if (path) {
 			udev = 1;
 
-			snprintf(line, sizeof(line), "[12345] %s -- Device event manager daemon", cmd);
-			if (service_register(SVC_TYPE_SERVICE, line, NULL)) {
-				_pe("Failed registering %s", cmd);
+			/* Register udevd as a monitored service, started much later */
+			snprintf(cmd, sizeof(cmd), "[12345] %s -- Device event manager daemon", path);
+			if (service_register(SVC_TYPE_SERVICE, cmd, NULL)) {
+				_pe("Failed registering %s", path);
 				udev = 0;
 			}
 
+			/* Start a temporary udevd instance to populate /dev  */
+			snprintf(cmd, sizeof(cmd), "%s --daemon", path);
 		}
+	}
 
-		snprintf(line, sizeof(line), "%s --daemon", cmd);
-		run_interactive(line, "Populating device tree");
+	if (path) {
+		free(path);
 
+		run_interactive(cmd, "Populating device tree");
 		if (udev && whichp("udevadm")) {
 			run("udevadm trigger --action=add --type=subsystems");
 			run("udevadm trigger --action=add --type=devices");
 			run("udevadm settle --timeout=120");
+
+			/* Tell temporary udevd to exit, we'll start a monitored instance later */
 			run("udevadm control --exit");
 		}
-
-		free(cmd);
 	}
 
 	/*
