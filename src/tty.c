@@ -345,24 +345,18 @@ tty_node_t *tty_find_by_pid(pid_t pid)
 
 static int tty_exist(char *dev)
 {
-	int fd;
+	int fd, result;
 	struct termios c;
 
-	if (access(dev, F_OK))
-		return 1;
-
-	fd = open(dev, O_RDONLY);
+	fd = open(dev, O_RDWR);
 	if (-1 == fd)
 		return 1;
 
 	/* XXX: Add check for errno == EIO? */
-	if (tcgetattr(fd, &c)) {
-		close(fd);
-		return 1;
-	}
+	result = tcgetattr(fd, &c);
 	close(fd);
 
-	return 0;
+	return result;
 }
 
 void tty_start(finit_tty_t *tty)
