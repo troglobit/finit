@@ -171,7 +171,8 @@ static void setup(void *arg)
 		gid = getgroup("uuid");
 		if (gid < 0)
 			gid = 0;
-		makedir("/var/run/uuid", uid, gid);
+		makedir("/var/run/uuid", 0755);
+		chown("/var/run/uuid", uid, gid);
 	}
 
 	umask(022);
