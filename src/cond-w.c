@@ -55,7 +55,7 @@ int cond_set_path(const char *path, enum cond_state new)
 		break;
 
 	case COND_OFF:
-		if (unlink(path))
+		if (unlink(path) && errno != ENOENT)
 			_pe("Failed removing condition '%s'", path);
 		break;
 
