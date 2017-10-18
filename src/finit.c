@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
 		run_interactive("mdev -s", "Populating device tree");
 	} else {
 		char *cmd;
-		char line[80];
+		char line[256];
 
 		cmd = which("udevd");
 		if (!cmd)
@@ -364,8 +364,19 @@ int main(int argc, char* argv[])
 				udev = 0;
 			}
 
-			free(cmd);
 		}
+
+		snprintf(line, sizeof(line), "%s --daemon", cmd);
+		run_interactive(line, "Populating device tree");
+
+		if (udev && whichp("udevadm")) {
+			run("udevadm trigger --action=add --type=subsystems");
+			run("udevadm trigger --action=add --type=devices");
+			run("udevadm settle --timeout=120");
+			run("udevadm control --exit");
+		}
+
+		free(cmd);
 	}
 
 	/*
@@ -418,13 +429,6 @@ int main(int argc, char* argv[])
 	 */
 	sm_init(&sm);
 	sm_step(&sm);
-
-	/* On udev systems we can now talk to udevd */
-	if (udev && whichp("udevadm")) {
-		run("udevadm trigger --action=add --type=subsystems");
-		run("udevadm trigger --action=add --type=devices");
-		run("udevadm settle --timeout=120");
-	}
 
 	/*
 	 * Network stuff
