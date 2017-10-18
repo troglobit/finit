@@ -277,8 +277,8 @@ static int service_start(svc_t *svc)
 			if (fp) {
 				dup2(fileno(fp), STDOUT_FILENO);
 				dup2(fileno(fp), STDERR_FILENO);
+				fclose(fp);
 			}
-			fclose(fp);
 		}
 
 	logger_err:
