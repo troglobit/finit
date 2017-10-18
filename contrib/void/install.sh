@@ -44,14 +44,6 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
 	ln -s finit init
     fi
 
-    echo "*** Setting up a GRUB boot entry ..."
-    MENU=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/menuentry '\([^']*\).*/\1/"`
-    TYPE=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/.*' --class \([a-z]*\).*/\1/"`
-    BOOT=`grep set=root /boot/grub/grub.cfg |head -1 |sed 's/.* \([a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*\).*/\1/'`
-    ROOT=`grep root=UUID /boot/grub/grub.cfg |head -1 |sed 's/.*UUID=\([a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*\).*/\1/'`
-    cat grub.d/40_custom | sed "s,\$BOOT,$BOOT,;s,\$ROOT,$ROOT,;s,\$TYPE,$TYPE,;s,\$MENU,$MENU," >/etc/grub.d/40_custom
-    update-grub
-
     echo "*** Done"
     echo
 else

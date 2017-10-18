@@ -23,18 +23,32 @@ More on that below.
 
     void:~/finit# ./contrib/void/install.sh
 
-The install script is non-destructive by default, you have to answer
-*Yes* twice to set up Finit as the system default init.  Pay close
-attention to the last question:
+The install script is (supposed to be) non-destructive by default, you
+have to answer *Yes* twice to set up Finit as the system default init.
+Pay close attention to the last question:
 
     *** Install Finit as the system default Init (y/N)?
 
 If you answer `No`, simply by pressing enter, you can change the symlink
-yourself later on, to point to `finit` instead of `/bin/busybox`:
+yourself later on, to point to `finit` instead of `runit`:
 
     void:~/finit# cd /sbin
     void:/sbin# rm init
     void:/sbin# ln -s finit init
+
+Another option is to change the Grub defaults, in `/etc/default/grub`:
+
+    #GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 slub_debug=P page_poison=1"
+    GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 init=/sbin/finit"
+
+Alternatively, you can simply modify the default Grub entry at boot, or
+set up an alternative Grub entry to include:
+
+    linux /boot/vmlinuz-X.YY.Z ... init=/sbin/finit
+
+If you modify a Grub configuration file, remember to run:
+
+    update-grub
 
 Before rebooting, make sure to set up a [/etc/finit.conf](finit.conf),
 and [/etc/finit.d/](finit.d/) for your services.  Samples are included
