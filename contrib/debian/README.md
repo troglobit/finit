@@ -25,9 +25,15 @@ set up your system to run Finit:
 
     user@debian:~/finit$ contrib/debian/build.sh
 
-However, since `/sbin/init` already exists on your system the script
+However, since `/sbin/init` already exists on your system, the script
 creates another entry in your GRUB config, in `/etc/grub.d/40_custom`,
-where `init=/sbin/finit` is added to your kernel line.
+where `init=/sbin/finit` is added to your kernel line.  It is of course
+also possible to change the default init to Finit, if you do you can
+remove the custom Grub entry:
+
+    user@debian:~/finit# cd /sbin
+    user@debian:/sbin# sudo rm init
+    user@debian:/sbin# sudo ln -s finit init
 
 Before rebooting, check the default [/etc/finit.conf](finit.conf) and
 `/etc/finit.d/*.conf` files.  The build + install script above provides
