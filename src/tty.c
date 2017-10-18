@@ -225,6 +225,8 @@ int tty_register(char *line, struct timeval *mtime)
 		entry = calloc(1, sizeof(*entry));
 		if (!entry) {
 			free(dev);
+			if (cmd)
+				free(cmd);
 			return errno = ENOMEM;
 		}
 	}
