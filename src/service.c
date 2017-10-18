@@ -192,6 +192,9 @@ static int service_start(svc_t *svc)
 		char *args[MAX_NUM_SVC_ARGS];
 
 		/* Set desired user+group */
+		if (gid >= 0)
+			setgid(gid);
+
 		if (uid >= 0) {
 			setuid(uid);
 
@@ -203,9 +206,6 @@ static int service_start(svc_t *svc)
 				chdir(home);
 			}
 		}
-
-		if (gid >= 0)
-			setgid(gid);
 
 		/* Serve copy of args to process in case it modifies them. */
 		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
