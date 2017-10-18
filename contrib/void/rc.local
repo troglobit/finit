@@ -1,0 +1,7 @@
+#!/bin/sh
+# This script is executed once at boot, at the very end,
+# right before starting the TTYs.
+#
+# Each line is run in sequence.
+#
+# NOTE: Remeber to set the executable bit!

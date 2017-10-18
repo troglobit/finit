@@ -31,7 +31,9 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     echo "*** Installing Finit files ..."
     make install
     cd `dirname $0`
-    install -vbD finit.conf /etc/finit.conf
+    for file in finit.conf rc.local; do
+	install -vbD $file /etc/$file
+    done
     cp -va finit.d /etc/
 
     read -p "*** Install Finit as the system default Init (y/N)? " yorn
