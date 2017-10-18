@@ -546,7 +546,7 @@ static int show_status(char *arg)
 				size_t len = sizeof(rq.data);
 
 				info = rq.data;
-				info[len - 1] = 0,
+				info[len - 1] = 0;
 
 				if (strcmp("internal", svc->cmd)) {
 					char *ptr;
