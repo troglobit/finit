@@ -284,8 +284,9 @@ int tty_unregister(tty_node_t *tty)
 		int i;
 
 		free(tty->data.cmd);
-		for (i = 0; tty->data.args[i] && i < TTY_MAX_ARGS; i++) {
-			free(tty->data.args[i]);
+		for (i = 0; i < TTY_MAX_ARGS; i++) {
+			if (tty->data.args[i])
+				free(tty->data.args[i]);
 			tty->data.args[i] = NULL;
 		}
 	}
