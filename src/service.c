@@ -643,6 +643,7 @@ recreate:
 		svc = svc_new(cmd, id, type);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
+			free(line);
 			return errno = ENOMEM;
 		}
 	}
