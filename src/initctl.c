@@ -543,9 +543,15 @@ static int show_status(char *arg)
 				snprintf(args, sizeof(args), "Unknown inetd");
 				info = args;
 			} else {
+				size_t len = sizeof(rq.data);
+
 				info = rq.data;
+				info[len - 1] = 0,
+
 				if (strcmp("internal", svc->cmd)) {
-					char *ptr = strchr(info, ' ');
+					char *ptr;
+
+					ptr = strchr(info, ' ');
 					if (ptr)
 						info = ptr + 1;
 				}
