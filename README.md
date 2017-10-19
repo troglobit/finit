@@ -349,25 +349,36 @@ not return until the given command has fully completed.
 Usage: initctl [OPTIONS] [COMMAND]
 
 Options:
-  -d, --debug               Debug initctl (client)
   -v, --verbose             Verbose output
   -h, --help                This help text
 
 Commands:
   debug                     Toggle Finit (daemon) debug
   help                      This help text
-  reload                    Reload *.conf in /etc/finit.d/ and activate changes
-  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
-  status | show             Show status of services, default command
+  version                   Show Finit version
+  
+  list                      List all .conf in /etc/finit.d/
+  enable   <CONF>           Enable   .conf in /etc/finit.d/available/
+  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]
+  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)
+  
   cond     set   <COND>     Set (assert) condition     => +COND
   cond     clear <COND>     Clear (deassert) condition => -COND
   cond     show             Show condition status
   cond     dump             Dump all conditions and their status
+  
+  log      [NAME]           Show ten last Finit, or NAME, messages from syslog
   start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
   stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
   restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
-  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name
-  version                   Show Finit version
+  status | show             Show status of services, default command
+  
+  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
+  reboot                    Reboot system
+  halt                      Halt system
+  poweroff                  Halt and power off system
+  
+  utmp     show             Raw dump of UTMP/WTMP db
 ```
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf

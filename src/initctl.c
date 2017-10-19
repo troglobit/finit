@@ -594,6 +594,7 @@ static int usage(int rc)
 		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
 		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
 		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
+//		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
 		"\n"
 		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
 		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
