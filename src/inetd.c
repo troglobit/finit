@@ -176,8 +176,10 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	/* Copy inherited attributes from inetd service's svc */
 	task->runlevels = svc->runlevels;
 
-	/* Only copy the most relevant parts of inetd, in particular we
-	 * must *not* copy the watcher data to the clone! */
+	/*
+	 * Only copy the most relevant parts of inetd, in particular we
+	 * must *not* copy the watcher data to the clone!
+	 */
 	task->inetd.svc  = svc;
 	task->inetd.cmd  = svc->inetd.cmd;
 	task->inetd.type = svc->inetd.type;
@@ -186,7 +188,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	memcpy(task->username, svc->username, sizeof(task->username));
 	memcpy(task->group,    svc->group,    sizeof(task->group));
 	memcpy(task->args,     svc->args,     sizeof(task->args));
-	snprintf(task->desc, sizeof(task->desc), "%s connection", svc->desc);
+	snprintf(task->desc, sizeof(task->desc), "%52.52s connection", svc->desc);
 
 	task->stdin_fd = stdin;
 	service_step(task);
