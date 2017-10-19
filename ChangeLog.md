@@ -3,15 +3,17 @@ Change Log
 
 All relevant changes are documented in this file.
 
-[3.0][UNRELEASED] - 2017-10-YY
-------------------------------
+[3.0][] - 2017-10-19
+--------------------
 
 Major release, support for conditions/dependencies between services,
 optional built-in watchdog daemon, optional built-in getty, optional
-built-in standard inetd services like echo server, chargen, datetime,
-etc.  Native support for `/etc/network/interfaces`, overhauled new
-configure based build system, logging to `/dev/kmsg` before syslogd has
-started, improved support for Linux distributions, ...
+built-in standard inetd services like echo server, rdate, etc.
+
+Also, native support for Debian/BusyBox `/etc/network/interfaces`,
+overhauled new configure based build system, logging to `/dev/kmsg`
+before syslogd has started, massively improved support for Linux
+distributions.
 
 ### Changes
 
@@ -596,7 +598,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/2.4...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/3.0...HEAD
 [3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
 [2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
 [2.3]: https://github.com/troglobit/finit/compare/2.2...2.3
