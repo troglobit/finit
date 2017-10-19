@@ -46,7 +46,7 @@ static char *mkcond(char *buf, size_t len, char *nm)
 static void pidfile_callback(void *arg, int fd, int events)
 {
 	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
-	static char cond[MAX_ARG_LEN];
+	static char cond[MAX_COND_LEN];
 
 	struct inotify_event *ev;
 	ssize_t sz, len;
@@ -94,7 +94,7 @@ static void pidfile_callback(void *arg, int fd, int events)
  */
 static void pidfile_reconf(void *_null)
 {
-	static char cond[MAX_ARG_LEN];
+	static char cond[MAX_COND_LEN];
 	svc_t *svc;
 	(void)(_null);
 	int restart = 0;

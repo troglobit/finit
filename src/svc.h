@@ -68,6 +68,7 @@ typedef enum {
 #define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64
+#define MAX_COND_LEN     (MAX_ARG_LEN * 3)
 #define MAX_USER_LEN     16
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
 #define MAX_NUM_SVC      64	     /* Enough? */
@@ -94,7 +95,7 @@ typedef struct svc {
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
 	svc_block_t    block;	       /* Reason that this service is currently stopped */
-	char           cond[MAX_ARG_LEN];
+	char           cond[MAX_COND_LEN];
 
 	/* Incremented for each restart by service monitor. */
 	const unsigned int restart_counter;
