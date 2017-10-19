@@ -209,7 +209,7 @@ static void cb(uev_t *w, void *arg, int events)
 			case 's':
 			case 'S':
 				rq.runlevel = '1'; /* Single user mode */
-				/* Fall through to regular processing */
+				/* fallthrough */
 
 			case '0'...'9':
 				_d("Setting new runlevel %c", rq.runlevel);

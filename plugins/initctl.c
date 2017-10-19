@@ -131,8 +131,8 @@ static void parse(void *arg, int fd, int events)
 			switch (rq.runlevel) {
 			case 's':
 			case 'S':
-				rq.runlevel = '1';
-				/* Fall through to regular processing */
+				rq.runlevel = '1'; /* Single user mode */
+				/* fallthrough */
 
 			case '0'...'9':
 				_d("Setting new runlevel %c", rq.runlevel);
