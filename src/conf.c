@@ -470,7 +470,7 @@ int conf_reload_dynamic(void)
 
 	for (i = 0; i < num; i++) {
 		char *name = e[i]->d_name;
-		char  path[CMD_SIZE];
+		char  path[LINE_SIZE];
 		size_t len;
 		struct stat st;
 		struct timeval mtime;

@@ -116,7 +116,7 @@ void do_kill(int signo)
 		while ((d = readdir(dirp))) {
 			int pid;
 			FILE *fp;
-			char file[80] = "";
+			char file[LINE_SIZE] = "";
 
 			if (d->d_type != DT_DIR)
 				continue;

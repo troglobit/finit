@@ -354,7 +354,7 @@ int run_parts(char *dir, char *cmd)
 		mode_t mode;
 		char *args[NUM_ARGS];
 		char *name = e[i]->d_name;
-		char path[CMD_SIZE];
+		char path[LINE_SIZE];
 
 		snprintf(path, sizeof(path), "%s/%s", dir, name);
 		mode = fmode(path);
