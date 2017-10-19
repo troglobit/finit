@@ -346,7 +346,7 @@ not return until the given command has fully completed.
 
 ```shell
 ~ $ initctl -h
-Usage: initctl [OPTIONS] <COMMAND>
+Usage: initctl [OPTIONS] [COMMAND]
 
 Options:
   -d, --debug               Debug initctl (client)
@@ -358,7 +358,7 @@ Commands:
   help                      This help text
   reload                    Reload *.conf in /etc/finit.d/ and activate changes
   runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
-  status | show             Show status of services
+  status | show             Show status of services, default command
   cond     set   <COND>     Set (assert) condition     => +COND
   cond     clear <COND>     Clear (deassert) condition => -COND
   cond     show             Show condition status

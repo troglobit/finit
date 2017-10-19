@@ -579,7 +579,7 @@ static int show_status(char *arg)
 static int usage(int rc)
 {
 	fprintf(stderr,
-		"Usage: %s [OPTIONS] <COMMAND>\n"
+		"Usage: %s [OPTIONS] [COMMAND]\n"
 		"\n"
 		"Options:\n"
 		"  -v, --verbose             Verbose output\n"
@@ -604,7 +604,7 @@ static int usage(int rc)
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
-		"  status | show             Show status of services\n"
+		"  status | show             Show status of services, default command\n"
 		"\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
@@ -625,6 +625,7 @@ static int do_help(char *arg)
 int main(int argc, char *argv[])
 {
 	int c;
+	char *cmd, arg[120] = "";
 	command_t command[] = {
 		{ "debug",    toggle_debug },
 		{ "help",     do_help      },
@@ -673,20 +674,20 @@ int main(int argc, char *argv[])
 	}
 
 	screen_init();
-	if (optind < argc) {
-		char *cmd = argv[optind++];
-		char  arg[120] = "";
 
-		while (optind < argc) {
-			strlcat(arg, argv[optind++], sizeof(arg));
-			if (optind < argc)
-				strlcat(arg, " ", sizeof(arg));
-		}
+	if (optind >= argc)
+		return show_status(NULL);
 
-		for (c = 0; command[c].cmd; c++) {
-			if (!strcmp(command[c].cmd, cmd))
-				return command[c].cb(arg);
-		}
+	cmd = argv[optind++];
+	while (optind < argc) {
+		strlcat(arg, argv[optind++], sizeof(arg));
+		if (optind < argc)
+			strlcat(arg, " ", sizeof(arg));
+	}
+
+	for (c = 0; command[c].cmd; c++) {
+		if (!strcmp(command[c].cmd, cmd))
+			return command[c].cb(arg);
 	}
 
 	return usage(1);
