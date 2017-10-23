@@ -45,11 +45,27 @@ static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
 
 static char *canonicalize(char *tty)
 {
+	char buf[42];
 	struct stat st;
 	static char path[80];
 
 	if (!tty)
 		return NULL;
+
+	/* Auto-detect serial console, for embedded devices mostly */
+	if (!strcmp(tty, "@console")) {
+		FILE *fp;
+
+		fp = fopen("/sys/class/tty/console/active", "r");
+		if (!fp) {
+			_e("Cannot find system console, is sysfs not mounted?");
+			return NULL;
+		}
+
+		if (fgets(buf, sizeof(buf), fp))
+			tty = chomp(buf);
+		fclose(fp);
+	}
 
 	strlcpy(path, tty, sizeof(path));
 	if (stat(path, &st)) {
@@ -168,6 +184,8 @@ int tty_register(char *line, struct timeval *mtime)
 		if (!dev && !cmd) {
 			if (args[i][0] == '[')
 				runlevels = line;
+			if (!strcmp(args[i], "@console"))
+				dev = args[i];
 			if (!strncmp(args[i], "/dev", 4))
 				dev = args[i];
 			if (!strncmp(args[i], "tty", 3))
