@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
+#include <termios.h>
 #include <lite/lite.h>
 
 #include "finit.h"
@@ -236,6 +237,18 @@ int exec_runtask(char *cmd, char *args[])
 
 static void prepare_tty(char *tty, char *procname, int console)
 {
+	struct termios term;
+
+	/*
+	 * Disable INTR, QUIT, SUSP, and DSUSP while handing over to
+	 * getty.  It is up to the getty process to allow ISIG again.
+	 */
+	tcdrain(STDIN_FILENO);
+	if (!tcgetattr(STDIN_FILENO, &term)) {
+		term.c_lflag &= ~ISIG;
+		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+	}
+
 	/* Reset signal handlers that were set by the parent process */
 	sig_unblock();
 	setsid();
