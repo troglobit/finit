@@ -235,7 +235,7 @@ int exec_runtask(char *cmd, char *args[])
 	return execvp(_PATH_BSHELL, argv);
 }
 
-static void prepare_tty(char *tty, char *procname, int console)
+static void prepare_tty(char *tty, char *procname)
 {
 	struct termios term;
 
@@ -256,8 +256,6 @@ static void prepare_tty(char *tty, char *procname, int console)
 	/* Set INIT_PROCESS UTMP entry */
 	utmp_set_init(tty, 0);
 
-	if (console)
-		procname = "console";
 	prctl(PR_SET_NAME, procname, 0, 0, 0);
 }
 
@@ -291,13 +289,13 @@ static int activate_console(int noclear, int nowait)
 	return 0;
 }
 
-pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait, int console)
+pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait)
 {
 	pid_t pid;
 
 	pid = fork();
 	if (!pid) {
-		prepare_tty(tty, "finit-getty", console);
+		prepare_tty(tty, "finit-getty");
 		if (activate_console(noclear, nowait))
 			_exit(getty(tty, speed, term, NULL));
 	}
@@ -305,7 +303,7 @@ pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait, int
 	return pid;
 }
 
-pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, int console)
+pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait)
 {
 	pid_t pid;
 
@@ -334,7 +332,7 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, in
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
 
-		prepare_tty(tty, "getty", console);
+		prepare_tty(tty, "getty");
 
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 			_pe("Failed TIOCSCTTY");

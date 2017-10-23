@@ -379,7 +379,6 @@ static int tty_exist(char *dev)
 
 void tty_start(finit_tty_t *tty)
 {
-	int is_console = 0;
 	char *dev;
 
 	if (tty->pid) {
@@ -393,18 +392,15 @@ void tty_start(finit_tty_t *tty)
 		return;
 	}
 
-	if (console && !strcmp(dev, console))
-		is_console = 1;
-
 	if (tty_exist(dev)) {
 		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
 		return;
 	}
 
 	if (!tty->cmd)
-		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, is_console);
+		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait);
 	else
-		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, is_console);
+		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait);
 }
 
 void tty_stop(finit_tty_t *tty)

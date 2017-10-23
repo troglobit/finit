@@ -57,7 +57,6 @@ char *network   = NULL;
 char *hostname  = NULL;
 char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;
-char *console   = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 

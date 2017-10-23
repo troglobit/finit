@@ -197,16 +197,10 @@ Syntax
         service [12345] /bin/sh -l
 ```
 
-* `console <DEV>`  
-  Use this, along with a matching `tty DEV` line, to mark this TTY as a
-  special "console" port with `prctl()`.  Useful in use-cases when
-  all logins except the console must be stopped, e.g. when performing a
-  flash upgrade on an embedded system.
-
 When running <kbd>make install</kbd> no default `/etc/finit.conf` will
 be installed since system requirements differ too much.  Try out the
 Debian 6.0 example `/usr/share/doc/finit/finit.conf` configuration that
-is capable of service monitoring SSH, sysklogd, gdm and a console getty!
+is capable of service monitoring SSH, sysklogd, gdm and getty!
 
 Every `run`, `task`, `service`, or `inetd` can also list the privileges
 the `/path/to/cmd` should be executed with.  Simply prefix the path with
@@ -272,7 +266,6 @@ the above `finit.conf` settings described above, only the following:
 - `inetd`
 - `rlimit`
 - `tty`
-- `console`
 
 **NOTE:*** The `/etc/finit.d` directory was previously the default Finit
   `runparts` directory.  Finit no longer has a default `runparts`, make
