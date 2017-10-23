@@ -162,9 +162,9 @@ Syntax
         tty [12345] /dev/ttyAMA0 115200 noclear vt220
 ```
 
-  The second variant is for using an external getty, like agetty or the
-  BusyBox getty.
-  
+  The second `tty` syntax variant is for using an external getty, like
+  agetty or the BusyBox getty.
+    
   By default both variants *clear* the TTY and *wait* for the user to
   press enter before starting getty.
 
@@ -185,7 +185,20 @@ Syntax
   Notice the ordering, the `TERM` option to the built-in getty must be
   the last argument.
 
-  On really bare bones systems Finit offers a fallback shell:
+  Embedded systems may want to enable automatic `DEV` by supplying the
+  special `@console` device.  This works regardless weather the system
+  uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit figures
+  it out by querying sysfs: `/sys/class/tty/console/active`.
+
+  **Example:**
+```conf
+        tty [12345] @console 115200 noclear vt220
+```
+
+  On really bare bones systems Finit offers a fallback shell, which
+  should not be enabled on production systems since.  This because it
+  may give a user root access without having to log in.  However, for
+  bringup and system debugging it can come in handy:
 
 ```shell
         configure --enable-fallback-shell
