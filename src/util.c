@@ -75,6 +75,9 @@ char *sanitize(char *arg, size_t len)
 
 void screen_init(void)
 {
+	if (!isatty(STDOUT_FILENO))
+		return
+
 	initscr(&screen_rows, &screen_cols);
 }
 
