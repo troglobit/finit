@@ -431,7 +431,7 @@ static int show_version(char *arg)
 char *runlevel_string(int runlevel, int levels)
 {
 	int i, pos = 1;
-	static char lvl[20];
+	static char lvl[21];
 
 	memset(lvl, 0, sizeof(lvl));
 	lvl[0] = '[';
