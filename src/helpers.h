@@ -56,7 +56,6 @@ void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 
-int     start_process   (char *cmd, char *args[], int console);
 int     getuser         (char *username, char **home);
 int     getgroup        (char *group);
 void    set_hostname    (char **hostname);
