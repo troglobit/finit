@@ -148,7 +148,7 @@ static plugin_t plugin = {
 		.cb    = pidfile_callback,
 		.flags = PLUGIN_IO_READ,
 	},
-	.depends = { "bootmisc", },
+	.depends = { "bootmisc", "netlink" },
 };
 
 PLUGIN_INIT(plugin_init)
