@@ -149,12 +149,7 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
  */
 void cond_reassert(const char *type)
 {
-	_d("%s", type ?: "reload done");
-	if (!type) {
-		cond_clear(COND_RECONF);
-		return;
-	}
-
+	_d("%s", type);
 	nftw(cond_path(type), reassert, 20, FTW_DEPTH);
 }
 
