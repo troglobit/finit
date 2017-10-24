@@ -505,11 +505,13 @@ void tty_reload(char *dev)
 
 	if (dev) {
 		tty = tty_find(dev);
-		if (!tty)
+		if (!tty) {
 			logit(LOG_WARNING, "No TTY registered for %s", dev);
-		else
-			tty_action(tty);
+			return;
+		}
 
+		tty_action(tty);
+		tty->dirty = 0;
 		return;
 	}
 
