@@ -34,7 +34,7 @@ static inline int timespec_newer(const struct timespec *a,
 	if (a->tv_sec != b->tv_sec)
 		return a->tv_sec > b->tv_sec;
 
-	return a->tv_nsec > b->tv_nsec;
+	return a->tv_nsec >= b->tv_nsec;
 }
 
 const char *condstr(enum cond_state s)
