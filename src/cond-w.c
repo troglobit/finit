@@ -151,7 +151,7 @@ void cond_reassert(const char *type)
 {
 	_d("%s", type ?: "reload done");
 	if (!type) {
-		cond_set_path(COND_RECONF, COND_OFF);
+		cond_clear(COND_RECONF);
 		return;
 	}
 
