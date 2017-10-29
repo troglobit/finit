@@ -183,6 +183,15 @@ tty [12345] /dev/ttyAMA0 115200 noclear vt100
 tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
 ```
 
+Users of embedded systems may want to enable automatic serial console
+with the special `@console` device.  This works regardless weather the
+system uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit
+figures it out by querying sysfs: `/sys/class/tty/console/active`.
+
+```conf
+tty [12345] @console 115200 linux noclear
+```
+
 For more information, see [doc/config.md](doc/config.md#syntax).
 
 
