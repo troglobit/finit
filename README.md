@@ -111,7 +111,7 @@ advanced uses as well:
 
     service /usr/sbin/sshd -D
 
-Dependencies are handled using [conditions](doc/conditions.md).  On of
+Dependencies are handled using [conditions](doc/conditions.md).  One of
 the most common conditions is to wait for basic networking to become
 available:
 
@@ -123,6 +123,10 @@ to create its PID file, by default `/var/run/syslogd.pid`.
 
     service [2345] log <svc/sbin/syslogd> /usr/sbin/ntpd -n -N -p pool.ntp.org
     service [S12345] /sbin/syslogd -n -- Syslog daemon
+
+Notice the `log` keyword, BusyBox `ntpd` uses `stderr` for logging when
+run in the foreground.  With `log` Finit redirects `stdout` + `stderr`
+to the system log daemon using the command line `logger(1)` tool.
 
 A service, or task, can have multiple dependencies listed.  Here we wait
 for *both* `syslogd` to have started and basic networking to be up:
