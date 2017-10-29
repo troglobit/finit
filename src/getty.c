@@ -208,72 +208,11 @@ static int do_login(char *name)
 	return 1;	/* We shouldn't get here ... */
 }
 
-static speed_t do_parse_speed(char *baud)
-{
-	char *ptr;
-	size_t i;
-	unsigned long val;
-	struct { unsigned long val; speed_t speed; } v2s[] = {
-		{       0, B0       },
-		{      50, B50      },
-		{      75, B75      },
-		{     110, B110     },
-		{     134, B134     },
-		{     150, B150     },
-		{     200, B200     },
-		{     300, B300     },
-		{     600, B600     },
-		{    1200, B1200    },
-		{    1800, B1800    },
-		{    2400, B2400    },
-		{    4800, B4800    },
-		{    9600, B9600    },
-		{   19200, B19200   },
-		{   38400, B38400   },
-		{   57600, B57600   },
-		{  115200, B115200  },
-		{  230400, B230400  },
-		{  460800, B460800  },
-		{  500000, B500000  },
-		{  576000, B576000  },
-		{  921600, B921600  },
-		{ 1000000, B1000000 },
-		{ 1152000, B1152000 },
-		{ 1500000, B1500000 },
-		{ 2000000, B2000000 },
-		{ 2500000, B2500000 },
-		{ 3000000, B3000000 },
-		{ 3500000, B3500000 },
-		{ 4000000, B4000000 },
-	};
-
-	errno = 0;
-	val = strtoul(baud, &ptr, 10);
-	if (errno || ptr == baud)
-		return B0;
-
-	for (i = 0; i < sizeof(v2s) / sizeof(v2s[0]); i++) {
-		if (v2s[i].val == val)
-			return v2s[i].speed;
-	}
-
-	return B0;
-}
-
-int getty(char *tty, char *baud, char *term, char *user)
+int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	int fd;
 	char name[30];
-	speed_t speed = B38400;
 	struct sigaction sa;
-
-	if (baud) {
-		speed = do_parse_speed(baud);
-		if (speed == B0) {
-			logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
-			return 1;
-		}
-	}
 
 	/* Detach from initial controlling TTY */
 	vhangup();

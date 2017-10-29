@@ -27,6 +27,8 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
+#include <sys/ttydefaults.h>	/* Not included by default in musl libc */
+#include <termios.h>
 #include <lite/lite.h>
 #include "log.h"
 
@@ -48,7 +50,10 @@ struct fstab *getfsent  (void);
 
 char   *strip_line      (char *line);
 
-int     stty            (int fd, unsigned int speed);
+int     getty           (char *tty, speed_t speed, char *term, char *user);
+
+int     stty            (int fd, speed_t speed);
+speed_t stty_parse_speed(char *baud);
 
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);
@@ -66,7 +71,7 @@ int     complete        (char *cmd, int pid);
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
 int     exec_runtask    (char *cmd, char *args[]);
-pid_t   run_getty       (char *tty, char *speed, char *term, int noclear, int nowait);
+pid_t   run_getty       (char *tty, char *baud, char *term,  int noclear, int nowait);
 pid_t   run_getty2      (char *tty, char *cmd, char *args[], int noclear, int nowait);
 int     run_parts       (char *dir, char *cmd);
 

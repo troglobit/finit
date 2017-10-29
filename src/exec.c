@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
+#include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
 #include <lite/lite.h>
 
@@ -39,8 +40,6 @@
 #include "utmp-api.h"
 
 #define NUM_ARGS    16
-
-int getty(char *tty, char *baud, char *term, char *user);
 
 
 /* Wait for process completion, returns status of waitpid(2) syscall */
@@ -235,14 +234,14 @@ int exec_runtask(char *cmd, char *args[])
 	return execvp(_PATH_BSHELL, argv);
 }
 
-static void prepare_tty(char *tty, char *procname)
+static void prepare_tty(char *tty, speed_t speed, char *procname)
 {
 	struct termios term;
 
 	/*
 	 * Reset to sane defaults in case of messup from prev. session
 	 */
-	stty(STDIN_FILENO, B38400);
+	stty(STDIN_FILENO, speed);
 
 	/*
 	 * Disable ISIG (INTR, QUIT, SUSP) before handing over to getty.
@@ -336,13 +335,23 @@ static int activate_console(int noclear, int nowait)
  * since /bin/login usually only disables ECHO until a password line has
  * been entered.  Upon starting the user's $SHELL the ISIG flag is reset
  */
-pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait)
+pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait)
 {
 	pid_t pid;
 
 	pid = fork();
 	if (!pid) {
-		prepare_tty(tty, "finit-getty");
+		speed_t speed = B38400;
+
+		if (baud) {
+			speed = stty_parse_speed(baud);
+			if (B0 == speed) {
+				logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
+				speed = B38400;
+			}
+		}
+
+		prepare_tty(tty, speed, "finit-getty");
 		if (activate_console(noclear, nowait))
 			_exit(getty(tty, speed, term, NULL));
 	}
@@ -379,7 +388,8 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait)
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
 
-		prepare_tty(tty, "getty");
+		/* Dunno speed, tell stty() to not mess with it */
+		prepare_tty(tty, B0, "getty");
 
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 			_pe("Failed TIOCSCTTY");
