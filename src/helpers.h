@@ -48,6 +48,8 @@ struct fstab *getfsent  (void);
 
 char   *strip_line      (char *line);
 
+int     stty            (int fd, unsigned int speed);
+
 int     pid_alive       (pid_t pid);
 char   *pid_get_name    (pid_t pid, char *name, size_t len);
 

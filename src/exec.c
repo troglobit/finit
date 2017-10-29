@@ -240,8 +240,13 @@ static void prepare_tty(char *tty, char *procname)
 	struct termios term;
 
 	/*
-	 * Disable INTR, QUIT, SUSP, and DSUSP while handing over to
-	 * getty.  It is up to the getty process to allow ISIG again.
+	 * Reset to sane defaults in case of messup from prev. session
+	 */
+	stty(STDIN_FILENO, B38400);
+
+	/*
+	 * Disable ISIG (INTR, QUIT, SUSP) before handing over to getty.
+	 * It is up to the getty process to allow them again.
 	 */
 	tcdrain(STDIN_FILENO);
 	if (!tcgetattr(STDIN_FILENO, &term)) {

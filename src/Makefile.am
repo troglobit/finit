@@ -14,7 +14,7 @@ finit_SOURCES      = api.c					\
 		     client.c					\
 		     conf.c	conf.h				\
 		     exec.c	finit.c		finit.h		\
-		     getty.c					\
+		     getty.c	stty.c				\
 		     helpers.c	helpers.h			\
 		     log.c	log.h				\
 		     mdadm.c	mount.c		pid.c		\

@@ -64,42 +64,6 @@ static int readch(char *tty)
 	return ch1 & 0xFF;
 }
 
-static void stty(int fd, speed_t speed)
-{
-	struct termios term;
-
-	tcdrain(fd);
-	if (tcgetattr(fd, &term))
-		return;
-
-	cfsetispeed(&term, speed);
-	cfsetospeed(&term, speed);
-	tcsetattr(fd, TCSAFLUSH, &term);
-	tcflush(fd, TCIOFLUSH);
-
-	/* Disable modem specific flags */
-	term.c_cflag     &= ~(0|CSTOPB|PARENB|PARODD);
-	term.c_cflag     &= ~CRTSCTS;
-	term.c_cflag     |= CLOCAL;
-
-	/* Timeouts, minimum chars and default flags */
-	term.c_cc[VTIME]  = 0;
-	term.c_cc[VMIN]   = 1;
-	term.c_iflag      = ICRNL|IXON|IXOFF;
-	term.c_oflag      = OPOST|ONLCR;
-	term.c_cflag     |= CS8|CREAD|HUPCL|CBAUDEX;
-	term.c_lflag     |= ICANON|ISIG|ECHO|ECHOE|ECHOK|ECHOKE;
-
-	/* Reset special characters to defaults */
-	term.c_cc[VINTR]  = CTRL('C');
-	term.c_cc[VQUIT]  = CTRL('\\');
-	term.c_cc[VEOF]   = CTRL('D');
-	term.c_cc[VEOL]   = '\n';
-	term.c_cc[VKILL]  = CTRL('U');
-	term.c_cc[VERASE] = CERASE;
-	tcsetattr(fd, TCSANOW, &term);
-}
-
 /*
  * Parse and display a line from /etc/issue
  */
