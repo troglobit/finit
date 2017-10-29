@@ -266,11 +266,21 @@ static void prepare_tty(char *tty, char *procname)
 
 static int activate_console(int noclear, int nowait)
 {
+	int ret = 0;
+	struct termios term;
+
 	if (!noclear)
 		(void)write(STDERR_FILENO, "\e[r\e[H\e[J", 9);
 
 	if (nowait)
 		return 1;
+
+	/* Disable ECHO, XON/OFF while waiting for <CR> */
+	if (!tcgetattr(STDIN_FILENO, &term)) {
+		term.c_iflag &= ~(IXON|IXOFF);
+		term.c_lflag &= ~ECHO;
+		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+	}
 
 	while (!fexist(SYNC_SHUTDOWN)) {
 		char c;
@@ -288,10 +298,18 @@ static int activate_console(int noclear, int nowait)
 		if (fexist(SYNC_STOPPED))
 			continue;
 
-		return 1;
+		ret = 1;
+		break;
 	}
 
-	return 0;
+	/* Restore ECHO, XON/OFF while waiting for <CR> */
+	if (!tcgetattr(STDIN_FILENO, &term)) {
+		term.c_iflag |= IXON|IXOFF;
+		term.c_lflag |= ECHO;
+		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+	}
+
+	return ret;
 }
 
 pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait)
