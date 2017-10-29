@@ -250,7 +250,9 @@ static void prepare_tty(char *tty, char *procname)
 	 */
 	tcdrain(STDIN_FILENO);
 	if (!tcgetattr(STDIN_FILENO, &term)) {
-		term.c_lflag &= ~ISIG;
+		term.c_lflag    &= ~ISIG;
+		term.c_cc[VEOF]  = _POSIX_VDISABLE;
+		term.c_cc[VINTR] = _POSIX_VDISABLE;
 		tcsetattr(STDIN_FILENO, TCSANOW, &term);
 	}
 
@@ -312,6 +314,25 @@ static int activate_console(int noclear, int nowait)
 	return ret;
 }
 
+/*
+ * Start a getty on @tty
+ *
+ * At the login: prompt, no signals are allowed, both Ctrl-C and Ctrl-D
+ * should be disabled.  Ctrl-S and Ctrl-Q are optional, but most getty
+ * allow them.
+ *
+ * Prior to getty is called and login: is printed, Finit may display the
+ * "Please press Enter ..." if @nowait is unset.  This mode must be RAW,
+ * only accepting <CR> and not echoing anything, this also means no
+ * signals are allowed.  For ease of implementation Finit will call the
+ * stty() function to reset the TTY and then force RAW mode until a <CR>
+ * has been received.  This is handled in the same fashion for both this
+ * function and run_getty2(), which is used for external getty.
+ *
+ * When handing over to /bin/login, Ctrl-C and Ctrl-D must be enabled
+ * since /bin/login usually only disables ECHO until a password line has
+ * been entered.  Upon starting the user's $SHELL the ISIG flag is reset
+ */
 pid_t run_getty(char *tty, char *speed, char *term, int noclear, int nowait)
 {
 	pid_t pid;

@@ -300,17 +300,19 @@ int getty(char *tty, char *baud, char *term, char *user)
 	sigaction(SIGINT,  &sa, NULL);
 	sigaction(SIGQUIT, &sa, NULL);
 
-	/* Set up TTY */
-	stty(fd, speed);
-	close(fd);
+	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
-	if (term)
-		setenv("TERM", term, 1);
-
 	if (!user)
 		do_getty(tty, name, sizeof(name));
 	else
 		strlcpy(name, user, sizeof(name));
+
+	/* Set up TTY, re-enabling ISIG et al. */
+	stty(fd, speed);
+	close(fd);
+
+	if (term)
+		setenv("TERM", term, 1);
 
 	return do_login(name);
 }
