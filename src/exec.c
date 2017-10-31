@@ -269,11 +269,12 @@ static void prepare_tty(char *tty, speed_t speed, char *procname)
 	sigaction(SIGHUP,  &sa, NULL);
 	sigaction(SIGINT,  &sa, NULL);
 	sigaction(SIGQUIT, &sa, NULL);
+
+	/* Create new session and process group */
 	setsid();
 
-	/* Set INIT_PROCESS UTMP entry */
+	/* Finit is responsible for the UTMP INIT_PROCESS record */
 	utmp_set_init(tty, 0);
-
 	prctl(PR_SET_NAME, procname, 0, 0, 0);
 }
 
@@ -305,20 +306,20 @@ static int activate_console(int noclear, int nowait)
 			continue;
 		}
 
-		(void)write(STDERR_FILENO, clr, sizeof(clr));
-		(void)write(STDERR_FILENO, msg, sizeof(msg));
+		(void)write(STDERR_FILENO, clr, strlen(clr));
+		(void)write(STDERR_FILENO, msg, strlen(msg));
 		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
 			continue;
 
 		if (fexist(SYNC_STOPPED))
 			continue;
 
-		(void)write(STDERR_FILENO, clr, sizeof(clr));
+		(void)write(STDERR_FILENO, clr, strlen(clr));
 		ret = 1;
 		break;
 	}
 
-	/* Restore ECHO, XON/OFF while waiting for <CR> */
+	/* Restore ECHO, XON/OFF */
 	if (!tcgetattr(STDIN_FILENO, &term)) {
 		term.c_iflag |= IXON|IXOFF;
 		term.c_lflag |= ECHO;
