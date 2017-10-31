@@ -236,6 +236,7 @@ int exec_runtask(char *cmd, char *args[])
 
 static void prepare_tty(char *tty, speed_t speed, char *procname)
 {
+	struct sigaction sa;
 	struct termios term;
 
 	/*
@@ -257,6 +258,17 @@ static void prepare_tty(char *tty, speed_t speed, char *procname)
 
 	/* Reset signal handlers that were set by the parent process */
 	sig_unblock();
+
+	/*
+	 * Ignore a few signals, needed to prevent Ctrl-C at login:
+	 * prompt and to prevent QUIT from dumping core.
+	 */
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags   = SA_RESTART;
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGHUP,  &sa, NULL);
+	sigaction(SIGINT,  &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
 	setsid();
 
 	/* Set INIT_PROCESS UTMP entry */

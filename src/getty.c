@@ -212,7 +212,6 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	int fd;
 	char name[30];
-	struct sigaction sa;
 
 	/* Detach from initial controlling TTY */
 	vhangup();
@@ -227,17 +226,6 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 
 	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 		warn("Failed TIOCSCTTY");
-
-	/*
-	 * Ignore a few signals, needed to prevent Ctrl-C at login:
-	 * prompt and to prevent QUIT from dumping core.
-	 */
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags   = SA_RESTART;
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGHUP,  &sa, NULL);
-	sigaction(SIGINT,  &sa, NULL);
-	sigaction(SIGQUIT, &sa, NULL);
 
 	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
