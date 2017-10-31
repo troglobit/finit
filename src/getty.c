@@ -126,7 +126,6 @@ static void do_issue(char *tty)
 	 */
 	uname(&uts);
 
-	print("\n");
 	fp = fopen("/etc/issue", "r");
 	if (fp) {
 		while (fgets(buf, sizeof(buf), fp))
