@@ -358,10 +358,8 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait)
 
 		if (baud) {
 			speed = stty_parse_speed(baud);
-			if (B0 == speed) {
+			if (B0 == speed)
 				logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
-				speed = B38400;
-			}
 		}
 
 		prepare_tty(tty, speed, "finit-getty");
