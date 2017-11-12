@@ -53,10 +53,9 @@ typedef struct {
 int verbose  = 0;
 int runlevel = 0;
 
-
-static int do_send(struct init_request *rq, ssize_t len)
+static int do_connect(void)
 {
-	int sd, result = 255;
+	int sd;
 	struct sockaddr_un sun = {
 		.sun_family = AF_UNIX,
 		.sun_path   = INIT_SOCKET,
@@ -64,10 +63,26 @@ static int do_send(struct init_request *rq, ssize_t len)
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (-1 == sd)
-		return -1;
-
-	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
 		goto error;
+
+	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
+		close(sd);
+		goto error;
+	}
+
+	return sd;
+error:
+	perror("Failed connecting to finit");
+	return -1;
+}
+
+static int do_send(struct init_request *rq, ssize_t len)
+{
+	int sd, result = 255;
+
+	sd = do_connect();
+	if (-1 == sd)
+		return -1;
 
 	if (write(sd, rq, len) != len)
 		goto error;
@@ -88,21 +103,14 @@ static int runlevel_get(void)
 {
 	int sd, result = 255;
 	struct init_request rq;
-	struct sockaddr_un sun = {
-		.sun_family = AF_UNIX,
-		.sun_path   = INIT_SOCKET,
-	};
 
 	memset(&rq, 0, sizeof(rq));
 	rq.cmd = INIT_CMD_GET_RUNLEVEL;
 	rq.magic = INIT_MAGIC;
 
-	sd = socket(AF_UNIX, SOCK_STREAM, 0);
+	sd = do_connect();
 	if (-1 == sd)
 		return -1;
-
-	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
-		goto error;
 
 	if (write(sd, &rq, sizeof(rq)) != sizeof(rq))
 		goto error;
