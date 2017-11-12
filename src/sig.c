@@ -224,6 +224,11 @@ void do_shutdown(shutop_t op)
 static void sighup_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	/* INIT_CMD_RELOAD: 'init q', 'initctl reload', and SIGHUP */
 	service_reload_dynamic();
 }
@@ -234,6 +239,11 @@ static void sighup_cb(uev_t *w, void *arg, int events)
 static void sigint_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	halt = SHUT_REBOOT;
 	service_runlevel(6);
 }
@@ -244,6 +254,11 @@ static void sigint_cb(uev_t *w, void *arg, int events)
 static void sigusr1_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	halt = SHUT_HALT;
 	service_runlevel(0);
 }
@@ -254,6 +269,11 @@ static void sigusr1_cb(uev_t *w, void *arg, int events)
 static void sigusr2_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	halt = SHUT_OFF;
 	service_runlevel(0);
 }
@@ -264,6 +284,11 @@ static void sigusr2_cb(uev_t *w, void *arg, int events)
 static void sigterm_cb(uev_t *w, void *arg, int events)
 {
 	_d("...");
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	halt = SHUT_REBOOT;
 	service_runlevel(6);
 }
@@ -274,6 +299,11 @@ static void sigterm_cb(uev_t *w, void *arg, int events)
 static void sigchld_cb(uev_t *w, void *arg, int events)
 {
 	pid_t pid;
+
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
 
 	/* Reap all the children! */
 	do {
@@ -290,6 +320,11 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
  */
 static void sigstop_cb(uev_t *w, void *arg, int events)
 {
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	touch(SYNC_STOPPED);
 	stopped++;
 }
@@ -299,6 +334,11 @@ static void sigstop_cb(uev_t *w, void *arg, int events)
  */
 static void sigcont_cb(uev_t *w, void *arg, int events)
 {
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
 	stopped = 0;
 	erase(SYNC_STOPPED);
 }

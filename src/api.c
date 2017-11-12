@@ -173,6 +173,11 @@ static void cb(uev_t *w, void *arg, int events)
 	int sd, lvl;
 	struct init_request rq;
 
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error on API socket");
+		return;
+	}
+
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
 		_pe("Failed serving API request");

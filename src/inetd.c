@@ -142,7 +142,12 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	svc_t *svc = (svc_t *)arg, *task;
 	int stdin;
 
-	_d("Got event on %s socket ...", svc->cmd);
+	_d("%s: Got socket event ...", svc->cmd);
+	if (UEV_ERROR == events) {
+		logit(LOG_INFO, "%s: Socket error, aborting: %m", svc->cmd);
+		return;
+	}
+
 	stdin = get_stdin(svc);
 	if (stdin < 0) {
 		logit(LOG_CRIT, "%s: Unable to accept incoming connection", svc->cmd);

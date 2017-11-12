@@ -82,6 +82,7 @@ static void service_timeout_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = arg;
 
+	/* Ignore any UEV_ERROR, we're a one-shot cb so just run it. */
 	svc->timer_cb(svc);
 }
 
