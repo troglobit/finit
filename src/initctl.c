@@ -687,8 +687,10 @@ int main(int argc, char *argv[])
 	}
 
 	for (c = 0; command[c].cmd; c++) {
-		if (!strcmp(command[c].cmd, cmd))
-			return command[c].cb(arg);
+		if (strcmp(command[c].cmd, cmd))
+			continue;
+
+		return command[c].cb(arg);
 	}
 
 	return usage(1);
