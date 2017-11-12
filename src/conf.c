@@ -166,7 +166,7 @@ static const struct rlimit_name rlimit_names[] = {
 void conf_parse_rlimit(char *line)
 {
 	struct rlimit rlim;
-	rlim_t new, *set;
+	rlim_t cfg, *set;
 	const struct rlimit_name *name;
 	int resource = -1;
 
@@ -196,11 +196,11 @@ void conf_parse_rlimit(char *line)
 		goto fail;
 
 	if (!strcmp(tok, "infinity")) {
-		new = RLIM_INFINITY;
+		cfg = RLIM_INFINITY;
 	} else {
 		const char *err = NULL;
 
-		new = strtonum(tok, 0, (long long)2 << 31, &err);
+		cfg = strtonum(tok, 0, (long long)2 << 31, &err);
 		if (err)
 			goto fail;
 	}
@@ -208,7 +208,7 @@ void conf_parse_rlimit(char *line)
 	if (getrlimit(resource, &rlim))
 		goto fail;
 
-	*set = new;
+	*set = cfg;
 	if (setrlimit(resource, &rlim))
 		goto fail;
 
