@@ -119,7 +119,6 @@ void tty_sweep(void)
 
 			if (tty->dirty == -1) {
 				_d("TTY %s removed, cleaning up.", tty->data.name);
-				LIST_REMOVE(tty, link);
 				tty_unregister(tty);
 			}
 		}
@@ -291,6 +290,8 @@ int tty_unregister(tty_node_t *tty)
 		_e("Missing argument");
 		return errno = EINVAL;
 	}
+
+	LIST_REMOVE(tty, link);
 
 	if (tty->data.name)
 		free(tty->data.name);
