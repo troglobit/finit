@@ -1,6 +1,6 @@
 /* Plugin based services architecture for finit
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012-2017  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,8 +34,16 @@
 #endif
 
 #define PLUGIN_DEP_MAX  10
+
+/*
+ * Event flags for I/O plugins
+ */
+#define PLUGIN_IO_ERROR UEV_ERROR
 #define PLUGIN_IO_READ  UEV_READ
 #define PLUGIN_IO_WRITE UEV_WRITE
+#define PLUGIN_IO_PRI   UEV_PRI
+#define PLUGIN_IO_HUP   UEV_HUP
+#define PLUGIN_IO_RDHUP UEV_RDHUP
 
 #define PLUGIN_INIT(x) static void __attribute__ ((constructor)) x(void)
 #define PLUGIN_EXIT(x) static void __attribute__ ((destructor))  x(void)

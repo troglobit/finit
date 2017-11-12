@@ -1,6 +1,6 @@
 /* Plugin based services architecture for finit
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012-2017  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -194,7 +194,11 @@ void plugin_run_hooks(hook_point_t no)
 	plugin_run_hook(no, NULL);
 }
 
-/* Generic libev I/O callback, looks up correct plugin and calls its callback */
+/*
+ * Generic libev I/O callback, looks up correct plugin and calls its
+ * callback.  libuEv might return UEV_ERROR in events, it is up to the
+ * plugin callback to handle this.
+ */
 static void generic_io_cb(uev_t *w, void *arg, int events)
 {
 	plugin_t *p = (plugin_t *)arg;
