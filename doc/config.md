@@ -52,14 +52,11 @@ Syntax
   Script or program to bring up networking, with optional arguments
 
 * `rlimit <hard|soft> RESOURCE <LIMIT|infinity>`  
-  Modify the specified resource's hard or soft limit to be the
-  specifed limit. `RESOURCE` is a lower-case string matching the
-  constants in `setrlimit(2)` with the `RLIMIT_` prefix
-  removed. E.g. to select `RLIMIT_CPU`, `RESOURCE` would be
-  `cpu`. `LIMIT` is an integer whose unit depends on the resource
-  being modified, see `setrlimit(2)` for more information. The special
-  limit `infinity` means the there should be no limit on the resource,
-  i.e. `RLIM_INFINITY` is passed to `setrlimit(2)`.
+  Set the hard or soft limit for a resource.  `RESOURCE` is a lower-case
+  string matching the `RLIMIT_` constants from `setrlimit(2)`, without
+  the prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.  The limit is an
+  integer that depends on the resource being modified, see the man page
+  for more information.  The special limit `infinity` means unlimited.
 
 ```shell
         # No process is allowed more than 8MB of address space
