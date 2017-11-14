@@ -106,9 +106,10 @@ static void setup(void *arg)
 	_d("Setting up FHS structure in /var ...");
 	umask(0);
 	makedir("/var/cache",      0755);
+	makedir("/var/db",         0755); /* _PATH_VARDB on some systems */
 	makedir("/var/games",      0755);
 	makedir("/var/lib",        0755);
-	makedir("/var/lib/misc",   0755);
+	makedir("/var/lib/misc",   0755); /* _PATH_VARDB on some systems */
 	makedir("/var/lib/alarm",  0755);
 	makedir("/var/lib/urandom",0755);
 	if (fisdir("/run")) {
