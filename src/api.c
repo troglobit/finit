@@ -38,6 +38,7 @@
 #include "helpers.h"
 #include "log.h"
 #include "plugin.h"
+#include "private.h"
 #include "sig.h"
 #include "service.h"
 #include "util.h"
@@ -173,15 +174,10 @@ static void cb(uev_t *w, void *arg, int events)
 	int sd, lvl;
 	struct init_request rq;
 
-	if (UEV_ERROR == events) {
-		_e("Unrecoverable error on API socket");
-		return;
-	}
-
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
 		_pe("Failed serving API request");
-		return;
+		goto error;
 	}
 
 	while (1) {
@@ -297,8 +293,17 @@ static void cb(uev_t *w, void *arg, int events)
 			_d("Failed sending ACK/NACK back to client");
 	}
 
+	if (UEV_ERROR == events)
+		goto error;
+
 leave:
 	close(sd);
+	return;
+
+error:
+	api_exit();
+	if (api_init(w->ctx))
+		_e("Unrecoverable error on API socket");
 }
 
 int api_init(uev_ctx_t *ctx)
