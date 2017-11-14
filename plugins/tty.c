@@ -45,7 +45,7 @@ static plugin_t plugin = {
 
 static void setup(void)
 {
-	if (plugin.io.fd)
+	if (plugin.io.fd > 0)
 		close(plugin.io.fd);
 
 	plugin.io.fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
