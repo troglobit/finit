@@ -51,20 +51,20 @@ static int notify(void)
 		return -1;
 
 	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
-		goto exit;
+		goto bye;
 
 	rq.cmd      = INIT_CMD_WDOG_HELLO;
 	rq.magic    = INIT_MAGIC;
 	rq.runlevel = getpid();
 	len         = sizeof(rq);
 	if (write(sd, &rq, len) != len)
-		goto exit;
+		goto bye;
 
 	if (read(sd, &rq, len) != len)
-		goto exit;
+		goto bye;
 
 	result = 0;
-exit:
+bye:
 	close(sd);
 	return result;
 }
@@ -105,8 +105,10 @@ static int loop(int fd)
 			done = 1;
 	}
 
-	if (handover)
+	if (handover) {
+		ioctl(fd, WDIOC_KEEPALIVE, &done);
 		return !write(fd, "V", 1);
+	}
 
 	return 0;
 }
