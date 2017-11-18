@@ -785,7 +785,7 @@ static void service_retry(svc_t *svc)
 	}
 
 	if (*restart_counter >= RESPAWN_MAX) {
-		_e("%s keeps crashing, not restarting", svc->desc);
+		logit(LOG_ERR, "%s keeps crashing, not restarting", svc->desc);
 		svc_crashing(svc);
 		*restart_counter = 0;
 		service_step(svc);
