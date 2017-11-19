@@ -169,7 +169,7 @@ static int do_handle_emit(char *buf, size_t len)
  * `initctl runlevel 0` is issued we default to POWERDOWN the system
  * instead of just halting.
  */
-static void cb(uev_t *w, void *arg, int events)
+static void api_cb(uev_t *w, void *arg, int events)
 {
 	int sd, lvl;
 	struct init_request rq;
@@ -229,36 +229,44 @@ static void cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_DEBUG:
+			_d("debug");
 			log_debug();
 			break;
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */
+			_d("reload");
 			service_reload_dynamic();
 			break;
 
 		case INIT_CMD_START_SVC:
+			_d("start %s", rq.data);
 			result = do_start(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_STOP_SVC:
+			_d("stop %s", rq.data);
 			result = do_stop(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:
+			_d("restart %s", rq.data);
 			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
 #ifdef INETD_ENABLED
 		case INIT_CMD_QUERY_INETD:
+			_d("query inetd");
 			result = do_query_inetd(rq.data, sizeof(rq.data));
 			break;
 #endif
 
 		case INIT_CMD_EMIT:
+			_d("emit %s", rq.data);
 			result = do_handle_emit(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_GET_RUNLEVEL:
+			_d("get runlevel");
 			rq.runlevel = runlevel;
 			break;
 
@@ -267,12 +275,14 @@ static void cb(uev_t *w, void *arg, int events)
 			goto leave;
 
 		case INIT_CMD_WDOG_HELLO:
+			_d("wdog hello");
 			if (rq.runlevel <= 0) {
 				result = 1;
 				break;
 			}
 
 			if (wdogpid > 0 && wdogpid != rq.runlevel) {
+				_d("Sending SIGTERM to %d", wdogpid);
 				kill(wdogpid, SIGTERM);
 				do_sleep(1);
 			}
@@ -330,7 +340,7 @@ int api_init(uev_ctx_t *ctx)
 		goto error;
 
 	umask(oldmask);
-	if (!uev_io_init(ctx, &api_watcher, cb, NULL, sd, UEV_READ))
+	if (!uev_io_init(ctx, &api_watcher, api_cb, NULL, sd, UEV_READ))
 		return 0;
 
 error:
