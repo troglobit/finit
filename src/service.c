@@ -161,15 +161,15 @@ static int service_start(svc_t *svc)
 		return 1;
 	}
 
-	if (svc_is_daemon(svc) || svc_is_inetd(svc))
+#ifdef INETD_ENABLED
+	if (svc_is_inetd(svc))
+		return inetd_start(&svc->inetd);
+#endif
+
+	if (svc_is_daemon(svc))
 		print_desc("Starting ", svc->desc);
 	else
 		print_desc("", svc->desc);
-
-#ifdef INETD_ENABLED
-	if (svc_is_inetd(svc))
-		return print_result(inetd_start(&svc->inetd));
-#endif
 
 	/* Declare we're waiting for svc to create its pidfile */
 	svc_starting(svc);
