@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
 {
 	char *path;
 	char cmd[256];
-	int ret, udev = 0;
+	int udev = 0;
 	uev_ctx_t loop;
 
 	/*
@@ -297,7 +297,7 @@ int main(int argc, char* argv[])
 	 * Load plugins early, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
-	ret = plugin_init(&loop, PLUGIN_PATH);
+	plugin_init(&loop, PLUGIN_PATH);
 
 	/*
 	 * Hello world.
