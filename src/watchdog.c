@@ -56,13 +56,13 @@ static int init(char *progname, char *devnode, int timeout)
 	return fd;
 }
 
-static int loop(int fd)
+static int loop(int fd, int period)
 {
 	int dummy = 0;
 
 	while (running) {
-		do_sleep(1);
 		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
+		sleep(period);
 	}
 
 	if (handover) {
@@ -87,7 +87,7 @@ int watchdog(char *progname)
 			_exit(1);
 		}
 
-		ret = loop(fd);
+		ret = loop(fd, WDT_TIMEOUT / 2);
 		close(fd);
 
 		_exit(ret);
