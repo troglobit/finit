@@ -304,9 +304,6 @@ int main(int argc, char* argv[])
 	 */
 	banner();
 
-	/* Show results after banner() */
-	print(ret, "Loading plugins");
-
 	/*
 	 * Check file filesystems in /etc/fstab
 	 */
