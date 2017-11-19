@@ -21,53 +21,16 @@
  * THE SOFTWARE.
  */
 
-#include <paths.h>
 #include <signal.h>
-#include <sys/un.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <linux/watchdog.h>
 
 #include "finit.h"
-#include "helpers.h"
-#include "util.h"
+#include "log.h"
 #include "watchdog.h"
 
 int running  = 1;
 int handover = 0;
-
-static int notify(void)
-{
-	int sd, result = 255;
-	ssize_t len;
-	struct sockaddr_un sun = {
-		.sun_family = AF_UNIX,
-		.sun_path   = INIT_SOCKET,
-	};
-	struct init_request rq;
-
-	sd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (-1 == sd)
-		return -1;
-
-	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
-		goto bye;
-
-	rq.cmd      = INIT_CMD_WDOG_HELLO;
-	rq.magic    = INIT_MAGIC;
-	rq.runlevel = getpid();
-	len         = sizeof(rq);
-	if (write(sd, &rq, len) != len)
-		goto bye;
-
-	if (read(sd, &rq, len) != len)
-		goto bye;
-
-	result = 0;
-bye:
-	close(sd);
-	return result;
-}
 
 static void sighandler(int signo)
 {
@@ -95,27 +58,27 @@ static int init(char *progname, char *devnode, int timeout)
 
 static int loop(int fd)
 {
-	int done = 0;
+	int dummy = 0;
 
 	while (running) {
 		do_sleep(1);
-		ioctl(fd, WDIOC_KEEPALIVE, &done);
-
-		if (!done && !notify())
-			done = 1;
+		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
 	}
 
 	if (handover) {
-		ioctl(fd, WDIOC_KEEPALIVE, &done);
+		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
 		return !write(fd, "V", 1);
 	}
 
 	return 0;
 }
 
-void watchdog(char *progname)
+int watchdog(char *progname)
 {
-	if (fork() == 0) {
+	int pid;
+
+	pid = fork();
+	if (pid == 0) {
 		int fd, ret;
 
 		fd = init(progname, WDT_DEVNODE, WDT_TIMEOUT);
@@ -129,6 +92,8 @@ void watchdog(char *progname)
 
 		_exit(ret);
 	}
+
+	return pid;
 }
 
 /**

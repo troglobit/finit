@@ -390,7 +390,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Start built-in watchdog as soon as possible, if enabled
 	 */
-	watchdog(argv[0]);
+	wdogpid = watchdog(argv[0]);
 
 	/* Set hostname as soon as possible, for syslog et al. */
 	set_hostname(&hostname);

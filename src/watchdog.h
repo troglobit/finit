@@ -27,9 +27,9 @@
 #define WDT_TIMEOUT 3
 
 #ifdef BUILTIN_WATCHDOG
-void    watchdog(char *progname);
+int     watchdog(char *progname);
 #else
-#define watchdog(progname)
+#define watchdog(progname) 0
 #endif /* BUILTIN_WATCHDOG */
 
 /**
