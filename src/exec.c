@@ -430,14 +430,18 @@ int run_parts(char *dir, char *cmd)
 	for (i = 0; i < num; i++) {
 		int j = 0;
 		pid_t pid = 0;
-		mode_t mode;
+		struct stat st;
 		char *args[NUM_ARGS];
 		char *name = e[i]->d_name;
 		char path[LINE_SIZE];
 
 		snprintf(path, sizeof(path), "%s/%s", dir, name);
-		mode = fmode(path);
-		if (!S_ISEXEC(mode) || S_ISDIR(mode)) {
+		if (stat(path, &st)) {
+			_d("Failed stat(%s): %s", path, strerror(errno));
+			continue;
+		}
+
+		if (!S_ISEXEC(st.st_mode) || S_ISDIR(st.st_mode)) {
 			_d("Skipping %s ...", path);
 			continue;
 		}
