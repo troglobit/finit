@@ -67,7 +67,7 @@ char *sanitize(char *arg, size_t len)
 		return arg;
 	}
 
-	if (i > 1 && arg[i] == 0)
+	if (i > 0 && arg[i] == 0)
 		return arg;
 
 	return NULL;
