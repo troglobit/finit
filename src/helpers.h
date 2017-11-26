@@ -26,6 +26,7 @@
 #define FINIT_HELPERS_H_
 
 #include <stdarg.h>
+#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
@@ -71,8 +72,8 @@ int     complete        (char *cmd, int pid);
 int     run             (char *cmd);
 int     run_interactive (char *cmd, char *fmt, ...);
 int     exec_runtask    (char *cmd, char *args[]);
-pid_t   run_getty       (char *tty, char *baud, char *term,  int noclear, int nowait);
-pid_t   run_getty2      (char *tty, char *cmd, char *args[], int noclear, int nowait);
+pid_t   run_getty       (char *tty, char *baud, char *term,  int noclear, int nowait, struct rlimit rlimit[]);
+pid_t   run_getty2      (char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[]);
 int     run_parts       (char *dir, char *cmd);
 
 static inline void create(char *path, mode_t mode, uid_t uid, gid_t gid)

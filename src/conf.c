@@ -38,6 +38,7 @@
 #define MATCH_CMD(l, c, x) \
 	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
+struct rlimit global_rlimit[RLIMIT_NLIMITS];
 static int parse_conf(char *file);
 
 
@@ -163,59 +164,74 @@ static const struct rlimit_name rlimit_names[] = {
 	{ NULL, 0 }
 };
 
-void conf_parse_rlimit(char *line)
+int str2rlim(char *str)
 {
-	struct rlimit rlim;
-	rlim_t cfg, *set;
-	const struct rlimit_name *name;
+	const struct rlimit_name *rn;
+
+	for (rn = rlimit_names; rn->name; rn++) {
+		if (!strcmp(str, rn->name))
+			return rn->val;
+	}
+
+	return -1;
+}
+
+char *rlim2str(int rlim)
+{
+	const struct rlimit_name *rn;
+
+	for (rn = rlimit_names; rn->name; rn++) {
+		if (rn->val == rlim)
+			return rn->name;
+	}
+
+	return "unknown";
+}
+
+void conf_parse_rlimit(char *line, struct rlimit arr[])
+{
+	char *level, *limit, *val;
 	int resource = -1;
+	rlim_t cfg, *set;
 
-	char *tok = strtok(line, " \t");
+	level = strtok(line, " \t");
+	if (!level)
+		goto error;
 
-	if (tok && !strcmp(tok, "soft"))
-		set = &rlim.rlim_cur;
-	else if (tok && !strcmp(tok, "hard"))
-		set = &rlim.rlim_max;
+	limit = strtok(NULL, " \t");
+	if (!limit)
+		goto error;
+
+	resource = str2rlim(limit);
+	if (resource < 0 || resource > RLIMIT_NLIMITS)
+		goto error;
+
+	val = strtok(NULL, " \t");
+	if (!val)
+		goto error;
+
+	if (!strcmp(level, "soft"))
+		set = &arr[resource].rlim_cur;
+	else if (!strcmp(level, "hard"))
+		set = &arr[resource].rlim_max;
 	else
 		goto error;
 
-	tok = strtok(NULL, " \t");
-	if (!tok)
-		goto error;
-
-	for (name = rlimit_names; name->name; name++) {
-		if (!strcmp(tok, name->name))
-			resource = name->val;
-	}
-
-	if (resource < 0)
-		goto fail;
-
-	tok = strtok(NULL, " \t");
-	if (!tok)
-		goto fail;
-
-	if (!strcmp(tok, "infinity")) {
+	/* Official keyword from v3.1 is `unlimited`, from prlimit(1) */
+	if (!strcmp(val, "unlimited") || !strcmp(val, "infinity")) {
 		cfg = RLIM_INFINITY;
 	} else {
 		const char *err = NULL;
 
-		cfg = strtonum(tok, 0, (long long)2 << 31, &err);
-		if (err)
-			goto fail;
+		cfg = strtonum(val, 0, (long long)2 << 31, &err);
+		if (err) {
+			logit(LOG_WARNING, "rlimit: invalid %s value: %s",
+			      rlim2str(resource), val);
+			return;
+		}
 	}
 
-	if (getrlimit(resource, &rlim))
-		goto fail;
-
 	*set = cfg;
-	if (setrlimit(resource, &rlim))
-		goto fail;
-
-	return;
-
-fail:
-	logit(LOG_WARNING, "rlimit: Failed setting rlimit %s", name->name ? : "unknown");
 	return;
 error:
 	logit(LOG_WARNING, "rlimit: parse error");
@@ -289,7 +305,7 @@ static void parse_static(char *line)
 	}
 }
 
-static void parse_dynamic(char *line, struct timeval *mtime)
+static void parse_dynamic(char *line, struct rlimit rlimit[], struct timeval *mtime)
 {
 	char *x;
 	char cmd[CMD_SIZE];
@@ -315,26 +331,26 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
-		service_register(SVC_TYPE_SERVICE, x, mtime);
+		service_register(SVC_TYPE_SERVICE, x, rlimit, mtime);
 		return;
 	}
 
 	/* One-shot task, will not be respawned */
 	if (MATCH_CMD(line, "task ", x)) {
-		service_register(SVC_TYPE_TASK, x, mtime);
+		service_register(SVC_TYPE_TASK, x, rlimit, mtime);
 		return;
 	}
 
 	/* Like task but waits for completion, useful w/ [S] */
 	if (MATCH_CMD(line, "run ", x)) {
-		service_register(SVC_TYPE_RUN, x, mtime);
+		service_register(SVC_TYPE_RUN, x, rlimit, mtime);
 		return;
 	}
 
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
 #ifdef INETD_ENABLED
-		service_register(SVC_TYPE_INETD, x, mtime);
+		service_register(SVC_TYPE_INETD, x, rlimit, mtime);
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
 #endif
@@ -343,13 +359,13 @@ static void parse_dynamic(char *line, struct timeval *mtime)
 
 	/* Read resource limits */
 	if (MATCH_CMD(line, "rlimit ", x)) {
-		conf_parse_rlimit(x);
+		conf_parse_rlimit(x, rlimit);
 		return;
 	}
 
 	/* Regular or serial TTYs to run getty */
 	if (MATCH_CMD(line, "tty ", x)) {
-		tty_register(strip_line(x), mtime);
+		tty_register(strip_line(x), rlimit, mtime);
 		return;
 	}
 }
@@ -368,12 +384,16 @@ static void tabstospaces(char *line)
 static int parse_conf_dynamic(char *file, struct timeval *mtime)
 {
 	FILE *fp;
+	struct rlimit rlimit[RLIMIT_NLIMITS];
 
 	fp = fopen(file, "r");
 	if (!fp) {
 		_pe("Failed opening %s", file);
 		return 1;
 	}
+
+	/* Prepare default limits for each service */
+	memcpy(rlimit, global_rlimit, sizeof(rlimit));
 
 	_d("Parsing %s", file);
 	while (!feof(fp)) {
@@ -386,7 +406,7 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 		tabstospaces(line);
 		_d("%s", line);
 
-		parse_dynamic(line, mtime);
+		parse_dynamic(line, rlimit, mtime);
 	}
 
 	fclose(fp);
@@ -394,11 +414,19 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 	return 0;
 }
 
+/* Reads /etc/finit.conf, once at boot */
 static int parse_conf(char *file)
 {
 	FILE *fp;
 	char line[LINE_SIZE] = "";
-	char *x;
+
+	/*
+	 * Get current global limits, which may be overridden from both
+	 * finit.conf, for Finit and its services like inetd+getty, and
+	 * *.conf in finit.d/, for each service(s) listed there.
+	 */
+	for (int i = 0; i < RLIMIT_NLIMITS; i++)
+		getrlimit(i, &global_rlimit[i]);
 
 	fp = fopen(file, "r");
 	if (!fp)
@@ -414,10 +442,16 @@ static int parse_conf(char *file)
 		_d("%s", line);
 
 		parse_static(line);
-		parse_dynamic(line, NULL);
+		parse_dynamic(line, global_rlimit, NULL);
 	}
 
 	fclose(fp);
+
+	/* Set global limits */
+	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
+		if (setrlimit(i, &global_rlimit[i]) == -1)
+			logit(LOG_WARNING, "rlimit: Failed setting %s", rlim2str(i));
+	}
 
 	return 0;
 }
@@ -438,6 +472,10 @@ int conf_reload_dynamic(void)
 		_d("Skipping %s, no files found ...", dir);
 		return 1;
 	}
+
+	/* Update global limits in case operator used prlimit(1) on us */
+	for (i = 0; i < RLIMIT_NLIMITS; i++)
+		getrlimit(i, &global_rlimit[i]);
 
 	for (i = 0; i < num; i++) {
 		char *name = e[i]->d_name;

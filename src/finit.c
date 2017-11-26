@@ -357,7 +357,7 @@ int main(int argc, char* argv[])
 
 			/* Register udevd as a monitored service, started much later */
 			snprintf(cmd, sizeof(cmd), "[12345] %s -- Device event manager daemon", path);
-			if (service_register(SVC_TYPE_SERVICE, cmd, NULL)) {
+			if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
 				_pe("Failed registering %s", path);
 				udev = 0;
 			}

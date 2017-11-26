@@ -127,8 +127,9 @@ void tty_sweep(void)
 
 /**
  * tty_register - Register a getty on a device
- * @line:  Configuration, text after initial "tty"
- * @mtime: Modification time, to propagate to lower layers
+ * @line:   Configuration, text after initial "tty"
+ * @rlimit: Limits for this service/task/run/inetd, may be global limits
+ * @mtime:  Modification time, to propagate to lower layers
  *
  * A Finit tty line can use the internal getty implementation or an
  * external one, like the BusyBox getty for instance.  This function
@@ -146,7 +147,7 @@ void tty_sweep(void)
  * Different getty implementations prefer the TTY device argument in
  * different order, so take care to investigate this first.
  */
-int tty_register(char *line, struct timeval *mtime)
+int tty_register(char *line, struct rlimit rlimit[], struct timeval *mtime)
 {
 	tty_node_t *entry;
 	int         insert = 0, noclear = 0, nowait = 0;
@@ -278,6 +279,9 @@ int tty_register(char *line, struct timeval *mtime)
 	if (insert)
 		LIST_INSERT_HEAD(&tty_list, entry, link);
 
+	/* Register configured limits */
+	memcpy(entry->data.rlimit, rlimit, sizeof(entry->data.rlimit));
+
 	tty_check(entry, mtime);
 	_d("TTY %s is %sdirty", dev, entry->dirty ? "" : "NOT ");
 
@@ -399,9 +403,9 @@ void tty_start(finit_tty_t *tty)
 	}
 
 	if (!tty->cmd)
-		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait);
+		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
 	else
-		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait);
+		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, tty->rlimit);
 }
 
 void tty_stop(finit_tty_t *tty)

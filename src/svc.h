@@ -26,6 +26,7 @@
 #define FINIT_SVC_H_
 
 #include <sys/ipc.h>		/* IPC_CREAT */
+#include <sys/resource.h>
 #include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 #include <lite/lite.h>
@@ -83,6 +84,9 @@ typedef enum {
 typedef struct svc {
 	/* Instance specifics */
 	int            job, id;	       /* JOB:ID */
+
+	/* Limits and scoping */
+	struct rlimit  rlimit[RLIMIT_NLIMITS];
 
 	/* Service details */
 	pid_t	       pid;

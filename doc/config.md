@@ -51,12 +51,15 @@ Syntax
 * `network <PATH>`  
   Script or program to bring up networking, with optional arguments
 
-* `rlimit <hard|soft> RESOURCE <LIMIT|infinity>`  
+* `rlimit <hard|soft> RESOURCE <LIMIT|unlimited>`  
   Set the hard or soft limit for a resource.  `RESOURCE` is a lower-case
   string matching the `RLIMIT_` constants from `setrlimit(2)`, without
-  the prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.  The limit is an
-  integer that depends on the resource being modified, see the man page
-  for more information.  The special limit `infinity` means unlimited.
+  the prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.
+  
+  The limit is an integer that depends on the resource being modified,
+  see the man page, or the kernel `/proc/PID/limits` file, for more
+  information.  Finit versions before v3.1 used `infinity` for
+  `unlimited`, which is still a supported keyword.
 
 ```shell
         # No process is allowed more than 8MB of address space

@@ -26,6 +26,11 @@
 
 #include "svc.h"
 
+extern struct rlimit global_rlimit[];
+
+int   str2rlim(char *str);
+char *rlim2str(int rlim);
+
 void conf_parse_cmdline   (void);
 int  conf_parse_runlevels (char *runlevels);
 void conf_parse_cond      (svc_t *svc, char *cond);

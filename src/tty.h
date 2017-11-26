@@ -26,6 +26,7 @@
 #define FINIT_TTY_H_
 
 #include <limits.h>
+#include <sys/resource.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #define TTY_MAX_ARGS 16
@@ -43,6 +44,9 @@ typedef struct {
 	char  *args[TTY_MAX_ARGS];
 
 	int    pid;
+
+	/* Limits and scoping */
+	struct rlimit rlimit[RLIMIT_NLIMITS];
 } finit_tty_t;
 
 typedef struct tty_node {
@@ -61,7 +65,7 @@ void	    tty_mark	    (void);
 void	    tty_check	    (tty_node_t *tty, struct timeval *mtime);
 void	    tty_sweep	    (void);
 
-int	    tty_register    (char *line, struct timeval *mtime);
+int	    tty_register    (char *line, struct rlimit rlimit[], struct timeval *mtime);
 int	    tty_unregister  (tty_node_t *tty);
 
 tty_node_t *tty_find	    (char *dev);

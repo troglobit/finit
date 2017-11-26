@@ -234,7 +234,7 @@ int exec_runtask(char *cmd, char *args[])
 	return execvp(_PATH_BSHELL, argv);
 }
 
-static void prepare_tty(char *tty, speed_t speed, char *procname)
+static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit rlimit[])
 {
 	struct sigaction sa;
 	struct termios term;
@@ -269,6 +269,12 @@ static void prepare_tty(char *tty, speed_t speed, char *procname)
 	sigaction(SIGHUP,  &sa, NULL);
 	sigaction(SIGINT,  &sa, NULL);
 	sigaction(SIGQUIT, &sa, NULL);
+
+	/* Set configured limits */
+	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
+		if (setrlimit(i, &rlimit[i]) == -1)
+			logit(LOG_WARNING, "%s: rlimit: Failed setting %s", tty, rlim2str(i));
+	}
 
 	/* Create new session and process group */
 	setsid();
@@ -348,7 +354,7 @@ static int activate_console(int noclear, int nowait)
  * since /bin/login usually only disables ECHO until a password line has
  * been entered.  Upon starting the user's $SHELL the ISIG flag is reset
  */
-pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait)
+pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, struct rlimit rlimit[])
 {
 	pid_t pid;
 
@@ -362,7 +368,7 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait)
 				logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
 		}
 
-		prepare_tty(tty, speed, "finit-getty");
+		prepare_tty(tty, speed, "finit-getty", rlimit);
 		if (activate_console(noclear, nowait))
 			_exit(getty(tty, speed, term, NULL));
 	}
@@ -370,7 +376,7 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait)
 	return pid;
 }
 
-pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait)
+pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[])
 {
 	pid_t pid;
 
@@ -400,7 +406,7 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait)
 		dup2(fd, STDERR_FILENO);
 
 		/* Dunno speed, tell stty() to not mess with it */
-		prepare_tty(tty, B0, "getty");
+		prepare_tty(tty, B0, "getty", rlimit);
 
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 			_pe("Failed TIOCSCTTY");

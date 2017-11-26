@@ -29,6 +29,7 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "service.h"
+#include "conf.h"
 
 #define DAEMON "dbus-daemon"
 #define ARGS   "--nofork --system"
@@ -58,7 +59,7 @@ static void setup(void *arg)
 
 	/* Register service with Finit */
 	snprintf(line, sizeof(line), "[S12345] %s %s -- %s", cmd, ARGS, DESC);
-	if (service_register(SVC_TYPE_SERVICE, line, NULL))
+	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
 		_pe("Failed registering %s", DAEMON);
 	free(cmd);
 

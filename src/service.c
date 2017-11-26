@@ -26,6 +26,7 @@
 
 #include <ctype.h>		/* isblank() */
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 #include <net/if.h>
 #include <lite/lite.h>
@@ -191,6 +192,14 @@ static int service_start(svc_t *svc)
 		int gid = getgroup(svc->group);
 #endif
 		char *args[MAX_NUM_SVC_ARGS];
+
+		/* Set configured limits */
+		for (int i = 0; i < RLIMIT_NLIMITS; i++) {
+			if (setrlimit(i, &svc->rlimit[i]) == -1)
+				logit(LOG_WARNING,
+				      "%s: rlimit: Failed setting %s",
+				      svc->cmd, rlim2str(i));
+		}
 
 		/* Set desired user+group */
 		if (gid >= 0)
@@ -471,9 +480,10 @@ void service_runlevel(int newlevel)
 
 /**
  * service_register - Register service, task or run commands
- * @type:     %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
- * @svcline:  A complete command line with -- separated description text
- * @mtime:    The modification time if service is loaded from /etc/finit.d
+ * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
+ * @cfg:    Configuration, complete command, with -- for description text
+ * @rlimit: Limits for this service/task/run/inetd, may be global limits
+ * @mtime:  The modification time if service is loaded from /etc/finit.d
  *
  * This function is used to register commands to be run on different
  * system runlevels with optional username.  The @type argument details
@@ -520,7 +530,7 @@ void service_runlevel(int newlevel)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int service_register(int type, char *svcline, struct timeval *mtime)
+int service_register(int type, char *cfg, struct rlimit rlimit[], struct timeval *mtime)
 {
 	int i = 0;
 	int id = 1;		/* Default to ID:1 */
@@ -534,12 +544,12 @@ int service_register(int type, char *svcline, struct timeval *mtime)
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
-	if (!svcline) {
+	if (!cfg) {
 		_e("Invalid input argument");
 		return errno = EINVAL;
 	}
 
-	line = strdup(svcline);
+	line = strdup(cfg);
 	if (!line)
 		return 1;
 
@@ -555,7 +565,7 @@ int service_register(int type, char *svcline, struct timeval *mtime)
 	cmd = strtok(line, " ");
 	if (!cmd) {
 	incomplete:
-		_e("Incomplete service '%s', cannot register", svcline);
+		_e("Incomplete service '%s', cannot register", cfg);
 		free(line);
 		return errno = ENOENT;
 	}
@@ -718,6 +728,8 @@ recreate:
 		}
 	}
 #endif
+	/* Set configured limits */
+	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
 
 	/* New, recently modified or unchanged ... used on reload. */
 	svc_check_dirty(svc, mtime);
