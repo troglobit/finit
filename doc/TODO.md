@@ -33,11 +33,6 @@ General
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
 * Add `IFF_RUNNING` support to netlink plugin along `IFF_UP`
-* Allow scripts, instead of C code, as process callbacks
-* Add support for a pipe/popen where we can listen for `STOP`, `START`
-  and `RELOAD` on `STDOUT` from a script ... call it for example
-  `.monitor=` in `svc_t` ... the script named as the basename of the
-  service it monitors + `.sh`.
 * Implement `initctl stop|start|restart|reload|status <SVC>` and
   `service <SVC> stop|start|restart|reload|status` on top
 * Add support for JSON output, or similar, from `initctl show`, e.g.
