@@ -358,10 +358,16 @@ static void service_kill(svc_t *svc)
 {
 	service_timeout_cancel(svc);
 
+	if (svc->pid <= 1) {
+		/* Avoid killing ourselves or all processes ... */
+		_d("%s: Aborting SIGKILL, already terminated.", svc->cmd);
+		return;
+	}
+
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
-	_d("Sending SIGKILL to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
+	_d("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
 	kill(svc->pid, SIGKILL);
 
 	/* Let SIGKILLs stand out, show result as [WARN] */
