@@ -899,7 +899,7 @@ restart:
 		if (!enabled) {
 			svc_set_state(svc, SVC_HALTED_STATE);
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
-			/* wait until all processes has been stopped before continuing... */
+			/* wait until all processes have been stopped before continuing... */
 			if (sm_is_in_teardown(&sm))
 				break;
 

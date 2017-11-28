@@ -449,6 +449,7 @@ int main(int argc, char* argv[])
 	/* Clean up bootstrap-only tasks/services that never started */
 	svc_prune_bootstrap();
 
+	/* All services/tasks/inetd/etc. in configure runlevel have started */
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 
