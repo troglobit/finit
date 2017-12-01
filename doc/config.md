@@ -13,7 +13,7 @@ Introduction
 
 Finit can be configured using only the original `/etc/finit.conf` file
 or in combination with `/etc/finit.d/*.conf`.  Finit 3 can even start a
-system using only /etc/finit.d/*.conf`, highly useful for package-based
+system using only `/etc/finit.d/*.conf`, highly useful for package-based
 Linux distributions -- each package can provide its own "script" file.
 
 - `/etc/finit.conf`: main configuration file, read only once at boot
@@ -280,7 +280,7 @@ the above `finit.conf` settings described above, only the following:
 - `rlimit`
 - `tty`
 
-**NOTE:*** The `/etc/finit.d` directory was previously the default Finit
+**NOTE:** The `/etc/finit.d` directory was previously the default Finit
   `runparts` directory.  Finit no longer has a default `runparts`, make
   sure to update your setup, or the finit configuration, accordingly.
 
