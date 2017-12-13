@@ -791,33 +791,33 @@ void service_monitor(pid_t lost)
 static void service_retry(svc_t *svc)
 {
 	int timeout;
-	int *restart_counter = (int *)&svc->restart_counter;
+	char *restart_cnt = (char *)&svc->restart_cnt;
 
 	service_timeout_cancel(svc);
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
 		_d("%s not crashing anymore", svc->desc);
-		*restart_counter = 0;
+		*restart_cnt = 0;
 		return;
 	}
 
-	if (*restart_counter >= RESPAWN_MAX) {
+	if (*restart_cnt >= RESPAWN_MAX) {
 		logit(LOG_ERR, "%s keeps crashing, not restarting", svc->desc);
 		svc_crashing(svc);
-		*restart_counter = 0;
+		*restart_cnt = 0;
 		service_step(svc);
 		return;
 	}
 
-	(*restart_counter)++;
+	(*restart_cnt)++;
 
-	_d("%s crashed, trying to start it again, attempt %d", svc->desc, *restart_counter);
+	_d("%s crashed, trying to start it again, attempt %d", svc->desc, *restart_cnt);
 	svc_unblock(svc);
 	service_step(svc);
 
 	/* Wait 2s for the first 5 respawns, then back off to 5s */
-	timeout = ((*restart_counter) <= (RESPAWN_MAX / 2)) ? 2000 : 5000;
+	timeout = ((*restart_cnt) <= (RESPAWN_MAX / 2)) ? 2000 : 5000;
 	service_timeout_after(svc, timeout, service_retry);
 }
 
@@ -837,7 +837,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 void service_step(svc_t *svc)
 {
 	int err;
-	int *restart_counter = (int *)&svc->restart_counter;
+	char *restart_cnt = (char *)&svc->restart_cnt;
 	svc_cmd_t enabled;
 	svc_state_t old_state;
 	cond_state_t cond;
@@ -905,7 +905,7 @@ restart:
 
 			err = service_start(svc);
 			if (err) {
-				(*restart_counter)++;
+				(*restart_cnt)++;
 
 				if (!svc_is_inetd_conn(svc))
 					break;
@@ -982,7 +982,7 @@ restart:
 		}
 
 		if (!svc->pid) {
-			(*restart_counter)++;
+			(*restart_cnt)++;
 			svc_set_state(svc, SVC_READY_STATE);
 			break;
 		}

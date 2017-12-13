@@ -101,8 +101,8 @@ typedef struct svc {
 	svc_block_t    block;	       /* Reason that this service is currently stopped */
 	char           cond[MAX_COND_LEN];
 
-	/* Incremented for each restart by service monitor. */
-	const unsigned int restart_counter;
+	/* Counters */
+	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
 
 	/* For inetd services */
 	inetd_t        inetd;
