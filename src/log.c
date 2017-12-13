@@ -63,7 +63,7 @@ void log_open(void)
 	closelog();
 
 	if (debug)
-		opts |= LOG_CONS | LOG_PERROR;
+		opts |= LOG_PERROR; /* LOG_CONS | */
 	openlog("finit", opts, LOG_DAEMON);
 	setlogmask(LOG_UPTO(loglevel));
 
