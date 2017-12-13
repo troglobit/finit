@@ -91,7 +91,7 @@ typedef struct svc {
 	/* Service details */
 	pid_t	       pid;
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
-	svc_type_t     type;
+	svc_type_t     type;	       /* Service, run, task, inetd, ... */
 	struct timeval mtime;          /* Modification time for .conf from /etc/finit.d/ */
 	const int      dirty;	       /* Set if old mtime != new mtime  => reloaded,
 					* or -1 when marked for removal */
@@ -102,6 +102,7 @@ typedef struct svc {
 	char           cond[MAX_COND_LEN];
 
 	/* Counters */
+	char           once;	       /* run/task, (at least) once per runlevel */
 	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
 
 	/* For inetd services */
@@ -196,6 +197,7 @@ static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty
 static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
 static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
 static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
+static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
 
 static inline int  svc_is_blocked  (svc_t *svc) { return svc->block != SVC_BLOCK_NONE; }
 static inline int  svc_is_busy     (svc_t *svc) { return svc->block == SVC_BLOCK_BUSY; }

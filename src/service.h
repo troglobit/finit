@@ -31,6 +31,7 @@ void	  service_runlevel	 (int newlevel);
 int	  service_register	 (int type, char *line, struct rlimit rlimit[], struct timeval *mtime);
 void      service_unregister     (svc_t *svc);
 
+void      service_runtask_clean  (void);
 void      service_reload_dynamic (void);
 
 void      service_step           (svc_t *svc);

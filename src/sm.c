@@ -145,6 +145,9 @@ restart:
 		if (runlevel != 0 && runlevel != 6)
 			conf_reload_dynamic();
 
+		/* Reset once flag of runtasks */
+		service_runtask_clean();
+
 		_d("Stopping services services not allowed in new runlevel ...");
 		sm->in_teardown = 1;
 		service_step_all(SVC_TYPE_ANY);

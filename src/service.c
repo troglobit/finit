@@ -274,7 +274,7 @@ static int service_start(svc_t *svc)
 
 		if (svc->inetd.cmd)
 			status = svc->inetd.cmd(svc->inetd.type);
-		else if (svc->type & SVC_TYPE_RUNTASK)
+		else if (svc_is_runtask(svc))
 			status = exec_runtask(svc->cmd, args);
 		else
 			status = execv(svc->cmd, args);
@@ -920,6 +920,11 @@ restart:
 				svc_set_state(svc, SVC_STOPPING_STATE);
 				break;
 			}
+
+			if (svc_is_runtask(svc)) {
+				svc->once++;
+				break;
+			}
 		}
 
 		cond = cond_get_agg(svc->cond);
@@ -993,6 +998,24 @@ restart:
 void service_step_all(int types)
 {
 	svc_foreach_type(types, service_step);
+}
+
+/**
+ * svc_clean_runtask - Clear once flag of runtasks
+ *
+ * XXX: runtasks should be stopped before calling this
+ */
+void service_runtask_clean(void)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!svc_is_runtask(svc))
+			continue;
+		svc->once = 0;
+		if (svc->state == SVC_DONE_STATE)
+			svc_set_state(svc, SVC_HALTED_STATE);
+	}
 }
 
 /**
