@@ -51,28 +51,34 @@
 #define PLUGIN_ITERATOR(x, tmp) TAILQ_FOREACH_SAFE(x, &plugins, link, tmp)
 
 /*
- * Predefined hook points for easier plugin debugging 
+ * Predefined hook points and corresponding conditions in Finit,
+ * for use by plugins and scripts.  Recommended to use the task
+ * or run stanzas:  task <hook/mount/error> /bin/rescue.sh
  */
-typedef enum {
-	/* Bootstrap hooks */
-	HOOK_BANNER = 0,
-	HOOK_ROOTFS_UP,
-	HOOK_MOUNT_ERROR,
-	HOOK_BASEFS_UP,
-	HOOK_NETWORK_UP,
-	HOOK_SVC_UP,
-	HOOK_SYSTEM_UP,
+#define HOOK_TYPES {						\
+	/* Bootstrap hooks, runlevel [S] */			\
+	CHOOSE(HOOK_BANNER = 0,      "hook/sys/banner"),	\
+	CHOOSE(HOOK_ROOTFS_UP,       "hook/mount/root"),	\
+	CHOOSE(HOOK_MOUNT_ERROR,     "hook/mount/error"),	\
+	CHOOSE(HOOK_BASEFS_UP,       "hook/mount/all"),		\
+	CHOOSE(HOOK_NETWORK_UP,      "hook/net/up"),		\
+	CHOOSE(HOOK_SVC_UP,          "hook/svc/up"),		\
+	CHOOSE(HOOK_SYSTEM_UP,       "hook/sys/up"),		\
+								\
+	/* Runtime hooks, runlevel [S1-9] */			\
+	CHOOSE(HOOK_SVC_RECONF,      "hook/svc/reconf"),	\
+	CHOOSE(HOOK_SVC_LOST,        "hook/svc/lost"),		\
+	CHOOSE(HOOK_SVC_START,       "hook/svc/start"),		\
+	CHOOSE(HOOK_RUNLEVEL_CHANGE, "hook/sys/runlevel"),	\
+								\
+	/* Shutdown hooks, runlevel [06] */			\
+	CHOOSE(HOOK_SHUTDOWN,        "hook/sys/shutdown"),	\
+	CHOOSE(HOOK_MAX_NUM,         "nop")			\
+}
 
-	/* Runtime hooks */
-	HOOK_SVC_RECONF,
-	HOOK_SVC_LOST,
-	HOOK_SVC_START,
-	HOOK_RUNLEVEL_CHANGE,
-
-	/* Shutdown hooks */
-	HOOK_SHUTDOWN,
-	HOOK_MAX_NUM
-} hook_point_t;
+#define CHOOSE(x, y) x
+typedef enum HOOK_TYPES hook_point_t;
+#undef CHOOSE
 
 /**
  * plugin_t - Finit &plugin_t object

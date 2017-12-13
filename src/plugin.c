@@ -30,10 +30,12 @@
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #include "config.h"
+#include "cond.h"
 #include "finit.h"
-#include "private.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "private.h"
+#include "service.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd > 0)
 #define SEARCH_PLUGIN(str)						\
@@ -163,6 +165,15 @@ plugin_t *plugin_find(char *name)
 }
 
 /* Private daemon API *******************************************************/
+#define CHOOSE(x, y) y
+static const char *hook_cond[] = HOOK_TYPES;
+#undef CHOOSE
+
+const char *plugin_hook_str(hook_point_t no)
+{
+	return hook_cond[no];
+}
+
 int plugin_exists(hook_point_t no)
 {
 	plugin_t *p, *tmp;
@@ -178,7 +189,17 @@ int plugin_exists(hook_point_t no)
 /* Some hooks are called with a fixed argument, like HOOK_SVC_LOST */
 void plugin_run_hook(hook_point_t no, void *arg)
 {
+	static int last = -1;
 	plugin_t *p, *tmp;
+
+	/*
+	 * End recursion: any plugin hook => start service => SVC start
+	 * hook => start service ... err ... wait a second
+	 */
+	if (HOOK_SVC_START == last) {
+		_d("End plugin recursion in our lifetime!");
+		return;
+	}
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
@@ -186,6 +207,16 @@ void plugin_run_hook(hook_point_t no, void *arg)
 			p->hook[no].cb(arg ? arg : p->hook[no].arg);
 		}
 	}
+
+	/* Guard against infinite recursion */
+	if (HOOK_SVC_START == no)
+		last = no;
+
+	cond_set(hook_cond[no]);
+	service_step_all(SVC_TYPE_RUNTASK);
+
+	if (HOOK_SVC_START == no)
+		last = -1;
 }
 
 /* Regular hooks are called with the registered plugin's argument */

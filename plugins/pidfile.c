@@ -114,7 +114,7 @@ static void pidfile_reconf(void *_null)
 		}
 
 		if (restart)
-			service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+			service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
 
 	} while (restart);
 }

@@ -40,6 +40,7 @@ int       client           (int argc, char *argv[]);
 
 void      service_monitor  (pid_t lost);
 
+const char *plugin_hook_str(hook_point_t no);
 int       plugin_exists    (hook_point_t no);
 void      plugin_run_hook  (hook_point_t no, void *arg);
 void      plugin_run_hooks (hook_point_t no);
