@@ -503,6 +503,29 @@ void svc_prune_bootstrap(void)
 	}
 }
 
+/**
+ * svc_enabled - Should the service run?
+ * @svc: Pointer to &svc_t object
+ *
+ * Returns:
+ * 1, if the service is allowed to run in the current runlevel and the
+ * user has not manually requested that this service should not run. 0
+ * otherwise.
+ */
+int svc_enabled(svc_t *svc)
+{
+	if (!svc)
+		return 0;
+
+	if (!svc_in_runlevel(svc, runlevel))
+		return 0;
+
+	if (svc_is_removed(svc) || svc_is_blocked(svc))
+		return 0;
+
+	return 1;
+}
+
 char *svc_status(svc_t *svc)
 {
 	switch (svc->state) {

@@ -173,6 +173,7 @@ void	    svc_clean_dynamic      (void (*cb)(svc_t *));
 int	    svc_clean_bootstrap    (svc_t *svc);
 void	    svc_prune_bootstrap	   (void);
 
+int         svc_enabled            (svc_t *svc);
 char       *svc_status             (svc_t *svc);
 const char *svc_dirtystr           (svc_t *svc);
 int         svc_next_id            (char  *cmd);

@@ -48,29 +48,6 @@
 static void svc_set_state(svc_t *svc, svc_state_t new);
 
 /**
- * service_enabled - Should the service run?
- * @svc: Pointer to &svc_t object
- *
- * Returns:
- * 1, if the service is allowed to run in the current runlevel and the
- * user has not manually requested that this service should not run. 0
- * otherwise.
- */
-int service_enabled(svc_t *svc)
-{
-	if (!svc)
-		return 0;
-
-	if (!svc_in_runlevel(svc, runlevel))
-		return 0;
-
-	if (svc_is_removed(svc) || svc_is_blocked(svc))
-		return 0;
-
-	return 1;
-}
-
-/**
  * service_timeout_cb - libuev callback wrapper for service timeouts
  * @w:      Watcher
  * @arg:    Callback argument, from init
@@ -845,7 +822,7 @@ void service_step(svc_t *svc)
 
 restart:
 	old_state = svc->state;
-	enabled = service_enabled(svc);
+	enabled = svc_enabled(svc);
 
 	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc->cmd, svc->pid,
 	   svc_status(svc), enabled ? "en" : "dis", svc_dirtystr(svc),
