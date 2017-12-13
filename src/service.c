@@ -76,8 +76,7 @@ int service_enabled(svc_t *svc)
  * @arg:    Callback argument, from init
  * @events: Error, or ready to read/write (N/A for relative timers)
  *
- * Calls the callback registered with the call to
- * service_timeout_after().
+ * Run callback registered when calling service_timeout_after().
  */
 static void service_timeout_cb(uev_t *w, void *arg, int events)
 {
@@ -89,14 +88,15 @@ static void service_timeout_cb(uev_t *w, void *arg, int events)
 
 /**
  * service_timeout_after - Call a function after some time has elapsed
- * @param svc      Service to use as argument to the callback
- * @param timeout  Timeout, in milliseconds
- * @param cb       Callback function
+ * @svc:     Service to use as argument to the callback
+ * @timeout: Timeout, in milliseconds
+ * @cb:      Callback function
  *
- * After @param timeout milliseconds has elapsed, calls @param cb with
- * @param svc as the argument.
+ * After @timeout milliseconds has elapsed, call @cb() with @svc as the
+ * argument.
  *
- * @return 0 on success, non-zero on error.
+ * Returns:
+ * POSIX OK(0) on success, non-zero on error.
  */
 static int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc))
 {
@@ -109,11 +109,12 @@ static int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc)
 
 /**
  * service_timeout_cancel - Cancel timeout associated with service
- * @param svc      Service whose timeout to cancel
+ * @svc: Service whose timeout to cancel
  *
- * If a timeout is associated with @param svc, cancel it.
+ * If a timeout is associated with @svc, cancel it.
  *
- * @return 0 on success, non-zero on error.
+ * Returns:
+ * POSIX OK(0) on success, non-zero on error.
  */
 static int service_timeout_cancel(svc_t *svc)
 {
