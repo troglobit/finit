@@ -107,7 +107,7 @@ static int fismnt(char *dir)
  */
 static int fsck(int pass)
 {
-	int save;
+//	int save;
 	struct fstab *fs;
 
 	if (!setfsent()) {
@@ -115,8 +115,8 @@ static int fsck(int pass)
 		return 1;
 	}
 
-	if ((save = log_is_debug()))
-		log_debug();
+//	if ((save = log_is_debug()))
+//		log_debug();
 
 	while ((fs = getfsent())) {
 		char cmd[80];
@@ -142,8 +142,8 @@ static int fsck(int pass)
 		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
-	if (save)
-		log_debug();
+//	if (save)
+//		log_debug();
 	endfsent();
 
 	return 0;
