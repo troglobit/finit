@@ -524,7 +524,7 @@ void service_runlevel(int newlevel)
 int service_register(int type, char *cfg, struct rlimit rlimit[], struct timeval *mtime)
 {
 	int i = 0;
-	int id = 1;		/* Default to ID:1 */
+	int id = -1;
 #ifdef INETD_ENABLED
 	int forking = 0;
 #endif
@@ -633,11 +633,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], struct timeval
 		svc = inetd_find_svc(cmd, service, proto);
 		if (svc)
 			goto inetd_setup;
-
-		id = svc_next_id(cmd);
 	}
 recreate:
 #endif
+
+	if (id <= 0)
+		id = svc_next_id(cmd);
 
 	svc = svc_find(cmd, id);
 	if (!svc) {
