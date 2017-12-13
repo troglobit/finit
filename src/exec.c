@@ -35,6 +35,7 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "conf.h"
 #include "helpers.h"
 #include "sig.h"
 #include "utmp-api.h"
