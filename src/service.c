@@ -311,8 +311,6 @@ static int service_start(svc_t *svc)
 		close(svc->stdin_fd);
 #endif
 
-	plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
-
 	if (SVC_TYPE_RUN == svc->type) {
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		if (!svc_clean_bootstrap(svc)) {
@@ -322,8 +320,17 @@ static int service_start(svc_t *svc)
 	}
 	
 	sigprocmask(SIG_SETMASK, &omask, NULL);
+	print_result(result);
 
-	return print_result(result);
+	/*
+	 * Only run hook on successful start, and *after* having printed
+	 * the result, otherwise any hook tasks may overwrite it and the
+	 * result would be like double "[ OK ]" but only one service.
+	 */
+	if (!result)
+		plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
+
+	return result;
 }
 
 /**
