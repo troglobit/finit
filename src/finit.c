@@ -422,6 +422,14 @@ int main(int argc, char* argv[])
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
 
+	/*
+	 * Reload all *.conf in /etc/finit.d, the mount command (above)
+	 * may have brought in new files (overlayfs).
+	 *
+	 * XXX: Can we detect remounted /etc to trigger this instead?
+	 */
+	conf_reload_dynamic();
+
 	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
