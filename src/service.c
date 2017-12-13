@@ -888,16 +888,21 @@ restart:
 			if (sm_is_in_teardown(&sm))
 				break;
 
+			/*
+			 * Make state transition *before* service_start(), because
+			 * of HOOK_SVC_START, which may call service_step()
+			 */
+			svc_mark_clean(svc);
+			svc_set_state(svc, SVC_RUNNING_STATE);
+
 			err = service_start(svc);
 			if (err) {
 				(*restart_cnt)++;
+				svc_set_state(svc, SVC_READY_STATE);
 
 				if (!svc_is_inetd_conn(svc))
 					break;
 			}
-
-			svc_mark_clean(svc);
-			svc_set_state(svc, SVC_RUNNING_STATE);
 		}
 		break;
 
