@@ -1031,6 +1031,67 @@ void service_runtask_clean(void)
 }
 
 /**
+ * service_runtask_completed - Have run/task completed in current runlevel
+ * @skip: Hardcoded list of conditions to skip
+ *
+ * This function checks if all run/task have run once in the current
+ * runlevel.  E.g., at bootstrap we must wait for these scripts or
+ * programs to complete their run before switching to the configured
+ * runlevel.
+ *
+ * Setting @skip means skipping tasks with %HOOK_SVC_UP, %HOOK_SYSTEM_UP
+ * set in their condition mask.  These tasks cannot run until finalize()
+ *
+ * Returns:
+ * %TRUE(1) or %FALSE(0)
+ */
+int service_runtask_completed(int skip)
+{
+	svc_t *svc;
+
+	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+		if (!svc_is_runtask(svc))
+			continue;
+
+		if (!svc_enabled(svc))
+			continue;
+
+		if (strstr(svc->cond, plugin_hook_str(HOOK_SVC_UP)) ||
+		    strstr(svc->cond, plugin_hook_str(HOOK_SYSTEM_UP))) {
+			_d("Skipping %s(%s), post-strap hook", svc->desc, svc->cmd);
+			continue;
+		}
+
+		if (!svc->once) {
+			_d("%s has not yet completed ...", svc->cmd);
+			return 0;
+		}
+		_d("%s has completed ...", svc->cmd);
+	}
+
+	return 1;
+}
+
+void service_bootstrap_cb(uev_t *w, void *arg, int events)
+{
+	static int cnt = 10;
+	void (*finalize)(void) = arg;
+
+	_d("Checking completion of all run/task ... %d", cnt);
+	if (cnt-- > 0 && !service_runtask_completed(!runlevel))
+		return;
+
+	if (cnt > 0)
+		_d("All run/task have completed, resuming bootstrap.");
+	else
+		_d("Timeout, resuming bootstrap.");
+	cnt = 10;
+	uev_timer_stop(w);
+	finalize();
+}
+
+
+/**
  * Local Variables:
  *  indent-tabs-mode: t
  *  c-file-style: "linux"

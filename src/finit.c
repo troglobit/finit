@@ -240,11 +240,64 @@ static void emergency_shell(void)
 #endif /* EMERGENCY_SHELL */
 }
 
+/*
+ * Handle bootstrap transition to configured runlevel, start TTYs
+ *
+ * This is the final stage of bootstrap.  It changes to the default
+ * (configured) runlevel, calls all external start scripts and final
+ * bootstrap hooks before bringing up TTYs.
+ *
+ * We must ensure that all declared `task [S]` and `run [S]` jobs in
+ * finit.conf, or *.conf in finit.d/, run to completion before we
+ * finalize the bootstrap process by calling this function.
+ */
+static void finalize(void)
+{
+	/*
+	 * Start all tasks/services in the configured runlevel
+	 */
+	service_runlevel(cfglevel);
+
+	/* Clean up bootstrap-only tasks/services that never started */
+	svc_prune_bootstrap();
+
+	/* All services/tasks/inetd/etc. in configure runlevel have started */
+	_d("Running svc up hooks ...");
+	plugin_run_hooks(HOOK_SVC_UP);
+	service_step_all(SVC_TYPE_ANY);
+
+	/*
+	 * Run startup scripts in the runparts directory, if any.
+	 */
+	if (runparts && fisdir(runparts)) {
+		_d("Running startup scripts in %s ...", runparts);
+		run_parts(runparts, NULL);
+		service_reload_dynamic();
+	}
+
+	/* Convenient SysV compat for when you just don't care ... */
+	if (!access(FINIT_RC_LOCAL, X_OK)) {
+		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
+		service_reload_dynamic();
+	}
+
+	/* Hooks that should run at the very end */
+	plugin_run_hooks(HOOK_SYSTEM_UP);
+	service_step_all(SVC_TYPE_ANY);
+
+	/* Enable silent mode before starting TTYs */
+	log_silent();
+
+	/* Delayed start of TTYs at bootstrap */
+	tty_runlevel();
+}
+
 int main(int argc, char* argv[])
 {
 	char *path;
 	char cmd[256];
 	int udev = 0;
+	uev_t timer;	       /* Bootstrap timer, on timeout call finalize() */
 	uev_ctx_t loop;
 
 	/*
@@ -449,44 +502,14 @@ int main(int argc, char* argv[])
 	/* Hooks that rely on loopback, or basic networking being up. */
 	plugin_run_hooks(HOOK_NETWORK_UP);
 
-	/*
-	 * Start all tasks/services in the configured runlevel
-	 */
-	service_runlevel(cfglevel);
-
-	/* Clean up bootstrap-only tasks/services that never started */
-	svc_prune_bootstrap();
-
-	/* All services/tasks/inetd/etc. in configure runlevel have started */
-	_d("Running svc up hooks ...");
-	plugin_run_hooks(HOOK_SVC_UP);
-
-	/*
-	 * Run startup scripts in the runparts directory, if any.
-	 */
-	if (runparts && fisdir(runparts)) {
-		_d("Running startup scripts in %s ...", runparts);
-		run_parts(runparts, NULL);
-		service_reload_dynamic();
-	}
-
-	/* Convenient SysV compat for when you just don't care ... */
-	if (!access(FINIT_RC_LOCAL, X_OK)) {
-		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
-		service_reload_dynamic();
-	}
-
-	/* Hooks that should run at the very end */
-	plugin_run_hooks(HOOK_SYSTEM_UP);
-
-	/* Enable silent mode before starting TTYs */
-	log_silent();
-
-	/* Delayed start of TTYs at bootstrap */
-	tty_runlevel();
-
 	/* Start new initctl API responder */
 	api_init(&loop);
+
+	/*
+	 * Wait for all SVC_TYPE_RUNTASK to have completed their work in
+	 * [S], or timeout, before calling finalize()
+	 */
+	uev_timer_init(&loop, &timer, service_bootstrap_cb, finalize, 1000, 1000);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services
