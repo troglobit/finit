@@ -70,6 +70,22 @@ static int inetd_dgram_peek(int sd, char *ifname)
 	return -1;
 }
 
+/* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
+static void inetd_dgram_drop(int sd, const char *ifname)
+{
+	char pkt_interface[17];
+	char buf[BUFSIZ];
+
+	do {
+		inetd_dgram_peek(sd, pkt_interface);
+		if(string_compare(pkt_interface, ifname)) {
+			recv(sd, buf, sizeof(buf), 0);
+			continue;
+		}
+
+	} while (0);
+}
+
 /* Peek into SOCK_STREAM on accepted client socket to figure out inbound interface */
 static int inetd_stream_peek(int sd, char *ifname)
 {
@@ -129,6 +145,8 @@ static int get_stdin(svc_t *svc)
 		logit(LOG_INFO, "Service %s on %s:%d is not allowed", svc->inetd.name, ifname, svc->inetd.port);
 		if (svc->inetd.type == SOCK_STREAM)
 			close(stdin);
+		else
+			inetd_dgram_drop(stdin, ifname);
 
 		return -1;
 	}
