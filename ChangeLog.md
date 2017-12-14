@@ -38,6 +38,7 @@ All relevant changes are documented in this file.
   switching to the configured runlevel at boot.  Issue #86
 * Allow inetd services to be registered with a unique ID, e.g. `:161`,
   issue #87.  Found by Westermo
+* inetd: drop UDP packets from blocked interfaces, issue #88
 * Handle obscure inter-plugin dependency issue by calling the netlink
   plugin before the pidfile plugin on `HOOK_SVC_RECONF` events
 * Handle event loop failure modes, issue found by Westermo
