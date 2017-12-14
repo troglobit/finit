@@ -3,6 +3,56 @@ Change Log
 
 All relevant changes are documented in this file.
 
+
+[3.1][] - 2017-12-xx
+--------------------
+
+### Changes
+
+* Support for `rlimit` per service/run/task/inetd/tty, issue #45
+* Support for auto-detecting serial console using Linux SysFS, the new
+  `tty @console` eliminates the need to keep track of different console
+  devices across embedded platforms: `/dev/ttyS0`, `/dev/ttyAMA0`, etc.
+* Support for calling run/tasks on Finit internal HOOK points, issue #18
+* Removed support for long-since deprecated `console DEV` setting
+* Cosmetic change to login, pressing enter at the `Press enter to ...`
+  prompt will now replace that line with the login issue text
+* Calling `initctl` without any arguments or options now defaults to
+  show status of all enabled services, and run/task/inetd jobs
+* Cosmetic change to boot messages, removed `Loading plugins ...`, start
+  of inetd services, and `Loading configuration ...`.  No end user knows
+  what those plugins and configurations are, i.e. internal state+config
+* Change kernel WDT timeout (3 --> 30 sec) for built-in watchdog daemon
+* Handle `/etc/` OverlayFS, reload /etc/finit.d/*.conf after `mount -a`
+
+### Fixes
+
+* Reset TTY before restarting it.  A program may manipulate the TTY in
+  various ways before the user logs out, Finit needs to reset the TTY to
+  a sane state before restarting it.  Issue #84
+* On .conf parse errors, do *not* default to set TTY speed 38400, reuse
+  current TTY speed instead
+* Fix run/tasks, must be guaranteed to run once per declared runlevel.
+  All run/tasks on `[S]` with a condition `<...>` failed to run.  Finit
+  now tracks run/tasks more carefully, waiting for them to finish before
+  switching to the configured runlevel at boot.  Issue #86
+* Allow inetd services to be registered with a unique ID, e.g. `:161`,
+  issue #87.  Found by Westermo
+* Handle obscure inter-plugin dependency issue by calling the netlink
+  plugin before the pidfile plugin on `HOOK_SVC_RECONF` events
+* Handle event loop failure modes, issue found by Westermo
+* Handle API socket errors more gracefully, restart socket
+* Fix regression in condition handling, reconf condition must be kept
+  as a reference point to previous reconfiguration, or bootstrap.
+* Fix nasty race condition with internal service stop, abort kill if the
+  service has already terminated, otherwise we may do `kill(0, SIGKILL)`
+* Fix reconfiguration issue with (very quick) systems that don't have
+  highres timers
+* Fix formatting of runlevel string in `initctl show`
+* Allow running `initctl` with `STDOUT` redirected
+* Fix regression in `initctl start/stop <ID>`, using name worked not id
+
+
 [3.0][] - 2017-10-19
 --------------------
 
