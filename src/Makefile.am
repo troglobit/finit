@@ -11,7 +11,7 @@ endif
 sbin_PROGRAMS      = finit initctl reboot
 finit_SOURCES      = api.c					\
 		     cond.c	cond-w.c	cond.h		\
-		     client.c					\
+		     telinit.c					\
 		     conf.c	conf.h				\
 		     exec.c	finit.c		finit.h		\
 		     getty.c	stty.c				\
