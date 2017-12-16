@@ -33,11 +33,9 @@
 #include <time.h>
 #include <utmp.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <lite/lite.h>
 
-#include "finit.h"
+#include "client.h"
 #include "cond.h"
 #include "serv.h"
 #include "service.h"
@@ -45,86 +43,22 @@
 
 #define _PATH_COND _PATH_VARRUN "finit/cond/"
 
-typedef struct {
-	char  *cmd;
-	int  (*cb)(char *arg);
-} command_t;
-
 int verbose  = 0;
 int runlevel = 0;
 
-static int do_connect(void)
-{
-	int sd;
-	struct sockaddr_un sun = {
-		.sun_family = AF_UNIX,
-		.sun_path   = INIT_SOCKET,
-	};
-
-	sd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (-1 == sd)
-		goto error;
-
-	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
-		close(sd);
-		goto error;
-	}
-
-	return sd;
-error:
-	perror("Failed connecting to finit");
-	return -1;
-}
-
-static int do_send(struct init_request *rq, ssize_t len)
-{
-	int sd, result = 255;
-
-	sd = do_connect();
-	if (-1 == sd)
-		return -1;
-
-	if (write(sd, rq, len) != len)
-		goto error;
-
-	if (read(sd, rq, len) != len)
-		goto error;
-
-	result = 0;
-	goto exit;
-error:
-	perror("Failed communicating with finit");
-exit:
-	close(sd);
-	return result;
-}
-
 static int runlevel_get(void)
 {
-	int sd, result = 255;
+	int result;
 	struct init_request rq;
 
 	memset(&rq, 0, sizeof(rq));
 	rq.cmd = INIT_CMD_GET_RUNLEVEL;
 	rq.magic = INIT_MAGIC;
 
-	sd = do_connect();
-	if (-1 == sd)
-		return -1;
+	result = client_send(&rq, sizeof(rq));
+	if (!result)
+		result = rq.runlevel;
 
-	if (write(sd, &rq, sizeof(rq)) != sizeof(rq))
-		goto error;
-
-	if (read(sd, &rq, sizeof(rq)) != sizeof(rq))
-		goto error;
-
-	result = rq.runlevel;
-	goto exit;
-error:
-	perror("Failed communicating with finit");
-	result = -1;
-exit:
-	close(sd);
 	return result;
 }
 
@@ -135,7 +69,7 @@ static int toggle_debug(char *arg)
 		.cmd = INIT_CMD_DEBUG,
 	};
 
-	return do_send(&rq, sizeof(rq));
+	return client_send(&rq, sizeof(rq));
 }
 
 static int do_log(char *svc)
@@ -169,7 +103,7 @@ static int do_runlevel(char *arg)
 		return 0;
 	}
 
-	return do_send(&rq, sizeof(rq));
+	return client_send(&rq, sizeof(rq));
 }
 
 static int do_svc(int cmd, char *arg)
@@ -181,7 +115,7 @@ static int do_svc(int cmd, char *arg)
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
 
-	return do_send(&rq, sizeof(rq));
+	return client_send(&rq, sizeof(rq));
 }
 
 static int do_emit   (char *arg) { return do_svc(INIT_CMD_EMIT,        arg); }
@@ -547,7 +481,7 @@ static int show_status(char *arg)
 			};
 
 			snprintf(rq.data, sizeof(rq.data), "%s", jobid);
-			if (do_send(&rq, sizeof(rq))) {
+			if (client_send(&rq, sizeof(rq))) {
 				snprintf(args, sizeof(args), "Unknown inetd");
 				info = args;
 			} else {
