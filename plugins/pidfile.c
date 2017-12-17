@@ -92,11 +92,10 @@ static void pidfile_callback(void *arg, int fd, int events)
  *
  * We must wait for the service to create/touch its pidfile.
  */
-static void pidfile_reconf(void *_null)
+static void pidfile_reconf(void *arg)
 {
 	static char cond[MAX_COND_LEN];
 	svc_t *svc;
-	(void)(_null);
 	int restart = 0;
 
 	do {
