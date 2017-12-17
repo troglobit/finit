@@ -160,27 +160,13 @@ static int missing(char *job, int id)
  */
 static int do_startstop(int cmd, char *arg)
 {
-	int ret;
-	char *svcs;
-
-	if (!arg) {
-		fprintf(stderr, "Usage: initctl %s <JOB|NAME>[:ID]",
+	/* Include \0 in len, needed by parser */
+	if (svc_parse_jobstr(arg, strlen(arg) + 1, NULL, missing)) {
+		fprintf(stderr, "Usage: initctl %s <JOB|NAME>[:ID]\n",
 			cmd == INIT_CMD_START_SVC ? "start" :
 			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
 		return 1;
 	}
-
-	svcs = strdup(arg);
-	if (!svcs) {
-		perror("Failed validating service(s) name");
-		return 1;
-	}
-
-	/* Include \0 in len, needed by parser */
-	ret = svc_parse_jobstr(svcs, strlen(svcs) + 1, NULL, missing);
-	free(svcs);
-	if (ret)
-		return ret;
 
 	return do_svc(cmd, arg);
 }
