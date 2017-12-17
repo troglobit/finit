@@ -267,7 +267,8 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_GET_RUNLEVEL:
 			_d("get runlevel");
-			rq.runlevel = runlevel;
+			rq.runlevel  = runlevel;
+			rq.sleeptime = prevlevel;
 			break;
 
 		case INIT_CMD_ACK:

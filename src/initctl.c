@@ -46,7 +46,7 @@
 int verbose  = 0;
 int runlevel = 0;
 
-static int runlevel_get(void)
+static int runlevel_get(int *prevlevel)
 {
 	int result;
 	struct init_request rq;
@@ -56,8 +56,11 @@ static int runlevel_get(void)
 	rq.magic = INIT_MAGIC;
 
 	result = client_send(&rq, sizeof(rq));
-	if (!result)
+	if (!result) {
 		result = rq.runlevel;
+		if (prevlevel)
+			*prevlevel = rq.sleeptime;
+	}
 
 	return result;
 }
@@ -88,6 +91,9 @@ static int do_log(char *svc)
 	return system(cmd);
 }
 
+/*
+ * XXX: Convert to read UTMP instead, like runlevel(8) does
+ */
 static int do_runlevel(char *arg)
 {
 	struct init_request rq = {
@@ -96,10 +102,21 @@ static int do_runlevel(char *arg)
 		.runlevel = (int)arg[0],
 	};
 
-	/* Not compatible with the SysV runlevel(8) command, it prints
-	 * "PREVLEVEL RUNLEVEL", we just print the current runlevel. */
 	if (!rq.runlevel) {
-		printf("%d\n", runlevel_get());
+		char prev;
+		int runlevel, prevlevel;
+
+		runlevel = runlevel_get(&prevlevel);
+		if (255 == runlevel) {
+			printf("unknown\n");
+			return 0;
+		}
+
+		prev = prevlevel + '0';
+		if (prev <= '0' || prev > '9')
+			prev = 'N';
+
+		printf("%c %d\n", prev , runlevel);
 		return 0;
 	}
 
@@ -401,15 +418,17 @@ char *runlevel_string(int runlevel, int levels)
 	return lvl;
 }
 
-/* In verbose mode we skip the header and each service description.
+/*
+ * In verbose mode we skip the header and each service description.
  * This in favor of having all info on one line so a machine can more
- * easily parse it. */
+ * easily parse it.
+ */
 static int show_status(char *arg)
 {
 	svc_t *svc;
 
 	/* Fetch UTMP runlevel, needed for svc_status() call below */
-	runlevel = runlevel_get();
+	runlevel = runlevel_get(NULL);
 
 	if (arg && arg[0]) {
 		int id = 1;
