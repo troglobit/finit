@@ -134,6 +134,37 @@ int svc_del(svc_t *svc)
 }
 
 /**
+ * svc_iterator1 - Naive iterator over all registered services.
+ * @pos:   Iterator variable, preserves state between calls
+ * @first: Get first &svc_t object, or next until end.
+ *
+ * Returns:
+ * The first &svc_t when @first is set, otherwise the next &svc_t until
+ * the end when %NULL is returned.
+ */
+svc_t *svc_iterator1(int *pos, int first)
+{
+	int i;
+	svc_t *list = __connect_shm();
+
+	if (first)
+		i = 0;
+	else
+		i = *(int *)pos;
+
+	while (i < MAX_NUM_SVC) {
+		svc_t *svc = &list[i++];
+
+		if (svc->type != SVC_TYPE_FREE) {
+			*(int *)pos = i;
+			return svc;
+		}
+	}
+
+	return NULL;
+}
+
+/**
  * svc_iterator - Naive iterator over all registered services.
  * @first: Get first &svc_t object, or next until end.
  *
@@ -143,36 +174,26 @@ int svc_del(svc_t *svc)
  */
 svc_t *svc_iterator(int first)
 {
-	static int i = 0;
-	svc_t *list = __connect_shm();
+	static int i;
 
-	if (first)
-		i = 0;
-
-	while (i < MAX_NUM_SVC) {
-		svc_t *svc = &list[i++];
-
-		if (svc->type != SVC_TYPE_FREE)
-			return svc;
-	}
-
-	return NULL;
+	return svc_iterator1(&i, first);
 }
 
 
 /**
  * svc_inetd_iterator - Naive iterator over all registered inetd services.
+ * @pos:   Iterator variable, preserves state between calls
  * @first: Get first &svc_t object, or next until end.
  *
  * Returns:
  * The first inetd &svc_t when @first is set, otherwise the next
  * inetd &svc_t until the end when %NULL is returned.
  */
-svc_t *svc_inetd_iterator(int first)
+svc_t *svc_inetd_iterator(int *pos, int first)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
+	for (svc = svc_iterator1(pos, first); svc; svc = svc_iterator1(pos, 0)) {
 		if (svc_is_inetd(svc))
 			return svc;
 	}
