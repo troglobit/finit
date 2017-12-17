@@ -633,12 +633,15 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], struct timeval
 		svc = inetd_find_svc(cmd, service, proto);
 		if (svc)
 			goto inetd_setup;
+
+		if (id <= 0)
+			id = svc_next_id(cmd);
 	}
 recreate:
 #endif
 
 	if (id <= 0)
-		id = svc_next_id(cmd);
+		id = 1;
 
 	svc = svc_find(cmd, id);
 	if (!svc) {
