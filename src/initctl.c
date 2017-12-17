@@ -224,6 +224,9 @@ static int do_cond_magic(char op, char *cond)
 {
 	char event[368];	/* sizeof(init_request.data) */
 
+	if (!cond || strlen(cond) < 1)
+		return 1;
+
 	event[0] = op;
 	strlcpy(&event[1], cond, sizeof(event) - 1);
 
@@ -240,7 +243,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 	if (tflag != FTW_F)
 		return 0;
 
-	if (!strcmp(fpath, _PATH_COND"reconf"))
+	if (!strcmp(fpath, _PATH_COND "reconf"))
 		return 0;
 
 	len = strlen(_PATH_COND);
@@ -293,9 +296,9 @@ static int do_cond(char *cmd)
 	int c;
 	char *arg;
 	command_t command[] = {
+		{ "show",    do_cond_show  },
 		{ "set",     do_cond_set   },
 		{ "clear",   do_cond_clear },
-		{ "show",    do_cond_show  },
 		{ "dump",    do_cond_dump  },
 		{ NULL, NULL }
 	};
@@ -305,7 +308,7 @@ static int do_cond(char *cmd)
 		*arg++ = 0;
 
 	for (c = 0; command[c].cmd; c++) {
-		if (!strcmp(command[c].cmd, cmd))
+		if (string_match(command[c].cmd, cmd))
 			return command[c].cb(arg);
 	}
 
@@ -509,7 +512,7 @@ static int show_status(char *arg)
 				info = rq.data;
 				info[len - 1] = 0;
 
-				if (strcmp("internal", svc->cmd)) {
+				if (!string_match("internal", svc->cmd)) {
 					char *ptr;
 
 					ptr = strchr(info, ' ');
@@ -587,7 +590,7 @@ static int do_help(char *arg)
 int main(int argc, char *argv[])
 {
 	int c;
-	char *cmd, arg[120] = "";
+	char *cmd, arg[120];
 	command_t command[] = {
 		{ "debug",    toggle_debug },
 		{ "help",     do_help      },
@@ -640,6 +643,7 @@ int main(int argc, char *argv[])
 	if (optind >= argc)
 		return show_status(NULL);
 
+	memset(arg, 0, sizeof(arg));
 	cmd = argv[optind++];
 	while (optind < argc) {
 		strlcat(arg, argv[optind++], sizeof(arg));
@@ -648,7 +652,7 @@ int main(int argc, char *argv[])
 	}
 
 	for (c = 0; command[c].cmd; c++) {
-		if (strcmp(command[c].cmd, cmd))
+		if (!string_match(command[c].cmd, cmd))
 			continue;
 
 		return command[c].cb(arg);
