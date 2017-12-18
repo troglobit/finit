@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -87,15 +88,42 @@ static int do_start  (char *buf, size_t len) { return call(service_start,   buf,
 static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
-#ifdef INETD_ENABLED
-static int do_query_inetd(char *buf, size_t len)
+static char query_buf[368];
+static int missing(char *job, int id)
+{
+	char buf[20];
+	char idstr[10] = "";
+
+	if (!job)
+		job = "";
+	if (id > 1)
+		snprintf(idstr, sizeof(idstr), ":%d", id);
+
+	snprintf(buf, sizeof(buf), "%s%s ", job, idstr);
+	strlcat(query_buf, buf, sizeof(query_buf));
+
+	return 1;
+}
+
+static int do_query(struct init_request *rq, size_t len)
+{
+	memset(query_buf, 0, sizeof(query_buf));
+	if (svc_parse_jobstr(rq->data, strlen(rq->data) + 1, NULL, missing)) {
+		memcpy(rq->data, query_buf, sizeof(rq->data));
+		return 1;
+	}
+
+	return 0;
+}
+
+static svc_t *do_find(char *buf, size_t len)
 {
 	int id = 1;
-	char *ptr, *input = sanitize(buf, len);
-	svc_t *svc;
+	char *ptr, *input;
 
+	input = sanitize(buf, len);
 	if (!input)
-		return -1;
+		return NULL;
 
 	ptr = strchr(input, ':');
 	if (ptr) {
@@ -103,11 +131,20 @@ static int do_query_inetd(char *buf, size_t len)
 		id = atonum(ptr);
 	}
 
-	svc = svc_find_by_jobid(atonum(input), id);
-	if (!svc || !svc_is_inetd(svc)) {
-		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", input);
+	if (isdigit(input[0]))
+		return svc_find_by_jobid(atonum(input), id);
+
+	return svc_find_by_nameid(input, id);
+}
+
+#ifdef INETD_ENABLED
+static int do_query_inetd(char *buf, size_t len)
+{
+	svc_t *svc;
+
+	svc = do_find(buf, len);
+	if (!svc || !svc_is_inetd(svc))
 		return 1;
-	}
 
 	return inetd_filter_str(&svc->inetd, buf, len);
 }
@@ -163,6 +200,22 @@ static int do_handle_emit(char *buf, size_t len)
 
 	return result;
 }
+
+static void send_svc(int sd, svc_t *svc)
+{
+	svc_t empty;
+	size_t len;
+
+	if (!svc) {
+		empty.pid = -1;
+		svc = &empty;
+	}
+
+	len = write(sd, svc, sizeof(*svc));
+	if (len != sizeof(*svc))
+		_d("Failed sending svc_t to client");
+}
+
 
 /*
  * In contrast to the SysV compat handling in plugins/initctl.c, when
@@ -289,6 +342,21 @@ static void api_cb(uev_t *w, void *arg, int events)
 			}
 			wdogpid = rq.runlevel;
 			break;
+
+		case INIT_CMD_SVC_ITER:
+			_d("svc iter, first: %d", rq.runlevel);
+			send_svc(sd, svc_iterator(rq.runlevel));
+			goto leave;
+
+		case INIT_CMD_SVC_QUERY:
+			_d("svc query: %s", rq.data);
+			result = do_query(&rq, len);
+			break;
+
+		case INIT_CMD_SVC_FIND:
+			_d("svc find: %s", rq.data);
+			send_svc(sd, do_find(rq.data, sizeof(rq.data)));
+			goto leave;
 
 		default:
 			_d("Unsupported cmd: %d", rq.cmd);

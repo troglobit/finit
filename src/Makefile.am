@@ -44,7 +44,7 @@ finit_LDADD       += -ldl
 endif
 
 initctl_SOURCES    = initctl.c client.c client.h \
-		     serv.c serv.h svc.c svc.h   \
+		     serv.c serv.h svc.h   \
 		     cond.c cond.h util.c util.h
 initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 initctl_CFLAGS    += $(lite_CFLAGS)

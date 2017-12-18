@@ -89,6 +89,74 @@ exit:
 	return result;
 }
 
+svc_t *client_svc_iterator(int first)
+{
+	int sd = -1;
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd   = INIT_CMD_SVC_ITER,
+	};
+	static svc_t svc;
+
+	sd = client_connect();
+	if (sd == -1)
+		return NULL;
+
+	if (first)
+		rq.runlevel = 1;
+	else
+		rq.runlevel = 0;
+
+	if (write(sd, &rq, sizeof(rq)) != sizeof(rq))
+		goto error;
+	if (read(sd, &svc, sizeof(svc)) != sizeof(svc))
+		goto error;
+
+	client_disconnect();
+	if (svc.pid < 0)
+		return NULL;
+
+	return &svc;
+error:
+	perror("Failed communicating with finit");
+	client_disconnect();
+	sd = -1;
+
+	return NULL;
+}
+
+svc_t *client_svc_find(char *arg)
+{
+	int sd = -1;
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd   = INIT_CMD_SVC_FIND,
+	};
+	static svc_t svc;
+
+	sd = client_connect();
+	if (sd == -1)
+		return NULL;
+
+	strlcpy(rq.data, arg, sizeof(rq.data));
+	if (write(sd, &rq, sizeof(rq)) != sizeof(rq))
+		goto error;
+	if (read(sd, &svc, sizeof(svc)) != sizeof(svc))
+		goto error;
+
+	client_disconnect();
+	if (svc.pid < 0)
+		return NULL;
+
+	return &svc;
+error:
+	client_disconnect();
+	perror("Failed communicating with finit");
+	sd = -1;
+
+	return NULL;
+}
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t

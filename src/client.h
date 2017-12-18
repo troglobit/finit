@@ -25,15 +25,18 @@
 #define FINIT_CLIENT_H_
 
 #include "finit.h"
+#include "svc.h"
 
 typedef struct {
 	char  *cmd;
 	int  (*cb)(char *arg);
 } command_t;
 
-int client_connect    (void);
-int client_disconnect (void);
+int    client_connect      (void);
+int    client_disconnect   (void);
 
-int client_send       (struct init_request *rq, ssize_t len);
+int    client_send         (struct init_request *rq, ssize_t len);
+svc_t *client_svc_iterator (int first);
+svc_t *client_svc_find     (char *arg);
 
 #endif /* FINIT_CLIENT_H_ */
