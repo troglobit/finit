@@ -27,7 +27,6 @@
 
 #include <sys/ipc.h>		/* IPC_CREAT */
 #include <sys/resource.h>
-#include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 #include <lite/lite.h>
 
@@ -66,7 +65,6 @@ typedef enum {
 	SVC_BLOCK_RESTARTING,
 } svc_block_t;
 
-#define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
@@ -128,23 +126,6 @@ typedef struct svc {
 	uev_t          timer;
 	void           (*timer_cb)(struct svc *svc);
 } svc_t;
-
-typedef struct svc_map svc_map_t;
-
-/* Put services array in shm */
-static inline svc_t *finit_svc_connect(void)
-{
-	static void *ptr = (void *)-1;
-
-	if ((void *)-1 == ptr) {
-		ptr = shmat(shmget(FINIT_SHM_ID, sizeof(svc_t) * MAX_NUM_SVC,
-				   0600 | IPC_CREAT), NULL, 0);
-		if ((void *)-1 == ptr)
-			return NULL;
-	}
-
-	return (svc_t *)ptr;
-}
 
 svc_t      *svc_new                (char *cmd, int id, int type);
 int	    svc_del	           (svc_t *svc);

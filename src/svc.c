@@ -35,37 +35,20 @@
 
 /* Each svc_t needs a unique job# */
 static int jobcounter = 1;
-static svc_t *workaround = NULL;
+static svc_t *svc_list = NULL;
 
 static svc_t *__connect_shm(void)
 {
-	svc_t *list;
+	if (svc_list)
+		return svc_list;
 
-	list = finit_svc_connect();
-	if (!list) {
-		if (workaround)
-			return workaround;
-
-		/* Linux not built with CONFIG_SYSVIPC, or libc does not support shmat()/shmget() */
-		if (ENOSYS == errno)
-			warn("Kernel does support SYSV shmat() IPC, error %d", errno);
-
-		/* Try to prevent PID 1 from aborting, issue #81 */
-		if (getpid() == 1) {
-			warnx("Implementing PID 1 workaround, initctl tool will not work ...");
-			if (!workaround)
-				workaround = calloc(MAX_NUM_SVC, sizeof(svc_t));
-
-			list = workaround;
-		}
-	}
-
-	if (!list) {
-		warn("Failed connecting to shared memory, error %d", errno);
+	svc_list = calloc(MAX_NUM_SVC, sizeof(svc_t));
+	if (!svc_list) {
+		warn("Failed allocating static list of services, error %d", errno);
 		abort();
 	}
 
-	return list;
+	return svc_list;
 }
 
 /**
