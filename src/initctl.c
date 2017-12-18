@@ -415,8 +415,14 @@ static int show_status(char *arg)
 		if (!svc)
 			return 1;
 
-		printf("%s\n", svc_status(svc));
-		return 0;
+		printf("Service     : %s\n", svc->cmd);
+		printf("Description : %s\n", svc->desc);
+		printf("PID         : %d\n", svc->pid);
+		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
+		printf("Status      : %s\n", svc_status(svc));
+		printf("\n");
+
+		return do_log(svc->cmd);
 	}
 
 	if (!verbose)
