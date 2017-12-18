@@ -29,6 +29,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>		/* pid_t */
 #include <lite/lite.h>
+#include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #include "inetd.h"
 #include "helpers.h"
@@ -70,7 +71,6 @@ typedef enum {
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
 #define MAX_USER_LEN     16
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
-#define MAX_NUM_SVC      64	     /* Enough? */
 #define MAX_NUM_SVC_ARGS 32
 
 /*
@@ -80,6 +80,8 @@ typedef enum {
  *   initctl <stop|start|restart> service
  */
 typedef struct svc {
+	TAILQ_ENTRY(svc) link;
+
 	/* Instance specifics */
 	int            job, id;	       /* JOB:ID */
 
@@ -135,12 +137,11 @@ svc_t	   *svc_find_by_pid        (pid_t pid);
 svc_t	   *svc_find_by_jobid      (int job, int id);
 svc_t	   *svc_find_by_nameid     (char *name, int id);
 
-svc_t	   *svc_iterator	   (int first);
-svc_t      *svc_iterator1          (int *pos, int first);
-svc_t	   *svc_inetd_iterator     (int *pos, int first);
-svc_t	   *svc_dynamic_iterator   (int *pos, int first);
-svc_t	   *svc_named_iterator     (int *pos, int first, char *cmd);
-svc_t      *svc_job_iterator       (int *pos, int first, int job);
+svc_t	   *svc_iterator	   (svc_t *iter);
+svc_t	   *svc_inetd_iterator     (svc_t *iter);
+svc_t	   *svc_dynamic_iterator   (svc_t *iter);
+svc_t	   *svc_named_iterator     (svc_t *iter, char *cmd);
+svc_t      *svc_job_iterator       (svc_t *iter, int job);
 
 void	    svc_foreach	           (void (*cb)(svc_t *));
 void	    svc_foreach_dynamic    (void (*cb)(svc_t *));

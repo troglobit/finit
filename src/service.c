@@ -1023,10 +1023,9 @@ void service_step_all(int types)
  */
 void service_runtask_clean(void)
 {
-	int pos;
 	svc_t *svc;
 
-	for (svc = svc_iterator1(&pos, 1); svc; svc = svc_iterator1(&pos, 0)) {
+	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
 		if (!svc_is_runtask(svc))
 			continue;
 
@@ -1053,10 +1052,9 @@ void service_runtask_clean(void)
  */
 int service_runtask_completed(int skip)
 {
-	int pos;
 	svc_t *svc;
 
-	for (svc = svc_iterator1(&pos, 1); svc; svc = svc_iterator1(&pos, 0)) {
+	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
 		if (!svc_is_runtask(svc))
 			continue;
 

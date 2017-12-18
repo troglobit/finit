@@ -88,11 +88,10 @@ static int svc_has_cond(svc_t *svc)
 
 static void cond_update(const char *name)
 {
-	int pos;
 	svc_t *svc;
 
 	_d("%s", name);
-	for (svc = svc_iterator1(&pos, 1); svc; svc = svc_iterator1(&pos, 0)) {
+	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
 		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
 			continue;
 

@@ -225,6 +225,7 @@ static void send_svc(int sd, svc_t *svc)
 static void api_cb(uev_t *w, void *arg, int events)
 {
 	int sd, lvl;
+	static svc_t *svc;
 	struct init_request rq;
 
 	sd = accept(w->fd, NULL, NULL);
@@ -345,7 +346,13 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_SVC_ITER:
 			_d("svc iter, first: %d", rq.runlevel);
-			send_svc(sd, svc_iterator(rq.runlevel));
+			/*
+			 * XXX: This severly limits the number of
+			 * simultaneous client connections, but will
+			 * have to do for now.
+			 */
+			svc = svc_iterator(rq.runlevel ? NULL : svc);
+			send_svc(sd, svc);
 			goto leave;
 
 		case INIT_CMD_SVC_QUERY:

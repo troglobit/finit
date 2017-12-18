@@ -95,14 +95,13 @@ static void pidfile_callback(void *arg, int fd, int events)
 static void pidfile_reconf(void *arg)
 {
 	static char cond[MAX_COND_LEN];
-	int pos;
 	svc_t *svc;
 	int restart = 0;
 
 	do {
 		restart = 0;
 
-		for (svc = svc_iterator1(&pos, 1); svc; svc = svc_iterator1(&pos, 0)) {
+		for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
 			mkcond(cond, sizeof(cond), svc->cmd);
 			if (svc->state == SVC_RUNNING_STATE &&
 			    !svc_is_changed(svc) &&
