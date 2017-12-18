@@ -204,17 +204,18 @@ svc_t *svc_inetd_iterator(int *pos, int first)
 
 /**
  * svc_dynamic_iterator - Naive iterator over all registered dynamic services.
+ * @pos:   Iterator variable, preserves state between calls
  * @first: Get first &svc_t object, or next until end.
  *
  * Returns:
  * The first dynamically loaded &svc_t when @first is set, otherwise the
  * next dynamically loaded &svc_t until the end when %NULL is returned.
  */
-svc_t *svc_dynamic_iterator(int first)
+svc_t *svc_dynamic_iterator(int *pos, int first)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
+	for (svc = svc_iterator1(pos, first); svc; svc = svc_iterator1(pos, 0)) {
 		if (svc->mtime.tv_sec)
 			return svc;
 	}
@@ -225,6 +226,7 @@ svc_t *svc_dynamic_iterator(int first)
 
 /**
  * svc_named_iterator - Iterates over all instances of a service.
+ * @pos:   Iterator variable, preserves state between calls
  * @first: Get first &svc_t object, or next until end.
  * @cmd:   Service name to look for.
  *
@@ -233,11 +235,11 @@ svc_t *svc_dynamic_iterator(int first)
  * &svc_t instance with the same @cmd until the end when %NULL is
  * returned.
  */
-svc_t *svc_named_iterator(int first, char *cmd)
+svc_t *svc_named_iterator(int *pos, int first, char *cmd)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
+	for (svc = svc_iterator1(pos, first); svc; svc = svc_iterator1(pos, 0)) {
 		char *name = basename(svc->cmd);
 
 		if (!strncmp(name, cmd, strlen(name)))
@@ -250,6 +252,7 @@ svc_t *svc_named_iterator(int first, char *cmd)
 
 /**
  * svc_job_iterator - Iterates over all instances of a service.
+ * @pos:   Iterator variable, preserves state between calls
  * @first: Get first &svc_t object, or next until end.
  * @job:   Job to look for.
  *
@@ -258,11 +261,11 @@ svc_t *svc_named_iterator(int first, char *cmd)
  * &svc_t instance with the same @job until the end when %NULL is
  * returned.
  */
-svc_t *svc_job_iterator(int first, int job)
+svc_t *svc_job_iterator(int *pos, int first, int job)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(first); svc; svc = svc_iterator(0)) {
+	for (svc = svc_iterator1(pos, first); svc; svc = svc_iterator1(pos, 0)) {
 		if (svc->job == job)
 			return svc;
 	}
