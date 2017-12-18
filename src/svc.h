@@ -176,8 +176,6 @@ int	    svc_clean_bootstrap    (svc_t *svc);
 void	    svc_prune_bootstrap	   (void);
 
 int         svc_enabled            (svc_t *svc);
-char       *svc_status             (svc_t *svc);
-const char *svc_dirtystr           (svc_t *svc);
 int         svc_next_id            (char  *cmd);
 int         svc_is_unique          (svc_t *svc);
 
@@ -209,6 +207,70 @@ static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_BUSY; }
 static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
 static inline void svc_restarting  (svc_t *svc) { svc->block = SVC_BLOCK_RESTARTING; }
 static inline void svc_crashing    (svc_t *svc) { svc->block = SVC_BLOCK_CRASHING; }
+
+static inline char *svc_status(svc_t *svc)
+{
+	switch (svc->state) {
+	case SVC_HALTED_STATE:
+		switch (svc->block) {
+		case SVC_BLOCK_NONE:
+			return "halted";
+
+		case SVC_BLOCK_MISSING:
+			return "missing";
+
+		case SVC_BLOCK_CRASHING:
+			return "crashed";
+
+		case SVC_BLOCK_USER:
+			return "stopped";
+
+		case SVC_BLOCK_BUSY:
+			return "busy";
+
+		case SVC_BLOCK_RESTARTING:
+			return "restart";
+		}
+
+	case SVC_DONE_STATE:
+		return "done";
+
+	case SVC_STOPPING_STATE:
+		switch (svc->type) {
+		case SVC_TYPE_INETD_CONN:
+		case SVC_TYPE_RUN:
+		case SVC_TYPE_TASK:
+			return "active";
+
+		default:
+			return "stopping";
+		}
+
+	case SVC_WAITING_STATE:
+		return "waiting";
+
+	case SVC_READY_STATE:
+		return "ready";
+
+	case SVC_RUNNING_STATE:
+		return "running";
+
+	default:
+		return "UNKNOWN";
+	}
+}
+
+static inline const char *svc_dirtystr(svc_t *svc)
+{
+	if (svc_is_removed(svc))
+		return "removed";
+	if (svc_is_updated(svc))
+		return "updated";
+	if (svc_is_changed(svc))
+		return "UNKNOWN";
+
+	return "clean";
+}
 
 #endif /* FINIT_SVC_H_ */
 
