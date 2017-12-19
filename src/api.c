@@ -44,7 +44,7 @@
 #include "service.h"
 #include "util.h"
 
-uev_t api_watcher;
+static uev_t api_watcher;
 
 static int call(int (*action)(svc_t *), char *buf, size_t len)
 {
