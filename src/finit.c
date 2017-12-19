@@ -254,6 +254,15 @@ static void emergency_shell(void)
 static void finalize(void)
 {
 	/*
+	 * Network stuff
+	 */
+	networking();
+	umask(022);
+
+	/* Hooks that rely on loopback, or basic networking being up. */
+	plugin_run_hooks(HOOK_NETWORK_UP);
+
+	/*
 	 * Start all tasks/services in the configured runlevel
 	 */
 	service_runlevel(cfglevel);
@@ -488,15 +497,6 @@ int main(int argc, char* argv[])
 	 */
 	sm_init(&sm);
 	sm_step(&sm);
-
-	/*
-	 * Network stuff
-	 */
-	networking();
-	umask(022);
-
-	/* Hooks that rely on loopback, or basic networking being up. */
-	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/* Start new initctl API responder */
 	api_init(&loop);
