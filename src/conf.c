@@ -35,6 +35,7 @@
 #include "tty.h"
 #include "helpers.h"
 
+#define BOOTSTRAP (runlevel == 0)
 #define MATCH_CMD(l, c, x) \
 	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
@@ -242,13 +243,13 @@ static void parse_static(char *line)
 	char *x;
 	char cmd[CMD_SIZE];
 
-	if (MATCH_CMD(line, "host ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "host ", x)) {
 		if (hostname) free(hostname);
 		hostname = strdup(strip_line(x));
 		return;
 	}
 
-	if (MATCH_CMD(line, "mknod ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "mknod ", x)) {
 		char *dev = strip_line(x);
 
 		strcpy(cmd, "mknod ");
@@ -258,13 +259,13 @@ static void parse_static(char *line)
 		return;
 	}
 
-	if (MATCH_CMD(line, "network ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "network ", x)) {
 		if (network) free(network);
 		network = strdup(strip_line(x));
 		return;
 	}
 
-	if (MATCH_CMD(line, "runparts ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "runparts ", x)) {
 		if (runparts) free(runparts);
 		runparts = strdup(strip_line(x));
 		return;
@@ -289,10 +290,12 @@ static void parse_static(char *line)
 		return;
 	}
 
-	/* The desired runlevel to start when leaving bootstrap (S).
+	/*
+	 * The desired runlevel to start when leaving bootstrap (S).
 	 * Finit supports 1-9, but most systems only use 1-6, where
-	 * 6 is reserved for reboot */
-	if (MATCH_CMD(line, "runlevel ", x)) {
+	 * 6 is reserved for reboot and 0 for halt/poweroff.
+	 */
+	if (BOOTSTRAP && MATCH_CMD(line, "runlevel ", x)) {
 		char *token = strip_line(x);
 		const char *err = NULL;
 
