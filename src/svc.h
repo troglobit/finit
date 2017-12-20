@@ -139,7 +139,6 @@ svc_t	   *svc_find_by_nameid     (char *name, int id);
 
 svc_t	   *svc_iterator	   (svc_t *iter);
 svc_t	   *svc_inetd_iterator     (svc_t *iter);
-svc_t	   *svc_dynamic_iterator   (svc_t *iter);
 svc_t	   *svc_named_iterator     (svc_t *iter, char *cmd);
 svc_t      *svc_job_iterator       (svc_t *iter, int job);
 

@@ -142,28 +142,6 @@ svc_t *svc_inetd_iterator(svc_t *iter)
 
 
 /**
- * svc_dynamic_iterator - Naive iterator over all registered dynamic services.
- * @iter: %NULL for first entry, use returned value for subsequent calls
- *
- * Returns:
- * The first dynamically loaded &svc_t when %NULL is given as argument,
- * otherwise the next dynamically loaded &svc_t until the end when %NULL
- * is returned.
- */
-svc_t *svc_dynamic_iterator(svc_t *iter)
-{
-	svc_t *svc;
-
-	for (svc = svc_iterator(iter); svc; svc = svc_iterator(svc)) {
-		if (svc->mtime.tv_sec)
-			return svc;
-	}
-
-	return NULL;
-}
-
-
-/**
  * svc_named_iterator - Iterates over all instances of a service.
  * @iter: %NULL for first entry, use returned value for subsequent calls
  * @cmd:  Service name to look for.
@@ -364,11 +342,11 @@ svc_t *svc_find_by_nameid(char *name, int id)
  */
 void svc_mark_dynamic(void)
 {
-	svc_t *svc = svc_dynamic_iterator(NULL);
+	svc_t *svc = svc_iterator(NULL);
 
 	while (svc) {
 		*((int *)&svc->dirty) = -1;
-		svc = svc_dynamic_iterator(svc);
+		svc = svc_iterator(svc);
 	}
 }
 
@@ -402,14 +380,14 @@ void svc_check_dirty(svc_t *svc, struct timeval *mtime)
  */
 void svc_clean_dynamic(void (*cb)(svc_t *))
 {
-	svc_t *svc = svc_dynamic_iterator(NULL);
+	svc_t *svc = svc_iterator(NULL);
 
 	while (svc) {
 		if (svc->dirty == -1 && cb) {
 			cb(svc);
 			svc_mark_clean(svc);
 		}
-		svc = svc_dynamic_iterator(svc);
+		svc = svc_iterator(svc);
 	}
 }
 
