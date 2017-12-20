@@ -228,22 +228,6 @@ void svc_foreach(void (*cb)(svc_t *))
 
 
 /**
- * svc_foreach_dynamic - Run a callback for each registered dynamic service
- * @cb: Callback to run for each dynamic service
- */
-void svc_foreach_dynamic(void (*cb)(svc_t *))
-{
-	svc_t *svc;
-
-	if (!cb)
-		return;
-
-	for (svc = svc_dynamic_iterator(NULL); svc; svc = svc_dynamic_iterator(svc))
-		cb(svc);
-}
-
-
-/**
  * svc_foreach_type - Run a callback for each matching type
  * @types: Mask of service types
  * @cb:    Callback to run for each matching type
