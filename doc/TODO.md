@@ -21,6 +21,9 @@ can also be used.
 General
 -------
 
+* Add support for `rescue` on the kernel command line, start rescue mode
+  if enabled with `configure` script.  Could mean skip `/etc/finit.conf`
+  et al and jump straight to a single getty login on console.
 * Add support for timed shutdown in Finit, including cancelled shutdown.
 * SysV init and systemd use SIGUSR1 to restart their FIFO/D-Bus.  Add
   API restart to SIGHUP callback for the same functionality in Finit.
