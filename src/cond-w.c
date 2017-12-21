@@ -25,16 +25,51 @@
 #include <libgen.h>
 #include <lite/lite.h>
 #include <stdio.h>
-#include <sys/stat.h>
 
 #include "finit.h"
 #include "cond.h"
 #include "service.h"
 
+static int cond_set_gen(const char *path, unsigned int gen)
+{
+	FILE *fp;
+	int ret;
+
+	fp = fopen(path, "w");
+	if (!fp)
+		return -1;
+
+	ret = fprintf(fp, "%u", gen);
+	fclose(fp);
+
+	return (ret > 0) ? 0 : ret;
+}
+
+static void cond_bump_reconf(void)
+{
+	unsigned int rgen;
+
+	rgen = cond_get_gen(COND_RECONF);
+	/* COND_RECONF does not exist, cond_get_gen will return 0
+	 * meaning that rgen++ is always what we want. */
+	rgen++;
+
+	cond_set_gen(COND_RECONF, rgen);
+}
+
 int cond_set_path(const char *path, enum cond_state new)
 {
 	char buf[MAX_ARG_LEN], *dir;
 	enum cond_state old;
+	unsigned int rgen;
+
+	_d("%s", path);
+
+	rgen = cond_get_gen(COND_RECONF);
+	if (!rgen) {
+		_e("Unable to read configuration generation (%s)", path);
+		return -1;
+	}
 
 	old = cond_get_path(path);
 
@@ -50,8 +85,7 @@ int cond_set_path(const char *path, enum cond_state new)
 			_pe("Failed creating dir '%s' for condition '%s'", dir, path);
 			return 0;
 		}
-		touch(path);
-		utimensat(0, path, NULL, 0);
+		cond_set_gen(path, rgen);
 		break;
 
 	case COND_OFF:
@@ -121,8 +155,8 @@ void cond_clear(const char *name)
 void cond_reload(void)
 {
 	_d("");
-	cond_set_path(COND_RECONF, COND_ON);
 
+	cond_bump_reconf();
 	cond_update(NULL);
 }
 
@@ -153,6 +187,15 @@ void cond_reassert(const char *type)
 	nftw(cond_path(type), reassert, 20, FTW_DEPTH);
 }
 
+void cond_init(void)
+{
+	if (makepath(COND_PATH) && errno != EEXIST) {
+		_pe("Failed creating condition base directory '%s'", COND_PATH);
+		return;
+	}
+
+	cond_bump_reconf();
+}
 
 /**
  * Local Variables:

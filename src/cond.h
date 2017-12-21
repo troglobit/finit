@@ -15,6 +15,7 @@ typedef enum cond_state {
 
 const char     *condstr      (enum cond_state s);
 const char     *cond_path    (const char *name);
+unsigned int    cond_get_gen (const char *path);
 enum cond_state cond_get_path(const char *path);
 enum cond_state cond_get     (const char *name);
 enum cond_state cond_get_agg (const char *names);
@@ -25,6 +26,7 @@ void cond_set     (const char *name);
 void cond_clear   (const char *name);
 void cond_reload  (void);
 void cond_reassert(const char *pat);
+void cond_init    (void);
 
 #endif	/* FINIT_COND_H_ */
 
