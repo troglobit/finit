@@ -51,10 +51,10 @@ svc_t *svc_new(char *cmd, int id, int type)
 {
 	int job = -1;
 	char *desc;
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
 	/* Find first job n:o if registering multiple instances */
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!strcmp(svc->cmd, cmd)) {
 			job = svc->job;
 			break;
@@ -103,36 +103,46 @@ int svc_del(svc_t *svc)
 
 /**
  * svc_iterator - Naive iterator over all registered services.
- * @iter: %NULL for first entry, use returned value for subsequent calls
+ * @iter:  Iterator, must be a valid pointer
+ * @first: If set, get first &svc_t, otherwise get next
  *
  * Returns:
- * The first &svc_t when %NULL is given as argument, otherwise the next
- * &svc_t until the end when %NULL is returned.
+ * An &svc_t pointer, or %NULL when no more entries can be found.
  */
-svc_t *svc_iterator(svc_t *iter)
+svc_t *svc_iterator(svc_t **iter, int first)
 {
-	if (!iter)
-		return TAILQ_FIRST(&svc_list);
+	svc_t *svc;
 
-	if (iter && iter != TAILQ_END(&svc_list))
-		return TAILQ_NEXT(iter, link);
-	
-	return NULL;
+	if (!iter) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	if (first)
+		svc = TAILQ_FIRST(&svc_list);
+	else
+		svc = *iter;
+
+	if (svc)
+		*iter = TAILQ_NEXT(svc, link);
+
+	return svc;
 }
 
 /**
  * svc_inetd_iterator - Naive iterator over all registered inetd services.
- * @iter: %NULL for first entry, use returned value for subsequent calls
+ * @iter:  Iterator, must be a valid pointer
+ * @first: If set, get first &svc_t, otherwise get next
  *
  * Returns:
  * The first inetd &svc_t when %NULL is given as argument, otherwise the
  * next inetd &svc_t until the end when %NULL is returned.
  */
-svc_t *svc_inetd_iterator(svc_t *iter)
+svc_t *svc_inetd_iterator(svc_t **iter, int first)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(iter); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(iter, first); svc; svc = svc_iterator(iter, 0)) {
 		if (svc_is_inetd(svc))
 			return svc;
 	}
@@ -143,19 +153,20 @@ svc_t *svc_inetd_iterator(svc_t *iter)
 
 /**
  * svc_named_iterator - Iterates over all instances of a service.
- * @iter: %NULL for first entry, use returned value for subsequent calls
- * @cmd:  Service name to look for.
+ * @iter:  Iterator, must be a valid pointer
+ * @first: If set, get first &svc_t, otherwise get next
+ * @cmd:   Service name to look for.
  *
  * Returns:
  * The first matching &svc_t when %NULL is given as argument, otherwise
  * the next &svc_t with the same @cmd name until the end when %NULL is
  * returned.
  */
-svc_t *svc_named_iterator(svc_t *iter, char *cmd)
+svc_t *svc_named_iterator(svc_t **iter, int first, char *cmd)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(iter); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(iter, first); svc; svc = svc_iterator(iter, 0)) {
 		char *name = basename(svc->cmd);
 
 		if (!strncmp(name, cmd, strlen(name)))
@@ -168,19 +179,20 @@ svc_t *svc_named_iterator(svc_t *iter, char *cmd)
 
 /**
  * svc_job_iterator - Iterates over all instances of a service.
- * @iter: %NULL for first entry, use returned value for subsequent calls
- * @job:  Job to look for.
+ * @iter:  Iterator, must be a valid pointer
+ * @first: If set, get first &svc_t, otherwise get next
+ * @job:   Job to look for.
  *
  * Returns:
  * The first matching &svc_t when %NULL is given as argument, otherwise
  * the next &svc_t with the same @job ID until the end when %NULL is
  * returned.
  */
-svc_t *svc_job_iterator(svc_t *iter, int job)
+svc_t *svc_job_iterator(svc_t **iter, int first, int job)
 {
 	svc_t *svc;
 
-	for (svc = svc_iterator(iter); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(iter, first); svc; svc = svc_iterator(iter, 0)) {
 		if (svc->job == job)
 			return svc;
 	}
@@ -195,12 +207,12 @@ svc_t *svc_job_iterator(svc_t *iter, int job)
  */
 void svc_foreach(void (*cb)(svc_t *))
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
 	if (!cb)
 		return;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc))
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0))
 		cb(svc);
 }
 
@@ -212,12 +224,12 @@ void svc_foreach(void (*cb)(svc_t *))
  */
 void svc_foreach_type(int types, void (*cb)(svc_t *))
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
 	if (!cb)
 		return;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!(svc->type & types))
 			continue;
 
@@ -235,9 +247,9 @@ void svc_foreach_type(int types, void (*cb)(svc_t *))
  */
 svc_t *svc_stop_completed(void)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->state == SVC_STOPPING_STATE)
 			return svc;
 	}
@@ -254,9 +266,9 @@ svc_t *svc_stop_completed(void)
  */
 svc_t *svc_find(char *cmd, int id)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->id == id && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
 			return svc;
 	}
@@ -273,9 +285,9 @@ svc_t *svc_find(char *cmd, int id)
  */
 svc_t *svc_find_by_pid(pid_t pid)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->pid == pid)
 			return svc;
 	}
@@ -293,9 +305,9 @@ svc_t *svc_find_by_pid(pid_t pid)
  */
 svc_t *svc_find_by_jobid(int job, int id)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->job == job && svc->id == id)
 			return svc;
 	}
@@ -314,9 +326,9 @@ svc_t *svc_find_by_jobid(int job, int id)
 svc_t *svc_find_by_nameid(char *name, int id)
 {
 	char *ptr;
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		ptr = strrchr(svc->cmd, '/');
 		if (ptr)
 			ptr++;
@@ -342,12 +354,10 @@ svc_t *svc_find_by_nameid(char *name, int id)
  */
 void svc_mark_dynamic(void)
 {
-	svc_t *svc = svc_iterator(NULL);
+	svc_t *svc, *iter = NULL;
 
-	while (svc) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0))
 		*((int *)&svc->dirty) = -1;
-		svc = svc_iterator(svc);
-	}
 }
 
 void svc_mark_dirty(svc_t *svc)
@@ -369,14 +379,13 @@ void svc_mark_clean(svc_t *svc)
  */
 void svc_clean_dynamic(void (*cb)(svc_t *))
 {
-	svc_t *svc = svc_iterator(NULL);
+	svc_t *svc, *iter = NULL;
 
-	while (svc) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->dirty == -1 && cb) {
 			cb(svc);
 			svc_mark_clean(svc);
 		}
-		svc = svc_iterator(svc);
 	}
 }
 
@@ -407,9 +416,9 @@ int svc_clean_bootstrap(svc_t *svc)
  */
 void svc_prune_bootstrap(void)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc->pid)
 			svc_clean_bootstrap(svc);
 	}
@@ -442,9 +451,9 @@ int svc_enabled(svc_t *svc)
 int svc_next_id(char *cmd)
 {
 	int id = 0;
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(NULL); svc; svc = svc_iterator(svc)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!strcmp(svc->cmd, cmd) && id < svc->id)
 			id = svc->id;
 	}
@@ -454,10 +463,10 @@ int svc_next_id(char *cmd)
 
 int svc_is_unique(svc_t *svc)
 {
-	svc_t *s;
+	svc_t *s, *iter = NULL;
 	int unique = 1;
 
-	for (s = svc_iterator(NULL); s; s = svc_iterator(svc)) {
+	for (s = svc_iterator(&iter, 1); s; s = svc_iterator(&iter, 0)) {
 		if (svc->type == SVC_TYPE_FREE)
 			continue;
 
@@ -488,21 +497,21 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 	token = strtok_r(input, " ", &pos);
 	while (token) {
 		int id = 1;
-		svc_t *svc;
+		svc_t *svc, *iter = NULL;
 		char *ptr = strchr(token, ':');
 
 		if (isdigit(token[0])) {
 			int job = atonum(token);
 
 			if (!ptr) {
-				svc = svc_job_iterator(NULL, job);
+				svc = svc_job_iterator(&iter, 1, job);
 				if (!svc && not_found)
 					result += not_found(NULL, job);
 
 				while (svc) {
 					if (found)
 						result += found(svc);
-					svc = svc_job_iterator(svc, job);
+					svc = svc_job_iterator(&iter, 0, job);
 				}
 			} else {
 				*ptr++ = 0;
@@ -517,14 +526,14 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 			}
 		} else {
 			if (!ptr) {
-				svc = svc_named_iterator(NULL, token);
+				svc = svc_named_iterator(&iter, 1, token);
 				if (!svc && not_found)
 					result += not_found(token, id);
 
 				while (svc) {
 					if (found)
 						result += found(svc);
-					svc = svc_named_iterator(svc, token);
+					svc = svc_named_iterator(&iter, 0, token);
 				}
 			} else {
 				*ptr++ = 0;

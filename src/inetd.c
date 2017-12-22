@@ -225,10 +225,10 @@ static void socket_cb(uev_t *w, void *arg, int events)
  */
 int inetd_check_loop(struct sockaddr *sa, socklen_t len, char *name)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
         char pname[NI_MAXHOST];
 
-        for (svc = svc_inetd_iterator(NULL); svc; svc = svc_inetd_iterator(svc)) {
+        for (svc = svc_inetd_iterator(&iter, 1); svc; svc = svc_inetd_iterator(&iter, 0)) {
 		inetd_t *i = &svc->inetd;
 
                 if (!i->builtin || i->type != SOCK_DGRAM)
@@ -665,9 +665,9 @@ int inetd_filter_str(inetd_t *inetd, char *str, size_t len)
 
 svc_t *inetd_find_svc(char *path, char *service, char *proto)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_inetd_iterator(NULL); svc; svc = svc_inetd_iterator(svc)) {
+	for (svc = svc_inetd_iterator(&iter, 1); svc; svc = svc_inetd_iterator(&iter, 0)) {
 		if (strncmp(path, svc->cmd, strlen(svc->cmd)))
 			continue;
 

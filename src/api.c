@@ -225,7 +225,8 @@ static void send_svc(int sd, svc_t *svc)
 static void api_cb(uev_t *w, void *arg, int events)
 {
 	int sd, lvl;
-	static svc_t *svc;
+	svc_t *svc;
+	static svc_t *iter = NULL;
 	struct init_request rq;
 
 	sd = accept(w->fd, NULL, NULL);
@@ -351,7 +352,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 			 * simultaneous client connections, but will
 			 * have to do for now.
 			 */
-			svc = svc_iterator(rq.runlevel ? NULL : svc);
+			svc = svc_iterator(&iter, rq.runlevel);
 			send_svc(sd, svc);
 			goto leave;
 

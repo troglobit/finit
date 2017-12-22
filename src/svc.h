@@ -135,10 +135,10 @@ svc_t	   *svc_find_by_pid        (pid_t pid);
 svc_t	   *svc_find_by_jobid      (int job, int id);
 svc_t	   *svc_find_by_nameid     (char *name, int id);
 
-svc_t	   *svc_iterator	   (svc_t *iter);
-svc_t	   *svc_inetd_iterator     (svc_t *iter);
-svc_t	   *svc_named_iterator     (svc_t *iter, char *cmd);
-svc_t      *svc_job_iterator       (svc_t *iter, int job);
+svc_t      *svc_iterator           (svc_t **iter, int first);
+svc_t      *svc_inetd_iterator     (svc_t **iter, int first);
+svc_t      *svc_named_iterator     (svc_t **iter, int first, char *cmd);
+svc_t      *svc_job_iterator       (svc_t **iter, int first, int job);
 
 void	    svc_foreach	           (void (*cb)(svc_t *));
 void        svc_foreach_type       (int types, void (*cb)(svc_t *));
