@@ -447,18 +447,14 @@ int main(int argc, char* argv[])
 	}
 
 	/*
-	 * Parse /etc/finit.conf and all *.conf in /etc/finit.d/ to
-	 * figure out how to bootstrap the system.
+	 * Initialize .conf system and load static /etc/finit.conf 
 	 */
-	conf_parse_config();
+	conf_init();
 
 	/*
 	 * Start built-in watchdog as soon as possible, if enabled
 	 */
 	wdogpid = watchdog(argv[0]);
-
-	/* Set hostname as soon as possible, for syslog et al. */
-	set_hostname(&hostname);
 
 	/*
 	 * Mount filesystems
@@ -488,12 +484,10 @@ int main(int argc, char* argv[])
 	sig_setup(&loop);
 
 	/*
-	 * Reload all *.conf in /etc/finit.d, the mount command (above)
-	 * may have brought in new files (overlayfs).
-	 *
-	 * XXX: Can we detect remounted /etc to trigger this instead?
+	 * Set up inotify watcher for /etc/finit.d and read all .conf
+	 * files to figure out how to bootstrap the system.
 	 */
-	conf_reload_dynamic();
+	conf_monitor(&loop);
 
 	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);

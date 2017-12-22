@@ -90,22 +90,8 @@ void tty_mark(void)
 {
 	tty_node_t *tty;
 
-	LIST_FOREACH(tty, &tty_list, link) {
-		if (tty->mtime.tv_sec)
-			tty->dirty = -1;
-	}
-}
-
-void tty_check(tty_node_t *tty, struct timeval *mtime)
-{
-	if (mtime && timercmp(&tty->mtime, mtime, !=))
-		tty->dirty = 1;	/* Modified, restart */
-	else
-		tty->dirty = 0;	/* Not modified */
-
-	/* Update mtime, if given */
-	tty->mtime.tv_sec  = mtime ? mtime->tv_sec  : 0;
-	tty->mtime.tv_usec = mtime ? mtime->tv_usec : 0;
+	LIST_FOREACH(tty, &tty_list, link)
+		tty->dirty = -1;
 }
 
 void tty_sweep(void)
@@ -113,14 +99,15 @@ void tty_sweep(void)
 	tty_node_t *tty, *tmp;
 
 	LIST_FOREACH_SAFE(tty, &tty_list, link, tmp) {
-		if (tty->mtime.tv_sec && tty->dirty) {
-			_d("TTY %s dirty, stopping ...", tty->data.name);
-			tty_stop(&tty->data);
+		if (!tty->dirty)
+			continue;
 
-			if (tty->dirty == -1) {
-				_d("TTY %s removed, cleaning up.", tty->data.name);
-				tty_unregister(tty);
-			}
+		_d("TTY %s dirty, stopping ...", tty->data.name);
+		tty_stop(&tty->data);
+
+		if (tty->dirty == -1) {
+			_d("TTY %s removed, cleaning up.", tty->data.name);
+			tty_unregister(tty);
 		}
 	}
 }
@@ -129,7 +116,7 @@ void tty_sweep(void)
  * tty_register - Register a getty on a device
  * @line:   Configuration, text after initial "tty"
  * @rlimit: Limits for this service/task/run/inetd, may be global limits
- * @mtime:  Modification time, to propagate to lower layers
+ * @file:   The file name TTY was loaded from
  *
  * A Finit tty line can use the internal getty implementation or an
  * external one, like the BusyBox getty for instance.  This function
@@ -147,7 +134,7 @@ void tty_sweep(void)
  * Different getty implementations prefer the TTY device argument in
  * different order, so take care to investigate this first.
  */
-int tty_register(char *line, struct rlimit rlimit[], struct timeval *mtime)
+int tty_register(char *line, struct rlimit rlimit[], char *file)
 {
 	tty_node_t *entry;
 	int         insert = 0, noclear = 0, nowait = 0;
@@ -282,7 +269,10 @@ int tty_register(char *line, struct rlimit rlimit[], struct timeval *mtime)
 	/* Register configured limits */
 	memcpy(entry->data.rlimit, rlimit, sizeof(entry->data.rlimit));
 
-	tty_check(entry, mtime);
+	if (file && conf_changed(file))
+		entry->dirty = 1; /* Modified, restart */
+	else
+		entry->dirty = 0; /* Not modified */
 	_d("TTY %s is %sdirty", dev, entry->dirty ? "" : "NOT ");
 
 	return 0;

@@ -92,9 +92,7 @@ typedef struct svc {
 	pid_t	       pid;
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, inetd, ... */
-	struct timeval mtime;          /* Modification time for .conf from /etc/finit.d/ */
-	const int      dirty;	       /* Set if old mtime != new mtime  => reloaded,
-					* or -1 when marked for removal */
+	const int      dirty;	       /* -1: removal, 0: unmodified, 1: modified */
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
@@ -148,7 +146,6 @@ void        svc_foreach_type       (int types, void (*cb)(svc_t *));
 svc_t	   *svc_stop_completed	   (void);
 
 void	    svc_mark_dynamic       (void);
-void	    svc_check_dirty        (svc_t *svc, struct timeval *mtime);
 void	    svc_mark_dirty         (svc_t *svc);
 void	    svc_mark_clean         (svc_t *svc);
 void	    svc_clean_dynamic      (void (*cb)(svc_t *));
@@ -168,7 +165,6 @@ static inline void svc_starting    (svc_t *svc) { svc->starting = 1;         }
 static inline void svc_started     (svc_t *svc) { svc->starting = 0;         }
 static inline int  svc_is_starting (svc_t *svc) { return 0 != svc->starting; }
 
-static inline int svc_is_dynamic   (svc_t *svc) { return svc &&  0 != svc->mtime.tv_sec; }
 static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
 static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }

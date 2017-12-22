@@ -144,7 +144,7 @@ restart:
 
 		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
 		if (runlevel != 0 && runlevel != 6)
-			conf_reload_dynamic();
+			conf_reload();
 
 		/* Reset once flag of runtasks */
 		service_runtask_clean();
@@ -199,7 +199,7 @@ restart:
 
 	case SM_RELOAD_CHANGE_STATE:
 		/* First reload all *.conf in /etc/finit.d/ */
-		conf_reload_dynamic();
+		conf_reload();
 
 		/*
 		 * Then, mark all affected service conditions as in-flux and

@@ -360,17 +360,6 @@ void svc_mark_clean(svc_t *svc)
 	*((int *)&svc->dirty) = 0;
 }
 
-void svc_check_dirty(svc_t *svc, struct timeval *mtime)
-{
-	if (mtime && timercmp(&svc->mtime, mtime, !=))
-		svc_mark_dirty(svc);
-	else
-		svc_mark_clean(svc);
-
-	svc->mtime.tv_sec = mtime ? mtime->tv_sec : 0;
-	svc->mtime.tv_usec = mtime ? mtime->tv_usec : 0;
-}
-
 /**
  * svc_clean_dynamic - Stop and cleanup stale services removed from /etc/finit.d
  * @cb: Callback to run for each stale service
