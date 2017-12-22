@@ -394,6 +394,9 @@ int main(int argc, char* argv[])
 	makedir("/dev/pts", 0755);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 
+	/* Some systems rely on /dev/shm being there, for `mount -a` below */
+	makedir("/dev/shm", 0755);
+
 	/*
 	 * New tmpfs based /run for volatile runtime data
 	 * For details, see http://lwn.net/Articles/436012/
