@@ -27,6 +27,7 @@
 int serv_list    (char *arg);
 int serv_enable  (char *arg);
 int serv_disable (char *arg);
+int serv_touch   (char *arg);
 
 #endif /* FINIT_SERV_H_ */
 

@@ -524,6 +524,7 @@ static int usage(int rc)
 		"  list                      List all .conf in /etc/finit.d/\n"
 		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
 		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
+		"  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload\n"
 		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
 //		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
 		"\n"
@@ -566,6 +567,7 @@ int main(int argc, char *argv[])
 		{ "list",     serv_list    },
 		{ "enable",   serv_enable  },
 		{ "disable",  serv_disable },
+		{ "touch",    serv_touch   },
 		{ "reload",   do_reload    },
 
 		{ "cond",     do_cond      },
