@@ -1095,7 +1095,6 @@ void service_bootstrap_cb(uev_t *w, void *arg, int events)
 	finalize();
 }
 
-
 /**
  * Local Variables:
  *  indent-tabs-mode: t

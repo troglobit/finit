@@ -401,6 +401,7 @@ int api_init(uev_ctx_t *ctx)
 		.sun_path   = INIT_SOCKET,
 	};
 
+	_d("Setting up external API socket ...");
 	sd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (-1 == sd) {
 		_pe("Failed starting external API socket");

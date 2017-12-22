@@ -398,7 +398,7 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 	/* Prepare default limits for each service */
 	memcpy(rlimit, global_rlimit, sizeof(rlimit));
 
-	_d("Parsing %s", file);
+	_d("Parsing %s <<<<<<", file);
 	while (!feof(fp)) {
 		char line[LINE_SIZE] = "";
 
@@ -417,7 +417,6 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 	return 0;
 }
 
-/* Reads /etc/finit.conf, once at boot */
 static int parse_conf(char *file)
 {
 	FILE *fp;
@@ -508,10 +507,6 @@ int conf_reload_dynamic(void)
 
 			rp = realpath(path, NULL);
 			if (!rp) {
-				/*
-				 * XXX: Prune from rcsd?
-				 * XXX: Possibly temporary service from last boot
-				 */
 				logit(LOG_WARNING, "Skipping %s, dangling symlink: %s", path, strerror(errno));
 				continue;
 			}

@@ -256,18 +256,22 @@ static void finalize(void)
 	/*
 	 * Network stuff
 	 */
+	_d("Setting up networking ...");
 	networking();
 	umask(022);
 
 	/* Hooks that rely on loopback, or basic networking being up. */
+	_d("Calling all network up hooks ...");
 	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/*
 	 * Start all tasks/services in the configured runlevel
 	 */
+	_d("Change to default runlevel, start all services ...");
 	service_runlevel(cfglevel);
 
 	/* Clean up bootstrap-only tasks/services that never started */
+	_d("Clean up all bootstrap-only tasks/services ...");
 	svc_prune_bootstrap();
 
 	/* All services/tasks/inetd/etc. in configure runlevel have started */
@@ -291,13 +295,16 @@ static void finalize(void)
 	}
 
 	/* Hooks that should run at the very end */
+	_d("Calling all system up hooks ...");
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 	service_step_all(SVC_TYPE_ANY);
 
 	/* Enable silent mode before starting TTYs */
+	_d("Going silent ...");
 	log_silent();
 
 	/* Delayed start of TTYs at bootstrap */
+	_d("Launching all getty services ...");
 	tty_runlevel();
 }
 
@@ -505,11 +512,13 @@ int main(int argc, char* argv[])
 	 * Wait for all SVC_TYPE_RUNTASK to have completed their work in
 	 * [S], or timeout, before calling finalize()
 	 */
+	_d("Starting bootstrap finalize timer ...");
 	uev_timer_init(&loop, &timer, service_bootstrap_cb, finalize, 1000, 1000);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services
 	 */
+	_d("Entering main loop ...");
 	return uev_run(&loop, 0);
 }
 
