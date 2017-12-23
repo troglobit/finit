@@ -31,11 +31,14 @@ extern struct rlimit global_rlimit[];
 int   str2rlim(char *str);
 char *rlim2str(int rlim);
 
+int  conf_init            (void);
+void conf_reload          (void);
+int  conf_changed         (char *file);
+int  conf_monitor         (uev_ctx_t *ctx);
+
 void conf_parse_cmdline   (void);
 int  conf_parse_runlevels (char *runlevels);
 void conf_parse_cond      (svc_t *svc, char *cond);
-int  conf_parse_config    (void);
-void conf_reload_dynamic  (void);
 
 #endif	/* FINIT_CONF_H_ */
 

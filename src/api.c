@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -43,7 +44,7 @@
 #include "service.h"
 #include "util.h"
 
-uev_t api_watcher;
+static uev_t api_watcher;
 
 static int call(int (*action)(svc_t *), char *buf, size_t len)
 {
@@ -87,15 +88,42 @@ static int do_start  (char *buf, size_t len) { return call(service_start,   buf,
 static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
 static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
 
-#ifdef INETD_ENABLED
-static int do_query_inetd(char *buf, size_t len)
+static char query_buf[368];
+static int missing(char *job, int id)
+{
+	char buf[20];
+	char idstr[10] = "";
+
+	if (!job)
+		job = "";
+	if (id > 1)
+		snprintf(idstr, sizeof(idstr), ":%d", id);
+
+	snprintf(buf, sizeof(buf), "%s%s ", job, idstr);
+	strlcat(query_buf, buf, sizeof(query_buf));
+
+	return 1;
+}
+
+static int do_query(struct init_request *rq, size_t len)
+{
+	memset(query_buf, 0, sizeof(query_buf));
+	if (svc_parse_jobstr(rq->data, strlen(rq->data) + 1, NULL, missing)) {
+		memcpy(rq->data, query_buf, sizeof(rq->data));
+		return 1;
+	}
+
+	return 0;
+}
+
+static svc_t *do_find(char *buf, size_t len)
 {
 	int id = 1;
-	char *ptr, *input = sanitize(buf, len);
-	svc_t *svc;
+	char *ptr, *input;
 
+	input = sanitize(buf, len);
 	if (!input)
-		return -1;
+		return NULL;
 
 	ptr = strchr(input, ':');
 	if (ptr) {
@@ -103,11 +131,20 @@ static int do_query_inetd(char *buf, size_t len)
 		id = atonum(ptr);
 	}
 
-	svc = svc_find_by_jobid(atonum(input), id);
-	if (!svc || !svc_is_inetd(svc)) {
-		_e("Cannot %s svc %s ...", !svc ? "find" : "query, not an inetd", input);
+	if (isdigit(input[0]))
+		return svc_find_by_jobid(atonum(input), id);
+
+	return svc_find_by_nameid(input, id);
+}
+
+#ifdef INETD_ENABLED
+static int do_query_inetd(char *buf, size_t len)
+{
+	svc_t *svc;
+
+	svc = do_find(buf, len);
+	if (!svc || !svc_is_inetd(svc))
 		return 1;
-	}
 
 	return inetd_filter_str(&svc->inetd, buf, len);
 }
@@ -164,6 +201,22 @@ static int do_handle_emit(char *buf, size_t len)
 	return result;
 }
 
+static void send_svc(int sd, svc_t *svc)
+{
+	svc_t empty;
+	size_t len;
+
+	if (!svc) {
+		empty.pid = -1;
+		svc = &empty;
+	}
+
+	len = write(sd, svc, sizeof(*svc));
+	if (len != sizeof(*svc))
+		_d("Failed sending svc_t to client");
+}
+
+
 /*
  * In contrast to the SysV compat handling in plugins/initctl.c, when
  * `initctl runlevel 0` is issued we default to POWERDOWN the system
@@ -172,6 +225,8 @@ static int do_handle_emit(char *buf, size_t len)
 static void api_cb(uev_t *w, void *arg, int events)
 {
 	int sd, lvl;
+	svc_t *svc;
+	static svc_t *iter = NULL;
 	struct init_request rq;
 
 	sd = accept(w->fd, NULL, NULL);
@@ -290,6 +345,27 @@ static void api_cb(uev_t *w, void *arg, int events)
 			wdogpid = rq.runlevel;
 			break;
 
+		case INIT_CMD_SVC_ITER:
+			_d("svc iter, first: %d", rq.runlevel);
+			/*
+			 * XXX: This severly limits the number of
+			 * simultaneous client connections, but will
+			 * have to do for now.
+			 */
+			svc = svc_iterator(&iter, rq.runlevel);
+			send_svc(sd, svc);
+			goto leave;
+
+		case INIT_CMD_SVC_QUERY:
+			_d("svc query: %s", rq.data);
+			result = do_query(&rq, len);
+			break;
+
+		case INIT_CMD_SVC_FIND:
+			_d("svc find: %s", rq.data);
+			send_svc(sd, do_find(rq.data, sizeof(rq.data)));
+			goto leave;
+
 		default:
 			_d("Unsupported cmd: %d", rq.cmd);
 			break;
@@ -326,6 +402,7 @@ int api_init(uev_ctx_t *ctx)
 		.sun_path   = INIT_SOCKET,
 	};
 
+	_d("Setting up external API socket ...");
 	sd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (-1 == sd) {
 		_pe("Failed starting external API socket");

@@ -27,9 +27,9 @@
 
 #include <sys/ipc.h>		/* IPC_CREAT */
 #include <sys/resource.h>
-#include <sys/shm.h>		/* shmat() */
 #include <sys/types.h>		/* pid_t */
 #include <lite/lite.h>
+#include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #include "inetd.h"
 #include "helpers.h"
@@ -66,13 +66,11 @@ typedef enum {
 	SVC_BLOCK_RESTARTING,
 } svc_block_t;
 
-#define FINIT_SHM_ID     0x494E4954  /* "INIT", see ascii(7) */
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
 #define MAX_USER_LEN     16
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
-#define MAX_NUM_SVC      64	     /* Enough? */
 #define MAX_NUM_SVC_ARGS 32
 
 /*
@@ -82,6 +80,8 @@ typedef enum {
  *   initctl <stop|start|restart> service
  */
 typedef struct svc {
+	TAILQ_ENTRY(svc) link;
+
 	/* Instance specifics */
 	int            job, id;	       /* JOB:ID */
 
@@ -92,9 +92,7 @@ typedef struct svc {
 	pid_t	       pid;
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, inetd, ... */
-	struct timeval mtime;          /* Modification time for .conf from /etc/finit.d/ */
-	const int      dirty;	       /* Set if old mtime != new mtime  => reloaded,
-					* or -1 when marked for removal */
+	const int      dirty;	       /* -1: removal, 0: unmodified, 1: modified */
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
@@ -129,23 +127,6 @@ typedef struct svc {
 	void           (*timer_cb)(struct svc *svc);
 } svc_t;
 
-typedef struct svc_map svc_map_t;
-
-/* Put services array in shm */
-static inline svc_t *finit_svc_connect(void)
-{
-	static void *ptr = (void *)-1;
-
-	if ((void *)-1 == ptr) {
-		ptr = shmat(shmget(FINIT_SHM_ID, sizeof(svc_t) * MAX_NUM_SVC,
-				   0600 | IPC_CREAT), NULL, 0);
-		if ((void *)-1 == ptr)
-			return NULL;
-	}
-
-	return (svc_t *)ptr;
-}
-
 svc_t      *svc_new                (char *cmd, int id, int type);
 int	    svc_del	           (svc_t *svc);
 
@@ -154,20 +135,17 @@ svc_t	   *svc_find_by_pid        (pid_t pid);
 svc_t	   *svc_find_by_jobid      (int job, int id);
 svc_t	   *svc_find_by_nameid     (char *name, int id);
 
-svc_t	   *svc_iterator	   (int first);
-svc_t	   *svc_inetd_iterator     (int first);
-svc_t	   *svc_dynamic_iterator   (int first);
-svc_t	   *svc_named_iterator     (int first, char *cmd);
-svc_t      *svc_job_iterator       (int first, int job);
+svc_t      *svc_iterator           (svc_t **iter, int first);
+svc_t      *svc_inetd_iterator     (svc_t **iter, int first);
+svc_t      *svc_named_iterator     (svc_t **iter, int first, char *cmd);
+svc_t      *svc_job_iterator       (svc_t **iter, int first, int job);
 
 void	    svc_foreach	           (void (*cb)(svc_t *));
-void	    svc_foreach_dynamic    (void (*cb)(svc_t *));
 void        svc_foreach_type       (int types, void (*cb)(svc_t *));
 
 svc_t	   *svc_stop_completed	   (void);
 
 void	    svc_mark_dynamic       (void);
-void	    svc_check_dirty        (svc_t *svc, struct timeval *mtime);
 void	    svc_mark_dirty         (svc_t *svc);
 void	    svc_mark_clean         (svc_t *svc);
 void	    svc_clean_dynamic      (void (*cb)(svc_t *));
@@ -175,8 +153,6 @@ int	    svc_clean_bootstrap    (svc_t *svc);
 void	    svc_prune_bootstrap	   (void);
 
 int         svc_enabled            (svc_t *svc);
-char       *svc_status             (svc_t *svc);
-const char *svc_dirtystr           (svc_t *svc);
 int         svc_next_id            (char  *cmd);
 int         svc_is_unique          (svc_t *svc);
 
@@ -189,7 +165,6 @@ static inline void svc_starting    (svc_t *svc) { svc->starting = 1;         }
 static inline void svc_started     (svc_t *svc) { svc->starting = 0;         }
 static inline int  svc_is_starting (svc_t *svc) { return 0 != svc->starting; }
 
-static inline int svc_is_dynamic   (svc_t *svc) { return svc &&  0 != svc->mtime.tv_sec; }
 static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
 static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }
@@ -208,6 +183,70 @@ static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_BUSY; }
 static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
 static inline void svc_restarting  (svc_t *svc) { svc->block = SVC_BLOCK_RESTARTING; }
 static inline void svc_crashing    (svc_t *svc) { svc->block = SVC_BLOCK_CRASHING; }
+
+static inline char *svc_status(svc_t *svc)
+{
+	switch (svc->state) {
+	case SVC_HALTED_STATE:
+		switch (svc->block) {
+		case SVC_BLOCK_NONE:
+			return "halted";
+
+		case SVC_BLOCK_MISSING:
+			return "missing";
+
+		case SVC_BLOCK_CRASHING:
+			return "crashed";
+
+		case SVC_BLOCK_USER:
+			return "stopped";
+
+		case SVC_BLOCK_BUSY:
+			return "busy";
+
+		case SVC_BLOCK_RESTARTING:
+			return "restart";
+		}
+
+	case SVC_DONE_STATE:
+		return "done";
+
+	case SVC_STOPPING_STATE:
+		switch (svc->type) {
+		case SVC_TYPE_INETD_CONN:
+		case SVC_TYPE_RUN:
+		case SVC_TYPE_TASK:
+			return "active";
+
+		default:
+			return "stopping";
+		}
+
+	case SVC_WAITING_STATE:
+		return "waiting";
+
+	case SVC_READY_STATE:
+		return "ready";
+
+	case SVC_RUNNING_STATE:
+		return "running";
+
+	default:
+		return "UNKNOWN";
+	}
+}
+
+static inline const char *svc_dirtystr(svc_t *svc)
+{
+	if (svc_is_removed(svc))
+		return "removed";
+	if (svc_is_updated(svc))
+		return "updated";
+	if (svc_is_changed(svc))
+		return "UNKNOWN";
+
+	return "clean";
+}
 
 #endif /* FINIT_SVC_H_ */
 

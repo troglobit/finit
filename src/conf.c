@@ -25,8 +25,10 @@
 
 #include <dirent.h>
 #include <string.h>
+#include <sys/inotify.h>
 #include <sys/resource.h>
 #include <lite/lite.h>
+#include <lite/queue.h>		/* BSD sys/queue.h API */
 #include <sys/time.h>
 
 #include "finit.h"
@@ -35,12 +37,22 @@
 #include "tty.h"
 #include "helpers.h"
 
+#define BOOTSTRAP (runlevel == 0)
 #define MATCH_CMD(l, c, x) \
 	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
-static int parse_conf(char *file);
 
+struct conf_change {
+	TAILQ_ENTRY(conf_change) link;
+	char *name;
+};
+
+static uev_t w1, w2, w3;
+static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
+
+static int parse_conf(char *file);
+static void drop_changes(void);
 
 void conf_parse_cmdline(void)
 {
@@ -242,13 +254,13 @@ static void parse_static(char *line)
 	char *x;
 	char cmd[CMD_SIZE];
 
-	if (MATCH_CMD(line, "host ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "host ", x)) {
 		if (hostname) free(hostname);
 		hostname = strdup(strip_line(x));
 		return;
 	}
 
-	if (MATCH_CMD(line, "mknod ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "mknod ", x)) {
 		char *dev = strip_line(x);
 
 		strcpy(cmd, "mknod ");
@@ -258,13 +270,13 @@ static void parse_static(char *line)
 		return;
 	}
 
-	if (MATCH_CMD(line, "network ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "network ", x)) {
 		if (network) free(network);
 		network = strdup(strip_line(x));
 		return;
 	}
 
-	if (MATCH_CMD(line, "runparts ", x)) {
+	if (BOOTSTRAP && MATCH_CMD(line, "runparts ", x)) {
 		if (runparts) free(runparts);
 		runparts = strdup(strip_line(x));
 		return;
@@ -289,10 +301,12 @@ static void parse_static(char *line)
 		return;
 	}
 
-	/* The desired runlevel to start when leaving bootstrap (S).
+	/*
+	 * The desired runlevel to start when leaving bootstrap (S).
 	 * Finit supports 1-9, but most systems only use 1-6, where
-	 * 6 is reserved for reboot */
-	if (MATCH_CMD(line, "runlevel ", x)) {
+	 * 6 is reserved for reboot and 0 for halt/poweroff.
+	 */
+	if (BOOTSTRAP && MATCH_CMD(line, "runlevel ", x)) {
 		char *token = strip_line(x);
 		const char *err = NULL;
 
@@ -305,7 +319,7 @@ static void parse_static(char *line)
 	}
 }
 
-static void parse_dynamic(char *line, struct rlimit rlimit[], struct timeval *mtime)
+static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 {
 	char *x;
 	char cmd[CMD_SIZE];
@@ -331,26 +345,26 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], struct timeval *mt
 
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
-		service_register(SVC_TYPE_SERVICE, x, rlimit, mtime);
+		service_register(SVC_TYPE_SERVICE, x, rlimit, file);
 		return;
 	}
 
 	/* One-shot task, will not be respawned */
 	if (MATCH_CMD(line, "task ", x)) {
-		service_register(SVC_TYPE_TASK, x, rlimit, mtime);
+		service_register(SVC_TYPE_TASK, x, rlimit, file);
 		return;
 	}
 
 	/* Like task but waits for completion, useful w/ [S] */
 	if (MATCH_CMD(line, "run ", x)) {
-		service_register(SVC_TYPE_RUN, x, rlimit, mtime);
+		service_register(SVC_TYPE_RUN, x, rlimit, file);
 		return;
 	}
 
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
 #ifdef INETD_ENABLED
-		service_register(SVC_TYPE_INETD, x, rlimit, mtime);
+		service_register(SVC_TYPE_INETD, x, rlimit, file);
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
 #endif
@@ -365,7 +379,7 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], struct timeval *mt
 
 	/* Regular or serial TTYs to run getty */
 	if (MATCH_CMD(line, "tty ", x)) {
-		tty_register(strip_line(x), rlimit, mtime);
+		tty_register(strip_line(x), rlimit, file);
 		return;
 	}
 }
@@ -381,7 +395,7 @@ static void tabstospaces(char *line)
 	}
 }
 
-static int parse_conf_dynamic(char *file, struct timeval *mtime)
+static int parse_conf_dynamic(char *file)
 {
 	FILE *fp;
 	struct rlimit rlimit[RLIMIT_NLIMITS];
@@ -395,7 +409,7 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 	/* Prepare default limits for each service */
 	memcpy(rlimit, global_rlimit, sizeof(rlimit));
 
-	_d("Parsing %s", file);
+	_d("Parsing %s <<<<<<", file);
 	while (!feof(fp)) {
 		char line[LINE_SIZE] = "";
 
@@ -406,7 +420,7 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 		tabstospaces(line);
 		_d("%s", line);
 
-		parse_dynamic(line, rlimit, mtime);
+		parse_dynamic(line, rlimit, file);
 	}
 
 	fclose(fp);
@@ -414,7 +428,6 @@ static int parse_conf_dynamic(char *file, struct timeval *mtime)
 	return 0;
 }
 
-/* Reads /etc/finit.conf, once at boot */
 static int parse_conf(char *file)
 {
 	FILE *fp;
@@ -456,21 +469,26 @@ static int parse_conf(char *file)
 	return 0;
 }
 
-/* Reload all *.conf in /etc/finit.d/ */
-int conf_reload_dynamic(void)
+/*
+ * Reload /etc/finit.conf and all *.conf in /etc/finit.d/
+ */
+int conf_reload(void)
 {
 	int i, num;
-	char *dir = rcsd;
 	struct dirent **e;
 
 	/* Mark and sweep */
 	svc_mark_dynamic();
 	tty_mark();
 
-	num = scandir(dir, &e, NULL, alphasort);
+	/* First, read /etc/finit.conf */
+	parse_conf(FINIT_CONF);
+
+	/* Next, read all *.conf in /etc/finit.d/ */
+	num = scandir(rcsd, &e, NULL, alphasort);
 	if (num < 0) {
-		_d("Skipping %s, no files found ...", dir);
-		return 1;
+		_d("Skipping %s, no files found ...", rcsd);
+		return 0;
 	}
 
 	/* Update global limits in case operator used prlimit(1) on us */
@@ -482,13 +500,11 @@ int conf_reload_dynamic(void)
 		char  path[LINE_SIZE];
 		size_t len;
 		struct stat st;
-		struct timeval mtime;
 
-		snprintf(path, sizeof(path), "%s/%s", dir, name);
+		snprintf(path, sizeof(path), "%s/%s", rcsd, name);
 
 		/* Check that it's an actual file ... beyond any symlinks */
 		if (lstat(path, &st)) {
-		lost:
 			_d("Skipping %s, cannot access: %s", path, strerror(errno));
 			continue;
 		}
@@ -505,10 +521,6 @@ int conf_reload_dynamic(void)
 
 			rp = realpath(path, NULL);
 			if (!rp) {
-				/*
-				 * XXX: Prune from rcsd?
-				 * XXX: Possibly temporary service from last boot
-				 */
 				logit(LOG_WARNING, "Skipping %s, dangling symlink: %s", path, strerror(errno));
 				continue;
 			}
@@ -523,27 +535,210 @@ int conf_reload_dynamic(void)
 			continue;
 		}
 
-		if (stat(path, &st))
-			goto lost; /* Weird, lost file between here and lstat() */
-
-		TIMESPEC_TO_TIMEVAL(&mtime, &st.st_mtim);
-		parse_conf_dynamic(path, &mtime);
+		parse_conf_dynamic(path);
 	}
 
 	while (num--)
 		free(e[num]);
 	free(e);
 
+	/* Drop record of all .conf changes */
+	drop_changes();
+
+	/*
+	 * Set host name, from %DEFHOST, *.conf or /etc/hostname.  The
+	 * latter wins, if neither exists we default to "noname"
+	 */
 	set_hostname(&hostname);
 
 	return 0;
 }
 
-int conf_parse_config(void)
+static struct conf_change *conf_find(char *file)
+{
+	struct conf_change *node, *tmp;
+
+	TAILQ_FOREACH_SAFE(node, &conf_change_list, link, tmp) {
+		if (string_compare(node->name, file))
+			return node;
+	}
+
+	return NULL;
+}
+
+static void drop_change(struct conf_change *node)
+{
+	if (!node)
+		return;
+
+	TAILQ_REMOVE(&conf_change_list, node, link);
+	free(node->name);
+	free(node);
+}
+
+
+static void drop_changes(void)
+{
+	struct conf_change *node, *tmp;
+
+	TAILQ_FOREACH_SAFE(node, &conf_change_list, link, tmp)
+		drop_change(node);
+}
+
+static int do_change(char *name, uint32_t mask)
+{
+	struct conf_change *node;
+
+	node = conf_find(name);
+	if (mask & (IN_DELETE | IN_MOVED_FROM)) {
+		drop_change(node);
+		return 0;
+	}
+
+	if (node) {
+		_d("Event already registered for %s ...", name);
+		return 0;
+	}
+
+	node = malloc(sizeof(*node));
+	if (!node)
+		return 1;
+
+	node->name = strdup(name);
+	if (!node->name) {
+		free(node);
+		return 1;
+	}
+
+	TAILQ_INSERT_HEAD(&conf_change_list, node,link);
+
+	return 0;
+}
+
+int conf_changed(char *file)
+{
+	char *ptr;
+
+	if (file && (ptr = strrchr(file, '/')))
+		file = ++ptr;
+
+	if (conf_find(file))
+		return 1;
+
+	return 0;
+}
+
+static void conf_cb(uev_t *w, void *arg, int events)
+{
+	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
+	struct inotify_event *ev;
+	ssize_t sz, len;
+
+	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
+	if (sz <= 0) {
+		_pe("invalid inotify event");
+		return;
+	}
+	ev_buf[sz] = 0;
+	ev = (struct inotify_event *)ev_buf;
+
+	if (arg) {
+		do_change(arg, ev->mask);
+		return;
+	}
+
+	for (ev = (void *)ev_buf; sz > (ssize_t)sizeof(*ev);
+	     len = sizeof(*ev) + ev->len, ev = (void *)ev + len, sz -= len) {
+		if (do_change(ev->name, ev->mask)) {
+			_pe("conf_monitor: Out of memory");
+			break;
+		}
+	}
+}
+
+static int add_watcher(uev_ctx_t *ctx, uev_t *w, char *path, uint32_t opt)
+{
+	struct stat st;
+	uint32_t mask = IN_CREATE | IN_DELETE | IN_MODIFY | IN_ATTRIB | IN_MOVE;
+	char *arg = NULL;
+	int fd, wd;
+
+	if (!ctx)
+		return 0;
+
+	if (stat(path, &st)) {
+		_d("No such file or directory, skipping %s", path);
+		w->fd = -1;
+		return 0;
+	}
+	if (!S_ISDIR(st.st_mode)) {
+		arg = strrchr(path, '/');
+		if (!arg)
+			arg = path;
+		else
+			arg++;
+	}
+
+	if (w->fd >= 0)
+		close(w->fd);
+
+	fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+	if (fd < 0) {
+		_pe("Failed creating inotify descriptor");
+		w->fd = -1;
+		return 1;
+	}
+
+	/*
+	 * Only forward error, don't report error,
+	 * user may not have @path and that's OK
+	 */
+	wd = inotify_add_watch(fd, path, mask | opt);
+	if (wd < 0) {
+		w->fd = -1;
+		close(fd);
+		return 1;
+	}
+
+	if (uev_io_init(ctx, w, conf_cb, arg, fd, UEV_READ)) {
+		_pe("Failed setting up I/O callback for %s watcher", path);
+		w->fd = -1;
+		close(fd);
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * Set up inotify watcher and load all *.conf in /etc/finit.d/
+ */
+int conf_monitor(uev_ctx_t *ctx)
+{
+	int rc = 0;
+
+	/*
+	 * If only one watcher fails, that's OK.  A user may have only
+	 * one of /etc/finit.conf or /etc/finit.d in use, and may also
+	 * have or not have symlinks in place.  We need to monitor for
+	 * changes to either symlink or target.
+	 */
+	rc += add_watcher(ctx, &w1, FINIT_RCSD, 0);
+	rc += add_watcher(ctx, &w2, FINIT_RCSD "/available", IN_DONT_FOLLOW);
+	rc += add_watcher(ctx, &w3, FINIT_CONF, 0);
+
+	return rc + conf_reload();
+}
+
+/*
+ * Prepare .conf parser and load all .conf files
+ */
+int conf_init(void)
 {
 	hostname = strdup(DEFHOST);
+	w1.fd = w2.fd = w3.fd = -1;
 
-	return parse_conf(FINIT_CONF) || conf_reload_dynamic();
+	return conf_monitor(NULL);
 }
 
 /**

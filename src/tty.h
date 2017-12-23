@@ -54,7 +54,6 @@ typedef struct tty_node {
 	finit_tty_t data;
 
 	/* XXX: Yes, TTYs should be refactored into a separate SVC type. */
-	struct timeval mtime;          /* Modification time for .conf from /etc/finit.d/ */
 	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,
 					* or -1 when marked for removal */
 } tty_node_t;
@@ -62,10 +61,9 @@ typedef struct tty_node {
 //extern LIST_HEAD(, tty_node) tty_list;
 
 void	    tty_mark	    (void);
-void	    tty_check	    (tty_node_t *tty, struct timeval *mtime);
 void	    tty_sweep	    (void);
 
-int	    tty_register    (char *line, struct rlimit rlimit[], struct timeval *mtime);
+int	    tty_register    (char *line, struct rlimit rlimit[], char *file);
 int	    tty_unregister  (tty_node_t *tty);
 
 tty_node_t *tty_find	    (char *dev);

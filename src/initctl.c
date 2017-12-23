@@ -138,21 +138,6 @@ static int do_svc(int cmd, char *arg)
 static int do_emit   (char *arg) { return do_svc(INIT_CMD_EMIT,        arg); }
 static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD,      arg); }
 
-static int missing(char *job, int id)
-{
-	char idstr[10] = "";
-
-	if (!job)
-		job = "";
-	if (id > 1)
-		snprintf(idstr, sizeof(idstr), ":%d", id);
-
-	if (verbose)
-		fprintf(stderr, "No such service %s%s\n", job, idstr);
-
-	return 1;
-}
-
 /*
  * This is a wrapper for do_svc() that adds a simple sanity check of
  * the service(s) provided as argument.  If a service does not exist
@@ -160,8 +145,14 @@ static int missing(char *job, int id)
  */
 static int do_startstop(int cmd, char *arg)
 {
-	/* Include \0 in len, needed by parser */
-	if (svc_parse_jobstr(arg, strlen(arg) + 1, NULL, missing)) {
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd   = INIT_CMD_SVC_QUERY
+	};
+
+	strlcpy(rq.data, arg, sizeof(rq.data));
+	if (client_send(&rq, sizeof(rq))) {
+		fprintf(stderr, "No such job(s) or service(s): %s\n\n", rq.data);
 		fprintf(stderr, "Usage: initctl %s <JOB|NAME>[:ID]\n",
 			cmd == INIT_CMD_START_SVC ? "start" :
 			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
@@ -257,7 +248,7 @@ static int do_cond_show(char *arg)
 
 	printheader(NULL, "PID     SERVICE               STATUS  CONDITION (+ ON, ~ FLUX, - OFF)", 0);
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		if (!svc->cond[0])
 			continue;
 
@@ -420,39 +411,29 @@ static int show_status(char *arg)
 	runlevel = runlevel_get(NULL);
 
 	if (arg && arg[0]) {
-		int id = 1;
-		char *ptr, *next;
-
-		ptr = strchr(arg, ':');
-		if (ptr) {
-			*ptr++ = 0;
-			next = strchr(ptr, ' ');
-			if (next)
-				*next = 0;
-			id = atonum(ptr);
-		}
-
-		if (isdigit(arg[0]))
-			svc = svc_find_by_jobid(atonum(arg), id);
-		else
-			svc = svc_find_by_nameid(arg, id);
-
+		svc = client_svc_find(arg);
 		if (!svc)
 			return 1;
 
-		printf("%s\n", svc_status(svc));
-		return 0;
+		printf("Service     : %s\n", svc->cmd);
+		printf("Description : %s\n", svc->desc);
+		printf("PID         : %d\n", svc->pid);
+		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
+		printf("Status      : %s\n", svc_status(svc));
+		printf("\n");
+
+		return do_log(svc->cmd);
 	}
 
 	if (!verbose)
 		printheader(NULL, "#      STATUS   PID     RUNLEVELS     SERVICE               DESCRIPTION", 0);
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char jobid[10], args[512] = "", *lvls;
 
-		if (svc_is_unique(svc))
-			snprintf(jobid, sizeof(jobid), "%d", svc->job);
-		else
+//		if (svc_is_unique(svc))
+//			snprintf(jobid, sizeof(jobid), "%d", svc->job);
+//		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
 		printf("%-5s  %7s  ", jobid, svc_status(svc));
@@ -543,6 +524,7 @@ static int usage(int rc)
 		"  list                      List all .conf in /etc/finit.d/\n"
 		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
 		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
+		"  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload\n"
 		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
 //		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
 		"\n"
@@ -585,6 +567,7 @@ int main(int argc, char *argv[])
 		{ "list",     serv_list    },
 		{ "enable",   serv_enable  },
 		{ "disable",  serv_disable },
+		{ "touch",    serv_touch   },
 		{ "reload",   do_reload    },
 
 		{ "cond",     do_cond      },

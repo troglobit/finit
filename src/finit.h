@@ -78,6 +78,9 @@
 #define INIT_CMD_EMIT           15
 #define INIT_CMD_GET_RUNLEVEL   16
 #define INIT_CMD_WDOG_HELLO     128  /* Watchdog register and hello */
+#define INIT_CMD_SVC_ITER       129
+#define INIT_CMD_SVC_QUERY      130
+#define INIT_CMD_SVC_FIND       131
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 

@@ -105,45 +105,43 @@ int log_is_debug(void)
 	return debug;
 }
 
-static void early_logit(int prio, const char *fmt, va_list ap)
-{
-	FILE *fp;
-
-	if (!debug && prio > loglevel)
-		return;
-
-	fp = fopen("/dev/kmsg", "w");
-	if (fp) {
-		fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
-		vfprintf(fp, fmt, ap);
-		fclose(fp);
-
-		if (debug)
-			vfprintf(stderr, fmt, ap);
-	} else {
-		vfprintf(stderr, fmt, ap);
-	}
-}
-
 /*
  * Log to /dev/kmsg until syslogd has started, then openlog()
  * and continue logging as a regular daemon.
  */
 void logit(int prio, const char *fmt, ...)
 {
+	FILE *fp;
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (!up) {
-		if (!fexist("/dev/log")) {
-			early_logit(prio, fmt, ap);
-			goto done;
-		}
 
-		log_open();
+	if (up || fexist("/dev/log")) {
+		if (!up)
+			log_open();
+		vsyslog(prio, fmt, ap);
+		goto done;
 	}
 
-	vsyslog(prio, fmt, ap);
+	if (!debug && prio > loglevel)
+		goto done;
+
+	fp = fopen("/dev/kmsg", "w");
+	if (!fp) {
+		vfprintf(stderr, fmt, ap);
+		goto done;
+	}
+
+	fprintf(fp, "<%d>finit[1]:", LOG_DAEMON | prio);
+	vfprintf(fp, fmt, ap);
+	fclose(fp);
+
+	if (debug) {
+		va_end(ap);
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+	}
+
 done:
 	va_end(ap);
 }

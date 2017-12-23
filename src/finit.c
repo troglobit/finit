@@ -255,11 +255,24 @@ static void emergency_shell(void)
 static void finalize(void)
 {
 	/*
+	 * Network stuff
+	 */
+	_d("Setting up networking ...");
+	networking();
+	umask(022);
+
+	/* Hooks that rely on loopback, or basic networking being up. */
+	_d("Calling all network up hooks ...");
+	plugin_run_hooks(HOOK_NETWORK_UP);
+
+	/*
 	 * Start all tasks/services in the configured runlevel
 	 */
+	_d("Change to default runlevel, start all services ...");
 	service_runlevel(cfglevel);
 
 	/* Clean up bootstrap-only tasks/services that never started */
+	_d("Clean up all bootstrap-only tasks/services ...");
 	svc_prune_bootstrap();
 
 	/* All services/tasks/inetd/etc. in configure runlevel have started */
@@ -283,13 +296,16 @@ static void finalize(void)
 	}
 
 	/* Hooks that should run at the very end */
+	_d("Calling all system up hooks ...");
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 	service_step_all(SVC_TYPE_ANY);
 
 	/* Enable silent mode before starting TTYs */
+	_d("Going silent ...");
 	log_silent();
 
 	/* Delayed start of TTYs at bootstrap */
+	_d("Launching all getty services ...");
 	tty_runlevel();
 }
 
@@ -379,9 +395,8 @@ int main(int argc, char* argv[])
 	makedir("/dev/pts", 0755);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 
+	/* Some systems rely on /dev/shm being there, for `mount -a` below */
 	makedir("/dev/shm", 0755);
-	if (!fismnt("/dev/shm"))
-		mount("shm", "/dev/shm", "tmpfs", 0, NULL);
 
 	/*
 	 * New tmpfs based /run for volatile runtime data
@@ -436,18 +451,14 @@ int main(int argc, char* argv[])
 	}
 
 	/*
-	 * Parse /etc/finit.conf and all *.conf in /etc/finit.d/ to
-	 * figure out how to bootstrap the system.
+	 * Initialize .conf system and load static /etc/finit.conf 
 	 */
-	conf_parse_config();
+	conf_init();
 
 	/*
 	 * Start built-in watchdog as soon as possible, if enabled
 	 */
 	wdogpid = watchdog(argv[0]);
-
-	/* Set hostname as soon as possible, for syslog et al. */
-	set_hostname(&hostname);
 
 	/*
 	 * Mount filesystems
@@ -480,12 +491,10 @@ int main(int argc, char* argv[])
 	cond_init();
 
 	/*
-	 * Reload all *.conf in /etc/finit.d, the mount command (above)
-	 * may have brought in new files (overlayfs).
-	 *
-	 * XXX: Can we detect remounted /etc to trigger this instead?
+	 * Set up inotify watcher for /etc/finit.d and read all .conf
+	 * files to figure out how to bootstrap the system.
 	 */
-	conf_reload_dynamic();
+	conf_monitor(&loop);
 
 	_d("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
@@ -497,15 +506,6 @@ int main(int argc, char* argv[])
 	sm_init(&sm);
 	sm_step(&sm);
 
-	/*
-	 * Network stuff
-	 */
-	networking();
-	umask(022);
-
-	/* Hooks that rely on loopback, or basic networking being up. */
-	plugin_run_hooks(HOOK_NETWORK_UP);
-
 	/* Start new initctl API responder */
 	api_init(&loop);
 
@@ -513,11 +513,13 @@ int main(int argc, char* argv[])
 	 * Wait for all SVC_TYPE_RUNTASK to have completed their work in
 	 * [S], or timeout, before calling finalize()
 	 */
+	_d("Starting bootstrap finalize timer ...");
 	uev_timer_init(&loop, &timer, service_bootstrap_cb, finalize, 1000, 1000);
 
 	/*
 	 * Enter main loop to monior /dev/initctl and services
 	 */
+	_d("Entering main loop ...");
 	return uev_run(&loop, 0);
 }
 

@@ -24,6 +24,7 @@
 #include "config.h"
 
 #include <err.h>
+#include <fcntl.h> /* Definition of AT_* constants */
 #include <glob.h>
 #include <stdio.h>
 #include <lite/lite.h>
@@ -166,6 +167,30 @@ int serv_disable(char *arg)
 		errx(1, "%s is not a symlink, move manually to %s first", link, available);
 
 	return remove(link) != 0;
+}
+
+int serv_touch(char *arg)
+{
+	char corr[40];
+
+	if (!strstr(arg, ".conf")) {
+		snprintf(corr, sizeof(corr), "%s.conf", arg);
+		arg = corr;
+	}
+
+	pushd(FINIT_RCSD);
+	if (!fexist(arg)) {
+		popd();
+		if (!strstr(arg, "finit.conf"))
+			errx(1, "Service %s is not enabled", arg);
+		arg = FINIT_CONF;
+	}
+
+	/* libite:touch() follows symlinks */
+	if (utimensat(AT_FDCWD, arg, NULL, AT_SYMLINK_NOFOLLOW))
+		err(1, "Failed marking %s for reload", arg);
+
+	return 0;
 }
 
 /**

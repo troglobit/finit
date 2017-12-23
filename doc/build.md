@@ -26,6 +26,12 @@ optional plugins to enable.  It depends on two external libraries:
 
     PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure
 
+The configure script checks for all dependencies, including the correct
+version of the above mentioned libraries.  Currently requried versions:
+
+- libite v2.0.1
+- libuEv v2.1.0
+
 
 Configure
 ---------

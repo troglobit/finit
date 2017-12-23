@@ -474,7 +474,7 @@ void service_runlevel(int newlevel)
  * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
  * @cfg:    Configuration, complete command, with -- for description text
  * @rlimit: Limits for this service/task/run/inetd, may be global limits
- * @mtime:  The modification time if service is loaded from /etc/finit.d
+ * @file:   The file name service was loaded from
  *
  * This function is used to register commands to be run on different
  * system runlevels with optional username.  The @type argument details
@@ -521,7 +521,7 @@ void service_runlevel(int newlevel)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int service_register(int type, char *cfg, struct rlimit rlimit[], struct timeval *mtime)
+int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 {
 	int i = 0;
 	int id = -1;
@@ -727,9 +727,13 @@ recreate:
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
 
 	/* New, recently modified or unchanged ... used on reload. */
-	svc_check_dirty(svc, mtime);
-	free(line);
+	if (file && conf_changed(file))
+		svc_mark_dirty(svc);
+	else
+		svc_mark_clean(svc);
 
+	/* Free duped line, from above */
+	free(line);
 	return 0;
 }
 
@@ -1023,11 +1027,12 @@ void service_step_all(int types)
  */
 void service_runtask_clean(void)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc_is_runtask(svc))
 			continue;
+
 		svc->once = 0;
 		if (svc->state == SVC_DONE_STATE)
 			svc_set_state(svc, SVC_HALTED_STATE);
@@ -1051,9 +1056,9 @@ void service_runtask_clean(void)
  */
 int service_runtask_completed(int skip)
 {
-	svc_t *svc;
+	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(1); svc; svc = svc_iterator(0)) {
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc_is_runtask(svc))
 			continue;
 
@@ -1093,7 +1098,6 @@ void service_bootstrap_cb(uev_t *w, void *arg, int events)
 	uev_timer_stop(w);
 	finalize();
 }
-
 
 /**
  * Local Variables:
