@@ -7,6 +7,8 @@ All relevant changes are documented in this file.
 [3.1][] - 2017-12-xx
 --------------------
 
+Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
+
 ### Changes
 
 * Support for `rlimit` per service/run/task/inetd/tty, issue #45
@@ -24,6 +26,18 @@ All relevant changes are documented in this file.
   what those plugins and configurations are, i.e. internal state+config
 * Change kernel WDT timeout (3 --> 30 sec) for built-in watchdog daemon
 * Handle `/etc/` OverlayFS, reload /etc/finit.d/*.conf after `mount -a`
+* initctl: Add support for printing previous runlevel
+* initctl: Support short forms of all commands
+* initctl: Support for `initctl touch <CONF>` to be used with `reload`
+* initctl: Improved output of `initctl show <SVC>`
+* Support reloading `/etc/finit.conf`.  The main finit.conf file
+  previously did not support reloading at runtime, as of v3.1 all
+  configuration directives supported in `/etc/finit.d/*.conf` are now
+  supported in `/etc/finit.conf`
+* Change `.conf` dependency + reload handling.  Finit no longer relies
+  on mtime of `.conf` files, instead an inotify handler tracks file
+  changes for time *insensitive* dependency tracking
+* Change condition handling to not rely on mtime but a generation id.
 
 ### Fixes
 
@@ -52,6 +66,10 @@ All relevant changes are documented in this file.
 * Fix formatting of runlevel string in `initctl show`
 * Allow running `initctl` with `STDOUT` redirected
 * Fix regression in `initctl start/stop <ID>`, using name worked not id
+* Fix error handling in `initctl start/stop` without any argument
+* Fix issue #81 properly, remove use of SYSV shm IPC completely.  Finit
+  now use the API socket for all communication between PID 1 and initctl
+* Fix segfault on x86_64 when started with kernel cmdline `--debug`
 
 
 [3.0][] - 2017-10-19
