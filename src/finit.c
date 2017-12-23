@@ -81,14 +81,13 @@ static void banner(void)
 	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, SCREEN_WIDTH - (int)strlen(buf) - 2, separator);
 }
 
-/* Requires /proc to be mounted */
-static int fismnt(char *dir)
+static int ismnt(char *file, char *dir)
 {
 	FILE *fp;
 	int found = 0;
 	struct mntent *mnt;
 
-	fp = setmntent("/proc/mounts", "r");
+	fp = setmntent(file, "r");
 	if (!fp)
 		return 0;	/* Dunno, maybe not */
 
@@ -101,6 +100,12 @@ static int fismnt(char *dir)
 	endmntent(fp);
 
 	return found;
+}
+
+/* Requires /proc to be mounted */
+static int fismnt(char *dir)
+{
+	return ismnt("/proc/mounts", dir);
 }
 
 /*
