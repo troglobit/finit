@@ -400,8 +400,15 @@ int main(int argc, char* argv[])
 	makedir("/dev/pts", 0755);
 	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
 
-	/* Some systems rely on /dev/shm being there, for `mount -a` below */
+	/*
+	 * Some systems rely on us to both create /dev/shm and, to mount
+	 * a tmpfs there.  Any system with dbus needs shared memory, so
+	 * mount it, unless its already mounted, but not if listed in
+	 * the /etc/fstab file already.
+	 */
 	makedir("/dev/shm", 0755);
+	if (!fismnt("/dev/shm") && !ismnt("/etc/fstab", "/dev/shm"))
+		mount("shm", "/dev/shm", "tmpfs", 0, NULL);
 
 	/*
 	 * New tmpfs based /run for volatile runtime data
