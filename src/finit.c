@@ -474,6 +474,9 @@ int main(int argc, char* argv[])
 	if (fexist("/lib/udev/udev-finish"))
 		run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 
+	/* Bootstrap conditions, needed for hooks */
+	cond_init();
+
 	_d("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);
 
@@ -486,9 +489,6 @@ int main(int argc, char* argv[])
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
-
-	/* Bootstrap conditions */
-	cond_init();
 
 	/*
 	 * Set up inotify watcher for /etc/finit.d and read all .conf
