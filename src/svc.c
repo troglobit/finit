@@ -356,8 +356,12 @@ void svc_mark_dynamic(void)
 {
 	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0))
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (svc->protected)
+			continue;
+
 		*((int *)&svc->dirty) = -1;
+	}
 }
 
 void svc_mark_dirty(svc_t *svc)

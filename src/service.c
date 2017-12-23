@@ -732,6 +732,9 @@ recreate:
 	else
 		svc_mark_clean(svc);
 
+	if (!file)
+		svc->protected = 1;
+
 	/* Free duped line, from above */
 	free(line);
 	return 0;
