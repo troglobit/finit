@@ -1,6 +1,6 @@
 /* Condition engine (write)
  *
- * Copyright (c) 2015-2016  Tobias Waldekranz <tobias@waldekranz.com>
+ * Copyright (c) 2015-2017  Tobias Waldekranz <tobias@waldekranz.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ static int cond_set_gen(const char *path, unsigned int gen)
 	if (!fp)
 		return -1;
 
-	ret = fprintf(fp, "%u", gen);
+	ret = fprintf(fp, "%u\n", gen);
 	fclose(fp);
 
 	return (ret > 0) ? 0 : ret;
@@ -49,9 +49,11 @@ static void cond_bump_reconf(void)
 {
 	unsigned int rgen;
 
+	/*
+	 * If %COND_RECONF does not exist, cond_get_gen() returns 0
+	 * meaning that rgen++ is always what we want.
+	 */
 	rgen = cond_get_gen(COND_RECONF);
-	/* COND_RECONF does not exist, cond_get_gen will return 0
-	 * meaning that rgen++ is always what we want. */
 	rgen++;
 
 	cond_set_gen(COND_RECONF, rgen);
