@@ -28,14 +28,6 @@
 #include "cond.h"
 #include "service.h"
 
-static inline int timespec_newer(const struct timespec *a,
-				 const struct timespec *b)
-{
-	if (a->tv_sec != b->tv_sec)
-		return a->tv_sec > b->tv_sec;
-
-	return a->tv_nsec >= b->tv_nsec;
-}
 
 const char *condstr(enum cond_state s)
 {
@@ -57,18 +49,35 @@ const char *cond_path(const char *name)
 	return file;
 }
 
+unsigned int cond_get_gen(const char *path)
+{
+	unsigned int gen;
+	FILE *fp;
+	int ret;
+
+	fp = fopen(path, "r");
+	if (!fp)
+		return 0;
+
+	ret = fscanf(fp, "%u", &gen);
+	fclose(fp);
+
+	return (ret == 1) ? gen : 0;
+}
+
 enum cond_state cond_get_path(const char *path)
 {
-	struct stat st, st_reconf;
+	int cgen, rgen;
 
-	if (stat(path, &st))
+	rgen = cond_get_gen(COND_RECONF);
+	if (!rgen)
 		return COND_OFF;
 
-	if (stat(COND_RECONF, &st_reconf) ||
-	    timespec_newer(&st.st_mtim, &st_reconf.st_mtim))
-		return COND_ON;
+	cgen = cond_get_gen(path);
+	if (!cgen)
+		return COND_OFF;
 
-	return COND_FLUX;
+	return (cgen == rgen) ? COND_ON : COND_FLUX;
 }
 
 enum cond_state cond_get(const char *name)

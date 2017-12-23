@@ -36,6 +36,7 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "cond.h"
 #include "conf.h"
 #include "helpers.h"
 #include "private.h"
@@ -485,6 +486,9 @@ int main(int argc, char* argv[])
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
+
+	/* Bootstrap conditions */
+	cond_init();
 
 	/*
 	 * Set up inotify watcher for /etc/finit.d and read all .conf
