@@ -152,10 +152,12 @@ Syntax
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
 
-* `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [TERM]`  
+* `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [nologin] [TERM]`  
   `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`  
   The first variant of this option uses the built-in getty on the given
-  TTY device DEV, in the given runlevels.  Default baud rate is `38400`.
+  TTY device DEV, in the given runlevels.  The DEV may be the special
+  keyword `@console`, which is very useful on embedded systems.  Default
+  baud rate is `38400`.
 
   **Example:**
 ```conf
@@ -181,6 +183,11 @@ Syntax
   message before actually starting the getty program.  On small and
   embedded systems running multiple unused getty wastes both memory
   and CPU cycles, so `wait` is the preferred default.
+
+  The `nologin` option disables getty and `/bin/login`, and gives the
+  user a root (login) shell on the given TTY `<DEV>` immediately.
+  Needless to say, this is a rather insecure option, but can be very
+  useful for developer builds, during board bringup, or similar.
 
   Notice the ordering, the `TERM` option to the built-in getty must be
   the last argument.
