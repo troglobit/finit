@@ -373,6 +373,7 @@ Commands:
   list                      List all .conf in /etc/finit.d/
   enable   <CONF>           Enable   .conf in /etc/finit.d/available/
   disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]
+  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload
   reload                    Reload  *.conf in /etc/finit.d/ (activates changes)
   
   cond     set   <COND>     Set (assert) condition     => +COND
