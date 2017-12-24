@@ -15,6 +15,9 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
 * Support for auto-detecting serial console using Linux SysFS, the new
   `tty @console` eliminates the need to keep track of different console
   devices across embedded platforms: `/dev/ttyS0`, `/dev/ttyAMA0`, etc.
+* Support for the special debug option `nologin` to tty configurations,
+  skips the login prompt and skips immediately to a root shell.  Useful
+  during board bringup, in developer builds, etc.  Be careful though ...
 * Support for calling run/tasks on Finit internal HOOK points, issue #18
 * Removed support for long-since deprecated `console DEV` setting
 * Cosmetic change to login, pressing enter at the `Press enter to ...`
