@@ -76,14 +76,15 @@ static void inetd_dgram_drop(int sd, const char *ifname)
 	char pkt_interface[17];
 	char buf[BUFSIZ];
 
-	do {
+	while (1) {
 		inetd_dgram_peek(sd, pkt_interface);
 		if (string_compare(pkt_interface, ifname)) {
 			if (recv(sd, buf, sizeof(buf), 0) < 0)
 				break;
 			continue;
 		}
-	} while (0);
+		break;
+	}
 }
 
 /* Peek into SOCK_STREAM on accepted client socket to figure out inbound interface */
