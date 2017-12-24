@@ -87,6 +87,9 @@ tty [12345] /sbin/getty -L 115200 /dev/tty3 linux
 # Use built-in getty for serial port and USB serial
 tty [12345] /dev/ttyAMA0 115200 noclear nowait
 tty [12345] /dev/ttyUSB0 115200 noclear
+
+# Just give me a shell, I need to debug this embedded system!
+tty [12345] @console noclear nologin
 ```
 
 The `service` stanza, as well as `task`, `run`, `inetd` and others are
@@ -192,7 +195,9 @@ figures it out by querying sysfs: `/sys/class/tty/console/active`.
 tty [12345] @console 115200 linux noclear
 ```
 
-For more information, see [doc/config.md](doc/config.md#syntax).
+Notice the optional `noclear`, `nowait`, and `nologin` flags.  The
+latter is for skipping the login process entirely. For more information,
+see [doc/config.md](doc/config.md#syntax).
 
 
 **Runlevels**
