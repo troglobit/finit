@@ -78,11 +78,11 @@ static void inetd_dgram_drop(int sd, const char *ifname)
 
 	do {
 		inetd_dgram_peek(sd, pkt_interface);
-		if(string_compare(pkt_interface, ifname)) {
-			recv(sd, buf, sizeof(buf), 0);
+		if (string_compare(pkt_interface, ifname)) {
+			if (recv(sd, buf, sizeof(buf), 0) < 0)
+				break;
 			continue;
 		}
-
 	} while (0);
 }
 
