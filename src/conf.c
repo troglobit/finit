@@ -619,7 +619,10 @@ int conf_changed(char *file)
 {
 	char *ptr;
 
-	if (file && (ptr = strrchr(file, '/')))
+	if (!file)
+		return 0;
+
+	if ((ptr = strrchr(file, '/')))
 		file = ++ptr;
 
 	if (conf_find(file))
