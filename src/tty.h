@@ -38,6 +38,7 @@ typedef struct {
 	char  *term;
 	int    noclear;
 	int    nowait;
+	int    nologin;
 	int    runlevels;
 
 	char  *cmd;		/* NULL when running built-in getty */

@@ -137,7 +137,7 @@ void tty_sweep(void)
 int tty_register(char *line, struct rlimit rlimit[], char *file)
 {
 	tty_node_t *entry;
-	int         insert = 0, noclear = 0, nowait = 0;
+	int         insert = 0, noclear = 0, nowait = 0, nologin = 0;
 	size_t      i, num = 0;
 	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
 	char             *dev = NULL, *baud = NULL;
@@ -159,6 +159,8 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 			noclear = 1;
 		else if (!strcmp(tok, "nowait"))
 			nowait = 1;
+		else if (!strcmp(tok, "nologin"))
+			nologin = 1;
 		else
 			args[num++] = tok;
 
@@ -241,6 +243,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 	entry->data.term = term ? strdup(term) : NULL;
 	entry->data.noclear = noclear;
 	entry->data.nowait  = nowait;
+	entry->data.nologin = nologin;
 	entry->data.runlevels = conf_parse_runlevels(runlevels);
 
 	/* External getty */
@@ -389,6 +392,11 @@ void tty_start(finit_tty_t *tty)
 
 	if (tty_exist(dev)) {
 		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
+		return;
+	}
+
+	if (tty->nologin) {
+		tty->pid = run_sh(dev, tty->noclear, tty->nowait, tty->rlimit);
 		return;
 	}
 

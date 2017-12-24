@@ -243,6 +243,48 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 	return do_login(name);
 }
 
+int sh(char *tty)
+{
+	int fd;
+	char *arg0;
+	char *args[2] = {
+		NULL,
+		NULL
+	};
+	size_t len;
+
+	/* Detach from initial controlling TTY */
+	vhangup();
+
+	fd = open(tty, O_RDWR);
+	if (fd < 0)
+		err(1, "Failed opening %s", tty);
+
+	dup2(fd, STDIN_FILENO);
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
+
+	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
+		warn("Failed TIOCSCTTY");
+
+	/* The getty process is usually responsible for the UTMP login record */
+	utmp_set_login(tty, NULL);
+
+	/* Set up TTY, re-enabling ISIG et al. */
+	stty(fd, B0);
+	close(fd);
+
+	/* Start /bin/sh as a login shell, i.e. with a prefix '-' */
+	len = strlen(_PATH_BSHELL) + 2;
+	arg0 = malloc(len);
+	if (!arg0)
+		err(1, "Failed allocating memory");
+	snprintf(arg0, len, "-%s", _PATH_BSHELL);
+	args[0] = arg0;
+
+	return execv(_PATH_BSHELL, args);
+}
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t
