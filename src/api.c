@@ -380,13 +380,11 @@ static void api_cb(uev_t *w, void *arg, int events)
 			_d("Failed sending ACK/NACK back to client");
 	}
 
-	if (UEV_ERROR == events)
-		goto error;
-
 leave:
 	close(sd);
+	if (UEV_ERROR == events)
+		goto error;
 	return;
-
 error:
 	api_exit();
 	if (api_init(w->ctx))
