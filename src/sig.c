@@ -133,6 +133,8 @@ void do_kill(int signo)
 			if (fgets(file, sizeof(file), fp)) {
 				if (file[0] != '@')
 					kill(pid, signo);
+				else
+					_d("Skipping %s ...", &file[1]);
 			}
 			fclose(fp);
 		}
@@ -179,6 +181,11 @@ void do_shutdown(shutop_t op)
 		return;
 	}
 
+	if (wdogpid) {
+		print(kill(wdogpid, SIGPWR) == 1, "Advising watchdog, system going down");
+		do_sleep(2);
+	}
+
 	/* Unmount any tmpfs before unmounting swap ... */
 	unmount_tmpfs();
 	run("swapoff -e -a");
@@ -201,7 +208,7 @@ void do_shutdown(shutop_t op)
 			int timeout = 10;
 
 			/* Wait here until the WDT reboots, or timeout with fallback */
-			print(kill(wdogpid, SIGPWR) == 1, "Pending watchdog reboot");
+			print(kill(wdogpid, SIGTERM) == 1, "Pending watchdog reboot");
 			while (timeout--)
 				do_sleep(1);
 		}
