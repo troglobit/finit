@@ -31,15 +31,19 @@
 
 int running  = 1;
 int handover = 0;
+int shutdown = 0;
 
 static void sighandler(int signo)
 {
 	if (signo == SIGTERM)
 		handover = 1;
+	if (signo == SIGPWR)
+		shutdown = 1;
+
 	running = 0;
 }
 
-static int init(char *progname, char *devnode, int timeout)
+static int init(char *progname, char *devnode)
 {
 	int fd;
 
@@ -51,20 +55,28 @@ static int init(char *progname, char *devnode, int timeout)
 	if (fd == -1)
 		return -1;
 
-	ioctl(fd, WDIOC_SETTIMEOUT, &timeout);
-
 	return fd;
 }
 
-static int loop(int fd, int period)
+static int loop(int fd, int timeout)
 {
 	int dummy = 0;
+	int period = timeout / 2;
+
+	ioctl(fd, WDIOC_SETTIMEOUT, &timeout);
 
 	while (running) {
 		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
 		sleep(period);
 	}
 
+	/* System is going down, prepare to reboot system on TERM */
+	if (shutdown) {
+		timeout /= 3;
+		ioctl(fd, WDIOC_SETTIMEOUT, &timeout);
+	}
+
+	/* External watchdogd wants to take over ... */
 	if (handover) {
 		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
 		return !write(fd, "V", 1);
@@ -81,13 +93,20 @@ int watchdog(char *progname)
 	if (pid == 0) {
 		int fd, ret;
 
-		fd = init(progname, WDT_DEVNODE, WDT_TIMEOUT);
+		fd = init(progname, WDT_DEVNODE);
 		if (fd == -1) {
 			_pe("Failed connecting to watchdog %s", WDT_DEVNODE);
 			_exit(1);
 		}
 
-		ret = loop(fd, WDT_TIMEOUT / 2);
+		ret = loop(fd, WDT_TIMEOUT);
+		while (!handover) {
+			/* Waiting for SIGTERM ... */
+			sleep(1);
+
+			/* Set lowest possible timeout on SIGTERM */
+			ioctl(fd, WDIOC_SETTIMEOUT, &shutdown);
+		}
 		close(fd);
 
 		_exit(ret);
