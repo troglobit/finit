@@ -334,6 +334,11 @@ int inetd_start(inetd_t *inetd)
 
 void inetd_stop(inetd_t *inetd)
 {
+	if (!inetd || !inetd->svc) {
+		_e("Invalid inetd, cannot stop it...");
+		return;
+	}
+
 	if (inetd->watcher.fd != -1) {
 		_d("Stopping %s socket watcher ...", inetd->svc->cmd);
 		uev_io_stop(&inetd->watcher);
@@ -342,8 +347,6 @@ void inetd_stop(inetd_t *inetd)
 		 * and halt the watcher, so don't close the socket! */
 		if (!svc_is_busy(inetd->svc)) {
 			_d("Shutting down inet socket %d ...", inetd->watcher.fd);
-			if (inetd->type == SOCK_STREAM)
-				shutdown(inetd->watcher.fd, SHUT_RDWR);
 			close(inetd->watcher.fd);
 			inetd->watcher.fd = -1;
 		}
