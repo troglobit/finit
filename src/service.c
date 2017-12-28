@@ -258,7 +258,9 @@ static int service_start(svc_t *svc)
 				dup2(fd, STDERR_FILENO);
 				close(fd);
 			}
-		} else {
+		}
+#ifdef REDIRECT_OUTPUT
+		else {
 			FILE *fp;
 
 			fp = fopen("/dev/null", "w");
@@ -268,6 +270,7 @@ static int service_start(svc_t *svc)
 				fclose(fp);
 			}
 		}
+#endif
 
 	logger_err:
 		sig_unblock();

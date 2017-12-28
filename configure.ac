@@ -58,6 +58,10 @@ AC_ARG_ENABLE(watchdog,
         AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
 	enable_watchdog=no])
 
+AC_ARG_ENABLE(redirect-output,
+        AS_HELP_STRING([--disable-redirect-output], [Disable redirection of service output to /dev/null]),,[
+	enable_redirect_output=yes])
+
 AC_ARG_ENABLE(inetd,
         AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]),,[
 	enable_inetd=yes])
@@ -147,6 +151,9 @@ AS_IF([test "x$enable_watchdog" = "xyes"], [
 AS_IF([test "x$enable_inetd" != "xno"], [
 	enable_inetd="yes"
 	AC_DEFINE(INETD_ENABLED,  1, [Enable built-in inetd])])
+
+AS_IF([test "x$enable_redirect_output" != "xno"], [
+	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])
 
 AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
