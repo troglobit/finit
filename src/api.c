@@ -342,6 +342,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 				kill(wdogpid, SIGTERM);
 				do_sleep(1);
 			}
+			_d("wdog was %d, now %d is in charge", wdogpid, rq.runlevel);
 			wdogpid = rq.runlevel;
 			break;
 
@@ -428,6 +429,9 @@ error:
 
 int api_exit(void)
 {
+	if (runlevel == 0 || runlevel == 6)
+		return close(api_watcher.fd);
+
 	return  shutdown(api_watcher.fd, SHUT_RDWR) ||
 		close(api_watcher.fd);
 }
