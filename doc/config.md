@@ -51,15 +51,15 @@ Syntax
 * `network <PATH>`  
   Script or program to bring up networking, with optional arguments
 
-* `rlimit <hard|soft> RESOURCE <LIMIT|unlimited>`  
-  Set the hard or soft limit for a resource.  `RESOURCE` is a lower-case
-  string matching the `RLIMIT_` constants from `setrlimit(2)`, without
-  the prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.
+* `rlimit [hard|soft] RESOURCE <LIMIT|unlimited>` Set the hard or soft
+  limit for a resource, or both if that argument is omitted.  `RESOURCE`
+  is the lower-case `RLIMIT_` string constants from `setrlimit(2)`,
+  without the prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.
   
-  The limit is an integer that depends on the resource being modified,
-  see the man page, or the kernel `/proc/PID/limits` file, for more
-  information.  Finit versions before v3.1 used `infinity` for
-  `unlimited`, which is still a supported keyword.
+  LIMIT is an integer that depends on the resource being modified, see
+  the man page, or the kernel `/proc/PID/limits` file, for details.
+  Finit versions before v3.1 used `infinity` for `unlimited`, which is
+  still supported, albeit deprecated.
 
 ```shell
         # No process is allowed more than 8MB of address space
@@ -67,6 +67,9 @@ Syntax
 
         # Core dumps may be arbitrarily large
         rlimit soft core infinity
+
+        # CPU limit for all services, soft & hard = 10 sec
+        rlimit cpu 10
 ```
 
 * `runlevel <N>`  

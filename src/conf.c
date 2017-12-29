@@ -221,11 +221,12 @@ char *lim2str(struct rlimit *rlim)
 	return buf;
 }
 
+/* First form: `rlimit <hard|soft> RESOURCE LIMIT` */
 void conf_parse_rlimit(char *line, struct rlimit arr[])
 {
 	char *level, *limit, *val;
 	int resource = -1;
-	rlim_t cfg, *set;
+	rlim_t cfg;
 
 	level = strtok(line, " \t");
 	if (!level)
@@ -235,19 +236,16 @@ void conf_parse_rlimit(char *line, struct rlimit arr[])
 	if (!limit)
 		goto error;
 
+	val = strtok(NULL, " \t");
+	if (!val) {
+		/* Second form: `rlimit RESOURCE LIMIT` */
+		val   = limit;
+		limit = level;
+		level = "both";
+	}
+
 	resource = str2rlim(limit);
 	if (resource < 0 || resource > RLIMIT_NLIMITS)
-		goto error;
-
-	val = strtok(NULL, " \t");
-	if (!val)
-		goto error;
-
-	if (!strcmp(level, "soft"))
-		set = &arr[resource].rlim_cur;
-	else if (!strcmp(level, "hard"))
-		set = &arr[resource].rlim_max;
-	else
 		goto error;
 
 	/* Official keyword from v3.1 is `unlimited`, from prlimit(1) */
@@ -264,7 +262,15 @@ void conf_parse_rlimit(char *line, struct rlimit arr[])
 		}
 	}
 
-	*set = cfg;
+	if (!strcmp(level, "soft"))
+		arr[resource].rlim_cur = cfg;
+	else if (!strcmp(level, "hard"))
+		arr[resource].rlim_max = cfg;
+	else if (!strcmp(level, "both"))
+		arr[resource].rlim_max = arr[resource].rlim_cur = cfg;
+	else
+		goto error;
+
 	return;
 error:
 	logit(LOG_WARNING, "rlimit: parse error");
