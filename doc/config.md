@@ -31,6 +31,11 @@ a restart of any service you can simply touch its corresponding `.conf`
 file in `/etc/finit.d` and call `initctl reload`.  Finit handle any
 and all conditions and dependencies between services automatically.
 
+It is also possible to drop `.conf` files in `/etc/finit.d/available/`
+and use `initctl enable` to enable a service `.conf` file.  This may be
+useful in particular to Linux distributions that may want to install all
+files for a package and let the user decide when to enable a service.
+
 On `initctl reload` the following is checked for all services:
 
 - If a service's `.conf` file has been removed, or its conditions are no
