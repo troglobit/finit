@@ -45,7 +45,7 @@ document [Finit Services](service.md).
 Syntax
 ------
 
-* `module <MODULE>`  
+* `module <MODULE> [ARGS]`  
   Load a kernel module, with optional arguments
 
 * `network <PATH>`  
