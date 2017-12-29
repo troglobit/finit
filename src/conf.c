@@ -491,10 +491,6 @@ int conf_reload(void)
 		return 0;
 	}
 
-	/* Update global limits in case operator used prlimit(1) on us */
-	for (i = 0; i < RLIMIT_NLIMITS; i++)
-		getrlimit(i, &global_rlimit[i]);
-
 	for (i = 0; i < num; i++) {
 		char *name = e[i]->d_name;
 		char  path[LINE_SIZE];
