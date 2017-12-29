@@ -16,7 +16,7 @@ or in combination with `/etc/finit.d/*.conf`.  Finit 3 can even start a
 system using only `/etc/finit.d/*.conf`, highly useful for package-based
 Linux distributions -- each package can provide its own "script" file.
 
-- `/etc/finit.conf`: main configuration file, read only once at boot
+- `/etc/finit.conf`: main configuration file
 - `/etc/finit.d/*.conf`: snippets, usually one service per file
 
 Not all configuration directives are available in `/etc/finit.d/*.conf`
@@ -26,8 +26,10 @@ the section [Limitations](#limitations) below for details.
 To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
 run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
 call `finit q`, but that has been deprecated with the `initctl` tool).
-Any service read from this directory is flagged as a dynamic service, so
-changes to or removal of `/etc/finit.d/*.conf` files, is detected.
+Finit monitors all known active `.conf` files, so if you want to force
+a restart of any service you can simply touch its corresponding `.conf`
+file in `/etc/finit.d` and call `initctl reload`.  Finit handle any
+and all conditions and dependencies between services automatically.
 
 On `initctl reload` the following is checked for all services:
 
@@ -143,12 +145,14 @@ Syntax
 * `runparts <DIR>`  
   Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
   files, or scripts, in the directory are called, in alphabetic order.
+  The scripts in this directory are executed at the very end of runlevel
+  `S`, bootstrap.
 
   It can be beneficial to use `S01name`, `S02othername`, etc. if there
   is a dependency order between the scripts.  Symlinks to existing
   daemons can talso be used, but make sure they daemonize by default.
 
-  As the optional `/etc/rc.local` shell script, make sure that all your
+  Similar to the `/etc/rc.local` shell script, make sure that all your
   services and programs either terminate or start in the background or
   you will block Finit.
 
@@ -258,31 +262,33 @@ Limitations
 
 To understand the limitations of `finit.conf` vs `finit.d` it is useful
 to picture the different phases of the system: bootstrap, runtime, and
-shutdown.  The `finit.conf` file can be used for all possible settings,
-but `finit.d/*.conf` can only be used for runtime settings.
+shutdown.
 
 ### /etc/finit.conf
 
-This file was the only way to set up and boot a system using Finit.  It
-is used for pre-runtime settings like system hostname, network bringup
-and shutdown:
+This file used to be the only way to set up and boot a Finit system.
+Today it is mainly used for pre-runtime settings like system hostname,
+network bringup and shutdown:
 
-- `host`
-- `mkdod`
-- `network`
-- `runparts`
+- `host`, only at bootstrap, (runlevel `S`)
+- `mknod`, only at bootstrap
+- `network`, only at bootstrap
+- `runparts`, only at bootstrap
 - `include`
-- `shtudown`
-- `runlevel`
+- `shutdown`
+- `runlevel`, only at bootstrap
 - ... and all configuration stanzas from `/etc/finit.d` below
 
 ### /etc/finit.d
 
-Support for partial `.conf` files in `/etc/finit.d` was added to handle
-changes of the system configuration at runtime.  It does *not support*
-the above `finit.conf` settings described above, only the following:
+Support for per-service `.conf` files in `/etc/finit.d` was added in
+v3.0 to handle changes of the system configuration at runtime.  As of
+v3.1 `finit.conf` is also handled at runtime, except of course for any
+stanza that only runs at bootstrap.  However, a `/etc/finit.d/*.conf`
+does *not support* the above `finit.conf` settings described above, only
+the following:
 
-- `module`, but only in runlevel `S`
+- `module`, but only at bootstrap
 - `service`
 - `task`
 - `run`
