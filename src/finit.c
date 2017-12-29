@@ -271,6 +271,16 @@ static void finalize(void)
 	plugin_run_hooks(HOOK_NETWORK_UP);
 
 	/*
+	 * Run startup scripts in the runparts directory, if any.
+	 */
+	if (runparts && fisdir(runparts)) {
+		_d("Running startup scripts in %s ...", runparts);
+		run_parts(runparts, NULL);
+		if (conf_any_change())
+			service_reload_dynamic();
+	}
+
+	/*
 	 * Start all tasks/services in the configured runlevel
 	 */
 	_d("Change to default runlevel, start all services ...");
@@ -284,16 +294,6 @@ static void finalize(void)
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 	service_step_all(SVC_TYPE_ANY);
-
-	/*
-	 * Run startup scripts in the runparts directory, if any.
-	 */
-	if (runparts && fisdir(runparts)) {
-		_d("Running startup scripts in %s ...", runparts);
-		run_parts(runparts, NULL);
-		if (conf_any_change())
-			service_reload_dynamic();
-	}
 
 	/* Convenient SysV compat for when you just don't care ... */
 	if (!access(FINIT_RC_LOCAL, X_OK)) {
