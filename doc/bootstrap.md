@@ -25,13 +25,13 @@ Bootstrap
 20. Bring up loopback interface and all `/etc/network/interfaces`, if
     the `.conf` setting `network <SCRIPT>` is set, it is called instead
 21. Call 3rd level hooks, `HOOK_NETWORK_UP`
-22. Switch to the configured runlevel from `/etc/finit.conf`, default 2.
+22. If `runparts <DIR>` is set, [run-parts(8)][] is called on `<DIR>`
+23. Switch to the configured runlevel from `/etc/finit.conf`, default 2.
     At every runlevel change all `*.conf` files in `/etc/finit.d/` are
     (re)loaded and new services, tasks, and blocking run commands are
     started.  Provided they are allowed in the new runlevel and all of
     their conditions, if any, are set.
-23. Call 4th level hooks, `HOOK_SVC_UP`
-24. If `runparts <DIR>` is set, [run-parts(8)][] is called on `<DIR>`
+24. Call 4th level hooks, `HOOK_SVC_UP`
 25. Call `/etc/rc.local`, if it exists and is an executable shell script
 26. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
 27. Start all configured TTYs, or a fallback shell on `/dev/console`
