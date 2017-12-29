@@ -633,6 +633,14 @@ static int do_change(char *name, uint32_t mask)
 	return 0;
 }
 
+int conf_any_change(void)
+{
+	if (TAILQ_EMPTY(&conf_change_list))
+		return 0;
+
+	return 1;
+}
+
 int conf_changed(char *file)
 {
 	char *ptr;

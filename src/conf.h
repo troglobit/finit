@@ -33,6 +33,7 @@ char *rlim2str(int rlim);
 
 int  conf_init            (void);
 void conf_reload          (void);
+int  conf_any_change      (void);
 int  conf_changed         (char *file);
 int  conf_monitor         (uev_ctx_t *ctx);
 

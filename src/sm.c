@@ -143,7 +143,7 @@ restart:
 			erase("/etc/nologin");
 
 		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
-		if (runlevel != 0 && runlevel != 6)
+		if (conf_any_change())
 			conf_reload();
 
 		/* Reset once flag of runtasks */

@@ -291,13 +291,15 @@ static void finalize(void)
 	if (runparts && fisdir(runparts)) {
 		_d("Running startup scripts in %s ...", runparts);
 		run_parts(runparts, NULL);
-		service_reload_dynamic();
+		if (conf_any_change())
+			service_reload_dynamic();
 	}
 
 	/* Convenient SysV compat for when you just don't care ... */
 	if (!access(FINIT_RC_LOCAL, X_OK)) {
 		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
-		service_reload_dynamic();
+		if (conf_any_change())
+			service_reload_dynamic();
 	}
 
 	/* Hooks that should run at the very end */
