@@ -200,6 +200,27 @@ char *rlim2str(int rlim)
 	return "unknown";
 }
 
+char *lim2str(struct rlimit *rlim)
+{
+	char tmp[10];
+	static char buf[42];
+
+	memset(buf, 0, sizeof(buf));
+	if (RLIM_INFINITY == rlim->rlim_cur)
+		sprintf(tmp, "unlimited, ");
+	else
+		sprintf(tmp, "%lu, ", rlim->rlim_cur);
+	strcat(buf, tmp);
+
+	if (RLIM_INFINITY == rlim->rlim_max)
+		sprintf(tmp, "unlimited, ");
+	else
+		sprintf(tmp, "%lu, ", rlim->rlim_max);
+	strcat(buf, tmp);
+
+	return buf;
+}
+
 void conf_parse_rlimit(char *line, struct rlimit arr[])
 {
 	char *level, *limit, *val;
@@ -463,7 +484,8 @@ static int parse_conf(char *file)
 	/* Set global limits */
 	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
 		if (setrlimit(i, &global_rlimit[i]) == -1)
-			logit(LOG_WARNING, "rlimit: Failed setting %s", rlim2str(i));
+			logit(LOG_WARNING, "rlimit: Failed setting %s: %s",
+			      rlim2str(i), lim2str(&global_rlimit[i]));
 	}
 
 	return 0;
