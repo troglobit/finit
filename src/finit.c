@@ -388,6 +388,12 @@ int main(int argc, char* argv[])
 	}
 
 	/*
+	 * Initialize .conf system and load static /etc/finit.conf
+	 * Also initializes global_rlimit[] for udevd, below.
+	 */
+	conf_init();
+
+	/*
 	 * Some non-embedded systems without an initramfs may not have /dev mounted yet
 	 * If they do, check if system has udevadm and perform cleanup from initramfs
 	 */
@@ -461,11 +467,6 @@ int main(int argc, char* argv[])
 			run("udevadm control --exit");
 		}
 	}
-
-	/*
-	 * Initialize .conf system and load static /etc/finit.conf 
-	 */
-	conf_init();
 
 	/*
 	 * Start built-in watchdog as soon as possible, if enabled
