@@ -58,21 +58,30 @@ void conf_parse_cmdline(void)
 {
 	int dbg = 0;
 	FILE *fp;
+	char line[LINE_SIZE], *cmdline, *tok;
 
 	fp = fopen("/proc/cmdline", "r");
-	if (fp) {
-		char line[LINE_SIZE];
+	if (!fp)
+		goto done;
 
-		fgets(line, sizeof(line), fp);
-		chomp(line);
-		_d("%s", line);
-
-		if (strstr(line, "finit_debug") || strstr(line, "--debug"))
-			dbg = 1;
-
+	if (!fgets(line, sizeof(line), fp)) {
 		fclose(fp);
+		goto done;
 	}
 
+	cmdline = chomp(line);
+	_d("%s", cmdline);
+
+	while ((tok = strtok(cmdline, " \t"))) {
+		cmdline = NULL;
+
+		/* Catches finit_debug (deprecated), --debug, and debug */
+		if (strstr(tok, "debug"))
+			dbg = 1;
+	}
+	fclose(fp);
+
+done:
 	log_init(dbg);
 }
 

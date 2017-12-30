@@ -366,7 +366,8 @@ int main(int argc, char* argv[])
 		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 
 	/*
-	 * Parse kernel parameters, including log_init()
+	 * Parse kernel command line (debug, rescue, splash, etc.)
+	 * Also calls log_init() to set correct log level
 	 */
 	conf_parse_cmdline();
 
