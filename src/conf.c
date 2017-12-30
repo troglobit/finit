@@ -76,7 +76,7 @@ void conf_parse_cmdline(void)
 		cmdline = NULL;
 
 		/* Catches finit_debug (deprecated), --debug, and debug */
-		if (string_compare(tok, "debug"))
+		if (strstr(tok, "debug"))
 			dbg = 1;
 
 		if (string_compare(tok, "rescue") || string_compare(tok, "recover"))
