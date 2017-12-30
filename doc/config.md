@@ -84,6 +84,10 @@ restart/reload.*
 Syntax
 ------
 
+* `host <NAME>`, or `hostname <NAME>`  
+  Set system hostname to NAME, unless `/etc/hostname` exists in which
+  case the contents of that file is used.
+
 * `module <MODULE> [ARGS]`  
   Load a kernel module, with optional arguments
 

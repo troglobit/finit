@@ -333,7 +333,7 @@ static void parse_static(char *line)
 	char *x;
 	char cmd[CMD_SIZE];
 
-	if (BOOTSTRAP && MATCH_CMD(line, "host ", x)) {
+	if (BOOTSTRAP && (MATCH_CMD(line, "host ", x) || MATCH_CMD(line, "hostname ", x))) {
 		if (hostname) free(hostname);
 		hostname = strdup(strip_line(x));
 		return;
