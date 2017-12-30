@@ -246,6 +246,25 @@ hook into the boot process or respond to various I/O.
 For more information, see [doc/plugins.md](doc/plugins.md).
 
 
+**Progress**
+
+Finit prior to v3.0 showed the progress at boot: plugins and modules
+being loaded, run/tasks/services being started, etc.  By default Finit
+is now silent, but progress can still be enabled at build-time using:
+
+    configure --enable-progress
+
+or at boot from the kernel cmdline using the boot parameter `splash`:
+
+```shell
+append="init=/sbin/finit splash"
+```
+
+For a really nice boot, add `quiet` as well.  This silences the output
+from the kernel, leaving only warnings and errors.  For other kernel
+command line parameters, see [doc/build.md](doc/build.md#recovery).
+
+
 Runparts & /etc/rc.local
 ------------------------
 
