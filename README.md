@@ -12,6 +12,7 @@
 * [Commands & Status](#commands--status)
 * [Building](doc/build.md#building)
   * [Running](doc/build.md#running)
+  * [Recovery](doc/build.md#recovery)
   * [Debugging](doc/build.md#debugging)
 * [Requirements](#requirements)
 * [Origin & References](#origin--references)

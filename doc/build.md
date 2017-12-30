@@ -124,6 +124,24 @@ append="init=/sbin/finit"
 Remember to also set up an initial `/etc/finit.conf` before rebooting!
 
 
+Recovery
+--------
+
+To rescue a system with Finit, append the following to the kernel
+command line:
+
+```shell
+append="init=/sbin/finit rescue"
+```
+
+This tells Finit to start in a very limited recovery mode, no services
+are loaded, no filesystems are mounted or checked, and no networking is
+enabled.  The default Finit rescue mode configuration is installed into
+`/lib/finit/rescue.conf`, which can be safely removed or changed.
+
+By default the a root shell, without login, is started.
+
+
 Debugging
 ---------
 
