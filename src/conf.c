@@ -76,10 +76,10 @@ void conf_parse_cmdline(void)
 		cmdline = NULL;
 
 		/* Catches finit_debug (deprecated), --debug, and debug */
-		if (strstr(tok, "debug"))
+		if (string_compare(tok, "debug"))
 			dbg = 1;
 
-		if (strstr(tok, "rescue") || strstr(tok, "recover"))
+		if (string_compare(tok, "rescue") || string_compare(tok, "recover"))
 			rescue = 1;
 	}
 	fclose(fp);
