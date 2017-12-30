@@ -96,6 +96,7 @@ extern int    wdogpid;
 extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;
+extern int    rescue;
 extern char  *rcsd;
 extern char  *sdown;
 extern char  *network;

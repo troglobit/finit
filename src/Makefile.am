@@ -58,6 +58,7 @@ REBOOT_LNKS        = shutdown halt poweroff suspend
 
 # Hook in install to add finit and reboot symlink(s)
 install-exec-hook:
+	@$(INSTALL_DATA) $(srcdir)/rescue.conf $(DESTDIR)$(pkglibdir)
 	@for file in $(INIT_LNKS); do				\
 		lnk=$(DESTDIR)$(sbindir)/$$file;		\
 		if [ -e $$lnk ]; then				\
@@ -80,6 +81,7 @@ install-exec-hook:
 	fi
 
 uninstall-hook:
+	@$(RM) $(DESTDIR)$(pkglibdir)/rescue.conf
 	@for file in $(INIT_LNKS); do				\
 		lnk=`readlink $(DESTDIR)$(sbindir)/$$file`;	\
 		if [ "$$lnk" != "finit" ]; then			\

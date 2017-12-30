@@ -53,6 +53,7 @@ int   wdogpid   = 0;		/* No watchdog by default */
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
+int   rescue    = 0;		/* rescue mode from kernel cmdline */
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
@@ -262,18 +263,20 @@ static void finalize(void)
 	/*
 	 * Network stuff
 	 */
-	_d("Setting up networking ...");
-	networking();
-	umask(022);
+	if (!rescue) {
+		_d("Setting up networking ...");
+		networking();
 
-	/* Hooks that rely on loopback, or basic networking being up. */
-	_d("Calling all network up hooks ...");
-	plugin_run_hooks(HOOK_NETWORK_UP);
+		/* Hooks that rely on loopback, or basic networking being up. */
+		_d("Calling all network up hooks ...");
+		plugin_run_hooks(HOOK_NETWORK_UP);
+	}
+	umask(022);
 
 	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
-	if (runparts && fisdir(runparts)) {
+	if (runparts && fisdir(runparts) && !rescue) {
 		_d("Running startup scripts in %s ...", runparts);
 		run_parts(runparts, NULL);
 		if (conf_any_change())
@@ -296,7 +299,7 @@ static void finalize(void)
 	service_step_all(SVC_TYPE_ANY);
 
 	/* Convenient SysV compat for when you just don't care ... */
-	if (!access(FINIT_RC_LOCAL, X_OK)) {
+	if (!access(FINIT_RC_LOCAL, X_OK) && !rescue) {
 		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
 		if (conf_any_change())
 			service_reload_dynamic();
@@ -385,7 +388,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Check file filesystems in /etc/fstab
 	 */
-	for (int pass = 1; pass < 10; pass++) {
+	for (int pass = 1; pass < 10 && !rescue; pass++) {
 		if (fsck(pass))
 			break;
 	}
@@ -479,12 +482,14 @@ int main(int argc, char* argv[])
 	/*
 	 * Mount filesystems
 	 */
+	if (!rescue) {
 #ifdef REMOUNT_ROOTFS
-	run("mount -n -o remount,rw /");
+		run("mount -n -o remount,rw /");
 #endif
 #ifdef SYSROOT
-	mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+		mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
+	}
 
 	/* Debian has this little script to copy generated rules while the system was read-only */
 	if (fexist("/lib/udev/udev-finish"))
@@ -493,15 +498,17 @@ int main(int argc, char* argv[])
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
 
-	_d("Root FS up, calling hooks ...");
-	plugin_run_hooks(HOOK_ROOTFS_UP);
+	if (!rescue) {
+		_d("Root FS up, calling hooks ...");
+		plugin_run_hooks(HOOK_ROOTFS_UP);
 
-	umask(0);
-	if (run_interactive("mount -na", "Mounting filesystems"))
-		plugin_run_hooks(HOOK_MOUNT_ERROR);
+		umask(0);
+		if (run_interactive("mount -na", "Mounting filesystems"))
+			plugin_run_hooks(HOOK_MOUNT_ERROR);
 
-	run("swapon -ea");
-	umask(0022);
+		run("swapon -ea");
+		umask(0022);
+	}
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
@@ -512,8 +519,10 @@ int main(int argc, char* argv[])
 	 */
 	conf_monitor(&loop);
 
-	_d("Base FS up, calling hooks ...");
-	plugin_run_hooks(HOOK_BASEFS_UP);
+	if (!rescue) {
+		_d("Base FS up, calling hooks ...");
+		plugin_run_hooks(HOOK_BASEFS_UP);
+	}
 
 	/*
 	 * Initalize state machine and start all bootstrap tasks

@@ -217,6 +217,9 @@ AC_EXPAND_DIR(plugin_path, "$libdir/finit/plugins")
 AC_SUBST(plugin_path)
 AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])
 
+AC_EXPAND_DIR(rescue_conf, "$libdir/finit/rescue.conf")
+AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
+
 # Generate all files
 AC_OUTPUT
 

@@ -78,6 +78,9 @@ void conf_parse_cmdline(void)
 		/* Catches finit_debug (deprecated), --debug, and debug */
 		if (strstr(tok, "debug"))
 			dbg = 1;
+
+		if (strstr(tok, "rescue") || strstr(tok, "recover"))
+			rescue = 1;
 	}
 	fclose(fp);
 
@@ -551,6 +554,19 @@ int conf_reload(void)
 	svc_mark_dynamic();
 	tty_mark();
 
+	if (rescue) {
+		int rc;
+		char line[80] = "tty [12345] @console noclear nologin";
+
+		/* If rescue.conf is missing, fall back to a root shell */
+		rc = parse_conf(RESCUE_CONF);
+		if (rc)
+			tty_register(line, global_rlimit, NULL);
+
+		print(rc, "Entering rescue mode");
+		goto done;
+	}
+
 	/* First, read /etc/finit.conf */
 	parse_conf(FINIT_CONF);
 
@@ -794,6 +810,10 @@ static int add_watcher(uev_ctx_t *ctx, uev_t *w, char *path, uint32_t opt)
 int conf_monitor(uev_ctx_t *ctx)
 {
 	int rc = 0;
+
+	/* Skip second run, when called from finit.c in rescue mode */
+	if (ctx && rescue)
+		return 0;
 
 	/*
 	 * If only one watcher fails, that's OK.  A user may have only
