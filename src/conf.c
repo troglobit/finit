@@ -516,7 +516,7 @@ int conf_reload(void)
 	num = scandir(rcsd, &e, NULL, alphasort);
 	if (num < 0) {
 		_d("Skipping %s, no files found ...", rcsd);
-		return 0;
+		goto done;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -566,6 +566,7 @@ int conf_reload(void)
 		free(e[num]);
 	free(e);
 
+done:
 	/* Drop record of all .conf changes */
 	drop_changes();
 
