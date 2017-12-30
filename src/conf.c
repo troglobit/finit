@@ -76,6 +76,49 @@ void conf_parse_cmdline(void)
 	log_init(dbg);
 }
 
+static int kmod_exists(char *mod)
+{
+	int found = 0;
+	FILE *fp;
+	char buf[256];
+	size_t len;
+
+	for (len = 0; mod[len]; len++) {
+		if (mod[len] == ' ' || mod[len] == '\t')
+			break;
+	}
+
+	fp = fopen("/proc/modules", "r");
+	if (!fp)
+		return 0;
+
+	while (!found && (fgets(buf, sizeof(buf), fp))) {
+		if (!strncmp(buf, mod, len))
+			found = 1;
+	}
+	fclose(fp);
+
+	return found;
+}
+
+static void kmod_load(char *line)
+{
+	char *mod;
+	char cmd[CMD_SIZE];
+
+	if (runlevel != 0)
+		return;
+
+	mod = strip_line(line);
+	if (kmod_exists(mod))
+		return;
+
+	strcpy(cmd, "modprobe ");
+	strlcat(cmd, mod, sizeof(cmd));
+
+	run_interactive(cmd, "Loading kernel module %s", mod);
+}
+
 /* Convert optional "[!123456789S]" string into a bitmask */
 int conf_parse_runlevels(char *runlevels)
 {
@@ -349,7 +392,6 @@ static void parse_static(char *line)
 static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 {
 	char *x;
-	char cmd[CMD_SIZE];
 
 	/* Skip comments, i.e. lines beginning with # */
 	if (MATCH_CMD(line, "#", x))
@@ -357,16 +399,7 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 
 	/* Kernel module to load at bootstrap */
 	if (MATCH_CMD(line, "module ", x)) {
-		char *mod;
-
-		if (runlevel != 0)
-			return;
-
-		mod = strip_line(x);
-		strcpy(cmd, "modprobe ");
-		strlcat(cmd, mod, sizeof(cmd));
-		run_interactive(cmd, "Loading kernel module %s", mod);
-
+		kmod_load(x);
 		return;
 	}
 
