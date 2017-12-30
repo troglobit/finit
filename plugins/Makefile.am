@@ -1,3 +1,4 @@
+pkglibdir           = $(plugin_path)
 AM_LDFLAGS          = -module -avoid-version -shared
 AM_CFLAGS           = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 AM_CPPFLAGS         = -I$(top_srcdir)/src -U_FORTIFY_SOURCE

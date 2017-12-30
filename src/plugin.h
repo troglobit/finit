@@ -24,6 +24,7 @@
 #ifndef FINIT_PLUGIN_H_
 #define FINIT_PLUGIN_H_
 
+#include <config.h>
 #include <uev/uev.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 

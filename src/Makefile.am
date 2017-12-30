@@ -4,7 +4,6 @@ if STATIC
 AM_CPPFLAGS       += -DENABLE_STATIC
 AM_LDFLAGS         = -static-libtool-libs
 else
-AM_CPPFLAGS       += -DPLUGIN_PATH=\"$(pkglibdir)\"
 AM_LDFLAGS         = -export-dynamic
 endif
 

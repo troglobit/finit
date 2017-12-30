@@ -93,11 +93,6 @@ AC_ARG_WITH(fifo,
         AS_HELP_STRING([--with-fifo=FIFO], [FIFO for init/telinit clients, default /var/run/initctl]),
 	[fifo=$withval], [fifo=$localstatedir/run/initctl])
 
-AC_ARG_WITH(plugindir,
-        AS_HELP_STRING([--with-plugindir=DIR], [Finit plugin directory, default /lib/finit/plugins]),
-	[pkglibdir=$withval], [pkglibdir=$libdir/finit/plugins])
-AC_SUBST([pkglibdir])
-
 AC_ARG_WITH(config,
         AS_HELP_STRING([--with-config=CONFIG], [Finit bootstrap config file, default /etc/finit.conf]),
 	[conf=$withval], [conf=$sysconfdir/finit.conf])
@@ -214,6 +209,14 @@ AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
 
+# Override default libdir, used for plugins and rescue.conf
+#pkglibdir=$libdir/finit
+#AC_SUBST(pkglibdir)
+#AC_EXPAND_DIR(pkglibdir, "$libdir/finit")
+AC_EXPAND_DIR(plugin_path, "$libdir/finit/plugins")
+AC_SUBST(plugin_path)
+AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])
+
 # Generate all files
 AC_OUTPUT
 
@@ -227,6 +230,7 @@ cat <<EOF
   FIFO path.............: $fifo_path
   Finit config file.....: $conf_path
   Finit config.d path...: $rcsd_path
+  Finit plugin path.....: $plugin_path
   Compat rc.local path..: $rclocal_path
   Random seed path......: $random_path
   C Compiler............: $CC $CFLAGS $CPPFLAGS $LDFLAGS $LIBS
