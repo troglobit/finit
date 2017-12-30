@@ -252,13 +252,13 @@ char *lim2str(struct rlimit *rlim)
 	if (RLIM_INFINITY == rlim->rlim_cur)
 		sprintf(tmp, "unlimited, ");
 	else
-		sprintf(tmp, "%lu, ", rlim->rlim_cur);
+		sprintf(tmp, "%llu, ", (unsigned long long)rlim->rlim_cur);
 	strcat(buf, tmp);
 
 	if (RLIM_INFINITY == rlim->rlim_max)
 		sprintf(tmp, "unlimited, ");
 	else
-		sprintf(tmp, "%lu, ", rlim->rlim_max);
+		sprintf(tmp, "%llu, ", (unsigned long long)rlim->rlim_max);
 	strcat(buf, tmp);
 
 	return buf;
