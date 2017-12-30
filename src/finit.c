@@ -334,19 +334,6 @@ int main(int argc, char* argv[])
 	if (getpid() != 1)
 		return client(argc, argv);
 
-	/* Set up canvas */
-	screen_init();
-
-	/*
-	 * In case of emergency.
-	 */
-	emergency_shell();
-
-	/*
-	 * Initial setup of signals, ignore all until we're up.
-	 */
-	sig_init();
-
 	/*
 	 * Initalize event context.
 	 */
@@ -373,6 +360,20 @@ int main(int argc, char* argv[])
 	 * Also calls log_init() to set correct log level
 	 */
 	conf_parse_cmdline();
+
+	/* Set up canvas */
+	if (!rescue)
+		screen_init();
+
+	/*
+	 * In case of emergency.
+	 */
+	emergency_shell();
+
+	/*
+	 * Initial setup of signals, ignore all until we're up.
+	 */
+	sig_init();
 
 	/*
 	 * Load plugins early, finit.conf may contain references to
