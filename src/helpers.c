@@ -232,6 +232,10 @@ void networking(int updown)
 {
 	FILE *fp;
 
+	/* No need to report errors if network is already down */
+	if (!prevlevel && !updown)
+		return;
+
 	if (updown)
 		_d("Setting up networking ...");
 	else
