@@ -93,9 +93,10 @@ uninstall-hook:
 		echo "Non-finit reboot, skipping uninstall.";	\
 	else							\
 		for file in $(REBOOT_LNKS); do			\
-			if [ "`readlink $$file`" != "reboot" ]; \
+		        link=$(DESTDIR)$(sbindir)/$$file;	\
+			if [ "`readlink $$link`" != "reboot" ]; \
 				then continue; 			\
 			fi;					\
-			$(RM) $(DESTDIR)$(sbindir)/$$file;	\
+			$(RM) $$link;				\
 		done;						\
 	fi
