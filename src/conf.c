@@ -254,21 +254,21 @@ char *rlim2str(int rlim)
 
 char *lim2str(struct rlimit *rlim)
 {
-	char tmp[10];
+	char tmp[20];
 	static char buf[42];
 
 	memset(buf, 0, sizeof(buf));
 	if (RLIM_INFINITY == rlim->rlim_cur)
-		sprintf(tmp, "unlimited, ");
+		snprintf(tmp, sizeof(tmp), "unlimited, ");
 	else
-		sprintf(tmp, "%llu, ", (unsigned long long)rlim->rlim_cur);
-	strcat(buf, tmp);
+		snprintf(tmp, sizeof(tmp), "%llu, ", (unsigned long long)rlim->rlim_cur);
+	strlcat(buf, tmp, sizeof(buf));
 
 	if (RLIM_INFINITY == rlim->rlim_max)
-		sprintf(tmp, "unlimited, ");
+		snprintf(tmp, sizeof(tmp), "unlimited, ");
 	else
-		sprintf(tmp, "%llu, ", (unsigned long long)rlim->rlim_max);
-	strcat(buf, tmp);
+		snprintf(tmp, sizeof(tmp), "%llu, ", (unsigned long long)rlim->rlim_max);
+	strlcat(buf, tmp, sizeof(buf));
 
 	return buf;
 }
