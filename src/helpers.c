@@ -184,6 +184,9 @@ void set_hostname(char **hostname)
 {
 	FILE *fp;
 
+	if (rescue)
+		goto done;
+
 	fp = fopen("/etc/hostname", "r");
 	if (fp) {
 		struct stat st;
@@ -204,6 +207,7 @@ void set_hostname(char **hostname)
 		fclose(fp);
 	}
 
+done:
 	if (*hostname)
 		sethostname(*hostname, strlen(*hostname));
 }
