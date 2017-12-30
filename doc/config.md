@@ -48,6 +48,38 @@ On `initctl reload` the following is checked for all services:
 For more info on the different states of a service, see the separate
 document [Finit Services](service.md).
 
+### Execute pre commands for a service
+
+If your service requires to run additional commands that are executed before
+the service is actually started (something like systemds `ExecStartPre`) you
+can use a wrapper shell script which runs the additional commands before
+executing the service.
+
+The Finit service .conf file can be put into `/etc/finit.d/available` so you
+can control the service using `initctl`. Just place in the service .conf file
+the path to the wrapper shell script, e.g. if the wrapper is located in
+`/etc/start.d`:
+
+**Example:**
+`/etc/finit.d/available/program.conf`:
+```conf
+service [235] <!> /etc/start.d/program -- Example Program
+```
+**Example:**
+`/etc/start.d/program:`
+```shell
+#!/bin/sh
+
+# Prepare the command line options
+OPTIONS="-u $(cat /etc/username)"
+
+# Execute the program
+exec /usr/bin/program $OPTIONS
+```
+
+*Note, that the example sets `<!>` to denote that it doesn't support SIGHUP. That
+way Finit will stop/start such the service instead of sending SIGHUP at
+restart/reload.*
 
 Syntax
 ------
