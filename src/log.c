@@ -44,6 +44,10 @@ void log_init(int dbg)
 		loglevel = LOG_DEBUG;
 	else
 		loglevel = LOG_NOTICE;
+
+	/* User override from kernel cmdline */
+	if (splash)
+		silent = 0;
 }
 
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */

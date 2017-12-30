@@ -84,6 +84,9 @@ void conf_parse_cmdline(void)
 
 		if (string_compare(tok, "single") || string_compare(tok, "S"))
 			single = 1;
+
+		if (string_compare(tok, "splash"))
+			splash = 1;
 	}
 	fclose(fp);
 
