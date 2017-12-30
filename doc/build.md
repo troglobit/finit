@@ -127,11 +127,11 @@ Remember to also set up an initial `/etc/finit.conf` before rebooting!
 Debugging
 ---------
 
-Add `finit_debug`, or `--debug`, to the kernel command line to enable
-debug messages.
+Edit, or append to, the kernel command line: remove `quiet` to enable
+kernel messages and add `debug` to enable Finit debug messages.
 
 ```shell
-append="init=/sbin/finit --debug"
+append="init=/sbin/finit debug"
 ```
 
 To debug startup issues, in particular issues with getty/login, try

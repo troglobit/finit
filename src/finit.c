@@ -187,7 +187,7 @@ static void emergency_shell(void)
 		}
 
 		fprintf(stderr, "\n=> Embarrassingly, Finit has crashed.  Check /dev/kmsg for details.\n");
-		fprintf(stderr,   "=> To debug, add '--debug' to the kernel command line.\n\n");
+		fprintf(stderr,   "=> To debug, add 'debug' to the kernel command line.\n\n");
 
 		/*
 		 * Become session leader and set controlling TTY

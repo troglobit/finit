@@ -5,7 +5,7 @@ Bootstrap
 2. Set up initial signal handlers
 3. Set up default $PATH early
 4. Mount `/proc` and `/sys`
-5. Check kernel command line for `--debug` to figure out log level
+5. Check kernel command line for `debug` to figure out log level
 6. Load all `.so` plugins
 7. Call `fsck` on file systems listed in `/etc/fstab`
 8. Populate `/dev` using either udev or mdev, depending on system type

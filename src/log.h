@@ -33,7 +33,7 @@
  * errors and debug messages.  For all other user messages, see logit()
  *
  * The default log level is LOG_NOTICE.  To toggle LOG_DEBUG messages,
- * use `initctl debug` or add `--debug` to the kernel cmdline.
+ * use `initctl debug` or add `debug` to the kernel cmdline.
  */
 #define  _d(fmt, args...) logit(LOG_DEBUG,   "%s():" fmt "\n", __func__, ##args)
 #define  _w(fmt, args...) logit(LOG_WARNING, "%s():" fmt "\n", __func__, ##args)
