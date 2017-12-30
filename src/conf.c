@@ -81,6 +81,9 @@ void conf_parse_cmdline(void)
 
 		if (string_compare(tok, "rescue") || string_compare(tok, "recover"))
 			rescue = 1;
+
+		if (string_compare(tok, "single") || string_compare(tok, "S"))
+			single = 1;
 	}
 	fclose(fp);
 
@@ -627,6 +630,10 @@ int conf_reload(void)
 done:
 	/* Drop record of all .conf changes */
 	drop_changes();
+
+	/* Override configured runlevel, user said 'S' on /proc/cmdline */
+	if (BOOTSTRAP && single)
+		cfglevel = 1;
 
 	/*
 	 * Set host name, from %DEFHOST, *.conf or /etc/hostname.  The

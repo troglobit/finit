@@ -54,6 +54,7 @@ int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
 int   rescue    = 0;		/* rescue mode from kernel cmdline */
+int   single    = 0;		/* single user mode from kernel cmdline */
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;

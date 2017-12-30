@@ -97,6 +97,7 @@ extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;
 extern int    rescue;
+extern int    single;
 extern char  *rcsd;
 extern char  *sdown;
 extern char  *network;
