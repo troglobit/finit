@@ -212,6 +212,77 @@ done:
 		sethostname(*hostname, strlen(*hostname));
 }
 
+static void ifup(char *ifname, int updown)
+{
+	char cmd[80];
+
+	if (updown) {
+		snprintf(cmd, sizeof(cmd), "ifup %s", ifname);
+		run_interactive(cmd, "Bringing up interface %s", ifname);
+	} else {
+		snprintf(cmd, sizeof(cmd), "ifdown -f %s", ifname);
+		run_interactive(cmd, "Taking down interface %s", ifname);
+	}
+}
+
+/*
+ * Bring up networking, but only if not single-user or rescue mode
+ */
+void networking(int updown)
+{
+	FILE *fp;
+
+	if (updown)
+		_d("Setting up networking ...");
+	else
+		_d("Taking down networking ...");
+
+	/* Run user network start script if enabled */
+	if (updown && network) {
+		run_interactive(network, "Starting networking: %s", network);
+		goto done;
+	}
+
+	/* Debian/Ubuntu/Busybox/RH/Suse */
+	if (!whichp("ifup"))
+		goto done;
+
+	fp = fopen("/etc/network/interfaces", "r");
+	if (fp) {
+		char buf[160];
+
+		/* Bring up, or down, all 'auto' interfaces */
+		while (fgets(buf, sizeof(buf), fp)) {
+			char *line, *ifname = NULL;
+
+			chomp(buf);
+			line = strip_line(buf);
+
+			if (!strncmp(line, "auto", 4))
+				ifname = &line[5];
+			if (!strncmp(line, "allow-hotplug", 13))
+				ifname = &line[14];
+
+			if (!ifname)
+				continue;
+
+			ifup(ifname, updown);
+		}
+
+		fclose(fp);
+	}
+
+done:
+	/* Fall back to bring up at least loopback */
+	ifconfig("lo", "127.0.0.1", "255.0.0.0", updown);
+
+	/* Hooks that rely on loopback, or basic networking being up. */
+	if (updown) {
+		_d("Calling all network up hooks ...");
+		plugin_run_hooks(HOOK_NETWORK_UP);
+	}
+}
+
 #ifndef HAVE_GETFSENT
 static lfile_t *fstab = NULL;
 

@@ -68,6 +68,7 @@ int     print_result    (int fail);
 int     getuser         (char *username, char **home);
 int     getgroup        (char *group);
 void    set_hostname    (char **hostname);
+void    networking      (int updown);
 
 int     complete        (char *cmd, int pid);
 int     run             (char *cmd);

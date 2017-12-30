@@ -157,54 +157,6 @@ static int fsck(int pass)
 	return 0;
 }
 
-static void networking(void)
-{
-	FILE *fp;
-
-	/* Run user network start script if enabled */
-	if (network) {
-		run_interactive(network, "Starting networking: %s", network);
-		goto done;
-	}
-
-	/* Debian/Ubuntu/Busybox/RH/Suse */
-	if (!whichp("ifup"))
-		goto done;
-
-	fp = fopen("/etc/network/interfaces", "r");
-	if (fp) {
-		int i = 0;
-		char buf[160];
-
-		/* Bring up all 'auto' interfaces */
-		while (fgets(buf, sizeof(buf), fp)) {
-			char cmd[80];
-			char *line, *ifname = NULL;
-
-			chomp(buf);
-			line = strip_line(buf);
-
-			if (!strncmp(line, "auto", 4))
-				ifname = &line[5];
-			if (!strncmp(line, "allow-hotplug", 13))
-				ifname = &line[14];
-
-			if (!ifname)
-				continue;
-
-			snprintf(cmd, 80, "ifup %s", ifname);
-			run_interactive(cmd, "Bringing up interface %s", ifname);
-			i++;
-		}
-
-		fclose(fp);
-	}
-
-done:
-	/* Fall back to bring up at least loopback */
-	ifconfig("lo", "127.0.0.1", "255.0.0.0", 1);
-}
-
 /*
  * If everything goes south we can use this to give the operator an
  * emergency shell to debug the problem -- Finit should not crash!
@@ -261,19 +213,6 @@ static void emergency_shell(void)
  */
 static void finalize(void)
 {
-	/*
-	 * Network stuff
-	 */
-	if (!rescue) {
-		_d("Setting up networking ...");
-		networking();
-
-		/* Hooks that rely on loopback, or basic networking being up. */
-		_d("Calling all network up hooks ...");
-		plugin_run_hooks(HOOK_NETWORK_UP);
-	}
-	umask(022);
-
 	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
@@ -535,6 +474,7 @@ int main(int argc, char* argv[])
 
 	/* Start new initctl API responder */
 	api_init(&loop);
+	umask(022);
 
 	/*
 	 * Wait for all SVC_TYPE_RUNTASK to have completed their work in

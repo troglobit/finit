@@ -468,8 +468,14 @@ void service_reload_dynamic(void)
  */
 void service_runlevel(int newlevel)
 {
+	if (!rescue && runlevel <= 1 && newlevel > 1)
+		networking(1);
+
 	sm_set_runlevel(&sm, newlevel);
 	sm_step(&sm);
+
+	if (!rescue && runlevel <= 1)
+		networking(0);
 }
 
 /**
