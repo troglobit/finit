@@ -423,6 +423,7 @@ Commands:
   start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
   stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
   restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
+  status   <JOB|NAME>[:ID]  Show service status, by job# or name
   status | show             Show status of services, default command
   
   runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot

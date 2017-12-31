@@ -537,6 +537,7 @@ static int usage(int rc)
 		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
 		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
+		"  status   <JOB|NAME>[:ID]  Show service status, by job# or name\n"
 		"  status | show             Show status of services, default command\n"
 		"\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
