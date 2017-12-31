@@ -1,0 +1,33 @@
+#!/bin/sh
+
+JOB=$1
+CMD=$2
+
+usage() {
+    echo "Usage: service [job# | name] <stop | start | restart | status | show>"
+    exit 1
+}
+
+if [ $# -eq 0 ]; then
+    initctl show
+    exit 0
+fi
+
+case $CMD in
+    stop)
+	;;
+    start)
+	;;
+    restart)
+	;;
+    status)
+	;;
+    show)
+	;;
+    *)
+	usage
+	;;
+esac
+
+initctl $2 $1
+

@@ -1,5 +1,6 @@
 ACLOCAL_AMFLAGS    = -I m4
 SUBDIRS            = plugins src
+bin_SCRIPT         = service
 doc_DATA           = README.md LICENSE contrib/finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
 
