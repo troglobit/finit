@@ -23,8 +23,11 @@
 
 #include "config.h"
 #include <ctype.h>		/* isprint() */
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/sysinfo.h>	/* sysinfo() */
+#include <lite/lite.h>		/* strlcat() */
 #include "util.h"
 
 int   screen_rows  = 24;
@@ -52,6 +55,57 @@ void do_sleep(unsigned int sec)
 static int isallowed(int ch)
 {
 	return isprint(ch);
+}
+
+/* Seconds since boot, from sysinfo() */
+long jiffies(void)
+{
+	struct sysinfo si;
+
+	if (!sysinfo(&si))
+		return si.uptime;
+
+	return 0;
+}
+
+char *uptime(long secs, char *buf, size_t len)
+{
+	long mins, hours, days, years;
+	char y[11] = "", d[9] = "", h[9] = "", m[9] = "", s[9] = "";
+
+	if (!buf) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	years = secs / 31556926;
+	secs  = secs % 31556926;
+	days  = secs / 86400;
+	secs  = secs % 86400;
+	hours = secs / 3600;
+	secs  = secs % 3600;
+	mins  = secs / 60;
+	secs  = secs % 60;
+
+	if (years)
+		snprintf(y, sizeof(y), "%ld year", years);
+	if (days)
+		snprintf(d, sizeof(d), "%ld day", days);
+	if (hours)
+		snprintf(h, sizeof(h), "%ld hour", hours);
+	if (mins)
+		snprintf(m, sizeof(m), "%ld min", mins);
+	if (secs)
+		snprintf(s, sizeof(s), "%ld sec", secs);
+
+	snprintf(buf, len, "%s%s%s%s%s%s%s%s%s",
+		 y, years ? " " : "",
+		 d, days  ? " " : "",
+		 h, hours ? " " : "",
+		 m, mins  ? " " : "",
+		 s);
+
+	return buf;
 }
 
 /* Sanitize user input, make sure to NUL terminate. */
