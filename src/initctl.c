@@ -411,6 +411,9 @@ static int show_status(char *arg)
 	runlevel = runlevel_get(NULL);
 
 	if (arg && arg[0]) {
+		long now = jiffies();
+		char buf[42] = "N/A";
+
 		svc = client_svc_find(arg);
 		if (!svc)
 			return 1;
@@ -418,6 +421,7 @@ static int show_status(char *arg)
 		printf("Service     : %s\n", svc->cmd);
 		printf("Description : %s\n", svc->desc);
 		printf("PID         : %d\n", svc->pid);
+		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
 		printf("Status      : %s\n", svc_status(svc));
 		printf("\n");
