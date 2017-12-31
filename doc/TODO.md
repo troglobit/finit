@@ -29,7 +29,6 @@ General
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
-* Add `IFF_RUNNING` support to netlink plugin along `IFF_UP`
 * Implement `initctl stop|start|restart|reload|status <SVC>` and
   `service <SVC> stop|start|restart|reload|status` on top
 * Add support for JSON output, or similar, from `initctl show`, e.g.
