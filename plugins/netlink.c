@@ -118,44 +118,36 @@ static void nl_link(struct nlmsghdr *nlmsg)
 			switch (nlmsg->nlmsg_type) {
 			case RTM_NEWLINK:
 				/*
-				 * New interface has appearad, or interface flags has changed.
+				 * New interface has appeared, or interface flags has changed.
 				 * Check ifi_flags here to see if the interface is UP/DOWN
 				 */
-				_d("%s: New link, ifi_change 0x%x", ifname, i->ifi_change);
-				if (i->ifi_change & IFF_UP) {
-					snprintf(msg, sizeof(msg), "net/%s/up", ifname);
+				_d("%s: New link, flags 0x%x, change 0x%x", ifname, i->ifi_flags, i->ifi_change);
+				snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+				cond_set(msg);
 
-					if (i->ifi_flags & IFF_UP)
-						cond_set(msg);
-					else
-						cond_clear(msg);
-
-					if (string_compare("lo", ifname)) {
-						snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
-						cond_set(msg);
-					}
-				} else if (i->ifi_change & IFF_RUNNING) {
-					snprintf(msg, sizeof(msg), "net/%s/running", ifname);
-
-					if (i->ifi_flags & IFF_RUNNING)
-						cond_set(msg);
-					else
-						cond_clear(msg);
-
-					if (string_compare("lo", ifname)) {
-						snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
-						cond_set(msg);
-					}
-				} else {
-					snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+				snprintf(msg, sizeof(msg), "net/%s/up", ifname);
+				if (i->ifi_flags & IFF_UP)
 					cond_set(msg);
-				}
+				else
+					cond_clear(msg);
+
+				snprintf(msg, sizeof(msg), "net/%s/running", ifname);
+				if (i->ifi_flags & IFF_RUNNING)
+					cond_set(msg);
+				else
+					cond_clear(msg);
 				break;
 
 			case RTM_DELLINK:
-				/* NOTE: Interface has dissapeared, not link down ... */
-				_d("%s: Delete link", ifname);
+				/* NOTE: Interface has disappeared, not link down ... */
+				_e("%s: Delete link", ifname);
 				snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+				cond_clear(msg);
+
+				snprintf(msg, sizeof(msg), "net/%s/up", ifname);
+				cond_clear(msg);
+
+				snprintf(msg, sizeof(msg), "net/%s/running", ifname);
 				cond_clear(msg);
 				break;
 
