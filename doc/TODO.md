@@ -21,18 +21,15 @@ can also be used.
 General
 -------
 
-* Add support for timed shutdown in Finit, including cancelled shutdown.
+* Add support for timed shutdown in Finit, including cancelled shutdown,
+  possibly using an at-job, see [crond section](#Crond) below
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
-* Implement `initctl stop|start|restart|reload|status <SVC>` and
-  `service <SVC> stop|start|restart|reload|status` on top
 * Add support for JSON output, or similar, from `initctl show`, e.g.
   `initctl show --json`
-* Improve `initctl show SVC` output.  Add service uptime, last ten SVC
-  logs/history (historian), etc. Similar to `systemctl show SVC`
 * [Solaris SMF][] (Service Management Facility) has some interesting
   features that may be well worth looking into adopting:
   
