@@ -429,11 +429,7 @@ error:
 
 int api_exit(void)
 {
-	if (runlevel == 0 || runlevel == 6)
-		return close(api_watcher.fd);
-
-	return  shutdown(api_watcher.fd, SHUT_RDWR) ||
-		close(api_watcher.fd);
+	return close(api_watcher.fd);
 }
 
 /**
