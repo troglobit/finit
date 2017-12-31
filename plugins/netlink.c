@@ -134,6 +134,18 @@ static void nl_link(struct nlmsghdr *nlmsg)
 						snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
 						cond_set(msg);
 					}
+				} else if (i->ifi_change & IFF_RUNNING) {
+					snprintf(msg, sizeof(msg), "net/%s/running", ifname);
+
+					if (i->ifi_flags & IFF_RUNNING)
+						cond_set(msg);
+					else
+						cond_clear(msg);
+
+					if (string_compare("lo", ifname)) {
+						snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
+						cond_set(msg);
+					}
 				} else {
 					snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
 					cond_set(msg);
