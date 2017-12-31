@@ -95,10 +95,11 @@ Built-in conditions:
 - `net/route/default`
 - `net/<IFNAME>/exist`
 - `net/<IFNAME>/up`
+- `net/<IFNAME>/running`
 
-**Note:** `up` means administratively up, the interface flag `IFF_UP`,
-  not link up, `IFF_RUNNING`.  This latter conditions is currently not
-  implemented by the `plugins/netlink.c` plugin.
+**Note:** `up` means administratively up, the interface flag `IFF_UP`.
+  `running` is the `IFF_RUNNING` flag, meaning operatively up.  The
+  difference is that `running` tells if the NIC has link.
 
 
 Debugging
