@@ -79,14 +79,16 @@ system-level timed periodic tasks:
 Proposed syntax:
 
     # Crontab
-    cron @YY-mm-ddTHH:MM [LVLS] /path/to/cmd [ARGS] -- Optional descr
+    cron @SPEC [LVLS] /path/to/cmd [ARGS] -- Optional descr
     
     # One-shot 'at' command
     at @YY-mm-ddTHH:MM [LVLS] /path/to/cmd [ARGS] -- Optional descr
 
-Notice the ISO date in notation.  The runlevels is extra filtering
-sugar.  E.g., if cron service is only allowed in runlevels two or three
-it will not start if system currently is in runlevel four.
+Notice the ISO date in the `at` notation.  The `cron @SPEC` could use
+are mo loose notation, e.g. `@hourly`, `@midnight`, `@daily`, `@weekly`,
+`@reboot`, etc.  The runlevels is extra filtering sugar.  E.g., if cron
+service is only allowed in runlevels two or three it will not start if
+system currently is in runlevel four.
 
 To run a command as another user the `.conf` file must have a that
 owner.  E.g., `/etc/finit.d/extra.conf` may be owned by operator and
