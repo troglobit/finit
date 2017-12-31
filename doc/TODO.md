@@ -22,8 +22,6 @@ General
 -------
 
 * Add support for timed shutdown in Finit, including cancelled shutdown.
-* SysV init and systemd use SIGUSR1 to restart their FIFO/D-Bus.  Add
-  API restart to SIGHUP callback for the same functionality in Finit.
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,

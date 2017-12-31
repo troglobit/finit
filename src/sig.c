@@ -27,6 +27,8 @@
  *
  * SIGHUP
  *      Same effect as init/telinit q, reloads *.conf in /etc/finit.d/
+ *      Also restarts API (initctl) socket, like SysV init and systemd
+ *      does on USR1 with their FIFO/D-Bus.
  *
  * SIGUSR1
  *      Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
@@ -235,6 +237,10 @@ static void sighup_cb(uev_t *w, void *arg, int events)
 		_e("Unrecoverable error in signal watcher");
 		return;
 	}
+
+	/* Restart initctl API domain socket, similar to systemd/SysV init */
+	api_exit();
+	api_init(w->ctx);
 
 	/* INIT_CMD_RELOAD: 'init q', 'initctl reload', and SIGHUP */
 	service_reload_dynamic();
