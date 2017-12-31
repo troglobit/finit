@@ -94,6 +94,17 @@ static void nl_route(struct nlmsghdr *nlmsg)
 	}
 }
 
+static void net_cond_set(char *ifname, char *cond, int set)
+{
+	char msg[MAX_ARG_LEN];
+
+	snprintf(msg, sizeof(msg), "net/%s/%s", ifname, cond);
+	if (set)
+		cond_set(msg);
+	else
+		cond_clear(msg);
+}
+
 static void nl_link(struct nlmsghdr *nlmsg)
 {
 	int la;
@@ -112,8 +123,6 @@ static void nl_link(struct nlmsghdr *nlmsg)
 
 	while (RTA_OK(a, la)) {
 		if (a->rta_type == IFLA_IFNAME) {
-			char msg[MAX_ARG_LEN];
-
 			strlcpy(ifname, RTA_DATA(a), sizeof(ifname));
 			switch (nlmsg->nlmsg_type) {
 			case RTM_NEWLINK:
@@ -122,33 +131,17 @@ static void nl_link(struct nlmsghdr *nlmsg)
 				 * Check ifi_flags here to see if the interface is UP/DOWN
 				 */
 				_d("%s: New link, flags 0x%x, change 0x%x", ifname, i->ifi_flags, i->ifi_change);
-				snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
-				cond_set(msg);
-
-				snprintf(msg, sizeof(msg), "net/%s/up", ifname);
-				if (i->ifi_flags & IFF_UP)
-					cond_set(msg);
-				else
-					cond_clear(msg);
-
-				snprintf(msg, sizeof(msg), "net/%s/running", ifname);
-				if (i->ifi_flags & IFF_RUNNING)
-					cond_set(msg);
-				else
-					cond_clear(msg);
+				net_cond_set(ifname, "exist",   1);
+				net_cond_set(ifname, "up",      i->ifi_flags & IFF_UP);
+				net_cond_set(ifname, "running", i->ifi_flags & IFF_RUNNING);
 				break;
 
 			case RTM_DELLINK:
 				/* NOTE: Interface has disappeared, not link down ... */
-				_e("%s: Delete link", ifname);
-				snprintf(msg, sizeof(msg), "net/%s/exist", ifname);
-				cond_clear(msg);
-
-				snprintf(msg, sizeof(msg), "net/%s/up", ifname);
-				cond_clear(msg);
-
-				snprintf(msg, sizeof(msg), "net/%s/running", ifname);
-				cond_clear(msg);
+				_d("%s: Delete link", ifname);
+				net_cond_set(ifname, "exist",   0);
+				net_cond_set(ifname, "up",      0);
+				net_cond_set(ifname, "running", 0);
 				break;
 
 			case RTM_NEWADDR:
