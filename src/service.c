@@ -41,6 +41,7 @@
 #include "service.h"
 #include "sm.h"
 #include "tty.h"
+#include "util.h"
 #include "utmp-api.h"
 
 #define RESPAWN_MAX    10	/* Prevent endless respawn of faulty services. */
@@ -308,6 +309,7 @@ static int service_start(svc_t *svc)
 	}
 
 	svc->pid = pid;
+	svc->start_time = jiffies();
 
 #ifdef INETD_ENABLED
 	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
@@ -317,7 +319,7 @@ static int service_start(svc_t *svc)
 	if (SVC_TYPE_RUN == svc->type) {
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		if (!svc_clean_bootstrap(svc)) {
-			svc->pid = 0;
+			svc->start_time = svc->pid = 0;
 			svc_set_state(svc, SVC_STOPPING_STATE);
 		}
 	}
@@ -433,7 +435,7 @@ static int service_restart(svc_t *svc)
 
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGHUP", svc->pid, svc->cmd);
-		svc->pid = 0;
+		svc->start_time = svc->pid = 0;
 		return 1;
 	}
 
@@ -783,7 +785,7 @@ void service_monitor(pid_t lost)
 	}
 
 	/* No longer running, update books. */
-	svc->pid = 0;
+	svc->start_time = svc->pid = 0;
 	service_step(svc);
 
 	/* Clean out any bootstrap tasks, they've had their time in the sun. */
