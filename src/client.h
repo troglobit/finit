@@ -27,11 +27,6 @@
 #include "finit.h"
 #include "svc.h"
 
-typedef struct {
-	char  *cmd;
-	int  (*cb)(char *arg);
-} command_t;
-
 int    client_connect      (void);
 int    client_disconnect   (void);
 

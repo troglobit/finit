@@ -43,6 +43,11 @@
 
 #define _PATH_COND _PATH_VARRUN "finit/cond/"
 
+struct command {
+	char  *cmd;
+	int  (*cb)(char *arg);
+};
+
 int verbose  = 0;
 int runlevel = 0;
 
@@ -272,7 +277,7 @@ static int do_cond(char *cmd)
 {
 	int c;
 	char *arg;
-	command_t command[] = {
+	struct command command[] = {
 		{ "show",    do_cond_show  },
 		{ "set",     do_cond_set   },
 		{ "clear",   do_cond_clear },
@@ -564,7 +569,7 @@ int main(int argc, char *argv[])
 {
 	int c;
 	char *cmd, arg[120];
-	command_t command[] = {
+	struct command command[] = {
 		{ "debug",    toggle_debug },
 		{ "help",     do_help      },
 		{ "version",  show_version },
