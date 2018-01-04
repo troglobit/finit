@@ -35,6 +35,15 @@ static int debug    = 0;
 static int silent   = SILENT_MODE;	/* Completely silent, including boot */
 static int loglevel = LOG_NOTICE;
 
+static void muffler(void)
+{
+	silent = SILENT_MODE;
+
+	/* User override from kernel cmdline */
+	if (splash)
+		silent = 0;
+}
+
 void log_init(int dbg)
 {
 	if (dbg)
@@ -45,15 +54,13 @@ void log_init(int dbg)
 	else
 		loglevel = LOG_NOTICE;
 
-	/* User override from kernel cmdline */
-	if (splash)
-		silent = 0;
+	muffler();
 }
 
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
 void log_exit(void)
 {
-	silent = SILENT_MODE;
+	muffler();
 	if (!silent) {
 		sched_yield();
 		fputs("\n", stderr);
