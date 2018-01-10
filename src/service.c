@@ -518,7 +518,7 @@ void service_runlevel(int newlevel)
  *
  * Service conditions can be: svc/<PATH> for PID files, net/<IFNAME>/up
  * and net/<IFNAME>/exists.  The condition handling is further described
- * doc/conditions.md.
+ * docs/conditions.md.
  *
  * For multiple instances of the same command, e.g. multiple DHCP
  * clients, the user must enter an ID, using the :ID syntax.

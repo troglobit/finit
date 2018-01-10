@@ -2,18 +2,18 @@
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [Bootstrap](doc/bootstrap.md#bootstrap)
+* [Bootstrap](docs/bootstrap.md#bootstrap)
 * [Runlevels](#runlevels)
-* [Syntax](doc/config.md#syntax)
-  * [Inetd](doc/inetd.md#inetd)
+* [Syntax](docs/config.md#syntax)
+  * [Inetd](docs/inetd.md#inetd)
   * [Runparts & /etc/rc.local](#runparts--etcrclocal)
-  * [Hooks, Callbacks & Plugins](doc/plugins.md#hooks-callbacks--plugins)
+  * [Hooks, Callbacks & Plugins](docs/plugins.md#hooks-callbacks--plugins)
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
-* [Building](doc/build.md#building)
-  * [Running](doc/build.md#running)
-  * [Recovery](doc/build.md#recovery)
-  * [Debugging](doc/build.md#debugging)
+* [Building](docs/build.md#building)
+  * [Running](docs/build.md#running)
+  * [Recovery](docs/build.md#recovery)
+  * [Debugging](docs/build.md#debugging)
 * [Requirements](#requirements)
 * [Origin & References](#origin--references)
 
@@ -94,7 +94,7 @@ tty [12345] @console noclear nologin
 ```
 
 The `service` stanza, as well as `task`, `run`, `inetd` and others are
-described in full in [doc/config.md](doc/config.md).  Here's a quick
+described in full in [docs/config.md](docs/config.md).  Here's a quick
 overview of some of the most common components needed to start a UNIX
 daemon:
 
@@ -115,7 +115,7 @@ advanced uses as well:
 
     service /usr/sbin/sshd -D
 
-Dependencies are handled using [conditions](doc/conditions.md).  One of
+Dependencies are handled using [conditions](docs/conditions.md).  One of
 the most common conditions is to wait for basic networking to become
 available:
 
@@ -156,7 +156,7 @@ Start, monitor and restart services should they fail.
 
 **Inetd**
 
-Finit comes with a built-in [inetd server](doc/inetd.md).  No need to
+Finit comes with a built-in [inetd server](docs/inetd.md).  No need to
 maintain a separate config file for services that you want to start on
 demand.
 
@@ -171,7 +171,7 @@ Built-in optional inetd services:
 - discard [RFC863][]
 - time (rdate) [RFC868][]
 
-For more information, see [doc/inetd.md](doc/inetd.md).
+For more information, see [docs/inetd.md](docs/inetd.md).
 
 
 **Getty**
@@ -198,7 +198,7 @@ tty [12345] @console 115200 linux noclear
 
 Notice the optional `noclear`, `nowait`, and `nologin` flags.  The
 latter is for skipping the login process entirely. For more information,
-see [doc/config.md](doc/config.md#syntax).
+see [docs/config.md](docs/config.md#syntax).
 
 
 **Runlevels**
@@ -243,7 +243,7 @@ Extensions and functionality not purely related to what an `/sbin/init`
 needs to start a system are available as a set of plugins that either
 hook into the boot process or respond to various I/O.
 
-For more information, see [doc/plugins.md](doc/plugins.md).
+For more information, see [docs/plugins.md](docs/plugins.md).
 
 
 **Progress**
@@ -262,7 +262,7 @@ append="init=/sbin/finit splash"
 
 For a really nice boot, add `quiet` as well.  This silences the output
 from the kernel, leaving only warnings and errors.  For other kernel
-command line parameters, see [doc/build.md](doc/build.md#recovery).
+command line parameters, see [docs/build.md](docs/build.md#recovery).
 
 
 Runparts & /etc/rc.local
@@ -284,8 +284,8 @@ Right after the runlevel change when all services have started properly,
 No configuration stanza in `/etc/finit.conf` is required for `rc.local`.
 If it exists and is an executable shell script Finit calls it at the very
 end of the boot, before calling the `HOOK_SYSTEM_UP`.  See more on hooks
-in [doc/plugins.md](doc/plugins.md#hooks), and about the system bootstrap
-in [doc/bootstrap.md](doc/bootstrap.md).
+in [docs/plugins.md](docs/plugins.md#hooks), and about the system bootstrap
+in [docs/bootstrap.md](docs/bootstrap.md).
 
 
 Runlevels
@@ -363,7 +363,7 @@ section.
 For compatibility reasons Finit listens to the same set of signals as
 BusyBox init.  This is not 100% compatible with SysV init, but clearly
 the more common combination for Finit.  For more details, see
-[doc/signals.md](doc/signals.md).
+[docs/signals.md](docs/signals.md).
 
 Finit also listens to the classic SysV init FIFO, used by `telinit`.
 Support for this is implemented by the `initctl.so` plugin.  Hence,
@@ -436,7 +436,7 @@ Commands:
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
 file must be used to tell Finit to stop and start it on `reload` and
-`runlevel` changes.  If `<>` holds more [conditions](doc/conditions.md),
+`runlevel` changes.  If `<>` holds more [conditions](docs/conditions.md),
 these will also affect how a service is maintained.
 
 **Note:** even though it is possible to start services not belonging in

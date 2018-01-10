@@ -100,7 +100,7 @@ distributions.
 * Ensure plugins always have a default name, file name
 * Reorganization, move all source files to a `src/` sub-directory
 * Add support for `initctl <list|enable|disable> <SVC>`, much needed by
-  distributions.  See [doc/distro.md](doc/distro.md) for details
+  distributions.  See [docs/distro.md](docs/distro.md) for details
 * Remove `UNUSED()` macro, mentioned here because it may have been used
   by external plugin developers.  Set `-Wno-unused-parameter` instead
 * New table headings in `initctl`, using `top` style inverted text
