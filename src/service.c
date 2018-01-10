@@ -114,6 +114,75 @@ static int is_norespawn(void)
 		fexist("/tmp/norespawn");
 }
 
+static char *pid_file(svc_t *svc)
+{
+	static char fn[MAX_ARG_LEN];
+
+	if (svc->pidfile[0]) {
+		if (svc->pidfile[0] == '!')
+			return &svc->pidfile[1];
+		return svc->pidfile;
+	}
+
+	snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
+	return fn;
+}
+
+static int pid_file_create(svc_t *svc)
+{
+	FILE *fp;
+
+	if (!svc->pidfile[0] || svc->pidfile[0] == '!')
+		return 1;
+
+	fp = fopen(svc->pidfile, "w");
+	if (!fp)
+		return 1;
+	fprintf(fp, "%d\n", svc->pid);
+
+	return fclose(fp);
+}
+
+static int pid_file_parse(svc_t *svc, char *arg)
+{
+	int len, not = 0;
+
+	/* Always clear, called with some sort of 'pid[:..]' argument */
+	svc->pidfile[0] = 0;
+
+	/* Sanity check ... */
+	if (!arg || !arg[0])
+		return 1;
+
+	/* 'pid:' imples argument following*/
+	if (!strncmp(arg, "pid:", 4)) {
+		arg += 4;
+		if ((arg[0] == '!' && arg[1] == '/') || arg[0] == '/') {
+			strlcpy(svc->pidfile, arg, sizeof(svc->pidfile));
+			return 0;
+		}
+
+		if (arg[0] == '!') {
+			arg++;
+			not++;
+		}
+		len = snprintf(svc->pidfile, sizeof(svc->pidfile), "%s%s%s",
+			       not ? "!" : "", _PATH_VARRUN, arg);
+		if (len > 4 && strcmp(&svc->pidfile[len - 4], ".pid"))
+			strlcat(svc->pidfile, ".pid", sizeof(svc->pidfile));
+
+		return 0;
+	}
+
+	/* 'pid' arg, no argument following */
+	if (!strcmp(arg, "pid")) {
+		strlcpy(svc->pidfile, pid_file(svc), sizeof(svc->pidfile));
+		return 0;
+	}
+
+	return 1;
+}
+
 /**
  * service_start - Start service
  * @svc: Service to start
@@ -323,7 +392,10 @@ static int service_start(svc_t *svc)
 			svc_set_state(svc, SVC_STOPPING_STATE);
 		}
 	}
-	
+
+	if (svc_is_daemon(svc))
+		pid_file_create(svc);
+
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	print_result(result);
 
@@ -540,7 +612,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	int forking = 0;
 #endif
 	int log = 0, levels = 0;
-	char *username = NULL, *line;
+	char *line;
+	char *username = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
@@ -573,7 +646,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	while (cmd) {
-		     if (cmd[0] == '@')	/* @username[:group] */
+		if (cmd[0] == '@')	/* @username[:group] */
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
 			runlevels = &cmd[0];
@@ -587,10 +660,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else if (!strncasecmp(cmd, "wait", 4))
 			forking = 0;
 #endif
-		else if (cmd[0] != '/' && strchr(cmd, '/'))
-			service = cmd;   /* inetd service/proto */
 		else if (!strncasecmp(cmd, "log", 3))
 			log = 1;
+		else if (!strncasecmp(cmd, "pid", 3))
+			pid = cmd;
+		else if (cmd[0] != '/' && strchr(cmd, '/'))
+			service = cmd;   /* inetd service/proto */
 		else
 			break;
 
@@ -679,6 +754,9 @@ recreate:
 	if (desc)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
 
+	if (pid && svc_is_daemon(svc) && pid_file_parse(svc, pid))
+		_e("Invalid 'pid' argument to service: %s", pid);
+
 	if (username) {
 		char *ptr = strchr(username, ':');
 
@@ -759,7 +837,6 @@ void service_unregister(svc_t *svc)
 void service_monitor(pid_t lost)
 {
 	svc_t *svc;
-	char pidfile[MAX_ARG_LEN];
 
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;
@@ -778,10 +855,12 @@ void service_monitor(pid_t lost)
 	_d("collected %s(%d)", svc->cmd, lost);
 
 	/* Try removing PID file (in case service does not clean up after itself) */
-	snprintf(pidfile, sizeof(pidfile), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
-	if (remove(pidfile)) {
-		if (errno != ENOENT)
-			logit(LOG_CRIT, "Failed removing service %s pidfile %s", basename(svc->cmd), pidfile);
+	if (svc_is_daemon(svc)) {
+		char *fn;
+
+		fn = pid_file(svc);
+		if (remove(fn) && errno != ENOENT)
+			logit(LOG_CRIT, "Failed removing service %s pidfile %s", basename(svc->cmd), fn);
 	}
 
 	/* No longer running, update books. */

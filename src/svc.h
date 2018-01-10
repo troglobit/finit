@@ -90,6 +90,7 @@ typedef struct svc {
 
 	/* Service details */
 	pid_t	       pid;
+	char           pidfile[MAX_ARG_LEN];
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, inetd, ... */
