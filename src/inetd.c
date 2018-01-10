@@ -208,6 +208,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	task->inetd.cmd  = svc->inetd.cmd;
 	task->inetd.type = svc->inetd.type;
 
+	memcpy(task->rlimit,   svc->rlimit,   sizeof(task->rlimit));
 	memcpy(task->cond,     svc->cond,     sizeof(task->cond));
 	memcpy(task->username, svc->username, sizeof(task->username));
 	memcpy(task->group,    svc->group,    sizeof(task->group));
