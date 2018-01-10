@@ -142,8 +142,8 @@ svc_t      *svc_inetd_iterator     (svc_t **iter, int first);
 svc_t      *svc_named_iterator     (svc_t **iter, int first, char *cmd);
 svc_t      *svc_job_iterator       (svc_t **iter, int first, int job);
 
-void	    svc_foreach	           (void (*cb)(svc_t *));
-void        svc_foreach_type       (int types, void (*cb)(svc_t *));
+void	    svc_foreach	           (int (*cb)(svc_t *));
+void        svc_foreach_type       (int types, int (*cb)(svc_t *));
 
 svc_t	   *svc_stop_completed	   (void);
 

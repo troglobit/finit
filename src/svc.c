@@ -205,7 +205,7 @@ svc_t *svc_job_iterator(svc_t **iter, int first, int job)
  * svc_foreach - Run a callback for each registered service
  * @cb: Callback to run for each service
  */
-void svc_foreach(void (*cb)(svc_t *))
+void svc_foreach(int (*cb)(svc_t *))
 {
 	svc_t *svc, *iter = NULL;
 
@@ -222,7 +222,7 @@ void svc_foreach(void (*cb)(svc_t *))
  * @types: Mask of service types
  * @cb:    Callback to run for each matching type
  */
-void svc_foreach_type(int types, void (*cb)(svc_t *))
+void svc_foreach_type(int types, int (*cb)(svc_t *))
 {
 	svc_t *svc, *iter = NULL;
 

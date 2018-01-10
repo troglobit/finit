@@ -786,11 +786,12 @@ void service_monitor(pid_t lost)
 
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;
-	service_step(svc);
 
-	/* Clean out any bootstrap tasks, they've had their time in the sun. */
-	if (svc_clean_bootstrap(svc))
-		_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
+	if (!service_step(svc)) {
+		/* Clean out any bootstrap tasks, they've had their time in the sun. */
+		if (svc_clean_bootstrap(svc))
+			_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
+	}
 
 	sm_step(&sm);
 }
@@ -841,7 +842,12 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	}
 }
 
-void service_step(svc_t *svc)
+/*
+ * Transition inetd/task/run/service
+ *
+ * Returns: non-zero if the @svc is no longer valid (removed)
+ */
+int service_step(svc_t *svc)
 {
 	int err;
 	char *restart_cnt = (char *)&svc->restart_cnt;
@@ -871,7 +877,7 @@ restart:
 				service_step(svc->inetd.svc);
 			}
 			service_unregister(svc);
-			return;
+			return -1;
 		}
 #endif
 		if (svc_is_changed(svc))
@@ -1027,6 +1033,8 @@ restart:
 		_d("%20s(%4d): -> %8s", svc->cmd, svc->pid, svc_status(svc));
 		goto restart;
 	}
+
+	return 0;
 }
 
 void service_step_all(int types)
