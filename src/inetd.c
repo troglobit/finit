@@ -159,6 +159,7 @@ static int get_stdin(svc_t *svc)
 static void socket_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = (svc_t *)arg, *task;
+	const char *conn = " connection";
 	int stdin;
 
 	_d("%s: Got socket event ...", svc->cmd);
@@ -213,7 +214,8 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	memcpy(task->username, svc->username, sizeof(task->username));
 	memcpy(task->group,    svc->group,    sizeof(task->group));
 	memcpy(task->args,     svc->args,     sizeof(task->args));
-	snprintf(task->desc, sizeof(task->desc), "%52.52s connection", svc->desc);
+	strlcpy(task->desc, svc->desc, sizeof(task->desc) - strlen(conn));
+	strlcat(task->desc, conn, sizeof(task->desc));
 
 	task->stdin_fd = stdin;
 	service_step(task);
