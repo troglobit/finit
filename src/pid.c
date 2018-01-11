@@ -1,7 +1,7 @@
-/* Misc. utility functions and C-library extensions for finit and its plugins
+/* PID and PID file helpers
  *
  * Copyright (c) 2008-2010  Claudio Matsuoka <cmatsuoka@gmail.com>
- * Copyright (c) 2008-2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2008-2018  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,13 @@
  */
 
 #include <errno.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <lite/lite.h>
 
+#include "svc.h"
 #include "helpers.h"
 
 
@@ -88,6 +90,75 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 		return name;
 
 	return pname;
+}
+
+char *pid_file(svc_t *svc)
+{
+	static char fn[MAX_ARG_LEN];
+
+	if (svc->pidfile[0]) {
+		if (svc->pidfile[0] == '!')
+			return &svc->pidfile[1];
+		return svc->pidfile;
+	}
+
+	snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
+	return fn;
+}
+
+int pid_file_create(svc_t *svc)
+{
+	FILE *fp;
+
+	if (!svc->pidfile[0] || svc->pidfile[0] == '!')
+		return 1;
+
+	fp = fopen(svc->pidfile, "w");
+	if (!fp)
+		return 1;
+	fprintf(fp, "%d\n", svc->pid);
+
+	return fclose(fp);
+}
+
+int pid_file_parse(svc_t *svc, char *arg)
+{
+	int len, not = 0;
+
+	/* Always clear, called with some sort of 'pid[:..]' argument */
+	svc->pidfile[0] = 0;
+
+	/* Sanity check ... */
+	if (!arg || !arg[0])
+		return 1;
+
+	/* 'pid:' imples argument following*/
+	if (!strncmp(arg, "pid:", 4)) {
+		arg += 4;
+		if ((arg[0] == '!' && arg[1] == '/') || arg[0] == '/') {
+			strlcpy(svc->pidfile, arg, sizeof(svc->pidfile));
+			return 0;
+		}
+
+		if (arg[0] == '!') {
+			arg++;
+			not++;
+		}
+		len = snprintf(svc->pidfile, sizeof(svc->pidfile), "%s%s%s",
+			       not ? "!" : "", _PATH_VARRUN, arg);
+		if (len > 4 && strcmp(&svc->pidfile[len - 4], ".pid"))
+			strlcat(svc->pidfile, ".pid", sizeof(svc->pidfile));
+
+		return 0;
+	}
+
+	/* 'pid' arg, no argument following */
+	if (!strcmp(arg, "pid")) {
+		strlcpy(svc->pidfile, pid_file(svc), sizeof(svc->pidfile));
+		return 0;
+	}
+
+	return 1;
 }
 
 /**

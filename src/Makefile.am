@@ -16,7 +16,8 @@ finit_SOURCES      = api.c					\
 		     getty.c	stty.c				\
 		     helpers.c	helpers.h			\
 		     log.c	log.h				\
-		     mdadm.c	mount.c		pid.c		\
+		     mdadm.c	mount.c				\
+		     pid.c      pid.h				\
 		     plugin.c	plugin.h	private.h	\
 		     service.c	service.h			\
 		     sig.c	sig.h				\

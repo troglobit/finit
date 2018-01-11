@@ -57,9 +57,6 @@ int     sh              (char *tty);
 int     stty            (int fd, speed_t speed);
 speed_t stty_parse_speed(char *baud);
 
-int     pid_alive       (pid_t pid);
-char   *pid_get_name    (pid_t pid, char *name, size_t len);
-
 void    printv          (const char *fmt, va_list ap);
 void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
