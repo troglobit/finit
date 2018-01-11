@@ -40,6 +40,10 @@ General
 * `initctl add /sbin/service -n -- Service description`, for details
   see above [Solaris SMF][] featuer, issue #55 and issue #69,
   https://github.com/troglobit/finit/issues/69#issuecomment-287907610
+* Changing the name of a pidfile, `pid:[/path/]file.pid`, after a
+  service has been started is not supported atm.  The previous name will
+  not be (never) removed and the new name will not be created until the
+  process has been stopped and started again.
 
 
 Init
