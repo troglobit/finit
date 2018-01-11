@@ -32,6 +32,7 @@
 #include "finit.h"
 #include "svc.h"
 #include "helpers.h"
+#include "pid.h"
 #include "util.h"
 
 /* Each svc_t needs a unique job# */
@@ -336,6 +337,25 @@ svc_t *svc_find_by_nameid(char *name, int id)
 			ptr = svc->cmd;
 
 		if (svc->id == id && !strcmp(name, ptr))
+			return svc;
+	}
+
+	return NULL;
+}
+
+/**
+ * svc_find_by_plidfile - Find an service object by its PID file
+ * @fn: PID file, can be absolute path or relative to /run
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find_by_pidfile(char *fn)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (string_compare(fn, pid_file(svc)))
 			return svc;
 	}
 

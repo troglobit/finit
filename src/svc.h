@@ -137,6 +137,7 @@ svc_t	   *svc_find	           (char *cmd, int id);
 svc_t	   *svc_find_by_pid        (pid_t pid);
 svc_t	   *svc_find_by_jobid      (int job, int id);
 svc_t	   *svc_find_by_nameid     (char *name, int id);
+svc_t      *svc_find_by_pidfile    (char *fn);
 
 svc_t      *svc_iterator           (svc_t **iter, int first);
 svc_t      *svc_inetd_iterator     (svc_t **iter, int first);
