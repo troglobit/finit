@@ -50,7 +50,6 @@ static void pidfile_callback(void *arg, int fd, int events)
 
 	struct inotify_event *ev;
 	ssize_t sz, len;
-	char *basename;
 	svc_t *svc;
 
 	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
@@ -60,23 +59,19 @@ static void pidfile_callback(void *arg, int fd, int events)
 	}
 	ev_buf[sz] = 0;
 
-	for (ev = (void *)ev_buf; sz > (ssize_t)sizeof(*ev);
+	for (ev = (void *)ev_buf;
+	     sz > (ssize_t)sizeof(*ev);
 	     len = sizeof(*ev) + ev->len, ev = (void *)ev + len, sz -= len) {
-	     /* ev = (void *)(ev + 1) + ev->len, sz -= sizeof(*ev) + ev->len) { */
 		if (!ev->mask || !strstr(ev->name, ".pid"))
 			continue;
 
-		basename = strtok(ev->name, ".");
-		if (!basename)
-			continue;
-
-		svc = svc_find_by_nameid(basename, 1);
+		svc = svc_find_by_pidfile(ev->name);
 		if (!svc)
 			continue;
 
 		/* TODO FIXME XXX WKZ check that pid is controlled by finit */
 
-		_d("%s: match %s", basename, svc->cmd);
+		_d("%s: match %s", ev->name, svc->cmd);
 		mkcond(cond, sizeof(cond), svc->cmd);
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY)) {
 			svc_started(svc);
