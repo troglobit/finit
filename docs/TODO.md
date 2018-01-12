@@ -44,6 +44,9 @@ General
   service has been started is not supported atm.  The previous name will
   not be (never) removed and the new name will not be created until the
   process has been stopped and started again.
+* PID files created in subdirectories to `/run` is not supported right
+  now inotify listeners should be automatically created (and removed)
+  when a subdirectory is added (or removed).
 
 
 Init
