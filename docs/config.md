@@ -153,8 +153,30 @@ Syntax
   Finit waits for another service, `/sbin/zebra`, to have created its
   PID file in `/var/run/zebra.pid` before starting `ospfd`.
 
-  For a detailed description of conditions, and how to debug them,
-  see the [Finit Conditions](conditions.md) document.
+  Some services do not maintain a PID file and rather than patching each
+  application Finit provides a workaround.  A `pid` keyword can be set
+  to have Finit automatically create (when starting) and later remove
+  (when stopping) the PID file.  The file is created in the `/var/run`
+  directory using the `basename(1)` of the service.  The default can be
+  modified with an optional argument:
+
+        pid[:[/path/to/]filename[.pid]]
+
+  For example, by adding `pid:/run/foo.pid` to the service `bar` that
+  PID file will, not only be created and removed automatically, but also
+  be used by the Finit condition subsystem.  So another service/run/task
+  can depend on `<svc/foo>`.
+
+  If a service `bar` *does* maintain a PID file, but using `foo.pid`, we
+  can inform Finit of this by simplly prepending an `!` to the argument.
+
+        pid:!/run/foo.pid
+
+  Here Finit will *not* create/remove/touch the PID file, only use it
+  for the condition handling instead of the default PID file name.
+
+  For a detailed description of conditions, and how to debug them, see
+  the [Finit Conditions](conditions.md) document.
 
 * `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
   Launch a daemon when a client initiates a connection on an Internet
