@@ -144,42 +144,82 @@ int pid_file_create(svc_t *svc)
 	return fclose(fp);
 }
 
+static int pid_realpath(svc_t *svc, char *file)
+{
+	int not = 0;
+
+	if (!file)
+		file = pid_file(svc);
+
+	if (file[0] == '!') {
+		not = 1;
+		file++;
+	}
+
+	pid_runpath(file, &svc->pidfile[not], sizeof(svc->pidfile) - not);
+	if (not)
+		svc->pidfile[0] = '!';
+
+	return 0;
+}
+
+/*
+ * This function parses a PID file @arg for @svc.
+ *
+ * The logic is explained below.  Please note that using the first form
+ * of the syntax not only creates and removes the PID file, but it also
+ * calls touch to update the mtime on service_restart(), only applicable
+ * to processes that accept SIGHUP.  This to ensure dependant services
+ * are sent SIGCONT properly on reload, otherwise their condition would
+ * never be asserted again after `initctl reload`.
+ *
+ * pid          --> /run/$(basename).pid
+ * pid:foo      --> /run/foo.pid
+ * pid:foo.pid  --> /run/foo.pid
+ * pid:foo.tla  --> /run/foo.tla.pid
+ * pid:/tmp/foo --> /tmp/foo.pid        (Not handled by pidfile plugin!)
+ *
+ * An exclamation mark, or logial NOT, in the first character position
+ * indicates that Finit should *not* manage the PID file, and that the
+ * process uses a "non-standard" location.  Eg. if service is 'bar'
+ * Finit would assume the PID file is /run/bar.pid and the below simply
+ * 'redirects' Finit to use the correct PID file.
+ *
+ * pid:!foo          --> !/run/foo.pid
+ * pid:!/run/foo.pid --> !/run/foo.pid
+ *
+ * Note, nothing is created or removed by Finit in this latter form.
+ */
 int pid_file_parse(svc_t *svc, char *arg)
 {
-	int len, not = 0;
-
-	/* Always clear, called with some sort of 'pid[:..]' argument */
-	svc->pidfile[0] = 0;
-
 	/* Sanity check ... */
 	if (!arg || !arg[0])
 		return 1;
 
-	/* 'pid:' imples argument following*/
+	/* 'pid:' implies argument following*/
 	if (!strncmp(arg, "pid:", 4)) {
+		int len, not = 0;
+		char path[MAX_ARG_LEN];
+
 		arg += 4;
-		if ((arg[0] == '!' && arg[1] == '/') || arg[0] == '/') {
-			strlcpy(svc->pidfile, arg, sizeof(svc->pidfile));
-			return 0;
-		}
+		if ((arg[0] == '!' && arg[1] == '/') || arg[0] == '/')
+			return pid_realpath(svc, arg);
 
 		if (arg[0] == '!') {
 			arg++;
 			not++;
 		}
-		len = snprintf(svc->pidfile, sizeof(svc->pidfile), "%s%s%s",
-			       not ? "!" : "", _PATH_VARRUN, arg);
-		if (len > 4 && strcmp(&svc->pidfile[len - 4], ".pid"))
-			strlcat(svc->pidfile, ".pid", sizeof(svc->pidfile));
 
-		return 0;
+		len = snprintf(path, sizeof(path), "%s%s%s", not ? "!" : "", _PATH_VARRUN, arg);
+		if (len > 4 && strcmp(&path[len - 4], ".pid"))
+			strlcat(path, ".pid", sizeof(path));
+
+		return pid_realpath(svc, path);
 	}
 
 	/* 'pid' arg, no argument following */
-	if (!strcmp(arg, "pid")) {
-		strlcpy(svc->pidfile, pid_file(svc), sizeof(svc->pidfile));
-		return 0;
-	}
+	if (!strcmp(arg, "pid"))
+		return pid_realpath(svc, NULL);
 
 	return 1;
 }
