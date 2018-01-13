@@ -355,7 +355,9 @@ svc_t *svc_find_by_pidfile(char *fn)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (string_compare(fn, pid_file(svc)))
+		char path[MAX_ARG_LEN];
+
+		if (string_compare(pid_runpath(fn, path, sizeof(path)), pid_file(svc)))
 			return svc;
 	}
 

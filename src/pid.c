@@ -115,7 +115,8 @@ char *pid_runpath(char *file, char *path, size_t len)
 
 char *pid_file(svc_t *svc)
 {
-	static char fn[MAX_ARG_LEN];
+	char fn[MAX_ARG_LEN];
+	static char path[MAX_ARG_LEN];
 
 	if (svc->pidfile[0]) {
 		if (svc->pidfile[0] == '!')
@@ -124,7 +125,8 @@ char *pid_file(svc_t *svc)
 	}
 
 	snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
-	return fn;
+
+	return pid_runpath(fn, path, sizeof(path));
 }
 
 int pid_file_create(svc_t *svc)

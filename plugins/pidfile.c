@@ -69,9 +69,6 @@ static void pidfile_callback(void *arg, int fd, int events)
 		if (!svc)
 			continue;
 
-		/* TODO FIXME XXX WKZ check that pid is controlled by finit */
-
-		_d("%s: match %s", ev->name, svc->cmd);
 		mkcond(cond, sizeof(cond), svc->cmd);
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY)) {
 			svc_started(svc);
