@@ -162,8 +162,14 @@ int         svc_is_unique          (svc_t *svc);
 
 int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, int));
 
+static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
+static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
+static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
+static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
+
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }
+static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && svc->pidfile[0] != 0 && svc->pidfile[0] != '!'; }
 
 static inline void svc_starting    (svc_t *svc) { svc->starting = 1;         }
 static inline void svc_started     (svc_t *svc) { svc->starting = 0;         }
@@ -172,11 +178,6 @@ static inline int  svc_is_starting (svc_t *svc) { return 0 != svc->starting; }
 static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
 static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }
-
-static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
-static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
-static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
-static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
 
 static inline int  svc_is_blocked  (svc_t *svc) { return svc->block != SVC_BLOCK_NONE; }
 static inline int  svc_is_busy     (svc_t *svc) { return svc->block == SVC_BLOCK_BUSY; }
