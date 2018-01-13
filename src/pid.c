@@ -92,6 +92,27 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 	return pname;
 }
 
+char *pid_runpath(char *file, char *path, size_t len)
+{
+	static int unknown = 1;
+	static char *prefix = "/var/run";
+
+	if (unknown) {
+		if (fisdir("/run"))
+			prefix = "/run";
+		unknown = 0;
+	}
+
+	if (!strncmp(file, "/var/run/", 9))
+		file += 9;
+	else if (!strncmp(file, "/run/", 5))
+		file += 5;
+
+	snprintf(path, len, "%s/%s", prefix, file);
+
+	return path;
+}
+
 char *pid_file(svc_t *svc)
 {
 	static char fn[MAX_ARG_LEN];

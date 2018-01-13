@@ -29,6 +29,8 @@ char *pid_file        (svc_t *svc);
 int   pid_file_create (svc_t *svc);
 int   pid_file_parse  (svc_t *svc, char *arg);
 
+char *pid_runpath     (char *file, char *path, size_t len);
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t
