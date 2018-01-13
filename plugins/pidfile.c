@@ -112,10 +112,23 @@ static void pidfile_reconf(void *arg)
 
 static void pidfile_init(void *arg)
 {
+	char *path;
 	struct context *ctx = arg;
 
-	ctx->wd = inotify_add_watch(ctx->fd, _PATH_VARRUN,
-				    IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY);
+	/*
+	 * The bootmisc plugin is responsible for setting up /var/run.
+	 * and/or /run, with proper symlinks etc.  We depend on bootmisc
+	 * so it's safe here to query realpath() and set up inotify.
+	 */
+	path = realpath(_PATH_VARRUN, NULL);
+	if (!path) {
+		_pe("Failed ");
+		return;
+	}
+
+	ctx->wd = inotify_add_watch(ctx->fd, path, IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY);
+	free(path);
+
 	if (ctx->wd < 0) {
 		_pe("inotify_add_watch()");
 		close(ctx->fd);
