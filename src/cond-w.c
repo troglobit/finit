@@ -59,9 +59,27 @@ static void cond_bump_reconf(void)
 	cond_set_gen(COND_RECONF, rgen);
 }
 
-int cond_set_path(const char *path, enum cond_state new)
+static int cond_checkpath(const char *path)
 {
 	char buf[MAX_ARG_LEN], *dir;
+
+	strlcpy(buf, path, sizeof(buf));
+	dir = dirname(buf);
+	if (!dir) {
+		_e("Invalid path '%s' for condition", path);
+		return 1;
+	}
+
+	if (makepath(dir) && errno != EEXIST) {
+		_pe("Failed creating dir '%s' for condition '%s'", dir, path);
+		return 1;
+	}
+
+	return 0;
+}
+
+int cond_set_path(const char *path, enum cond_state new)
+{
 	enum cond_state old;
 	unsigned int rgen;
 
@@ -77,16 +95,8 @@ int cond_set_path(const char *path, enum cond_state new)
 
 	switch (new) {
 	case COND_ON:
-		strlcpy(buf, path, sizeof(buf));
-		dir = dirname(buf);
-		if (!dir) {
-			_e("Invalid path '%s' for condition", path);
-			return 0;
-		}
-		if (makepath(dir) && errno != EEXIST) {
-			_pe("Failed creating dir '%s' for condition '%s'", dir, path);
-			return 0;
-		}
+		if (cond_checkpath(path))
+		    return 0;
 		cond_set_gen(path, rgen);
 		break;
 
@@ -142,6 +152,18 @@ void cond_set(const char *name)
 	if (!cond_set_path(cond_path(name), COND_ON))
 		return;
 
+	cond_update(name);
+}
+
+void cond_set_oneshot(const char *name)
+{
+	const char *path = cond_path(name);
+
+	_d("s => %s", name, path);
+	if (cond_checkpath(path))
+		return;
+
+	symlink(COND_RECONF, path);
 	cond_update(name);
 }
 
