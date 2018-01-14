@@ -210,7 +210,7 @@ void plugin_run_hook(hook_point_t no, void *arg)
 	if (HOOK_SVC_START == no)
 		last = no;
 
-	cond_set(hook_cond[no]);
+	cond_set_oneshot(hook_cond[no]);
 	service_step_all(SVC_TYPE_RUNTASK);
 
 	if (HOOK_SVC_START == no)
