@@ -196,10 +196,8 @@ void plugin_run_hook(hook_point_t no, void *arg)
 	 * End recursion: any plugin hook => start service => SVC start
 	 * hook => start service ... err ... wait a second
 	 */
-	if (HOOK_SVC_START == last) {
-		_d("End plugin recursion in our lifetime!");
+	if (HOOK_SVC_START == last)
 		return;
-	}
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
