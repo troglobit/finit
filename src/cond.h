@@ -4,7 +4,6 @@
 #include <paths.h>
 
 #define COND_PATH     _PATH_VARRUN "finit/cond"
-#define COND_SVC_PATH COND_PATH "/svc/"
 #define COND_RECONF   COND_PATH "/reconf"
 
 typedef enum cond_state {

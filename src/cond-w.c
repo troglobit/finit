@@ -149,6 +149,9 @@ static void cond_update(const char *name)
 void cond_set(const char *name)
 {	
 	_d("%s", name);
+	if (string_compare(name, "nop"))
+		return;
+
 	if (!cond_set_path(cond_path(name), COND_ON))
 		return;
 
@@ -157,9 +160,14 @@ void cond_set(const char *name)
 
 void cond_set_oneshot(const char *name)
 {
-	const char *path = cond_path(name);
+	const char *path;
 
+	if (string_compare(name, "nop"))
+		return;
+
+	path = cond_path(name);
 	_d("s => %s", name, path);
+
 	if (cond_checkpath(path))
 		return;
 
@@ -170,6 +178,9 @@ void cond_set_oneshot(const char *name)
 void cond_clear(const char *name)
 {
 	_d("%s", name);
+	if (string_compare(name, "nop"))
+		return;
+
 	if (!cond_set_path(cond_path(name), COND_OFF))
 		return;
 

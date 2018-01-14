@@ -55,6 +55,18 @@
  * Predefined hook points and corresponding conditions in Finit,
  * for use by plugins and scripts.  Recommended to use the task
  * or run stanzas:  task <hook/mount/error> /bin/rescue.sh
+ *
+ * Some of the below hooks cannot (currently) be realized as conditions.
+ * The idea was to rename them action scripts, with optional argument,
+ * according to the following scheme:
+ *
+ * - HOOK_SVC_RECONF      :: action/svc/reconf
+ * - HOOK_SVC_LOST        :: action/svc/lost
+ * - HOOK_SVC_START       :: action/svc/start
+ * - HOOK_RUNLEVEL_CHANGE :: action/sys/runlevel
+ *
+ * However, the implementation did not turn out to be stable enough for
+ * general release, so it was pulled.
  */
 #define HOOK_TYPES {						\
 	/* Bootstrap hooks, runlevel [S] */			\
@@ -67,10 +79,10 @@
 	CHOOSE(HOOK_SYSTEM_UP,       "hook/sys/up"),		\
 								\
 	/* Runtime hooks, runlevel [S1-9] */			\
-	CHOOSE(HOOK_SVC_RECONF,      "hook/svc/reconf"),	\
-	CHOOSE(HOOK_SVC_LOST,        "hook/svc/lost"),		\
-	CHOOSE(HOOK_SVC_START,       "hook/svc/start"),		\
-	CHOOSE(HOOK_RUNLEVEL_CHANGE, "hook/sys/runlevel"),	\
+	CHOOSE(HOOK_SVC_RECONF,      "nop"),			\
+	CHOOSE(HOOK_SVC_LOST,        "nop"),			\
+	CHOOSE(HOOK_SVC_START,       "nop"),			\
+	CHOOSE(HOOK_RUNLEVEL_CHANGE, "nop"),			\
 								\
 	/* Shutdown hooks, runlevel [06] */			\
 	CHOOSE(HOOK_SHUTDOWN,        "hook/sys/shutdown"),	\
