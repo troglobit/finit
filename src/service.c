@@ -213,7 +213,7 @@ static int service_start(svc_t *svc)
 		} else
 #endif
 
-		if (svc->log) {
+		if (svc->log.enabled) {
 			int fd;
 
 			/*
@@ -222,12 +222,12 @@ static int service_start(svc_t *svc)
 			 */
 			fd = posix_openpt(O_RDWR);
 			if (fd == -1) {
-				svc->log = 0;
+				svc->log.enabled = 0;
 				goto logger_err;
 			}
 			if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
 				close(fd);
-				svc->log = 0;
+				svc->log.enabled = 0;
 				goto logger_err;
 			}
 
@@ -235,8 +235,11 @@ static int service_start(svc_t *svc)
 			sigprocmask(SIG_BLOCK, &nmask, NULL);
 			pid = fork();
 			if (pid == 0) {
-				int fds = open(ptsname(fd), O_RDONLY);
+				int fds;
+				char *tag  = basename(svc->cmd);
+				char *prio = "daemon.info";
 
+				fds = open(ptsname(fd), O_RDONLY);
 				close(fd);
 				if (fds == -1)
 					_exit(0);
@@ -245,7 +248,12 @@ static int service_start(svc_t *svc)
 				/* Reset signals */
 				sig_unblock();
 
-				execlp("logger", "logger", "-t", svc->cmd, "-p", "daemon.info", NULL);
+				if (svc->log.ident[0])
+					tag = svc->log.ident;
+				if (svc->log.prio[0])
+					prio = svc->log.prio;
+
+				execlp("logger", "logger", "-t", tag, "-p", prio, NULL);
 				_exit(0);
 			}
 
@@ -294,7 +302,7 @@ static int service_start(svc_t *svc)
 			}
 		} else
 #endif
-		if (svc->log)
+		if (svc->log.enabled)
 			waitpid(pid, NULL, 0);
 		exit(status);
 	} else if (log_is_debug()) {
@@ -495,6 +503,28 @@ void service_runlevel(int newlevel)
 		networking(0);
 }
 
+/*
+ * log:/path/to/logfile,priority:facility.level,tag:ident
+ */
+static void parse_log(svc_t *svc, char *arg)
+{
+	char *tok;
+
+	tok = strtok(arg, ":, ");
+	while (tok) {
+		if (!strcmp(tok, "log"))
+			svc->log.enabled = 1;
+		else if (tok[0] == '/')
+			strlcpy(svc->log.file, tok, sizeof(svc->log.file));
+		else if (!strcmp(tok, "priority") || !strcmp(tok, "prio"))
+			strlcpy(svc->log.prio, strtok(NULL, ","), sizeof(svc->log.prio));
+		else if (!strcmp(tok, "tag") || !strcmp(tok, "identity") || !strcmp(tok, "ident"))
+			strlcpy(svc->log.ident, strtok(NULL, ","), sizeof(svc->log.ident));
+
+		tok = strtok(NULL, ":=, ");
+	}
+}
+
 /**
  * service_register - Register service, task or run commands
  * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
@@ -554,9 +584,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 #ifdef INETD_ENABLED
 	int forking = 0;
 #endif
-	int log = 0, levels = 0;
+	int levels = 0;
 	char *line;
-	char *username = NULL, *pid = NULL;
+	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	svc_t *svc;
@@ -604,7 +634,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			forking = 0;
 #endif
 		else if (!strncasecmp(cmd, "log", 3))
-			log = 1;
+			log = cmd;
 		else if (!strncasecmp(cmd, "pid", 3))
 			pid = cmd;
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
@@ -693,10 +723,6 @@ recreate:
 	}
 #endif
 
-	svc->log = log;
-	if (desc)
-		strlcpy(svc->desc, desc, sizeof(svc->desc));
-
 	/* Always clear svc PID file, for now.  See TODO */
 	svc->pidfile[0] = 0;
 	/* Decode any optional pid:/optional/path/to/file.pid */
@@ -728,6 +754,11 @@ recreate:
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	conf_parse_cond(svc, cond);
+
+	if (log)
+		parse_log(svc, log);
+	if (desc)
+		strlcpy(svc->desc, desc, sizeof(svc->desc));
 
 #ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {

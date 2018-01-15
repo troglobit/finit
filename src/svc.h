@@ -111,7 +111,12 @@ typedef struct svc {
 	int            stdin_fd;
 
 	/* Set for services we need to redirect stdout/stderr to syslog */
-	int            log;
+	struct {
+		int    enabled;
+		char   file[64];
+		char   prio[20];
+		char   ident[20];
+	} log;
 
 	/* Identity */
 	char	       username[MAX_USER_LEN];
