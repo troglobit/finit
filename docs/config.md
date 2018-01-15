@@ -115,6 +115,9 @@ Syntax
         rlimit cpu 10
 ```
 
+  `rlimit` can be set globally, in `/etc/finit.conf`, or locally for
+  a set of task/run/services, in `/etc/finit.d/*.conf`.
+
 * `runlevel <N>`  
   N is the runlevel number 1-9, where 6 is reserved for reboot.  
   Default is 2.
