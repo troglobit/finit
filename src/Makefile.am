@@ -44,7 +44,7 @@ finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
 finit_LDADD        = $(lite_LIBS) $(uev_LIBS)
 if STATIC
-finit_LDADD       += plugins/libplug.la
+finit_LDADD       += ../plugins/libplug.la
 else
 finit_LDADD       += -ldl
 endif
