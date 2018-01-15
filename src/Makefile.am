@@ -7,7 +7,12 @@ else
 AM_LDFLAGS         = -export-dynamic
 endif
 
+bin_PROGRAMS       = logit
 sbin_PROGRAMS      = finit initctl reboot
+
+logit_SOURCES      = logit.c
+logit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+
 finit_SOURCES      = api.c					\
 		     cond.c	cond-w.c	cond.h		\
 		     telinit.c					\
