@@ -112,7 +112,8 @@ typedef struct svc {
 
 	/* Set for services we need to redirect stdout/stderr to syslog */
 	struct {
-		int    enabled;
+		char   enabled;
+		char   null;
 		char   file[64];
 		char   prio[20];
 		char   ident[20];

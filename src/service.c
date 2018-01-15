@@ -109,6 +109,18 @@ static int service_timeout_cancel(svc_t *svc)
 	return err;
 }
 
+static void redirect_null(void)
+{
+	FILE *fp;
+
+	fp = fopen("/dev/null", "w");
+	if (fp) {
+		dup2(fileno(fp), STDOUT_FILENO);
+		dup2(fileno(fp), STDERR_FILENO);
+		fclose(fp);
+	}
+}
+
 static int is_norespawn(void)
 {
 	return  sig_stopped()            ||
@@ -216,6 +228,11 @@ static int service_start(svc_t *svc)
 		if (svc->log.enabled) {
 			int fd;
 
+			if (svc->log.null) {
+				redirect_null();
+				goto logit_done;
+			}
+
 			/*
 			 * Open PTY to connect to logger.  A pty isn't buffered
 			 * like a pipe, and it eats newlines so they aren't logged
@@ -223,12 +240,12 @@ static int service_start(svc_t *svc)
 			fd = posix_openpt(O_RDWR);
 			if (fd == -1) {
 				svc->log.enabled = 0;
-				goto logger_err;
+				goto logit_done;
 			}
 			if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
 				close(fd);
 				svc->log.enabled = 0;
-				goto logger_err;
+				goto logit_done;
 			}
 
 			/* SIGCHLD is still blocked for grantpt() and fork() */
@@ -276,19 +293,11 @@ static int service_start(svc_t *svc)
 			}
 		}
 #ifdef REDIRECT_OUTPUT
-		else {
-			FILE *fp;
-
-			fp = fopen("/dev/null", "w");
-			if (fp) {
-				dup2(fileno(fp), STDOUT_FILENO);
-				dup2(fileno(fp), STDERR_FILENO);
-				fclose(fp);
-			}
-		}
+		else
+			redirect_null();
 #endif
 
-	logger_err:
+	logit_done:
 		sig_unblock();
 
 		if (svc->inetd.cmd)
@@ -307,7 +316,7 @@ static int service_start(svc_t *svc)
 			}
 		} else
 #endif
-		if (svc->log.enabled)
+		if (svc->log.enabled && !svc->log.null)
 			waitpid(pid, NULL, 0);
 		exit(status);
 	} else if (log_is_debug()) {
@@ -519,6 +528,8 @@ static void parse_log(svc_t *svc, char *arg)
 	while (tok) {
 		if (!strcmp(tok, "log"))
 			svc->log.enabled = 1;
+		else if (!strcmp(tok, "null") || !strcmp(tok, "/dev/null"))
+			svc->log.null = 1;
 		else if (tok[0] == '/')
 			strlcpy(svc->log.file, tok, sizeof(svc->log.file));
 		else if (!strcmp(tok, "priority") || !strcmp(tok, "prio"))
