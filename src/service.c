@@ -248,12 +248,17 @@ static int service_start(svc_t *svc)
 				/* Reset signals */
 				sig_unblock();
 
+				if (svc->log.file[0] == '/') {
+					execlp("logit", "logit", "-f", svc->log.file, NULL);
+					_exit(0);
+				}
+
 				if (svc->log.ident[0])
 					tag = svc->log.ident;
 				if (svc->log.prio[0])
 					prio = svc->log.prio;
 
-				execlp("logger", "logger", "-t", tag, "-p", prio, NULL);
+				execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
 				_exit(0);
 			}
 
