@@ -125,11 +125,13 @@ reopen:
 
 	if (buf[0]) {
 		fprintf(fp, "%s\n", buf);
+		fsync(fileno(fp));
 		if (checksz(fp, sz))
 			return logrotate(logfile, num, sz);
 	} else {
 		while ((fgets(buf, len, stdin))) {
 			fputs(buf, fp);
+			fsync(fileno(fp));
 
 			if (checksz(fp, sz)) {
 				logrotate(logfile, num, sz);
