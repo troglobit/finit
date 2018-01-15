@@ -185,7 +185,7 @@ static int parse_prio(char *arg, int *f, int *l)
 
 static int usage(int code)
 {
-	fprintf(stderr, "Usage: %s [OPTIONS] [MESSAGE]\n"
+	fprintf(stderr, "Usage: logit [OPTIONS] [MESSAGE]\n"
 		"\n"
 		"Write MESSAGE (or stdin) to syslog, or file (with logrotate)\n"
 		"\n"
@@ -197,9 +197,10 @@ static int usage(int code)
 		"  -f FILE  File to write log messages to, instead of syslog\n"
 		"  -n SIZE  Number of bytes before rotating, default: 200 kB\n"
 		"  -r NUM   Number of rotated files to keep, default: 5\n"
-		"  -v        Show program version\n"
+		"  -v       Show program version\n"
 		"\n"
-		"Bug report address: %s\n", PACKAGE, PACKAGE_BUGREPORT);
+		"This version of logit is distributed as part of Finit.\n"
+		"Bug report address: %s\n", PACKAGE_BUGREPORT);
 
 	return code;
 }
