@@ -51,12 +51,6 @@ void do_sleep(unsigned int sec)
 		;
 }
 
-/* Allowed characters in job/id/name */
-static int isallowed(int ch)
-{
-	return isprint(ch);
-}
-
 /* Seconds since boot, from sysinfo() */
 long jiffies(void)
 {
@@ -106,6 +100,12 @@ char *uptime(long secs, char *buf, size_t len)
 		 s);
 
 	return buf;
+}
+
+/* Allowed characters in job/id/name */
+static int isallowed(int ch)
+{
+	return isprint(ch);
 }
 
 /* Sanitize user input, make sure to NUL terminate. */
