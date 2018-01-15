@@ -26,6 +26,9 @@
 
 #include "svc.h"
 
+extern int logfile_size_max;
+extern int logfile_count_max;
+
 extern struct rlimit global_rlimit[];
 
 int   str2rlim(char *str);

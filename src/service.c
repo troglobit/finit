@@ -266,7 +266,12 @@ static int service_start(svc_t *svc)
 				sig_unblock();
 
 				if (svc->log.file[0] == '/') {
-					execlp("logit", "logit", "-f", svc->log.file, NULL);
+					char sz[20], num[3];
+
+					snprintf(sz, sizeof(sz), "%d", logfile_size_max);
+					snprintf(num, sizeof(num), "%d", logfile_count_max);
+
+					execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
 					_exit(0);
 				}
 

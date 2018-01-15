@@ -36,10 +36,14 @@
 #include "service.h"
 #include "tty.h"
 #include "helpers.h"
+#include "util.h"
 
 #define BOOTSTRAP (runlevel == 0)
 #define MATCH_CMD(l, c, x) \
 	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
+
+int logfile_size_max = 200000;	/* 200 kB */
+int logfile_count_max = 5;
 
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
 
@@ -381,6 +385,26 @@ static void parse_static(char *line)
 
 		parse_conf(cmd);
 		return;
+	}
+
+	if (MATCH_CMD(line, "log ", x)) {
+		char *tok;
+		static int size = 200000, count = 5;
+
+		tok = strtok(x, ":= ");
+		while (tok) {
+			if (!strncmp(tok, "size", 4))
+				size = strtobytes(strtok(NULL, ":= "));
+			else if (!strncmp(tok, "count", 5))
+				count = strtobytes(strtok(NULL, ":= "));
+
+			tok = strtok(NULL, ":= ");
+		}
+
+		if (size > 0)
+			logfile_size_max = size;
+		if (count >= 0)
+			logfile_count_max = count;
 	}
 
 	if (MATCH_CMD(line, "shutdown ", x)) {
