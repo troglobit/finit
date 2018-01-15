@@ -11,7 +11,16 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
 
 ### Changes
 
+* Support for more kernel command line settings:
+  - splash, enable boot progress
+  - debug, like `--debug` but also enable kernel debug
+  - single, single user mode (no network)
+  - rescue, new rescue mode
+* Support for `IFF_RUNNING` to netlink plugin => `net/IFNAME/running`
+* Support for restarting `initctl` API socket on `SIGHUP`
+* Greatly updated `initctl status <JOB|NAME>` command
 * Support for `rlimit` per service/run/task/inetd/tty, issue #45
+* Support for setting `hard` and `soft` rlimit for a resource at once
 * Support for auto-detecting serial console using Linux SysFS, the new
   `tty @console` eliminates the need to keep track of different console
   devices across embedded platforms: `/dev/ttyS0`, `/dev/ttyAMA0`, etc.
@@ -28,6 +37,9 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
   of inetd services, and `Loading configuration ...`.  No end user knows
   what those plugins and configurations are, i.e. internal state+config
 * Change kernel WDT timeout (3 --> 30 sec) for built-in watchdog daemon
+* Advise watchdog dawmon on shutdown and reboot using `SIGPWR` and then
+  `SIGTERM`.  It is recommended the daemon start a timer on the first
+  signal, in case the shutdown process somehow hangs.
 * Handle `/etc/` OverlayFS, reload /etc/finit.d/*.conf after `mount -a`
 * initctl: Add support for printing previous runlevel
 * initctl: Support short forms of all commands
@@ -41,6 +53,13 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
   on mtime of `.conf` files, instead an inotify handler tracks file
   changes for time *insensitive* dependency tracking
 * Change condition handling to not rely on mtime but a generation id.
+* New configure script option `--enable-redirect` to automatically
+  redirect `stdout` and `stderr` of all applications to `/dev/null`
+* New `pid` sub-option to services when a service does not create a PID
+  file, or when the PID file has another name.  Issue #95
+* New `log` sub-option to service/run/task to selectively redirect
+  `stdout` and `stderr` using the new tool `logit` to either syslog
+  or a logfile.  Issue #44
 
 ### Fixes
 
@@ -60,6 +79,8 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
   plugin before the pidfile plugin on `HOOK_SVC_RECONF` events
 * Handle event loop failure modes, issue found by Westermo
 * Handle API socket errors more gracefully, restart socket
+* Do not attempt to load kernel modules more than once at bootstrap
+* Remove reboot symlinks properly on uninstall
 * Fix regression in condition handling, reconf condition must be kept
   as a reference point to previous reconfiguration, or bootstrap.
 * Fix nasty race condition with internal service stop, abort kill if the
