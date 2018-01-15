@@ -382,11 +382,11 @@ static int load_plugins(char *path)
 }
 #endif	/* ENABLE_STATIC */
 
-int plugin_init(uev_ctx_t *ctx, char *path)
+int plugin_init(uev_ctx_t *ctx)
 {
 	int fail = 1;
 
-	if (!load_plugins(path))
+	if (!load_plugins(PLUGIN_PATH))
 	    fail = init_plugins(ctx);
 
 	return fail;

@@ -24,15 +24,10 @@
 #ifndef FINIT_PLUGIN_H_
 #define FINIT_PLUGIN_H_
 
-#include <config.h>
 #include <uev/uev.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #include "svc.h"
-
-#ifndef PLUGIN_PATH		/* Fallback for --enable-static builds */
-#define PLUGIN_PATH "/dev/null"
-#endif
 
 #define PLUGIN_DEP_MAX  10
 

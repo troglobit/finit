@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
 	 * Load plugins early, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
-	plugin_init(&loop, PLUGIN_PATH);
+	plugin_init(&loop);
 
 	/*
 	 * Hello world.

@@ -45,7 +45,7 @@ int       plugin_exists    (hook_point_t no);
 void      plugin_run_hook  (hook_point_t no, void *arg);
 void      plugin_run_hooks (hook_point_t no);
 
-int       plugin_init      (uev_ctx_t *ctx, char *path);
+int       plugin_init      (uev_ctx_t *ctx);
 void      plugin_exit      (void);
 
 #endif /* FINIT_PRIVATE_H_ */
