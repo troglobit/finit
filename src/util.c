@@ -25,6 +25,7 @@
 #include <ctype.h>		/* isprint() */
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/sysinfo.h>	/* sysinfo() */
 #include <lite/lite.h>		/* strlcat() */
@@ -43,6 +44,35 @@ char *progname(char *arg0)
 	       prognm = arg0;
 
        return prognm;
+}
+
+int strtobytes(char *arg)
+{
+	int mod = 0, bytes;
+	size_t pos;
+
+	if (!arg)
+		return -1;
+
+	pos = strspn(arg, "0123456789");
+	if (arg[pos] != 0) {
+		if (arg[pos] == 'G')
+			mod = 3;
+		else if (arg[pos] == 'M')
+			mod = 2;
+		else if (arg[pos] == 'k')
+			mod = 1;
+		else
+			return -1;
+
+		arg[pos] = 0;
+	}
+
+	bytes = atoi(arg);
+	while (mod--)
+		bytes *= 1000;
+
+	return bytes;
 }
 
 void do_sleep(unsigned int sec)

@@ -39,6 +39,7 @@ extern char *prognm;
 #include <lite/conio.h>
 
 char *progname     (char *arg0);
+int   strtobytes   (char *arg);
 void  do_sleep     (unsigned int sec);
 
 long  jiffies      (void);
