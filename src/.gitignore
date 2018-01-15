@@ -1,6 +1,7 @@
 .deps/*
 finit
 initctl
+logit
 reboot
 Makefile
 Makefile.in
