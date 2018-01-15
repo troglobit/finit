@@ -316,8 +316,17 @@ Without the `:ID` to the service the latter will overwrite the former
 and only the old web server would be started and supervised.
 
 The `run`, `task`, `service`, or `inetd` stanzas also allow the keyword
-`log` to redirect `stderr` and `stdout` of the application to syslog,
-using `logger`.
+`log` to redirect `stderr` and `stdout` of the application to a file or
+syslog using the native `logit` tool.  The full syntax is:
+
+    log:/path/to/file
+    log:prio:facility.level,tag:ident
+    log:null
+    log
+
+**Example:**
+
+     service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
 
 Worth noting is that conditions is allowed for all these stanzas.  For a
 detailed description, see the [Conditions](conditions.md) document.
