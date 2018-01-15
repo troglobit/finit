@@ -58,7 +58,7 @@ AC_ARG_ENABLE(watchdog,
         AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
 	enable_watchdog=no])
 
-AC_ARG_ENABLE(redirect-output,
+AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--enable-redirect], [Redirect service output to /dev/null, default: no]),,[
 	enable_redirect_output=no])
 
@@ -142,7 +142,7 @@ AS_IF([test "x$enable_progress" = "xyes"], [
 AS_IF([test "x$enable_watchdog" = "xyes"], [
         AC_DEFINE(BUILTIN_WATCHDOG,  1, [Enable built-in watchdog, kicks on /dev/watchdog])])
 
-AS_IF([test "x$enable_redirect_output" = "xyes"], [
+AS_IF([test "x$enable_redirect" = "xyes"], [
 	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])
 
 ### Disable features ###########################################################################
