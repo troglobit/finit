@@ -71,7 +71,7 @@ long jiffies(void)
 char *uptime(long secs, char *buf, size_t len)
 {
 	long mins, hours, days, years;
-	char y[11] = "", d[9] = "", h[9] = "", m[9] = "", s[9] = "";
+	char y[20] = "", d[20] = "", h[20] = "", m[20] = "", s[20] = "";
 
 	if (!buf) {
 		errno = EINVAL;
