@@ -225,6 +225,11 @@ Syntax
 * `include <CONF>`  
   Include another configuration file.  Absolute path required.
 
+* `log size:200k count:5`
+
+  Log rotation for run/task/services using the `log` sub-option with
+  redirection to a log file.  Global setting, applies to all services.
+
 * `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [nologin] [TERM]`  
   `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`  
   The first variant of this option uses the built-in getty on the given
@@ -324,6 +329,8 @@ syslog using the native `logit` tool.  The full syntax is:
     log:null
     log
 
+Log rotation is controlled using the global `log` setting.
+
 **Example:**
 
      service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
@@ -350,6 +357,7 @@ network bringup and shutdown:
 - `network`, only at bootstrap
 - `runparts`, only at bootstrap
 - `include`
+- `log`, global setting
 - `shutdown`
 - `runlevel`, only at bootstrap
 - ... and all configuration stanzas from `/etc/finit.d` below
