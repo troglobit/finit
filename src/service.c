@@ -392,10 +392,10 @@ static void service_kill(svc_t *svc)
 		return;
 	}
 
+	_d("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
-	_d("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
 	kill(svc->pid, SIGKILL);
 
 	/* Let SIGKILLs stand out, show result as [WARN] */
@@ -440,10 +440,10 @@ static int service_stop(svc_t *svc)
 	if (SVC_TYPE_SERVICE != svc->type)
 		return 0;
 
+	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	if (runlevel != 1)
 		print_desc("Stopping ", svc->desc);
 
-	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	res = kill(svc->pid, SIGTERM);
 
 	if (runlevel != 1)
@@ -479,14 +479,14 @@ static int service_restart(svc_t *svc)
 		return 1;
 	}
 
+	_d("Sending SIGHUP to PID %d", svc->pid);
 	if (svc->desc && svc->desc[0])
 		print_desc("Restarting ", svc->desc);
 
+	rc = kill(svc->pid, SIGHUP);
+
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
 	svc_starting(svc);
-
-	_d("Sending SIGHUP to PID %d", svc->pid);
-	rc = kill(svc->pid, SIGHUP);
 
 	/* Service does not maintain a PID file on its own */
 	if (svc_has_pidfile(svc)) {
