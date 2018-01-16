@@ -2,6 +2,7 @@ Configuration
 =============
 
 * [Introduction](#introduction)
+* [Service Wrapper Scripts](#service-wrapper-scripts)
 * [Syntax](#syntax)
 * [Limitations](#limitations)
   * [/etc/finit.conf](#etcfinitconf)
@@ -48,24 +49,26 @@ On `initctl reload` the following is checked for all services:
 For more info on the different states of a service, see the separate
 document [Finit Services](service.md).
 
-### Execute pre commands for a service
 
-If your service requires to run additional commands that are executed before
-the service is actually started (something like systemds `ExecStartPre`) you
-can use a wrapper shell script which runs the additional commands before
-executing the service.
+Service Wrapper Scripts
+-----------------------
 
-The Finit service .conf file can be put into `/etc/finit.d/available` so you
-can control the service using `initctl`. Just place in the service .conf file
-the path to the wrapper shell script, e.g. if the wrapper is located in
-`/etc/start.d`:
+If your service requires to run additional commands, executed before the
+service is actually started, like the systemd `ExecStartPre`, you can
+use a wrapper shell script to start your service.
+
+The Finit service `.conf` file can be put into `/etc/finit.d/available`,
+so you can control the service using `initctl`.  Then use the path to
+the wrapper script in the Finit `.conf` service stanza.  The following
+example employs a wrapper script in `/etc/start.d`.
 
 **Example:**
+
 `/etc/finit.d/available/program.conf`:
 ```conf
 service [235] <!> /etc/start.d/program -- Example Program
 ```
-**Example:**
+
 `/etc/start.d/program:`
 ```shell
 #!/bin/sh
@@ -77,9 +80,10 @@ OPTIONS="-u $(cat /etc/username)"
 exec /usr/bin/program $OPTIONS
 ```
 
-*Note, that the example sets `<!>` to denote that it doesn't support SIGHUP. That
-way Finit will stop/start such the service instead of sending SIGHUP at
-restart/reload.*
+**Note:**, that the example sets `<!>` to denote that it doesn't support
+  `SIGHUP`. That way Finit will stop/start such the service instead of
+  sending SIGHUP at restart/reload.
+
 
 Syntax
 ------
