@@ -639,6 +639,15 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		while (*desc && isblank(*desc))
 			desc++;
+	} else {
+		int pos;
+
+		/* Find "--\n" to denote empty/no description */
+		pos = (int)strlen(line) - 2;
+		if (pos > 0 && !strcmp(&line[pos], "--")) {
+			line[pos] = 0;
+			desc = &line[pos];
+		}
 	}
 
 	cmd = strtok(line, " ");
