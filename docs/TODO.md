@@ -21,7 +21,6 @@ can also be used.
 Before Release
 --------------
 
-* Ctrl-C does not work properly on "logins" in `nologin` mode
 * Running `initctl restart foo` in the background blocks
 
 

@@ -252,6 +252,7 @@ int sh(char *tty)
 		NULL
 	};
 	size_t len;
+	struct termios term;
 
 	/* Detach from initial controlling TTY */
 	vhangup();
@@ -281,6 +282,17 @@ int sh(char *tty)
 		err(1, "Failed allocating memory");
 	snprintf(arg0, len, "-%s", _PATH_BSHELL);
 	args[0] = arg0;
+
+	/* Reenable Ctrl-D and Ctrl-C, and ... */
+	if (!tcgetattr(STDIN_FILENO, &term)) {
+		term.c_lflag    |= ISIG;
+		term.c_cc[VEOF]  = CTL('D');
+		term.c_cc[VINTR] = CTL('C');
+		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+	}
+
+	/* ... unblock signals in general */
+	sig_unblock();
 
 	return execv(_PATH_BSHELL, args);
 }
