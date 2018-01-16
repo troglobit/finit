@@ -74,7 +74,7 @@ svc_t *svc_new(char *cmd, int id, int type)
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
 	/* Default description, if missing */
-	desc = rindex(cmd, '/');
+	desc = strrchr(cmd, '/');
 	if (desc)
 		desc++;
 	else
