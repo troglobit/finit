@@ -50,11 +50,22 @@ host default
 # Runlevel to start after bootstrap, 'S', default: 2
 runlevel 2
 
+# Max file size for each log file: 100 kiB, rotate max 4 copies:
+# log => log.1 => log.2.gz => log.3.gz => log.4.gz
+log size=100k count=4
+
 # Services to be monitored and respawned as needed
 service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
 service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
 service [S12345] /sbin/klogd -n                              -- Kernel log daemon
 service   [2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
+
+# The BusyBox ntpd does not use syslog when running in the foreground
+# So we use this trick to redirect stdout/stderr to a log file.  The
+# log file is rotated with the above settings.  The condition declares
+# a dependency on a system default route (gateway) to be set.  A single
+# <!> at the beginning means ntpd does not respect SIGHUP for restart.
+service [2345] log:/var/log/ntpd.log <!net/route/default> /sbin/ntpd -n -l -I eth0 -- NTP daemon
 
 # For multiple instances of the same service, add :ID somewhere between
 # the service/run/task keyword and the command.
