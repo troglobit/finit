@@ -64,12 +64,12 @@ example employs a wrapper script in `/etc/start.d`.
 
 **Example:**
 
-`/etc/finit.d/available/program.conf`:
+* `/etc/finit.d/available/program.conf`:
 ```conf
 service [235] <!> /etc/start.d/program -- Example Program
 ```
 
-`/etc/start.d/program:`
+* `/etc/start.d/program:`
 ```shell
 #!/bin/sh
 
