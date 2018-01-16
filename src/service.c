@@ -137,7 +137,7 @@ static int is_norespawn(void)
  */
 static int service_start(svc_t *svc)
 {
-	int i, result = 0;
+	int i, result = 0, do_progress = 1;
 	pid_t pid;
 	sigset_t nmask, omask;
 
@@ -160,10 +160,15 @@ static int service_start(svc_t *svc)
 		return inetd_start(&svc->inetd);
 #endif
 
-	if (svc_is_daemon(svc))
-		print_desc("Starting ", svc->desc);
-	else
-		print_desc("", svc->desc);
+	if (!svc->desc || !svc->desc[0])
+		do_progress = 0;
+
+	if (do_progress) {
+		if (svc_is_daemon(svc))
+			print_desc("Starting ", svc->desc);
+		else
+			print_desc("", svc->desc);
+	}
 
 	/* Declare we're waiting for svc to create its pidfile */
 	svc_starting(svc);
@@ -357,7 +362,8 @@ static int service_start(svc_t *svc)
 		pid_file_create(svc);
 
 	sigprocmask(SIG_SETMASK, &omask, NULL);
-	print_result(result);
+	if (do_progress)
+		print_result(result);
 
 	/*
 	 * Only run hook on successful start, and *after* having printed
@@ -413,14 +419,14 @@ static int service_stop(svc_t *svc)
 
 #ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {
-		int do_print = runlevel != 1 && !svc_is_busy(svc);
+		int do_progress = runlevel != 1 && !svc_is_busy(svc);
 
-		if (do_print)
+		if (do_progress)
 			print_desc("Stopping ", svc->desc);
 
 		inetd_stop(&svc->inetd);
 
-		if (do_print)
+		if (do_progress)
 			print_result(0);
 		return 0;
 	}
@@ -473,7 +479,8 @@ static int service_restart(svc_t *svc)
 		return 1;
 	}
 
-	print_desc("Restarting ", svc->desc);
+	if (svc->desc && svc->desc[0])
+		print_desc("Restarting ", svc->desc);
 
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
 	svc_starting(svc);
@@ -487,7 +494,10 @@ static int service_restart(svc_t *svc)
 		touch(pid_file(svc));
 	}
 
-	return print_result(rc);
+	if (svc->desc && svc->desc[0])
+		print_result(rc);
+
+	return rc;
 }
 
 /**
