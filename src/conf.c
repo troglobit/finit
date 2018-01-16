@@ -401,7 +401,7 @@ static void parse_static(char *line)
 			tok = strtok(NULL, ":= ");
 		}
 
-		if (size > 0)
+		if (size >= 0)
 			logfile_size_max = size;
 		if (count >= 0)
 			logfile_count_max = count;
