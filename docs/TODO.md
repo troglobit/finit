@@ -18,6 +18,13 @@ after a reconfiguration (`initctl reload`), the Finit dependency system
 can also be used.
 
 
+Before Release
+--------------
+
+* Ctrl-C does not work properly on "logins" in `nologin` mode
+* Running `initctl restart foo` in the background blocks
+
+
 General
 -------
 
