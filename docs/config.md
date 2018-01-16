@@ -230,6 +230,14 @@ Syntax
   Log rotation for run/task/services using the `log` sub-option with
   redirection to a log file.  Global setting, applies to all services.
 
+  The size can be given as bytes, without a specifier, or in `k`, `M`,
+  or `G`, e.g. `size:10M`, or `size:3G`.  A value of `size:0` disables
+  log rotation.  The default is `200k`.
+
+  The count value is recommended to be between 1-5, with a default 5.
+  Setting count to 0 means the logfile will be truncated when the MAX
+  size limit is reached.
+
 * `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [nologin] [TERM]`  
   `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`  
   The first variant of this option uses the built-in getty on the given
