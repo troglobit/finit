@@ -29,6 +29,7 @@
 
 #include "finit.h"
 #include "log.h"
+#include "util.h"
 
 static int up       = 0;
 static int debug    = 0;
@@ -65,6 +66,9 @@ void log_exit(void)
 		sched_yield();
 		fputs("\n", stderr);
 	}
+
+	/* Reinitialize screen, terminal may have been resized at runtime */
+	screen_init();
 }
 
 void log_open(void)

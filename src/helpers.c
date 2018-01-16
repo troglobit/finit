@@ -110,6 +110,13 @@ void print(int action, const char *fmt, ...)
 	if (log_is_silent())
 		return;
 
+	/*
+	 * In debug mode we must reinitialize often, user may be
+	 * resizing their terminal to cope with debug output.
+	 */
+	if (log_is_debug())
+		screen_init();
+
 	if (fmt) {
 		va_start(ap, fmt);
 		printv(fmt, ap);
