@@ -433,7 +433,7 @@ static int service_stop(svc_t *svc)
 #endif
 
 	if (svc->pid <= 1) {
-		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->desc);
+		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->cmd);
 		return 1;
 	}
 
@@ -892,13 +892,13 @@ static void service_retry(svc_t *svc)
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
-		_d("%s not crashing anymore", svc->desc);
+		_d("%s not crashing anymore", svc->cmd);
 		*restart_cnt = 0;
 		return;
 	}
 
 	if (*restart_cnt >= RESPAWN_MAX) {
-		logit(LOG_ERR, "%s keeps crashing, not restarting", svc->desc);
+		logit(LOG_ERR, "%s keeps crashing, not restarting", svc->cmd);
 		svc_crashing(svc);
 		*restart_cnt = 0;
 		service_step(svc);
@@ -907,7 +907,7 @@ static void service_retry(svc_t *svc)
 
 	(*restart_cnt)++;
 
-	_d("%s crashed, trying to start it again, attempt %d", svc->desc, *restart_cnt);
+	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
 	svc_unblock(svc);
 	service_step(svc);
 
@@ -1037,7 +1037,7 @@ restart:
 				 * Restart directly after the first crash,
 				 * then retry after 2 sec
 				 */
-				_d("delayed restart of %s", svc->desc);
+				_d("delayed restart of %s", svc->cmd);
 				service_timeout_after(svc, 1, service_retry);
 				break;
 			}
