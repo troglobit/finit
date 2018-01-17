@@ -435,7 +435,7 @@ static int show_status(char *arg)
 	}
 
 	if (!verbose)
-		printheader(NULL, "#      STATUS   PID     RUNLEVELS     SERVICE               DESCRIPTION", 0);
+		printheader(NULL, "#         STATUS   PID     RUNLEVELS     SERVICE           DESCRIPTION", 0);
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char jobid[10], args[512] = "", *lvls;
@@ -445,7 +445,7 @@ static int show_status(char *arg)
 //		else
 			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
 
-		printf("%-5s  %7s  ", jobid, svc_status(svc));
+		printf("%-9s %7s  ", jobid, svc_status(svc));
 		if (svc_is_inetd(svc))
 			printf("inetd   ");
 		else
@@ -466,7 +466,7 @@ static int show_status(char *arg)
 			else
 				name++;
 
-			printf("%-20.20s  %-*.*s\n", name, adj, adj, svc->desc);
+			printf("%-16.16s  %-*.*s\n", name, adj, adj, svc->desc);
 			continue;
 		}
 
