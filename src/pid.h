@@ -22,6 +22,11 @@
  * THE SOFTWARE.
  */
 
+#ifndef FINIT_PID_H_
+#define FINIT_PID_H_
+
+#include "svc.h"
+
 int   pid_alive       (pid_t pid);
 char *pid_get_name    (pid_t pid, char *name, size_t len);
 
@@ -29,7 +34,28 @@ char *pid_file        (svc_t *svc);
 int   pid_file_create (svc_t *svc);
 int   pid_file_parse  (svc_t *svc, char *arg);
 
-char *pid_runpath     (char *file, char *path, size_t len);
+static inline char *pid_runpath(char *file, char *path, size_t len)
+{
+	static int unknown = 1;
+	static char *prefix = "/var/run";
+
+	if (unknown) {
+		if (fisdir("/run"))
+			prefix = "/run";
+		unknown = 0;
+	}
+
+	if (!strncmp(file, "/var/run/", 9))
+		file += 9;
+	else if (!strncmp(file, "/run/", 5))
+		file += 5;
+
+	snprintf(path, len, "%s/%s", prefix, file);
+
+	return path;
+}
+
+#endif /* FINIT_PID_H_ */
 
 /**
  * Local Variables:
