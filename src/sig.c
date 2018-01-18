@@ -133,7 +133,9 @@ void do_kill(int signo)
 				continue;
 
 			if (fgets(file, sizeof(file), fp)) {
-				if (file[0] != '@')
+				if (strstr(file, "gdbserver"))
+					_d("Skipping %s ...", file);
+				else if (file[0] != '@')
 					kill(pid, signo);
 				else
 					_d("Skipping %s ...", &file[1]);
