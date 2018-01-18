@@ -170,6 +170,9 @@ static void setup(void *arg)
 	makefifo("/dev/xconsole",  0640); /* sysklogd */
 	chown("/dev/xconsole", 0, gid);
 
+	if (!fexist("/etc/mtab"))
+		symlink("../proc/self/mounts", "/etc/mtab");
+
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
 	uid = getuser("uuidd", NULL);
 	if (uid >= 0) {
