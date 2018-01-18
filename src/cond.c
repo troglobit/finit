@@ -26,6 +26,7 @@
 
 #include "finit.h"
 #include "cond.h"
+#include "pid.h"
 #include "service.h"
 
 
@@ -42,11 +43,12 @@ const char *condstr(enum cond_state s)
 
 const char *cond_path(const char *name)
 {
+	char tmp[MAX_ARG_LEN];
 	static char file[MAX_ARG_LEN];
 
-	snprintf(file, sizeof(file), COND_PATH "/%s", name);
+	snprintf(tmp, sizeof(tmp), COND_PATH "/%s", name);
 
-	return file;
+	return pid_runpath(tmp, file, sizeof(file));
 }
 
 unsigned int cond_get_gen(const char *path)
