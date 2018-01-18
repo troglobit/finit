@@ -108,6 +108,9 @@ int plugin_register(plugin_t *plugin)
 /* Not called, at the moment plugins cannot be unloaded. */
 int plugin_unregister(plugin_t *plugin)
 {
+	if (is_io_plugin(plugin))
+		uev_io_stop(&plugin->watcher);
+
 #ifndef ENABLE_STATIC
 	TAILQ_REMOVE(&plugins, plugin, link);
 
