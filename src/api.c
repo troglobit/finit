@@ -429,6 +429,8 @@ error:
 
 int api_exit(void)
 {
+	uev_io_stop(&api_watcher);
+
 	return close(api_watcher.fd);
 }
 
