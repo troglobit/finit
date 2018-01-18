@@ -68,6 +68,7 @@
 	CHOOSE(HOOK_BANNER = 0,      "hook/sys/banner"),	\
 	CHOOSE(HOOK_ROOTFS_UP,       "hook/mount/root"),	\
 	CHOOSE(HOOK_MOUNT_ERROR,     "hook/mount/error"),	\
+	CHOOSE(HOOK_MOUNT_POST,      "hook/mount/post"),	\
 	CHOOSE(HOOK_BASEFS_UP,       "hook/mount/all"),		\
 	CHOOSE(HOOK_NETWORK_UP,      "hook/net/up"),		\
 	CHOOSE(HOOK_SVC_UP,          "hook/svc/up"),		\

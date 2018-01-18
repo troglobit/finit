@@ -448,6 +448,9 @@ int main(int argc, char* argv[])
 		if (run_interactive("mount -na", "Mounting filesystems"))
 			plugin_run_hooks(HOOK_MOUNT_ERROR);
 
+		_d("Calling extra mount hook, after mount -a ...");
+		plugin_run_hooks(HOOK_MOUNT_POST);
+
 		run("swapon -ea");
 		umask(0022);
 	}
