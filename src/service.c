@@ -850,6 +850,18 @@ recreate:
 
 void service_unregister(svc_t *svc)
 {
+	if (!svc)
+		return;
+
+	if (svc_is_inetd(svc)) {
+		if (svc_is_busy(svc->inetd.svc)) {
+			svc_unblock(svc->inetd.svc);
+			service_step(svc->inetd.svc);
+		}
+
+		inetd_del(&svc->inetd);
+	}
+
 	svc_del(svc);
 }
 
@@ -970,10 +982,6 @@ restart:
 	case SVC_DONE_STATE:
 #ifdef INETD_ENABLED
 		if (svc_is_inetd_conn(svc)) {
-			if (svc_is_busy(svc->inetd.svc)) {
-				svc_unblock(svc->inetd.svc);
-				service_step(svc->inetd.svc);
-			}
 			service_unregister(svc);
 			return -1;
 		}

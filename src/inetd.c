@@ -346,8 +346,10 @@ void inetd_stop(inetd_t *inetd)
 		_d("Stopping %s socket watcher ...", inetd->svc->cmd);
 		uev_io_stop(&inetd->watcher);
 
-		/* For dgram inetd services we block the parent SVC
-		 * and halt the watcher, so don't close the socket! */
+		/*
+		 * For dgram inetd services we block the parent SVC
+		 * and halt the watcher, so don't close the socket!
+		 */
 		if (!svc_is_busy(inetd->svc)) {
 			_d("Shutting down inet socket %d ...", inetd->watcher.fd);
 			close(inetd->watcher.fd);
