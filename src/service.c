@@ -857,6 +857,9 @@ void service_unregister(svc_t *svc)
 	if (!svc)
 		return;
 
+	service_stop(svc);
+	service_step(svc);
+
 	if (svc_is_inetd(svc)) {
 		if (svc_is_busy(svc->inetd.svc)) {
 			svc_unblock(svc->inetd.svc);
