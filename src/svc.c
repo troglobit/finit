@@ -408,10 +408,8 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->dirty == -1 && cb) {
+		if (svc->dirty == -1 && cb)
 			cb(svc);
-			svc_mark_clean(svc);
-		}
 	}
 }
 
