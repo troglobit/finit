@@ -429,6 +429,8 @@ static int service_stop(svc_t *svc)
 
 		if (do_progress)
 			print_result(0);
+
+		svc_set_state(svc, SVC_STOPPING_STATE);
 		return 0;
 	} else
 #endif
@@ -443,6 +445,8 @@ static int service_stop(svc_t *svc)
 		return 0;
 
 	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
+	svc_set_state(svc, SVC_STOPPING_STATE);
+
 	if (runlevel != 1)
 		print_desc("Stopping ", svc->desc);
 
@@ -1043,7 +1047,6 @@ restart:
 	case SVC_RUNNING_STATE:
 		if (!enabled) {
 			service_stop(svc);
-			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 		}
 
@@ -1077,7 +1080,6 @@ restart:
 		switch (cond) {
 		case COND_OFF:
 			service_stop(svc);
-			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 
 		case COND_FLUX:
@@ -1094,7 +1096,6 @@ restart:
 					service_restart(svc);
 				} else {
 					service_stop(svc);
-					svc_set_state(svc, SVC_STOPPING_STATE);
 				}
 				svc_mark_clean(svc);
 			}
@@ -1106,7 +1107,6 @@ restart:
 		if (!enabled) {
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
-			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 		}
 
@@ -1126,7 +1126,6 @@ restart:
 		case COND_OFF:
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
-			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 
 		case COND_FLUX:
