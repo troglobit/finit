@@ -429,8 +429,9 @@ static int service_stop(svc_t *svc)
 		if (do_progress)
 			print_result(0);
 		return 0;
-	}
+	} else
 #endif
+	service_timeout_cancel(svc);
 
 	if (svc->pid <= 1) {
 		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->cmd);
