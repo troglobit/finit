@@ -4,7 +4,8 @@ d_LINKS    = console-setup.conf getty.conf keyboard-setup.conf	\
 	     modules.conf rsyslogd.conf sshd.conf
 
 install-exec-hook:
-	for file in $(d_LINKS); do				\
+	@$(MKDIR_P) $(DESTDIR)$(docsdir)
+	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
 		if [ -e $$lnk ]; then				\

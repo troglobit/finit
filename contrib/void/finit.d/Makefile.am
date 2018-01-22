@@ -3,7 +3,8 @@ docsdir   := @docdir@/contrib/void/finit.d
 d_LINKS    = acpid.conf dhcpcd.conf getty.conf sshd.conf uuidd.conf
 
 install-exec-hook:
-	for file in $(d_LINKS); do				\
+	@$(MKDIR_P) $(DESTDIR)$(docsdir)
+	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
 		if [ -e $$lnk ]; then				\

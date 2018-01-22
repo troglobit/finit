@@ -28,6 +28,7 @@ LT_INIT([shared disable-static dlopen aix-soname=both disable-fast-install])
 AC_PROG_CC
 AC_PROG_LN_S
 AC_PROG_INSTALL
+AC_PROG_MKDIR_P
 
 # Configuration.
 AC_HEADER_STDC
