@@ -206,7 +206,13 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
 	if (tflg != FTW_F)
 		return 0;
 
-	nm = (char *)fpath + sizeof(COND_PATH);
+	nm = strstr((char *)fpath, COND_DIR);
+	if (!nm) {
+		_e("Incorrect condtion path %s, cannot reassert", fpath);
+		return 1;
+	}
+
+	nm += sizeof(COND_DIR) + 1;
 	_d("Reasserting %s => %s", fpath, nm);
 	cond_set(nm);
 

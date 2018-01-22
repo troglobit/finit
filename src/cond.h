@@ -3,7 +3,8 @@
 
 #include <paths.h>
 
-#define COND_PATH     _PATH_VARRUN "finit/cond"
+#define COND_DIR      "finit/cond"
+#define COND_PATH     _PATH_VARRUN COND_DIR
 #define COND_RECONF   COND_PATH "/reconf"
 
 typedef enum cond_state {
