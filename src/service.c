@@ -436,13 +436,8 @@ static int service_stop(svc_t *svc)
 #endif
 	service_timeout_cancel(svc);
 
-	if (svc->pid <= 1) {
-		_d("Bad PID %d for %s, SIGTERM", svc->pid, svc->cmd);
+	if (svc->pid <= 1)
 		return 1;
-	}
-
-	if (SVC_TYPE_SERVICE != svc->type)
-		return 0;
 
 	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
 	svc_set_state(svc, SVC_STOPPING_STATE);
@@ -858,12 +853,10 @@ void service_unregister(svc_t *svc)
 		return;
 
 	/*
-	 * Only call service_stop() if @svc is still running *and* it's
-	 * not an inetd connection.  This prevents infinite recursion if
-	 * called from service_step(), or if it's an inet connection and
-	 * it's already been stopped.
+	 * Only try stopping @svc if it's *not* an inetd connection.
+	 * Prevents infinite recursion when called from service_step()
 	 */
-	if (svc->pid && !svc_is_inetd_conn(svc))
+	if (!svc_is_inetd_conn(svc))
 		service_stop(svc);
 
 	if (svc_is_inetd(svc)) {
