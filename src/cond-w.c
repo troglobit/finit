@@ -212,7 +212,7 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
 		return 1;
 	}
 
-	nm += sizeof(COND_DIR) + 1;
+	nm += sizeof(COND_DIR);
 	_d("Reasserting %s => %s", fpath, nm);
 	cond_set(nm);
 
