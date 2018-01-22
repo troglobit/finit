@@ -7,7 +7,7 @@ install-exec-hook:
 	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
-		if [ -e $$lnk ]; then				\
+		if [ -L $$lnk ]; then				\
 			echo "Skipping $$lnk exists.";		\
 		else						\
 			$(LN_S) $$src $$lnk;			\

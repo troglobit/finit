@@ -1,13 +1,14 @@
 SUBDIRS    = available
 docsdir   := @docdir@/contrib/alpine/finit.d
-d_LINKS    = dropbear.conf getty.conf keymap.conf modules.conf klogd.conf syslogd.conf
+d_LINKS    = dropbear.conf getty.conf keymap.conf modules.conf klogd.conf \
+	     syslogd.conf
 
 install-exec-hook:
 	@$(MKDIR_P) $(DESTDIR)$(docsdir)
 	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
-		if [ -e $$lnk ]; then				\
+		if [ -L $$lnk ]; then				\
 			echo "Skipping $$lnk exists.";		\
 		else						\
 			$(LN_S) $$src $$lnk;			\
