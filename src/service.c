@@ -857,8 +857,14 @@ void service_unregister(svc_t *svc)
 	if (!svc)
 		return;
 
-	service_stop(svc);
-	service_step(svc);
+	/*
+	 * Only call service_stop() if @svc is still running *and* it's
+	 * not an inetd connection.  This prevents infinite recursion if
+	 * called from service_step(), or if it's an inet connection and
+	 * it's already been stopped.
+	 */
+	if (svc->pid && !svc_is_inetd_conn(svc))
+		service_stop(svc);
 
 	if (svc_is_inetd(svc)) {
 		if (svc_is_busy(svc->inetd.svc)) {
