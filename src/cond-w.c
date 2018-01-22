@@ -28,6 +28,7 @@
 
 #include "finit.h"
 #include "cond.h"
+#include "pid.h"
 #include "service.h"
 
 static int cond_set_gen(const char *path, unsigned int gen)
@@ -224,7 +225,9 @@ void cond_reassert(const char *type)
 
 void cond_init(void)
 {
-	if (makepath(COND_PATH) && errno != EEXIST) {
+	char path[MAX_ARG_LEN];
+
+	if (makepath(pid_runpath(COND_PATH, path, sizeof(path))) && errno != EEXIST) {
 		_pe("Failed creating condition base directory '%s'", COND_PATH);
 		return;
 	}
