@@ -847,6 +847,17 @@ recreate:
 	return 0;
 }
 
+/*
+ * This function is called when cleaning up lingering (stopped) services
+ * after a .conf reload, as well as when an inetd connection terminates.
+ *
+ * We need to ensure we properly stop the service before removing it,
+ * including stopping any pending restart or SIGKILL timers before we
+ * proceed to free() the svc itself.
+ *
+ * Remember to not try to stop inetd connections, they only get here
+ * when already stopped, if we do we end up in a recursive loop.
+ */
 void service_unregister(svc_t *svc)
 {
 	if (!svc)
