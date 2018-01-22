@@ -4,7 +4,14 @@ AM_SILENT_RULES([yes])
 
 AC_CONFIG_SRCDIR([src/finit.c])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile docs/Makefile plugins/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile
+	contrib/Makefile
+	contrib/alpine/Makefile contrib/alpine/finit.d/Makefile contrib/alpine/finit.d/available/Makefile
+	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile contrib/debian/grub.d/Makefile
+	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
+	docs/Makefile
+	plugins/Makefile
+	src/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/plugin.m4])
