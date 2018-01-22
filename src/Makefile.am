@@ -69,7 +69,7 @@ install-exec-hook:
 	@for file in $(INIT_LNKS); do				\
 		lnk=$(DESTDIR)$(sbindir)/$$file;		\
 		if [ -e $$lnk ]; then				\
-			echo "Skipping $$lnk exists already.";	\
+			echo "Skipping $$lnk exists.";		\
 		else						\
 			$(LN_S) finit $$lnk;			\
 		fi;						\
@@ -78,11 +78,11 @@ install-exec-hook:
 		echo "Non-finit reboot, skipping install.";	\
 	else							\
 		for file in $(REBOOT_LNKS); do			\
-			link=$(DESTDIR)$(sbindir)/$$file;	\
-			if [ -e $$link ]; then			\
-				echo "$$link exists, skipping.";\
+			lnk=$(DESTDIR)$(sbindir)/$$file;	\
+			if [ -e $$lnk ]; then			\
+				echo "Skipping $$lnk exists.";	\
 			else					\
-				$(LN_S) reboot $$link;		\
+				$(LN_S) reboot $$lnk;		\
 			fi;					\
 		done;						\
 	fi
@@ -101,10 +101,11 @@ uninstall-hook:
 		echo "Non-finit reboot, skipping uninstall.";	\
 	else							\
 		for file in $(REBOOT_LNKS); do			\
-		        link=$(DESTDIR)$(sbindir)/$$file;	\
-			if [ "`readlink $$link`" != "reboot" ]; \
-				then continue; 			\
+		        lnk=$(DESTDIR)$(sbindir)/$$file;	\
+			dst=`readlink $$lnk`;			\
+			if [ "$$dst" != "reboot" ]; then 	\
+				continue; 			\
 			fi;					\
-			$(RM) $$link;				\
+			$(RM) $$lnk;				\
 		done;						\
 	fi
