@@ -2,13 +2,15 @@
 *.o
 *.so
 *.gz
+ID
 GPATH
 GRTAGS
 GSYMS
 GTAGS
 
 # GNU configure and build system
-/autom4te.cache/*
+/.deps
+/autom4te.cache
 /aclocal.m4
 /ar-lib
 /compile
@@ -33,3 +35,8 @@ GTAGS
 /.config
 /.stamp
 /.unpacked
+
+# WeOS build system
+/.autoconf
+/.automake
+/.built
