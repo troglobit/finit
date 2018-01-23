@@ -161,7 +161,7 @@ static int service_start(svc_t *svc)
 		return inetd_start(&svc->inetd);
 #endif
 
-	if (!svc->desc || !svc->desc[0])
+	if (!svc->desc[0])
 		do_progress = 0;
 
 	if (do_progress) {
@@ -481,7 +481,7 @@ static int service_restart(svc_t *svc)
 	}
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
-	if (svc->desc && svc->desc[0])
+	if (svc->desc[0])
 		print_desc("Restarting ", svc->desc);
 
 	rc = kill(svc->pid, SIGHUP);
@@ -495,7 +495,7 @@ static int service_restart(svc_t *svc)
 		touch(pid_file(svc));
 	}
 
-	if (svc->desc && svc->desc[0])
+	if (svc->desc[0])
 		print_result(rc);
 
 	return rc;
