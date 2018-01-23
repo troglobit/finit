@@ -43,10 +43,13 @@ install:
 # Custom build script for the time being, no "make test" yet
 script:
   - ./autogen.sh
-  - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp
+  - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp --disable-inetd --enable-static
+  - make clean
+  - make V=1 -j5
+  - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp --enable-inetd-echo-plugin --enable-inetd-time-plugin --enable-x11-common-plugin --enable-inetd-chargen-plugin --enable-fallback-shell --enable-watchdog
   - cat config.log
   - make clean
-  - make -j5 V=1
+  - make V=1 -j5
   - make install-strip
   - tree /tmp
   - ldd /tmp/sbin/finit
