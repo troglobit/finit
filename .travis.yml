@@ -11,6 +11,7 @@ sudo: false
 # Test build with both GCC and Clang (LLVM)
 compiler:
   - gcc
+  - clang
 
 env:
   global:
