@@ -4,10 +4,16 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[3.1][] - 2017-12-xx
+[3.1][] - 2018-01-23
 --------------------
 
-Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
+Improvements to `netlink.so` plugin, per-service `rlimit` support,
+improved integration with `watchdogd`, auto-detect TTY console.  Much
+improved debug, rescue and logging support.  Also, many fixes to both
+big and small issues, most notably in the condition handling, which no
+longer is sensitive to time skips.
+
+This version requires at least libuEv v2.1.0 and libite v2.0.1
 
 ### Changes
 
@@ -24,9 +30,8 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
 * Support for auto-detecting serial console using Linux SysFS, the new
   `tty @console` eliminates the need to keep track of different console
   devices across embedded platforms: `/dev/ttyS0`, `/dev/ttyAMA0`, etc.
-* Support for the special debug option `nologin` to tty configurations,
-  skips the login prompt and skips immediately to a root shell.  Useful
-  during board bringup, in developer builds, etc.  Be careful though ...
+* Add TTY `nologin` option.  Bypasses login and skips immediately to a
+  root shell.  Useful during board bringup, in developer builds, etc.
 * Support for calling run/tasks on Finit internal HOOK points, issue #18
 * Removed support for long-since deprecated `console DEV` setting
 * Cosmetic change to login, pressing enter at the `Press enter to ...`
@@ -57,9 +62,21 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
   redirect `stdout` and `stderr` of all applications to `/dev/null`
 * New `pid` sub-option to services when a service does not create a PID
   file, or when the PID file has another name.  Issue #95
-* New `log` sub-option to service/run/task to selectively redirect
-  `stdout` and `stderr` using the new tool `logit` to either syslog
-  or a logfile.  Issue #44
+* Greatly improved `log` sub-option to service/run/tasks, selectively
+  redirect `stdout` and `stderr` using the new tool `logit` to either
+  syslog or a logfile.  Issue #44
+* Support for automatic log rotation of logfiles created by `log`
+  option.  Use `configure --disable-logrotate` on systems with a
+  dedicated log rotation service.  Issue #44
+* Support for disabling service/run/task progress with empty ` --`
+  description.  Note: no description separator gives a default desc.
+* Create `/etc/mtab` symlink if missing on system (bootmisc plugin)
+* New hook: `hook/mount/post` runs after `mount -a` but before the
+  `hook/mount/all`, where `bootmisc.so` runs.  This provides the
+  possibility of running a second stage mount command before files in
+  `/run` and similar are created
+* Skip `gdbserver` when unleashing the grim reaper at shutdown
+* Distribute and install `docs/` and `contrib/` directories
 
 ### Fixes
 
@@ -94,6 +111,7 @@ Finit v3.1 require libuEv v2.1.0, or later, and libite v2.0.1, or later.
 * Fix issue #81 properly, remove use of SYSV shm IPC completely.  Finit
   now use the API socket for all communication between PID 1 and initctl
 * Fix segfault on x86_64 when started with kernel cmdline `--debug`
+* Normalize condition paths on systems with `/run` instead of `/var/run`
 
 
 [3.0][] - 2017-10-19
@@ -691,7 +709,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/3.0...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/3.1...HEAD
+[3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
 [3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
 [2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
 [2.3]: https://github.com/troglobit/finit/compare/2.2...2.3
