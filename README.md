@@ -10,6 +10,7 @@
   * [Hooks, Callbacks & Plugins](docs/plugins.md#hooks-callbacks--plugins)
 * [Rebooting & Halting](#rebooting--halting)
 * [Commands & Status](#commands--status)
+* [Tips & Tricks with the kernel cmdline](docs/cmdline.md)
 * [Building](docs/build.md#building)
   * [Running](docs/build.md#running)
   * [Recovery](docs/build.md#recovery)
