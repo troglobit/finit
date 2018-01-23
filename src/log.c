@@ -122,6 +122,9 @@ void log_debug(void)
 	}
 	log_open();
 
+	/* Also toggle silent mode (progress) */
+	log_silent();
+
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
 }
 
