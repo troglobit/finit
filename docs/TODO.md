@@ -18,16 +18,26 @@ after a reconfiguration (`initctl reload`), the Finit dependency system
 can also be used.
 
 
-General
--------
+Before Release
+--------------
 
-* Add support for timed shutdown in Finit, including cancelled shutdown,
-  possibly using an at-job, see [crond section](#Crond) below
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
+* Cron/At support, see below
+* Write man pages for finit and `finit.conf`, steal from the excellent
+  `pimd` man pages ...
+* Add simple, *very* simple, `finit-simple.conf` example. To illustrate
+  how close Finit3 still is to the original easy-to-use Finit0 :)
+
+
+General
+-------
+
+* Add support for timed shutdown in Finit, including cancelled shutdown,
+  possibly using an at-job, see [crond section](#Crond) below
 * Add support for JSON output, or similar, from `initctl show`, e.g.
   `initctl show --json`
 * [Solaris SMF][] (Service Management Facility) has some interesting
@@ -104,21 +114,4 @@ the shell -- that way setting up one-time jobs would not entail
 re-reading `/etc/finit.conf`
 
 
-Documentation
--------------
-
-* Write man pages for finit and `finit.conf`, steal from the excellent
-  `pimd` man pages ...
-* Add simple, *very* simple, `finit-simple.conf` example. To illustrate
-  how close Finit3 still is to the original easy-to-use Finit0 :)
-
-
-[libwdt]: http://www.wehavemorefun.de/fritzbox/Libwdt.so
-[Fritz!Box source dump]: ftp://ftp.avm.de/fritz.box/fritzbox.fon_wlan_7170/x_misc/opensrc/
 [Solaris SMF]: http://www.oracle.com/technetwork/articles/servers-storage-admin/intro-smf-basics-s11-1729181.html
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
