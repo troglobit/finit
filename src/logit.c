@@ -65,7 +65,7 @@ static int logrotate(char *file, int num, off_t sz)
 				snprintf(nfile, len, "%s.%d.gz", file, cnt);
 
 				/* May fail because ofile doesn't exist yet, ignore. */
-				rename(ofile, nfile);
+				(void)rename(ofile, nfile);
 			}
 
 			for (cnt = num; cnt > 0; cnt--) {
