@@ -876,7 +876,9 @@ void service_unregister(svc_t *svc)
 			service_step(svc->inetd.svc);
 		}
 
+#ifdef INETD_ENABLED
 		inetd_del(&svc->inetd);
+#endif
 	}
 
 	svc_del(svc);
