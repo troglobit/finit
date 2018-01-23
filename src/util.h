@@ -48,6 +48,7 @@ char *uptime       (long secs, char *buf, size_t len);
 char *sanitize     (char *arg, size_t len);
 
 void  screen_init  (void);
+void  screen_exit  (void);
 int   screen_width (void);
 
 #endif /* FINIT_UTIL_H_ */

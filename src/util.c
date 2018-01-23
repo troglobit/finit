@@ -157,12 +157,26 @@ char *sanitize(char *arg, size_t len)
 	return NULL;
 }
 
+/*
+ * Called at boot, and shutdown, to (re)initialize the
+ * screen size for print() et al.
+ */
 void screen_init(void)
 {
 	if (!isatty(STDOUT_FILENO))
 		return;
 
 	initscr(&screen_rows, &screen_cols);
+}
+
+/*
+ * Called when debug mode is enabled to revert back
+ * to old-school safe defaults.
+ */
+void screen_exit(void)
+{
+	screen_rows = 24;
+	screen_cols = 80;
 }
 
 /**
