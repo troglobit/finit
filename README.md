@@ -29,8 +29,11 @@ was reverse engineered from the [EeePC fastinit][] ten years ago by
 
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
-[contrib/](contrib/) section where both [Debian](contrib/debian/) and
-up to date [Alpine Linux](contrib/alpine/) tutorials can be found.
+[contrib/](contrib/) section with tutorials for:
+
+* [Alpine Linux](contrib/alpine/),
+* [Debian GNU/Linux](contrib/debian/), and
+* [Void Linux](contrib/void/)
 
 ![Alpine screenshot](images/alpine-screenshot.png)  
 The screenshot shows [Alpine Linux](https://www.alpinelinux.org/).
