@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
 	conf_parse_cmdline();
 
 	/* Set up canvas */
-	if (!rescue)
+	if (!rescue && !log_is_debug())
 		screen_init();
 
 	/*

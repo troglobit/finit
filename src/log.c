@@ -67,8 +67,14 @@ void log_exit(void)
 		fputs("\n", stderr);
 	}
 
-	/* Reinitialize screen, terminal may have been resized at runtime */
-	screen_init();
+	/*
+	 * Unless in debug mode at shutdown, Reinitialize screen,
+	 * terminal may have been resized at runtime
+	 */
+	if (debug)
+		screen_exit();
+	else
+		screen_init();
 }
 
 void log_open(void)
@@ -106,9 +112,13 @@ void log_debug(void)
 	if (debug) {
 		silent   = 0;
 		loglevel = LOG_DEBUG;
+
+		screen_exit();
 	} else {
 		silent   = SILENT_MODE;
 		loglevel = LOG_NOTICE;
+
+		screen_init();
 	}
 	log_open();
 
