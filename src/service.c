@@ -870,12 +870,12 @@ void service_unregister(svc_t *svc)
 	if (!svc_is_inetd_conn(svc))
 		service_stop(svc);
 
-	if (svc_is_inetd(svc)) {
+	if (!svc_is_inetd(svc)) {
 		if (svc_is_busy(svc->inetd.svc)) {
 			svc_unblock(svc->inetd.svc);
 			service_step(svc->inetd.svc);
 		}
-
+	} else {
 #ifdef INETD_ENABLED
 		inetd_del(&svc->inetd);
 #endif
