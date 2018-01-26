@@ -177,26 +177,29 @@ static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && IS
 static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }
 static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && svc->pidfile[0] != 0 && svc->pidfile[0] != '!'; }
 
-static inline void svc_starting    (svc_t *svc) { svc->starting = 1;         }
-static inline void svc_started     (svc_t *svc) { svc->starting = 0;         }
-static inline int  svc_is_starting (svc_t *svc) { return 0 != svc->starting; }
+static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;       }
+static inline void svc_started     (svc_t *svc) { if (svc) svc->starting = 0;       }
+static inline int  svc_is_starting (svc_t *svc) { return svc && 0 != svc->starting; }
 
 static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
 static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }
 
-static inline int  svc_is_blocked  (svc_t *svc) { return svc->block != SVC_BLOCK_NONE; }
-static inline int  svc_is_busy     (svc_t *svc) { return svc->block == SVC_BLOCK_BUSY; }
-static inline void svc_unblock     (svc_t *svc) { svc->block = SVC_BLOCK_NONE; }
+static inline int  svc_is_blocked  (svc_t *svc) { return svc && svc->block != SVC_BLOCK_NONE; }
+static inline int  svc_is_busy     (svc_t *svc) { return svc && svc->block == SVC_BLOCK_BUSY; }
+static inline void svc_unblock     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_NONE;       }
 #define            svc_start(svc)  svc_unblock(svc)
-static inline void svc_stop        (svc_t *svc) { svc->block = SVC_BLOCK_USER; }
-static inline void svc_busy        (svc_t *svc) { svc->block = SVC_BLOCK_BUSY; }
-static inline void svc_missing     (svc_t *svc) { svc->block = SVC_BLOCK_MISSING; }
-static inline void svc_restarting  (svc_t *svc) { svc->block = SVC_BLOCK_RESTARTING; }
-static inline void svc_crashing    (svc_t *svc) { svc->block = SVC_BLOCK_CRASHING; }
+static inline void svc_stop        (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_USER; }
+static inline void svc_busy        (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_BUSY; }
+static inline void svc_missing     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_MISSING; }
+static inline void svc_restarting  (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_RESTARTING; }
+static inline void svc_crashing    (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_CRASHING; }
 
 static inline char *svc_status(svc_t *svc)
 {
+	if (!svc)
+		return "Unknown";
+
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
 		switch (svc->block) {
@@ -249,6 +252,9 @@ static inline char *svc_status(svc_t *svc)
 
 static inline const char *svc_dirtystr(svc_t *svc)
 {
+	if (!svc)
+		return "Unknown";
+
 	if (svc_is_removed(svc))
 		return "removed";
 	if (svc_is_updated(svc))
