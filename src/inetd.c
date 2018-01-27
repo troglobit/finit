@@ -56,7 +56,7 @@ static int inetd_dgram_peek(int sd, char *ifname)
 	if (recvmsg(sd, &msgh, MSG_PEEK) < 0)
 		return -1;
 
-	for (cmsg = CMSG_FIRSTHDR(&msgh); cmsg; cmsg = CMSG_NXTHDR(&msgh,cmsg)) {
+	for (cmsg = CMSG_FIRSTHDR(&msgh); cmsg; cmsg = CMSG_NXTHDR(&msgh, cmsg)) {
 		struct in_pktinfo *ipi = (struct in_pktinfo *)CMSG_DATA(cmsg);
 
 		if (cmsg->cmsg_level != SOL_IP || cmsg->cmsg_type != IP_PKTINFO)
