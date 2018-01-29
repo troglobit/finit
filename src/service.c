@@ -1087,6 +1087,7 @@ restart:
 			}
 
 			if (svc_is_runtask(svc)) {
+				svc_set_state(svc, SVC_STOPPING_STATE);
 				svc->once++;
 				break;
 			}
