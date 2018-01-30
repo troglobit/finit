@@ -18,9 +18,10 @@ after a reconfiguration (`initctl reload`), the Finit dependency system
 can also be used.
 
 
-Before Release
---------------
+For upcoming Finit v3.2
+-----------------------
 
+* Merge UDP redirect service uredir as an UDP inetd variant
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
