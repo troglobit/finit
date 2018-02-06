@@ -4,7 +4,7 @@ d_LINKS    = dropbear.conf getty.conf keymap.conf modules.conf klogd.conf \
 	     syslogd.conf
 
 install-exec-hook:
-	@$(MKDIR_P) $(DESTDIR)$(docsdir)
+	@$(MKDIR_P) $(DESTDIR)$(docsdir)/available
 	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
