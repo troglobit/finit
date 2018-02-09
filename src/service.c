@@ -966,7 +966,8 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	*state = new;
 
 	/* if the PID isn't collected within 3s, kill it! */
-	if (*state == SVC_STOPPING_STATE) {
+	if ((*state == SVC_STOPPING_STATE) &&
+	    !svc_is_inetd(svc)) {
 		service_timeout_cancel(svc);
 		service_timeout_after(svc, 3000, service_kill);
 	}
