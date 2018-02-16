@@ -522,6 +522,7 @@ static int usage(int rc)
 		"Usage: %s [OPTIONS] [COMMAND]\n"
 		"\n"
 		"Options:\n"
+		"  -b, --batch               Batch mode, no screen size probing\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
 		"\n"
@@ -567,7 +568,7 @@ static int do_help(char *arg)
 
 int main(int argc, char *argv[])
 {
-	int c;
+	int interactive = 1, c;
 	char *cmd, arg[120];
 	struct command command[] = {
 		{ "debug",    toggle_debug },
@@ -598,6 +599,7 @@ int main(int argc, char *argv[])
 		{ NULL, NULL }
 	};
 	struct option long_options[] = {
+		{"batch",   0, NULL, 'b'},
 		{"help",    0, NULL, 'h'},
 		{"debug",   0, NULL, 'd'},
 		{"verbose", 0, NULL, 'v'},
@@ -605,8 +607,12 @@ int main(int argc, char *argv[])
 	};
 
 	progname(argv[0]);
-	while ((c = getopt_long(argc, argv, "h?v", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bh?v", long_options, NULL)) != EOF) {
 		switch(c) {
+		case 'b':
+			interactive = 0;
+			break;
+
 		case 'h':
 		case '?':
 			return usage(0);
@@ -617,7 +623,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	screen_init();
+	if (interactive)
+		screen_init();
 
 	if (optind >= argc)
 		return show_status(NULL);
