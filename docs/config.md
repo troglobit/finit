@@ -341,6 +341,9 @@ syslog using the native `logit` tool.  The full syntax is:
     log:null
     log
 
+Default `prio` is `daemon.info` and default `tag` is the basename of the
+service or run/task command.
+
 Log rotation is controlled using the global `log` setting.
 
 **Example:**
