@@ -345,7 +345,7 @@ Log rotation is controlled using the global `log` setting.
 
 **Example:**
 
-     service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
+    service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
 
 Worth noting is that conditions is allowed for all these stanzas.  For a
 detailed description, see the [Conditions](conditions.md) document.
