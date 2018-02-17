@@ -81,7 +81,7 @@ static void banner(void)
 		return;
 
 	memset(separator, '=', sizeof(separator));
-	fprintf(stderr, "\e[2K\e[1m%s %.*s\e[0m\n", buf, SCREEN_WIDTH - (int)strlen(buf) - 2, separator);
+	fprintf(stderr, "\n\e[2K\e[1m%s %.*s\e[0m\n", buf, SCREEN_WIDTH - (int)strlen(buf) - 2, separator);
 }
 
 static int ismnt(char *file, char *dir)
