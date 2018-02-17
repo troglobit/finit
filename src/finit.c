@@ -374,31 +374,32 @@ int main(int argc, char* argv[])
 
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
+	 * Prefer udev if mdev is also available on the system.
 	 */
-	path = which("mdev");
+	path = which("udevd");
+	if (!path)
+		path = which("/lib/systemd/systemd-udevd");
 	if (path) {
-		/* Embedded Linux systems usually have BusyBox mdev */
-		if (log_is_debug())
-			touch("/dev/mdev.log");
-
-		snprintf(cmd, sizeof(cmd), "%s -s", path);
-	} else {
 		/* Desktop and server distros usually have a variant of udev */
-		path = which("udevd");
-		if (!path)
-			path = which("/lib/systemd/systemd-udevd");
+		udev = 1;
+
+		/* Register udevd as a monitored service, started much later */
+		snprintf(cmd, sizeof(cmd), "[12345] %s -- Device event manager daemon", path);
+		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
+			_pe("Failed registering %s", path);
+			udev = 0;
+		}
+
+		/* Start a temporary udevd instance to populate /dev  */
+		snprintf(cmd, sizeof(cmd), "%s --daemon", path);
+	} else {
+		path = which("mdev");
 		if (path) {
-			udev = 1;
+			/* Embedded Linux systems usually have BusyBox mdev */
+			if (log_is_debug())
+				touch("/dev/mdev.log");
 
-			/* Register udevd as a monitored service, started much later */
-			snprintf(cmd, sizeof(cmd), "[12345] %s -- Device event manager daemon", path);
-			if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
-				_pe("Failed registering %s", path);
-				udev = 0;
-			}
-
-			/* Start a temporary udevd instance to populate /dev  */
-			snprintf(cmd, sizeof(cmd), "%s --daemon", path);
+			snprintf(cmd, sizeof(cmd), "%s -s", path);
 		}
 	}
 
