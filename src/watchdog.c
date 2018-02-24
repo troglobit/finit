@@ -95,7 +95,8 @@ int watchdog(char *progname)
 
 		fd = init(progname, WDT_DEVNODE);
 		if (fd == -1) {
-			_pe("Failed connecting to watchdog %s", WDT_DEVNODE);
+			if (ENOENT != errno)
+				_pe("Failed connecting to watchdog %s", WDT_DEVNODE);
 			_exit(1);
 		}
 
