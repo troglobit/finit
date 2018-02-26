@@ -282,9 +282,10 @@ int main(int argc, char* argv[])
 	ctx = &loop;
 
 	/*
-	 * Set the PATH early to something sane
+	 * Set PATH and SHELL early to something sane
 	 */
 	setenv("PATH", _PATH_STDPATH, 1);
+	setenv("SHELL", _PATH_BSHELL, 1);
 
 	/*
 	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
