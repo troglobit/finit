@@ -217,12 +217,8 @@ static void finalize(void)
 	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
-	if (runparts && fisdir(runparts) && !rescue) {
-		_d("Running startup scripts in %s ...", runparts);
+	if (runparts && fisdir(runparts) && !rescue)
 		run_parts(runparts, NULL);
-		if (conf_any_change())
-			service_reload_dynamic();
-	}
 
 	/*
 	 * Start all tasks/services in the configured runlevel
@@ -240,11 +236,8 @@ static void finalize(void)
 	service_step_all(SVC_TYPE_ANY);
 
 	/* Convenient SysV compat for when you just don't care ... */
-	if (!access(FINIT_RC_LOCAL, X_OK) && !rescue) {
+	if (!access(FINIT_RC_LOCAL, X_OK) && !rescue)
 		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
-		if (conf_any_change())
-			service_reload_dynamic();
-	}
 
 	/* Hooks that should run at the very end */
 	_d("Calling all system up hooks ...");
