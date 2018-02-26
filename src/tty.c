@@ -396,10 +396,12 @@ void tty_start(finit_tty_t *tty)
 	}
 
 	if (tty->nologin) {
+		_d("%s: Starting /bin/sh ...", dev);
 		tty->pid = run_sh(dev, tty->noclear, tty->nowait, tty->rlimit);
 		return;
 	}
 
+	_d("%s: Starting %sgetty ...", dev, !tty->cmd ? "built-in " : "");
 	if (!tty->cmd)
 		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
 	else
