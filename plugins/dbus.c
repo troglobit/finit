@@ -38,7 +38,7 @@
 static void setup(void *arg)
 {
 	char *cmd;
-	char line[80];
+	char line[256];
 
 	cmd = which(DAEMON);
 	if (!cmd) {
