@@ -355,6 +355,7 @@ static int service_start(svc_t *svc)
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		if (!svc_clean_bootstrap(svc)) {
 			svc->start_time = svc->pid = 0;
+			svc->once++;
 			svc_set_state(svc, SVC_STOPPING_STATE);
 		}
 	}
