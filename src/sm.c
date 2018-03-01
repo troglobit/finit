@@ -149,7 +149,7 @@ restart:
 		/* Reset once flag of runtasks */
 		service_runtask_clean();
 
-		_d("Stopping services services not allowed in new runlevel ...");
+		_d("Stopping services not allowed in new runlevel ...");
 		sm->in_teardown = 1;
 		service_step_all(SVC_TYPE_ANY);
 
@@ -171,7 +171,7 @@ restart:
 		_d("All services have been stoppped, calling runlevel change hooks ...");
 		plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
 
-		_d("Starting services services new to this runlevel ...");
+		_d("Starting services new to this runlevel ...");
 		sm->in_teardown = 0;
 		service_step_all(SVC_TYPE_ANY);
 
@@ -205,7 +205,7 @@ restart:
 		 * Then, mark all affected service conditions as in-flux and
 		 * let all affected services move to WAITING/HALTED
 		 */
-		_d("Stopping services services not allowed after reconf ...");
+		_d("Stopping services not allowed after reconf ...");
 		sm->in_teardown = 1;
 		cond_reload();
 		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
