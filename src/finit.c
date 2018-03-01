@@ -378,16 +378,16 @@ int main(int argc, char* argv[])
 		udev = 1;
 
 		/* Register udevd as a monitored service */
-		snprintf(cmd, sizeof(cmd), "[S12345789] %s -- Device event manager daemon", path);
+		snprintf(cmd, sizeof(cmd), "[S12345789] %s -- Device event managing daemon", path);
 		free(path);
 		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
 			_pe("Failed registering %s", path);
 			udev = 0;
 		} else {
-			snprintf(cmd, sizeof(cmd), "[S] udevadm trigger --action=add --type=subsystems -- ");
+			snprintf(cmd, sizeof(cmd), ":1 [S] udevadm trigger -c add -t devices -- Requesting device events");
 			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
 
-			snprintf(cmd, sizeof(cmd), "[S] udevadm trigger --action=add --type=devices -- ");
+			snprintf(cmd, sizeof(cmd), ":2 [S] udevadm trigger -c add -t subsystems -- Requesting subsystem events");
 			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
 		}
 	} else {
