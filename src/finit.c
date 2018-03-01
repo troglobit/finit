@@ -366,6 +366,9 @@ int main(int argc, char* argv[])
 		mount("tmpfs", "/run", "tmpfs", MS_NODEV, "mode=0755,size=10%");
 	umask(022);
 
+	/* Bootstrap conditions, needed for hooks */
+	cond_init();
+
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 * Prefer udev if mdev is also available on the system.
@@ -420,9 +423,6 @@ int main(int argc, char* argv[])
 		mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 	}
-
-	/* Bootstrap conditions, needed for hooks */
-	cond_init();
 
 	if (!rescue) {
 		_d("Root FS up, calling hooks ...");
