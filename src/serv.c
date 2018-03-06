@@ -131,6 +131,9 @@ int serv_enable(char *arg)
 	char link[80];
 	char path[80];
 
+	if (!arg || !arg[0])
+		return serv_list(NULL);
+
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
 		arg = corr;
@@ -154,6 +157,9 @@ int serv_disable(char *arg)
 	char link[80];
 	struct stat st;
 
+	if (!arg || !arg[0])
+		return serv_list(NULL);
+
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
 		arg = corr;
@@ -172,6 +178,9 @@ int serv_disable(char *arg)
 int serv_touch(char *arg)
 {
 	char corr[40];
+
+	if (!arg || !arg[0])
+		return serv_list(NULL);
 
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
