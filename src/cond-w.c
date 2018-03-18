@@ -31,12 +31,16 @@
 #include "pid.h"
 #include "service.h"
 
-static int cond_set_gen(const char *path, unsigned int gen)
+static int cond_set_gen(const char *file, unsigned int gen)
 {
+	char *ptr, path[256];
 	FILE *fp;
 	int ret;
 
-	fp = fopen(path, "w");
+	/* /var/run --> /run symlink may not exist (yet) */
+	ptr = pid_runpath(file, path, sizeof(path));
+
+	fp = fopen(ptr, "w");
 	if (!fp)
 		return -1;
 

@@ -51,13 +51,17 @@ const char *cond_path(const char *name)
 	return pid_runpath(tmp, file, sizeof(file));
 }
 
-unsigned int cond_get_gen(const char *path)
+unsigned int cond_get_gen(const char *file)
 {
+	char *ptr, path[256];
 	unsigned int gen;
 	FILE *fp;
 	int ret;
 
-	fp = fopen(path, "r");
+	/* /var/run --> /run symlink may not exist (yet) */
+	ptr = pid_runpath(file, path, sizeof(path));
+
+	fp = fopen(ptr, "r");
 	if (!fp)
 		return 0;
 
