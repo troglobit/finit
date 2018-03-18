@@ -32,7 +32,9 @@
 #define TTY_MAX_ARGS 16
 #define EVENT_SIZE ((sizeof(struct inotify_event) + NAME_MAX + 1))
 
-typedef struct {
+struct tty {
+	LIST_ENTRY(tty) link;
+
 	char  *name;
 	char  *baud;
 	char  *term;
@@ -48,32 +50,24 @@ typedef struct {
 
 	/* Limits and scoping */
 	struct rlimit rlimit[RLIMIT_NLIMITS];
-} finit_tty_t;
 
-typedef struct tty_node {
-	LIST_ENTRY(tty_node) link;
-	finit_tty_t data;
-
-	/* XXX: Yes, TTYs should be refactored into a separate SVC type. */
-	int            dirty;	       /* Set if old mtime != new mtime  => reloaded,
-					* or -1 when marked for removal */
-} tty_node_t;
-
-//extern LIST_HEAD(, tty_node) tty_list;
+	/* Set if modified => reloaded, or -1 when marked for removal */
+	int    dirty;
+};
 
 void	    tty_mark	    (void);
 void	    tty_sweep	    (void);
 
 int	    tty_register    (char *line, struct rlimit rlimit[], char *file);
-int	    tty_unregister  (tty_node_t *tty);
+int	    tty_unregister  (struct tty *tty);
 
-tty_node_t *tty_find	    (char *dev);
+struct tty *tty_find	    (char *dev);
 size_t	    tty_num	    (void);
 size_t      tty_num_active  (void);
-tty_node_t *tty_find_by_pid (pid_t pid);
-void	    tty_start	    (finit_tty_t *tty);
-void	    tty_stop	    (finit_tty_t *tty);
-int	    tty_enabled	    (finit_tty_t *tty);
+struct tty *tty_find_by_pid (pid_t pid);
+void	    tty_start	    (struct tty *tty);
+void	    tty_stop	    (struct tty *tty);
+int	    tty_enabled	    (struct tty *tty);
 int	    tty_respawn	    (pid_t pid);
 void	    tty_reload      (char *dev);
 void	    tty_runlevel    (void);

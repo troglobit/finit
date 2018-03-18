@@ -41,7 +41,7 @@
 #ifdef FALLBACK_SHELL
 static pid_t fallback = 0;
 #endif
-static LIST_HEAD(, tty_node) tty_list = LIST_HEAD_INITIALIZER();
+static LIST_HEAD(, tty) tty_list = LIST_HEAD_INITIALIZER();
 
 static char *canonicalize(char *tty)
 {
@@ -88,7 +88,7 @@ static char *canonicalize(char *tty)
 
 void tty_mark(void)
 {
-	tty_node_t *tty;
+	struct tty *tty;
 
 	LIST_FOREACH(tty, &tty_list, link)
 		tty->dirty = -1;
@@ -96,17 +96,17 @@ void tty_mark(void)
 
 void tty_sweep(void)
 {
-	tty_node_t *tty, *tmp;
+	struct tty *tty, *tmp;
 
 	LIST_FOREACH_SAFE(tty, &tty_list, link, tmp) {
 		if (!tty->dirty)
 			continue;
 
-		_d("TTY %s dirty, stopping ...", tty->data.name);
-		tty_stop(&tty->data);
+		_d("TTY %s dirty, stopping ...", tty->name);
+		tty_stop(tty);
 
 		if (tty->dirty == -1) {
-			_d("TTY %s removed, cleaning up.", tty->data.name);
+			_d("TTY %s removed, cleaning up.", tty->name);
 			tty_unregister(tty);
 		}
 	}
@@ -136,7 +136,7 @@ void tty_sweep(void)
  */
 int tty_register(char *line, struct rlimit rlimit[], char *file)
 {
-	tty_node_t *entry;
+	struct tty *entry;
 	int         insert = 0, noclear = 0, nowait = 0, nologin = 0;
 	size_t      i, num = 0;
 	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
@@ -238,13 +238,13 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 		}
 	}
 
-	entry->data.name = dev;
-	entry->data.baud = baud ? strdup(baud) : NULL;
-	entry->data.term = term ? strdup(term) : NULL;
-	entry->data.noclear = noclear;
-	entry->data.nowait  = nowait;
-	entry->data.nologin = nologin;
-	entry->data.runlevels = conf_parse_runlevels(runlevels);
+	entry->name      = dev;
+	entry->baud      = baud ? strdup(baud) : NULL;
+	entry->term      = term ? strdup(term) : NULL;
+	entry->noclear   = noclear;
+	entry->nowait    = nowait;
+	entry->nologin   = nologin;
+	entry->runlevels = conf_parse_runlevels(runlevels);
 
 	/* External getty */
 	if (cmd) {
@@ -255,12 +255,12 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 			tok = cmd;
 		else
 			tok++;
-		entry->data.cmd = cmd;
+		entry->cmd = cmd;
 		args[1] = strdup(tok);
 
 		for (i = 1; i < num; i++)
-			entry->data.args[j++] = strdup(args[i]);
-		entry->data.args[++j] = NULL;
+			entry->args[j++] = strdup(args[i]);
+		entry->args[++j] = NULL;
 	}
 
 	_d("Registering %s getty on TTY %s at %s baud with term %s on runlevels %s",
@@ -270,7 +270,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 		LIST_INSERT_HEAD(&tty_list, entry, link);
 
 	/* Register configured limits */
-	memcpy(entry->data.rlimit, rlimit, sizeof(entry->data.rlimit));
+	memcpy(entry->rlimit, rlimit, sizeof(entry->rlimit));
 
 	if (file && conf_changed(file))
 		entry->dirty = 1; /* Modified, restart */
@@ -281,7 +281,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 	return 0;
 }
 
-int tty_unregister(tty_node_t *tty)
+int tty_unregister(struct tty *tty)
 {
 	if (!tty) {
 		_e("Missing argument");
@@ -290,20 +290,20 @@ int tty_unregister(tty_node_t *tty)
 
 	LIST_REMOVE(tty, link);
 
-	if (tty->data.name)
-		free(tty->data.name);
-	if (tty->data.baud)
-		free(tty->data.baud);
-	if (tty->data.term)
-		free(tty->data.term);
-	if (tty->data.cmd) {
+	if (tty->name)
+		free(tty->name);
+	if (tty->baud)
+		free(tty->baud);
+	if (tty->term)
+		free(tty->term);
+	if (tty->cmd) {
 		int i;
 
-		free(tty->data.cmd);
+		free(tty->cmd);
 		for (i = 0; i < TTY_MAX_ARGS; i++) {
-			if (tty->data.args[i])
-				free(tty->data.args[i]);
-			tty->data.args[i] = NULL;
+			if (tty->args[i])
+				free(tty->args[i]);
+			tty->args[i] = NULL;
 		}
 	}
 	free(tty);
@@ -311,12 +311,12 @@ int tty_unregister(tty_node_t *tty)
 	return 0;
 }
 
-tty_node_t *tty_find(char *dev)
+struct tty *tty_find(char *dev)
 {
-	tty_node_t *entry;
+	struct tty *entry;
 
 	LIST_FOREACH(entry, &tty_list, link) {
-		if (!strcmp(dev, entry->data.name))
+		if (!strcmp(dev, entry->name))
 			return entry;
 	}
 
@@ -326,7 +326,7 @@ tty_node_t *tty_find(char *dev)
 size_t tty_num(void)
 {
 	size_t num = 0;
-	tty_node_t *entry;
+	struct tty *entry;
 
 	LIST_FOREACH(entry, &tty_list, link)
 		num++;
@@ -337,22 +337,22 @@ size_t tty_num(void)
 size_t tty_num_active(void)
 {
 	size_t num = 0;
-	tty_node_t *entry;
+	struct tty *entry;
 
 	LIST_FOREACH(entry, &tty_list, link) {
-		if (entry->data.pid)
+		if (entry->pid)
 			num++;
 	}
 
 	return num;
 }
 
-tty_node_t *tty_find_by_pid(pid_t pid)
+struct tty *tty_find_by_pid(pid_t pid)
 {
-	tty_node_t *entry;
+	struct tty *entry;
 
 	LIST_FOREACH(entry, &tty_list, link) {
-		if (entry->data.pid == pid)
+		if (entry->pid == pid)
 			return entry;
 	}
 
@@ -375,7 +375,7 @@ static int tty_exist(char *dev)
 	return result;
 }
 
-void tty_start(finit_tty_t *tty)
+void tty_start(struct tty *tty)
 {
 	char *dev;
 
@@ -408,7 +408,7 @@ void tty_start(finit_tty_t *tty)
 		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, tty->rlimit);
 }
 
-void tty_stop(finit_tty_t *tty)
+void tty_stop(struct tty *tty)
 {
 	if (!tty->pid)
 		return;
@@ -425,7 +425,7 @@ void tty_stop(finit_tty_t *tty)
 	tty->pid = 0;
 }
 
-int tty_enabled(finit_tty_t *tty)
+int tty_enabled(struct tty *tty)
 {
 	if (!tty)
 		return 0;
@@ -473,12 +473,12 @@ int tty_fallback(pid_t lost)
 	return 0;
 }
 
-static void tty_action(tty_node_t *tty)
+static void tty_action(struct tty *tty)
 {
-	if (!tty_enabled(&tty->data))
-		tty_stop(&tty->data);
+	if (!tty_enabled(tty))
+		tty_stop(tty);
 	else
-		tty_start(&tty->data);
+		tty_start(tty);
 }
 
 /*
@@ -486,7 +486,7 @@ static void tty_action(tty_node_t *tty)
  */
 int tty_respawn(pid_t pid)
 {
-	tty_node_t *tty = tty_find_by_pid(pid);
+	struct tty *tty = tty_find_by_pid(pid);
 
 	if (!tty)
 		return tty_fallback(pid);
@@ -495,7 +495,7 @@ int tty_respawn(pid_t pid)
 	utmp_set_dead(pid);
 
 	/* Clear PID to be able to respawn it. */
-	tty->data.pid = 0;
+	tty->pid = 0;
 	tty_action(tty);
 
 	return 1;
@@ -506,7 +506,7 @@ int tty_respawn(pid_t pid)
  */
 void tty_reload(char *dev)
 {
-	tty_node_t *tty;
+	struct tty *tty;
 
 	if (dev) {
 		tty = tty_find(dev);
@@ -531,7 +531,7 @@ void tty_reload(char *dev)
 /* Start all TTYs that exist in the system and are allowed at this runlevel */
 void tty_runlevel(void)
 {
-	tty_node_t *tty;
+	struct tty *tty;
 
 	LIST_FOREACH(tty, &tty_list, link)
 		tty_action(tty);
