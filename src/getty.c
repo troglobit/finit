@@ -237,7 +237,7 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 	stty(fd, speed);
 	close(fd);
 
-	if (term)
+	if (term && term[0])
 		setenv("TERM", term, 1);
 
 	return do_login(name);

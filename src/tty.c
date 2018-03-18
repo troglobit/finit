@@ -238,9 +238,9 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 		}
 	}
 
-	entry->name      = dev;
-	entry->baud      = baud ? strdup(baud) : NULL;
-	entry->term      = term ? strdup(term) : NULL;
+	strlcpy(entry->name, dev, sizeof(entry->name));
+	strlcpy(entry->baud, baud ? baud : "", sizeof(entry->baud));
+	strlcpy(entry->term, term ? term : "", sizeof(entry->term));
 	entry->noclear   = noclear;
 	entry->nowait    = nowait;
 	entry->nologin   = nologin;
@@ -290,12 +290,6 @@ int tty_unregister(struct tty *tty)
 
 	LIST_REMOVE(tty, link);
 
-	if (tty->name)
-		free(tty->name);
-	if (tty->baud)
-		free(tty->baud);
-	if (tty->term)
-		free(tty->term);
 	if (tty->cmd) {
 		int i;
 

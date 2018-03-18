@@ -35,9 +35,9 @@
 struct tty {
 	LIST_ENTRY(tty) link;
 
-	char  *name;
-	char  *baud;
-	char  *term;
+	char   name[42];
+	char   baud[10];
+	char   term[10];
 	int    noclear;
 	int    nowait;
 	int    nologin;
