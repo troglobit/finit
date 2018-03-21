@@ -72,6 +72,22 @@ static char *sm_status(sm_state_t state)
 	}
 }
 
+/*
+ * Disable login in single user mode and shutdown/reboot
+ *
+ * Re-enable only when going from these runlevels, this way a user can
+ * manage /etc/nologin manually within the other runlevels without us
+ * pulling the rug from under their feet.
+ */
+static void nologin(void)
+{
+	if (runlevel == 1 || runlevel == 0 || runlevel == 6)
+		touch("/etc/nologin");
+
+	if (prevlevel == 1 || prevlevel == 0 || prevlevel == 6)
+		erase("/etc/nologin");
+}
+
 void sm_set_runlevel(sm_t *sm, int newlevel)
 {
 	sm->newlevel = newlevel;
@@ -137,10 +153,7 @@ restart:
 		runlevel_set(prevlevel, runlevel);
 
 		/* Disable login in single-user mode as well as shutdown/reboot */
-		if (runlevel == 1 || runlevel == 0 || runlevel == 6)
-			touch("/etc/nologin");
-		else
-			erase("/etc/nologin");
+		nologin();
 
 		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
 		if (conf_any_change())
