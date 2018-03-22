@@ -55,9 +55,6 @@ static inline char *pid_runpath(const char *file, char *path, size_t len)
 		unknown = 0;
 	}
 
-	if (!strncmp(file, prefix, strlen(prefix)))
-		return (char *)file;
-
 	if (!strncmp(file, "/var/run/", 9))
 		file += 9;
 	else if (!strncmp(file, "/run/", 5))
