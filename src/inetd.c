@@ -351,9 +351,20 @@ void inetd_stop(inetd_t *inetd)
 		 * and halt the watcher, so don't close the socket!
 		 */
 		if (!svc_is_busy(inetd->svc)) {
+			svc_t *svc, *iter = NULL;
+
 			_d("Shutting down inet socket %d ...", inetd->watcher.fd);
 			close(inetd->watcher.fd);
 			inetd->watcher.fd = -1;
+
+			svc = svc_job_iterator(&iter, 1, inetd->svc->job);
+			while (svc) {
+				if (!svc_is_inetd(svc)) {
+					svc_stop(svc);
+					service_step(svc);
+				}
+				svc = svc_job_iterator(&iter, 0, inetd->svc->job);
+			}
 		}
 	}
 }
