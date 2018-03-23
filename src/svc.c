@@ -381,6 +381,8 @@ void svc_mark_dynamic(void)
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->protected)
 			continue;
+		if (svc_is_inetd_conn(svc))
+			continue;
 
 		*((int *)&svc->dirty) = -1;
 	}
