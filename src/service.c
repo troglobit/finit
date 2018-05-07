@@ -1114,9 +1114,11 @@ restart:
 						break;
 					service_restart(svc);
 				} else {
+#ifdef INETD_ENABLED
 					if (svc_is_inetd(svc))
 						inetd_stop_children(&svc->inetd, 1);
 					else
+#endif
 						service_stop(svc);
 				}
 				svc_mark_clean(svc);
