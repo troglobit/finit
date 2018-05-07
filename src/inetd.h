@@ -58,6 +58,7 @@ int     inetd_check_loop(struct sockaddr *sa, socklen_t len, char *name);
 
 int     inetd_start     (inetd_t *inetd);
 void    inetd_stop      (inetd_t *inetd);
+void    inetd_stop_children (inetd_t *inetd, int check_allowed);
 
 int     inetd_new       (inetd_t *inetd, char *name, char *service, char *proto, int forking, svc_t *svc);
 int     inetd_del       (inetd_t *inetd);

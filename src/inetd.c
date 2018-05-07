@@ -122,7 +122,7 @@ static int inetd_stream_peek(int sd, char *ifname)
 	return 0;
 }
 
-static int get_stdin(svc_t *svc)
+static int get_stdin(svc_t *svc, char* iifname)
 {
 	int stdin = svc->inetd.watcher.fd;
 	char ifname[IF_NAMESIZE] = "UNKNOWN";
@@ -152,6 +152,9 @@ static int get_stdin(svc_t *svc)
 		return -1;
 	}
 
+	/* Return ingress interface */
+	strncpy(iifname, ifname, IF_NAMESIZE);
+
 	return stdin;
 }
 
@@ -160,6 +163,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = (svc_t *)arg, *task;
 	const char *conn = " connection";
+	char iifname[IF_NAMESIZE] = "UNKNOWN";
 	int stdin;
 
 	_d("%s: Got socket event ...", svc->cmd);
@@ -168,7 +172,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	stdin = get_stdin(svc);
+	stdin = get_stdin(svc, iifname);
 	if (stdin < 0) {
 		logit(LOG_CRIT, "%s: Unable to accept incoming connection", svc->cmd);
 		return;
@@ -216,6 +220,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	memcpy(task->args,     svc->args,     sizeof(task->args));
 	strlcpy(task->desc, svc->desc, sizeof(task->desc) - strlen(conn));
 	strlcat(task->desc, conn, sizeof(task->desc));
+	strncpy(task->iifname, iifname, sizeof(task->iifname));
 
 	task->stdin_fd = stdin;
 	service_step(task);
@@ -335,6 +340,22 @@ int inetd_start(inetd_t *inetd)
 	return 0;
 }
 
+void inetd_stop_children(inetd_t *inetd, int check_allowed)
+{
+	svc_t *svc, *iter = NULL;
+
+	svc = svc_job_iterator(&iter, 1, inetd->svc->job);
+	while (svc) {
+		if (!svc_is_inetd(svc)) {
+			if (!check_allowed || !inetd_is_allowed(inetd, svc->iifname)) {
+				svc_stop(svc);
+				service_step(svc);
+			}
+		}
+		svc = svc_job_iterator(&iter, 0, inetd->svc->job);
+	}
+}
+
 void inetd_stop(inetd_t *inetd)
 {
 	if (!inetd || !inetd->svc) {
@@ -351,20 +372,11 @@ void inetd_stop(inetd_t *inetd)
 		 * and halt the watcher, so don't close the socket!
 		 */
 		if (!svc_is_busy(inetd->svc)) {
-			svc_t *svc, *iter = NULL;
-
 			_d("Shutting down inet socket %d ...", inetd->watcher.fd);
 			close(inetd->watcher.fd);
 			inetd->watcher.fd = -1;
 
-			svc = svc_job_iterator(&iter, 1, inetd->svc->job);
-			while (svc) {
-				if (!svc_is_inetd(svc)) {
-					svc_stop(svc);
-					service_step(svc);
-				}
-				svc = svc_job_iterator(&iter, 0, inetd->svc->job);
-			}
+			inetd_stop_children(inetd, 0);
 		}
 	}
 }
