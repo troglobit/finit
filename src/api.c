@@ -78,6 +78,9 @@ static int service_restart(svc_t *svc)
 	if (!svc)
 		return 1;
 
+	if (svc_is_blocked(svc))
+		svc_start(svc);
+
 	svc_mark_dirty(svc);
 	service_step(svc);
 
