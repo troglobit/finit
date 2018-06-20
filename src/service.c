@@ -559,6 +559,33 @@ static void parse_log(svc_t *svc, char *arg)
 }
 
 /**
+ * parse_cmdline_args - Update the command line args in the svc struct
+ *
+ * strtok internal pointer must be positioned at first command line arg
+ * when this function is called.
+ *
+ * Side effect: strtok internal pointer will be modified.
+ */
+static void parse_cmdline_args(svc_t *svc, char *cmd)
+{
+	int i;
+	char *arg;
+
+	strlcpy(svc->args[0], cmd, sizeof(svc->args[0]));
+
+	/* Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
+	 * array to be zero-terminated. */
+	for (i=1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS-1); i++)
+		strlcpy(svc->args[i], arg, sizeof(svc->args[0]));
+
+	/* clear remaining args in case they were set earlier.
+	 * This also zero-terminates the args array.*/
+	for (; i < MAX_NUM_SVC_ARGS; i++)
+		svc->args[i][0] = 0;
+}
+
+
+/**
  * service_register - Register service, task or run commands
  * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
  * @cfg:    Configuration, complete command, with -- for description text
@@ -612,7 +639,6 @@ static void parse_log(svc_t *svc, char *arg)
  */
 int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 {
-	int i = 0;
 	int id = -1;
 #ifdef INETD_ENABLED
 	int forking = 0;
@@ -730,11 +756,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			}
 		}
 
-		/* Check if known inetd, then add ifnames for filtering only. */
+		/* Check if known inetd, update command line, then add ifnames for filtering only. */
 		svc = inetd_find_svc(cmd, service, proto);
-		if (svc)
+		if (svc) {
+			parse_cmdline_args(svc, cmd);
 			goto inetd_setup;
-
+		}
 		if (id <= 0)
 			id = svc_next_id(cmd);
 	}
@@ -785,12 +812,8 @@ recreate:
 		/* Internal plugin provides this service */
 		svc->inetd.cmd = plugin->inetd.cmd;
 		svc->inetd.builtin = 1;
-	} else {
-		strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
-		while ((cmd = strtok(NULL, " ")))
-			strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
-		svc->args[i][0] = 0;
-	}
+	} else
+		parse_cmdline_args(svc, cmd);
 
 	svc->runlevels = levels;
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
