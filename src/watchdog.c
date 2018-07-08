@@ -21,12 +21,18 @@
  * SOFTWARE.
  */
 
+#include <config.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 #include <signal.h>
+#include <syslog.h>
 #include <sys/ioctl.h>
 #include <linux/watchdog.h>
 
-#include "finit.h"
-#include "log.h"
 #include "watchdog.h"
 
 int running  = 1;
@@ -50,6 +56,9 @@ static int init(char *progname, char *devnode)
 	sprintf(progname, "@finit-watchdog");
 	signal(SIGTERM, sighandler);
 	signal(SIGPWR,  sighandler);
+
+	openlog(&progname[1], LOG_CONS | LOG_PID, LOG_DAEMON);
+	syslog(LOG_INFO, "Finit v%s basic watchdogd starting ...", VERSION);
 
 	fd = open(devnode, O_WRONLY);
 	if (fd == -1)
@@ -78,6 +87,7 @@ static int loop(int fd, int timeout)
 
 	/* External watchdogd wants to take over ... */
 	if (handover) {
+		syslog(LOG_INFO, "Handing over %s and exiting ...", WDT_DEVNODE);
 		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
 		return !write(fd, "V", 1);
 	}
@@ -85,35 +95,30 @@ static int loop(int fd, int timeout)
 	return 0;
 }
 
-int watchdog(char *progname)
+int main(int argc, char *argv[])
 {
-	int pid;
+	int fd, ret;
 
-	pid = fork();
-	if (pid == 0) {
-		int fd, ret;
-
-		fd = init(progname, WDT_DEVNODE);
-		if (fd == -1) {
-			if (ENOENT != errno)
-				_pe("Failed connecting to watchdog %s", WDT_DEVNODE);
-			_exit(1);
-		}
-
-		ret = loop(fd, WDT_TIMEOUT);
-		while (!handover) {
-			/* Waiting for SIGTERM ... */
-			sleep(1);
-
-			/* Set lowest possible timeout on SIGTERM */
-			ioctl(fd, WDIOC_SETTIMEOUT, &shutdown);
-		}
-		close(fd);
-
-		_exit(ret);
+	fd = init(argv[0], WDT_DEVNODE);
+	if (fd == -1) {
+		if (ENOENT != errno)
+			syslog(LOG_CRIT, "Failed connecting to watchdog %s", WDT_DEVNODE);
+		return 1;
 	}
 
-	return pid;
+	ret = loop(fd, WDT_TIMEOUT);
+	while (!handover) {
+		syslog(LOG_ALERT, "System going down ...");
+
+		/* Waiting for SIGTERM ... */
+		sleep(1);
+
+		/* Set lowest possible timeout on SIGTERM */
+		ioctl(fd, WDIOC_SETTIMEOUT, &shutdown);
+	}
+	close(fd);
+
+	return ret;
 }
 
 /**

@@ -218,9 +218,11 @@ AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
 
 # Override default libdir, used for plugins and rescue.conf
-#pkglibdir=$libdir/finit
-#AC_SUBST(pkglibdir)
-#AC_EXPAND_DIR(pkglibdir, "$libdir/finit")
+pkglibdir=$libdir/finit
+AC_SUBST(pkglibexecdir)
+AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
+AC_DEFINE_UNQUOTED(FINIT_LIBPATH_, "$pkglibexecdir", [Finit libexec path])
+
 AC_EXPAND_DIR(plugin_path, "$libdir/finit/plugins")
 AC_SUBST(plugin_path)
 AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])

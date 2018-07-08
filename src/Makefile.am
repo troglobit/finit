@@ -10,6 +10,9 @@ endif
 
 bin_PROGRAMS       = logit
 sbin_PROGRAMS      = finit initctl reboot
+if WATCHDOGD
+pkglibexec_PROGRAMS = watchdogd
+endif
 
 logit_SOURCES      = logit.c
 logit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
@@ -36,9 +39,6 @@ pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h log.h plugin.h svc.h
 if INETD
 finit_SOURCES     += inetd.c	inetd.h
 endif
-if WATCHDOGD
-finit_SOURCES     += watchdog.c	watchdog.h
-endif
 
 finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
@@ -62,6 +62,12 @@ reboot_LDADD       = $(lite_LIBS)
 
 INIT_LNKS          = telinit init
 REBOOT_LNKS        = shutdown halt poweroff suspend
+
+if WATCHDOGD
+watchdogd_SOURCES  = watchdog.c watchdog.h
+watchdogd_CFLAGS   = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+#log.c log.h
+endif
 
 # Hook in install to add finit and reboot symlink(s)
 install-exec-hook:

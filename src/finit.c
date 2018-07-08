@@ -47,7 +47,6 @@
 #include "tty.h"
 #include "util.h"
 #include "utmp-api.h"
-#include "watchdog.h"
 
 int   wdogpid   = 0;		/* No watchdog by default */
 int   runlevel  = 0;		/* Bootstrap 'S' */
@@ -214,11 +213,17 @@ static void emergency_shell(void)
  */
 static void finalize(void)
 {
+	svc_t *svc;
+
 	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
 	if (runparts && fisdir(runparts) && !rescue)
 		run_parts(runparts, NULL);
+
+	svc = svc_find(FINIT_LIBPATH_ "watchdogd", 1);
+	if (svc && !wdogpid)
+		wdogpid = svc->pid;
 
 	/*
 	 * Start all tasks/services in the configured runlevel
@@ -412,9 +417,10 @@ int main(int argc, char* argv[])
 	}
 
 	/*
-	 * Start built-in watchdog as soon as possible, if enabled
+	 * Start bundled watchdogd as soon as possible, if enabled
 	 */
-	wdogpid = watchdog(argv[0]);
+	if (which(FINIT_LIBPATH_ "/watchdogd"))
+		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd", global_rlimit, NULL);
 
 	/*
 	 * Mount filesystems
