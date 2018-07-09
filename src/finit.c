@@ -48,7 +48,6 @@
 #include "util.h"
 #include "utmp-api.h"
 
-int   wdogpid   = 0;		/* No watchdog by default */
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
@@ -62,6 +61,7 @@ char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
+svc_t *wdog     = NULL;		/* No watchdog by default */
 
 /*
  * Show user configured banner before service bootstrap progress
@@ -216,14 +216,17 @@ static void finalize(void)
 	svc_t *svc;
 
 	/*
+	 * Track bundled watchdogd in case a better one turns up
+	 */
+	svc = svc_find(FINIT_LIBPATH_ "/watchdogd", 1);
+	if (svc)
+		wdog = svc;
+
+	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
 	if (runparts && fisdir(runparts) && !rescue)
 		run_parts(runparts, NULL);
-
-	svc = svc_find(FINIT_LIBPATH_ "watchdogd", 1);
-	if (svc && !wdogpid)
-		wdogpid = svc->pid;
 
 	/*
 	 * Start all tasks/services in the configured runlevel

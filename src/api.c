@@ -44,6 +44,7 @@
 #include "service.h"
 #include "util.h"
 
+extern svc_t *wdog;
 static uev_t api_watcher;
 
 static int call(int (*action)(svc_t *), char *buf, size_t len)
@@ -340,13 +341,23 @@ static void api_cb(uev_t *w, void *arg, int events)
 				break;
 			}
 
-			if (wdogpid > 0 && wdogpid != rq.runlevel) {
-				_d("Sending SIGTERM to %d", wdogpid);
-				kill(wdogpid, SIGTERM);
-				do_sleep(1);
+			_e("Request to hand-over wdog ... to PID %d", rq.runlevel);
+			svc = svc_find_by_pid(rq.runlevel);
+			if (!svc) {
+				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq.runlevel);
+				break;
 			}
-			_d("wdog was %d, now %d is in charge", wdogpid, rq.runlevel);
-			wdogpid = rq.runlevel;
+
+			/* Disable and allow Finit to collect bundled watchdog */
+			if (wdog) {
+				logit(LOG_NOTICE, "Stopping and removing %s (PID:%d)", wdog->cmd, wdog->pid);
+				stop(wdog);
+				if (wdog->protected) {
+					wdog->protected = 0;
+					wdog->runlevels = 0;
+				}
+			}
+			wdog = svc;
 			break;
 
 		case INIT_CMD_SVC_ITER:

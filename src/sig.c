@@ -83,6 +83,8 @@
 #include "util.h"
 #include "utmp-api.h"
 
+extern svc_t *wdog;
+
 /*
  * Old-style SysV shutdown sends a setenv cmd INIT_HALT with "=HALT",
  * "=POWERDOWN", or "" to cancel shutdown, before requesting change to
@@ -185,8 +187,8 @@ void do_shutdown(shutop_t op)
 		return;
 	}
 
-	if (wdogpid) {
-		print(kill(wdogpid, SIGPWR) == 1, "Advising watchdog, system going down");
+	if (wdog) {
+		print(kill(wdog->pid, SIGPWR) == 1, "Advising watchdog, system going down");
 		do_sleep(2);
 	}
 
@@ -208,11 +210,11 @@ void do_shutdown(shutop_t op)
 
 	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
-		if (wdogpid) {
+		if (wdog) {
 			int timeout = 10;
 
 			/* Wait here until the WDT reboots, or timeout with fallback */
-			print(kill(wdogpid, SIGTERM) == 1, "Pending watchdog reboot");
+			print(kill(wdog->pid, SIGTERM) == 1, "Pending watchdog reboot");
 			while (timeout--)
 				do_sleep(1);
 		}
