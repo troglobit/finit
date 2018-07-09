@@ -51,7 +51,7 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 	return svc_parse_jobstr(buf, len, action, NULL);
 }
 
-static int service_stop(svc_t *svc)
+static int stop(svc_t *svc)
 {
 	if (!svc)
 		return 1;
@@ -62,7 +62,7 @@ static int service_stop(svc_t *svc)
 	return 0;
 }
 
-static int service_start(svc_t *svc)
+static int start(svc_t *svc)
 {
 	if (!svc)
 		return 1;
@@ -73,7 +73,7 @@ static int service_start(svc_t *svc)
 	return 0;
 }
 
-static int service_restart(svc_t *svc)
+static int restart(svc_t *svc)
 {
 	if (!svc)
 		return 1;
@@ -87,9 +87,9 @@ static int service_restart(svc_t *svc)
 	return 0;
 }
 
-static int do_start  (char *buf, size_t len) { return call(service_start,   buf, len); }
-static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
-static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
+static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
+static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
+static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
 
 static char query_buf[368];
 static int missing(char *job, int id)
