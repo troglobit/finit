@@ -92,7 +92,6 @@ struct init_request {
 	char	data[368];
 };
 
-extern int    wdogpid;
 extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;

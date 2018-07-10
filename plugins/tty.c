@@ -57,7 +57,7 @@ static void watcher(void *arg, int fd, int events)
 {
 	int len = 0;
 	char buf[EVENT_SIZE], name[42];
-	tty_node_t *entry;
+	struct tty *entry;
 	struct inotify_event *notified = (struct inotify_event *)buf;
 
 	while ((len = read(fd, buf, sizeof(buf)))) {
@@ -72,11 +72,11 @@ static void watcher(void *arg, int fd, int events)
 
 		snprintf(name, sizeof(name), "/dev/%s", notified->name);
 		entry = tty_find(name);
-		if (entry && tty_enabled(&entry->data)) {
+		if (entry && tty_enabled(entry)) {
 			if (notified->mask & IN_CREATE)
-				tty_start(&entry->data);
-			else if (entry->data.pid)
-				tty_stop(&entry->data);
+				tty_start(entry);
+			else if (entry->pid)
+				tty_stop(entry);
 		}
 	}
 }

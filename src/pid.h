@@ -34,7 +34,17 @@ char *pid_file        (svc_t *svc);
 int   pid_file_create (svc_t *svc);
 int   pid_file_parse  (svc_t *svc, char *arg);
 
-static inline char *pid_runpath(char *file, char *path, size_t len)
+/**
+ * pid_runpath - Adjust /var/run --> /run path depending on system
+ * @file: Path to file in /run/path or /var/run/path
+ * @path: Pointer to buffer to write correct path
+ * @len:  Length, in bytes, of @path buffer
+ *
+ * Returns:
+ * Always returns a valid pointer, which can be either @path with a /run
+ * or /var/run prefix to @file, or it may be @file if the prefix is OK.
+ */
+static inline char *pid_runpath(const char *file, char *path, size_t len)
 {
 	static int unknown = 1;
 	static char *prefix = "/var/run";

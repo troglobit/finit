@@ -47,9 +47,7 @@
 #include "tty.h"
 #include "util.h"
 #include "utmp-api.h"
-#include "watchdog.h"
 
-int   wdogpid   = 0;		/* No watchdog by default */
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
@@ -63,6 +61,7 @@ char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
+svc_t *wdog     = NULL;		/* No watchdog by default */
 
 /*
  * Show user configured banner before service bootstrap progress
@@ -214,6 +213,15 @@ static void emergency_shell(void)
  */
 static void finalize(void)
 {
+	svc_t *svc;
+
+	/*
+	 * Track bundled watchdogd in case a better one turns up
+	 */
+	svc = svc_find(FINIT_LIBPATH_ "/watchdogd", 1);
+	if (svc)
+		wdog = svc;
+
 	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
@@ -412,9 +420,10 @@ int main(int argc, char* argv[])
 	}
 
 	/*
-	 * Start built-in watchdog as soon as possible, if enabled
+	 * Start bundled watchdogd as soon as possible, if enabled
 	 */
-	wdogpid = watchdog(argv[0]);
+	if (which(FINIT_LIBPATH_ "/watchdogd"))
+		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd", global_rlimit, NULL);
 
 	/*
 	 * Mount filesystems

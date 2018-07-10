@@ -9,9 +9,9 @@ sudo: false
 #sudo: true
 
 # Test build with both GCC and Clang (LLVM)
+#  - clang
 compiler:
   - gcc
-  - clang
 
 env:
   global:

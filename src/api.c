@@ -44,6 +44,7 @@
 #include "service.h"
 #include "util.h"
 
+extern svc_t *wdog;
 static uev_t api_watcher;
 
 static int call(int (*action)(svc_t *), char *buf, size_t len)
@@ -51,7 +52,7 @@ static int call(int (*action)(svc_t *), char *buf, size_t len)
 	return svc_parse_jobstr(buf, len, action, NULL);
 }
 
-static int service_stop(svc_t *svc)
+static int stop(svc_t *svc)
 {
 	if (!svc)
 		return 1;
@@ -62,7 +63,7 @@ static int service_stop(svc_t *svc)
 	return 0;
 }
 
-static int service_start(svc_t *svc)
+static int start(svc_t *svc)
 {
 	if (!svc)
 		return 1;
@@ -73,10 +74,13 @@ static int service_start(svc_t *svc)
 	return 0;
 }
 
-static int service_restart(svc_t *svc)
+static int restart(svc_t *svc)
 {
 	if (!svc)
 		return 1;
+
+	if (svc_is_blocked(svc))
+		svc_start(svc);
 
 	svc_mark_dirty(svc);
 	service_step(svc);
@@ -84,9 +88,9 @@ static int service_restart(svc_t *svc)
 	return 0;
 }
 
-static int do_start  (char *buf, size_t len) { return call(service_start,   buf, len); }
-static int do_stop   (char *buf, size_t len) { return call(service_stop,    buf, len); }
-static int do_restart(char *buf, size_t len) { return call(service_restart, buf, len); }
+static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
+static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
+static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
 
 static char query_buf[368];
 static int missing(char *job, int id)
@@ -337,13 +341,23 @@ static void api_cb(uev_t *w, void *arg, int events)
 				break;
 			}
 
-			if (wdogpid > 0 && wdogpid != rq.runlevel) {
-				_d("Sending SIGTERM to %d", wdogpid);
-				kill(wdogpid, SIGTERM);
-				do_sleep(1);
+			_e("Request to hand-over wdog ... to PID %d", rq.runlevel);
+			svc = svc_find_by_pid(rq.runlevel);
+			if (!svc) {
+				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq.runlevel);
+				break;
 			}
-			_d("wdog was %d, now %d is in charge", wdogpid, rq.runlevel);
-			wdogpid = rq.runlevel;
+
+			/* Disable and allow Finit to collect bundled watchdog */
+			if (wdog) {
+				logit(LOG_NOTICE, "Stopping and removing %s (PID:%d)", wdog->cmd, wdog->pid);
+				stop(wdog);
+				if (wdog->protected) {
+					wdog->protected = 0;
+					wdog->runlevels = 0;
+				}
+			}
+			wdog = svc;
 			break;
 
 		case INIT_CMD_SVC_ITER:
