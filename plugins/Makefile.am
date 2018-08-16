@@ -39,6 +39,10 @@ libplug_la_SOURCES += time.c
 endif
 endif
 
+if BUILD_MODULES_LOAD_PLUGIN
+libplug_la_SOURCES += modules-load.c
+endif
+
 if BUILD_NETLINK_PLUGIN
 libplug_la_SOURCES += netlink.c
 endif
@@ -78,6 +82,10 @@ endif
 if BUILD_INETD_TIME_PLUGIN
 pkglib_LTLIBRARIES += time.la
 endif
+endif
+
+if BUILD_MODULES_LOAD_PLUGIN
+pkglib_LTLIBRARIES += modules-load.la
 endif
 
 if BUILD_NETLINK_PLUGIN
