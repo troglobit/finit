@@ -78,6 +78,14 @@ AC_ARG_ENABLE(logrotate,
         AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
 	enable_logrotate=yes])
 
+AC_ARG_ENABLE(docs,
+        AS_HELP_STRING([--disable-docs], [Disable build and install of docs section]),,[
+	enable_docs=yes])
+
+AC_ARG_ENABLE(contrib,
+        AS_HELP_STRING([--disable-contrib], [Disable build and install of contrib section]),,[
+	enable_contrib=yes])
+
 # Check for extra plugins to enable
 enable_all_plugins=auto
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
@@ -216,6 +224,8 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
+AM_CONDITIONAL(DOCS,      [test "x$enable_docs" = "xyes"])
+AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 
 # Override default libdir, used for plugins and rescue.conf
 pkglibdir=$libdir/finit
@@ -254,6 +264,8 @@ Behavior:
   Plugins...............: $plugins
 
 Optional features:
+  Install docs/.........: $enable_docs
+  Install contrib/......: $enable_contrib
   Built-in inetd........: $enable_inetd
   Built-in watchdogd....: $enable_watchdog
   Built-in logrotate....: $enable_logrotate
