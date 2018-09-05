@@ -350,6 +350,7 @@ syslog using the native `logit` tool.  The full syntax is:
 
     log:/path/to/file
     log:prio:facility.level,tag:ident
+    log:console
     log:null
     log
 

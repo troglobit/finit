@@ -119,6 +119,7 @@ typedef struct svc {
 	struct {
 		char   enabled;
 		char   null;
+		char   console;
 		char   file[64];
 		char   prio[20];
 		char   ident[20];

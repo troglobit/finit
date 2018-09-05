@@ -139,7 +139,7 @@ static int is_norespawn(void)
  * @svc: Service to start
  *
  * Returns:
- * 0 if the service was successfully started. Non-zero otherwise. 
+ * 0 if the service was successfully started. Non-zero otherwise.
  */
 static int service_start(svc_t *svc)
 {
@@ -241,6 +241,9 @@ static int service_start(svc_t *svc)
 
 			if (svc->log.null) {
 				redirect_null();
+				goto logit_done;
+			}
+			if (svc->log.console) {
 				goto logit_done;
 			}
 
@@ -466,7 +469,7 @@ static int service_stop(svc_t *svc)
  *
  * This function does some basic checks of the runtime state of Finit
  * and a sanity check of the @svc before sending %SIGHUP.
- * 
+ *
  * Returns:
  * POSIX OK(0) or non-zero on error.
  */
@@ -558,6 +561,8 @@ static void parse_log(svc_t *svc, char *arg)
 			svc->log.enabled = 1;
 		else if (!strcmp(tok, "null") || !strcmp(tok, "/dev/null"))
 			svc->log.null = 1;
+		else if (!strcmp(tok, "console") || !strcmp(tok, "/dev/console"))
+			svc->log.console = 1;
 		else if (tok[0] == '/')
 			strlcpy(svc->log.file, tok, sizeof(svc->log.file));
 		else if (!strcmp(tok, "priority") || !strcmp(tok, "prio"))
