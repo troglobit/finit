@@ -185,6 +185,12 @@ Syntax
   For a detailed description of conditions, and how to debug them, see
   the [Finit Conditions](conditions.md) document.
 
+  The name of a service, shown by the `initctl` tool, defaults to the
+  basename of the service executable. It can be changed with the
+  optional `name` argument:
+
+        name:<service-name>
+
 * `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
   Launch a daemon when a client initiates a connection on an Internet
   port.  Available services are listed in the UNIX `/etc/services` file.

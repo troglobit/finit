@@ -80,7 +80,6 @@ static void svc_gc(void *arg)
 svc_t *svc_new(char *cmd, int id, int type)
 {
 	int job = -1;
-	char *desc;
 	svc_t *svc, *iter = NULL;
 
 	/* Find first job n:o if registering multiple instances */
@@ -103,12 +102,7 @@ svc_t *svc_new(char *cmd, int id, int type)
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
 	/* Default description, if missing */
-	desc = strrchr(cmd, '/');
-	if (desc)
-		desc++;
-	else
-		desc = cmd;
-	strlcpy(svc->desc, desc, sizeof(svc->desc));
+	strlcpy(svc->desc, svc->name, sizeof(svc->desc));
 
 	TAILQ_INSERT_TAIL(&svc_list, svc, link);
 
@@ -204,7 +198,7 @@ svc_t *svc_named_iterator(svc_t **iter, int first, char *cmd)
 	svc_t *svc;
 
 	for (svc = svc_iterator(iter, first); svc; svc = svc_iterator(iter, 0)) {
-		char *name = basename(svc->cmd);
+		char *name = svc->name;
 
 		if (!strncmp(name, cmd, strlen(name)))
 			return svc;
@@ -362,17 +356,10 @@ svc_t *svc_find_by_jobid(int job, int id)
  */
 svc_t *svc_find_by_nameid(char *name, int id)
 {
-	char *ptr;
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		ptr = strrchr(svc->cmd, '/');
-		if (ptr)
-			ptr++;
-		else
-			ptr = svc->cmd;
-
-		if (svc->id == id && !strcmp(name, ptr))
+		if (svc->id == id && !strcmp(name, svc->name))
 			return svc;
 	}
 

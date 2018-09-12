@@ -104,6 +104,7 @@ typedef struct svc {
 	int            sighup;	       /* This service supports SIGHUP :) */
 	svc_block_t    block;	       /* Reason that this service is currently stopped */
 	char           cond[MAX_COND_LEN];
+	char           name[MAX_ARG_LEN];
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */

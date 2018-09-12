@@ -569,6 +569,23 @@ static void parse_log(svc_t *svc, char *arg)
 	}
 }
 
+/*
+ * name:<name>
+ */
+static void parse_name(svc_t *svc, char *arg)
+{
+	char *name = NULL;
+
+	if (arg && !strncasecmp(arg, "name:", 5)) {
+		name = arg + 5;
+	} else {
+		name = strrchr(svc->cmd, '/');
+		name = name ? name + 1 : svc->cmd;
+	}
+
+	strlcpy(svc->name, name, sizeof(svc->name));
+}
+
 /**
  * parse_cmdline_args - Update the command line args in the svc struct
  *
@@ -659,6 +676,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
+	char *name = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
@@ -716,6 +734,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			log = cmd;
 		else if (!strncasecmp(cmd, "pid", 3))
 			pid = cmd;
+		else if (!strncasecmp(cmd, "name:", 5))
+			name = cmd;
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
 		else
@@ -830,6 +850,8 @@ recreate:
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	conf_parse_cond(svc, cond);
+
+	parse_name(svc, name);
 
 	if (log)
 		parse_log(svc, log);

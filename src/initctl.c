@@ -459,14 +459,7 @@ static int show_status(char *arg)
 
 		if (!verbose) {
 			int adj = screen_cols - 60;
-			char *name = strrchr(svc->cmd, '/');
-
-			if (!name)
-				name = svc->cmd;
-			else
-				name++;
-
-			printf("%-16.16s  %-*.*s\n", name, adj, adj, svc->desc);
+			printf("%-16.16s  %-*.*s\n", svc->name, adj, adj, svc->desc);
 			continue;
 		}
 
