@@ -120,7 +120,7 @@ int serv_list(char *arg)
 	if (fisdir(enabled))
 		do_list("ENABLED  ", enabled);
 	if (fisdir(FINIT_RCSD))
-		do_list("ENABLED  ", FINIT_RCSD);
+		do_list("STATIC   ", FINIT_RCSD);
 
 	return 0;
 }
@@ -140,11 +140,11 @@ int serv_enable(char *arg)
 	}
 
 	pushd(FINIT_RCSD);
-	snprintf(path, sizeof(path), "available/%s", arg);
+	snprintf(path, sizeof(path), "%s/%s", available, arg);
 	if (!fexist(path))
 		errx(1, "Cannot find %s", path);
 
-	snprintf(link, sizeof(link), "%s/%s", FINIT_RCSD, arg);
+	snprintf(link, sizeof(link), "%s/%s", enabled, arg);
 	if (fexist(link))
 		errx(1, "%s already exists", link);
 
@@ -165,7 +165,7 @@ int serv_disable(char *arg)
 		arg = corr;
 	}
 
-	snprintf(link, sizeof(link), "%s/%s", FINIT_RCSD, arg);
+	snprintf(link, sizeof(link), "%s/%s", enabled, arg);
 	if (stat(link, &st))
 		err(1, "Cannot find %s", link);
 
