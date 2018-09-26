@@ -1232,9 +1232,12 @@ int service_runtask_completed(int skip)
 	return 1;
 }
 
+/*
+ * Wait for system bootstrap to complete, should not take more than 120 sec.
+ */
 void service_bootstrap_cb(uev_t *w, void *arg, int events)
 {
-	static int cnt = 10;
+	static int cnt = 120;
 	void (*finalize)(void) = arg;
 
 	_d("Checking completion of all run/task ... %d", cnt);
