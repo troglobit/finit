@@ -672,6 +672,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	int forking = 0;
 #endif
 	int levels = 0;
+	int manual = 0;
 	char *line;
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
@@ -736,6 +737,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			pid = cmd;
 		else if (!strncasecmp(cmd, "name:", 5))
 			name = cmd;
+		else if (!strncasecmp(cmd, "manual:yes", 10))
+			manual = 1;
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
 		else
@@ -810,6 +813,10 @@ recreate:
 			_e("Out of memory, cannot register service %s", cmd);
 			free(line);
 			return errno = ENOMEM;
+		}
+
+		if (type == SVC_TYPE_SERVICE && manual) {
+			svc_stop(svc);
 		}
 	}
 #ifdef INETD_ENABLED
