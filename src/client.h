@@ -32,6 +32,6 @@ int    client_disconnect   (void);
 
 int    client_send         (struct init_request *rq, ssize_t len);
 svc_t *client_svc_iterator (int first);
-svc_t *client_svc_find     (char *arg);
+svc_t *client_svc_find     (const char *arg);
 
 #endif /* FINIT_CLIENT_H_ */

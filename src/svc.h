@@ -97,7 +97,7 @@ typedef struct svc {
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, inetd, ... */
-	int            protected;      /* Services like dbus-daemon & udev by Finit */
+	int            protect;        /* Services like dbus-daemon & udev by Finit */
 	const int      dirty;	       /* -1: removal, 0: unmodified, 1: modified */
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;

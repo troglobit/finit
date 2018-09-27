@@ -909,7 +909,7 @@ recreate:
 		svc_mark_clean(svc);
 
 	if (!file)
-		svc->protected = 1;
+		svc->protect = 1;
 
 	/* Free duped line, from above */
 	free(line);

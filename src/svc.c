@@ -402,7 +402,7 @@ void svc_mark_dynamic(void)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->protected)
+		if (svc->protect)
 			continue;
 		if (svc_is_inetd_conn(svc))
 			continue;

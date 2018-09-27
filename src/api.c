@@ -352,8 +352,8 @@ static void api_cb(uev_t *w, void *arg, int events)
 			if (wdog) {
 				logit(LOG_NOTICE, "Stopping and removing %s (PID:%d)", wdog->cmd, wdog->pid);
 				stop(wdog);
-				if (wdog->protected) {
-					wdog->protected = 0;
+				if (wdog->protect) {
+					wdog->protect = 0;
 					wdog->runlevels = 0;
 				}
 			}
