@@ -349,11 +349,9 @@ static int service_start(svc_t *svc)
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
 		result = WEXITSTATUS(complete(svc->cmd, pid));
-		if (!svc_clean_bootstrap(svc)) {
-			svc->start_time = svc->pid = 0;
-			svc->once++;
-			svc_set_state(svc, SVC_STOPPING_STATE);
-		}
+		svc->start_time = svc->pid = 0;
+		svc->once++;
+		svc_set_state(svc, SVC_STOPPING_STATE);
 		break;
 
 	case SVC_TYPE_SERVICE:
