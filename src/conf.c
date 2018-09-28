@@ -727,6 +727,7 @@ static int do_change(char *name, uint32_t mask)
 		return 1;
 	}
 
+	_d("Event registered for %s, mask 0x%x", name, mask);
 	TAILQ_INSERT_HEAD(&conf_change_list, node,link);
 
 	return 0;
