@@ -57,7 +57,6 @@
  *
  * - HOOK_SVC_RECONF      :: action/svc/reconf
  * - HOOK_SVC_LOST        :: action/svc/lost
- * - HOOK_SVC_START       :: action/svc/start
  * - HOOK_RUNLEVEL_CHANGE :: action/sys/runlevel
  *
  * However, the implementation did not turn out to be stable enough for
@@ -77,7 +76,6 @@
 	/* Runtime hooks, runlevel [S1-9] */			\
 	CHOOSE(HOOK_SVC_RECONF,      "nop"),			\
 	CHOOSE(HOOK_SVC_LOST,        "nop"),			\
-	CHOOSE(HOOK_SVC_START,       "nop"),			\
 	CHOOSE(HOOK_RUNLEVEL_CHANGE, "nop"),			\
 								\
 	/* Shutdown hooks, runlevel [06] */			\

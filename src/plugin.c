@@ -192,15 +192,7 @@ int plugin_exists(hook_point_t no)
 /* Some hooks are called with a fixed argument, like HOOK_SVC_LOST */
 void plugin_run_hook(hook_point_t no, void *arg)
 {
-	static int last = -1;
 	plugin_t *p, *tmp;
-
-	/*
-	 * End recursion: any plugin hook => start service => SVC start
-	 * hook => start service ... err ... wait a second
-	 */
-	if (HOOK_SVC_START == last)
-		return;
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
@@ -209,15 +201,8 @@ void plugin_run_hook(hook_point_t no, void *arg)
 		}
 	}
 
-	/* Guard against infinite recursion */
-	if (HOOK_SVC_START == no)
-		last = no;
-
 	cond_set_oneshot(hook_cond[no]);
 	service_step_all(SVC_TYPE_RUNTASK);
-
-	if (HOOK_SVC_START == no)
-		last = -1;
 }
 
 /* Regular hooks are called with the registered plugin's argument */

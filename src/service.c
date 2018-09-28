@@ -346,34 +346,34 @@ static int service_start(svc_t *svc)
 	svc->pid = pid;
 	svc->start_time = jiffies();
 
-#ifdef INETD_ENABLED
-	if (svc_is_inetd_conn(svc) && svc->inetd.type == SOCK_STREAM)
-		close(svc->stdin_fd);
-#endif
-
-	if (SVC_TYPE_RUN == svc->type) {
+	switch (svc->type) {
+	case SVC_TYPE_RUN:
 		result = WEXITSTATUS(complete(svc->cmd, pid));
 		if (!svc_clean_bootstrap(svc)) {
 			svc->start_time = svc->pid = 0;
 			svc->once++;
 			svc_set_state(svc, SVC_STOPPING_STATE);
 		}
-	}
+		break;
 
-	if (svc_is_daemon(svc))
+	case SVC_TYPE_SERVICE:
 		pid_file_create(svc);
+		break;
+
+#ifdef INETD_ENABLED
+	case SVC_TYPE_INETD_CONN:
+		if (svc->inetd.type == SOCK_STREAM)
+			close(svc->stdin_fd);
+		break;
+#endif
+
+	default:
+		break;
+	}
 
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (do_progress)
 		print_result(result);
-
-	/*
-	 * Only run hook on successful start, and *after* having printed
-	 * the result, otherwise any hook tasks may overwrite it and the
-	 * result would be like double "[ OK ]" but only one service.
-	 */
-	if (!result)
-		plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
 
 	return result;
 }
@@ -1067,13 +1067,6 @@ restart:
 			if (sm_is_in_teardown(&sm))
 				break;
 
-			/*
-			 * Make state transition *before* service_start(), because
-			 * of HOOK_SVC_START, which may call service_step()
-			 */
-			svc_mark_clean(svc);
-			svc_set_state(svc, SVC_RUNNING_STATE);
-
 			err = service_start(svc);
 			if (err) {
 				(*restart_cnt)++;
@@ -1082,6 +1075,10 @@ restart:
 				if (!svc_is_inetd_conn(svc))
 					break;
 			}
+
+			/* Everything went fine, clean and set state */
+			svc_mark_clean(svc);
+			svc_set_state(svc, SVC_RUNNING_STATE);
 		}
 		break;
 
