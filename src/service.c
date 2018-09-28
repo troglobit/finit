@@ -367,14 +367,6 @@ static int service_start(svc_t *svc)
 	if (do_progress)
 		print_result(result);
 
-	/*
-	 * Only run hook on successful start, and *after* having printed
-	 * the result, otherwise any hook tasks may overwrite it and the
-	 * result would be like double "[ OK ]" but only one service.
-	 */
-	if (!result)
-		plugin_run_hook(HOOK_SVC_START, (void *)(uintptr_t)pid);
-
 	return result;
 }
 
@@ -1044,13 +1036,6 @@ restart:
 			if (sm_is_in_teardown(&sm))
 				break;
 
-			/*
-			 * Make state transition *before* service_start(), because
-			 * of HOOK_SVC_START, which may call service_step()
-			 */
-			svc_mark_clean(svc);
-			svc_set_state(svc, SVC_RUNNING_STATE);
-
 			err = service_start(svc);
 			if (err) {
 				(*restart_cnt)++;
@@ -1059,6 +1044,10 @@ restart:
 				if (!svc_is_inetd_conn(svc))
 					break;
 			}
+
+			/* Everything went fine, clean and set state */
+			svc_mark_clean(svc);
+			svc_set_state(svc, SVC_RUNNING_STATE);
 		}
 		break;
 
