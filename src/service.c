@@ -464,6 +464,7 @@ static int service_stop(svc_t *svc)
  */
 static int service_restart(svc_t *svc)
 {
+	int do_progress = 1;
 	int rc;
 
 	/* Ignore if finit is SIGSTOP'ed */
@@ -479,10 +480,14 @@ static int service_restart(svc_t *svc)
 		return 1;
 	}
 
-	_d("Sending SIGHUP to PID %d", svc->pid);
-	if (svc->desc[0])
+	/* Skip progress if desc disabled or bootstrap task */
+	if (!svc->desc[0] || svc_in_runlevel(svc, 0))
+		do_progress = 0;
+
+	if (do_progress)
 		print_desc("Restarting ", svc->desc);
 
+	_d("Sending SIGHUP to PID %d", svc->pid);
 	rc = kill(svc->pid, SIGHUP);
 
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
@@ -494,7 +499,7 @@ static int service_restart(svc_t *svc)
 		touch(pid_file(svc));
 	}
 
-	if (svc->desc[0])
+	if (do_progress)
 		print_result(rc);
 
 	return rc;
