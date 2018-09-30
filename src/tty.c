@@ -45,27 +45,11 @@ static LIST_HEAD(, tty) tty_list = LIST_HEAD_INITIALIZER();
 
 static char *canonicalize(char *tty)
 {
-	char buf[42];
 	struct stat st;
 	static char path[80];
 
 	if (!tty)
 		return NULL;
-
-	/* Auto-detect serial console, for embedded devices mostly */
-	if (!strcmp(tty, "@console")) {
-		FILE *fp;
-
-		fp = fopen("/sys/class/tty/console/active", "r");
-		if (!fp) {
-			_e("Cannot find system console, is sysfs not mounted?");
-			return NULL;
-		}
-
-		if (fgets(buf, sizeof(buf), fp))
-			tty = chomp(buf);
-		fclose(fp);
-	}
 
 	strlcpy(path, tty, sizeof(path));
 	if (stat(path, &st)) {
@@ -137,11 +121,11 @@ void tty_sweep(void)
 int tty_register(char *line, struct rlimit rlimit[], char *file)
 {
 	struct tty *entry;
-	int         insert = 0, noclear = 0, nowait = 0, nologin = 0;
 	size_t      i, num = 0;
-	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS];
+	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS], buf[256];
 	char             *dev = NULL, *baud = NULL;
 	char       *runlevels = NULL, *term = NULL;
+	int         insert = 0, noclear = 0, nowait = 0, nologin = 0, atcon = 0;
 
 	if (!line) {
 		_e("Missing argument");
@@ -220,6 +204,24 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 		return errno = EINVAL;
 	}
 
+	/* Auto-detect serial console, for embedded devices mostly */
+	if (!strcmp(dev, "@console")) {
+		FILE *fp;
+
+		fp = fopen("/sys/class/tty/console/active", "r");
+		if (!fp) {
+			_e("Cannot find system console, is sysfs not mounted?");
+			return errno = ENOENT;
+		}
+
+		atcon = 1;
+		if (fgets(buf, sizeof(buf), fp))
+			dev = strtok(chomp(buf), " \t");
+
+		fclose(fp);
+	}
+
+again:
 	/* Ensure all getty (built-in + external) are registered with absolute path */
 	dev = canonicalize(dev);
 	if (!dev)
@@ -277,6 +279,14 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 	else
 		entry->dirty = 0; /* Not modified */
 	_d("TTY %s is %sdirty", dev, entry->dirty ? "" : "NOT ");
+
+	if (atcon) {
+		dev = strtok(NULL, " \t");
+		if (dev) {
+			_d("Found another @console: %s", dev);
+			goto again;
+		}
+	}
 
 	return 0;
 }
