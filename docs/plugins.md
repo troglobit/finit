@@ -47,9 +47,6 @@ For your convenience a set of *optional* plugins are available:
 
 * *initctl.so*: Extends finit with a traditional `initctl` functionality.
 
-* *lost.so*: Very simple `HOOK_SVC_LOST` example.  Logs process ID and
-  name to syslog.  _Optional plugin._
-
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor
   for services that may want to be SIGHUP'ed on new default route or
@@ -101,14 +98,6 @@ Hooks
   `/etc/finit.d` directory and issued `SIGHUP`.  The hook is called when
   all modified/removed services have been stopped.  When the hook has
   completed, Finit continues to start all modified and new services.
-
-* `HOOK_SVC_LOST`: Called when a process is lost.  When reconfiguring
-  services at runtime this hook may be called a lot.  However, it may be
-  a quite useful hook to monitor a system post bootstrap when no, or
-  few, services are expected to exit.  A default plugin `lost.so` is
-  available in the `plugins/` subdirectory as an example.
-
-  **NOTE:** This hook callback gets the lost PID as argument.
 
 * `HOOK_RUNLEVEL_CHANGE`: Called when the user has issued a runlevel
   change.  The hook is called when services not matching the new

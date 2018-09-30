@@ -189,7 +189,7 @@ int plugin_exists(hook_point_t no)
 	return 0;
 }
 
-/* Some hooks are called with a fixed argument, like HOOK_SVC_LOST */
+/* Some hooks are called with a fixed argument */
 void plugin_run_hook(hook_point_t no, void *arg)
 {
 	plugin_t *p, *tmp;

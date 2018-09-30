@@ -39,10 +39,6 @@ libplug_la_SOURCES += time.c
 endif
 endif
 
-if BUILD_LOST_PLUGIN
-libplug_la_SOURCES += lost.c
-endif
-
 if BUILD_NETLINK_PLUGIN
 libplug_la_SOURCES += netlink.c
 endif
@@ -82,10 +78,6 @@ endif
 if BUILD_INETD_TIME_PLUGIN
 pkglib_LTLIBRARIES += time.la
 endif
-endif
-
-if BUILD_LOST_PLUGIN
-pkglib_LTLIBRARIES += lost.la
 endif
 
 if BUILD_NETLINK_PLUGIN

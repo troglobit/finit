@@ -53,8 +53,6 @@ Below are a few of the main switches to configure:
 
 * `--enable-dbus-plugin`: Enable the optional D-Bus `dbus.so` plugin.
 
-* `--enable-lost-plugin`: Enable noisy example plugin for `HOOK_SVC_LOST`.
-
 * `--enable-resolvconf-plugin`: Enable the `resolvconf.so` optional plugin.
 
 * `--enable-x11-common-plugin`: Enable the optional X Window `x11-common.so` plugin.
