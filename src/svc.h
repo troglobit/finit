@@ -73,6 +73,9 @@ typedef enum {
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
 #define MAX_NUM_SVC_ARGS 32
 
+/* Time after SIGTERM that we SIGKILL stopping processes */
+#define SVC_TERM_TIMEOUT 3000
+
 /*
  * Default enable for all services, can be stopped by means
  * of issuing an initctl call. E.g.
