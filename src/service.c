@@ -1071,8 +1071,6 @@ restart:
 			err = service_start(svc);
 			if (err) {
 				(*restart_cnt)++;
-				svc_set_state(svc, SVC_READY_STATE);
-
 				if (!svc_is_inetd_conn(svc))
 					break;
 			}
