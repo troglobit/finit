@@ -481,6 +481,9 @@ int main(int argc, char* argv[])
 	api_init(&loop);
 	umask(022);
 
+	/* Finalize bootstrap, allow service/run/tasks to complete */
+	service_step_all(SVC_TYPE_ANY);
+
 	/*
 	 * Wait for all SVC_TYPE_RUNTASK to have completed their work in
 	 * [S], or timeout, before calling finalize()

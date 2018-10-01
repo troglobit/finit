@@ -1267,6 +1267,9 @@ void service_bootstrap_cb(uev_t *w, void *arg, int events)
 	static int cnt = 120;
 	void (*finalize)(void) = arg;
 
+	_d("Step all services ...");
+	service_step_all(SVC_TYPE_ANY);
+
 	_d("Checking completion of all run/task ... %d", cnt);
 	if (cnt-- > 0 && !service_runtask_completed(!runlevel))
 		return;
