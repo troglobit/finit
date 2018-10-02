@@ -24,6 +24,7 @@
 
 #include <err.h>
 #include <ctype.h>		/* isdigit() */
+#include <time.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/time.h>
@@ -37,7 +38,48 @@
 
 /* Each svc_t needs a unique job# */
 static int jobcounter = 1;
-static TAILQ_HEAD(head, svc) svc_list = TAILQ_HEAD_INITIALIZER(svc_list);
+static TAILQ_HEAD(, svc) svc_list = TAILQ_HEAD_INITIALIZER(svc_list);
+static TAILQ_HEAD(, svc) gc_list  = TAILQ_HEAD_INITIALIZER(gc_list);
+
+static uev_t gc_timer;
+static int   gc_init = 0;
+
+static void gc(uev_t *w, void *arg, int events)
+{
+	struct timespec now;
+	svc_t *svc, *next;
+
+	if (UEV_ERROR == events) {
+		uev_timer_start(w);
+		return;
+	}
+
+	clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
+	TAILQ_FOREACH_SAFE(svc, &gc_list, link, next) {
+		int msec;
+
+		msec  = (now.tv_sec  - svc->gc.tv_sec)  * 1000 +
+			(now.tv_nsec - svc->gc.tv_nsec) / 1000000;
+		if (msec < SVC_TERM_TIMEOUT)
+			continue;
+
+		TAILQ_REMOVE(&gc_list, svc, link);
+		free(svc);
+	}
+
+	if (!TAILQ_EMPTY(&gc_list))
+		uev_timer_set(&gc_timer, SVC_TERM_TIMEOUT, 0);
+}
+
+static int schedule_gc(int msec)
+{
+	if (!gc_init) {
+		gc_init =1;
+		return uev_timer_init(ctx, &gc_timer, gc, NULL, msec, 0);
+	}
+
+	return uev_timer_set(&gc_timer, msec, 0);
+}
 
 /**
  * svc_new - Create a new service
@@ -87,7 +129,7 @@ svc_t *svc_new(char *cmd, int id, int type)
 }
 
 /**
- * svc_del - Delete a service object
+ * svc_del - Mark a service object for deletion
  * @svc: Pointer to an &svc_t object
  *
  * Returns:
@@ -96,8 +138,10 @@ svc_t *svc_new(char *cmd, int id, int type)
 int svc_del(svc_t *svc)
 {
 	TAILQ_REMOVE(&svc_list, svc, link);
-	memset(svc, 0, sizeof(*svc));
-	free(svc);
+	TAILQ_INSERT_TAIL(&gc_list, svc, link);
+
+	clock_gettime(CLOCK_MONOTONIC_COARSE, &svc->gc);
+	schedule_gc(SVC_TERM_TIMEOUT);
 
 	return 0;
 }

@@ -138,6 +138,9 @@ typedef struct svc {
 	 */
 	uev_t          timer;
 	void           (*timer_cb)(struct svc *svc);
+
+	/* time at svc_del(), used by gc timer */
+	struct timespec gc;
 } svc_t;
 
 svc_t      *svc_new                (char *cmd, int id, int type);
