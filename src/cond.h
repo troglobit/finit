@@ -13,6 +13,7 @@ typedef enum cond_state {
 	COND_ON
 } cond_state_t;
 
+char           *mkcond       (char *buf, size_t len, char *nm);
 const char     *condstr      (enum cond_state s);
 const char     *cond_path    (const char *name);
 unsigned int    cond_get_gen (const char *path);

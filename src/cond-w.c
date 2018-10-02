@@ -140,15 +140,19 @@ static int svc_has_cond(svc_t *svc)
 static void cond_update(const char *name)
 {
 	svc_t *svc, *iter = NULL;
+	int restart = 0;
 
 	_d("%s", name);
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
-			continue;
+	do {
+		restart = 0;
+		for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+			if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
+				continue;
 
-		_d("%s: match <%s> %s(%s)", name ?: "nil", svc->cond, svc->desc, svc->cmd);
-		service_step(svc);
-	}
+			_d("%s: match <%s> %s(%s)", name ?: "nil", svc->cond, svc->desc, svc->cmd);
+			restart += service_step(svc);
+		}
+	} while (restart);
 }
 
 void cond_set(const char *name)

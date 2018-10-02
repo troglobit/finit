@@ -1009,6 +1009,7 @@ int service_step(svc_t *svc)
 	svc_cmd_t enabled;
 	svc_state_t old_state;
 	cond_state_t cond;
+	int restarts = 0;
 
 restart:
 	old_state = svc->state;
@@ -1165,6 +1166,13 @@ restart:
 		case COND_ON:
 			kill(svc->pid, SIGCONT);
 			svc_set_state(svc, SVC_RUNNING_STATE);
+			/* Reassert condition if we go from waiting and no change */
+			if (!svc_is_changed(svc)) {
+				char cond[MAX_COND_LEN];
+
+				mkcond(cond, sizeof(cond), svc->cmd);
+				cond_set_path(cond_path(cond), COND_ON);
+			}
 			break;
 
 		case COND_OFF:
@@ -1180,10 +1188,11 @@ restart:
 
 	if (svc->state != old_state) {
 		_d("%20s(%4d): -> %8s", svc->cmd, svc->pid, svc_status(svc));
+		restarts++;
 		goto restart;
 	}
 
-	return 0;
+	return restarts;
 }
 
 void service_step_all(int types)

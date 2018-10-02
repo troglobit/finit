@@ -30,6 +30,12 @@
 #include "service.h"
 
 
+char *mkcond(char *buf, size_t len, char *nm)
+{
+	snprintf(buf, len, "svc%s%s", nm[0] != '/' ? "/" : "", nm);
+	return buf;
+}
+
 const char *condstr(enum cond_state s)
 {
 	static const char *strs[] = {
