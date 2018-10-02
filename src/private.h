@@ -28,11 +28,6 @@
 #include "svc.h"
 #include "plugin.h"
 
-/*
- * Main loop context
- */
-uev_ctx_t *ctx;
-
 int       api_init         (uev_ctx_t *ctx);
 int       api_exit         (void);
 
