@@ -41,7 +41,7 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
 # Check for required libraries
-PKG_CHECK_MODULES([uev],  [libuev >= 2.1.0])
+PKG_CHECK_MODULES([uev],  [libuev >= 2.2.0])
 PKG_CHECK_MODULES([lite], [libite >= 2.0.1])
 
 # Check for configured Finit features

@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
 	/*
 	 * Initalize event context.
 	 */
-	uev_init(&loop);
+	uev_init1(&loop, 1);
 	ctx = &loop;
 
 	/*
