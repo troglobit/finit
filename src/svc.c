@@ -35,6 +35,7 @@
 #include "helpers.h"
 #include "pid.h"
 #include "util.h"
+#include "cond.h"
 
 /* Each svc_t needs a unique job# */
 static int jobcounter = 1;
@@ -56,6 +57,7 @@ static void gc(uev_t *w, void *arg, int events)
 
 	clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
 	TAILQ_FOREACH_SAFE(svc, &gc_list, link, next) {
+		char cond[MAX_COND_LEN];
 		int msec;
 
 		msec  = (now.tv_sec  - svc->gc.tv_sec)  * 1000 +
@@ -64,6 +66,7 @@ static void gc(uev_t *w, void *arg, int events)
 			continue;
 
 		TAILQ_REMOVE(&gc_list, svc, link);
+		cond_clear(mkcond(cond, sizeof(cond), svc->cmd));
 		free(svc);
 	}
 
