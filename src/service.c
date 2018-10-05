@@ -408,7 +408,7 @@ static void service_kill(svc_t *svc)
  * @svc: Service to stop
  *
  * Returns:
- * 0 if the service was successfully stopped. Non-zero otherwise. 
+ * 0 if the service was successfully stopped. Non-zero otherwise.
  */
 static int service_stop(svc_t *svc)
 {
@@ -416,6 +416,9 @@ static int service_stop(svc_t *svc)
 
 	if (!svc)
 		return 1;
+
+	if (svc->state <= SVC_STOPPING_STATE)
+		return 0;
 
 #ifdef INETD_ENABLED
 	if (svc_is_inetd(svc)) {
