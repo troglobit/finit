@@ -897,20 +897,25 @@ void service_unregister(svc_t *svc)
 	 * Only try stopping @svc if it's *not* an inetd connection.
 	 * Prevents infinite recursion when called from service_step()
 	 */
-	if (!svc_is_inetd_conn(svc))
-		service_stop(svc);
-	else {
+	switch (svc->type) {
+#ifdef INETD_ENABLED
+	case SVC_TYPE_INETD:
+		inetd_del(&svc->inetd);
+		break;
+
+	case SVC_TYPE_INETD_CONN:
 		/* inetd connection, if UDP unblock parent */
 		if (svc_is_busy(svc->inetd.svc)) {
 			svc_unblock(svc->inetd.svc);
 			service_step(svc->inetd.svc);
 		}
-	}
-
-#ifdef INETD_ENABLED
-	if (svc_is_inetd(svc))
-		inetd_del(&svc->inetd);
+		break;
 #endif
+
+	default:
+		service_stop(svc);
+		break;
+	}
 
 	svc_del(svc);
 }
