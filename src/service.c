@@ -48,7 +48,32 @@
 
 #define RESPAWN_MAX    10	/* Prevent endless respawn of faulty services. */
 
+static uev_t wq_timer;
+static int   wq_init = 0;
+
 static void svc_set_state(svc_t *svc, svc_state_t new);
+
+/* Should be generic work, but currently only steps all services */
+static void wq(uev_t *w, void *arg, int events)
+{
+	if (UEV_ERROR == events) {
+		uev_timer_start(w);
+		return;
+	}
+
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
+}
+
+static int schedule_wq(void)
+{
+	if (!wq_init) {
+		wq_init =1;
+		return uev_timer_init(ctx, &wq_timer, wq, NULL, 100, 0);
+	}
+
+	return uev_timer_set(&wq_timer, 100, 0);
+}
+
 
 /**
  * service_timeout_cb - libuev callback wrapper for service timeouts
@@ -1012,12 +1037,12 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
  */
 int service_step(svc_t *svc)
 {
-	int err;
-	char *restart_cnt = (char *)&svc->restart_cnt;
-	svc_cmd_t enabled;
-	svc_state_t old_state;
 	cond_state_t cond;
-	int restarts = 0;
+	svc_state_t old_state;
+	svc_cmd_t enabled;
+	char *restart_cnt = (char *)&svc->restart_cnt;
+	int changed = 0;
+	int err;
 
 restart:
 	old_state = svc->state;
@@ -1194,11 +1219,18 @@ restart:
 
 	if (svc->state != old_state) {
 		_d("%20s(%4d): -> %8s", svc->cmd, svc->pid, svc_status(svc));
-		restarts++;
+		changed++;
 		goto restart;
 	}
 
-	return restarts;
+	/*
+	 * When a run/task/service changes state, e.g. transitioning from
+	 * waiting to running, other services may need to change state too.
+	 */
+	if (changed)
+		schedule_wq();
+
+	return 0;
 }
 
 void service_step_all(int types)
