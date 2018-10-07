@@ -36,24 +36,18 @@
 #include "pid.h"
 #include "util.h"
 #include "cond.h"
+#include "schedule.h"
 
 /* Each svc_t needs a unique job# */
 static int jobcounter = 1;
 static TAILQ_HEAD(, svc) svc_list = TAILQ_HEAD_INITIALIZER(svc_list);
 static TAILQ_HEAD(, svc) gc_list  = TAILQ_HEAD_INITIALIZER(gc_list);
 
-static uev_t gc_timer;
-static int   gc_init = 0;
-
-static void gc(uev_t *w, void *arg, int events)
+static void svc_gc(void *arg)
 {
 	struct timespec now;
+	struct wq *work = (struct wq *)arg;
 	svc_t *svc, *next;
-
-	if (UEV_ERROR == events) {
-		uev_timer_start(w);
-		return;
-	}
 
 	clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
 	TAILQ_FOREACH_SAFE(svc, &gc_list, link, next) {
@@ -71,17 +65,7 @@ static void gc(uev_t *w, void *arg, int events)
 	}
 
 	if (!TAILQ_EMPTY(&gc_list))
-		uev_timer_set(&gc_timer, SVC_TERM_TIMEOUT, 0);
-}
-
-static int schedule_gc(int msec)
-{
-	if (!gc_init) {
-		gc_init =1;
-		return uev_timer_init(ctx, &gc_timer, gc, NULL, msec, 0);
-	}
-
-	return uev_timer_set(&gc_timer, msec, 0);
+		schedule_work(work);
 }
 
 /**
@@ -131,6 +115,11 @@ svc_t *svc_new(char *cmd, int id, int type)
 	return svc;
 }
 
+static struct wq work = {
+	.cb    = svc_gc,
+	.delay = SVC_TERM_TIMEOUT
+};
+
 /**
  * svc_del - Mark a service object for deletion
  * @svc: Pointer to an &svc_t object
@@ -144,7 +133,7 @@ int svc_del(svc_t *svc)
 	TAILQ_INSERT_TAIL(&gc_list, svc, link);
 
 	clock_gettime(CLOCK_MONOTONIC_COARSE, &svc->gc);
-	schedule_gc(SVC_TERM_TIMEOUT);
+	schedule_work(&work);
 
 	return 0;
 }

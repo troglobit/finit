@@ -45,35 +45,15 @@
 #include "tty.h"
 #include "util.h"
 #include "utmp-api.h"
+#include "schedule.h"
 
 #define RESPAWN_MAX    10	/* Prevent endless respawn of faulty services. */
 
-static uev_t wq_timer;
-static int   wq_init = 0;
+static struct wq work = {
+	.cb = service_worker,
+};
 
 static void svc_set_state(svc_t *svc, svc_state_t new);
-
-/* Should be generic work, but currently only steps all services */
-static void wq(uev_t *w, void *arg, int events)
-{
-	if (UEV_ERROR == events) {
-		uev_timer_start(w);
-		return;
-	}
-
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
-}
-
-static int schedule_wq(void)
-{
-	if (!wq_init) {
-		wq_init =1;
-		return uev_timer_init(ctx, &wq_timer, wq, NULL, 100, 0);
-	}
-
-	return uev_timer_set(&wq_timer, 100, 0);
-}
-
 
 /**
  * service_timeout_cb - libuev callback wrapper for service timeouts
@@ -1228,7 +1208,7 @@ restart:
 	 * waiting to running, other services may need to change state too.
 	 */
 	if (changed)
-		schedule_wq();
+		schedule_work(&work);
 
 	return 0;
 }
@@ -1236,6 +1216,11 @@ restart:
 void service_step_all(int types)
 {
 	svc_foreach_type(types, service_step);
+}
+
+void service_worker(void *unused)
+{
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
 }
 
 /**
