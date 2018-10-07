@@ -28,6 +28,7 @@ finit_SOURCES      = api.c					\
 		     mdadm.c	mount.c				\
 		     pid.c      pid.h				\
 		     plugin.c	plugin.h	private.h	\
+		     schedule.c	schedule.h			\
 		     service.c	service.h			\
 		     sig.c	sig.h				\
 		     sm.c	sm.h				\
