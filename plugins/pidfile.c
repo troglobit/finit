@@ -73,35 +73,38 @@ static void pidfile_callback(void *arg, int fd, int events)
 }
 
 /*
- * Assert condition only if the service is running, but not if it's
- * recently been changed or while it's starting up.
+ * This function is called after `initctl reload` to reassert conditions
+ * for services that have not been changed.
  *
- * We must wait for the service to create/touch its pidfile.
+ * We reassert the run/task/service's condition only if it is running,
+ * but not if it's recently been changed or while it's starting up.
  */
 static void pidfile_reconf(void *arg)
 {
 	static char cond[MAX_COND_LEN];
 	svc_t *svc, *iter = NULL;
-	int restart = 0;
 
-	do {
-		restart = 0;
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (svc->state != SVC_RUNNING_STATE)
+			continue;
 
-		for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-			mkcond(cond, sizeof(cond), svc->cmd);
-			if (svc->state == SVC_RUNNING_STATE &&
-			    !svc_is_changed(svc) &&
-			    !svc_is_starting(svc) &&
-			    cond_get(cond) != COND_ON) {
-				cond_set_path(cond_path(cond), COND_ON);
-				restart = 1;
-			}
-		}
+		if (svc_is_changed(svc) || svc_is_starting(svc))
+			continue;
 
-		if (restart)
-			service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
+		mkcond(cond, sizeof(cond), svc->cmd);
+		if (cond_get(cond) == COND_ON)
+			continue;
 
-	} while (restart);
+		cond_set_path(cond_path(cond), COND_ON);
+	}
+
+	/*
+	 * This will call service_step(), which in turn will schedule itself
+	 * as long as stepped services change state.  Services going from
+	 * WAITING to RUNNING will reassert their conditions in that loop,
+	 * which in turn may unlock other services, and so on.
+	 */
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
 }
 
 static void pidfile_init(void *arg)
