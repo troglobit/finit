@@ -47,6 +47,7 @@
 #include "tty.h"
 #include "util.h"
 #include "utmp-api.h"
+#include "schedule.h"
 
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
@@ -62,6 +63,9 @@ char *runparts  = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 svc_t *wdog     = NULL;		/* No watchdog by default */
+
+static int udev = 0;		/* Runtime detection of udev */
+
 
 /*
  * Show user configured banner before service bootstrap progress
@@ -261,13 +265,61 @@ static void finalize(void)
 	tty_runlevel();
 }
 
+/*
+ * Start cranking the big state machine
+ */
+static void crank_worker(void *unused)
+{
+	/*
+	 * Initalize state machine and start all bootstrap tasks
+	 * NOTE: no network available!
+	 */
+	sm_init(&sm);
+	sm_step(&sm);
+
+	/* Debian has this little script to copy generated rules while the system was read-only */
+	if (udev && fexist("/lib/udev/udev-finish"))
+		run_interactive("/lib/udev/udev-finish", "Finalizing udev");
+}
+
+/*
+ * Wait for system bootstrap to complete, all SVC_TYPE_RUNTASK must be
+ * allowed to complete their work in [S], or timeout, before we call
+ * finalize(), should not take more than 120 sec.
+ */
+static void final_worker(void *work)
+{
+	static int cnt = 120;
+
+	_d("Step all services ...");
+	service_step_all(SVC_TYPE_ANY);
+
+	if (cnt-- > 0 && !service_completed()) {
+		_d("Not all bootstrap run/tasks have completed yet ... %d", cnt);
+		schedule_work(work);
+		return;
+	}
+
+	if (cnt > 0)
+		_d("All run/task have completed, resuming bootstrap.");
+	else
+		_d("Timeout, resuming bootstrap.");
+
+	finalize();
+}
+
 int main(int argc, char* argv[])
 {
+	struct wq crank = {
+		.cb = crank_worker
+	};
+	struct wq final = {
+		.cb = final_worker,
+		.delay = 1000
+	};
+	uev_ctx_t loop;
 	char *path;
 	char cmd[256];
-	int udev = 0;
-	uev_t timer;	       /* Bootstrap timer, on timeout call finalize() */
-	uev_ctx_t loop;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -466,33 +518,18 @@ int main(int argc, char* argv[])
 	 */
 	conf_monitor(&loop);
 
-	/*
-	 * Initalize state machine and start all bootstrap tasks
-	 * NOTE: no network available!
-	 */
-	sm_init(&sm);
-	sm_step(&sm);
-
-	/* Debian has this little script to copy generated rules while the system was read-only */
-	if (udev && fexist("/lib/udev/udev-finish"))
-		run_interactive("/lib/udev/udev-finish", "Finalizing udev");
-
-	/* Start new initctl API responder */
+	_d("Starting initctl API responder ...");
 	api_init(&loop);
 	umask(022);
 
-	/* Finalize bootstrap, allow service/run/tasks to complete */
-	service_step_all(SVC_TYPE_ANY);
+	_d("Starting the big state machine ...");
+	schedule_work(&crank);
 
-	/*
-	 * Wait for all SVC_TYPE_RUNTASK to have completed their work in
-	 * [S], or timeout, before calling finalize()
-	 */
 	_d("Starting bootstrap finalize timer ...");
-	uev_timer_init(&loop, &timer, service_bootstrap_cb, finalize, 1000, 1000);
+	schedule_work(&final);
 
 	/*
-	 * Enter main loop to monior /dev/initctl and services
+	 * Enter main loop to monitor /dev/initctl and services
 	 */
 	_d("Entering main loop ...");
 	return uev_run(&loop, 0);

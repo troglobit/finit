@@ -38,7 +38,7 @@ int       service_step           (svc_t *svc);
 void      service_step_all       (int types);
 void      service_worker         (void *unused);
 
-void      service_bootstrap_cb   (uev_t *w, void *arg, int events);
+int       service_completed      (void);
 
 #endif	/* FINIT_SERVICE_H_ */
 
