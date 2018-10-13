@@ -4,6 +4,74 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[3.2][UNRELEASED] - 2018-10-xx
+------------------------------
+
+Bug fix release.
+
+### Changes
+* Add support for `--disable-docs` and `--disable-contrib` to speed up
+  builds and work around issue with massively parallel builds
+* Add `-b`, batch mode, for non-interactive use to `initctl`
+* Prefer udev to handle `/dev/` if mdev is also available
+* Redirect dbus daemon output to syslog
+* Set `$SHELL`, like `$PATH`, to a sane default value, needed by BusyBox
+* Finit no longer automatically reloads its `*.conf` files after running
+  `/etc/rc.local` or run-parts.  Use `initctl reload` instead.
+* `initctl` without an argument or option now defaults to list services
+* Converted built-in watchdog daemon to standalone mini watchdogd
+* Improved watchdog hand-over, now based on `svc_t` and not PID
+* Extended bootstrap, runlevel S, timeout: 10 --> 120 sec. before services
+  not allowed in the runtime runlevel are unconditionally stopped
+* Removed `HOOK_SVC_START` and `HOOK_SVC_LOST`, caused more problems
+  than they were worth.  Users are encouraged to use accounting instead
+* Skip displaying "Restarting ..." progress for bootstrap processes
+* Added a simple work queue mechanism to queue up work at boot + runtime
+  - Postpone deletion of `svc_t` until any `SIGKILL` timer has elapsed
+  - As long as a stepped service changes state we queue another step all
+    event, because services may depend on each other
+* Require new libuEv API: `uev_init1()` to reduce event cache so that
+  the kernel can invalidate deleted events before enqueing to userspace
+  
+### Fixes
+
+* Fix #96: Start udevd as a proper service
+* Ensure we track run commands as well as task/service, once per runlevel
+* Fix #98: FTBFS with `--disable-inetd`
+* Make sure to unblock UDP inetd services when connection terminates.
+  Regression introduced in v3.1
+* Ensure run/tasks also go to stopping state on exit, like services,
+  otherwise it is unnecessarily hard to restart them
+* Fix #99: Do not try to `SIGKILL` inetd services, they are not backed
+  by a PID.  This caused a use after free issue crashing finit.  Found
+  and fixed by Tobias Waldekranz, Westermo
+* Fix missing OS/Finit title bug, adds leading newline before banner
+* Remove "Failed connecting to watchdog ..." error message on systems
+  that do not have a watchdog
+* Fix #100: Early condition handling may not work if `/var/run` does
+  not yet exist (symlink to `/run`).  Added compat layer for access
+* Fix #103: Register multiple getty if `@console` resolves to >1 TTY
+* Fix #105: Only remove /etc/nologin when moving from runlevel 0, 1, 6
+* Fix #106: Don't mark inetd connections for deletion at .conf reload.
+  Fixed by Jonas Johansson, Westermo
+* Fix #107: Stop spawned inetd conncections when stopping inetd service.
+  Fixed by Jonas Johansson, Westermo
+* Fix #111: Only restart inetd services when necessary.  E.g., if the
+  listening interface is changed.  Only stop established connections
+  which are no longer allowed, i.e. do not touch already allowed
+  established connections.  Fixed by Jonas Johansson, Westermo
+* Fix: update inetd service args on config change.  Found and fixed by
+  Petrus Hellgren, Westermo
+* Fix `initctl [start | restart]`, should behave the same for services
+  that have crashed.  Found by Mattias Walström, Westermo
+* Wait for bootstrap phase to complete before cleaning out any bootstrap
+  processes that have stopped, they may be restarted again
+* Reassert condition when an unmodified run/task/service goes from
+  WAITING back to RUNNING again after a reconfiguration event.  
+  Found and fixed by Jonas Johansson, Westermo
+* Remove service condition when service is deleted
+
+
 [3.1][] - 2018-01-23
 --------------------
 
@@ -710,6 +778,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/3.1...HEAD
+[3.2]: https://github.com/troglobit/finit/compare/3.1...3.2
 [3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
 [3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
 [2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
