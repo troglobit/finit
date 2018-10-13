@@ -18,8 +18,8 @@ after a reconfiguration (`initctl reload`), the Finit dependency system
 can also be used.
 
 
-For upcoming Finit v3.2
------------------------
+Near Future
+-----------
 
 * Merge UDP redirect service uredir as an UDP inetd variant
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
