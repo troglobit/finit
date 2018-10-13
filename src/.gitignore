@@ -3,5 +3,6 @@ finit
 initctl
 logit
 reboot
+watchdogd
 Makefile
 Makefile.in
