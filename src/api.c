@@ -96,7 +96,7 @@ static char query_buf[368];
 static int missing(char *job, int id)
 {
 	char buf[20];
-	char idstr[10] = "";
+	char idstr[13] = "";
 
 	if (!job)
 		job = "";

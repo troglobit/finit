@@ -112,7 +112,7 @@ typedef struct svc {
 	/* For inetd services */
 	inetd_t        inetd;
 	int            stdin_fd;
-	char           iifname[IF_NAMESIZE];  /* Ingress interface for connection */
+	char           iifname[IF_NAMESIZE + 1]; /* Ingress interface for connection */
 
 	/* Set for services we need to redirect stdout/stderr to syslog */
 	struct {

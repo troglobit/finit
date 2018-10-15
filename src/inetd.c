@@ -43,12 +43,13 @@
 	} while (0);
 
 /* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
-static int inetd_dgram_peek(int sd, char *ifname)
+static int inetd_dgram_peek(int sd, char *ifname, size_t len)
 {
-	char cmbuf[0x100];
-	struct msghdr msgh;
 	struct cmsghdr *cmsg;
+	struct msghdr msgh;
+	char cmbuf[0x100];
 
+	memset(ifname, 0, len);
 	memset(&msgh, 0, sizeof(msgh));
 	msgh.msg_control    = cmbuf;
 	msgh.msg_controllen = sizeof(cmbuf);
@@ -58,11 +59,13 @@ static int inetd_dgram_peek(int sd, char *ifname)
 
 	for (cmsg = CMSG_FIRSTHDR(&msgh); cmsg; cmsg = CMSG_NXTHDR(&msgh, cmsg)) {
 		struct in_pktinfo *ipi = (struct in_pktinfo *)CMSG_DATA(cmsg);
+		char tmp[IF_NAMESIZE + 1] = { 0 };
 
 		if (cmsg->cmsg_level != SOL_IP || cmsg->cmsg_type != IP_PKTINFO)
 			continue;
 
-		if_indextoname(ipi->ipi_ifindex, ifname);
+		if_indextoname(ipi->ipi_ifindex, tmp);
+		strlcpy(ifname, tmp, len);
 
 		return 0;
 	}
@@ -73,11 +76,11 @@ static int inetd_dgram_peek(int sd, char *ifname)
 /* Peek into SOCK_DGRAM socket to figure out where an inbound packet comes from. */
 static void inetd_dgram_drop(int sd, const char *ifname)
 {
-	char pkt_interface[17];
+	char pkt_interface[IF_NAMESIZE + 1];
 	char buf[BUFSIZ];
 
 	while (1) {
-		inetd_dgram_peek(sd, pkt_interface);
+		inetd_dgram_peek(sd, pkt_interface, sizeof(pkt_interface));
 		if (string_compare(pkt_interface, ifname)) {
 			if (recv(sd, buf, sizeof(buf), 0) < 0)
 				break;
@@ -88,12 +91,13 @@ static void inetd_dgram_drop(int sd, const char *ifname)
 }
 
 /* Peek into SOCK_STREAM on accepted client socket to figure out inbound interface */
-static int inetd_stream_peek(int sd, char *ifname)
+static int inetd_stream_peek(int sd, char *ifname, size_t ilen)
 {
 	struct ifaddrs *ifaddr, *ifa;
 	struct sockaddr_in sin;
 	socklen_t len = sizeof(sin);
 
+	memset(ifname, 0, ilen);
 	if (-1 == getsockname(sd, (struct sockaddr *)&sin, &len))
 		return -1;
 
@@ -112,7 +116,7 @@ static int inetd_stream_peek(int sd, char *ifname)
 
 		iin = (struct sockaddr_in *)ifa->ifa_addr;
 		if (!memcmp(&sin.sin_addr, &iin->sin_addr, len)) {
-			strncpy(ifname, ifa->ifa_name, IF_NAMESIZE);
+			strlcpy(ifname, ifa->ifa_name, ilen);
 			break;
 		}
 	}
@@ -122,11 +126,12 @@ static int inetd_stream_peek(int sd, char *ifname)
 	return 0;
 }
 
-static int get_stdin(svc_t *svc, char* iifname)
+static int get_stdin(svc_t *svc, char *iifname, size_t len)
 {
 	int stdin = svc->inetd.watcher.fd;
-	char ifname[IF_NAMESIZE] = "UNKNOWN";
+	char ifname[IF_NAMESIZE + 1] = "UNKNOWN";
 
+	memset(iifname, 0, len);
 	if (svc->inetd.type == SOCK_STREAM) {
 		/* Open new client socket from server socket */
 		stdin = accept(stdin, NULL, NULL);
@@ -137,9 +142,9 @@ static int get_stdin(svc_t *svc, char* iifname)
 
 		_d("New client socket %d accepted for inetd service %d/tcp", stdin, svc->inetd.port);
 
-		inetd_stream_peek(stdin, ifname);
+		inetd_stream_peek(stdin, ifname, sizeof(ifname));
 	} else {           /* SOCK_DGRAM */
-		inetd_dgram_peek(stdin, ifname);
+		inetd_dgram_peek(stdin, ifname, sizeof(ifname));
 	}
 
 	if (!inetd_is_allowed(&svc->inetd, ifname)) {
@@ -153,7 +158,7 @@ static int get_stdin(svc_t *svc, char* iifname)
 	}
 
 	/* Return ingress interface */
-	strncpy(iifname, ifname, IF_NAMESIZE);
+	strlcpy(iifname, ifname, len);
 
 	return stdin;
 }
@@ -163,7 +168,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = (svc_t *)arg, *task;
 	const char *conn = " connection";
-	char iifname[IF_NAMESIZE] = "UNKNOWN";
+	char iifname[IF_NAMESIZE + 1] = "UNKNOWN";
 	int stdin;
 
 	_d("%s: Got socket event ...", svc->cmd);
@@ -172,7 +177,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	stdin = get_stdin(svc, iifname);
+	stdin = get_stdin(svc, iifname, sizeof(iifname));
 	if (stdin < 0) {
 		logit(LOG_CRIT, "%s: Unable to accept incoming connection", svc->cmd);
 		return;
@@ -220,7 +225,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	memcpy(task->args,     svc->args,     sizeof(task->args));
 	strlcpy(task->desc, svc->desc, sizeof(task->desc) - strlen(conn));
 	strlcat(task->desc, conn, sizeof(task->desc));
-	strncpy(task->iifname, iifname, sizeof(task->iifname));
+	strlcpy(task->iifname, iifname, sizeof(task->iifname));
 
 	task->stdin_fd = stdin;
 	service_step(task);

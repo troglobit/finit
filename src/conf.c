@@ -267,7 +267,7 @@ char *rlim2str(int rlim)
 
 char *lim2str(struct rlimit *rlim)
 {
-	char tmp[20];
+	char tmp[25];
 	static char buf[42];
 
 	memset(buf, 0, sizeof(buf));
