@@ -228,6 +228,7 @@ static inline char *svc_status(svc_t *svc)
 		case SVC_BLOCK_RESTARTING:
 			return "restart";
 		}
+		return "unknown";
 
 	case SVC_DONE_STATE:
 		return "done";
