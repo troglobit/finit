@@ -449,14 +449,18 @@ int run_parts(char *dir, char *cmd)
 	}
 
 	for (i = 0; i < num; i++) {
-		int j = 0;
-		pid_t pid = 0;
 		struct stat st;
-		char *args[NUM_ARGS];
+		char path[512];
+		char *argv[4] = {
+			"sh",
+			"-c",
+			path,
+			NULL
+		};
 		char *name = e[i]->d_name;
-		char path[LINE_SIZE];
+		pid_t pid = 0;
 
-		snprintf(path, sizeof(path), "%s/%s", dir, name);
+		snprintf(path, sizeof(path), "%s/%s ", dir, name);
 		if (stat(path, &st)) {
 			_d("Failed stat(%s): %s", path, strerror(errno));
 			continue;
@@ -467,29 +471,22 @@ int run_parts(char *dir, char *cmd)
 			continue;
 		}
 
-		/* Fill in args[], starting with full path to executable */
-		args[j++] = path;
-
 		/* If the callee didn't supply a run_parts() argument */
 		if (!cmd) {
 			/* Check if S<NUM>service or K<NUM>service notation is used */
 			_d("Checking if %s is a sysvinit startstop script ...", name);
-			if (name[0] == 'S' && isdigit(name[1])) {
-				args[j++] = "start";
-			} else if (name[0] == 'K' && isdigit(name[1])) {
-				args[j++] = "stop";
-			}
+			if (name[0] == 'S' && isdigit(name[1]))
+				strlcat(path, "start", sizeof(path));
+			else if (name[0] == 'K' && isdigit(name[1]))
+				strlcat(path, "stop", sizeof(path));
 		} else {
-			args[j++] = cmd;
+			strlcat(path, cmd, sizeof(path));
 		}
-		args[j++] = NULL;
 
 		pid = fork();
 		if (!pid) {
-			_d("Calling %s ...", path);
 			sig_unblock();
-			execv(path, args);
-			exit(0);
+			return execvp(_PATH_BSHELL, argv);
 		}
 
                 complete(path, pid);
