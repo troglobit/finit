@@ -115,6 +115,9 @@ void stty(int fd, speed_t speed)
 	term.c_cc[VKILL]  = CTRL('U');
 	term.c_cc[VERASE] = CERASE;
 	tcsetattr(fd, TCSANOW, &term);
+
+	/* Restore cursor if it was hidden previously */
+	write(fd, "\033[?25h", 6);
 }
 
 /**
