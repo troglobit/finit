@@ -173,7 +173,7 @@ static int do_restart(char *arg) { return do_startstop(INIT_CMD_RESTART_SVC, arg
 
 static void show_cond_one(const char *_conds)
 {
-	static char conds[MAX_ARG_LEN];
+	static char conds[MAX_COND_LEN];
 	char *cond;
 
 	strlcpy(conds, _conds, sizeof(conds));
