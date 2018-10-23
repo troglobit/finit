@@ -64,7 +64,7 @@ static void pidfile_callback(void *arg, int fd, int events)
 			continue;
 
 		mkcond(cond, sizeof(cond), svc->cmd);
-		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY)) {
+		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
 			svc_started(svc);
 			cond_set(cond);
 		} else if (ev->mask & IN_DELETE)
@@ -111,6 +111,7 @@ static void pidfile_init(void *arg)
 {
 	char *path;
 	struct context *ctx = arg;
+	uint32_t mask = IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY | IN_MOVED_TO;
 
 	/*
 	 * The bootmisc plugin is responsible for setting up /var/run.
@@ -123,7 +124,7 @@ static void pidfile_init(void *arg)
 		return;
 	}
 
-	ctx->wd = inotify_add_watch(ctx->fd, path, IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY);
+	ctx->wd = inotify_add_watch(ctx->fd, path, mask);
 	free(path);
 
 	if (ctx->wd < 0) {

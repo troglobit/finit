@@ -97,13 +97,14 @@ typedef struct svc {
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, inetd, ... */
-	int            protected;      /* Services like dbus-daemon & udev by Finit */
+	int            protect;        /* Services like dbus-daemon & udev by Finit */
 	const int      dirty;	       /* -1: removal, 0: unmodified, 1: modified */
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
 	svc_block_t    block;	       /* Reason that this service is currently stopped */
 	char           cond[MAX_COND_LEN];
+	char           name[MAX_ARG_LEN];
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
@@ -118,6 +119,7 @@ typedef struct svc {
 	struct {
 		char   enabled;
 		char   null;
+		char   console;
 		char   file[64];
 		char   prio[20];
 		char   ident[20];

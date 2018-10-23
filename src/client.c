@@ -125,7 +125,7 @@ error:
 	return NULL;
 }
 
-svc_t *client_svc_find(char *arg)
+svc_t *client_svc_find(const char *arg)
 {
 	int sd = -1;
 	struct init_request rq = {

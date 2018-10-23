@@ -226,6 +226,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	strlcpy(task->desc, svc->desc, sizeof(task->desc) - strlen(conn));
 	strlcat(task->desc, conn, sizeof(task->desc));
 	strlcpy(task->iifname, iifname, sizeof(task->iifname));
+	strlcpy(task->name, svc->name, sizeof(task->name));
 
 	task->stdin_fd = stdin;
 	service_step(task);

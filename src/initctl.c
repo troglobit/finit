@@ -173,7 +173,7 @@ static int do_restart(char *arg) { return do_startstop(INIT_CMD_RESTART_SVC, arg
 
 static void show_cond_one(const char *_conds)
 {
-	static char conds[MAX_ARG_LEN];
+	static char conds[MAX_COND_LEN];
 	char *cond;
 
 	strlcpy(conds, _conds, sizeof(conds));
@@ -459,14 +459,7 @@ static int show_status(char *arg)
 
 		if (!verbose) {
 			int adj = screen_cols - 60;
-			char *name = strrchr(svc->cmd, '/');
-
-			if (!name)
-				name = svc->cmd;
-			else
-				name++;
-
-			printf("%-16.16s  %-*.*s\n", name, adj, adj, svc->desc);
+			printf("%-16.16s  %-*.*s\n", svc->name, adj, adj, svc->desc);
 			continue;
 		}
 

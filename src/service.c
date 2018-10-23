@@ -139,7 +139,7 @@ static int is_norespawn(void)
  * @svc: Service to start
  *
  * Returns:
- * 0 if the service was successfully started. Non-zero otherwise. 
+ * 0 if the service was successfully started. Non-zero otherwise.
  */
 static int service_start(svc_t *svc)
 {
@@ -241,6 +241,9 @@ static int service_start(svc_t *svc)
 
 			if (svc->log.null) {
 				redirect_null();
+				goto logit_done;
+			}
+			if (svc->log.console) {
 				goto logit_done;
 			}
 
@@ -466,7 +469,7 @@ static int service_stop(svc_t *svc)
  *
  * This function does some basic checks of the runtime state of Finit
  * and a sanity check of the @svc before sending %SIGHUP.
- * 
+ *
  * Returns:
  * POSIX OK(0) or non-zero on error.
  */
@@ -558,6 +561,8 @@ static void parse_log(svc_t *svc, char *arg)
 			svc->log.enabled = 1;
 		else if (!strcmp(tok, "null") || !strcmp(tok, "/dev/null"))
 			svc->log.null = 1;
+		else if (!strcmp(tok, "console") || !strcmp(tok, "/dev/console"))
+			svc->log.console = 1;
 		else if (tok[0] == '/')
 			strlcpy(svc->log.file, tok, sizeof(svc->log.file));
 		else if (!strcmp(tok, "priority") || !strcmp(tok, "prio"))
@@ -567,6 +572,23 @@ static void parse_log(svc_t *svc, char *arg)
 
 		tok = strtok(NULL, ":=, ");
 	}
+}
+
+/*
+ * name:<name>
+ */
+static void parse_name(svc_t *svc, char *arg)
+{
+	char *name = NULL;
+
+	if (arg && !strncasecmp(arg, "name:", 5)) {
+		name = arg + 5;
+	} else {
+		name = strrchr(svc->cmd, '/');
+		name = name ? name + 1 : svc->cmd;
+	}
+
+	strlcpy(svc->name, name, sizeof(svc->name));
 }
 
 /**
@@ -655,10 +677,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	int forking = 0;
 #endif
 	int levels = 0;
+	int manual = 0;
 	char *line;
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
+	char *name = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
@@ -716,6 +740,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			log = cmd;
 		else if (!strncasecmp(cmd, "pid", 3))
 			pid = cmd;
+		else if (!strncasecmp(cmd, "name:", 5))
+			name = cmd;
+		else if (!strncasecmp(cmd, "manual:yes", 10))
+			manual = 1;
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
 		else
@@ -791,6 +819,10 @@ recreate:
 			free(line);
 			return errno = ENOMEM;
 		}
+
+		if (type == SVC_TYPE_SERVICE && manual) {
+			svc_stop(svc);
+		}
 	}
 #ifdef INETD_ENABLED
 	else {
@@ -830,6 +862,8 @@ recreate:
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
 
 	conf_parse_cond(svc, cond);
+
+	parse_name(svc, name);
 
 	if (log)
 		parse_log(svc, log);
@@ -875,7 +909,7 @@ recreate:
 		svc_mark_clean(svc);
 
 	if (!file)
-		svc->protected = 1;
+		svc->protect = 1;
 
 	/* Free duped line, from above */
 	free(line);

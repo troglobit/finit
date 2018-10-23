@@ -185,6 +185,18 @@ Syntax
   For a detailed description of conditions, and how to debug them, see
   the [Finit Conditions](conditions.md) document.
 
+  If a service should not be automatically started, it can be configured
+  as manual with the optional `manual` argument. The service can then be
+  started at any time by running `initctl start <service>`.
+
+        manual:yes
+
+  The name of a service, shown by the `initctl` tool, defaults to the
+  basename of the service executable. It can be changed with the
+  optional `name` argument:
+
+        name:<service-name>
+
 * `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
   Launch a daemon when a client initiates a connection on an Internet
   port.  Available services are listed in the UNIX `/etc/services` file.
@@ -338,6 +350,7 @@ syslog using the native `logit` tool.  The full syntax is:
 
     log:/path/to/file
     log:prio:facility.level,tag:ident
+    log:console
     log:null
     log
 

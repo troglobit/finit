@@ -47,6 +47,8 @@ For your convenience a set of *optional* plugins are available:
 
 * *initctl.so*: Extends finit with a traditional `initctl` functionality.
 
+* *modules-load.so*: Scans /etc/modules-load.d for modules to modprobe.
+
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor
   for services that may want to be SIGHUP'ed on new default route or

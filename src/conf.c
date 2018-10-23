@@ -30,6 +30,7 @@
 #include <lite/lite.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 #include <sys/time.h>
+#include <glob.h>
 
 #include "finit.h"
 #include "cond.h"
@@ -52,7 +53,7 @@ struct conf_change {
 	char *name;
 };
 
-static uev_t w1, w2, w3;
+static uev_t w1, w2, w3, w4;
 static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
 
 static int parse_conf(char *file);
@@ -577,8 +578,8 @@ static int parse_conf(char *file)
  */
 int conf_reload(void)
 {
-	int i, num;
-	struct dirent **e;
+	size_t i;
+	glob_t gl;
 
 	/* Mark and sweep */
 	svc_mark_dynamic();
@@ -601,19 +602,13 @@ int conf_reload(void)
 	parse_conf(FINIT_CONF);
 
 	/* Next, read all *.conf in /etc/finit.d/ */
-	num = scandir(rcsd, &e, NULL, alphasort);
-	if (num < 0) {
-		_d("Skipping %s, no files found ...", rcsd);
-		goto done;
-	}
+	glob("/etc/finit.d/*.conf", 0, NULL, &gl);
+	glob("/etc/finit.d/enabled/*.conf", GLOB_APPEND, NULL, &gl);
 
-	for (i = 0; i < num; i++) {
-		char *name = e[i]->d_name;
-		char  path[LINE_SIZE];
+	for (i = 0; i < gl.gl_pathc; i++) {
+		char *path = gl.gl_pathv[i];
 		size_t len;
 		struct stat st;
-
-		snprintf(path, sizeof(path), "%s/%s", rcsd, name);
 
 		/* Check that it's an actual file ... beyond any symlinks */
 		if (lstat(path, &st)) {
@@ -650,9 +645,7 @@ int conf_reload(void)
 		parse_conf_dynamic(path);
 	}
 
-	while (num--)
-		free(e[num]);
-	free(e);
+	globfree(&gl);
 
 done:
 	/* Drop record of all .conf changes */
@@ -783,6 +776,9 @@ static void conf_cb(uev_t *w, void *arg, int events)
 			break;
 		}
 	}
+
+	if (conf_any_change())
+		service_reload_dynamic();
 }
 
 static int add_watcher(uev_ctx_t *ctx, uev_t *w, char *path, uint32_t opt)
@@ -857,8 +853,9 @@ int conf_monitor(uev_ctx_t *ctx)
 	 * changes to either symlink or target.
 	 */
 	rc += add_watcher(ctx, &w1, FINIT_RCSD, 0);
-	rc += add_watcher(ctx, &w2, FINIT_RCSD "/available", IN_DONT_FOLLOW);
-	rc += add_watcher(ctx, &w3, FINIT_CONF, 0);
+	rc += add_watcher(ctx, &w2, FINIT_RCSD "/available/", IN_DONT_FOLLOW);
+	rc += add_watcher(ctx, &w3, FINIT_RCSD "/enabled/", 0);
+	rc += add_watcher(ctx, &w4, FINIT_CONF, 0);
 
 	return rc + conf_reload();
 }
@@ -869,7 +866,7 @@ int conf_monitor(uev_ctx_t *ctx)
 int conf_init(void)
 {
 	hostname = strdup(DEFHOST);
-	w1.fd = w2.fd = w3.fd = -1;
+	w1.fd = w2.fd = w3.fd = w4.fd = -1;
 
 	return conf_monitor(NULL);
 }
