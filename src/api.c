@@ -93,17 +93,16 @@ static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
 static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
 
 static char query_buf[368];
-static int missing(char *job, int id)
+static int missing(char *job, char *id)
 {
 	char buf[20];
-	char idstr[13] = "";
 
 	if (!job)
 		job = "";
-	if (id > 1)
-		snprintf(idstr, sizeof(idstr), ":%d", id);
+	if (!id)
+		id = "";
 
-	snprintf(buf, sizeof(buf), "%s%s ", job, idstr);
+	snprintf(buf, sizeof(buf), "%s:%s ", job, id);
 	strlcat(query_buf, buf, sizeof(query_buf));
 
 	return 1;
@@ -122,8 +121,9 @@ static int do_query(struct init_request *rq, size_t len)
 
 static svc_t *do_find(char *buf, size_t len)
 {
-	int id = 1;
+	char *id = NULL;
 	char *ptr, *input;
+	svc_t *iter = NULL;
 
 	input = sanitize(buf, len);
 	if (!input)
@@ -132,11 +132,28 @@ static svc_t *do_find(char *buf, size_t len)
 	ptr = strchr(input, ':');
 	if (ptr) {
 		*ptr++ = 0;
-		id = atonum(ptr);
+		id = ptr;
 	}
 
-	if (isdigit(input[0]))
-		return svc_find_by_jobid(atonum(input), id);
+	if (isdigit(input[0])) {
+		char *ep;
+		long job = 0;
+
+		errno = 0;
+		job = strtol(input, &ep, 10);
+		if ((errno == ERANGE && (job == LONG_MAX || job == LONG_MIN)) ||
+		    (errno != 0 && job == 0) ||
+		    (input == ep))
+			return NULL;
+
+		if (!id)
+			return svc_job_iterator(&iter, 1, job);
+
+		return svc_find_by_jobid(job, id);
+	}
+
+	if (!id)
+		return svc_named_iterator(&iter, 1, input);
 
 	return svc_find_by_nameid(input, id);
 }

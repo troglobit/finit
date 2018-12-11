@@ -169,6 +169,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 	svc_t *svc = (svc_t *)arg, *task;
 	const char *conn = " connection";
 	char iifname[IF_NAMESIZE + 1] = "UNKNOWN";
+	char id[MAX_ID_LEN];
 	int stdin;
 
 	_d("%s: Got socket event ...", svc->cmd);
@@ -194,7 +195,8 @@ static void socket_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	task = svc_new(svc->cmd, svc->inetd.next_id++, SVC_TYPE_INETD_CONN);
+	snprintf(id, sizeof(id), "%d", svc->inetd.next_id++);
+	task = svc_new(svc->cmd, id, SVC_TYPE_INETD_CONN);
 	if (!task) {
 		logit(LOG_CRIT, "%s: Unable to allocate service for inetd client", svc->cmd);
 		if (svc->inetd.type == SOCK_STREAM)
