@@ -222,7 +222,7 @@ static void finalize(void)
 	/*
 	 * Track bundled watchdogd in case a better one turns up
 	 */
-	svc = svc_find(FINIT_LIBPATH_ "/watchdogd", 1);
+	svc = svc_find(FINIT_LIBPATH_ "/watchdogd", "1");
 	if (svc)
 		wdog = svc;
 

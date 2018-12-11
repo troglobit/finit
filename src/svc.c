@@ -77,7 +77,7 @@ static void svc_gc(void *arg)
  * Returns:
  * A pointer to a new &svc_t object, or %NULL if out of empty slots.
  */
-svc_t *svc_new(char *cmd, int id, int type)
+svc_t *svc_new(char *cmd, char *id, int type)
 {
 	int job = -1;
 	svc_t *svc, *iter = NULL;
@@ -98,7 +98,7 @@ svc_t *svc_new(char *cmd, int id, int type)
 
 	svc->type = type;
 	svc->job  = job;
-	svc->id   = id;
+	strlcpy(svc->id, id, sizeof(svc->id));
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
 	/* Default description, if missing */
@@ -295,12 +295,12 @@ svc_t *svc_stop_completed(void)
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find(char *cmd, int id)
+svc_t *svc_find(char *cmd, char *id)
 {
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->id == id && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
+		if (svc->id && !strcmp(svc->id, id) && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
 			return svc;
 	}
 
@@ -334,12 +334,12 @@ svc_t *svc_find_by_pid(pid_t pid)
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find_by_jobid(int job, int id)
+svc_t *svc_find_by_jobid(int job, char *id)
 {
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->job == job && svc->id == id)
+		if (svc->job == job && svc->id && !strcmp(svc->id, id))
 			return svc;
 	}
 
@@ -354,12 +354,12 @@ svc_t *svc_find_by_jobid(int job, int id)
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find_by_nameid(char *name, int id)
+svc_t *svc_find_by_nameid(char *name, char *id)
 {
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->id == id && !strcmp(name, svc->name))
+		if (svc->id && !strcmp(svc->id, id) && !strcmp(name, svc->name))
 			return svc;
 	}
 
@@ -496,18 +496,24 @@ int svc_enabled(svc_t *svc)
 	return 1;
 }
 
-/* Same base service, return unique ID */
-int svc_next_id(char *cmd)
+/* Same base service, return unique ID as an integer */
+int svc_next_id_int(char *cmd)
 {
-	int id = 0;
+	int n = 1;
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!strcmp(svc->cmd, cmd) && id < svc->id)
-			id = svc->id;
+		char id[MAX_ID_LEN];
+
+		snprintf(id, sizeof(id), "%d", n);
+
+		if (!strcmp(svc->cmd, cmd) && svc->id && strcmp(svc->id, id))
+			return n;
+
+		n++;
 	}
 
-	return id + 1;
+	return 0;
 }
 
 int svc_is_unique(svc_t *svc)
@@ -534,7 +540,7 @@ int svc_is_unique(svc_t *svc)
 /*
  * Used by api.c (to start/stop/restart) and initctl.c (for input validation)
  */
-int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, int))
+int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *))
 {
 	int result = 0;
 	char *input, *token, *pos;
@@ -545,17 +551,27 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 
 	token = strtok_r(input, " ", &pos);
 	while (token) {
-		int id = 1;
+		char *id = NULL;
 		svc_t *svc, *iter = NULL;
 		char *ptr = strchr(token, ':');
 
 		if (isdigit(token[0])) {
-			int job = atonum(token);
+			char *ep;
+			long job = 0;
+
+			errno = 0;
+			job = strtol(token, &ep, 10);
+			if ((errno == ERANGE && (job == LONG_MAX || job == LONG_MIN)) ||
+			    (errno != 0 && job == 0) ||
+			    (token == ep)) {
+				result++;
+				continue;
+			}
 
 			if (!ptr) {
 				svc = svc_job_iterator(&iter, 1, job);
 				if (!svc && not_found)
-					result += not_found(NULL, job);
+					result += not_found(NULL, token);
 
 				while (svc) {
 					if (found)
@@ -564,8 +580,7 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 				}
 			} else {
 				*ptr++ = 0;
-				id  = atonum(ptr);
-				job = atonum(token);
+				id  = ptr;
 
 				svc = svc_find_by_jobid(job, id);
 				if (!svc && not_found)
@@ -586,7 +601,7 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 				}
 			} else {
 				*ptr++ = 0;
-				id  = atonum(ptr);
+				id  = ptr;
 
 				svc = svc_find_by_nameid(token, id);
 				if (!svc && not_found)

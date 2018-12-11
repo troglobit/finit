@@ -438,12 +438,12 @@ static int show_status(char *arg)
 		printheader(NULL, "#         STATUS   PID     RUNLEVELS     SERVICE           DESCRIPTION", 0);
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
-		char jobid[10], args[512] = "", *lvls;
+		char jobid[20], args[512] = "", *lvls;
 
 //		if (svc_is_unique(svc))
 //			snprintf(jobid, sizeof(jobid), "%d", svc->job);
 //		else
-			snprintf(jobid, sizeof(jobid), "%d:%d", svc->job, svc->id);
+			snprintf(jobid, sizeof(jobid), "%d:%s", svc->job, svc->id);
 
 		printf("%-9s %7s  ", jobid, svc_status(svc));
 		if (svc_is_inetd(svc))

@@ -66,6 +66,7 @@ typedef enum {
 	SVC_BLOCK_RESTARTING,
 } svc_block_t;
 
+#define MAX_ID_LEN       16
 #define MAX_ARG_LEN      64
 #define MAX_STR_LEN      64
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
@@ -86,7 +87,8 @@ typedef struct svc {
 	TAILQ_ENTRY(svc) link;
 
 	/* Instance specifics */
-	int            job, id;	       /* JOB:ID */
+	int            job;	       /* JOB: */
+	char           id[MAX_ID_LEN]; /* :ID */
 
 	/* Limits and scoping */
 	struct rlimit  rlimit[RLIMIT_NLIMITS];
@@ -145,13 +147,13 @@ typedef struct svc {
 	struct timespec gc;
 } svc_t;
 
-svc_t      *svc_new                (char *cmd, int id, int type);
+svc_t      *svc_new                (char *cmd, char *id, int type);
 int	    svc_del	           (svc_t *svc);
 
-svc_t	   *svc_find	           (char *cmd, int id);
+svc_t	   *svc_find	           (char *cmd, char *id);
 svc_t	   *svc_find_by_pid        (pid_t pid);
-svc_t	   *svc_find_by_jobid      (int job, int id);
-svc_t	   *svc_find_by_nameid     (char *name, int id);
+svc_t	   *svc_find_by_jobid      (int job, char *id);
+svc_t	   *svc_find_by_nameid     (char *name, char *id);
 svc_t      *svc_find_by_pidfile    (char *fn);
 
 svc_t      *svc_iterator           (svc_t **iter, int first);
@@ -172,10 +174,10 @@ int	    svc_clean_bootstrap    (svc_t *svc);
 void	    svc_prune_bootstrap	   (void);
 
 int         svc_enabled            (svc_t *svc);
-int         svc_next_id            (char  *cmd);
+int         svc_next_id_int        (char  *cmd);
 int         svc_is_unique          (svc_t *svc);
 
-int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, int));
+int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *));
 
 static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
 static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }

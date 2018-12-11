@@ -672,13 +672,14 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  */
 int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 {
-	int id = -1;
+	char id_str[MAX_ID_LEN];
 #ifdef INETD_ENABLED
 	int forking = 0;
 #endif
 	int levels = 0;
 	int manual = 0;
 	char *line;
+	char *id = NULL;
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
@@ -729,7 +730,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else if (cmd[0] == '<')	/* <[!][cond][,cond..]> */
 			cond = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
-			id = atoi(&cmd[1]);
+			id = &cmd[1];
 #ifdef INETD_ENABLED
 		else if (!strncasecmp(cmd, "nowait", 6))
 			forking = 1;
@@ -801,18 +802,24 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			parse_cmdline_args(svc, cmd);
 			goto inetd_setup;
 		}
-		if (id <= 0)
-			id = svc_next_id(cmd);
+		if (!id) {
+			int n = svc_next_id_int(cmd);
+
+			if (n) {
+				snprintf(id_str, sizeof(id_str), "%d", n);
+				id = id_str;
+			}
+		}
 	}
 recreate:
 #endif
 
-	if (id <= 0)
-		id = 1;
+	if (!id)
+		id = "1";
 
 	svc = svc_find(cmd, id);
 	if (!svc) {
-		_d("Creating new svc for %s id #%d type %d", cmd, id, type);
+		_d("Creating new svc for %s id #%s type %d", cmd, id, type);
 		svc = svc_new(cmd, id, type);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
