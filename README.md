@@ -1,4 +1,4 @@
-<img align="right" src="images/finit3.png" alt="Finit: Fast Init">
+<img align="right" src="img/finit3.png" alt="Finit: Fast Init">
 
 * [Introduction](#introduction)
 * [Features](#features)
@@ -35,7 +35,7 @@ on server and desktop systems as well.  For working examples, see the
 * [Debian GNU/Linux](contrib/debian/), and
 * [Void Linux](contrib/void/)
 
-![Alpine screenshot](images/alpine-screenshot.png)  
+![Alpine screenshot](img/alpine-screenshot.png)  
 The screenshot shows [Alpine Linux](https://www.alpinelinux.org/).
 
 
