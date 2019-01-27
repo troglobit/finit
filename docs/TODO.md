@@ -30,8 +30,6 @@ Near Future
 * Cron/At support, see below
 * Write man pages for finit and `finit.conf`, steal from the excellent
   `pimd` man pages ...
-* Add simple, *very* simple, `finit-simple.conf` example. To illustrate
-  how close Finit3 still is to the original easy-to-use Finit0 :)
 
 
 General
@@ -58,6 +56,8 @@ General
 * PID files created in subdirectories to `/run` is not supported right
   now inotify listeners should be automatically created (and removed)
   when a subdirectory is added (or removed).
+
+[Solaris SMF]: http://www.oracle.com/technetwork/articles/servers-storage-admin/intro-smf-basics-s11-1729181.html
 
 
 Init
@@ -114,5 +114,3 @@ could support the basic functionality of the `at` command directly from
 the shell -- that way setting up one-time jobs would not entail
 re-reading `/etc/finit.conf`
 
-
-[Solaris SMF]: http://www.oracle.com/technetwork/articles/servers-storage-admin/intro-smf-basics-s11-1729181.html
