@@ -25,6 +25,7 @@
 #include <ctype.h>		/* isprint() */
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/sysinfo.h>	/* sysinfo() */
@@ -44,6 +45,32 @@ char *progname(char *arg0)
 	       prognm = arg0;
 
        return prognm;
+}
+
+int echo(char *file, int append, char *fmt, ...)
+{
+	va_list ap;
+	FILE *fp;
+
+	if (!file)
+		fp = stdout;
+	else
+		fp = fopen(file, append ? "a" : "w");
+	if (!fp)
+		return -1;
+
+	if (fmt) {
+		va_start(ap, fmt);
+		vfprintf(fp, fmt, ap);
+		va_end(ap);
+	}
+
+	/* echo(1) always adds a newline */
+	fprintf(fp, "\n");
+	if (file)
+		fclose(fp);
+
+	return 0;
 }
 
 int strtobytes(char *arg)
