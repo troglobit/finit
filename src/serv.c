@@ -140,6 +140,8 @@ int serv_enable(char *arg)
 	}
 
 	pushd(FINIT_RCSD);
+	mkdir("enabled", 0755);
+
 	snprintf(path, sizeof(path), "%s/%s", available, arg);
 	if (!fexist(path))
 		errx(1, "Cannot find %s", path);
