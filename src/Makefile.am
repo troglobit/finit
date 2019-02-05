@@ -10,6 +10,7 @@ endif
 
 bin_PROGRAMS       = logit
 sbin_PROGRAMS      = finit initctl reboot
+pkglibexec_SCRIPTS = cgreaper.sh
 if WATCHDOGD
 pkglibexec_PROGRAMS = watchdogd
 endif
@@ -17,7 +18,7 @@ endif
 logit_SOURCES      = logit.c
 logit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 
-finit_SOURCES      = api.c					\
+finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     cond.c	cond-w.c	cond.h		\
 		     telinit.c					\
 		     conf.c	conf.h				\

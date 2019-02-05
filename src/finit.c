@@ -36,6 +36,7 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "cgroup.h"
 #include "cond.h"
 #include "conf.h"
 #include "helpers.h"
@@ -351,6 +352,11 @@ int main(int argc, char* argv[])
 		_pe("Failed mounting /sysfs");
 	if (fisdir("/proc/bus/usb"))
 		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
+
+	/*
+	 * Initialize default control groups, if available
+	 */
+	cgroup_init();
 
 	/*
 	 * Parse kernel command line (debug, rescue, splash, etc.)

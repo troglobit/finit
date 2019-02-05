@@ -32,6 +32,7 @@
 #include <net/if.h>
 #include <lite/lite.h>
 
+#include "cgroup.h"
 #include "conf.h"
 #include "cond.h"
 #include "finit.h"
@@ -185,6 +186,8 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
+	cgroup_service(svc->cmd, pid);
+
 	if (pid == 0) {
 		int status;
 		char *home = NULL;

@@ -32,6 +32,7 @@
 #include <termios.h>
 
 #include "finit.h"
+#include "cgroup.h"
 #include "helpers.h"
 #include "sig.h"
 #include "utmp-api.h"
@@ -192,6 +193,7 @@ static int do_login(char *name)
 {
 	struct stat st;
 
+	cgroup_user(name);
 	execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
 
 	/*

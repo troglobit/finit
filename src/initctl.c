@@ -509,6 +509,70 @@ static int show_status(char *arg)
 	return 0;
 }
 
+static int dump_cgroup(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
+{
+	FILE *fp;
+	char *group;
+	char path[256];
+	char buf[256];
+	int user = 0;
+	int num = 0;
+
+	if (tflag == FTW_F)
+		return 0;
+
+	snprintf(path, sizeof(path), "%s/cgroup.procs", fpath);
+	fp = fopen(path, "r");
+	if (!fp)
+		return 0;
+
+	if (strstr(fpath, "finit/user"))
+		user = 1;
+
+	group = strrchr(fpath, '/');
+	if (!group)
+		return 0;
+	group++;
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		FILE *cfp;
+		int pid;
+
+		if (num == 0)
+			printf("%c  :- %s/", user ? ' ' : '|', group);
+		num++;
+
+		pid = atoi(chomp(buf));
+		snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
+		cfp = fopen(path, "r");
+		if (!cfp)
+			continue;
+		fgets(buf, sizeof(buf), cfp);
+		fclose(cfp);
+
+		printf("\n%c      :- %d %s", user ? ' ' : '|', pid, buf);
+	}
+	fclose(fp);
+
+	if (num)
+		printf("\r%c\n", user ? ' ' : '|');
+
+	return 0;
+}
+
+static int show_cgroup(char *arg)
+{
+	puts("finit/");
+	puts("|- init/");
+	nftw("/sys/fs/cgroup/finit/init", dump_cgroup, 20, 0);
+	puts("|- system/");
+	nftw("/sys/fs/cgroup/finit/system", dump_cgroup, 20, 0);
+	puts("`- user/");
+	nftw("/sys/fs/cgroup/finit/user", dump_cgroup, 20, 0);
+
+	return 0;
+}
+
 static int usage(int rc)
 {
 	fprintf(stderr,
@@ -542,6 +606,8 @@ static int usage(int rc)
 		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
 		"  status   <JOB|NAME>[:ID]  Show service status, by job# or name\n"
 		"  status | show             Show status of services, default command\n"
+		"\n"
+		"  ps                        List processes based on cgroups\n"
 		"\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
@@ -582,6 +648,8 @@ int main(int argc, char *argv[])
 		{ "restart",  do_restart   },
 		{ "status",   show_status  },
 		{ "show",     show_status  }, /* Convenience alias */
+
+		{ "ps",       show_cgroup  },
 
 		{ "runlevel", do_runlevel  },
 		{ "reboot",   do_reboot    },
