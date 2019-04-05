@@ -32,7 +32,10 @@ Bug fix release.
     event, because services may depend on each other
 * Require new libuEv API: `uev_init1()` to reduce event cache so that
   the kernel can invalidate deleted events before enqueing to userspace
-  
+* Rename `hwclock.so` plugin to `rtc.so` since it now is stand-alone
+  from the `hwclock` tool.  Note: the kernel can also be set to load
+  and store RTC to/from system clock at boot/halt as well.
+
 ### Fixes
 
 * Fix #96: Start udevd as a proper service
