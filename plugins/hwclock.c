@@ -1,6 +1,6 @@
 /* Save and restore RTC using hwclock
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012-2019  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,33 +21,124 @@
  * THE SOFTWARE.
  */
 
+#include <time.h>
+#include <sys/ioctl.h>
+#include <linux/rtc.h>
 #include <lite/lite.h>
 
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
 
-static void save(void *arg)
+/* Kernel RTC driver validates against this date for sanity check */
+#define RTC_TIMESTAMP_BEGIN_2000        946684800LL /* 2000-01-01 00:00:00 */
+
+static int rtc_open(void)
 {
-	_d("Saving system clock to RTC ...");
-	/* -w,--systohc, -u,--utc */
-	run_interactive("hwclock -w -u", "Saving system time (UTC) to RTC");
+	char *alt[] = {
+		"/dev/rtc",
+		"/dev/rtc0",
+		"/dev/misc/rtc"
+	};
+	size_t i;
+	int fd;
+
+	for (i = 0; i < NELEMS(alt); i++) {
+		fd = open(alt[i], O_RDONLY);
+		if (fd < 0)
+			continue;
+
+		return fd;
+	}
+
+	return -1;
 }
 
-static void restore(void *arg)
+static void rtc_save(void *arg)
 {
-	_d("Restoring system clock from RTC ...");
-	/* -s,--hctosys, -u,--utc */
-	run_interactive("hwclock -s -u", "Restoring system clock (UTC) from RTC");
+	struct timeval tv = { 0 };
+	struct tm tm = { 0 };
+	int fd, rc = 0;
+
+	fd = rtc_open();
+	if (fd < 0)
+		return;
+
+	rc = gettimeofday(&tv, NULL);
+	if (rc < 0 || tv.tv_sec < RTC_TIMESTAMP_BEGIN_2000) {
+		print_desc(NULL, "System clock invalid, not saving to RTC");
+	invalid:
+		logit(LOG_ERR, "System clock invalid, before 2000-01-01 00:00, not saving to RTC");
+		rc = 2;
+		goto out;
+	}
+
+	print_desc(NULL, "Saving system time (UTC) to RTC");
+	gmtime_r(&tv.tv_sec, &tm);
+	if (ioctl(fd, RTC_SET_TIME, &tm) < 0) {
+		if (EINVAL == errno)
+			goto invalid;
+		rc = 1;
+		goto out;
+	}
+
+out:
+	print(rc, NULL);
+	close(fd);
+}
+
+static void rtc_restore(void *arg)
+{
+	struct timeval tv = { 0 };
+	struct tm tm = { 0 };
+	int fd, rc = 0;
+
+	fd = rtc_open();
+	if (fd < 0)
+		return;
+
+	if (ioctl(fd, RTC_RD_TIME, &tm) < 0) {
+		char msg[120];
+
+		snprintf(msg, sizeof(msg), "Failed restoring system clock from RTC, %s",
+			 EINVAL == errno ? "RTC time is too old"   :
+			 ENOENT == errno ? "RTC has no saved time" : "see log for details");
+		print_desc(NULL, msg);
+
+	invalid:
+		logit(LOG_ERR, "Failed restoring system clock from RTC.");
+		if (EINVAL == errno)
+			logit(LOG_ERR, "RTC time is too old (before 2000-01-01 00:00)");
+		else if (ENOENT == errno)
+			logit(LOG_ERR, "RTC has no previously saved (valid) time.");
+		else
+			logit(LOG_ERR, "RTC error code %d: %m", errno);
+		rc = 2;
+		goto out;
+	}
+
+	print_desc(NULL, "Restoring system clock (UTC) from RTC");
+	tv.tv_sec = mktime(&tm);
+	if (tv.tv_sec < RTC_TIMESTAMP_BEGIN_2000) {
+		errno = EINVAL;
+		goto invalid;
+	}
+
+	if (settimeofday(&tv, NULL) == -1)
+		rc = 1;
+
+out:
+	print(rc, NULL);
+	close(fd);
 }
 
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
-		.cb  = restore
+		.cb  = rtc_restore
 	},
 	.hook[HOOK_SHUTDOWN] = {
-		.cb  = save
+		.cb  = rtc_save
 	}
 };
 
