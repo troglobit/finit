@@ -300,7 +300,7 @@ svc_t *svc_find(char *cmd, char *id)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!strcmp(svc->id, id) && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
+		if (!strcmp(svc->cmd, cmd) && !strcmp(svc->id, id))
 			return svc;
 	}
 
