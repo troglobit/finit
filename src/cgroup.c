@@ -76,7 +76,7 @@ void cgroup_init(void)
 	}
 
 	/* Set up reaper and enable callbacks */
-	echo("/sys/fs/cgroup/finit/release_agent", 0, "/libexec/finit/cgreaper.sh");
+	echo("/sys/fs/cgroup/finit/release_agent", 0, FINIT_LIBPATH_ "/cgreaper.sh");
 	echo("/sys/fs/cgroup/finit/notify_on_release", 0, "1");
 
 	/* Default groups, PID 1, services, and user/login processes */
