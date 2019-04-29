@@ -100,7 +100,7 @@ static void rtc_restore(void *arg)
 	if (ioctl(fd, RTC_RD_TIME, &tm) < 0) {
 		char msg[120];
 
-		snprintf(msg, sizeof(msg), "Failed restoring system clock from RTC, %s",
+		snprintf(msg, sizeof(msg), "Failed restoring system clock, %s",
 			 EINVAL == errno ? "RTC time is too old"   :
 			 ENOENT == errno ? "RTC has no saved time" : "see log for details");
 		print_desc(NULL, msg);
