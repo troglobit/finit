@@ -51,6 +51,9 @@ struct tty {
 	/* Limits and scoping */
 	struct rlimit rlimit[RLIMIT_NLIMITS];
 
+	/* Control group */
+	char   cgroup[32];
+
 	/* Set if modified => reloaded, or -1 when marked for removal */
 	int    dirty;
 };
@@ -58,7 +61,7 @@ struct tty {
 void	    tty_mark	    (void);
 void	    tty_sweep	    (void);
 
-int	    tty_register    (char *line, struct rlimit rlimit[], char *file);
+int	    tty_register    (char *line, struct rlimit rlimit[], char *cgroup, char *file);
 int	    tty_unregister  (struct tty *tty);
 
 struct tty *tty_find	    (char *dev);

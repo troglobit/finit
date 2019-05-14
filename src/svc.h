@@ -93,6 +93,9 @@ typedef struct svc {
 	/* Limits and scoping */
 	struct rlimit  rlimit[RLIMIT_NLIMITS];
 
+	/* Control group */
+	char           cgroup[32];
+
 	/* Service details */
 	pid_t	       pid;
 	char           pidfile[MAX_ARG_LEN];

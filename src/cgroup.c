@@ -30,7 +30,15 @@
 #include "log.h"
 #include "util.h"
 
+static struct {
+	int  active;
+	char cgroup[16];
+	char path[32];
+} cg_avail[200];
+
 static int cg_init = 0;
+static int cg_num  = 0;
+
 
 /*
  * Called by Finit at early boot to mount initial cgroups
@@ -64,8 +72,19 @@ void cgroup_init(void)
 
 		snprintf(rc, sizeof(rc), "/sys/fs/cgroup/%s", cgroup);
 		mkdir(rc, 0755);
-		if (mount("cgroup", rc, "cgroup", opts, cgroup))
+		if (mount("cgroup", rc, "cgroup", opts, cgroup)) {
 			_d("Failed mounting %s cgroup on %s", cgroup, rc);
+			continue;
+		}
+
+		cg_avail[cg_num].active = 1;
+		strlcpy(cg_avail[cg_num].cgroup, cgroup, sizeof(cg_avail[cg_num].cgroup));
+		strlcpy(cg_avail[cg_num].path, rc, sizeof(cg_avail[cg_num].path));
+		cg_num++;
+
+		/* Create default group in all available cgroups */
+		strlcat(rc, "/default", sizeof(rc));
+		mkdir(rc, 0755);
 	}
 
 	/* Default cgroups for process monitoring */
@@ -92,6 +111,49 @@ void cgroup_init(void)
 fail:
 	fclose(fp);
 }
+
+int cgroup_add(char *name, void (*cb)(char *, void *), void *arg)
+{
+	int rc = 0;
+	int i;
+
+	for (i = 0; i < cg_num; i++) {
+		char path[80];
+
+		snprintf(path, sizeof(path), "%s/%s", cg_avail[i].path, name);
+		if (mkdir(path, 0755) && EEXIST != errno) {
+			rc++;
+			continue;
+		}
+
+		/* XXX: Add to cache of added groups, for cgroup_find() */
+		if (cb)
+			cb(path, arg);
+	}
+
+	return 0;
+}
+
+/* XXX: Temporary hackish implementation */
+int cgroup_find(char *name, char *group, size_t len)
+{
+	char path[80];
+
+	if (cg_num <= 0)
+		return 1;
+
+	snprintf(path, sizeof(path), "%s/%s", cg_avail[0].path, name);
+	if (access(path, F_OK))
+		return 1;
+
+	strlcpy(group, name, len);
+
+	return 0;
+}
+
+/* int cgroup_cpuset_range(char *group, int min, int max) */
+/* { */
+/* } */
 
 static int move_pid(char *group, char *name, int pid)
 {
@@ -133,6 +195,20 @@ int cgroup_service(char *cmd, int pid)
 		nm = cmd;
 
 	return move_pid("finit/system", nm, pid);
+}
+
+int cgroup_assign(char *name, int pid)
+{
+	char path[120];
+	int i, rc = 0;
+
+	for (i = 0; i < cg_num; i++) {
+		snprintf(path, sizeof(path), "%s/%s/cgroup.procs",
+			 cg_avail[i].path, name);
+		rc += echo(path, 0, "%d", pid);
+	}
+
+	return rc;
 }
 
 /**

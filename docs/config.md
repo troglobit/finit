@@ -98,6 +98,54 @@ Syntax
 * `network <PATH>`  
   Script or program to bring up networking, with optional arguments
 
+* `cgroup <NAME> cpuset:SPEC cpu:SPEC mem:SPEC`  
+  Create a control group for resource limiting services using cgroups.
+  Unlike `rlimit` this setting defines a common group to be selected for
+  any set of run/task/services using the `group` directive (below).
+  
+  A cpuset for a cgroup can be the traditional list of CPU cores to
+  assign to the group, or a range that Finit will use to dynamically
+  allocate cores based on the amount available.  The range values can be
+  either in absolute form or percent.
+
+```shell
+        cgroup first cpuset:1
+```
+
+  To create a cgroup with one exclusive CPU:
+
+```shell
+		cgroup single cpuset:[1,1]
+```
+
+  To create cgroup that uses at most two shared CPUs:
+
+```shell
+		cgroup uptotwo cpuset:[,2]
+```
+
+  To create cgroup with at least two shared CPUs:
+
+```shell
+		cgroup dual cpuset:[2,]
+```
+
+  To create cgroup with at least one CPU and at most half of all
+  available CPUs:
+
+```shell
+		cgroup greedy cpuset:[1,50%]
+```
+
+
+* `group <NAME>`
+  All subsequent `service`, `task`, or `run` directives are executed in the
+  given control group `NAME`, which must be defined prior to this line.  If
+  `NAME` does not yet exist the default group `default` is used.
+
+  When separate Finit `.conf` files are used for services the default group
+  is reset for each `.conf` file read.
+
 * `rlimit [hard|soft] RESOURCE <LIMIT|unlimited>` Set the hard or soft
   limit for a resource, or both if that argument is omitted.  `RESOURCE`
   is the lower-case `RLIMIT_` string constants from `setrlimit(2)`,

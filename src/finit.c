@@ -450,19 +450,19 @@ int main(int argc, char* argv[])
 
 		/* Register udevd as a monitored service */
 		snprintf(cmd, sizeof(cmd), "[S12345789] pid:udevd %s -- Device event managing daemon", path);
-		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
+		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, "default", NULL)) {
 			_pe("Failed registering %s", path);
 			udev = 0;
 		} else {
 			snprintf(cmd, sizeof(cmd), ":1 [S] <svc%s> "
 				 "udevadm trigger -c add -t devices "
 				 "-- Requesting device events", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
+			service_register(SVC_TYPE_RUN, cmd, global_rlimit,  "default", NULL);
 
 			snprintf(cmd, sizeof(cmd), ":2 [S] <svc%s> "
 				 "udevadm trigger -c add -t subsystems "
 				 "-- Requesting subsystem events", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
+			service_register(SVC_TYPE_RUN, cmd, global_rlimit,  "default", NULL);
 		}
 		free(path);
 	} else {
@@ -483,7 +483,7 @@ int main(int argc, char* argv[])
 	 * Start bundled watchdogd as soon as possible, if enabled
 	 */
 	if (which(FINIT_LIBPATH_ "/watchdogd"))
-		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd", global_rlimit, NULL);
+		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd", global_rlimit,  "default", NULL);
 
 	/*
 	 * Mount filesystems

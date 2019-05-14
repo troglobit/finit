@@ -26,7 +26,11 @@
 
 void cgroup_init   (void);
 
+int  cgroup_add    (char *name, void (*cb)(char *, void *), void *arg);
+int  cgroup_find   (char *name, char *group, size_t len);
+
 int cgroup_user    (char *name);
 int cgroup_service (char *cmd, int pid);
+int cgroup_assign  (char *name, int pid);
 
 #endif /* FINIT_CGROUP_H_ */

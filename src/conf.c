@@ -33,6 +33,7 @@
 #include <glob.h>
 
 #include "finit.h"
+#include "cgroup.h"
 #include "cond.h"
 #include "service.h"
 #include "tty.h"
@@ -53,6 +54,7 @@ struct conf_change {
 	char *name;
 };
 
+static char cgroup[32];
 static uev_t w1, w2, w3, w4;
 static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
 
@@ -342,6 +344,45 @@ error:
 	logit(LOG_WARNING, "rlimit: parse error");
 }
 
+static void cpuset_cb(char *grp, void *arg)
+{
+	int cpuset = *(int *)arg;
+	char path[128];
+
+	if (!strstr(grp, "cpuset"))
+		return;
+
+	/* Both .cpus and .mems are mandatory settings */
+	snprintf(path, sizeof(path), "%s/cpuset.cpus", grp);
+	echo(path, 0, "%d", cpuset);
+	snprintf(path, sizeof(path), "%s/cpuset.mems", grp);
+	echo(path, 0, "0");
+
+	/* XXX: HACK for now, fix proper CPU allocation */
+	snprintf(path, sizeof(path), "%s/cpuset.cpu_exclusive", grp);
+	echo(path, 0, "1");
+}
+
+static void parse_cgroup(char *line)
+{
+	char *group, *token;
+	int cpuset = -1;
+
+	group = strtok(line, " ");
+	if (!group)
+		return;
+
+	while ((token = strtok(NULL, " "))) {
+		if (!strncmp(token, "cpuset:", 7)) {
+			token += 7;
+			cpuset = atoi(token); /* XXX: fixme */
+		}
+	}
+
+	if (cpuset >= 0)
+		cgroup_add(group, cpuset_cb, &cpuset);
+}
+
 static void parse_static(char *line)
 {
 	char *x;
@@ -430,6 +471,11 @@ static void parse_static(char *line)
 			cfglevel = 2; /* Fallback */
 		return;
 	}
+
+	if (MATCH_CMD(line, "cgroup ", x)) {
+		parse_cgroup(strip_line(x));
+		return;
+	}
 }
 
 static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
@@ -448,26 +494,26 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
-		service_register(SVC_TYPE_SERVICE, x, rlimit, file);
+		service_register(SVC_TYPE_SERVICE, x, rlimit, cgroup, file);
 		return;
 	}
 
 	/* One-shot task, will not be respawned */
 	if (MATCH_CMD(line, "task ", x)) {
-		service_register(SVC_TYPE_TASK, x, rlimit, file);
+		service_register(SVC_TYPE_TASK, x, rlimit, cgroup, file);
 		return;
 	}
 
 	/* Like task but waits for completion, useful w/ [S] */
 	if (MATCH_CMD(line, "run ", x)) {
-		service_register(SVC_TYPE_RUN, x, rlimit, file);
+		service_register(SVC_TYPE_RUN, x, rlimit, cgroup, file);
 		return;
 	}
 
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
 #ifdef INETD_ENABLED
-		service_register(SVC_TYPE_INETD, x, rlimit, file);
+		service_register(SVC_TYPE_INETD, x, rlimit, cgroup, file);
 #else
 		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
 #endif
@@ -480,9 +526,15 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 		return;
 	}
 
+	/* All subsequent run/task/service/tty/etc. directives to use this cgroup */
+	if (MATCH_CMD(line, "group ", x)) {
+		cgroup_find(x, cgroup, sizeof(cgroup));
+		return;
+	}
+
 	/* Regular or serial TTYs to run getty */
 	if (MATCH_CMD(line, "tty ", x)) {
-		tty_register(strip_line(x), rlimit, file);
+		tty_register(strip_line(x), rlimit, cgroup, file);
 		return;
 	}
 }
@@ -500,8 +552,8 @@ static void tabstospaces(char *line)
 
 static int parse_conf_dynamic(char *file)
 {
-	FILE *fp;
 	struct rlimit rlimit[RLIMIT_NLIMITS];
+	FILE *fp;
 
 	fp = fopen(file, "r");
 	if (!fp) {
@@ -511,6 +563,9 @@ static int parse_conf_dynamic(char *file)
 
 	/* Prepare default limits for each service */
 	memcpy(rlimit, global_rlimit, sizeof(rlimit));
+
+	/* Prepare default cgroup for each service */
+	strlcpy(cgroup, "default", sizeof(cgroup));
 
 	_d("Parsing %s <<<<<<", file);
 	while (!feof(fp)) {
@@ -592,7 +647,7 @@ int conf_reload(void)
 		/* If rescue.conf is missing, fall back to a root shell */
 		rc = parse_conf(RESCUE_CONF);
 		if (rc)
-			tty_register(line, global_rlimit, NULL);
+			tty_register(line, global_rlimit, cgroup, NULL);
 
 		print(rc, "Entering rescue mode");
 		goto done;

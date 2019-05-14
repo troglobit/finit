@@ -186,7 +186,11 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
-	cgroup_service(svc->cmd, pid);
+
+	if (pid > 0) {
+		cgroup_service(svc->cmd, pid);
+		cgroup_assign(svc->cgroup, pid);
+	}
 
 	if (pid == 0) {
 		int status;
@@ -626,6 +630,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
  * @cfg:    Configuration, complete command, with -- for description text
  * @rlimit: Limits for this service/task/run/inetd, may be global limits
+ * @cgroup: Control group, may be default
  * @file:   The file name service was loaded from
  *
  * This function is used to register commands to be run on different
@@ -673,7 +678,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
-int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
+int service_register(int type, char *cfg, struct rlimit rlimit[], char *cgroup, char *file)
 {
 	char id_str[MAX_ID_LEN];
 #ifdef INETD_ENABLED
@@ -911,6 +916,9 @@ recreate:
 #endif
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
+
+	/* Register desired control group */
+	strlcpy(svc->cgroup, cgroup, sizeof(svc->cgroup));
 
 	/* New, recently modified or unchanged ... used on reload. */
 	if (file && conf_changed(file))

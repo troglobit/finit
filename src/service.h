@@ -28,7 +28,7 @@
 #include "svc.h"
 
 void	  service_runlevel	 (int newlevel);
-int	  service_register	 (int type, char *line, struct rlimit rlimit[], char *file);
+int	  service_register	 (int type, char *line, struct rlimit rlimit[], char *cgroup, char *file);
 void      service_unregister     (svc_t *svc);
 
 void      service_runtask_clean  (void);
