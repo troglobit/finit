@@ -40,6 +40,9 @@ AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
+# Check for pkg-config first, warn if it's not installed
+PKG_PROG_PKG_CONFIG
+
 # Check for required libraries
 PKG_CHECK_MODULES([uev],  [libuev >= 2.2.0])
 PKG_CHECK_MODULES([lite], [libite >= 2.0.1])
