@@ -66,9 +66,6 @@ how `git commit -s` is used to automatically add a `Signed-off-by`:
     Signed-off-by: Jane Doe <jane.doe@example.com>
 
 
-Another good *counter* example [is this][rambling] ...
-
-
 Code of Conduct
 ---------------
 
@@ -79,11 +76,4 @@ Bill & Ted; [be excellent to each other][conduct].
 [github]:   https://github.com/troglobit/finit/
 [KNF]:      https://en.wikipedia.org/wiki/Kernel_Normal_Form
 [gitbook]:  https://git-scm.com/book/ch5-2.html
-[rambling]: http://stopwritingramblingcommitmessages.com/
 [conduct]:  https://github.com/troglobit/finit/blob/master/CODE-OF-CONDUCT.md
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
