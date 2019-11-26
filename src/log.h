@@ -26,6 +26,11 @@
 
 #include <syslog.h>
 
+/* Local facility, unused in GNU but available in FreeBSD or sysklogd >= 2.0 */
+#ifndef LOG_CONSOLE
+#define LOG_CONSOLE  (14<<3)
+#endif
+
 /*
  * Developer error and debug messages, otherwise --> use logit() <--
  *                                                   ~~~~~~~~~~~

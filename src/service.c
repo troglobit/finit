@@ -354,6 +354,9 @@ static int service_start(svc_t *svc)
 		_d("Starting %s: %s", svc->cmd, buf);
 	}
 
+	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s:%s, PID: %d",
+	      basename(svc->cmd), svc->id, pid);
+
 	svc->pid = pid;
 	svc->start_time = jiffies();
 
@@ -404,6 +407,8 @@ static void service_kill(svc_t *svc)
 	}
 
 	_d("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
+	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending SIGKILL ...",
+	      basename(svc->cmd), svc->id, svc->pid);
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
@@ -453,6 +458,8 @@ static int service_stop(svc_t *svc)
 		return 1;
 
 	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
+	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending SIGTERM ...",
+	      basename(svc->cmd), svc->id, svc->pid);
 	svc_set_state(svc, SVC_STOPPING_STATE);
 
 	if (runlevel != 1)
@@ -502,6 +509,8 @@ static int service_restart(svc_t *svc)
 		print_desc("Restarting ", svc->desc);
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
+	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s:%s, PID: %d, sending SIGHUP ...",
+	      basename(svc->cmd), svc->id, svc->pid);
 	rc = kill(svc->pid, SIGHUP);
 
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
@@ -1023,7 +1032,8 @@ static void service_retry(svc_t *svc)
 	}
 
 	if (*restart_cnt >= RESPAWN_MAX) {
-		logit(LOG_ERR, "%s keeps crashing, not restarting", svc->cmd);
+		logit(LOG_CONSOLE | LOG_WARNING, "Service %s:%s keeps crashing, not restarting.",
+		      basename(svc->cmd), svc->id);
 		svc_crashing(svc);
 		*restart_cnt = 0;
 		service_step(svc);
@@ -1033,6 +1043,8 @@ static void service_retry(svc_t *svc)
 	(*restart_cnt)++;
 
 	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
+	logit(LOG_CONSOLE | LOG_WARNING, "Service %s:%s died, restarting (%d/%d)",
+	      basename(svc->cmd), svc->id, *restart_cnt, RESPAWN_MAX);
 	svc_unblock(svc);
 	service_step(svc);
 
