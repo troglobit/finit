@@ -21,6 +21,9 @@ can also be used.
 Near Future
 -----------
 
+* When a process dies, and Finit does not restart it, we should collect
+  a `siginfo_t` from the SIGCHLD signal and supply to the user in case
+  `initctl status <process>` is called to debug the issue.
 * Merge UDP redirect service uredir as an UDP inetd variant
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
