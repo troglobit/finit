@@ -39,6 +39,30 @@
 #include "util.h"
 #include "utmp-api.h"
 
+static int progress_style = PROGRESS_STYLE;
+
+/*
+ * Note: the pending status (⋯) must be last item.  Also, ⋯ is not
+ *       off-by-one, it's a multi-byte character.
+ */
+#define STATUS_CLASS {							\
+	CHOOSE(" OK ",  " OK ",  "\e[1;32m"),		/* Green  */	\
+	CHOOSE("FAIL",  "FAIL",  "\e[1;31m"),		/* Red    */	\
+	CHOOSE("WARN",  "WARN",  "\e[1;31m"),		/* Red    */	\
+	CHOOSE(" \\/ ", " ⋯  ", "\e[1;33m"),		/* Yellow */	\
+}
+
+#define CHOOSE(x,y,z) x
+static const char *status1[] = STATUS_CLASS;
+#undef CHOOSE
+
+#define CHOOSE(x,y,z) y
+static const char *status2[] = STATUS_CLASS;
+#undef CHOOSE
+
+#define CHOOSE(x,y,z) z
+static const char *color[] = STATUS_CLASS;
+
 
 char *strip_line(char *line)
 {
@@ -55,6 +79,74 @@ char *strip_line(char *line)
 	*ptr = 0;
 
 	return line;
+}
+
+/*
+ * Return screen length of string, not counting escape chars, and
+ * accounting for unicode characters as only one screen byte wide
+ */
+size_t slen(char *string)
+{
+	unsigned char *buf = (unsigned char *)string;
+	size_t len = 0;
+
+	while (*buf) {
+		/* Skip ANSI escape sequences */
+		if (*buf == '\e') {
+			while (*buf && !isalpha(*buf))
+				buf++;
+			continue;
+		}
+		/* Skip 3-byte unicode */
+		if (*buf == 0xe2) {
+			for (int cnt = 3; *buf && cnt >= 0; cnt--)
+				buf++;
+			continue;
+		}
+
+		len++;
+		buf++;
+	}
+
+	return len;
+}
+
+static char *pad(char *buf, size_t len, char ch, size_t width)
+{
+	size_t pos = strlen(buf);
+	size_t i = slen(buf);
+
+	if (pos < len)
+		buf[pos++] = ' ';
+
+	while (i < width - 8 && pos < len) {
+		buf[pos++] = ch;
+		i++;
+	}
+
+	return buf;
+}
+
+void print_banner(const char *heading)
+{
+	char buf[SCREEN_WIDTH + 10];
+
+	memset(buf, 0, sizeof(buf));
+	strlcat(buf, "\r\e[2K", sizeof(buf));
+	if (progress_style == 1) {
+		strlcat(buf, "\e[1m", sizeof(buf));
+		strlcat(buf, heading, sizeof(buf));
+		pad(buf, sizeof(buf), '=', SCREEN_WIDTH - 2);
+	} else {
+		size_t wmax = 80 <= SCREEN_WIDTH ? 80 : SCREEN_WIDTH;
+
+		strlcat(buf, "\e[1;31m⏺ \e[1;33m⏺ \e[1;32m⏺ \e[0m\e[1m ", sizeof(buf));
+		strlcat(buf, heading, sizeof(buf));
+		pad(buf, sizeof(buf), '=', wmax + 8);
+	}
+	strlcat(buf, "\e[0m\n", sizeof(buf));
+
+	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
 
 static size_t print_timestamp(char *buf, size_t len)
@@ -77,6 +169,26 @@ static size_t print_timestamp(char *buf, size_t len)
 #endif
 }
 
+static char *status(int rc)
+{
+	static char buf[64];
+
+	if (rc < 0 || rc >= (int)NELEMS(status1))
+		rc = NELEMS(status1) - 1;	/* Default to "⋯" (pending) */
+
+	if (progress_style == 1) {
+		int hl = 1;
+
+		if (rc == 1 || rc == 2)
+			hl = 7;
+
+		snprintf(buf, sizeof(buf), "\e[%dm[%s]\e[0m", hl, status1[rc]);
+	} else
+		snprintf(buf, sizeof(buf), "\e[1m[%s%s\e[0m\e[1m]\e[0m ", color[rc], status2[rc]);
+
+	return buf;
+}
+
 void printv(const char *fmt, va_list ap)
 {
 	char buf[SCREEN_WIDTH];
@@ -91,51 +203,32 @@ void printv(const char *fmt, va_list ap)
 	len = print_timestamp(buf, sizeof(buf));
 	vsnprintf(&buf[len], sizeof(buf) - len, fmt, ap);
 
-	len = strlen(buf);
-	buf[len++] = ' ';
-	for (size_t i = len; i < (sizeof(buf) - 8); i++)
-		buf[i] = '.';	/* pad with dots. */
-
-	fprintf(stderr, "\r%s ", buf);
+	if (progress_style == 1)
+		fprintf(stderr, "\r%s ", pad(buf, sizeof(buf), '.', sizeof(buf)));
+	else
+		fprintf(stderr, "\r\e[2K%s%s", status(3), buf);
 }
 
-void print(int action, const char *fmt, ...)
+void print(int rc, const char *fmt, ...)
 {
-	va_list ap;
-	const char success[] = "\e[1m[ OK ]\e[0m\n";
-	const char failure[] = "\e[7m[FAIL]\e[0m\n";
-	const char warning[] = "\e[7m[WARN]\e[0m\n";
-	const char pending[] = "\e[1m[ \\/ ]\e[0m\n";
-
 	if (log_is_silent())
 		return;
 
 	if (fmt) {
+		va_list ap;
+
 		va_start(ap, fmt);
 		printv(fmt, ap);
 		va_end(ap);
 	}
 
-	switch (action) {
-	case -1:
-		break;
+	if (rc < 0)
+		return;
 
-	case 0:
-		write(STDERR_FILENO, success, sizeof(success));
-		break;
-
-	case 1:
-		write(STDERR_FILENO, failure, sizeof(failure));
-		break;
-
-	case 2:
-		write(STDERR_FILENO, warning, sizeof(warning));
-		break;
-
-	default:
-		write(STDERR_FILENO, pending, sizeof(pending));
-		break;
-	}
+	if (progress_style == 1)
+		fprintf(stderr, "%s\n", status(rc));
+	else
+		fprintf(stderr, ".\r%s\n", status(rc));
 }
 
 void print_desc(char *action, char *desc)

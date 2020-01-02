@@ -73,9 +73,6 @@ static int udev = 0;		/* Runtime detection of udev */
  */
 static void banner(void)
 {
-	char *buf = INIT_HEADING;
-	char separator[SCREEN_WIDTH];
-
 	if (plugin_exists(HOOK_BANNER)) {
 		plugin_run_hooks(HOOK_BANNER);
 		return;
@@ -84,8 +81,7 @@ static void banner(void)
 	if (log_is_silent())
 		return;
 
-	memset(separator, '=', sizeof(separator));
-	fprintf(stderr, "\n\e[2K\e[1m%s %.*s\e[0m\n", buf, SCREEN_WIDTH - (int)strlen(buf) - 2, separator);
+	print_banner(INIT_HEADING);
 }
 
 static int ismnt(char *file, char *dir)

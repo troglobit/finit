@@ -62,8 +62,12 @@ AC_ARG_ENABLE(rw-rootfs,
 	enable_rw_rootfs=no])
 
 AC_ARG_ENABLE(progress,
-        AS_HELP_STRING([--enable-progress], [Pre Finit v3 bootup progress and heading]),,[
+        AS_HELP_STRING([--enable-progress], [Modern progress display at bootup]),,[
 	enable_progress=no])
+
+AC_ARG_ENABLE(progress-classic,
+	AS_HELP_STRING([--enable-progress-classic], [Pre Finit v3 bootup progress and heading]),,[
+	enable_progress_classic=no])
 
 AC_ARG_ENABLE(watchdog,
         AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
@@ -154,9 +158,17 @@ AS_IF([test "x$enable_rw_rootfs" = "xyes"], [
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
 AS_IF([test "x$enable_progress" = "xyes"], [
-        AC_DEFINE(SILENT_MODE,  0, [Pre Finit v3 bootup messages and heading])
+        AC_DEFINE(PROGRESS_STYLE, 2, [Modern bootup messages, systemd inspired])])
+
+AS_IF([test "x$enable_progress_classic" = "xyes"], [
+	enable_progress=no
+        AC_DEFINE(PROGRESS_STYLE, 1, [Pre Finit v3 bootup messages and heading])])
+
+AS_IF([test "x$enable_progress_classic" = "xyes" -o "x$enable_progress" = "xyes"], [
+        AC_DEFINE(SILENT_MODE,  0, [Display bootup progress, see above for style])
 	], [
-	AC_DEFINE(SILENT_MODE,  1, [Completely silent until login prompt])])
+        AC_DEFINE(PROGRESS_STYLE, 0, [Default progress style])
+	AC_DEFINE(SILENT_MODE, 1, [Completely silent until login prompt (default)])])
 
 AS_IF([test "x$enable_watchdog" = "xyes"], [
         AC_DEFINE(BUILTIN_WATCHDOG,  1, [Enable built-in watchdog, kicks on /dev/watchdog])])
@@ -275,7 +287,8 @@ Optional features:
   Emergency shell.......: $enable_emergency_shell
   Fallback shell........: $enable_fallback_shell
   Remount / RW at boot..: $enable_rw_rootfs
-  Traditional progress..: $enable_progress
+  Modern progress.......: $enable_progress
+  Classic progress......: $enable_progress_classic
   Default console dev...: $console
   Default hostname......: $hostname
   Default runlevel......: $runlevel

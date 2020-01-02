@@ -57,6 +57,7 @@ int     sh              (char *tty);
 int     stty            (int fd, speed_t speed);
 speed_t stty_parse_speed(char *baud);
 
+void    print_banner    (const char *heading);
 void    printv          (const char *fmt, va_list ap);
 void    print           (int action, const char *fmt, ...);
 void    print_desc      (char *action, char *desc);
