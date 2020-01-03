@@ -1,4 +1,5 @@
 <img align="right" src="img/finit3.png" alt="Finit: Fast Init">
+[![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 * [Introduction](#introduction)
 * [Features](#features)
@@ -21,7 +22,6 @@
 
 Introduction
 ------------
-[![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 Finit is a simple alternative to [SysV init][4] and [systemd][6].  It
 was reverse engineered from the [EeePC fastinit][] over ten years ago
