@@ -24,8 +24,8 @@ Introduction
 [![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
 
 Finit is a simple alternative to [SysV init][4] and [systemd][6].  It
-was reverse engineered from the [EeePC fastinit][] ten years ago by
-[Claudio Matsuoka][] — "gaps filled with frog DNA …"
+was reverse engineered from the [EeePC fastinit][] over ten years ago
+by [Claudio Matsuoka][] — "gaps filled with frog DNA …"
 
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
