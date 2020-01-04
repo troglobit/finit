@@ -111,16 +111,18 @@ size_t slen(char *string)
 	return len;
 }
 
-static char *pad(char *buf, size_t len, char ch, size_t width)
+/*
+ * ch may be an ascii or unicode character
+ */
+static char *pad(char *buf, size_t len, char *ch, size_t width)
 {
-	size_t pos = strlen(buf);
 	size_t i = slen(buf);
 
-	if (pos < len)
-		buf[pos++] = ' ';
+	strlcat(buf, " ", len);
 
-	while (i < width - 8 && pos < len) {
-		buf[pos++] = ch;
+	width -= 8;		/* Skip leading '[ STAT ]' */
+	while (i < width) {
+		strlcat(buf, ch, len);
 		i++;
 	}
 
@@ -136,13 +138,18 @@ void print_banner(const char *heading)
 	if (progress_style == 1) {
 		strlcat(buf, "\e[1m", sizeof(buf));
 		strlcat(buf, heading, sizeof(buf));
-		pad(buf, sizeof(buf), '=', SCREEN_WIDTH - 2);
+		pad(buf, sizeof(buf), "=", SCREEN_WIDTH - 2);
 	} else {
 		size_t wmax = 80 <= SCREEN_WIDTH ? 80 : SCREEN_WIDTH;
 
 		strlcat(buf, "\e[1;31m⏺ \e[1;33m⏺ \e[1;32m⏺ \e[0m\e[1m ", sizeof(buf));
 		strlcat(buf, heading, sizeof(buf));
-		pad(buf, sizeof(buf), '=', wmax + 8);
+
+		/*
+		 * Padding with full-width '═' sign from unicode,
+		 * we could also use '―' or something else.
+		 */
+		pad(buf, sizeof(buf), "═", wmax);
 	}
 	strlcat(buf, "\e[0m\n", sizeof(buf));
 
@@ -204,7 +211,7 @@ void printv(const char *fmt, va_list ap)
 	vsnprintf(&buf[len], sizeof(buf) - len, fmt, ap);
 
 	if (progress_style == 1)
-		fprintf(stderr, "\r%s ", pad(buf, sizeof(buf), '.', sizeof(buf)));
+		fprintf(stderr, "\r%s ", pad(buf, sizeof(buf), ".", sizeof(buf)));
 	else
 		fprintf(stderr, "\r\e[2K%s%s", status(3), buf);
 }
