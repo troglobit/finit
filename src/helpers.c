@@ -131,7 +131,7 @@ static char *pad(char *buf, size_t len, char *ch, size_t width)
 
 void print_banner(const char *heading)
 {
-	char buf[SCREEN_WIDTH + 10];
+	char buf[4 * SCREEN_WIDTH];
 
 	memset(buf, 0, sizeof(buf));
 	strlcat(buf, "\r\e[2K", sizeof(buf));
