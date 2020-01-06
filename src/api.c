@@ -245,10 +245,8 @@ static void send_svc(int sd, svc_t *svc)
  */
 static void api_cb(uev_t *w, void *arg, int events)
 {
-	int sd, lvl;
-	svc_t *svc;
 	static svc_t *iter = NULL;
-	struct init_request rq;
+	int sd, lvl;
 
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
@@ -257,10 +255,14 @@ static void api_cb(uev_t *w, void *arg, int events)
 	}
 
 	while (1) {
-		int result = 0;
+		char buf[sizeof(struct init_request) + 1];
+		struct init_request *rq = (struct init_request *)buf;
 		ssize_t len;
+		svc_t *svc;
+		int result = 0;
 
-		len = read(sd, &rq, sizeof(rq));
+		memset(buf, 0, sizeof(buf));
+		len = read(sd, buf, sizeof(buf) - 1);
 		if (len <= 0) {
 			if (-1 == len) {
 				if (EINTR == errno)
@@ -274,23 +276,24 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 			break;
 		}
+		buf[sizeof(*rq)] = 0;
 
-		if (rq.magic != INIT_MAGIC || len != sizeof(rq)) {
+		if (rq->magic != INIT_MAGIC || len != sizeof(*rq)) {
 			_e("Invalid initctl request");
 			break;
 		}
 
-		switch (rq.cmd) {
+		switch (rq->cmd) {
 		case INIT_CMD_RUNLVL:
-			switch (rq.runlevel) {
+			switch (rq->runlevel) {
 			case 's':
 			case 'S':
-				rq.runlevel = '1'; /* Single user mode */
+				rq->runlevel = '1'; /* Single user mode */
 				/* fallthrough */
 
 			case '0'...'9':
-				_d("Setting new runlevel %c", rq.runlevel);
-				lvl = rq.runlevel - '0';
+				_d("Setting new runlevel %c", rq->runlevel);
+				lvl = rq->runlevel - '0';
 				if (lvl == 0)
 					halt = SHUT_OFF;
 				if (lvl == 6)
@@ -299,7 +302,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 				break;
 
 			default:
-				_d("Unsupported runlevel: %d", rq.runlevel);
+				_d("Unsupported runlevel: %d", rq->runlevel);
 				break;
 			}
 			break;
@@ -315,36 +318,36 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_START_SVC:
-			_d("start %s", rq.data);
-			result = do_start(rq.data, sizeof(rq.data));
+			_d("start %s", rq->data);
+			result = do_start(rq->data, sizeof(rq->data));
 			break;
 
 		case INIT_CMD_STOP_SVC:
-			_d("stop %s", rq.data);
-			result = do_stop(rq.data, sizeof(rq.data));
+			_d("stop %s", rq->data);
+			result = do_stop(rq->data, sizeof(rq->data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:
-			_d("restart %s", rq.data);
-			result = do_restart(rq.data, sizeof(rq.data));
+			_d("restart %s", rq->data);
+			result = do_restart(rq->data, sizeof(rq->data));
 			break;
 
 #ifdef INETD_ENABLED
 		case INIT_CMD_QUERY_INETD:
 			_d("query inetd");
-			result = do_query_inetd(rq.data, sizeof(rq.data));
+			result = do_query_inetd(rq->data, sizeof(rq->data));
 			break;
 #endif
 
 		case INIT_CMD_EMIT:
-			_d("emit %s", rq.data);
-			result = do_handle_emit(rq.data, sizeof(rq.data));
+			_d("emit %s", rq->data);
+			result = do_handle_emit(rq->data, sizeof(rq->data));
 			break;
 
 		case INIT_CMD_GET_RUNLEVEL:
 			_d("get runlevel");
-			rq.runlevel  = runlevel;
-			rq.sleeptime = prevlevel;
+			rq->runlevel  = runlevel;
+			rq->sleeptime = prevlevel;
 			break;
 
 		case INIT_CMD_ACK:
@@ -353,15 +356,15 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_WDOG_HELLO:
 			_d("wdog hello");
-			if (rq.runlevel <= 0) {
+			if (rq->runlevel <= 0) {
 				result = 1;
 				break;
 			}
 
-			_e("Request to hand-over wdog ... to PID %d", rq.runlevel);
-			svc = svc_find_by_pid(rq.runlevel);
+			_e("Request to hand-over wdog ... to PID %d", rq->runlevel);
+			svc = svc_find_by_pid(rq->runlevel);
 			if (!svc) {
-				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq.runlevel);
+				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq->runlevel);
 				break;
 			}
 
@@ -378,37 +381,37 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_SVC_ITER:
-			_d("svc iter, first: %d", rq.runlevel);
+			_d("svc iter, first: %d", rq->runlevel);
 			/*
 			 * XXX: This severly limits the number of
 			 * simultaneous client connections, but will
 			 * have to do for now.
 			 */
-			svc = svc_iterator(&iter, rq.runlevel);
+			svc = svc_iterator(&iter, rq->runlevel);
 			send_svc(sd, svc);
 			goto leave;
 
 		case INIT_CMD_SVC_QUERY:
-			_d("svc query: %s", rq.data);
-			result = do_query(&rq, len);
+			_d("svc query: %s", rq->data);
+			result = do_query(rq, len);
 			break;
 
 		case INIT_CMD_SVC_FIND:
-			_d("svc find: %s", rq.data);
-			send_svc(sd, do_find(rq.data, sizeof(rq.data)));
+			_d("svc find: %s", rq->data);
+			send_svc(sd, do_find(rq->data, sizeof(rq->data)));
 			goto leave;
 
 		default:
-			_d("Unsupported cmd: %d", rq.cmd);
+			_d("Unsupported cmd: %d", rq->cmd);
 			break;
 		}
 
 		if (result)
-			rq.cmd = INIT_CMD_NACK;
+			rq->cmd = INIT_CMD_NACK;
 		else
-			rq.cmd = INIT_CMD_ACK;
-		len = write(sd, &rq, sizeof(rq));
-		if (len != sizeof(rq))
+			rq->cmd = INIT_CMD_ACK;
+		len = write(sd, rq, sizeof(*rq));
+		if (len != sizeof(*rq))
 			_d("Failed sending ACK/NACK back to client");
 	}
 
