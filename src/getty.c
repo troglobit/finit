@@ -211,8 +211,9 @@ static int do_login(char *name)
 
 int getty(char *tty, speed_t speed, char *term, char *user)
 {
-	int fd;
+	const char cln[] = "\r\e[2K\n";
 	char name[30];
+	int fd;
 
 	/* Detach from initial controlling TTY */
 	vhangup();
@@ -231,7 +232,7 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 
 	/* Set up TTY, re-enabling ISIG et al. */
 	stty(STDIN_FILENO, speed);
-	(void)write(STDOUT_FILENO, "\n", 1);
+	(void)write(STDOUT_FILENO, cln, strlen(cln));
 
 	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
