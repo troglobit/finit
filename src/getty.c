@@ -224,9 +224,14 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 	dup2(fd, STDIN_FILENO);
 	dup2(fd, STDOUT_FILENO);
 	dup2(fd, STDERR_FILENO);
+	close(fd);
 
 	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 		warn("Failed TIOCSCTTY");
+
+	/* Set up TTY, re-enabling ISIG et al. */
+	stty(STDIN_FILENO, speed);
+	(void)write(STDOUT_FILENO, "\n", 1);
 
 	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
@@ -234,10 +239,6 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 		do_getty(tty, name, sizeof(name));
 	else
 		strlcpy(name, user, sizeof(name));
-
-	/* Set up TTY, re-enabling ISIG et al. */
-	stty(fd, speed);
-	close(fd);
 
 	if (term && term[0])
 		setenv("TERM", term, 1);
