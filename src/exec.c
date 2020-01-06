@@ -291,8 +291,8 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 
 static int activate_console(int noclear, int nowait)
 {
+	struct termios orig;
 	int ret = 0;
-	struct termios term;
 
 	if (!noclear)
 		(void)write(STDERR_FILENO, "\e[r\e[H\e[J", 9);
@@ -301,15 +301,20 @@ static int activate_console(int noclear, int nowait)
 		return 1;
 
 	/* Disable ECHO, XON/OFF while waiting for <CR> */
-	if (!tcgetattr(STDIN_FILENO, &term)) {
-		term.c_iflag &= ~(IXON|IXOFF);
-		term.c_lflag &= ~ECHO;
-		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+	if (!tcgetattr(STDIN_FILENO, &orig)) {
+		struct termios c = orig;
+
+		c.c_iflag &= ~(BRKINT|ICRNL|INPCK|ISTRIP|IXON|IXOFF);
+		c.c_oflag &= ~(OPOST);
+		c.c_cflag |=  (CS8);
+		c.c_lflag &= ~(ECHO|ICANON|IEXTEN|ISIG);
+		tcsetattr(STDIN_FILENO, TCSANOW, &c);
 	}
 
 	while (!fexist(SYNC_SHUTDOWN)) {
 		char c;
 		static const char clr[] = "\r\e[2K";
+		static const char cup[] = "\e[A";
 		static const char msg[] = "\nPlease press Enter to activate this console.";
 
 		if (fexist(SYNC_STOPPED)) {
@@ -319,23 +324,21 @@ static int activate_console(int noclear, int nowait)
 
 		(void)write(STDERR_FILENO, clr, strlen(clr));
 		(void)write(STDERR_FILENO, msg, strlen(msg));
-		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\n')
+		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\r')
 			continue;
 
 		if (fexist(SYNC_STOPPED))
 			continue;
 
 		(void)write(STDERR_FILENO, clr, strlen(clr));
+		(void)write(STDERR_FILENO, cup, strlen(cup));
 		ret = 1;
 		break;
 	}
 
-	/* Restore ECHO, XON/OFF */
-	if (!tcgetattr(STDIN_FILENO, &term)) {
-		term.c_iflag |= IXON|IXOFF;
-		term.c_lflag |= ECHO;
-		tcsetattr(STDIN_FILENO, TCSANOW, &term);
-	}
+	/* Restore TTY */
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &orig) == -1)
+		ret = 0;
 
 	return ret;
 }
