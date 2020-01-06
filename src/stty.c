@@ -95,7 +95,7 @@ void stty(int fd, speed_t speed)
 	tcflush(fd, TCIOFLUSH);
 
 	/* Disable modem specific flags */
-	term.c_cflag     &= ~(0|CSTOPB|PARENB|PARODD);
+	term.c_cflag     &= ~(0|CSTOPB|PARENB|PARODD|CBAUDEX);
 	term.c_cflag     &= ~CRTSCTS;
 	term.c_cflag     |= CLOCAL;
 
@@ -104,7 +104,7 @@ void stty(int fd, speed_t speed)
 	term.c_cc[VMIN]   = 1;
 	term.c_iflag      = ICRNL|IXON|IXOFF;
 	term.c_oflag      = OPOST|ONLCR;
-	term.c_cflag     |= CS8|CREAD|HUPCL|CBAUDEX;
+	term.c_cflag     |= CS8|CREAD|HUPCL;
 	term.c_lflag     |= ICANON|ISIG|ECHO|ECHOE|ECHOK|ECHOKE;
 
 	/* Reset special characters to defaults */
@@ -116,8 +116,11 @@ void stty(int fd, speed_t speed)
 	term.c_cc[VERASE] = CERASE;
 	tcsetattr(fd, TCSANOW, &term);
 
-	/* Restore cursor if it was hidden previously */
+	/* Show cursor again, if it was hidden previously */
 	write(fd, "\033[?25h", 6);
+
+	/* Enable line wrap, if disabled previously */
+	write(fd, "\033[7h", 4);
 }
 
 /**
