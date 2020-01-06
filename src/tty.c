@@ -270,7 +270,8 @@ again:
 			/* Replace @console with actual device */
 			if (arg && !strcmp(arg, "@console"))
 				arg = dev;
-			entry->args[j++] = strdup(arg);
+			if (arg)
+				entry->args[j++] = strdup(arg);
 		}
 		entry->args[++j] = NULL;
 	}
