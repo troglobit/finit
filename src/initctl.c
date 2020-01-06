@@ -531,7 +531,7 @@ static int dump_cgroup(const char *fpath, const struct stat *sb, int tflag, stru
 
 	group = strrchr(fpath, '/');
 	if (!group)
-		return 0;
+		goto err;
 	group++;
 
 	while (fgets(buf, sizeof(buf), fp)) {
@@ -552,8 +552,9 @@ static int dump_cgroup(const char *fpath, const struct stat *sb, int tflag, stru
 
 		printf("\n%c      :- %d %s", user ? ' ' : '|', pid, buf);
 	}
-	fclose(fp);
 
+err:
+	fclose(fp);
 	if (num)
 		printf("\r%c\n", user ? ' ' : '|');
 
