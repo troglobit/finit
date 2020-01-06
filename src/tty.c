@@ -153,8 +153,12 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 
 	/* Iterate over all args */
 	for (i = 0; i < num; i++) {
-		/* First, figure out if built-in or external */
-		if (!dev && !cmd) {
+		/* 
+		 * First, figure out if built-in or external getty
+		 * tty [12345] /dev/ttyAMA0 115200 noclear vt220		# built-in
+		 * tty [12345] /sbin/getty -L 115200 @console vt100 noclear	# external
+		 */
+		if ((!cmd && !dev) || (cmd && !dev)) {
 			if (args[i][0] == '[')
 				runlevels = line;
 			if (!strcmp(args[i], "@console"))
@@ -171,7 +175,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 		}
 
 		/* Built-in getty args */
-		if (dev) {
+		if (!cmd && dev) {
 			if (isdigit(args[i][0])) {
 				baud = args[i];
 				continue;
@@ -183,15 +187,6 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 			 */
 			if (i + 1 == num)
 				term = args[i];
-		}
-
-		/* External getty, figure out the device */
-		if (cmd) {
-			if (!strncmp(args[i], "/dev", 4))
-				dev = args[i];
-
-			if (!strncmp(args[i], "tty", 3))
-				dev = args[i];
 		}
 	}
 
@@ -226,18 +221,27 @@ again:
 	dev = canonicalize(dev);
 	if (!dev)
 		goto error;
-	dev = strdup(dev);
 
 	entry = tty_find(dev);
 	if (!entry) {
-		insert = 1;
 		entry = calloc(1, sizeof(*entry));
 		if (!entry) {
-			free(dev);
 			if (cmd)
 				free(cmd);
 			return errno = ENOMEM;
 		}
+		insert = 1;
+	} else {
+		if (entry->cmd) {
+			free(entry->cmd);
+			entry->cmd = NULL;
+			for (i = 0; i < TTY_MAX_ARGS; i++) {
+				if (entry->args[i])
+					free(entry->args[i]);
+				entry->args[i] = NULL;
+			}
+		}
+		insert = 0;
 	}
 
 	strlcpy(entry->name, dev, sizeof(entry->name));
@@ -260,8 +264,14 @@ again:
 		entry->cmd = cmd;
 		args[1] = strdup(tok);
 
-		for (i = 1; i < num; i++)
-			entry->args[j++] = strdup(args[i]);
+		for (i = 1; i < num; i++) {
+			char *arg = args[i];
+
+			/* Replace @console with actual device */
+			if (arg && !strcmp(arg, "@console"))
+				arg = dev;
+			entry->args[j++] = strdup(arg);
+		}
 		entry->args[++j] = NULL;
 	}
 
