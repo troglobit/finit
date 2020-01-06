@@ -168,7 +168,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 			if (!strncmp(args[i], "tty", 3))
 				dev = args[i];
 			if (!access(args[i], X_OK))
-				cmd = strdup(args[i]);
+				cmd = args[i];
 
 			/* The first arg must be one of the above */
 			continue;
@@ -193,9 +193,6 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 	if (!dev) {
 	error:
 		_e("Incomplete or non-existing TTY device given, cannot register.");
-		if (cmd)
-			free(cmd);
-
 		return errno = EINVAL;
 	}
 
@@ -225,11 +222,8 @@ again:
 	entry = tty_find(dev);
 	if (!entry) {
 		entry = calloc(1, sizeof(*entry));
-		if (!entry) {
-			if (cmd)
-				free(cmd);
+		if (!entry)
 			return errno = ENOMEM;
-		}
 		insert = 1;
 	} else {
 		if (entry->cmd) {
@@ -261,7 +255,7 @@ again:
 			tok = cmd;
 		else
 			tok++;
-		entry->cmd = cmd;
+		entry->cmd = strdup(cmd);
 		args[1] = strdup(tok);
 
 		for (i = 1; i < num; i++) {
