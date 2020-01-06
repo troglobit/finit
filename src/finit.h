@@ -84,12 +84,14 @@
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 
+/* Traditionally aligned on 384 bytes */
 struct init_request {
 	int	magic;		/* Magic number			*/
 	int	cmd;		/* What kind of request		*/
 	int	runlevel;	/* Runlevel to change to	*/
 	int	sleeptime;	/* Time between TERM and KILL	*/
-	char	data[368];
+	char	data[367];
+	char	data_guard;	/* Forced to '\0' by Finit      */
 };
 
 extern int    runlevel;

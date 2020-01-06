@@ -275,6 +275,9 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 		}
 
+		/* Make sure no API using init_request::data can be abused */
+		rq.data_guard = 0;
+
 		if (rq.magic != INIT_MAGIC || len != sizeof(rq)) {
 			_e("Invalid initctl request");
 			break;

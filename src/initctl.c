@@ -204,7 +204,7 @@ static void show_cond_one(const char *_conds)
 
 static int do_cond_magic(char op, char *cond)
 {
-	char event[368];	/* sizeof(init_request.data) */
+	char event[367];	/* sizeof(init_request.data) */
 
 	if (!cond || strlen(cond) < 1)
 		return 1;
