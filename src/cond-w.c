@@ -171,7 +171,7 @@ void cond_set_oneshot(const char *name)
 		return;
 
 	path = cond_path(name);
-	_d("s => %s", name, path);
+	_d("%s => %s", name, path);
 
 	if (cond_checkpath(path))
 		return;
