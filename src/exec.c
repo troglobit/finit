@@ -239,6 +239,7 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 {
 	struct sigaction sa;
 	struct termios term;
+	char name[80];
 
 	/*
 	 * Reset to sane defaults in case of messup from prev. session
@@ -282,7 +283,10 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 
 	/* Finit is responsible for the UTMP INIT_PROCESS record */
 	utmp_set_init(tty, 0);
-	prctl(PR_SET_NAME, procname, 0, 0, 0);
+	if (!strncmp("/dev/", tty, 5))
+		tty += 5;
+	snprintf(name, sizeof(name), "%s %s", procname, tty);
+	prctl(PR_SET_NAME, name, 0, 0, 0);
 }
 
 static int activate_console(int noclear, int nowait)
@@ -369,7 +373,7 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 				logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
 		}
 
-		prepare_tty(tty, speed, "finit-getty", rlimit);
+		prepare_tty(tty, speed, "tty", rlimit);
 		if (activate_console(noclear, nowait))
 			_exit(getty(tty, speed, term, NULL));
 	}
