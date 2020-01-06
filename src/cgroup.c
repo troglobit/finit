@@ -63,13 +63,15 @@ void cgroup_init(void)
 			continue;
 
 		snprintf(rc, sizeof(rc), "/sys/fs/cgroup/%s", cgroup);
-		mkdir(rc, 0755);
+		if (mkdir(rc, 0755) && EEXIST != errno)
+			continue;
 		if (mount("cgroup", rc, "cgroup", opts, cgroup))
 			_d("Failed mounting %s cgroup on %s", cgroup, rc);
 	}
 
 	/* Default cgroups for process monitoring */
-	mkdir("/sys/fs/cgroup/finit", 0755);
+	if (mkdir("/sys/fs/cgroup/finit", 0755) && EEXIST != errno)
+		goto fail;
 	if (mount("none", "/sys/fs/cgroup/finit", "cgroup", opts, "none,name=finit")) {
 		_pe("Failed mounting Finit cgroup hierarchy");
 		goto fail;
@@ -80,9 +82,12 @@ void cgroup_init(void)
 	echo("/sys/fs/cgroup/finit/notify_on_release", 0, "1");
 
 	/* Default groups, PID 1, services, and user/login processes */
-	mkdir("/sys/fs/cgroup/finit/init", 0755);
-	mkdir("/sys/fs/cgroup/finit/system", 0755);
-	mkdir("/sys/fs/cgroup/finit/user", 0755);
+	if (mkdir("/sys/fs/cgroup/finit/init", 0755) && EEXIST != errno)
+		goto fail;
+	if (mkdir("/sys/fs/cgroup/finit/system", 0755) && EEXIST != errno)
+		goto fail;
+	if (mkdir("/sys/fs/cgroup/finit/user", 0755) && EEXIST != errno)
+		goto fail;
 
 	/* Move ourselves to init */
 	echo("/sys/fs/cgroup/finit/init/cgroup.procs", 0, "1");
