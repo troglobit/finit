@@ -140,7 +140,6 @@ static int do_svc(int cmd, char *arg)
 	return client_send(&rq, sizeof(rq));
 }
 
-static int do_emit   (char *arg) { return do_svc(INIT_CMD_EMIT,        arg); }
 static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD,      arg); }
 
 /*
@@ -201,22 +200,6 @@ static void show_cond_one(const char *_conds)
 
 	putchar('>');
 }
-
-static int do_cond_magic(char op, char *cond)
-{
-	char event[367];	/* sizeof(init_request.data) */
-
-	if (!cond || strlen(cond) < 1)
-		return 1;
-
-	event[0] = op;
-	strlcpy(&event[1], cond, sizeof(event) - 1);
-
-	return do_emit(event);
-}
-
-static int do_cond_set  (char *cond) { return do_cond_magic('+', cond); }
-static int do_cond_clear(char *cond) { return do_cond_magic('-', cond); }
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
@@ -279,8 +262,6 @@ static int do_cond(char *cmd)
 	char *arg;
 	struct command command[] = {
 		{ "show",    do_cond_show  },
-		{ "set",     do_cond_set   },
-		{ "clear",   do_cond_clear },
 		{ "dump",    do_cond_dump  },
 		{ NULL, NULL }
 	};
@@ -596,8 +577,6 @@ static int usage(int rc)
 		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
 //		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
 		"\n"
-		"  cond     set   <COND>     Set (assert) condition     => +COND\n"
-		"  cond     clear <COND>     Clear (deassert) condition => -COND\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Dump all conditions and their status\n"
 		"\n"

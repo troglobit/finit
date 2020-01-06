@@ -181,47 +181,6 @@ ev_t ev_list[] = {
 	{ NULL, NULL }
 };
 
-static int do_handle_event(char *event)
-{
-	int i;
-
-	for (i = 0; ev_list[i].event; i++) {
-		ev_t *e = &ev_list[i];
-		size_t len = MAX(strlen(e->event), strlen(event));
-
-		if (!strncasecmp(e->event, event, len)) {
-			e->cb();
-			return 0;
-		}
-	}
-
-	if (event[0] == '-')
-		cond_clear(&event[1]);
-	else if (event[0] == '+')
-		cond_set(&event[1]);
-	else
-		cond_set(event);
-	return 0;
-}
-
-static int do_handle_emit(char *buf, size_t len)
-{
-	int result = 0;
-	char *input, *event, *pos;
-
-	input = sanitize(buf, len);
-	if (!input)
-		return -1;
-
-	event = strtok_r(input, " ", &pos);
-	while (event) {
-		result += do_handle_event(event);
-		event = strtok_r(NULL, " ", &pos);
-	}
-
-	return result;
-}
-
 static void send_svc(int sd, svc_t *svc)
 {
 	svc_t empty;
@@ -338,11 +297,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 			result = do_query_inetd(rq.data, sizeof(rq.data));
 			break;
 #endif
-
-		case INIT_CMD_EMIT:
-			_d("emit %s", rq.data);
-			result = do_handle_emit(rq.data, sizeof(rq.data));
-			break;
 
 		case INIT_CMD_GET_RUNLEVEL:
 			_d("get runlevel");

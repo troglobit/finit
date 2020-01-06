@@ -47,17 +47,7 @@ service's PID file being created.
 Triggering
 ----------
 
-Conditions are triggered by built-in plugins, but can for debugging
-purposes also be controlled using the `cond set` and `cond clear`
-sub-commands to the `initctl` control tool:
-
-* `initctl cond set your/cond/here`
-
-  To set a condition
-
-* `initctl cond clear your/cond/here`
-
-  To clear a condition
+Conditions can only be triggered by built-in plugins.
 
 Conditions retain their current state until the next reconfiguration or
 runlevel change.  At that point all set conditions transition into the
@@ -133,12 +123,13 @@ To fake interface `vlan1` suddenly appearing, and test what happens to
 
 ```shell
     ~ # initctl debug
-    ~ # initctl cond set net/vlan1/exist
+    ~ # mkdir -p /var/run/finit/cond/net/vlan1
+    ~ # cp /var/run/finit/cond /var/run/finit/cond/net/vlan1/exist
 ```
 
 Then watch the console for the debug messages and then check the output
-from `initctl cond show` again.  (The client will likely have failed to
-start, but at least the condition is now satisfied.)
+from `initctl cond show` again.  The client will likely have failed to
+start, but at least the condition is now satisfied.
 
 There is also the `initctl cond dump` command, which dumps all known
 conditions and their current status.
@@ -147,9 +138,10 @@ conditions and their current status.
 Internals
 ---------
 
-Conditions are implemented as simple files in the file system, in the
-`/var/run/finit/cond/` sub-directory.  Use the `initctl cond set/clear`
-commands to add/remove files in this hierarchy.
+As shown previously, conditions are implemented as simple files in the
+file system, in the `/var/run/finit/cond/` sub-directory.  The files
+are created, updated, and removed by condition plugins.  To debug them,
+see the previous section.
 
 A condition is always in one of three states:
 

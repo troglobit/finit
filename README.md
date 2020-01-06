@@ -429,8 +429,6 @@ Commands:
   touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload
   reload                    Reload  *.conf in /etc/finit.d/ (activates changes)
   
-  cond     set   <COND>     Set (assert) condition     => +COND
-  cond     clear <COND>     Clear (deassert) condition => -COND
   cond     show             Show condition status
   cond     dump             Dump all conditions and their status
   
