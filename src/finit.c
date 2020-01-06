@@ -305,7 +305,7 @@ static void final_worker(void *work)
 	finalize();
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	struct wq crank = {
 		.cb = crank_worker
@@ -324,6 +324,19 @@ int main(int argc, char* argv[])
 	 */
 	if (getpid() != 1)
 		return client(argc, argv);
+
+	/*
+	 * Hide command line arguments from ps (in particular for
+	 * forked children that don't execv()).  This is an ugly
+	 * hack that only works on Linux.
+	 * https://web.archive.org/web/20110227041321/http://netsplit.com/2007/01/10/hiding-arguments-from-ps/
+	 */
+	if (argc > 1) {
+		char *arg_end;
+
+		arg_end = argv[argc-1] + strlen (argv[argc-1]);
+		*arg_end = ' ';
+	}
 
 	/*
 	 * Initalize event context.
