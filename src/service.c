@@ -345,11 +345,11 @@ static int service_start(svc_t *svc)
 		char buf[CMD_SIZE] = "";
 
 		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++) {
-			char arg[MAX_ARG_LEN];
+			char arg[MAX_ARG_LEN + 1];
 
 			snprintf(arg, sizeof(arg), "%s ", svc->args[i]);
 			if (strlen(arg) < (sizeof(buf) - strlen(buf)))
-				strcat(buf, arg);
+				strlcat(buf, arg, sizeof(buf));
 		}
 		_d("Starting %s: %s", svc->cmd, buf);
 	}
