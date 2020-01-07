@@ -170,7 +170,7 @@ char *sanitize(char *arg, size_t len)
 {
 	size_t i = 0;
 
-	while (isallowed(arg[i]) && i < len)
+	while (i < len && isallowed(arg[i]))
 		i++;
 
 	if (i + 1 < len) {
