@@ -536,7 +536,7 @@ and proposed extensions.
 [Joachim Nilsson]:  http://troglobit.com
 [GitHub]:           https://github.com/troglobit/finit
 [License]:          https://en.wikipedia.org/wiki/MIT_License
-[License Badge]:    https://img.shields.io/badge/License-MIT-yellow.svg
+[License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
 [Travis]:           https://travis-ci.org/troglobit/finit
 [Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
