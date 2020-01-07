@@ -537,23 +537,58 @@ int svc_is_unique(svc_t *svc)
 	return unique;
 }
 
+/* break up "job:id job:id job:id ..." into several "job:id" tokens */
+static char *tokstr(char *str, size_t len)
+{
+	static char   *cur = NULL;
+	static size_t  pos = 0;
+	char *token;
+
+	if (!cur && !str)
+		return NULL;
+
+	if (str) {
+		cur = str;
+		pos = 0;
+	}
+
+	if (pos >= len)
+		return NULL;
+
+	token = &cur[pos];
+	while (pos < len) {
+		if (isspace(cur[pos])) {
+			cur[pos++] = 0;
+			break;
+		}
+		pos++;
+	}
+
+	return token;
+}
+
 /*
  * Used by api.c (to start/stop/restart) and initctl.c (for input validation)
  */
 int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *))
 {
+	char *input, *token;
 	int result = 0;
-	char *input, *token, *pos;
 
-	input = sanitize(str, len);
-	if (!input)
-		return -1;
-
-	token = strtok_r(input, " ", &pos);
-	while (token) {
+	_d("Got str:'%s'", str);
+	input = tokstr(str, len);
+	while (input) {
 		char *id = NULL;
 		svc_t *svc, *iter = NULL;
-		char *ptr = strchr(token, ':');
+		char *ptr;
+
+		_d("Got token:'%s'", input);
+		token = sanitize(input, len);
+		if (!token) {
+			_d("Sanitation of token:'%s' failed", input);
+			goto next;
+		}
+		ptr = strchr(token, ':');
 
 		if (isdigit(token[0])) {
 			char *ep;
@@ -611,7 +646,8 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 			}
 		}
 
-		token = strtok_r(NULL, " ", &pos);
+	next:
+		input = tokstr(NULL, len);
 	}
 
 	return result;
