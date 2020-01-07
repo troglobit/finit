@@ -50,11 +50,11 @@ const char *condstr(enum cond_state s)
 const char *cond_path(const char *name)
 {
 	char tmp[MAX_ARG_LEN];
-	static char file[MAX_ARG_LEN];
+	static char path[256];
 
 	snprintf(tmp, sizeof(tmp), COND_PATH "/%s", name);
 
-	return pid_runpath(tmp, file, sizeof(file));
+	return pid_runpath(tmp, path, sizeof(path));
 }
 
 unsigned int cond_get_gen(const char *file)

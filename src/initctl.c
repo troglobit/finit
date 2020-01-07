@@ -688,6 +688,19 @@ int main(int argc, char *argv[])
 	return usage(1);
 }
 
+void logit(int prio, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (prio <= LOG_ERR)
+		verrx(1, fmt, ap);
+	else
+		vwarnx(fmt, ap);
+	va_end(ap);
+}
+
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t
