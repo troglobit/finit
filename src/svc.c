@@ -300,7 +300,7 @@ svc_t *svc_find(char *cmd, char *id)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->id[0] && !strcmp(svc->id, id) && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
+		if (!strcmp(svc->id, id) && !strncmp(svc->cmd, cmd, strlen(svc->cmd)))
 			return svc;
 	}
 
@@ -339,7 +339,7 @@ svc_t *svc_find_by_jobid(int job, char *id)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->job == job && svc->id[0] && !strcmp(svc->id, id))
+		if (svc->job == job && !strcmp(svc->id, id))
 			return svc;
 	}
 
@@ -359,7 +359,7 @@ svc_t *svc_find_by_nameid(char *name, char *id)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->id[0] && !strcmp(svc->id, id) && !strcmp(name, svc->name))
+		if (!strcmp(svc->id, id) && !strcmp(name, svc->name))
 			return svc;
 	}
 
@@ -507,7 +507,7 @@ int svc_next_id_int(char *cmd)
 
 		snprintf(id, sizeof(id), "%d", n);
 
-		if (!strcmp(svc->cmd, cmd) && svc->id[0] && strcmp(svc->id, id))
+		if (!strcmp(svc->cmd, cmd) && strcmp(svc->id, id))
 			return n;
 
 		n++;
