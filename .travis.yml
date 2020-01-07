@@ -13,10 +13,11 @@ compiler:
   - gcc
   - clang
 
+# The secure: declaration is the encrypted COVERITY_SCAN_TOKEN, created
+#   via the "travis encrypt" command using the project repo's public key
 env:
   global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
+   - PKG_CONFIG_PATH=/tmp/lib/pkgconfig
    - secure: "eOiuHs02lG2Uv146K9dMqucGTWUJFEhpz1oAtwe+kPrRXsXWc20hYMO+DSpMgD05vSvNeQA6p7h7LdRFQ+/g/Obj27TsOE+RKkUvRAtdwzxnKVyii9C/nmML8cFw7rIA0VS8O9mAkVYeyDxNDupBp3e9DPCibhKPvqCvioTnyy4="
 
 addons:
@@ -28,7 +29,7 @@ addons:
       name: "troglobit/finit"
       description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./autogen.sh && PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp"
+    build_command_prepend: "./autogen.sh && ./configure --prefix=/tmp"
     build_command: "make"
     branch_pattern: dev
 
@@ -43,10 +44,10 @@ install:
 # Custom build script for the time being, no "make test" yet
 script:
   - ./autogen.sh
-  - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp --disable-inetd --enable-static
+  - ./configure --prefix=/tmp --disable-inetd --enable-static
   - make clean
   - make V=1 -j5
-  - PKG_CONFIG_PATH=/tmp/lib/pkgconfig ./configure --prefix=/tmp --enable-inetd-echo-plugin --enable-inetd-time-plugin --enable-x11-common-plugin --enable-inetd-chargen-plugin --enable-fallback-shell --enable-watchdog
+  - ./configure --prefix=/tmp --enable-inetd-echo-plugin --enable-inetd-time-plugin --enable-x11-common-plugin --enable-inetd-chargen-plugin --enable-fallback-shell --enable-watchdog
   - cat config.log
   - make clean
   - make V=1 -j5
