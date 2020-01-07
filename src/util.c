@@ -24,6 +24,7 @@
 #include "config.h"
 #include <ctype.h>		/* isprint() */
 #include <errno.h>
+#include <regex.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -159,29 +160,29 @@ char *uptime(long secs, char *buf, size_t len)
 	return buf;
 }
 
-/* Allowed characters in job/id/name */
-static int isallowed(int ch)
-{
-	return isprint(ch);
-}
-
-/* Sanitize user input, make sure to NUL terminate. */
+/*
+ * Verify string argument is NUL terminated
+ * Verify string is a JOB[:ID], JOB and ID
+ * can both be string or number, or combo.
+ */
 char *sanitize(char *arg, size_t len)
 {
-	size_t i = 0;
+	const char *regex = "[a-z0-9_]+[:]?[a-z0-9_]*";
+	regex_t preg;
+	int rc;
 
-	while (i < len && isallowed(arg[i]))
-		i++;
+	if (strlen(arg) > len)
+		return NULL;
 
-	if (i + 1 < len) {
-		arg[i + 1] = 0;
-		return arg;
-	}
+	if (regcomp(&preg, regex, REG_ICASE | REG_EXTENDED))
+		return NULL;
 
-	if (i > 0 && arg[i] == 0)
-		return arg;
+	rc = regexec(&preg, arg, 0, NULL, 0);
+	regfree(&preg);
+	if (rc)
+		return NULL;
 
-	return NULL;
+	return arg;
 }
 
 /*
