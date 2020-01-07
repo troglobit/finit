@@ -73,6 +73,10 @@ AC_ARG_ENABLE(watchdog,
         AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
 	enable_watchdog=no])
 
+AC_ARG_ENABLE(logit,
+     AS_HELP_STRING([--enable-logit], [Enable logger (sysklogd) replacement, default: disabled]),,[
+     enable_logit=no])
+
 AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--enable-redirect], [Redirect service output to /dev/null, default: no]),,[
 	enable_redirect_output=no])
@@ -143,7 +147,6 @@ AC_ARG_WITH(runlevel,
 AC_ARG_WITH(random-seed,
         AS_HELP_STRING([--with-random-seed=FILE], [Save a random seed for /dev/urandom across reboots, default /var/lib/misc/random-seed]),
 	[random_seed=$withval], [random_seed=/var/lib/misc/random-seed])
-
 
 ### Enable features ###########################################################################
 
@@ -239,6 +242,7 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
+AM_CONDITIONAL(LOGIT,     [test "x$enable_logit" = "xyes"])
 AM_CONDITIONAL(DOCS,      [test "x$enable_docs" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 
@@ -284,6 +288,7 @@ Optional features:
   Built-in inetd........: $enable_inetd
   Built-in watchdogd....: $enable_watchdog
   Built-in logrotate....: $enable_logrotate
+  Scripting tool logit..: $enable_logit
   Emergency shell.......: $enable_emergency_shell
   Fallback shell........: $enable_fallback_shell
   Remount / RW at boot..: $enable_rw_rootfs

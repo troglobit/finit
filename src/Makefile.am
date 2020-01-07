@@ -8,15 +8,17 @@ else
 AM_LDFLAGS         = -export-dynamic
 endif
 
-bin_PROGRAMS       = logit
 sbin_PROGRAMS      = finit initctl reboot
 pkglibexec_SCRIPTS = cgreaper.sh
 if WATCHDOGD
 pkglibexec_PROGRAMS = watchdogd
 endif
 
+if LOGIT
+bin_PROGRAMS       = logit
 logit_SOURCES      = logit.c
 logit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+endif
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     cond.c	cond-w.c	cond.h		\
