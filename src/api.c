@@ -92,7 +92,7 @@ static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
 static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
 static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
 
-static char query_buf[368];
+static char query_buf[367];
 static int missing(char *job, char *id)
 {
 	char buf[20];
@@ -108,11 +108,11 @@ static int missing(char *job, char *id)
 	return 1;
 }
 
-static int do_query(struct init_request *rq, size_t len)
+static int do_query(char *buf, size_t len)
 {
 	memset(query_buf, 0, sizeof(query_buf));
-	if (svc_parse_jobstr(rq->data, strlen(rq->data) + 1, NULL, missing)) {
-		memcpy(rq->data, query_buf, sizeof(rq->data));
+	if (svc_parse_jobstr(buf, len, NULL, missing)) {
+		memcpy(buf, query_buf, len);
 		return 1;
 	}
 
@@ -347,7 +347,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_SVC_QUERY:
 			_d("svc query: %s", rq.data);
-			result = do_query(&rq, len);
+			result = do_query(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_SVC_FIND:
