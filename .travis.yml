@@ -18,6 +18,7 @@ compiler:
 env:
   global:
    - PKG_CONFIG_PATH=/tmp/lib/pkgconfig
+   - CFLAGS="-W -Wall -Wextra"
    - secure: "eOiuHs02lG2Uv146K9dMqucGTWUJFEhpz1oAtwe+kPrRXsXWc20hYMO+DSpMgD05vSvNeQA6p7h7LdRFQ+/g/Obj27TsOE+RKkUvRAtdwzxnKVyii9C/nmML8cFw7rIA0VS8O9mAkVYeyDxNDupBp3e9DPCibhKPvqCvioTnyy4="
 
 addons:
@@ -47,7 +48,7 @@ script:
   - ./configure --prefix=/tmp --disable-inetd --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix=/tmp --enable-inetd-echo-plugin --enable-inetd-time-plugin --enable-x11-common-plugin --enable-inetd-chargen-plugin --enable-fallback-shell --enable-watchdog
+  - ./configure --prefix=/tmp --enable-inetd-echo-plugin --enable-inetd-time-plugin --enable-x11-common-plugin --enable-inetd-chargen-plugin --enable-fallback-shell --enable-watchdog --enable-logit
   - cat config.log
   - make clean
   - make V=1 -j5
