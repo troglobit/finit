@@ -92,7 +92,7 @@ static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
 static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
 static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
 
-static char query_buf[367];
+static char query_buf[368];
 static int missing(char *job, char *id)
 {
 	char buf[20];
@@ -234,9 +234,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 		}
 
-		/* Make sure no API using init_request::data can be abused */
-		rq.data_guard = 0;
-
 		if (rq.magic != INIT_MAGIC || len != sizeof(rq)) {
 			_e("Invalid initctl request");
 			break;
@@ -278,22 +275,26 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_START_SVC:
 			_d("start %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
 			result = do_start(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_STOP_SVC:
 			_d("stop %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
 			result = do_stop(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:
 			_d("restart %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
 			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
 #ifdef INETD_ENABLED
 		case INIT_CMD_QUERY_INETD:
 			_d("query inetd");
+			strterm(rq.data, sizeof(rq.data));
 			result = do_query_inetd(rq.data, sizeof(rq.data));
 			break;
 #endif
@@ -347,11 +348,13 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_SVC_QUERY:
 			_d("svc query: %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
 			result = do_query(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_SVC_FIND:
 			_d("svc find: %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
 			send_svc(sd, do_find(rq.data, sizeof(rq.data)));
 			goto leave;
 

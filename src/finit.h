@@ -90,8 +90,7 @@ struct init_request {
 	int	cmd;		/* What kind of request		*/
 	int	runlevel;	/* Runlevel to change to	*/
 	int	sleeptime;	/* Time between TERM and KILL	*/
-	char	data[367];
-	char	data_guard;	/* Forced to '\0' by Finit      */
+	char	data[368];
 };
 
 extern int    runlevel;

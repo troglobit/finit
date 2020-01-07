@@ -52,6 +52,12 @@ void  screen_init  (void);
 void  screen_exit  (void);
 int   screen_width (void);
 
+static inline char *strterm(char *str, size_t len)
+{
+	str[len - 1] = 0;
+	return str;
+}
+
 #endif /* FINIT_UTIL_H_ */
 
 /**
