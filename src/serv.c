@@ -140,7 +140,7 @@ int serv_enable(char *arg)
 	}
 
 	pushd(FINIT_RCSD);
-	if (mkdir("enabled", 0755))
+	if (mkdir("enabled", 0755) && EEXIST != errno)
 		err(1, "Failed creating %s/enabled directory", FINIT_RCSD);
 
 	snprintf(path, sizeof(path), "%s/%s", available, arg);
