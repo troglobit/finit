@@ -4,10 +4,12 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[3.2][UNRELEASED] - 2018-10-xx
+[3.2][UNRELEASED] - 2020-01-xx
 ------------------------------
 
-Bug fix release.
+Bug fix release, but also cgroups and a new progress!
+
+  https://twitter.com/b0rk/status/1214341831049252870?s=20
 
 ### Changes
 * Add support for `--disable-docs` and `--disable-contrib` to speed up
