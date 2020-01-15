@@ -93,7 +93,16 @@ Syntax
   case the contents of that file is used.
 
 * `module <MODULE> [ARGS]`  
-  Load a kernel module, with optional arguments
+  Load a kernel module, with optional arguments.  Similar to `insmod`
+  command line tool.
+
+  Note, there is both a `modules-load.so` and a `modprobe.so` plugin
+  that can handle module loading better.  The former supports loading
+  from `/etc/modules-load.d/`, and the latter uses kernel modinfo to
+  automatically load (or coldplug) every required module.  For hotplug
+  we recommend the BusyBox mdev tool, add to `/etc/mdev.conf`:
+
+        $MODALIAS=.*  root:root       0660    @modprobe -b "$MODALIAS"
 
 * `network <PATH>`  
   Script or program to bring up networking, with optional arguments
