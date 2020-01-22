@@ -705,6 +705,8 @@ static int do_change(char *name, uint32_t mask)
 {
 	struct conf_change *node;
 
+	_d("Change detected for %s, mask 0x%08x", name, mask);
+
 	node = conf_find(name);
 	if (mask & (IN_DELETE | IN_MOVED_FROM)) {
 		drop_change(node);
@@ -837,6 +839,7 @@ static int add_watcher(uev_ctx_t *ctx, uev_t *w, char *path, uint32_t opt)
 		close(fd);
 		return 1;
 	}
+	_d("Set up inotify watcher for %s ...", path);
 
 	return 0;
 }

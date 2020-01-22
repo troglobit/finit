@@ -231,6 +231,7 @@ int exec_runtask(char *cmd, char *args[])
 		strlcat(buf, args[i], sizeof(buf));
 	}
 	logit(LOG_DEBUG, "Calling %s %s", _PATH_BSHELL, buf);
+	_d("Calling %s %s", _PATH_BSHELL, buf);
 
 	return execvp(_PATH_BSHELL, argv);
 }
