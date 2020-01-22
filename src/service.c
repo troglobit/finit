@@ -665,13 +665,17 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 
 	strlcpy(svc->args[0], cmd, sizeof(svc->args[0]));
 
-	/* Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
-	 * array to be zero-terminated. */
-	for (i=1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS-1); i++)
+	/* 
+	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
+	 * array to be zero-terminated.
+	 */
+	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1); i++)
 		strlcpy(svc->args[i], arg, sizeof(svc->args[0]));
 
-	/* clear remaining args in case they were set earlier.
-	 * This also zero-terminates the args array.*/
+	/* 
+	 * Clear remaining args in case they were set earlier.
+	 * This also zero-terminates the args array.
+	 */
 	for (; i < MAX_NUM_SVC_ARGS; i++)
 		svc->args[i][0] = 0;
 }
