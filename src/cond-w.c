@@ -128,6 +128,7 @@ static int svc_has_cond(svc_t *svc)
 	case SVC_TYPE_SERVICE:
 	case SVC_TYPE_TASK:
 	case SVC_TYPE_RUN:
+	case SVC_TYPE_SYSV:
 		return 1;
 
 	default:

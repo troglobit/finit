@@ -464,6 +464,12 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 		return;
 	}
 
+	/* Similar to task but is treated like a SysV init script */
+	if (MATCH_CMD(line, "sysv ", x)) {
+		service_register(SVC_TYPE_SYSV, x, rlimit, file);
+		return;
+	}
+
 	/* Classic inetd service */
 	if (MATCH_CMD(line, "inetd ", x)) {
 #ifdef INETD_ENABLED

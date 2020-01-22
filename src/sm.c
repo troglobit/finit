@@ -117,7 +117,7 @@ restart:
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
 		_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
-		service_step_all(SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SERVICE);
+		service_step_all(SVC_TYPE_RUNTASK | SVC_TYPE_SERVICE);
 		sm->state = SM_RUNNING_STATE;
 		break;
 

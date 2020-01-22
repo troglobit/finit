@@ -43,10 +43,11 @@ typedef enum {
 	SVC_TYPE_RUN        = 4,	/* Like task, but wait for completion */
 	SVC_TYPE_INETD      = 8,	/* Classic inetd service */
 	SVC_TYPE_INETD_CONN = 16,	/* Single inetd connection */
+	SVC_TYPE_SYSV       = 32,	/* SysV style init.d script w/ start/stop */
 } svc_type_t;
 
 #define SVC_TYPE_ANY          (-1)
-#define SVC_TYPE_RUNTASK      (6)
+#define SVC_TYPE_RUNTASK      (SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SYSV)
 
 typedef enum {
 	SVC_HALTED_STATE = 0,	/* Not allowed in runlevel, or not enabled. */
@@ -182,6 +183,7 @@ int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *)
 static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
 static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
 static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
+static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV       == svc->type; }
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }

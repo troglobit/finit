@@ -152,6 +152,20 @@ Syntax
         task [s] echo "foo" | cat >/tmp/bar
 ```
 
+* `sysv [LVLS] <COND> /path/to/init-script -- Optional description`__
+  Similar to `task` is the `sysv` stanza, which can be used to call SysV
+  style scripts.  The primary intention for this command is to be able to
+  re-use much of existing setup and init scripts in Linux distributions.
+  
+  When entering an allowed runlevel, Finit calls `init-script start`,
+  when entering a disallowed runlevel, Finit calls `init-script stop`,
+  and if the Finit .conf, where `sysv` stanza is declared, is modified,
+  Finit calls `init-script restart` on `initctl restart`.  Similar
+  to how a `service` stanza works.
+  
+  > **Note:** there is currently now supervision of daemons started as
+  > sysv services.  I.e., the `pid:!...` support is still missing.
+
 * `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
   Service, or daemon, to be monitored and automatically restarted if it
   exits prematurely.  Please note that you often need to provide a

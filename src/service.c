@@ -166,12 +166,19 @@ static int service_start(svc_t *svc)
 	if (svc_is_inetd(svc))
 		return inetd_start(&svc->inetd);
 #endif
+	if (svc_is_sysv(svc)) {
+		_d("Starting SYSV script %s", svc->cmd);
+		if (svc_is_runtask(svc))
+			_d("SYSV is class:runtask");
+		else
+			_d("SYSV is *NOT* class:runtask");
+	}
 
 	if (!svc->desc[0])
 		do_progress = 0;
 
 	if (do_progress) {
-		if (svc_is_daemon(svc))
+		if (svc_is_daemon(svc) || svc_is_sysv(svc))
 			print_desc("Starting ", svc->desc);
 		else
 			print_desc("", svc->desc);
@@ -224,9 +231,15 @@ static int service_start(svc_t *svc)
 			}
 		}
 
-		/* Serve copy of args to process in case it modifies them. */
-		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
-			args[i] = svc->args[i];
+		if (!svc_is_sysv(svc)) {
+			/* Serve copy of args to process in case it modifies them. */
+			for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
+				args[i] = svc->args[i];
+		} else {
+			i = 0;
+			args[i++] = svc->cmd;
+			args[i++] = "start";
+		}
 		args[i] = NULL;
 
 		/* Redirect inetd socket to stdin for connection */
@@ -454,23 +467,57 @@ static int service_stop(svc_t *svc)
 #endif
 	service_timeout_cancel(svc);
 
-	if (svc->pid <= 1)
-		return 1;
+	if (!svc_is_sysv(svc)) {
+		if (svc->pid <= 1)
+			return 1;
 
-	_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
-	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending SIGTERM ...",
-	      basename(svc->cmd), svc->id, svc->pid);
+		_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
+		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending SIGTERM ...",
+		      basename(svc->cmd), svc->id, svc->pid);
+	} else {
+		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", svc->cmd);
+	}
+
 	svc_set_state(svc, SVC_STOPPING_STATE);
 
 	if (runlevel != 1)
 		print_desc("Stopping ", svc->desc);
 
-	res = kill(svc->pid, SIGTERM);
+	if (!svc_is_sysv(svc)) {
+		res = kill(svc->pid, SIGTERM);
+	} else {
+		char *args[] = { svc->cmd, "stop", NULL };
+		pid_t pid;
+
+		pid = fork();
+		switch (pid) {
+		case 0:
+			exec_runtask(svc->cmd, args);
+			_exit(0);
+			break;
+		case -1:
+			_pe("Failed fork() to call sysv script '%s stop'", svc->cmd);
+			res = 1;
+			break;
+		default:
+			res = WEXITSTATUS(complete(svc->cmd, pid));
+			break;
+		}
+	}
 
 	if (runlevel != 1)
 		print_result(res);
 
 	return res;
+}
+
+/*
+ * SysV start/stop script wrapper for service_stop()
+ */
+static int sysv_stop(svc_t *svc)
+{
+	svc_set_state(svc, SVC_READY_STATE);
+	return service_stop(svc);
 }
 
 /**
@@ -1092,6 +1139,14 @@ restart:
 	case SVC_HALTED_STATE:
 		if (enabled)
 			svc_set_state(svc, SVC_READY_STATE);
+
+		if (svc_is_sysv(svc)) {
+			if (!enabled && sm_is_in_teardown(&sm)) {
+				sysv_stop(svc);
+				svc_set_state(svc, SVC_HALTED_STATE);
+			}
+			break;
+		}
 		break;
 
 	case SVC_DONE_STATE:
@@ -1119,6 +1174,7 @@ restart:
 			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
+			case SVC_TYPE_SYSV:
 				svc_set_state(svc, SVC_DONE_STATE);
 				break;
 
