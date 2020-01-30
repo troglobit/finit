@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/sysinfo.h>	/* sysinfo() */
 #include <lite/lite.h>		/* strlcat() */
@@ -105,7 +106,11 @@ int strtobytes(char *arg)
 
 void do_sleep(unsigned int sec)
 {
-	while ((sec = sleep(sec)))
+	struct timespec requested_sleep = {
+		.tv_sec = sec,
+		.tv_nsec = 0,
+	};
+	while (nanosleep(&requested_sleep, &requested_sleep))
 		;
 }
 
