@@ -62,10 +62,8 @@ void log_init(int dbg)
 void log_exit(void)
 {
 	muffler();
-	if (!silent) {
+	if (!silent)
 		sched_yield();
-		fputs("\n", stderr);
-	}
 
 	/*
 	 * Unless in debug mode at shutdown, Reinitialize screen,
