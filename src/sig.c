@@ -316,6 +316,7 @@ static void sigterm_cb(uev_t *w, void *arg, int events)
 static void sigchld_cb(uev_t *w, void *arg, int events)
 {
 	pid_t pid;
+	int status;
 
 	if (UEV_ERROR == events) {
 		_e("Unrecoverable error in signal watcher");
@@ -324,10 +325,10 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 
 	/* Reap all the children! */
 	do {
-		pid = waitpid(-1, NULL, WNOHANG);
+		pid = waitpid(-1, &status, WNOHANG);
 		if (pid > 0) {
 			_d("Collected child %d", pid);
-			service_monitor(pid);
+			service_monitor(pid, status);
 		}
 	} while (pid > 0);
 }

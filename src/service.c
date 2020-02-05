@@ -375,7 +375,8 @@ static int service_start(svc_t *svc)
 
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
-		result = WEXITSTATUS(complete(svc->cmd, pid));
+		svc->status = complete(svc->cmd, pid);
+		result = WEXITSTATUS(svc->status);
 		svc->start_time = svc->pid = 0;
 		svc->once++;
 		svc_set_state(svc, SVC_STOPPING_STATE);
@@ -1029,7 +1030,7 @@ void service_unregister(svc_t *svc)
 	svc_del(svc);
 }
 
-void service_monitor(pid_t lost)
+void service_monitor(pid_t lost, int status)
 {
 	svc_t *svc;
 
@@ -1045,7 +1046,9 @@ void service_monitor(pid_t lost)
 		return;
 	}
 
-	_d("collected %s(%d)", svc->cmd, lost);
+	_d("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
+	   svc->cmd, lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+	svc->status = status;
 
 	/* Try removing PID file (in case service does not clean up after itself) */
 	if (svc_is_daemon(svc)) {
