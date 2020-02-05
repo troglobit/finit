@@ -376,7 +376,10 @@ static int service_start(svc_t *svc)
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
 		svc->status = complete(svc->cmd, pid);
-		result = WEXITSTATUS(svc->status);
+		if (WIFEXITED(svc->status) && !WEXITSTATUS(svc->status))
+			result = 0;
+		else
+			result = 1;
 		svc->start_time = svc->pid = 0;
 		svc->once++;
 		svc_set_state(svc, SVC_STOPPING_STATE);
