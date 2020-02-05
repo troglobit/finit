@@ -128,6 +128,100 @@ static void redirect_null(void)
 	}
 }
 
+/*
+ * Handle redirection of process output, if enabled
+ */
+static void redirect(svc_t *svc)
+{
+	/* Redirect inetd socket to stdin for connection */
+#ifdef INETD_ENABLED
+	if (svc_is_inetd_conn(svc)) {
+		dup2(svc->stdin_fd, STDIN_FILENO);
+		close(svc->stdin_fd);
+		dup2(STDIN_FILENO, STDOUT_FILENO);
+		dup2(STDIN_FILENO, STDERR_FILENO);
+	} else
+#endif
+
+	if (svc->log.enabled) {
+		pid_t pid;
+		int fd;
+
+		if (svc->log.null) {
+			redirect_null();
+			return;
+		}
+		if (svc->log.console)
+			return;
+
+		/*
+		 * Open PTY to connect to logger.  A pty isn't buffered
+		 * like a pipe, and it eats newlines so they aren't logged
+		 */
+		fd = posix_openpt(O_RDWR);
+		if (fd == -1) {
+			svc->log.enabled = 0;
+			return;
+		}
+		if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
+			close(fd);
+			svc->log.enabled = 0;
+			return;
+		}
+
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+		close(fd);
+
+		pid = fork();
+		if (pid == 0) {
+			int fds;
+			char *tag  = basename(svc->cmd);
+			char *prio = "daemon.info";
+
+			fds = open(ptsname(fd), O_RDONLY);
+			close(fd);
+			if (fds == -1)
+				_exit(0);
+			dup2(fds, STDIN_FILENO);
+
+			/* Reset signals */
+			sig_unblock();
+
+			if (svc->log.file[0] == '/') {
+				char sz[20], num[3];
+
+				snprintf(sz, sizeof(sz), "%d", logfile_size_max);
+				snprintf(num, sizeof(num), "%d", logfile_count_max);
+
+				execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+				_exit(0);
+			}
+
+			if (svc->log.ident[0])
+				tag = svc->log.ident;
+			if (svc->log.prio[0])
+				prio = svc->log.prio;
+
+			execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
+			_exit(0);
+		}
+	} else if (log_is_debug()) {
+		int fd;
+
+		fd = open(CONSOLE, O_WRONLY | O_APPEND);
+		if (-1 != fd) {
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			close(fd);
+		}
+	}
+#ifdef REDIRECT_OUTPUT
+	else
+		redirect_null();
+#endif
+}
+
 static int is_norespawn(void)
 {
 	return  sig_stopped()            ||
@@ -242,97 +336,7 @@ static int service_start(svc_t *svc)
 		}
 		args[i] = NULL;
 
-		/* Redirect inetd socket to stdin for connection */
-#ifdef INETD_ENABLED
-		if (svc_is_inetd_conn(svc)) {
-			dup2(svc->stdin_fd, STDIN_FILENO);
-			close(svc->stdin_fd);
-			dup2(STDIN_FILENO, STDOUT_FILENO);
-			dup2(STDIN_FILENO, STDERR_FILENO);
-		} else
-#endif
-
-		if (svc->log.enabled) {
-			int fd;
-
-			if (svc->log.null) {
-				redirect_null();
-				goto logit_done;
-			}
-			if (svc->log.console) {
-				goto logit_done;
-			}
-
-			/*
-			 * Open PTY to connect to logger.  A pty isn't buffered
-			 * like a pipe, and it eats newlines so they aren't logged
-			 */
-			fd = posix_openpt(O_RDWR);
-			if (fd == -1) {
-				svc->log.enabled = 0;
-				goto logit_done;
-			}
-			if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
-				close(fd);
-				svc->log.enabled = 0;
-				goto logit_done;
-			}
-
-			/* SIGCHLD is still blocked for grantpt() and fork() */
-			sigprocmask(SIG_BLOCK, &nmask, NULL);
-			pid = fork();
-			if (pid == 0) {
-				int fds;
-				char *tag  = basename(svc->cmd);
-				char *prio = "daemon.info";
-
-				fds = open(ptsname(fd), O_RDONLY);
-				close(fd);
-				if (fds == -1)
-					_exit(0);
-				dup2(fds, STDIN_FILENO);
-
-				/* Reset signals */
-				sig_unblock();
-
-				if (svc->log.file[0] == '/') {
-					char sz[20], num[3];
-
-					snprintf(sz, sizeof(sz), "%d", logfile_size_max);
-					snprintf(num, sizeof(num), "%d", logfile_count_max);
-
-					execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
-					_exit(0);
-				}
-
-				if (svc->log.ident[0])
-					tag = svc->log.ident;
-				if (svc->log.prio[0])
-					prio = svc->log.prio;
-
-				execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
-				_exit(0);
-			}
-
-			dup2(fd, STDOUT_FILENO);
-			dup2(fd, STDERR_FILENO);
-			close(fd);
-		} else if (log_is_debug()) {
-			int fd;
-
-			fd = open(CONSOLE, O_WRONLY | O_APPEND);
-			if (-1 != fd) {
-				dup2(fd, STDOUT_FILENO);
-				dup2(fd, STDERR_FILENO);
-				close(fd);
-			}
-		}
-#ifdef REDIRECT_OUTPUT
-		else
-			redirect_null();
-#endif
-
-	logit_done:
+		redirect(svc);
 		sig_unblock();
 
 		if (svc->inetd.cmd)
