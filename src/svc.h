@@ -98,6 +98,7 @@ typedef struct svc {
 	pid_t	       pid;
 	char           pidfile[256];
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */
+	int            started;	       /* Set for run/task/sysv to track if started */
 	int            status;	       /* From waitpid() when process is collected */
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, inetd, ... */

@@ -261,11 +261,7 @@ static int service_start(svc_t *svc)
 		return inetd_start(&svc->inetd);
 #endif
 	if (svc_is_sysv(svc)) {
-		_d("Starting SYSV script %s", svc->cmd);
-		if (svc_is_runtask(svc))
-			_d("SYSV is class:runtask");
-		else
-			_d("SYSV is *NOT* class:runtask");
+		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", svc->cmd);
 	}
 
 	if (!svc->desc[0])
@@ -518,15 +514,6 @@ static int service_stop(svc_t *svc)
 	return res;
 }
 
-/*
- * SysV start/stop script wrapper for service_stop()
- */
-static int sysv_stop(svc_t *svc)
-{
-	svc_set_state(svc, SVC_READY_STATE);
-	return service_stop(svc);
-}
-
 /**
  * service_restart - Restart a service by sending %SIGHUP
  * @svc: Service to reload
@@ -672,14 +659,14 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 
 	strlcpy(svc->args[0], cmd, sizeof(svc->args[0]));
 
-	/* 
+	/*
 	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
 	 * array to be zero-terminated.
 	 */
 	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1); i++)
 		strlcpy(svc->args[i], arg, sizeof(svc->args[0]));
 
-	/* 
+	/*
 	 * Clear remaining args in case they were set earlier.
 	 * This also zero-terminates the args array.
 	 */
@@ -1063,6 +1050,11 @@ void service_monitor(pid_t lost, int status)
 		fn = pid_file(svc);
 		if (remove(fn) && errno != ENOENT)
 			logit(LOG_CRIT, "Failed removing service %s pidfile %s", basename(svc->cmd), fn);
+	} else if (svc_is_runtask(svc)) {
+		if (WIFEXITED(status) && !WEXITSTATUS(status))
+			svc->started = 1;
+		else
+			svc->started = 0;
 	}
 
 	/* No longer running, update books. */
@@ -1152,14 +1144,6 @@ restart:
 	case SVC_HALTED_STATE:
 		if (enabled)
 			svc_set_state(svc, SVC_READY_STATE);
-
-		if (svc_is_sysv(svc)) {
-			if (!enabled && sm_is_in_teardown(&sm)) {
-				sysv_stop(svc);
-				svc_set_state(svc, SVC_HALTED_STATE);
-			}
-			break;
-		}
 		break;
 
 	case SVC_DONE_STATE:
@@ -1246,7 +1230,12 @@ restart:
 			}
 
 			if (svc_is_runtask(svc)) {
-				svc_set_state(svc, SVC_STOPPING_STATE);
+				if (svc_is_sysv(svc)) {
+					if (!svc->started)
+						svc_set_state(svc, SVC_STOPPING_STATE);
+				} else {
+					svc_set_state(svc, SVC_STOPPING_STATE);
+				}
 				svc->once++;
 				break;
 			}
