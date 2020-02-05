@@ -355,8 +355,6 @@ static int service_start(svc_t *svc)
 			}
 		} else
 #endif
-		if (svc->log.enabled && !svc->log.null)
-			waitpid(pid, NULL, 0);
 		_exit(status);
 	} else if (log_is_debug()) {
 		char buf[CMD_SIZE] = "";
