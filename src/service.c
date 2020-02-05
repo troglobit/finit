@@ -500,6 +500,7 @@ static int service_stop(svc_t *svc)
 		pid = fork();
 		switch (pid) {
 		case 0:
+			redirect(svc);
 			exec_runtask(svc->cmd, args);
 			_exit(0);
 			break;
