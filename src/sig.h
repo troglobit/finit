@@ -70,9 +70,12 @@ extern shutop_t halt;
 
 void do_shutdown    (shutop_t op);
 int  sig_stopped    (void);
+int  sig_num        (const char *name);
 void sig_init       (void);
 void sig_unblock    (void);
 void sig_setup      (uev_ctx_t *ctx);
+
+const char *sig_name(int signo);
 
 #endif /* FINIT_SIG_H_ */
 

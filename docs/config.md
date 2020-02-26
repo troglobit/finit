@@ -231,6 +231,13 @@ Syntax
 
         name:<service-name>
 
+  When stopping a service (run/task/sysv/service), either manually or
+  when moving to another runlevel, Finit starts by sending `SIGTERM`, to
+  allow the process to shut down gracefully.  If the process has not
+  been collected within 3 seconds, Finit sends `SIGKILL`.  To halt the
+  process using a different signal, use the option `halt:SIGNAL`, e.g.,
+  `halt:SIGPWR`.
+
 * `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
   Launch a daemon when a client initiates a connection on an Internet
   port.  Available services are listed in the UNIX `/etc/services` file.

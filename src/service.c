@@ -472,9 +472,10 @@ static int service_stop(svc_t *svc)
 		if (svc->pid <= 1)
 			return 1;
 
-		_d("Sending SIGTERM to pid:%d name:%s", svc->pid, pid_get_name(svc->pid, NULL, 0));
-		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending SIGTERM ...",
-		      basename(svc->cmd), svc->id, svc->pid);
+		_d("Sending %s to pid:%d name:%s", sig_name(svc->sighalt),
+		   svc->pid, pid_get_name(svc->pid, NULL, 0));
+		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending %s ...",
+		      basename(svc->cmd), svc->id, svc->pid, sig_name(svc->sighalt));
 	} else {
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", svc->cmd);
 	}
@@ -488,7 +489,7 @@ static int service_stop(svc_t *svc)
 		if (svc->pid <= 1)
 			goto cleanup;
 
-		res = kill(svc->pid, SIGTERM);
+		res = kill(svc->pid, svc->sighalt);
 
 		/* PID lost or forking process never really started */
 		if (res == -1 && ESRCH == errno) {
@@ -644,6 +645,17 @@ static void parse_log(svc_t *svc, char *arg)
 	}
 }
 
+static void parse_sighalt(svc_t *svc, char *arg)
+{
+	int signo;
+
+	signo = sig_num(arg);
+	if (signo == -1)
+		return;
+
+	svc->sighalt = signo;
+}
+
 /*
  * name:<name>
  */
@@ -757,7 +769,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
-	char *name = NULL;
+	char *name = NULL, *halt = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
@@ -819,6 +831,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			name = cmd;
 		else if (!strncasecmp(cmd, "manual:yes", 10))
 			manual = 1;
+		else if (!strncasecmp(cmd, "halt:", 5))
+			halt = &cmd[5];
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
 		else
@@ -945,7 +959,8 @@ recreate:
 	conf_parse_cond(svc, cond);
 
 	parse_name(svc, name);
-
+	if (halt)
+		parse_sighalt(svc, halt);
 	if (log)
 		parse_log(svc, log);
 	if (desc)

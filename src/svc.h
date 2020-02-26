@@ -75,7 +75,7 @@ typedef enum {
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
 #define MAX_NUM_SVC_ARGS 32
 
-/* Time after SIGTERM that we SIGKILL stopping processes */
+/* Time after SIGTERM (svc->sighalt) that we SIGKILL stopping processes */
 #define SVC_TERM_TIMEOUT 3000
 
 /*
@@ -95,6 +95,7 @@ typedef struct svc {
 	struct rlimit  rlimit[RLIMIT_NLIMITS];
 
 	/* Service details */
+	int            sighalt;        /* Signal to stop prorcess, default: SIGTERM */
 	pid_t	       pid;
 	char           pidfile[256];
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */

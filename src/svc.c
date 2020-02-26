@@ -104,6 +104,9 @@ svc_t *svc_new(char *cmd, char *id, int type)
 	/* Default description, if missing */
 	strlcpy(svc->desc, svc->name, sizeof(svc->desc));
 
+	/* Default HALT signal to send */
+	svc->sighalt = SIGTERM;
+
 	TAILQ_INSERT_TAIL(&svc_list, svc, link);
 
 	return svc;

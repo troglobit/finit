@@ -98,6 +98,55 @@ static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
 static uev_t sigchld_watcher;
 static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
+static struct sigmap {
+	int   num;
+	char *name;
+} signames[] = {
+	/* ISO C99 signals.  */
+	{ SIGINT,    "SIGINT"    },
+	{ SIGILL,    "SIGILL"    },
+	{ SIGABRT,   "SIGABRT"   },
+	{ SIGFPE,    "SIGFPE"    },
+	{ SIGSEGV,   "SIGSEGV"   },
+	{ SIGTERM,   "SIGTERM"   },
+	/* Historical signals specified by POSIX. */
+	{ SIGHUP,    "SIGHUP"    },
+	{ SIGQUIT,   "SIGQUIT"   },
+	{ SIGTRAP,   "SIGTRAP"   },
+	{ SIGKILL,   "SIGKILL"   },
+	{ SIGBUS,    "SIGBUS"    },
+	{ SIGSYS,    "SIGSYS"    },
+	{ SIGPIPE,   "SIGPIPE"   },
+	{ SIGALRM,   "SIGALRM"   },
+
+	/* New(er) POSIX signals (1003.1-2008, 1003.1-2013). */
+	{ SIGURG,    "SIGURG"    },
+	{ SIGSTOP,   "SIGSTOP"   },
+	{ SIGTSTP,   "SIGTSTP"   },
+	{ SIGCONT,   "SIGCONT"   },
+	{ SIGCHLD,   "SIGCHLD"   },
+	{ SIGTTIN,   "SIGTTIN"   },
+	{ SIGTTOU,   "SIGTTOU"   },
+	{ SIGPOLL,   "SIGPOLL"   },
+	{ SIGXCPU,   "SIGXCPU"   },
+	{ SIGXFSZ,   "SIGXFSZ"   },
+	{ SIGVTALRM, "SIGVTALRM" },
+	{ SIGPROF,   "SIGPROF"   },
+	{ SIGUSR1,   "SIGUSR1"   },
+	{ SIGUSR2,   "SIGUSR2"   },
+
+	/* Nonstandard signals found in all modern POSIX systems
+	   (including both BSD and Linux).  */
+	{ SIGWINCH,  "SIGWINCH"  },
+	{ SIGSTKFLT, "SIGSTKFLT" },
+	{ SIGPWR,    "SIGPWR"    },
+
+	/* Archaic names for compatibility.  */
+	{ SIGIO,     "SIGIO"     },
+	{ SIGIOT,    "SIGIOT"    },
+	{ SIGCLD,    "SIGCLD"    },
+};
+
 void mdadm_wait(void);
 void unmount_tmpfs(void);
 void unmount_regular(void);
@@ -367,6 +416,38 @@ static void sigcont_cb(uev_t *w, void *arg, int events)
 int sig_stopped(void)
 {
 	return stopped;
+}
+
+/*
+ * Convert SIGFOO to a number, if it exists
+ */
+int sig_num(const char *name)
+{
+	size_t i, offset = 0;
+
+	if (strncasecmp(name, "SIG", 3))
+		offset = 3;
+
+	for (i = 0; i < NELEMS(signames); i++) {
+		if (strcasecmp(name, &signames[i].name[offset]))
+			continue;
+
+		return signames[i].num;
+	}
+
+	return -1;
+}
+
+const char *sig_name(int signo)
+{
+	size_t i;
+
+	for (i = 0; i < NELEMS(signames); i++) {
+		if (signames[i].num == signo)
+			return signames[i].name;
+	}
+
+	return "SIGUNKOWN";
 }
 
 /*
