@@ -45,7 +45,7 @@ int pid_alive(pid_t pid)
 {
 	char name[24]; /* Enough for max pid_t */
 
-	snprintf(name, sizeof(name), "/proc/%d", pid);
+	snprintf(name, sizeof(name), "/proc/%d/status", pid);
 
 	return fexist(name);
 }
