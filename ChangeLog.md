@@ -12,6 +12,8 @@ Bug fix release, but also cgroups and a new progress!
   https://twitter.com/b0rk/status/1214341831049252870?s=20
 
 ### Changes
+* Support for `sysv` start/stop scripts as well as monitoring forking
+  services, stared using `sysv` or `service` stanza
 * Add support for `--disable-docs` and `--disable-contrib` to speed up
   builds and work around issue with massively parallel builds
 * Add `-b`, batch mode, for non-interactive use to `initctl`

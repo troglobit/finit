@@ -187,6 +187,7 @@ static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_C
 static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
 static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV       == svc->type; }
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
+static inline int svc_is_forking   (svc_t *svc) { return (svc_is_daemon(svc) || svc_is_sysv(svc)) && svc->pidfile[0] == '!'; }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }

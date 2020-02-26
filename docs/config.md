@@ -160,17 +160,28 @@ Syntax
   When entering an allowed runlevel, Finit calls `init-script start`,
   when entering a disallowed runlevel, Finit calls `init-script stop`,
   and if the Finit .conf, where `sysv` stanza is declared, is modified,
-  Finit calls `init-script restart` on `initctl restart`.  Similar
-  to how a `service` stanza works.
-  
-  > **Note:** there is currently now supervision of daemons started as
-  > sysv services.  I.e., the `pid:!...` support is still missing.
+  Finit calls `init-script restart` on `initctl reload`.  Similar to
+  how `service` stanzas work.
 
+  Forking services started with `sysv` scripts can be monitored by Finit
+  by declaring the PID file to look for: `pid:!/path/to/pidfile.pid`.
+  
 * `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
   Service, or daemon, to be monitored and automatically restarted if it
-  exits prematurely.  Please note that you often need to provide a
-  `--foreground` or `--no-background` argument to most daemons to
-  prevent them from forking off a sub-process in the background.
+  exits prematurely.
+  
+  For daemons that support it, we recommend appending `--foreground`, or
+  `--no-background`, argument to prevent them from forking off a
+  sub-process in the background.  This is the most reliable way to
+  monitor a service.
+
+  However, not all daemons support running in the foreground, or they
+  may start logging to the foreground as well, these are called forking
+  services and are supported using the same syntax as forking `sysv`
+  services, using the `pid:!/path/to/pidfile.pid` syntax.
+  
+  In the case of `ospfd` (below), we omit the `-d` flag to prevent it
+  from forking (daemonizing):
 
 ```shell
         service [2345] <svc/sbin/zebra> /sbin/ospfd -- OSPF daemon
@@ -198,7 +209,7 @@ Syntax
   can depend on `<svc/foo>`.
 
   If a service `bar` *does* maintain a PID file, but using `foo.pid`, we
-  can inform Finit of this by simplly prepending an `!` to the argument.
+  can inform Finit of this by prepending an `!` to the argument.
 
         pid:!/run/foo.pid
 

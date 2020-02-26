@@ -485,7 +485,25 @@ static int service_stop(svc_t *svc)
 		print_desc("Stopping ", svc->desc);
 
 	if (!svc_is_sysv(svc)) {
+		if (svc->pid <= 1)
+			goto cleanup;
+
 		res = kill(svc->pid, SIGTERM);
+
+		/* PID lost or forking process never really started */
+		if (res == -1 && ESRCH == errno) {
+			char *fn;
+
+			/* XXX: Same clenup as done by service_monitor(), refactor */
+		cleanup:
+			fn = pid_file(svc);
+			if (remove(fn) && errno != ENOENT)
+				logit(LOG_CRIT, "Failed removing service %s pidfile %s",
+				      basename(svc->cmd), fn);
+
+			/* No longer running, update books. */
+			svc->start_time = svc->pid = 0;
+		}
 	} else {
 		char *args[] = { svc->cmd, "stop", NULL };
 		pid_t pid;
@@ -1041,6 +1059,10 @@ void service_monitor(pid_t lost, int status)
 	_d("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
 	   svc->cmd, lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
 	svc->status = status;
+
+	/* Forking sysv/services declare themselves with pid:!/path/to/pid.file  */
+	if (svc_is_starting(svc) && svc_is_forking(svc))
+		return;
 
 	/* Try removing PID file (in case service does not clean up after itself) */
 	if (svc_is_daemon(svc)) {

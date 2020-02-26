@@ -29,6 +29,7 @@
 #include "finit.h"
 #include "cond.h"
 #include "helpers.h"
+#include "pid.h"
 #include "plugin.h"
 #include "service.h"
 
@@ -66,6 +67,15 @@ static void pidfile_callback(void *arg, int fd, int events)
 		mkcond(cond, sizeof(cond), svc->cmd);
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
 			svc_started(svc);
+			if (svc_is_forking(svc)) {
+				pid_t pid;
+
+				pid = pid_file_read(pid_file(svc));
+				_d("Forking service %s changed PID from %d to %d",
+				   svc->cmd, svc->pid, pid);
+				svc->pid = pid;
+			}
+
 			cond_set(cond);
 		} else if (ev->mask & IN_DELETE)
 			cond_clear(cond);
