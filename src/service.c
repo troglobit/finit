@@ -656,6 +656,21 @@ static void parse_sighalt(svc_t *svc, char *arg)
 	svc->sighalt = signo;
 }
 
+static void parse_killdelay(svc_t *svc, char *delay)
+{
+	const char *errstr;
+	long long sec;
+
+	sec = strtonum(delay, 1, 60, &errstr);
+	if (errstr) {
+		_e("%s: killdelay %s is %s (1-60)", svc->cmd, delay, errstr);
+		return;
+	}
+
+	/* convert to msec */
+	svc->killdelay = (int)(sec * 1000);
+}
+
 /*
  * name:<name>
  */
@@ -769,7 +784,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *service = NULL, *proto = NULL, *ifaces = NULL;
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
-	char *name = NULL, *halt = NULL;
+	char *name = NULL, *halt = NULL, *delay = NULL;
 	svc_t *svc;
 	plugin_t *plugin = NULL;
 
@@ -833,6 +848,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			manual = 1;
 		else if (!strncasecmp(cmd, "halt:", 5))
 			halt = &cmd[5];
+		else if (!strncasecmp(cmd, "kill:", 5))
+			delay = &cmd[5];
 		else if (cmd[0] != '/' && strchr(cmd, '/'))
 			service = cmd;   /* inetd service/proto */
 		else
@@ -961,6 +978,8 @@ recreate:
 	parse_name(svc, name);
 	if (halt)
 		parse_sighalt(svc, halt);
+	if (delay)
+		parse_killdelay(svc, delay);
 	if (log)
 		parse_log(svc, log);
 	if (desc)
@@ -1149,8 +1168,10 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
 	if ((*state == SVC_STOPPING_STATE) && !svc_is_inetd(svc)) {
+		_d("%s is stopping, wait %d sec before sending SIGKILL ...",
+		   svc->cmd, svc->killdelay / 1000);
 		service_timeout_cancel(svc);
-		service_timeout_after(svc, SVC_TERM_TIMEOUT, service_kill);
+		service_timeout_after(svc, svc->killdelay, service_kill);
 	}
 }
 
@@ -1196,6 +1217,7 @@ restart:
 	case SVC_STOPPING_STATE:
 		if (!svc->pid) {
 			/* PID was collected normally, no need to kill it */
+			_d("%s: Stopped normally, no need to send SIGKILL :)", svc->cmd);
 			service_timeout_cancel(svc);
 
 			switch (svc->type) {

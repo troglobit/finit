@@ -236,7 +236,9 @@ Syntax
   allow the process to shut down gracefully.  If the process has not
   been collected within 3 seconds, Finit sends `SIGKILL`.  To halt the
   process using a different signal, use the option `halt:SIGNAL`, e.g.,
-  `halt:SIGPWR`.
+  `halt:SIGPWR`.  To change the delay between your halt signal and KILL,
+  use the option `kill:SEC`, e.g., `kill:10` to wait 10 seconds before
+  sending `SIGKILL`.
 
 * `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
   Launch a daemon when a client initiates a connection on an Internet

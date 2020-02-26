@@ -107,6 +107,9 @@ svc_t *svc_new(char *cmd, char *id, int type)
 	/* Default HALT signal to send */
 	svc->sighalt = SIGTERM;
 
+	/* Default delay between SIGTERM and SIGKILL */
+	svc->killdelay = SVC_TERM_TIMEOUT;
+
 	TAILQ_INSERT_TAIL(&svc_list, svc, link);
 
 	return svc;
