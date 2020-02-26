@@ -339,7 +339,7 @@ static int service_start(svc_t *svc)
 		else if (svc_is_runtask(svc))
 			status = exec_runtask(svc->cmd, args);
 		else
-			status = execv(svc->cmd, args);
+			status = execvp(svc->cmd, args);
 
 #ifdef INETD_ENABLED
 		if (svc_is_inetd_conn(svc)) {
