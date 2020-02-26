@@ -280,6 +280,20 @@ from the kernel, leaving only warnings and errors.  For other kernel
 command line parameters, see [docs/build.md](docs/build.md#recovery).
 
 
+**Automatic Reload**
+
+By default, Finit monitors `/etc/finit.d/` and `/etc/finit.d/enabled/`
+registering any changes to `.conf` files.  To activate a change the user
+must call `initctl reload`, which reloads all modified files, stops any
+removed services, starts new ones, and restarts any modified ones, with
+SIGHUP if the process supports it.
+
+For some use-cases the extra step of calling `initctl reload` creates an
+unnecessary overhead, which can be removed at build-time using:
+
+    configure --enable-auto-reload
+
+
 Runparts & /etc/rc.local
 ------------------------
 

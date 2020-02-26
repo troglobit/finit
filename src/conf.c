@@ -785,8 +785,10 @@ static void conf_cb(uev_t *w, void *arg, int events)
 		}
 	}
 
+#ifdef ENABLE_AUTO_RELOAD
 	if (conf_any_change())
 		service_reload_dynamic();
+#endif
 }
 
 static int add_watcher(uev_ctx_t *ctx, uev_t *w, char *path, uint32_t opt)

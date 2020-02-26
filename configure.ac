@@ -57,6 +57,10 @@ AC_ARG_ENABLE(fallback_shell,
         AS_HELP_STRING([--enable-fallback-shell], [Start a shell if no TTYs can start]),,[
 	enable_fallback_shell=no])
 
+AC_ARG_ENABLE(auto_reload,
+        AS_HELP_STRING([--enable-auto-reload], [Automatic reload on any .conf change]),,[
+	enable_auto_reload=no])
+
 AC_ARG_ENABLE(rw-rootfs,
         AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]),,[
 	enable_rw_rootfs=no])
@@ -156,6 +160,9 @@ AS_IF([test "x$enable_emergency_shell" = "xyes"], [
 
 AS_IF([test "x$enable_fallback_shell" = "xyes"], [
         AC_DEFINE(FALLBACK_SHELL,  1, [Start /bin/sh on console if no TTYs.])])
+
+AS_IF([test "x$enable_auto_reload" = "xyes"], [
+        AC_DEFINE(AUTO_RELOAD, 1, [Finit automatically does `initctl reload` on any .conf change])])
 
 AS_IF([test "x$enable_rw_rootfs" = "xyes"], [
         AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
