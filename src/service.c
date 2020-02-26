@@ -322,7 +322,6 @@ static int service_start(svc_t *svc)
 		}
 
 		if (!svc_is_sysv(svc)) {
-			/* Serve copy of args to process in case it modifies them. */
 			for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
 				args[i] = svc->args[i];
 		} else {
