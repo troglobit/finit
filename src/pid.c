@@ -109,6 +109,25 @@ char *pid_file(svc_t *svc)
 	return pid_runpath(fn, path, sizeof(path));
 }
 
+pid_t pid_file_read(const char *fn)
+{
+	pid_t pid = 0;
+	FILE *fp;
+	char buf[42];
+
+	fp = fopen(fn, "r");
+	if (!fp)
+		return -1;
+
+	if (fgets(buf, sizeof(buf), fp)) {
+		chomp(buf);
+		pid = atoi(buf);
+	}
+	fclose(fp);
+
+	return pid;
+}
+
 int pid_file_create(svc_t *svc)
 {
 	FILE *fp;

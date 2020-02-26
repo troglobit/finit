@@ -31,6 +31,7 @@ int   pid_alive       (pid_t pid);
 char *pid_get_name    (pid_t pid, char *name, size_t len);
 
 char *pid_file        (svc_t *svc);
+pid_t pid_file_read   (const char *fn);
 int   pid_file_create (svc_t *svc);
 int   pid_file_parse  (svc_t *svc, char *arg);
 
