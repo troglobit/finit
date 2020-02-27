@@ -31,9 +31,9 @@ Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
 [contrib/](contrib/) section with tutorials for:
 
-* [Alpine Linux](contrib/alpine/),
-* [Debian GNU/Linux](contrib/debian/), and
-* [Void Linux](contrib/void/)
+  * [Void Linux](contrib/void/),
+  * [Alpine Linux](contrib/alpine/), and
+  * [Debian GNU/Linux](contrib/debian/)
 
 ![Alpine screenshot](img/alpine-screenshot.png)  
 The screenshot shows [Alpine Linux](https://www.alpinelinux.org/).
@@ -545,7 +545,7 @@ and proposed extensions.
 [openrc]:           http://www.gentoo.org/proj/en/base/openrc/
 [run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
-[EeePC fastinit]:   http://wiki.eeeuser.com/boot_process:the_boot_process
+[EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
 [Joachim Nilsson]:  http://troglobit.com
 [GitHub]:           https://github.com/troglobit/finit
