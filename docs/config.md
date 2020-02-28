@@ -203,21 +203,21 @@ Syntax
 
         pid[:[/path/to/]filename[.pid]]
 
-  For example, by adding `pid:/run/foo.pid` to the service `bar` that
-  PID file will, not only be created and removed automatically, but also
-  be used by the Finit condition subsystem.  So another service/run/task
-  can depend on `<svc/foo>`.
+  For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`
+  that PID file will, not only be created and removed automatically, but
+  also be used by the Finit condition subsystem.  So a service/run/task
+  can depend on `<svc/sbin/foo>`, notice the composition of conditions.
 
-  If a service `bar` *does* maintain a PID file, but using `foo.pid`, we
-  can inform Finit of this by prepending an `!` to the argument.
+  However, if a service `bar` *does* create a PID file, using `foo.pid`,
+  we can inform Finit of this by prepending an `!`:
 
         pid:!/run/foo.pid
 
   Here Finit will *not* create/remove/touch the PID file, only use it
   for the condition handling instead of the default PID file name.
 
-  For a detailed description of conditions, and how to debug them, see
-  the [Finit Conditions](conditions.md) document.
+>  For a detailed description of conditions, and how to debug them, see
+>  the [Finit Conditions](conditions.md) document.
 
   If a service should not be automatically started, it can be configured
   as manual with the optional `manual` argument. The service can then be
