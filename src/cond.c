@@ -49,8 +49,8 @@ const char *condstr(enum cond_state s)
 
 const char *cond_path(const char *name)
 {
-	char tmp[MAX_ARG_LEN];
 	static char path[256];
+	char tmp[MAX_ARG_LEN];
 
 	snprintf(tmp, sizeof(tmp), COND_PATH "/%s", name);
 
@@ -59,8 +59,8 @@ const char *cond_path(const char *name)
 
 unsigned int cond_get_gen(const char *file)
 {
-	char *ptr, path[256];
 	unsigned int gen;
+	char *ptr, path[256];
 	FILE *fp;
 	int ret;
 
@@ -99,9 +99,9 @@ enum cond_state cond_get(const char *name)
 
 enum cond_state cond_get_agg(const char *names)
 {
-	char *cond;
-	enum cond_state s = COND_ON;
 	static char conds[MAX_COND_LEN];
+	enum cond_state s = COND_ON;
+	char *cond;
 
 	if (!names)
 		return COND_ON;
@@ -115,8 +115,8 @@ enum cond_state cond_get_agg(const char *names)
 
 int cond_affects(const char *name, const char *names)
 {
-	char *cond;
 	static char conds[MAX_COND_LEN];
+	char *cond;
 
 	if (!name || !names)
 		return 0;

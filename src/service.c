@@ -1351,10 +1351,10 @@ restart:
 			svc_set_state(svc, SVC_RUNNING_STATE);
 			/* Reassert condition if we go from waiting and no change */
 			if (!svc_is_changed(svc)) {
-				char cond[MAX_COND_LEN];
+				char name[MAX_COND_LEN];
 
-				mkcond(cond, sizeof(cond), svc->cmd);
-				cond_set_path(cond_path(cond), COND_ON);
+				mkcond(name, sizeof(name), svc->cmd);
+				cond_set_path(cond_path(name), COND_ON);
 			}
 			break;
 

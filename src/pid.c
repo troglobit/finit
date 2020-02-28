@@ -95,8 +95,8 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 
 char *pid_file(svc_t *svc)
 {
-	char fn[MAX_ARG_LEN];
 	static char path[256];
+	char fn[MAX_ARG_LEN];
 
 	if (svc->pidfile[0]) {
 		if (svc->pidfile[0] == '!')
