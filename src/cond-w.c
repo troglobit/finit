@@ -31,6 +31,68 @@
 #include "pid.h"
 #include "service.h"
 
+/*
+ * The service condition name is constructed from the 'svc/' prefix, the
+ * dirname of the svc->cmd, e.g., '/usr/bin/teamd' => 'usr/bin', and the
+ * service's pid:filename, including an optional subdirectory, without
+ * the .pid extension.
+ *
+ * The following example uses the team (aggregate) service:
+ *
+ *    service pid:!/run/teamd/a1.pid /usr/bin/teamd -f /etc/teamd/a1.conf
+ *
+ * => 'svc/' + 'usr/bin' + 'teamd/a1' => svc/usr/bin/teamd/a1
+ *
+ * The next example uses the dbus-daemon:
+ *
+ *    service pid:!/run/dbus/pid /usr/bin/dbus-daemon
+ *
+ * => 'svc/' + 'usr/bin' + 'dbus' => svc/usr/bin/dbus
+ *
+ * The last example uses lxc-start to start container foo:
+ *
+ *    service pid:!/run/lxc/foo.pid lxc-start -n foo -F -p /run/lxc/foo.pid -- Container foo
+ *
+ * => 'svc/' + '' + 'lxc/foo' => svc/lxc/foo
+ */
+char *mkcond(svc_t *svc, char *buf, size_t len)
+{
+	char path[256];
+	char *pidfile;
+	char *ptr;
+
+	strlcpy(path, svc->cmd, sizeof(path));
+	ptr = rindex(path, '/');
+	if (ptr)
+		*ptr = 0;
+	else
+		path[0] = 0;
+
+	pidfile = pid_file(svc);
+	ptr = strstr(pidfile, "run");
+	if (ptr)
+		ptr += 3;
+	else
+		ptr = rindex(pidfile, '/');
+
+	snprintf(buf, len, "svc%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
+	_d("Composed condition from cmd %s (path %s) and pidfile %s => %s", svc->cmd, path, ptr, buf);
+
+	/* Case: /var/run/dbus/pid */
+	ptr = strstr(buf, "/pid");
+	if (ptr && !strcmp(ptr, "/pid"))
+		*ptr = 0;
+
+	/* Case /var/run/teamd/a1.pid */
+	ptr = strstr(buf, ".pid");
+	if (ptr && !strcmp(ptr, ".pid"))
+		*ptr = 0;
+
+	_d("Creating condition => %s", buf);
+
+	return buf;
+}
+
 static int cond_set_gen(const char *file, unsigned int gen)
 {
 	char *ptr, path[256];

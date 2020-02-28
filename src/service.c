@@ -1353,7 +1353,7 @@ restart:
 			if (!svc_is_changed(svc)) {
 				char name[MAX_COND_LEN];
 
-				mkcond(name, sizeof(name), svc->cmd);
+				mkcond(svc, name, sizeof(name));
 				cond_set_path(cond_path(name), COND_ON);
 			}
 			break;

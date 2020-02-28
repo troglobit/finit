@@ -1,6 +1,7 @@
 /* Simple pidfile event monitor for the Finit condition engine
  *
  * Copyright (c) 2015-2016  Tobias Waldekranz <tobias@waldekranz.com>
+ * Copyright (c) 2016-2020  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +22,10 @@
  * THE SOFTWARE.
  */
 
+#include <glob.h>
 #include <limits.h>
 #include <paths.h>
-
+#include <lite/queue.h>
 #include <sys/inotify.h>
 
 #include "finit.h"
@@ -33,52 +35,217 @@
 #include "plugin.h"
 #include "service.h"
 
+struct wd_entry {
+	TAILQ_ENTRY(wd_entry) link;
+	char *path;
+	int fd;
+};
+
 struct context {
 	int fd;
-	int wd;
+	TAILQ_HEAD(, wd_entry) wd_list;
 };
+
+static struct context pidfile_ctx;
+
+static int watcher_add(struct context *ctx, char *path)
+{
+	struct wd_entry *wd;
+	uint32_t mask = IN_ONLYDIR | IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY | IN_MOVED_TO;
+	char *ptr;
+	int fd;
+
+	_d("pidfile: Adding new watcher for path %s", path);
+	ptr = strstr(path, "run/");
+	if (ptr) {
+		char *slash;
+
+		ptr += 4;
+		slash = strchr(ptr, '/');
+		if (slash) {
+			ptr = slash++;
+			slash = strchr(ptr, '/');
+			if (slash) {
+				_d("pidfile: Path too deep, skipping.");
+				return -1;
+			}
+		}
+	}
+
+	fd = inotify_add_watch(ctx->fd, path, mask);
+	if (fd < 0) {
+		_pe("inotify_add_watch()");
+		return -1;
+	}
+
+	wd = malloc(sizeof(struct wd_entry));
+	if (!wd) {
+		_pe("Failed allocating new `struct wd_entry`");
+		inotify_rm_watch(ctx->fd, fd);
+		return -1;
+	}
+
+	wd->path = path;
+	wd->fd = fd;
+	TAILQ_INSERT_HEAD(&ctx->wd_list, wd, link);
+
+	return 0;
+}
+
+static int watcher_del(struct context *ctx, struct wd_entry *wde)
+{
+	_d("pidfile: Removing watcher for removed path %s", wde->path);
+	TAILQ_REMOVE(&ctx->wd_list, wde, link);
+	inotify_rm_watch(ctx->fd, wde->fd);
+	free(wde->path);
+	free(wde);
+
+	return 0;
+}
+
+static void update_conds(char *name, uint32_t mask)
+{
+	svc_t *svc;
+	char cond[MAX_COND_LEN];
+
+	_d("name: %s", name);
+	svc = svc_find_by_pidfile(name);
+	if (!svc) {
+		_d("pidfile: No matching svc for %s", name);
+		return;
+	}
+
+	_d("Event %s for svc %s", name, svc->cmd);
+
+	mkcond(svc, cond, sizeof(cond));
+	if (mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
+		svc_started(svc);
+		if (svc_is_forking(svc)) {
+			pid_t pid;
+
+			pid = pid_file_read(pid_file(svc));
+			_d("Forking service %s changed PID from %d to %d",
+			   svc->cmd, svc->pid, pid);
+			svc->pid = pid;
+		}
+
+		cond_set(cond);
+	} else if (mask & IN_DELETE)
+		cond_clear(cond);
+}
+
+/* synthesize events in case of new run dirs */
+static void scan_for_pidfiles(struct context *ctx, char *dir, int len)
+{
+	glob_t gl;
+	size_t i;
+	char path[len + 6];
+	int rc;
+
+	snprintf(path, sizeof(path), "%s/*.pid", dir);
+	rc = glob(path, GLOB_NOSORT, NULL, &gl);
+	if (rc && rc != GLOB_NOMATCH)
+		return;
+
+	snprintf(path, sizeof(path), "%s/pid", dir);
+	rc = glob(path, GLOB_NOSORT | GLOB_APPEND, NULL, &gl);
+	if (rc && rc != GLOB_NOMATCH)
+		return;
+
+	for (i = 0; i < gl.gl_pathc; i++) {
+		_d("scan found %s", gl.gl_pathv[i]);
+		update_conds(gl.gl_pathv[i], IN_CREATE);
+	}
+	globfree(&gl);
+}
 
 static void pidfile_callback(void *arg, int fd, int events)
 {
-	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
-	static char cond[MAX_COND_LEN];
-
 	struct inotify_event *ev;
-	ssize_t sz, len;
-	svc_t *svc;
+	ssize_t sz, off;
+	size_t buflen = 8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1;
+	char *buf;
 
-	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
-	if (sz <= 0) {
-		_pe("invalid inotify event");
+        buf= malloc(buflen);
+	if (!buf) {
+		_pe("Failed allocating buffer for inotify events");
 		return;
 	}
-	ev_buf[sz] = 0;
 
-	for (ev = (void *)ev_buf;
-	     sz > (ssize_t)sizeof(*ev);
-	     len = sizeof(*ev) + ev->len, ev = (void *)ev + len, sz -= len) {
-		if (!ev->mask || !strstr(ev->name, ".pid"))
+	_d("pidfile: Entering ... reading %zu bytes into ev_buf[]", buflen - 1);
+	sz = read(fd, buf, buflen - 1);
+	if (sz <= 0) {
+		_pe("invalid inotify event");
+		free(buf);
+		return;
+	}
+	buf[sz] = 0;
+	_d("pidfile: Read %zd bytes, processing ...", sz);
+
+	off = 0;
+	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
+		struct wd_entry *wde;
+
+		ev = (struct inotify_event *)&buf[off];
+
+		_d("pidfile: path %s, event: 0x%08x", ev->name, ev->mask);
+		if (!ev->mask)
 			continue;
 
-		svc = svc_find_by_pidfile(ev->name);
-		if (!svc)
-			continue;
+		/* Find base path for this event */
+		TAILQ_FOREACH(wde, &pidfile_ctx.wd_list, link) {
+			if (wde->fd == ev->wd)
+				break;
+		}
 
-		mkcond(cond, sizeof(cond), svc->cmd);
-		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
-			svc_started(svc);
-			if (svc_is_forking(svc)) {
-				pid_t pid;
+		if (ev->mask & IN_ISDIR) {
+			char *path;
+			int plen;
+			int exist = 0;
 
-				pid = pid_file_read(pid_file(svc));
-				_d("Forking service %s changed PID from %d to %d",
-				   svc->cmd, svc->pid, pid);
-				svc->pid = pid;
+			plen = snprintf(NULL, 0, "%s/%s", wde->path, ev->name) + 1;
+			path = malloc(plen);
+			if (!path) {
+				_pe("Failed allocating path buffer for watcher");
+				free(buf);
+				return;
+			}
+			snprintf(path, plen, "%s/%s", wde->path, ev->name);
+			_d("pidfile: path is %s", path);
+
+			TAILQ_FOREACH(wde, &pidfile_ctx.wd_list, link) {
+				if (!strcmp(wde->path, path)) {
+					exist = 1;
+					break;
+				}
 			}
 
-			cond_set(cond);
-		} else if (ev->mask & IN_DELETE)
-			cond_clear(cond);
+			if (ev->mask & IN_CREATE) {
+				if (!exist) {
+					int rc;
+
+					rc = watcher_add(&pidfile_ctx, path);
+					scan_for_pidfiles(&pidfile_ctx, path, plen);
+					if (rc)
+						free(path);
+					continue;
+				}
+			} else if (ev->mask & IN_DELETE) {
+				if (exist)
+					watcher_del(&pidfile_ctx, wde);
+			}
+
+			free(path);
+			continue; /* no more processing for dirs */
+		}
+
+		if (ev->mask & IN_DELETE) {
+			_d("pidfile %s/%s removed ...", wde->path, ev->name);
+			continue;
+		}
+
+		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
+			update_conds(ev->name, ev->mask);
 	}
 }
 
@@ -101,7 +268,7 @@ static void pidfile_reconf(void *arg)
 		if (svc_is_changed(svc) || svc_is_starting(svc))
 			continue;
 
-		mkcond(cond, sizeof(cond), svc->cmd);
+		mkcond(svc, cond, sizeof(cond));
 		if (cond_get(cond) == COND_ON)
 			continue;
 
@@ -120,8 +287,6 @@ static void pidfile_reconf(void *arg)
 static void pidfile_init(void *arg)
 {
 	char *path;
-	struct context *ctx = arg;
-	uint32_t mask = IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY | IN_MOVED_TO;
 
 	/*
 	 * The bootmisc plugin is responsible for setting up /var/run.
@@ -134,15 +299,9 @@ static void pidfile_init(void *arg)
 		return;
 	}
 
-	ctx->wd = inotify_add_watch(ctx->fd, path, mask);
-	free(path);
-
-	if (ctx->wd < 0) {
-		_pe("inotify_add_watch()");
-		close(ctx->fd);
-		return;
-	}
-
+	TAILQ_INIT(&pidfile_ctx.wd_list);
+	if (watcher_add(&pidfile_ctx, path))
+		close(pidfile_ctx.fd);
 	_d("pidfile monitor active");
 }
 
@@ -154,7 +313,7 @@ static struct context pidfile_ctx;
  */
 static plugin_t plugin = {
 	.name = __FILE__,
-	.hook[HOOK_BASEFS_UP]  = { .arg = &pidfile_ctx, .cb = pidfile_init },
+	.hook[HOOK_BASEFS_UP]  = { .cb = pidfile_init   },
 	.hook[HOOK_SVC_RECONF] = { .cb = pidfile_reconf },
 	.io = {
 		.cb    = pidfile_callback,
@@ -177,7 +336,13 @@ PLUGIN_INIT(plugin_init)
 
 PLUGIN_EXIT(plugin_exit)
 {
-	inotify_rm_watch(pidfile_ctx.fd, pidfile_ctx.wd);
+	struct wd_entry *wde, *tmp;
+
+	TAILQ_FOREACH_SAFE(wde, &pidfile_ctx.wd_list, link, tmp) {
+		inotify_rm_watch(pidfile_ctx.fd, wde->fd);
+		free(wde->path);
+		free(wde);
+	}
 	close(pidfile_ctx.fd);
 
 	plugin_unregister(&plugin);

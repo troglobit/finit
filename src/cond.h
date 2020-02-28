@@ -2,6 +2,7 @@
 #define FINIT_COND_H_
 
 #include <paths.h>
+#include <svc.h>
 
 #define COND_DIR      "finit/cond"
 #define COND_PATH     _PATH_VARRUN COND_DIR
@@ -13,7 +14,7 @@ typedef enum cond_state {
 	COND_ON
 } cond_state_t;
 
-char           *mkcond       (char *buf, size_t len, char *nm);
+char           *mkcond       (svc_t *svc, char *buf, size_t len);
 const char     *condstr      (enum cond_state s);
 const char     *cond_path    (const char *name);
 unsigned int    cond_get_gen (const char *path);
