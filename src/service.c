@@ -171,7 +171,6 @@ static void redirect(svc_t *svc)
 
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
-		close(fd);
 
 		pid = fork();
 		if (pid == 0) {
@@ -206,6 +205,8 @@ static void redirect(svc_t *svc)
 			execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
 			_exit(0);
 		}
+
+		close(fd);
 	} else if (log_is_debug()) {
 		int fd;
 
