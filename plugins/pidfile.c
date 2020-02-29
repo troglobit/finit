@@ -176,8 +176,7 @@ static void pidfile_callback(void *arg, int fd, int events)
 	sz = read(fd, buf, buflen - 1);
 	if (sz <= 0) {
 		_pe("invalid inotify event");
-		free(buf);
-		return;
+		goto done;
 	}
 	buf[sz] = 0;
 	_d("pidfile: Read %zd bytes, processing ...", sz);
@@ -207,8 +206,7 @@ static void pidfile_callback(void *arg, int fd, int events)
 			path = malloc(plen);
 			if (!path) {
 				_pe("Failed allocating path buffer for watcher");
-				free(buf);
-				return;
+				goto done;
 			}
 			snprintf(path, plen, "%s/%s", wde->path, ev->name);
 			_d("pidfile: path is %s", path);
@@ -247,6 +245,8 @@ static void pidfile_callback(void *arg, int fd, int events)
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
 			update_conds(ev->name, ev->mask);
 	}
+done:
+	free(buf);
 }
 
 /*
