@@ -159,6 +159,44 @@ static void scan_for_pidfiles(struct context *ctx, char *dir, int len)
 	globfree(&gl);
 }
 
+static void handle_dir(struct context *ctx, struct wd_entry *wde, char *name, int mask)
+{
+	char *path;
+	int plen;
+	int exist = 0;
+
+	plen = snprintf(NULL, 0, "%s/%s", wde->path, name) + 1;
+	path = malloc(plen);
+	if (!path) {
+		_pe("Failed allocating path buffer for watcher");
+		return;
+	}
+	snprintf(path, plen, "%s/%s", wde->path, name);
+	_d("pidfile: path is %s", path);
+
+	TAILQ_FOREACH(wde, &ctx->wd_list, link) {
+		if (!strcmp(wde->path, path)) {
+			exist = 1;
+			break;
+		}
+	}
+
+	if (mask & IN_CREATE) {
+		if (!exist) {
+			int rc = watcher_add(ctx, path);
+
+			scan_for_pidfiles(ctx, path, plen);
+			if (!rc)
+				return;
+		}
+	} else if (mask & IN_DELETE) {
+		if (exist)
+			watcher_del(&pidfile_ctx, wde);
+	}
+
+	free(path);
+}
+
 static void pidfile_callback(void *arg, int fd, int events)
 {
 	struct inotify_event *ev;
@@ -198,43 +236,8 @@ static void pidfile_callback(void *arg, int fd, int events)
 		}
 
 		if (ev->mask & IN_ISDIR) {
-			char *path;
-			int plen;
-			int exist = 0;
-
-			plen = snprintf(NULL, 0, "%s/%s", wde->path, ev->name) + 1;
-			path = malloc(plen);
-			if (!path) {
-				_pe("Failed allocating path buffer for watcher");
-				goto done;
-			}
-			snprintf(path, plen, "%s/%s", wde->path, ev->name);
-			_d("pidfile: path is %s", path);
-
-			TAILQ_FOREACH(wde, &pidfile_ctx.wd_list, link) {
-				if (!strcmp(wde->path, path)) {
-					exist = 1;
-					break;
-				}
-			}
-
-			if (ev->mask & IN_CREATE) {
-				if (!exist) {
-					int rc;
-
-					rc = watcher_add(&pidfile_ctx, path);
-					scan_for_pidfiles(&pidfile_ctx, path, plen);
-					if (rc)
-						free(path);
-					continue;
-				}
-			} else if (ev->mask & IN_DELETE) {
-				if (exist)
-					watcher_del(&pidfile_ctx, wde);
-			}
-
-			free(path);
-			continue; /* no more processing for dirs */
+			handle_dir(&pidfile_ctx, wde, ev->name, ev->mask);
+			continue;
 		}
 
 		if (ev->mask & IN_DELETE) {
