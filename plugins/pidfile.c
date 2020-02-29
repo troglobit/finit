@@ -55,7 +55,6 @@ static int watcher_add(struct context *ctx, char *path)
 	char *ptr;
 	int fd;
 
-	_d("pidfile: Adding new watcher for path %s", path);
 	ptr = strstr(path, "run/");
 	if (ptr) {
 		char *slash;
@@ -94,7 +93,6 @@ static int watcher_add(struct context *ctx, char *path)
 
 static int watcher_del(struct context *ctx, struct wd_entry *wde)
 {
-	_d("pidfile: Removing watcher for removed path %s", wde->path);
 	TAILQ_REMOVE(&ctx->wd_list, wde, link);
 	inotify_rm_watch(ctx->fd, wde->fd);
 	free(wde->path);
@@ -108,14 +106,11 @@ static void update_conds(char *name, uint32_t mask)
 	svc_t *svc;
 	char cond[MAX_COND_LEN];
 
-	_d("name: %s", name);
 	svc = svc_find_by_pidfile(name);
 	if (!svc) {
 		_d("pidfile: No matching svc for %s", name);
 		return;
 	}
-
-	_d("Event %s for svc %s", name, svc->cmd);
 
 	mkcond(svc, cond, sizeof(cond));
 	if (mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
@@ -172,7 +167,6 @@ static void handle_dir(struct context *ctx, struct wd_entry *wde, char *name, in
 		return;
 	}
 	snprintf(path, plen, "%s/%s", wde->path, name);
-	_d("pidfile: path is %s", path);
 
 	TAILQ_FOREACH(wde, &ctx->wd_list, link) {
 		if (!strcmp(wde->path, path)) {
@@ -210,14 +204,12 @@ static void pidfile_callback(void *arg, int fd, int events)
 		return;
 	}
 
-	_d("pidfile: Entering ... reading %zu bytes into ev_buf[]", buflen - 1);
 	sz = read(fd, buf, buflen - 1);
 	if (sz <= 0) {
 		_pe("invalid inotify event");
 		goto done;
 	}
 	buf[sz] = 0;
-	_d("pidfile: Read %zd bytes, processing ...", sz);
 
 	off = 0;
 	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
@@ -225,7 +217,6 @@ static void pidfile_callback(void *arg, int fd, int events)
 
 		ev = (struct inotify_event *)&buf[off];
 
-		_d("pidfile: path %s, event: 0x%08x", ev->name, ev->mask);
 		if (!ev->mask)
 			continue;
 
@@ -237,11 +228,6 @@ static void pidfile_callback(void *arg, int fd, int events)
 
 		if (ev->mask & IN_ISDIR) {
 			handle_dir(&pidfile_ctx, wde, ev->name, ev->mask);
-			continue;
-		}
-
-		if (ev->mask & IN_DELETE) {
-			_d("pidfile %s/%s removed ...", wde->path, ev->name);
 			continue;
 		}
 
@@ -305,7 +291,6 @@ static void pidfile_init(void *arg)
 	TAILQ_INIT(&pidfile_ctx.wd_list);
 	if (watcher_add(&pidfile_ctx, path))
 		close(pidfile_ctx.fd);
-	_d("pidfile monitor active");
 }
 
 static struct context pidfile_ctx;
