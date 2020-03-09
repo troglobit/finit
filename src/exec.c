@@ -468,7 +468,7 @@ int run_parts(char *dir, char *cmd)
 		char *name = e[i]->d_name;
 		pid_t pid = 0;
 
-		snprintf(path, sizeof(path), "%s/%s ", dir, name);
+		snprintf(path, sizeof(path), "%s/%s", dir, name);
 		if (stat(path, &st)) {
 			_d("Failed stat(%s): %s", path, strerror(errno));
 			continue;
