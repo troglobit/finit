@@ -73,7 +73,7 @@ typedef enum {
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
 #define MAX_USER_LEN     16
 #define MAX_NUM_FDS      64	     /* Max number of I/O plugins */
-#define MAX_NUM_SVC_ARGS 32
+#define MAX_NUM_SVC_ARGS 64
 
 /* Default kill delay (msec) after SIGTERM (svc->sighalt) that we SIGKILL processes */
 #define SVC_TERM_TIMEOUT 3000
