@@ -484,9 +484,9 @@ int run_parts(char *dir, char *cmd)
 			/* Check if S<NUM>service or K<NUM>service notation is used */
 			_d("Checking if %s is a sysvinit startstop script ...", name);
 			if (name[0] == 'S' && isdigit(name[1]))
-				strlcat(path, "start", sizeof(path));
+				strlcat(path, " start", sizeof(path));
 			else if (name[0] == 'K' && isdigit(name[1]))
-				strlcat(path, "stop", sizeof(path));
+				strlcat(path, " stop", sizeof(path));
 		} else {
 			strlcat(path, cmd, sizeof(path));
 		}
