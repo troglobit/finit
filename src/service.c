@@ -333,6 +333,7 @@ static int service_start(svc_t *svc)
 		args[i] = NULL;
 
 		redirect(svc);
+		setsid();
 		sig_unblock();
 
 		if (svc->inetd.cmd)
