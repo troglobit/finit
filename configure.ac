@@ -77,10 +77,6 @@ AC_ARG_ENABLE(watchdog,
         AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
 	enable_watchdog=no])
 
-AC_ARG_ENABLE(logit,
-     AS_HELP_STRING([--enable-logit], [Enable logger (sysklogd) replacement, default: disabled]),,[
-     enable_logit=no])
-
 AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--enable-redirect], [Redirect service output to /dev/null, default: no]),,[
 	enable_redirect_output=no])
@@ -88,6 +84,10 @@ AC_ARG_ENABLE(redirect,
 AC_ARG_ENABLE(inetd,
         AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]),,[
 	enable_inetd=yes])
+
+AC_ARG_ENABLE(logit,
+     AS_HELP_STRING([--disable-logit], [Disable logit, used for log redirection, default: enable]),,[
+     enable_logit=yes])
 
 AC_ARG_ENABLE(logrotate,
         AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
