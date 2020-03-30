@@ -191,6 +191,9 @@ AS_IF([test "x$enable_inetd" != "xno"], [
 	enable_inetd="yes"
 	AC_DEFINE(INETD_ENABLED,  1, [Enable built-in inetd])])
 
+AS_IF([test "x$enable_logit" != "xno"], [
+	AC_DEFINE(LOGIT_ENABLED,  1, [Enable logit tool, used for log redirection by Finit])])
+
 AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
 

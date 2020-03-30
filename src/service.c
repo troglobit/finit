@@ -133,6 +133,99 @@ static int fredirect(const char *file)
 	return -1;
 }
 
+#ifndef LOGIT_ENABLED
+/*
+ * Fallback in case we don't even have logger on the system.
+ * XXX: we should parse 'prio' here to get facility.level
+ */
+static void fallback_logger(char *ident, char *prio)
+{
+	int facility = LOG_DAEMON;
+	int level = LOG_NOTICE;
+	char buf[256];
+
+	openlog(ident, LOG_NOWAIT | LOG_PID, facility);
+	while ((fgets(buf, sizeof(buf), stdin)))
+		syslog(level, "%s", buf);
+
+	closelog();
+}
+#endif
+
+/*
+ * Redirect output to syslog using the command line logit tool
+ */
+static int lredirect(svc_t *svc)
+{
+	pid_t pid;
+	int fd;
+
+	/*
+	 * Open PTY to connect to logger.  A pty isn't buffered
+	 * like a pipe, and it eats newlines so they aren't logged
+	 */
+	fd = posix_openpt(O_RDWR);
+	if (fd == -1) {
+		svc->log.enabled = 0;
+		return -1;
+	}
+	if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
+		close(fd);
+		svc->log.enabled = 0;
+		return -1;
+	}
+
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
+
+	pid = fork();
+	if (pid == 0) {
+		int fds;
+		char *tag  = basename(svc->cmd);
+		char *prio = "daemon.info";
+
+		fds = open(ptsname(fd), O_RDONLY);
+		close(fd);
+		if (fds == -1)
+			_exit(0);
+		dup2(fds, STDIN_FILENO);
+
+		/* Reset signals */
+		sig_unblock();
+
+		if (svc->log.file[0] == '/') {
+#ifdef LOGIT_ENABLED
+			char sz[20], num[3];
+
+			snprintf(sz, sizeof(sz), "%d", logfile_size_max);
+			snprintf(num, sizeof(num), "%d", logfile_count_max);
+
+			execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+			_exit(0);
+#else
+			logit(LOG_INFO, "logit disabled, logging %s to syslog instead", svc->name);
+#endif
+		}
+
+		if (svc->log.ident[0])
+			tag = svc->log.ident;
+		if (svc->log.prio[0])
+			prio = svc->log.prio;
+
+#ifdef LOGIT_ENABLED
+		execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
+#else
+		if (whichp("logger"))
+			execlp("logger", "logger", "-t", tag, "-p", prio, NULL);
+
+		fallback_logger(tag, prio);
+#endif
+		_exit(0);
+	}
+
+	return close(fd);
+}
+
 /*
  * Handle redirection of process output, if enabled
  */
@@ -149,67 +242,12 @@ static int redirect(svc_t *svc)
 #endif
 
 	if (svc->log.enabled) {
-		pid_t pid;
-		int fd;
-
 		if (svc->log.null)
 			return fredirect("/dev/null");
 		if (svc->log.console)
 			return fredirect(CONSOLE);
 
-		/*
-		 * Open PTY to connect to logger.  A pty isn't buffered
-		 * like a pipe, and it eats newlines so they aren't logged
-		 */
-		fd = posix_openpt(O_RDWR);
-		if (fd == -1) {
-			svc->log.enabled = 0;
-			return -1;
-		}
-		if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
-			close(fd);
-			svc->log.enabled = 0;
-			return -1;
-		}
-
-		dup2(fd, STDOUT_FILENO);
-		dup2(fd, STDERR_FILENO);
-
-		pid = fork();
-		if (pid == 0) {
-			int fds;
-			char *tag  = basename(svc->cmd);
-			char *prio = "daemon.info";
-
-			fds = open(ptsname(fd), O_RDONLY);
-			close(fd);
-			if (fds == -1)
-				_exit(0);
-			dup2(fds, STDIN_FILENO);
-
-			/* Reset signals */
-			sig_unblock();
-
-			if (svc->log.file[0] == '/') {
-				char sz[20], num[3];
-
-				snprintf(sz, sizeof(sz), "%d", logfile_size_max);
-				snprintf(num, sizeof(num), "%d", logfile_count_max);
-
-				execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
-				_exit(0);
-			}
-
-			if (svc->log.ident[0])
-				tag = svc->log.ident;
-			if (svc->log.prio[0])
-				prio = svc->log.prio;
-
-			execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
-			_exit(0);
-		}
-
-		return close(fd);
+		return lredirect(svc);
 	} else if (log_is_debug())
 		return fredirect(CONSOLE);
 #ifdef REDIRECT_OUTPUT
