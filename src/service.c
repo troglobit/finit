@@ -116,22 +116,27 @@ static int service_timeout_cancel(svc_t *svc)
 	return err;
 }
 
-static void redirect_null(void)
+/*
+ * Redirect output to a file, e.g., /dev/null, or /dev/console
+ */
+static int fredirect(const char *file)
 {
-	FILE *fp;
+	int fd;
 
-	fp = fopen("/dev/null", "w");
-	if (fp) {
-		dup2(fileno(fp), STDOUT_FILENO);
-		dup2(fileno(fp), STDERR_FILENO);
-		fclose(fp);
+	fd = open(file, O_WRONLY | O_APPEND);
+	if (-1 != fd) {
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+		return close(fd);
 	}
+
+	return -1;
 }
 
 /*
  * Handle redirection of process output, if enabled
  */
-static void redirect(svc_t *svc)
+static int redirect(svc_t *svc)
 {
 	/* Redirect inetd socket to stdin for connection */
 #ifdef INETD_ENABLED
@@ -147,12 +152,10 @@ static void redirect(svc_t *svc)
 		pid_t pid;
 		int fd;
 
-		if (svc->log.null) {
-			redirect_null();
-			return;
-		}
+		if (svc->log.null)
+			return fredirect("/dev/null");
 		if (svc->log.console)
-			return;
+			return fredirect(CONSOLE);
 
 		/*
 		 * Open PTY to connect to logger.  A pty isn't buffered
@@ -161,12 +164,12 @@ static void redirect(svc_t *svc)
 		fd = posix_openpt(O_RDWR);
 		if (fd == -1) {
 			svc->log.enabled = 0;
-			return;
+			return -1;
 		}
 		if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
 			close(fd);
 			svc->log.enabled = 0;
-			return;
+			return -1;
 		}
 
 		dup2(fd, STDOUT_FILENO);
@@ -206,21 +209,15 @@ static void redirect(svc_t *svc)
 			_exit(0);
 		}
 
-		close(fd);
-	} else if (log_is_debug()) {
-		int fd;
-
-		fd = open(CONSOLE, O_WRONLY | O_APPEND);
-		if (-1 != fd) {
-			dup2(fd, STDOUT_FILENO);
-			dup2(fd, STDERR_FILENO);
-			close(fd);
-		}
-	}
+		return close(fd);
+	} else if (log_is_debug())
+		return fredirect(CONSOLE);
 #ifdef REDIRECT_OUTPUT
 	else
-		redirect_null();
+		return fredirect("/dev/null");
 #endif
+
+	return 0;
 }
 
 static int is_norespawn(void)
@@ -332,8 +329,21 @@ static int service_start(svc_t *svc)
 		}
 		args[i] = NULL;
 
-		redirect(svc);
+		/*
+		 * The setsid() call is the most humble of all in this
+		 * function.  It takes care to detach the process from
+		 * its controlling terminal, preventing daemons from
+		 * leaking to the console, and allowing us to run such
+		 * programs like `lxc-start -F` in the foreground to
+		 * properly monitor them.
+		 *
+		 * If you find yourself here wanting to fix the output
+		 * to the console at boot, for debugging or similar,
+		 * have a look at redirect() and log.console instead.
+		 */
 		setsid();
+
+		redirect(svc);
 		sig_unblock();
 
 		if (svc->inetd.cmd)
