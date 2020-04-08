@@ -476,7 +476,7 @@ static void service_kill(svc_t *svc)
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
-	kill(svc->pid, SIGKILL);
+	kill(-svc->pid, SIGKILL);
 
 	/* Let SIGKILLs stand out, show result as [WARN] */
 	if (runlevel != 1)
@@ -539,7 +539,7 @@ static int service_stop(svc_t *svc)
 		if (svc->pid <= 1)
 			goto cleanup;
 
-		res = kill(svc->pid, svc->sighalt);
+		res = kill(-svc->pid, svc->sighalt);
 
 		/* PID lost or forking process never really started */
 		if (res == -1 && ESRCH == errno) {
