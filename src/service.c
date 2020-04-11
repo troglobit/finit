@@ -117,6 +117,23 @@ static int service_timeout_cancel(svc_t *svc)
 }
 
 /*
+ * Redirect stdin to /dev/null => all reads by process = EOF
+ * https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Logging%20and%20Standard%20Input/Output
+ */
+static int stdin_redirect(void)
+{
+	int fd;
+
+	fd = open("/dev/null", O_RDONLY | O_APPEND);
+	if (-1 != fd) {
+		dup2(fd, STDIN_FILENO);
+		return close(fd);
+	}
+
+	return -1;
+}
+
+/*
  * Redirect output to a file, e.g., /dev/null, or /dev/console
  */
 static int fredirect(const char *file)
@@ -238,8 +255,11 @@ static int redirect(svc_t *svc)
 		close(svc->stdin_fd);
 		dup2(STDIN_FILENO, STDOUT_FILENO);
 		dup2(STDIN_FILENO, STDERR_FILENO);
-	} else
+
+		return 0;
+	}
 #endif
+	stdin_redirect();
 
 	if (svc->log.enabled) {
 		if (svc->log.null)
