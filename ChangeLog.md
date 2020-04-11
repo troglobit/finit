@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[3.2][UNRELEASED] - 2020-01-xx
+[3.2][UNRELEASED] - 2020-04-xx
 ------------------------------
 
 Bug fix release, but also cgroups and a new progress!
@@ -12,10 +12,17 @@ Bug fix release, but also cgroups and a new progress!
   https://twitter.com/b0rk/status/1214341831049252870?s=20
 
 ### Changes
+* Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
 * Support for `sysv` start/stop scripts as well as monitoring forking
   services, stared using `sysv` or `service` stanza
+* Support for custom `kill:DELAY`, default 3 sec.
+* Support for custom `halt:SIGNAL`, default SIGTERM
+* Support for tracking custom PID files, using `pid:!/path/to/foo.pid`,
+  useful with new `sysv` or `service` which fork to background
+* Support starting run/task/services without absolute path, trust `$PATH`
 * Add support for `--disable-docs` and `--disable-contrib` to speed up
   builds and work around issue with massively parallel builds
+* Add support for `@console` also for external getty
 * Add `-b`, batch mode, for non-interactive use to `initctl`
 * Prefer udev to handle `/dev/` if mdev is also available
 * Redirect dbus daemon output to syslog
@@ -23,7 +30,7 @@ Bug fix release, but also cgroups and a new progress!
 * Finit no longer automatically reloads its `*.conf` files after running
   `/etc/rc.local` or run-parts.  Use `initctl reload` instead.
 * `initctl` without an argument or option now defaults to list services
-* Converted built-in watchdog daemon to standalone mini watchdogd
+* Convert built-in watchdog daemon to standalone mini watchdogd, issue #102
 * Improved watchdog hand-over, now based on `svc_t` and not PID
 * Extended bootstrap, runlevel S, timeout: 10 --> 120 sec. before services
   not allowed in the runtime runlevel are unconditionally stopped
@@ -38,7 +45,19 @@ Bug fix release, but also cgroups and a new progress!
   the kernel can invalidate deleted events before enqueing to userspace
 * Rename `hwclock.so` plugin to `rtc.so` since it now is stand-alone
   from the `hwclock` tool.  Note: the kernel can also be set to load
-  and store RTC to/from system clock at boot/halt as well.
+  and store RTC to/from system clock at boot/halt as well, issue #110
+* New plugin to support cold plugging devices, auto-loading of modules
+  at boot.  Detects required modules by reading `/sys/devices/*`
+* New plugin for `/etc/modules-load.d/` by Robert Andersson, Atlas Copco
+* New `name:foo` support for services, by Robert Andersson, Atlas Copco
+* New `manual:yes` support for services, by Robert Andersson, Atlas Copco
+* New `log:console` support for services, by Robert Andersson, Atlas Copco
+* Support for `:ID` as a string, by Jonas Johansson, Westermo
+* Support for auto-reload, instead of having to do `initctl reload`,
+  when a service configuration has changed.  Disabled by default, but
+  can be enabled with `./configure --enable-auto-reload`
+* Support for logging security related events, e.g., runlevel change,
+  star/stop or failure to start services, by Jonas Holmberg, Westermo
 
 ### Fixes
 
@@ -57,18 +76,29 @@ Bug fix release, but also cgroups and a new progress!
   that do not have a watchdog
 * Fix #100: Early condition handling may not work if `/var/run` does
   not yet exist (symlink to `/run`).  Added compat layer for access
-* Fix #103: Register multiple getty if `@console` resolves to >1 TTY
+* Fix #103: Register multiple getty if `@console` resolves to >1 TTY,
 * Fix #105: Only remove /etc/nologin when moving from runlevel 0, 1, 6
 * Fix #106: Don't mark inetd connections for deletion at .conf reload.
   Fixed by Jonas Johansson, Westermo
 * Fix #107: Stop spawned inetd conncections when stopping inetd service.
   Fixed by Jonas Johansson, Westermo
+* Fix #109: Support for PID files in sub-directories to `/var/run`
+* Handle rename of PID files, by Robert Andersson, Atlas Copco
 * Fix #111: Only restart inetd services when necessary.  E.g., if the
   listening interface is changed.  Only stop established connections
   which are no longer allowed, i.e. do not touch already allowed
   established connections.  Fixed by Jonas Johansson, Westermo
+* Fix #120: Redirect `stdin` to `/dev/null` for services by default
+* Fix #122: Switch to `nanosleep()` to achieve "signal safe" sleep,
+  fixed by Jacques de Laval, Westermo
+* Fix #124: Lingering processes in process group when session leader
+  exits.  E.g., lingering `logit` processes when parent dies
 * Fix: update inetd service args on config change.  Found and fixed by
   Petrus Hellgren, Westermo
+* Fix service name matching, e.g. for condition handling, may match with
+  wrong service, by Jonas Holmberg, Westermo
+* Run all run-parts scripts using `/bin/sh -c foo` just like the standard
+  run-parts tool.  Found by Magnus Malm, Westermo
 * Fix `initctl [start | restart]`, should behave the same for services
   that have crashed.  Found by Mattias Walström, Westermo
 * Wait for bootstrap phase to complete before cleaning out any bootstrap
@@ -76,7 +106,9 @@ Bug fix release, but also cgroups and a new progress!
 * Reassert condition when an unmodified run/task/service goes from
   WAITING back to RUNNING again after a reconfiguration event.  
   Found and fixed by Jonas Johansson, Westermo
+* Restore Ctrl-D and Ctrl-U support in built-in getty
 * Remove service condition when service is deleted
+* Fix C++ compilation issues, by Robert Andersson, Atlas Copco
 
 
 [3.1][] - 2018-01-23
