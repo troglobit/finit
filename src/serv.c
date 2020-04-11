@@ -128,8 +128,8 @@ int serv_list(char *arg)
 int serv_enable(char *arg)
 {
 	char corr[40];
-	char link[80];
-	char path[80];
+	char link[256];
+	char path[256];
 
 	if (!arg || !arg[0])
 		return serv_list(NULL);
@@ -157,7 +157,7 @@ int serv_enable(char *arg)
 int serv_disable(char *arg)
 {
 	char corr[40];
-	char link[80];
+	char link[256];
 	struct stat st;
 
 	if (!arg || !arg[0])
