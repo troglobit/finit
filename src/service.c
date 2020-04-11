@@ -319,7 +319,7 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
-	cgroup_service(svc->cmd, pid);
+	cgroup_service(svc->name, svc->id, pid);
 
 	if (pid == 0) {
 		int status;

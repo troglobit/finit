@@ -98,11 +98,11 @@ fail:
 	fclose(fp);
 }
 
-static int move_pid(char *group, char *name, int pid)
+static int move_pid(char *group, char *name, char *id, int pid)
 {
 	char path[256];
 
-	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
+	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s:%s", group, name, id);
 	if (mkdir(path, 0755) && errno != EEXIST)
 		return 1;
 
@@ -116,13 +116,11 @@ int cgroup_user(char *name)
 	if (!cg_init)
 		return 0;
 
-	return move_pid("finit/user", name, getpid());
+	return move_pid("finit/user", name, "0", getpid());
 }
 
-int cgroup_service(char *cmd, int pid)
+int cgroup_service(char *nm, char *id, int pid)
 {
-	char *nm;
-
 	if (!cg_init)
 		return 0;
 
@@ -131,13 +129,7 @@ int cgroup_service(char *cmd, int pid)
 		return 1;
 	}
 
-	nm = strrchr(cmd, '/');
-	if (nm)
-		nm++;
-	else
-		nm = cmd;
-
-	return move_pid("finit/system", nm, pid);
+	return move_pid("finit/system", nm, id, pid);
 }
 
 /**
