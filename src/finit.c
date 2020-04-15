@@ -421,9 +421,9 @@ int main(int argc, char *argv[])
 	else if (whichp("udevadm"))
 		run_interactive("udevadm info --cleanup-db", "Cleaning up udev db");
 
-	/* Some systems use /dev/pts */
+	/* Modern systems use /dev/pts */
 	makedir("/dev/pts", 0755);
-	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620");
+	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620,ptmxmode=0666");
 
 	/*
 	 * Some systems rely on us to both create /dev/shm and, to mount
