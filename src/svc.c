@@ -25,6 +25,7 @@
 #include <err.h>
 #include <ctype.h>		/* isdigit() */
 #include <time.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/time.h>
