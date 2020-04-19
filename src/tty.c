@@ -161,7 +161,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 		if ((!cmd && !dev) || (cmd && !dev)) {
 			if (args[i][0] == '[')
 				runlevels = line;
-			if (!strcmp(args[i], "@console"))
+			if (!strcmp(args[i], "@console") || !strcmp(args[i], "console"))
 				dev = args[i];
 			if (!strncmp(args[i], "/dev", 4))
 				dev = args[i];
@@ -197,7 +197,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 	}
 
 	/* Auto-detect serial console, for embedded devices mostly */
-	if (!strcmp(dev, "@console")) {
+	if (!strcmp(dev, "@console") || !strcmp(dev, "console")) {
 		FILE *fp;
 
 		fp = fopen("/sys/class/tty/console/active", "r");
@@ -262,7 +262,7 @@ again:
 			char *arg = args[i];
 
 			/* Replace @console with actual device */
-			if (arg && !strcmp(arg, "@console"))
+			if (arg && (!strcmp(arg, "@console") || !strcmp(arg, "console")))
 				arg = dev;
 			if (arg)
 				entry->args[j++] = strdup(arg);
