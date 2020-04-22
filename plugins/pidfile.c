@@ -103,19 +103,22 @@ static int watcher_del(struct context *ctx, struct wd_entry *wde)
 	return 0;
 }
 
-static void update_conds(char *name, uint32_t mask)
+static void update_conds(char *dir, char *name, uint32_t mask)
 {
-	svc_t *svc;
 	char cond[MAX_COND_LEN];
+	char fn[PATH_MAX];
+	svc_t *svc;
 
-	_d("name: %s", name);
-	svc = svc_find_by_pidfile(name);
+	_d("Got dir: %s, name: %s, mask: %08x", dir, name, mask);
+	snprintf(fn, sizeof(fn), "%s/%s", dir, name);
+
+	svc = svc_find_by_pidfile(fn);
 	if (!svc) {
-		_d("pidfile: No matching svc for %s", name);
+		_d("pidfile: No matching svc for %s", fn);
 		return;
 	}
 
-	_d("Event %s for svc %s", name, svc->cmd);
+	_d("pidfile: Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
 
 	mkcond(svc, cond, sizeof(cond));
 	if (mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
@@ -154,7 +157,7 @@ static void scan_for_pidfiles(struct context *ctx, char *dir, int len)
 
 	for (i = 0; i < gl.gl_pathc; i++) {
 		_d("scan found %s", gl.gl_pathv[i]);
-		update_conds(gl.gl_pathv[i], IN_CREATE);
+		update_conds(dir, gl.gl_pathv[i], IN_CREATE);
 	}
 	globfree(&gl);
 }
@@ -246,7 +249,7 @@ static void pidfile_callback(void *arg, int fd, int events)
 		}
 
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
-			update_conds(ev->name, ev->mask);
+			update_conds(wde->path, ev->name, ev->mask);
 	}
 done:
 	free(buf);
