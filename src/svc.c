@@ -60,6 +60,7 @@ static void svc_gc(void *arg)
 			continue;
 
 		TAILQ_REMOVE(&gc_list, svc, link);
+		_d("Cleaning out %s, clearing any conditions ...", svc->name);
 		cond_clear(mkcond(svc, cond, sizeof(cond)));
 		free(svc);
 	}

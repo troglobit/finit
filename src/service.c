@@ -1427,11 +1427,13 @@ restart:
 				char name[MAX_COND_LEN];
 
 				mkcond(svc, name, sizeof(name));
+				_d("Reassert condition %s", name);
 				cond_set_path(cond_path(name), COND_ON);
 			}
 			break;
 
 		case COND_OFF:
+			_d("Condition for %s is off, sending SIGCONT + SIGTERM", svc->name);
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
 			break;
