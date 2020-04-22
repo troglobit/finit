@@ -440,7 +440,7 @@ int main(int argc, char *argv[])
 	 * For details, see http://lwn.net/Articles/436012/
 	 */
 	if (fisdir("/run") && !fismnt("/run"))
-		mount("tmpfs", "/run", "tmpfs", MS_NODEV, "mode=0755,size=10%,nosuid,nodev,noexec");
+		mount("tmpfs", "/run", "tmpfs", MS_NODEV | MS_NOSUID | MS_NOEXEC, "mode=0755,size=10%");
 	umask(022);
 
 	/* Bootstrap conditions, needed for hooks */
