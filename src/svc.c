@@ -376,6 +376,14 @@ svc_t *svc_find_by_nameid(char *name, char *id)
  * svc_find_by_plidfile - Find an service object by its PID file
  * @fn: PID file, can be absolute path or relative to /run
  *
+ * This function is primarily used by the pidfile plugin to track the
+ * conditions and dependencies of services.
+ *
+ * Note, the PID file is assumed to exist so the contents can be
+ * compared to the the PID of a located service.  There may be several
+ * services, in many runlevels, that use the same name for the PID file.
+ * So we won't know for sure until the PID is compared.
+ *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
@@ -385,9 +393,17 @@ svc_t *svc_find_by_pidfile(char *fn)
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		char path[MAX_ARG_LEN];
+		pid_t pid;
 
-		if (string_compare(pid_runpath(fn, path, sizeof(path)), pid_file(svc)))
-			return svc;
+		pid_runpath(fn, path, sizeof(path));
+		if (!string_compare(path, pid_file(svc)))
+			continue;
+
+		pid = pid_file_read(path);
+		if (svc->pid != pid)
+			continue;
+
+		return svc;
 	}
 
 	return NULL;
