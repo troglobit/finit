@@ -390,13 +390,28 @@ svc_t *svc_find_by_nameid(char *name, char *id)
 svc_t *svc_find_by_pidfile(char *fn)
 {
 	svc_t *svc, *iter = NULL;
+	char adjpath[strlen(fn) + 10]; /* + sizeof("/var/run/") */
+	char fnpath[PATH_MAX];
+
+	pid_runpath(fn, adjpath, sizeof(adjpath));
+	if (!realpath(adjpath, fnpath)) {
+		_pe("adjpath: %s, errno %d", adjpath, errno);
+		return NULL;
+	}
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		char path[MAX_ARG_LEN];
+		char path[PATH_MAX];
+		char *pidfn;
 		pid_t pid;
 
-		pid_runpath(fn, path, sizeof(path));
-		if (!string_compare(path, pid_file(svc)))
+		pidfn = pid_file(svc);
+		if (!pidfn || !realpath(pidfn, path)) {
+			if (errno != ENOENT)
+				_pe("pidfn: %s, errno %d", pidfn ?: "<NULL>", errno);
+			continue;
+		}
+
+		if (!string_compare(fnpath, path))
 			continue;
 
 		pid = pid_file_read(path);
