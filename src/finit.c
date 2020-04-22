@@ -492,7 +492,7 @@ int main(int argc, char *argv[])
 	 * Start bundled watchdogd as soon as possible, if enabled
 	 */
 	if (which(FINIT_LIBPATH_ "/watchdogd"))
-		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd", global_rlimit, NULL);
+		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
 
 	/*
 	 * Mount filesystems
