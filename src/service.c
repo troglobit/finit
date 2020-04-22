@@ -307,7 +307,7 @@ static int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!whichp(svc->cmd) && !svc->inetd.cmd) {
-		print(1, "Service %s does not exist!", svc->cmd);
+		print(1, "Service %s does not exist", svc->cmd);
 		svc_missing(svc);
 		return 1;
 	}
