@@ -95,14 +95,14 @@ inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
 # Run start scripts from this directory
 # runparts /etc/start.d
 
-# Virtual consoles run BusyBox getty
-tty [12345] /sbin/getty -L 115200 /dev/tty1 linux
-tty [12345] /sbin/getty -L 115200 /dev/tty2 linux
-tty [12345] /sbin/getty -L 115200 /dev/tty3 linux
+# Virtual consoles run BusyBox getty, keep kernel default speed
+tty [12345] /sbin/getty -L 0 /dev/tty1 linux
+tty [12345] /sbin/getty -L 0 /dev/tty2 linux
+tty [12345] /sbin/getty -L 0 /dev/tty3 linux
 
 # Use built-in getty for serial port and USB serial
-tty [12345] /dev/ttyAMA0 115200 noclear nowait
-tty [12345] /dev/ttyUSB0 115200 noclear
+tty [12345] /dev/ttyAMA0 noclear nowait
+tty [12345] /dev/ttyUSB0 noclear
 
 # Just give me a shell, I need to debug this embedded system!
 tty [12345] @console noclear nologin
@@ -197,9 +197,9 @@ waits for user input before handing over to `/bin/login`, which is
 responsible for handling the actual authentication.
 
 ```conf
-tty [12345] /dev/tty1    38400  nowait  linux
-tty [12345] /dev/ttyAMA0 115200 noclear vt100
-tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
+tty [12345] /dev/tty1    nowait  linux
+tty [12345] /dev/ttyAMA0 noclear vt100
+tty [12345] /sbin/getty  -L /dev/ttyAMA0 vt100
 ```
 
 Users of embedded systems may want to enable automatic serial console
@@ -208,7 +208,7 @@ system uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit
 figures it out by querying sysfs: `/sys/class/tty/console/active`.
 
 ```conf
-tty [12345] @console 115200 linux noclear
+tty [12345] @console linux noclear
 ```
 
 Notice the optional `noclear`, `nowait`, and `nologin` flags.  The
