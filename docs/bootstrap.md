@@ -12,7 +12,7 @@ Bootstrap
 9. Parse `/etc/finit.conf` and all `/etc/finit.d/*.conf` files
 10. Start built-in watchdog, if enabled
 11. Set hostname
-12. Pivot root, or remount `/` read-write, depending on system type
+12. Remount `/` read-write if `/` is listed in `/etc/fstab` without `ro`
 13. Call 1st level hooks, `HOOK_ROOTFS_UP`
 14. Mount all file systems listed in `/etc/fstab` and swap, if available
 15. Enable SysV init signals

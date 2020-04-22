@@ -61,10 +61,6 @@ AC_ARG_ENABLE(auto_reload,
         AS_HELP_STRING([--enable-auto-reload], [Automatic reload on any .conf change]),,[
 	enable_auto_reload=no])
 
-AC_ARG_ENABLE(rw-rootfs,
-        AS_HELP_STRING([--enable-rw-rootfs], [Remount / R/W at boot, usually not for embedded]),,[
-	enable_rw_rootfs=no])
-
 AC_ARG_ENABLE(progress,
         AS_HELP_STRING([--enable-progress], [Modern progress display at bootup]),,[
 	enable_progress=no])
@@ -163,9 +159,6 @@ AS_IF([test "x$enable_fallback_shell" = "xyes"], [
 
 AS_IF([test "x$enable_auto_reload" = "xyes"], [
         AC_DEFINE(AUTO_RELOAD, 1, [Finit automatically does `initctl reload` on any .conf change])])
-
-AS_IF([test "x$enable_rw_rootfs" = "xyes"], [
-        AC_DEFINE(REMOUNT_ROOTFS,  1, [Remount / as rw at boot])])
 
 AS_IF([test "x$enable_progress" = "xyes"], [
         AC_DEFINE(PROGRESS_STYLE, 2, [Modern bootup messages, systemd inspired])])
@@ -301,7 +294,6 @@ Optional features:
   Scripting tool logit..: $enable_logit
   Emergency shell.......: $enable_emergency_shell
   Fallback shell........: $enable_fallback_shell
-  Remount / RW at boot..: $enable_rw_rootfs
   Modern progress.......: $enable_progress
   Classic progress......: $enable_progress_classic
   Default console dev...: $console

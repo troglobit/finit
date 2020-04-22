@@ -22,7 +22,7 @@ echo
 # The plugins are optional, but you may need D-Bus and X11 if you want
 # to run X-Window, the other configure flags are however required.
 ./configure									\
-    --enable-rw-rootfs                --enable-progress				\
+                                      --enable-progress				\
     --enable-dbus-plugin              --enable-x11-common-plugin		\
     --enable-alsa-utils-plugin        --enable-inetd-echo-plugin		\
     --enable-inetd-chargen-plugin     --enable-inetd-daytime-plugin		\

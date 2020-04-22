@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
 	 */
 	makedir("/dev/shm", 0755);
 	if (!fismnt("/dev/shm") && !ismnt("/etc/fstab", "/dev/shm"))
-		mount("shm", "/dev/shm", "tmpfs", 0, NULL);
+		mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
 
 	/*
 	 * New tmpfs based /run for volatile runtime data
@@ -498,10 +498,30 @@ int main(int argc, char *argv[])
 	 * Mount filesystems
 	 */
 	if (!rescue) {
-#ifdef REMOUNT_ROOTFS
-		run("mount -n -o remount,rw /");
-#endif
-#ifdef SYSROOT
+#ifndef SYSROOT
+		/*
+		 * Remount / read-write if it exists in fstab is not 'ro'.
+		 * This is what the Debian sysv initscripts does.
+		 */
+		if (setfsent()) {
+			struct fstab *fs;
+
+			while ((fs = getfsent())) {
+				if (strcmp(fs->fs_file, "/"))
+					continue;
+
+				if (strcmp(fs->fs_type, "ro"))
+					run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
+				break;
+			}
+
+			endfsent();
+		}
+#else
+		/*
+		 * XXX: Untested, in the initramfs age we should
+		 *      probably use switch_root instead.
+		 */
 		mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
 	}

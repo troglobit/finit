@@ -40,11 +40,6 @@ Below are a few of the main switches to configure:
 
 * `--disable-inetd`: Disable the built-in inetd server.
 
-* `--enable-rw-rootfs`: Most desktop and server systems boot with the
-  root file stystem read-only.  With this setting Finit will remount it
-  as read-write early at boot so the `bootmisc.so` plugin can run.
-  Usually not needed on embedded systems.
-
 * `--enable-static`: Build Finit statically.  The plugins will be
   built-ins (.o files) and all external libraries, except the C library
   will be linked statically.
@@ -73,7 +68,7 @@ First, unpack the archive:
 Then configure, build and install:
 
 ```shell
-    $ ./configure --enable-rw-rootfs            --enable-inetd-echo-plugin        \
+    $ ./configure                               --enable-inetd-echo-plugin        \
                   --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
                   --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
                   --with-heading="Alpine Linux 3.4" --with-hostname=alpine
