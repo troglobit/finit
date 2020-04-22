@@ -369,15 +369,12 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 
 	pid = fork();
 	if (!pid) {
-		speed_t speed = B38400;
+		speed_t speed;
 
-		if (baud && baud[0]) {
-			speed = stty_parse_speed(baud);
-			if (B0 == speed)
-				logit(LOG_CRIT, "TTY %s: Invalid speed %s", tty, baud);
-		}
-
+		speed = stty_parse_speed(baud);
+		logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
 		prepare_tty(tty, speed, "tty", rlimit);
+
 		if (activate_console(noclear, nowait))
 			_exit(getty(tty, speed, term, NULL));
 	}
@@ -415,6 +412,7 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 		dup2(fd, STDERR_FILENO);
 
 		/* Dunno speed, tell stty() to not mess with it */
+		logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
 		prepare_tty(tty, B0, "getty", rlimit);
 
 		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)

@@ -301,8 +301,9 @@ Syntax
   `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`  
   The first variant of this option uses the built-in getty on the given
   TTY device DEV, in the given runlevels.  The DEV may be the special
-  keyword `@console`, which is very useful on embedded systems.  Default
-  baud rate is `38400`.
+  keyword `@console`, or `console`, useful on embedded systems.
+
+  The default baud rate is 0, i.e., keep kernel default.
 
   **Example:**
 ```conf
@@ -340,11 +341,12 @@ Syntax
   Embedded systems may want to enable automatic `DEV` by supplying the
   special `@console` device.  This works regardless weather the system
   uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit figures
-  it out by querying sysfs: `/sys/class/tty/console/active`.
+  it out by querying sysfs: `/sys/class/tty/console/active`.  The speed
+  can be omitted to keep the kernel default.
 
   **Example:**
 ```conf
-        tty [12345] @console 115200 noclear vt220
+        tty [12345] @console noclear vt220
 ```
 
   On really bare bones systems Finit offers a fallback shell, which

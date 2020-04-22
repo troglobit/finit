@@ -27,6 +27,7 @@
 #include <sys/ttydefaults.h>  /* Not included by default in musl libc */
 #include <termios.h>
 
+/* B0 means; keep kernel default */
 speed_t stty_parse_speed(char *baud)
 {
 	char *ptr;
@@ -65,6 +66,9 @@ speed_t stty_parse_speed(char *baud)
 		{ 3500000, B3500000 },
 		{ 4000000, B4000000 },
 	};
+
+	if (!baud || !baud[0])
+		return B0;
 
 	errno = 0;
 	val = strtoul(baud, &ptr, 10);
