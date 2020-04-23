@@ -83,7 +83,7 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 
 	/* Custom name:foo declaration found => svc/foo instead of /svc/bin/path/pidfile-.pid */
 	if (strcmp(nm, svc->name)) {
-		snprintf(buf, len, "svc/%s", svc->name);
+		snprintf(buf, len, "svc/%s/%s", svc->name, svc->id);
 		_d("Composed condition from svc->name %s => %s", svc->name, buf);
 	} else {
 		snprintf(buf, len, "svc%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
