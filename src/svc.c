@@ -100,7 +100,8 @@ svc_t *svc_new(char *cmd, char *id, int type)
 
 	svc->type = type;
 	svc->job  = job;
-	strlcpy(svc->id, id, sizeof(svc->id));
+	if (id && id[0])
+		strlcpy(svc->id, id, sizeof(svc->id));
 	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
 	/* Default description, if missing */
@@ -535,7 +536,10 @@ int svc_enabled(svc_t *svc)
 	return 1;
 }
 
-/* Same base service, return unique ID as an integer */
+/*
+ * Same base service, return unique ID as an integer
+ * Note: intended for use with INETD services.
+ */
 int svc_next_id_int(char *cmd)
 {
 	int n = 1;
@@ -552,7 +556,7 @@ int svc_next_id_int(char *cmd)
 		n++;
 	}
 
-	return 0;
+	return 1;
 }
 
 int svc_is_unique(svc_t *svc)

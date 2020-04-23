@@ -977,20 +977,18 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			parse_cmdline_args(svc, cmd);
 			goto inetd_setup;
 		}
-		if (!id) {
-			int n = svc_next_id_int(cmd);
 
-			if (n) {
-				snprintf(id_str, sizeof(id_str), "%d", n);
-				id = id_str;
-			}
+		/* inetd services need a unique ID, so we must always set one. */
+		if (!id) {
+			snprintf(id_str, sizeof(id_str), "%d", svc_next_id_int(cmd));
+			id = id_str;
 		}
 	}
 recreate:
 #endif
 
 	if (!id)
-		id = "1";
+		id = "";
 
 	svc = svc_find(cmd, id);
 	if (!svc) {
