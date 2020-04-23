@@ -59,14 +59,20 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 {
 	char path[256];
 	char *pidfile;
-	char *ptr;
+	char *ptr, *nm;
 
 	strlcpy(path, svc->cmd, sizeof(path));
 	ptr = rindex(path, '/');
 	if (ptr)
-		*ptr = 0;
+		*ptr++ = 0;
 	else
 		path[0] = 0;
+
+	/* Figure out default name used when registering service */
+	if (ptr)
+		nm = ptr;
+	else
+		nm = svc->cmd;
 
 	pidfile = pid_file(svc);
 	ptr = strstr(pidfile, "run");
@@ -75,8 +81,14 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 	else
 		ptr = rindex(pidfile, '/');
 
-	snprintf(buf, len, "svc%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
-	_d("Composed condition from cmd %s (path %s) and pidfile %s => %s", svc->cmd, path, ptr, buf);
+	/* Custom name:foo declaration found => svc/foo instead of /svc/bin/path/pidfile-.pid */
+	if (strcmp(nm, svc->name)) {
+		snprintf(buf, len, "svc/%s", svc->name);
+		_d("Composed condition from svc->name %s => %s", svc->name, buf);
+	} else {
+		snprintf(buf, len, "svc%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
+		_d("Composed condition from cmd %s (path %s) and pidfile %s => %s", svc->cmd, path, ptr, buf);
+	}
 
 	/* Case: /var/run/dbus/pid */
 	ptr = strstr(buf, "/pid");
