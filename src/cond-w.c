@@ -83,7 +83,7 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 
 	/* Custom name:foo declaration found => svc/foo instead of /svc/bin/path/pidfile-.pid */
 	if (strcmp(nm, svc->name)) {
-		snprintf(buf, len, "svc/%s/%s", svc->name, svc->id);
+		snprintf(buf, len, "svc/%s", svc->name);
 		_d("Composed condition from svc->name %s => %s", svc->name, buf);
 	} else {
 		snprintf(buf, len, "svc%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
@@ -99,6 +99,12 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 	ptr = strstr(buf, ".pid");
 	if (ptr && !strcmp(ptr, ".pid"))
 		*ptr = 0;
+
+	/* Always append /ID if service is declared with :ID */
+	if (svc->id[0]) {
+		strlcat(buf, "/", len);
+		strlcat(buf, svc->id, len);
+	}
 
 	_d("Creating condition => %s", buf);
 
