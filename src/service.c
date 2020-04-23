@@ -844,8 +844,8 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  */
 int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 {
-	char id_str[MAX_ID_LEN];
 #ifdef INETD_ENABLED
+	char id_str[MAX_ID_LEN];
 	int forking = 0;
 #endif
 	int levels = 0;
