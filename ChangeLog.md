@@ -58,6 +58,19 @@ Bug fix release, but also cgroups and a new progress!
   can be enabled with `./configure --enable-auto-reload`
 * Support for logging security related events, e.g., runlevel change,
   star/stop or failure to start services, by Jonas Holmberg, Westermo
+* Mount devtpts with recommended `ptxmode=0666`
+* Mount /run tmpfs with nosuid,nodev,noexec for added security
+* Support for `console` as alias for `@console` in tty stanzas
+* Drop `--enable-rw-roots` configure option, use `rw` for your `/`
+  partition in `/etc/fstab` instead to trigger remount at boot
+* Drop default tty speed (38400) and use 0 (kernel default) instead
+* Make `:ID` optional for real, use NULL/zero internally and only
+  force :ID (numbered) for inetd services, this allows ...
+* Handle use-cases where multiple services share the same PID filem
+  and thus the same condition path, e.g. different instances for
+  different runlevels.  Allow custom condition path with `name:foo`
+  syntax, creates conditions w/o a path, and ...
+* Always append `:ID` qualifier to conditions if set for a service
 
 ### Fixes
 
@@ -109,6 +122,8 @@ Bug fix release, but also cgroups and a new progress!
 * Restore Ctrl-D and Ctrl-U support in built-in getty
 * Remove service condition when service is deleted
 * Fix C++ compilation issues, by Robert Andersson, Atlas Copco
+* Build fixes for uClibc
+* Provide service description for built-in watchdog daemon
 
 
 [3.1][] - 2018-01-23
