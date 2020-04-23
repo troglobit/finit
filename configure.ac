@@ -9,7 +9,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/alpine/Makefile contrib/alpine/finit.d/Makefile contrib/alpine/finit.d/available/Makefile
 	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile contrib/debian/grub.d/Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
-	docs/Makefile
+	doc/Makefile
 	plugins/Makefile
 	src/Makefile])
 
@@ -89,9 +89,9 @@ AC_ARG_ENABLE(logrotate,
         AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
 	enable_logrotate=yes])
 
-AC_ARG_ENABLE(docs,
-        AS_HELP_STRING([--disable-docs], [Disable build and install of docs section]),,[
-	enable_docs=yes])
+AC_ARG_ENABLE(doc,
+        AS_HELP_STRING([--disable-doc], [Disable build and install of doc/ section]),,[
+	enable_doc=yes])
 
 AC_ARG_ENABLE(contrib,
         AS_HELP_STRING([--disable-contrib], [Disable build and install of contrib section]),,[
@@ -246,7 +246,7 @@ AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
 AM_CONDITIONAL(LOGIT,     [test "x$enable_logit" = "xyes"])
-AM_CONDITIONAL(DOCS,      [test "x$enable_docs" = "xyes"])
+AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 
 # Override default libdir, used for plugins and rescue.conf
@@ -286,7 +286,7 @@ Behavior:
   Plugins...............: $plugins
 
 Optional features:
-  Install docs/.........: $enable_docs
+  Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
   Built-in inetd........: $enable_inetd
   Built-in watchdogd....: $enable_watchdog

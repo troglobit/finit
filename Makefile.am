@@ -6,8 +6,8 @@ EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
 if CONTRIB
 SUBDIRS           += contrib
 endif
-if DOCS
-SUBDIRS           += docs
+if DOC
+SUBDIRS           += doc
 endif
 
 # Compat hook

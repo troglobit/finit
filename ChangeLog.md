@@ -20,7 +20,7 @@ Bug fix release, but also cgroups and a new progress!
 * Support for tracking custom PID files, using `pid:!/path/to/foo.pid`,
   useful with new `sysv` or `service` which fork to background
 * Support starting run/task/services without absolute path, trust `$PATH`
-* Add support for `--disable-docs` and `--disable-contrib` to speed up
+* Add support for `--disable-doc` and `--disable-contrib` to speed up
   builds and work around issue with massively parallel builds
 * Add support for `@console` also for external getty
 * Add `-b`, batch mode, for non-interactive use to `initctl`
@@ -183,7 +183,7 @@ This version requires at least libuEv v2.1.0 and libite v2.0.1
   possibility of running a second stage mount command before files in
   `/run` and similar are created
 * Skip `gdbserver` when unleashing the grim reaper at shutdown
-* Distribute and install `docs/` and `contrib/` directories
+* Distribute and install `doc/` and `contrib/` directories
 
 ### Fixes
 
@@ -246,7 +246,7 @@ distributions.
 * Ensure plugins always have a default name, file name
 * Reorganization, move all source files to a `src/` sub-directory
 * Add support for `initctl <list|enable|disable> <SVC>`, much needed by
-  distributions.  See [docs/distro.md](docs/distro.md) for details
+  distributions.  See [doc/distro.md](doc/distro.md) for details
 * Remove `UNUSED()` macro, mentioned here because it may have been used
   by external plugin developers.  Set `-Wno-unused-parameter` instead
 * New table headings in `initctl`, using `top` style inverted text
