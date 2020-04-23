@@ -421,9 +421,9 @@ static int show_status(char *arg)
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char jobid[20], args[512] = "", *lvls;
 
-//		if (svc_is_unique(svc))
-//			snprintf(jobid, sizeof(jobid), "%d", svc->job);
-//		else
+		if (!svc->id[0])
+			snprintf(jobid, sizeof(jobid), "%d", svc->job);
+		else
 			snprintf(jobid, sizeof(jobid), "%d:%s", svc->job, svc->id);
 
 		printf("%-9s %8s ", jobid, svc_status(svc));
