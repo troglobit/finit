@@ -142,9 +142,15 @@ static struct sigmap {
 	{ SIGPWR,    "SIGPWR"    },
 
 	/* Archaic names for compatibility.  */
+#ifdef SIGIO
 	{ SIGIO,     "SIGIO"     },
+#endif
+#ifdef SIGIOT
 	{ SIGIOT,    "SIGIOT"    },
+#endif
+#ifdef SIGCLD
 	{ SIGCLD,    "SIGCLD"    },
+#endif
 };
 
 void mdadm_wait(void);
