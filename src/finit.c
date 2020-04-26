@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Mount base file system
 	 */
-	if (mount("none", "/proc", "proc", 0, NULL))
+	if (!fismnt("/proc") && mount("none", "/proc", "proc", 0, NULL))
 		_pe("Failed mounting /proc");
 	if (fisdir("/proc/bus/usb"))
 		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
