@@ -256,7 +256,7 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 		term.c_lflag    &= ~ISIG;
 		term.c_cc[VEOF]  = _POSIX_VDISABLE;
 		term.c_cc[VINTR] = _POSIX_VDISABLE;
-		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 	}
 
 	/* Reset signal handlers that were set by the parent process */
@@ -309,7 +309,7 @@ static int activate_console(int noclear, int nowait)
 		c.c_oflag &= ~(OPOST);
 		c.c_cflag |=  (CS8);
 		c.c_lflag &= ~(ECHO|ICANON|IEXTEN|ISIG);
-		tcsetattr(STDIN_FILENO, TCSANOW, &c);
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &c);
 	}
 
 	while (!fexist(SYNC_SHUTDOWN)) {
@@ -338,7 +338,7 @@ static int activate_console(int noclear, int nowait)
 	}
 
 	/* Restore TTY */
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &orig) == -1)
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig) == -1)
 		ret = 0;
 
 	return ret;

@@ -41,7 +41,6 @@
 #define _PATH_LOGIN  "/bin/login"
 #endif
 
-#define CTL(x)   ((x) ^ 0100)
 #define print(s) (void)write(STDOUT_FILENO, s, strlen(s))
 
 
@@ -164,7 +163,7 @@ static void do_getty(char *tty, char *name, size_t len)
 
 		np = name;
 		while ((ch = readch(tty)) != '\n') {
-			if (ch == CTL('U')) {
+			if (ch == CTRL('U')) {
 				while (np > name) {
 					(void)write(1, "\b \b", 3);
 					np--;
@@ -290,9 +289,9 @@ int sh(char *tty)
 	/* Reenable Ctrl-D and Ctrl-C, and ... */
 	if (!tcgetattr(STDIN_FILENO, &term)) {
 		term.c_lflag    |= ISIG;
-		term.c_cc[VEOF]  = CTL('D');
-		term.c_cc[VINTR] = CTL('C');
-		tcsetattr(STDIN_FILENO, TCSANOW, &term);
+		term.c_cc[VEOF]  = CEOF;
+		term.c_cc[VINTR] = CINTR;
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 	}
 
 	/* ... unblock signals in general */

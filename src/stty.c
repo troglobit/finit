@@ -96,29 +96,29 @@ void stty(int fd, speed_t speed)
 		cfsetospeed(&term, speed);
 		tcsetattr(fd, TCSAFLUSH, &term);
 	}
-	tcflush(fd, TCIOFLUSH);
 
-	/* Disable modem specific flags */
-	term.c_cflag     &= ~(0|CSTOPB|PARENB|PARODD|CBAUDEX);
-	term.c_cflag     &= ~CRTSCTS;
-	term.c_cflag     |= CLOCAL;
+	/* Modem specific control flags */
+	term.c_cflag     &= ~(PARENB|PARODD|CSTOPB|CRTSCTS);
+	term.c_cflag     |= CS8|HUPCL|CREAD|CLOCAL;
+	term.c_line       = 0;
+	tcsetattr(fd, TCSAFLUSH, &term);
 
 	/* Timeouts, minimum chars and default flags */
 	term.c_cc[VTIME]  = 0;
 	term.c_cc[VMIN]   = 1;
 	term.c_iflag      = ICRNL|IXON|IXOFF;
 	term.c_oflag      = OPOST|ONLCR;
-	term.c_cflag     |= CS8|CREAD|HUPCL;
 	term.c_lflag     |= ICANON|ISIG|ECHO|ECHOE|ECHOK|ECHOKE;
+	tcsetattr(fd, TCSAFLUSH, &term);
 
 	/* Reset special characters to defaults */
-	term.c_cc[VINTR]  = CTRL('C');
-	term.c_cc[VQUIT]  = CTRL('\\');
-	term.c_cc[VEOF]   = CTRL('D');
-	term.c_cc[VEOL]   = '\n';
-	term.c_cc[VKILL]  = CTRL('U');
+	term.c_cc[VINTR]  = CINTR;
+	term.c_cc[VQUIT]  = CQUIT;
+	term.c_cc[VEOF]   = CEOF;
+	term.c_cc[VEOL]   = CEOL;
+	term.c_cc[VKILL]  = CKILL;
 	term.c_cc[VERASE] = CERASE;
-	tcsetattr(fd, TCSANOW, &term);
+	tcsetattr(fd, TCSAFLUSH, &term);
 
 	/* Show cursor again, if it was hidden previously */
 	write(fd, "\033[?25h", 6);
