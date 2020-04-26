@@ -88,7 +88,7 @@ static inline int create(char *path, mode_t mode, uid_t uid, gid_t gid)
 	return 0;
 }
 
-int	ismnt		(char *file, char *dir);
+int	ismnt		(char *file, char *dir, char *mode);
 int	fismnt		(char *dir);
 
 #endif /* FINIT_HELPERS_H_ */

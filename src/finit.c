@@ -115,8 +115,8 @@ static int fsck(int pass)
 			}
 		}
 
-		if (fismnt(fs->fs_file)) {
-			_d("Skipping fsck of %s, already mounted on %s.", fs->fs_spec, fs->fs_file);
+		if (ismnt("/proc/mounts", fs->fs_file, "rw")) {
+			_d("Skipping fsck of %s, already mounted rw on %s.", fs->fs_spec, fs->fs_file);
 			continue;
 		}
 
@@ -288,8 +288,8 @@ int main(int argc, char *argv[])
 		.delay = 1000
 	};
 	uev_ctx_t loop;
-	char *path;
 	char cmd[256];
+	char *path;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -376,8 +376,11 @@ int main(int argc, char *argv[])
 	 * Check file filesystems in /etc/fstab
 	 */
 	for (int pass = 1; pass < 10 && !rescue; pass++) {
-		if (fsck(pass))
+		if (fsck(pass)) {
 			break;
+		}
+	}
+
 	}
 
 	/*
@@ -406,7 +409,7 @@ int main(int argc, char *argv[])
 	 * the /etc/fstab file already.
 	 */
 	makedir("/dev/shm", 0755);
-	if (!fismnt("/dev/shm") && !ismnt("/etc/fstab", "/dev/shm"))
+	if (!fismnt("/dev/shm") && !ismnt("/etc/fstab", "/dev/shm", NULL))
 		mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
 
 	/*

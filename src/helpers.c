@@ -429,12 +429,28 @@ void endfsent(void)
 }
 #endif	/* HAVE_GETFSENT */
 
-
-int ismnt(char *file, char *dir)
+static int hasopt(char *opts, char *opt)
 {
-	FILE *fp;
-	int found = 0;
+	char buf[strlen(opts) + 1];
+	char *ptr;
+
+	memcpy(buf, opts, sizeof(buf));
+	ptr = strtok(buf, ",");
+	while (ptr) {
+		if (!strcmp(ptr, opt))
+			return 1;
+
+		ptr = strtok(NULL, ",");
+	}
+
+	return 0;
+}
+
+int ismnt(char *file, char *dir, char *mode)
+{
 	struct mntent *mnt;
+	int found = 0;
+	FILE *fp;
 
 	fp = setmntent(file, "r");
 	if (!fp)
@@ -442,7 +458,10 @@ int ismnt(char *file, char *dir)
 
 	while ((mnt = getmntent(fp))) {
 		if (!strcmp(mnt->mnt_dir, dir)) {
-			found = 1;
+			if (mode && hasopt(mnt->mnt_opts, mode))
+				found = 1;
+			else
+				found = 1;
 			break;
 		}
 	}
@@ -454,7 +473,7 @@ int ismnt(char *file, char *dir)
 /* Requires /proc to be mounted */
 int fismnt(char *dir)
 {
-	return ismnt("/proc/mounts", dir);
+	return ismnt("/proc/mounts", dir, NULL);
 }
 
 /**
