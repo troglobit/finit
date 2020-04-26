@@ -290,6 +290,7 @@ int main(int argc, char *argv[])
 	uev_ctx_t loop;
 	char cmd[256];
 	char *path;
+	int rc;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -375,12 +376,48 @@ int main(int argc, char *argv[])
 	/*
 	 * Check file filesystems in /etc/fstab
 	 */
+	rc = 0;
 	for (int pass = 1; pass < 10 && !rescue; pass++) {
 		if (fsck(pass)) {
+			rc++;
 			break;
 		}
 	}
 
+	/*
+	 * Mount filesystems
+	 */
+	if (!rescue) {
+#ifndef SYSROOT
+		/*
+		 * Remount / read-write if it exists in fstab is not 'ro'.
+		 * This is what the Debian sysv initscripts does.
+		 */
+		if (setfsent()) {
+			struct fstab *fs;
+
+			while ((fs = getfsent())) {
+				if (strcmp(fs->fs_file, "/"))
+					continue;
+
+				if (strcmp(fs->fs_type, "ro")) {
+					if (!rc)
+						print(1, "Cannot remount / as read-write, fsck failed before");
+					else
+						run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
+				}
+				break;
+			}
+
+			endfsent();
+		}
+#else
+		/*
+		 * XXX: Untested, in the initramfs age we should
+		 *      probably use switch_root instead.
+		 */
+		mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+#endif
 	}
 
 	/*
@@ -470,38 +507,6 @@ int main(int argc, char *argv[])
 	 */
 	if (which(FINIT_LIBPATH_ "/watchdogd"))
 		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
-
-	/*
-	 * Mount filesystems
-	 */
-	if (!rescue) {
-#ifndef SYSROOT
-		/*
-		 * Remount / read-write if it exists in fstab is not 'ro'.
-		 * This is what the Debian sysv initscripts does.
-		 */
-		if (setfsent()) {
-			struct fstab *fs;
-
-			while ((fs = getfsent())) {
-				if (strcmp(fs->fs_file, "/"))
-					continue;
-
-				if (strcmp(fs->fs_type, "ro"))
-					run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
-				break;
-			}
-
-			endfsent();
-		}
-#else
-		/*
-		 * XXX: Untested, in the initramfs age we should
-		 *      probably use switch_root instead.
-		 */
-		mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
-#endif
-	}
 
 	if (!rescue) {
 		_d("Root FS up, calling hooks ...");
