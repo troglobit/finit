@@ -360,11 +360,6 @@ int main(int argc, char *argv[])
 		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 
 	/*
-	 * Initialize default control groups, if available
-	 */
-	cgroup_init();
-
-	/*
 	 * Load plugins early, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
@@ -431,6 +426,11 @@ int main(int argc, char *argv[])
 		print(1, "Cannot mount /sys, your system may behave unusually");
 		_pe("Failed mounting /sys");
 	}
+
+	/*
+	 * Initialize default control groups, if available
+	 */
+	cgroup_init();
 
 	/*
 	 * Initialize .conf system and load static /etc/finit.conf
