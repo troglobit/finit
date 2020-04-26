@@ -318,27 +318,13 @@ int main(int argc, char *argv[])
 	ctx = &loop;
 
 	/*
-	 * Set PATH and SHELL early to something sane
+	 * Set PATH, SHELL, PWD and umask early to something sane
 	 */
 	setenv("PATH", _PATH_STDPATH, 1);
 	setenv("SHELL", _PATH_BSHELL, 1);
 
-	/*
-	 * Mount base file system, kernel is assumed to run devtmpfs for /dev
-	 */
 	chdir("/");
 	umask(0);
-	if (mount("none", "/proc", "proc", 0, NULL))
-		_pe("Failed mounting /proc");
-	if (mount("none", "/sys", "sysfs", 0, NULL))
-		_pe("Failed mounting /sysfs");
-	if (fisdir("/proc/bus/usb"))
-		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
-
-	/*
-	 * Initialize default control groups, if available
-	 */
-	cgroup_init();
 
 	/*
 	 * Parse kernel command line (debug, rescue, splash, etc.)
@@ -359,6 +345,21 @@ int main(int argc, char *argv[])
 	 * Initial setup of signals, ignore all until we're up.
 	 */
 	sig_init();
+
+	/*
+	 * Mount base file system
+	 */
+	if (mount("none", "/proc", "proc", 0, NULL))
+		_pe("Failed mounting /proc");
+	if (mount("none", "/sys", "sysfs", 0, NULL))
+		_pe("Failed mounting /sys");
+	if (fisdir("/proc/bus/usb"))
+		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
+
+	/*
+	 * Initialize default control groups, if available
+	 */
+	cgroup_init();
 
 	/*
 	 * Load plugins early, finit.conf may contain references to
