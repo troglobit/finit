@@ -429,6 +429,34 @@ void endfsent(void)
 }
 #endif	/* HAVE_GETFSENT */
 
+
+int ismnt(char *file, char *dir)
+{
+	FILE *fp;
+	int found = 0;
+	struct mntent *mnt;
+
+	fp = setmntent(file, "r");
+	if (!fp)
+		return 0;	/* Dunno, maybe not */
+
+	while ((mnt = getmntent(fp))) {
+		if (!strcmp(mnt->mnt_dir, dir)) {
+			found = 1;
+			break;
+		}
+	}
+	endmntent(fp);
+
+	return found;
+}
+
+/* Requires /proc to be mounted */
+int fismnt(char *dir)
+{
+	return ismnt("/proc/mounts", dir);
+}
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t

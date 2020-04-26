@@ -84,33 +84,6 @@ static void banner(void)
 	print_banner(INIT_HEADING);
 }
 
-static int ismnt(char *file, char *dir)
-{
-	FILE *fp;
-	int found = 0;
-	struct mntent *mnt;
-
-	fp = setmntent(file, "r");
-	if (!fp)
-		return 0;	/* Dunno, maybe not */
-
-	while ((mnt = getmntent(fp))) {
-		if (!strcmp(mnt->mnt_dir, dir)) {
-			found = 1;
-			break;
-		}
-	}
-	endmntent(fp);
-
-	return found;
-}
-
-/* Requires /proc to be mounted */
-static int fismnt(char *dir)
-{
-	return ismnt("/proc/mounts", dir);
-}
-
 /*
  * Check all filesystems in /etc/fstab with a fs_passno > 0
  */
