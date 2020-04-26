@@ -90,8 +90,9 @@ static void banner(void)
  */
 static int fsck(int pass)
 {
-//	int save;
 	struct fstab *fs;
+//	int save;
+	int rc = 0;
 
 	if (!setfsent()) {
 		_pe("Failed opening fstab");
@@ -122,14 +123,14 @@ static int fsck(int pass)
 		}
 
 		snprintf(cmd, sizeof(cmd), "fsck -a %s", fs->fs_spec);
-		run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
+		rc += run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
 //	if (save)
 //		log_debug();
 	endfsent();
 
-	return 0;
+	return rc;
 }
 
 /*
@@ -371,14 +372,13 @@ int main(int argc, char *argv[])
 	banner();
 
 	/*
-	 * Check file filesystems in /etc/fstab
+	 * Check file systems listed with pass > 0 in /etc/fstab
 	 */
 	rc = 0;
 	for (int pass = 1; pass < 10 && !rescue; pass++) {
-		if (fsck(pass)) {
-			rc++;
+		rc = fsck(pass);
+		if (rc)
 			break;
-		}
 	}
 
 	/*
@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
 					continue;
 
 				if (strcmp(fs->fs_type, "ro")) {
-					if (!rc)
+					if (rc)
 						print(1, "Cannot remount / as read-write, fsck failed before");
 					else
 						rc = run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
