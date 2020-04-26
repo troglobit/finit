@@ -118,6 +118,7 @@ static void rtc_restore(void *arg)
 	}
 
 	print_desc(NULL, "Restoring system clock (UTC) from RTC");
+	tm.tm_isdst = -1; /* Use tzdata to figure it out, please. */
 	tv.tv_sec = mktime(&tm);
 	if (tv.tv_sec < RTC_TIMESTAMP_BEGIN_2000) {
 		errno = EINVAL;
