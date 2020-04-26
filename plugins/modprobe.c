@@ -142,11 +142,18 @@ static void coldplug(void *arg)
 	struct module *m, *tmp;
 	int rc = 0;
 
+	if (!fismnt("/sys")) {
+		print(1, "Cannot modprobe system, /sys is not mounted");
+		return;
+	}
+
 	print_desc("Cold plugging system", NULL);
-	nftw("/sys/devices", scan_alias, 200, FTW_DEPTH);
-	TAILQ_FOREACH_SAFE(m, &modules, link, tmp) {
-		rc += modprobe(m->alias);
-		alias_remove(m);
+	rc = nftw("/sys/devices", scan_alias, 200, FTW_DEPTH | FTW_PHYS);
+	if (!rc) {
+		TAILQ_FOREACH_SAFE(m, &modules, link, tmp) {
+			rc += modprobe(m->alias);
+			alias_remove(m);
+		}
 	}
 
 	print_result(rc);
