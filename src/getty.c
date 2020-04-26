@@ -148,12 +148,6 @@ static void do_getty(char *tty, char *name, size_t len)
 	char *np;
 
 	/*
-	 * Clean up tty name.
-	 */
-	if (!strncmp(tty, _PATH_DEV, strlen(_PATH_DEV)))
-		tty += 5;
-
-	/*
 	 * Display prompt.
 	 */
 	ch = ' ';
@@ -212,26 +206,16 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	const char cln[] = "\r\e[2K\n";
 	char name[30];
-	int fd;
 
-	/* Detach from initial controlling TTY */
-	vhangup();
-
-	fd = open(tty, O_RDWR);
-	if (fd < 0)
-		err(1, "Failed opening %s", tty);
-
-	dup2(fd, STDIN_FILENO);
-	dup2(fd, STDOUT_FILENO);
-	dup2(fd, STDERR_FILENO);
-	close(fd);
-
-	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
-		warn("Failed TIOCSCTTY");
+	/*
+	 * Clean up tty name.
+	 */
+	if (!strncmp(tty, _PATH_DEV, strlen(_PATH_DEV)))
+		tty += 5;
 
 	/* Set up TTY, re-enabling ISIG et al. */
 	stty(STDIN_FILENO, speed);
-	(void)write(STDOUT_FILENO, cln, strlen(cln));
+	(void)write(STDERR_FILENO, cln, strlen(cln));
 
 	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
@@ -248,35 +232,19 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 
 int sh(char *tty)
 {
-	int fd;
-	char *arg0;
+	struct termios term;
 	char *args[2] = {
 		NULL,
 		NULL
 	};
+	char *arg0;
 	size_t len;
-	struct termios term;
-
-	/* Detach from initial controlling TTY */
-	vhangup();
-
-	fd = open(tty, O_RDWR);
-	if (fd < 0)
-		err(1, "Failed opening %s", tty);
-
-	dup2(fd, STDIN_FILENO);
-	dup2(fd, STDOUT_FILENO);
-	dup2(fd, STDERR_FILENO);
-
-	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
-		warn("Failed TIOCSCTTY");
 
 	/* The getty process is usually responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
 
 	/* Set up TTY, re-enabling ISIG et al. */
-	stty(fd, B0);
-	close(fd);
+	stty(STDIN_FILENO, B0);
 
 	/* Start /bin/sh as a login shell, i.e. with a prefix '-' */
 	len = strlen(_PATH_BSHELL) + 2;

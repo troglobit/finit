@@ -241,6 +241,25 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	struct sigaction sa;
 	struct termios term;
 	char name[80];
+	int fd;
+
+	/* Detach from initial controlling TTY and become session leader */
+	vhangup();
+	setsid();
+
+	fd = open(tty, O_RDWR);
+	if (fd < 0) {
+		logit(LOG_ERR, "Failed opening %s: %m", tty);
+		_exit(1);
+	}
+
+	dup2(fd, STDIN_FILENO);
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
+	close(fd);
+
+	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
+		logit(LOG_WARNING, "Failed TIOCSCTTY on %s: %m", tty);
 
 	/*
 	 * Reset to sane defaults in case of messup from prev. session
@@ -251,7 +270,6 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	 * Disable ISIG (INTR, QUIT, SUSP) before handing over to getty.
 	 * It is up to the getty process to allow them again.
 	 */
-	tcdrain(STDIN_FILENO);
 	if (!tcgetattr(STDIN_FILENO, &term)) {
 		term.c_lflag    &= ~ISIG;
 		term.c_cc[VEOF]  = _POSIX_VDISABLE;
@@ -278,9 +296,6 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 		if (setrlimit(i, &rlimit[i]) == -1)
 			logit(LOG_WARNING, "%s: rlimit: Failed setting %s", tty, rlim2str(i));
 	}
-
-	/* Create new session and process group */
-	setsid();
 
 	/* Finit is responsible for the UTMP INIT_PROCESS record */
 	utmp_set_init(tty, 0);
@@ -374,7 +389,6 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 		speed = stty_parse_speed(baud);
 		logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
 		prepare_tty(tty, speed, "tty", rlimit);
-
 		if (activate_console(noclear, nowait))
 			_exit(getty(tty, speed, term, NULL));
 	}
@@ -388,40 +402,12 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 
 	pid = fork();
 	if (!pid) {
-		int  i, fd;
-		struct sigaction sa;
-
-		/* Reset signal handlers that were set by the parent process */
-		for (i = 1; i < NSIG; i++)
-			DFLSIG(sa, i, 0);
-
-		/* Detach from initial controlling TTY */
-		vhangup();
-
-		close(STDERR_FILENO);
-		close(STDOUT_FILENO);
-		close(STDIN_FILENO);
-
-		/* Attach TTY to console */
-		fd = open(tty, O_RDWR);
-		if (fd != STDIN_FILENO)
-			exit(1);
-
-		dup2(fd, STDIN_FILENO);
-		dup2(fd, STDOUT_FILENO);
-		dup2(fd, STDERR_FILENO);
-
 		/* Dunno speed, tell stty() to not mess with it */
 		logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
 		prepare_tty(tty, B0, "getty", rlimit);
-
-		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
-			_pe("Failed TIOCSCTTY");
-
 		if (activate_console(noclear, nowait))
 			_exit(execv(cmd, args));
 
-		close(fd);
 		vhangup();
 		exit(0);
 	}
