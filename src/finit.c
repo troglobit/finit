@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
 	uev_ctx_t loop;
 	char cmd[256];
 	char *path;
-	int rc;
+	int rc = 0;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -352,8 +352,6 @@ int main(int argc, char *argv[])
 	 */
 	if (mount("none", "/proc", "proc", 0, NULL))
 		_pe("Failed mounting /proc");
-	if (mount("none", "/sys", "sysfs", 0, NULL))
-		_pe("Failed mounting /sys");
 	if (fisdir("/proc/bus/usb"))
 		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 
@@ -404,7 +402,7 @@ int main(int argc, char *argv[])
 					if (!rc)
 						print(1, "Cannot remount / as read-write, fsck failed before");
 					else
-						run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
+						rc = run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
 				}
 				break;
 			}
@@ -416,8 +414,18 @@ int main(int argc, char *argv[])
 		 * XXX: Untested, in the initramfs age we should
 		 *      probably use switch_root instead.
 		 */
-		mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+		rc = mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 #endif
+	}
+
+	/* Create /sys if missing, some systems don't include it in their rootfs skeleton */
+	if (!rc && !fisdir("/sys"))
+		mkdir("/sys", 0755);
+
+	/* Only mount /sys if it's not already mounted */
+	if (!fismnt("/sys") && mount("none", "/sys", "sysfs", 0, NULL)) {
+		print(1, "Cannot mount /sys, your system may behave unusually");
+		_pe("Failed mounting /sys");
 	}
 
 	/*
