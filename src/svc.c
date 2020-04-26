@@ -398,7 +398,8 @@ svc_t *svc_find_by_pidfile(char *fn)
 
 	pid_runpath(fn, adjpath, sizeof(adjpath));
 	if (!realpath(adjpath, fnpath)) {
-		_pe("adjpath: %s, errno %d", adjpath, errno);
+		if (errno != ENOENT)
+			_pe("adjpath: %s, errno %d", adjpath, errno);
 		return NULL;
 	}
 
