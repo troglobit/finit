@@ -78,10 +78,14 @@ pid_t   run_getty2      (char *tty, char *cmd, char *args[], int noclear, int no
 pid_t   run_sh          (char *tty, int noclear, int nowait, struct rlimit rlimit[]);
 int     run_parts       (char *dir, char *cmd);
 
-static inline void create(char *path, mode_t mode, uid_t uid, gid_t gid)
+static inline int create(char *path, mode_t mode, uid_t uid, gid_t gid)
 {
-	if (touch(path) || chmod(path, mode) || chown(path, uid, gid))
+	if (touch(path) || chmod(path, mode) || chown(path, uid, gid)) {
 		_w("Failed creating %s properly.", path);
+		return -1;
+	}
+
+	return 0;
 }
 
 int	ismnt		(char *file, char *dir);
