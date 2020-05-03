@@ -317,8 +317,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 			}
 
 			_e("Request to hand-over wdog ... to PID %d", rq.runlevel);
-			svc = svc_find_by_pid(rq.runlevel);
-			if (!svc) {
+			if (!svc_find_by_pid(rq.runlevel)) {
 				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq.runlevel);
 				break;
 			}
@@ -332,7 +331,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 					wdog->runlevels = 0;
 				}
 			}
-			wdog = svc;
 			break;
 
 		case INIT_CMD_SVC_ITER:
