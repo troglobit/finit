@@ -300,6 +300,7 @@ svc_t *svc_stop_completed(void)
 /**
  * svc_find - Find a service object by its full path name
  * @cmd: Full path name, e.g., /sbin/syslogd
+ * @id:  Optional instance id
  *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
@@ -307,6 +308,9 @@ svc_t *svc_stop_completed(void)
 svc_t *svc_find(char *cmd, char *id)
 {
 	svc_t *svc, *iter = NULL;
+
+	if (!id)
+		id = "";
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!strcmp(svc->cmd, cmd) && !strcmp(svc->id, id))
@@ -338,7 +342,7 @@ svc_t *svc_find_by_pid(pid_t pid)
 /**
  * svc_find_by_jobid - Find an service object by its JOB:ID
  * @job: Job n:o
- * @id:  Instance id
+ * @id:  Optional instance id
  *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
@@ -346,6 +350,9 @@ svc_t *svc_find_by_pid(pid_t pid)
 svc_t *svc_find_by_jobid(int job, char *id)
 {
 	svc_t *svc, *iter = NULL;
+
+	if (!id)
+		id = "";
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->job == job && !strcmp(svc->id, id))
@@ -358,7 +365,7 @@ svc_t *svc_find_by_jobid(int job, char *id)
 /**
  * svc_find_by_nameid - Find an service object by its basename:ID
  * @name: Process name to match
- * @id:   Instance id
+ * @id:   Optional instance id
  *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
@@ -366,6 +373,9 @@ svc_t *svc_find_by_jobid(int job, char *id)
 svc_t *svc_find_by_nameid(char *name, char *id)
 {
 	svc_t *svc, *iter = NULL;
+
+	if (!id)
+		id = "";
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!strcmp(svc->id, id) && !strcmp(name, svc->name))
