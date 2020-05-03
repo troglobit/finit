@@ -321,13 +321,10 @@ int main(int argc, char *argv[])
 	ctx = &loop;
 
 	/*
-	 * Set PATH, SHELL, PWD, TZ and umask early to something sane
+	 * Set PATH, SHELL, PWD, and umask early to something sane
 	 */
 	setenv("PATH", _PATH_STDPATH, 1);
 	setenv("SHELL", _PATH_BSHELL, 1);
-
-	setenv("TZ", "UTC0", 1);
-	tzset();
 
 	chdir("/");
 	umask(0);

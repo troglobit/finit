@@ -33,6 +33,29 @@
 /* Kernel RTC driver validates against this date for sanity check */
 #define RTC_TIMESTAMP_BEGIN_2000        946684800LL /* 2000-01-01 00:00:00 */
 
+static void tz_set(char *tz, size_t len)
+{
+	char *ptr;
+
+	ptr = getenv("TZ");
+	if (!ptr)
+		memset(tz, 0, len);
+	else
+		strlcpy(tz, ptr, len);
+
+	setenv("TZ", "UTC0", 1);
+	tzset();
+}
+
+static void tz_restore(char *tz)
+{
+	if (!tz || !tz[0])
+		unsetenv("TZ");
+	else
+		setenv("TZ", tz, 1);
+	tzset();
+}
+
 static int rtc_open(void)
 {
 	char *alt[] = {
@@ -59,11 +82,13 @@ static void rtc_save(void *arg)
 	struct timeval tv = { 0 };
 	struct tm tm = { 0 };
 	int fd, rc = 0;
+	char tz[128];
 
 	fd = rtc_open();
 	if (fd < 0)
 		return;
 
+	tz_set(tz, sizeof(tz));
 	rc = gettimeofday(&tv, NULL);
 	if (rc < 0 || tv.tv_sec < RTC_TIMESTAMP_BEGIN_2000) {
 		print_desc(NULL, "System clock invalid, not saving to RTC");
@@ -74,6 +99,7 @@ static void rtc_save(void *arg)
 	}
 
 	print_desc(NULL, "Saving system time (UTC) to RTC");
+
 	gmtime_r(&tv.tv_sec, &tm);
 	if (ioctl(fd, RTC_SET_TIME, &tm) < 0) {
 		if (EINVAL == errno)
@@ -83,6 +109,7 @@ static void rtc_save(void *arg)
 	}
 
 out:
+	tz_restore(tz);
 	print(rc, NULL);
 	close(fd);
 }
@@ -92,11 +119,13 @@ static void rtc_restore(void *arg)
 	struct timeval tv = { 0 };
 	struct tm tm = { 0 };
 	int fd, rc = 0;
+	char tz[128];
 
 	fd = rtc_open();
 	if (fd < 0)
 		return;
 
+	tz_set(tz, sizeof(tz));
 	if (ioctl(fd, RTC_RD_TIME, &tm) < 0) {
 		char msg[120];
 
@@ -129,6 +158,7 @@ static void rtc_restore(void *arg)
 		rc = 1;
 
 out:
+	tz_restore(tz);
 	print(rc, NULL);
 	close(fd);
 }
