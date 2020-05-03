@@ -189,15 +189,6 @@ static void emergency_shell(void)
  */
 static void finalize(void)
 {
-	svc_t *svc;
-
-	/*
-	 * Track bundled watchdogd in case a better one turns up
-	 */
-	svc = svc_find(FINIT_LIBPATH_ "/watchdogd", "1");
-	if (svc)
-		wdog = svc;
-
 	/*
 	 * Run startup scripts in the runparts directory, if any.
 	 */
@@ -514,8 +505,10 @@ int main(int argc, char *argv[])
 	/*
 	 * Start bundled watchdogd as soon as possible, if enabled
 	 */
-	if (which(FINIT_LIBPATH_ "/watchdogd"))
+	if (which(FINIT_LIBPATH_ "/watchdogd")) {
 		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
+		wdog = svc_find(FINIT_LIBPATH_ "/watchdogd", NULL);
+	}
 
 	if (!rescue) {
 		_d("Root FS up, calling hooks ...");
