@@ -41,6 +41,10 @@
 
 static int progress_style = PROGRESS_STYLE;
 
+#ifndef HOSTNAME_PATH
+#define HOSTNAME_PATH "/etc/hostname"
+#endif
+
 /*
  * Note: the pending status (⋯) must be last item.  Also, ⋯ is not
  *       off-by-one, it's a multi-byte character.
@@ -287,7 +291,7 @@ void set_hostname(char **hostname)
 	if (rescue)
 		goto done;
 
-	fp = fopen("/etc/hostname", "r");
+	fp = fopen(HOSTNAME_PATH, "r");
 	if (fp) {
 		struct stat st;
 
