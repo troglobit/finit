@@ -32,7 +32,9 @@
 #include "service.h"
 #include "conf.h"
 
+#ifndef MODULES_LOAD_PATH
 #define MODULES_LOAD_PATH "/etc/modules-load.d"
+#endif
 #define SERVICE_LINE \
 	":%d name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
 
