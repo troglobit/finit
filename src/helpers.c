@@ -146,7 +146,8 @@ void print_banner(const char *heading)
 	} else {
 		size_t wmax = 80 <= SCREEN_WIDTH ? 80 : SCREEN_WIDTH;
 
-		strlcat(buf, "\e[1;31m⏺ \e[1;33m⏺ \e[1;32m⏺ \e[0m\e[1m ", sizeof(buf));
+		/* ⦿⦿⦿ Foo System ═══════════════════════════════════════════════ */
+		strlcat(buf, "\e[1;31m⦿ \e[1;33m⦿ \e[1;32m⦿ \e[0m\e[1m ", sizeof(buf));
 		strlcat(buf, heading, sizeof(buf));
 
 		/*
