@@ -142,6 +142,10 @@ static void coldplug(void *arg)
 	struct module *m, *tmp;
 	int rc = 0;
 
+	/* Skip for systems without modules, e.g. small embedded or containers */
+	if (!fisdir("/lib/modules"))
+		return;
+
 	if (!fismnt("/sys")) {
 		print(1, "Cannot modprobe system, /sys is not mounted");
 		return;
