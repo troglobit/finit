@@ -317,6 +317,34 @@ done:
 		sethostname(*hostname, strlen(*hostname));
 }
 
+/*
+ * Some systems, e.g. lxc, come with loopback up by default.  We can try
+ * all we want to take it down first or force reconfig, it will fail.
+ * This was added to skip lo on such systems to keep the noise down.
+ */
+static int skip_loopback(char *ifname)
+{
+	struct ifreq ifr;
+	int sd, rc = 0;
+
+	if (strcmp(ifname, "lo"))
+		return 0;	/* Not loopback */
+
+	if ((sd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
+		return 0;	/* We dunno, don't skip */
+
+	memset(&ifr, 0, sizeof (ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_addr.sa_family = AF_INET;
+	if (!ioctl(sd, SIOCGIFFLAGS, &ifr)) {
+		if (ifr.ifr_flags & IFF_UP)
+			rc = 1;	/* Already up, skip it */
+	}
+	close(sd);
+
+	return rc;
+}
+
 static void ifup(char *ifname, int updown)
 {
 	char cmd[80];
@@ -373,6 +401,9 @@ void networking(int updown)
 				ifname = &line[14];
 
 			if (!ifname)
+				continue;
+
+			if (skip_loopback(ifname))
 				continue;
 
 			ifup(ifname, updown);
