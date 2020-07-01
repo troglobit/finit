@@ -240,7 +240,7 @@ void print(int rc, const char *fmt, ...)
 	if (progress_style == 1)
 		fprintf(stderr, "%s\n", status(rc));
 	else
-		fprintf(stderr, ".\r%s\n", status(rc));
+		fprintf(stderr, "\r%s\n", status(rc));
 }
 
 void print_desc(char *action, char *desc)
