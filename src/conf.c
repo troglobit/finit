@@ -59,11 +59,30 @@ static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(c
 static int parse_conf(char *file);
 static void drop_changes(void);
 
-void conf_parse_cmdline(void)
+static void parse_arg(char *arg, int *dbg)
+{
+	/* Catches finit_debug (deprecated), --debug, and debug */
+	if (strstr(arg, "debug"))
+		*dbg = 1;
+
+	if (string_compare(arg, "rescue") || string_compare(arg, "recover"))
+		rescue = 1;
+
+	if (string_compare(arg, "single") || string_compare(arg, "S"))
+		single = 1;
+
+	if (string_compare(arg, "splash"))
+		splash = 1;
+}
+
+void conf_parse_cmdline(int argc, char *argv[])
 {
 	int dbg = 0;
 	FILE *fp;
 	char line[LINE_SIZE], *cmdline, *tok;
+
+	for (int i = 1; i < argc; i++)
+		parse_arg(argv[i], &dbg);
 
 	fp = fopen("/proc/cmdline", "r");
 	if (!fp)
@@ -79,19 +98,7 @@ void conf_parse_cmdline(void)
 
 	while ((tok = strtok(cmdline, " \t"))) {
 		cmdline = NULL;
-
-		/* Catches finit_debug (deprecated), --debug, and debug */
-		if (strstr(tok, "debug"))
-			dbg = 1;
-
-		if (string_compare(tok, "rescue") || string_compare(tok, "recover"))
-			rescue = 1;
-
-		if (string_compare(tok, "single") || string_compare(tok, "S"))
-			single = 1;
-
-		if (string_compare(tok, "splash"))
-			splash = 1;
+		parse_arg(tok, &dbg);
 	}
 	fclose(fp);
 

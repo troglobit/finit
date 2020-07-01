@@ -293,6 +293,12 @@ int main(int argc, char *argv[])
 		return client(argc, argv);
 
 	/*
+	 * Parse kernel command line (debug, rescue, splash, etc.)
+	 * Also calls log_init() to set correct log level
+	 */
+	conf_parse_cmdline(argc, argv);
+
+	/*
 	 * Hide command line arguments from ps (in particular for
 	 * forked children that don't execv()).  This is an ugly
 	 * hack that only works on Linux.
@@ -319,12 +325,6 @@ int main(int argc, char *argv[])
 
 	chdir("/");
 	umask(0);
-
-	/*
-	 * Parse kernel command line (debug, rescue, splash, etc.)
-	 * Also calls log_init() to set correct log level
-	 */
-	conf_parse_cmdline();
 
 	/* Set up canvas */
 	if (!rescue && !log_is_debug())

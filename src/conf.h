@@ -40,7 +40,7 @@ int  conf_any_change      (void);
 int  conf_changed         (char *file);
 int  conf_monitor         (uev_ctx_t *ctx);
 
-void conf_parse_cmdline   (void);
+void conf_parse_cmdline   (int argc, char *argv[]);
 int  conf_parse_runlevels (char *runlevels);
 void conf_parse_cond      (svc_t *svc, char *cond);
 
