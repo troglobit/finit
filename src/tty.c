@@ -165,7 +165,7 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 				dev = args[i];
 			if (!strncmp(args[i], "/dev", 4))
 				dev = args[i];
-			if (!strncmp(args[i], "tty", 3))
+			if (!strncmp(args[i], "tty", 3) || !strcmp(args[i], "console"))
 				dev = args[i];
 			if (!access(args[i], X_OK))
 				cmd = args[i];
