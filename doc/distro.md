@@ -13,13 +13,13 @@ By default Finit uses the following directories for configuration files:
 ```
 
 To enable a service one simply drops a small configuration file in the
-`/etc/finit.d/` directory.  This practice works will with systems that
+`/etc/finit.d/` directory.  This practice works with systems that
 keep disabled services elsewhere, or generates them as needed from some
 other tool.
 
-Disitributions, however, may want a clearer separation of enabled and
+Distributions, however, may want a clearer separation of enabled and
 available (installed but not enabled) services.  They may even want to
-customize the directories used, for brand labling or uniformity.
+customize the directories used, for brand labeling or uniformity.
 
 To that end Finit allows for a sub-directory `/etc/finit.d/available/`
 where installed but disabled services can reside.  Adding a symlink to a
