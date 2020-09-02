@@ -522,7 +522,7 @@ This project is based on the [original finit][] by [Claudio Matsuoka][]
 which was reverse engineered from syscalls of the [EeePC fastinit][] —
 "gaps filled with frog DNA …"
 
-Finit is developed and maintained by [Joachim Nilsson][] at [GitHub][].
+Finit is developed and maintained by [Joachim Wiberg][] at [GitHub][].
 Please file bug reports, clone it, or send pull requests for bug fixes
 and proposed extensions.
 
@@ -547,7 +547,7 @@ and proposed extensions.
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
-[Joachim Nilsson]:  http://troglobit.com
+[Joachim Wiberg]:   http://troglobit.com
 [GitHub]:           https://github.com/troglobit/finit
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
