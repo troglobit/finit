@@ -42,10 +42,10 @@ The resulting directory structure is depicted below.  Please notice how
     /etc/
       |-- init.d/
       |    |-- available/      -- Regular (disabled) services
-	  |    |    |-- httpd.conf
-	  |    |    |-- ntpd.conf
-	  |    |    `-- sshd.conf
-	  |    |-- sshd.conf       -- Symlink to available/sshd.conf
+      |    |    |-- httpd.conf
+      |    |    |-- ntpd.conf
+      |    |    `-- sshd.conf
+      |    |-- sshd.conf       -- Symlink to available/sshd.conf
       |     `- init.conf       -- Bootstrap tasks and services
       :
 ```
