@@ -300,6 +300,18 @@ Optional features:
   Default hostname......: $hostname
   Default runlevel......: $runlevel
 
+---------------- Please Note! ---------------
+
+The default --prefix in Finit is / which give
+default paths that fit most systems following
+the FHS, e.g., /sbin/init which Linux use,
+config in /etc/finit.d/, and /sbin/reboot
+
+> If you want a different file system layout
+> you will have to tweak many configure opts
+> and be prepared to patch Finit and other
+> system components to suit your needs.
+
 ------------- Compiler version --------------
 $($CC --version || true)
 -------------- Linker version ---------------
