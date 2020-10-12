@@ -299,19 +299,6 @@ int main(int argc, char *argv[])
 	conf_parse_cmdline(argc, argv);
 
 	/*
-	 * Hide command line arguments from ps (in particular for
-	 * forked children that don't execv()).  This is an ugly
-	 * hack that only works on Linux.
-	 * https://web.archive.org/web/20110227041321/http://netsplit.com/2007/01/10/hiding-arguments-from-ps/
-	 */
-	if (argc > 1) {
-		char *arg_end;
-
-		arg_end = argv[argc-1] + strlen (argv[argc-1]);
-		*arg_end = ' ';
-	}
-
-	/*
 	 * Initalize event context.
 	 */
 	uev_init1(&loop, 1);

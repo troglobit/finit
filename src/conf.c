@@ -59,6 +59,22 @@ static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(c
 static int parse_conf(char *file);
 static void drop_changes(void);
 
+static void hide_args(int argc, char *argv[])
+{
+	/*
+	 * Hide command line arguments from ps (in particular for
+	 * forked children that don't execv()).  This is an ugly
+	 * hack that only works on Linux.
+	 * https://web.archive.org/web/20110227041321/http://netsplit.com/2007/01/10/hiding-arguments-from-ps/
+	 */
+	if (argc > 1) {
+		char *arg_end;
+
+		arg_end = argv[argc-1] + strlen (argv[argc-1]);
+		*arg_end = ' ';
+	}
+}
+
 static void parse_arg(char *arg, int *dbg)
 {
 	/* Catches finit_debug (deprecated), --debug, and debug */
@@ -83,6 +99,8 @@ void conf_parse_cmdline(int argc, char *argv[])
 
 	for (int i = 1; i < argc; i++)
 		parse_arg(argv[i], &dbg);
+
+	hide_args(argc, argv);
 
 	fp = fopen("/proc/cmdline", "r");
 	if (!fp)
