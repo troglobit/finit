@@ -74,10 +74,7 @@ static int udev = 0;		/* Runtime detection of udev */
  */
 static void banner(void)
 {
-	if (plugin_exists(HOOK_BANNER)) {
-		plugin_run_hooks(HOOK_BANNER);
-		return;
-	}
+	plugin_run_hooks(HOOK_BANNER);
 
 	if (log_is_silent())
 		return;
