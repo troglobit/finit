@@ -417,10 +417,8 @@ int main(int argc, char *argv[])
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
 
-	if (!rescue) {
-		_d("Base FS up, calling hooks ...");
-		plugin_run_hooks(HOOK_BASEFS_UP);
-	}
+	_d("Base FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
 	 * Set up inotify watcher for /etc/finit.d and read all .conf
