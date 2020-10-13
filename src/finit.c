@@ -124,6 +124,80 @@ static int fsck(int pass)
 	return rc;
 }
 
+static int fsck_all(void)
+{
+	int pass, rc = 0;
+
+	for (pass = 1; pass < 10; pass++) {
+		rc = fsck(pass);
+		if (rc)
+			break;
+	}
+
+	return rc;
+}
+
+#ifndef SYSROOT
+static void fs_remount_root(int fsckerr)
+{
+	struct fstab *fs;
+
+	if (!setfsent())
+		return;
+
+	while ((fs = getfsent())) {
+		if (!strcmp(fs->fs_file, "/"))
+			break;
+	}
+
+	/* If / is not listed in fstab, or listed as 'ro', leave it
+	 * alone. */
+	if (!fs || !strcmp(fs->fs_type, "ro"))
+		goto out;
+
+	if (fsckerr)
+		print(1, "Cannot remount / as read-write, fsck failed before");
+	else
+		run_interactive("mount -n -o remount,rw /",
+				"Remounting / as read-write");
+
+out:
+	endfsent();
+}
+#else
+static void fs_remount_root(int fsckerr)
+{
+	/*
+	 * XXX: Untested, in the initramfs age we should
+	 *      probably use switch_root instead.
+	 */
+	rc = mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+}
+#endif	/* SYSROOT */
+
+static void fs_init(void)
+{
+	int fsckerr;
+
+	if (!rescue) {
+		fsckerr = fsck_all();
+		fs_remount_root(fsckerr);
+	}
+
+
+	_d("Root FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_ROOTFS_UP);
+
+	if (run_interactive("mount -na", "Mounting filesystems"))
+		plugin_run_hooks(HOOK_MOUNT_ERROR);
+
+	_d("Calling extra mount hook, after mount -a ...");
+	plugin_run_hooks(HOOK_MOUNT_POST);
+
+	run("swapon -ea");
+	umask(0022);
+}
+
 /*
  * If everything goes south we can use this to give the operator an
  * emergency shell to debug the problem -- Finit should not crash!
@@ -274,7 +348,6 @@ int main(int argc, char *argv[])
 	uev_ctx_t loop;
 	char cmd[256];
 	char *path;
-	int rc = 0;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -314,84 +387,20 @@ int main(int argc, char *argv[])
 	emergency_shell();
 
 	/*
+	 * Hello world.
+	 */
+	banner();
+
+	/*
 	 * Initial setup of signals, ignore all until we're up.
 	 */
 	sig_init();
-
-	/*
-	 * Mount base file system
-	 */
-	if (!fismnt("/proc") && mount("none", "/proc", "proc", 0, NULL))
-		_pe("Failed mounting /proc");
-	if (fisdir("/proc/bus/usb"))
-		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
 
 	/*
 	 * Load plugins early, finit.conf may contain references to
 	 * features implemented by plugins.
 	 */
 	plugin_init(&loop);
-
-	/*
-	 * Hello world.
-	 */
-	banner();
-
-	/*
-	 * Check file systems listed with pass > 0 in /etc/fstab
-	 */
-	rc = 0;
-	for (int pass = 1; pass < 10 && !rescue; pass++) {
-		rc = fsck(pass);
-		if (rc)
-			break;
-	}
-
-	/*
-	 * Mount filesystems
-	 */
-	if (!rescue) {
-#ifndef SYSROOT
-		/*
-		 * Remount / read-write if it exists in fstab is not 'ro'.
-		 * This is what the Debian sysv initscripts does.
-		 */
-		if (setfsent()) {
-			struct fstab *fs;
-
-			while ((fs = getfsent())) {
-				if (strcmp(fs->fs_file, "/"))
-					continue;
-
-				if (strcmp(fs->fs_type, "ro")) {
-					if (rc)
-						print(1, "Cannot remount / as read-write, fsck failed before");
-					else
-						rc = run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
-				}
-				break;
-			}
-
-			endfsent();
-		}
-#else
-		/*
-		 * XXX: Untested, in the initramfs age we should
-		 *      probably use switch_root instead.
-		 */
-		rc = mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
-#endif
-	}
-
-	/* Create /sys if missing, some systems don't include it in their rootfs skeleton */
-	if (!rc && !fisdir("/sys"))
-		mkdir("/sys", 0755);
-
-	/* Only mount /sys if it's not already mounted */
-	if (!fismnt("/sys") && mount("none", "/sys", "sysfs", 0, NULL)) {
-		print(1, "Cannot mount /sys, your system may behave unusually");
-		_pe("Failed mounting /sys");
-	}
 
 	/*
 	 * Initialize default control groups, if available
@@ -404,39 +413,15 @@ int main(int argc, char *argv[])
 	 */
 	conf_init();
 
-	/*
-	 * Some non-embedded systems without an initramfs may not have /dev mounted yet
-	 * If they do, check if system has udevadm and perform cleanup from initramfs
-	 */
-	if (!fismnt("/dev"))
-		mount("udev", "/dev", "devtmpfs", MS_RELATIME, "size=10%,nr_inodes=61156,mode=755");
-	else if (whichp("udevadm"))
-		run_interactive("udevadm info --cleanup-db", "Cleaning up udev db");
-
-	/* Modern systems use /dev/pts */
-	makedir("/dev/pts", 0755);
-	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620,ptmxmode=0666");
-
-	/*
-	 * Some systems rely on us to both create /dev/shm and, to mount
-	 * a tmpfs there.  Any system with dbus needs shared memory, so
-	 * mount it, unless its already mounted, but not if listed in
-	 * the /etc/fstab file already.
-	 */
-	makedir("/dev/shm", 0755);
-	if (!fismnt("/dev/shm") && !ismnt("/etc/fstab", "/dev/shm", NULL))
-		mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
-
-	/*
-	 * New tmpfs based /run for volatile runtime data
-	 * For details, see http://lwn.net/Articles/436012/
-	 */
-	if (fisdir("/run") && !fismnt("/run"))
-		mount("tmpfs", "/run", "tmpfs", MS_NODEV | MS_NOSUID | MS_NOEXEC, "mode=0755,size=10%");
-	umask(022);
+	fs_init();
 
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
+
+	/* Emit conditions for early hooks that ran before the
+	 * condition system was initialized in case anyone . */
+	cond_set_oneshot(plugin_hook_str(HOOK_BANNER));
+	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
 
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
@@ -486,21 +471,6 @@ int main(int argc, char *argv[])
 	if (which(FINIT_LIBPATH_ "/watchdogd")) {
 		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
 		wdog = svc_find(FINIT_LIBPATH_ "/watchdogd", NULL);
-	}
-
-	if (!rescue) {
-		_d("Root FS up, calling hooks ...");
-		plugin_run_hooks(HOOK_ROOTFS_UP);
-
-		umask(0);
-		if (run_interactive("mount -na", "Mounting filesystems"))
-			plugin_run_hooks(HOOK_MOUNT_ERROR);
-
-		_d("Calling extra mount hook, after mount -a ...");
-		plugin_run_hooks(HOOK_MOUNT_POST);
-
-		run("swapon -ea");
-		umask(0022);
 	}
 
 	/* Base FS up, enable standard SysV init signals */
