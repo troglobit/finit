@@ -66,8 +66,6 @@ char *runparts  = NULL;
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 svc_t *wdog     = NULL;		/* No watchdog by default */
 
-static int udev = 0;		/* Runtime detection of udev */
-
 
 /*
  * Show user configured banner before service bootstrap progress
@@ -304,10 +302,6 @@ static void crank_worker(void *unused)
 	 */
 	sm_init(&sm);
 	sm_step(&sm);
-
-	/* Debian has this little script to copy generated rules while the system was read-only */
-	if (udev && fexist("/lib/udev/udev-finish"))
-		run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 }
 
 /*
@@ -346,8 +340,6 @@ int main(int argc, char *argv[])
 		.delay = 1000
 	};
 	uev_ctx_t loop;
-	char cmd[256];
-	char *path;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -408,8 +400,7 @@ int main(int argc, char *argv[])
 	cgroup_init();
 
 	/*
-	 * Initialize .conf system and load static /etc/finit.conf
-	 * Also initializes global_rlimit[] for udevd, below.
+	 * Initialize .conf system and load static /etc/finit.conf.
 	 */
 	conf_init();
 
@@ -422,56 +413,6 @@ int main(int argc, char *argv[])
 	 * condition system was initialized in case anyone . */
 	cond_set_oneshot(plugin_hook_str(HOOK_BANNER));
 	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
-
-	/*
-	 * Populate /dev and prepare for runtime events from kernel.
-	 * Prefer udev if mdev is also available on the system.
-	 */
-	path = which("udevd");
-	if (!path)
-		path = which("/lib/systemd/systemd-udevd");
-	if (path) {
-		/* Desktop and server distros usually have a variant of udev */
-		udev = 1;
-
-		/* Register udevd as a monitored service */
-		snprintf(cmd, sizeof(cmd), "[S12345789] pid:udevd %s -- Device event managing daemon", path);
-		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
-			_pe("Failed registering %s", path);
-			udev = 0;
-		} else {
-			snprintf(cmd, sizeof(cmd), ":1 [S] <svc%s> "
-				 "udevadm trigger -c add -t devices "
-				 "-- Requesting device events", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
-
-			snprintf(cmd, sizeof(cmd), ":2 [S] <svc%s> "
-				 "udevadm trigger -c add -t subsystems "
-				 "-- Requesting subsystem events", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
-		}
-		free(path);
-	} else {
-		path = which("mdev");
-		if (path) {
-			/* Embedded Linux systems usually have BusyBox mdev */
-			if (log_is_debug())
-				touch("/dev/mdev.log");
-
-			snprintf(cmd, sizeof(cmd), "%s -s", path);
-			free(path);
-
-			run_interactive(cmd, "Populating device tree");
-		}
-	}
-
-	/*
-	 * Start bundled watchdogd as soon as possible, if enabled
-	 */
-	if (which(FINIT_LIBPATH_ "/watchdogd")) {
-		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
-		wdog = svc_find(FINIT_LIBPATH_ "/watchdogd", NULL);
-	}
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
