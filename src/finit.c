@@ -399,12 +399,14 @@ int main(int argc, char *argv[])
 	 */
 	cgroup_init();
 
+
+	/* Check and mount filesystems. */
+	fs_init();
+
 	/*
 	 * Initialize .conf system and load static /etc/finit.conf.
 	 */
 	conf_init();
-
-	fs_init();
 
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
