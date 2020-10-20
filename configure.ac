@@ -101,6 +101,7 @@ AC_ARG_ENABLE(contrib,
 enable_all_plugins=auto
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],          [no],  [Setup and start system message bus, D-Bus])
+AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
 AC_PLUGIN([inetd-echo],    [no],  [Inetd plugin: echo server, RFC862])
 AC_PLUGIN([inetd-chargen], [no],  [Inetd plugin: character generator, RFC864])
 AC_PLUGIN([inetd-daytime], [no],  [Inetd plugin: daytime server, RFC867])
