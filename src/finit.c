@@ -66,18 +66,13 @@ char *runparts  = NULL;
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 svc_t *wdog     = NULL;		/* No watchdog by default */
 
-static int udev = 0;		/* Runtime detection of udev */
-
 
 /*
  * Show user configured banner before service bootstrap progress
  */
 static void banner(void)
 {
-	if (plugin_exists(HOOK_BANNER)) {
-		plugin_run_hooks(HOOK_BANNER);
-		return;
-	}
+	plugin_run_hooks(HOOK_BANNER);
 
 	if (log_is_silent())
 		return;
@@ -91,16 +86,12 @@ static void banner(void)
 static int fsck(int pass)
 {
 	struct fstab *fs;
-//	int save;
 	int rc = 0;
 
 	if (!setfsent()) {
 		_pe("Failed opening fstab");
 		return 1;
 	}
-
-//	if ((save = log_is_debug()))
-//		log_debug();
 
 	while ((fs = getfsent())) {
 		char cmd[80];
@@ -126,11 +117,83 @@ static int fsck(int pass)
 		rc += run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
 	}
 
-//	if (save)
-//		log_debug();
 	endfsent();
 
 	return rc;
+}
+
+static int fsck_all(void)
+{
+	int pass, rc = 0;
+
+	for (pass = 1; pass < 10; pass++) {
+		rc = fsck(pass);
+		if (rc)
+			break;
+	}
+
+	return rc;
+}
+
+#ifndef SYSROOT
+static void fs_remount_root(int fsckerr)
+{
+	struct fstab *fs;
+
+	if (!setfsent())
+		return;
+
+	while ((fs = getfsent())) {
+		if (!strcmp(fs->fs_file, "/"))
+			break;
+	}
+
+	/* If / is not listed in fstab, or listed as 'ro', leave it
+	 * alone. */
+	if (!fs || !strcmp(fs->fs_type, "ro"))
+		goto out;
+
+	if (fsckerr)
+		print(1, "Cannot remount / as read-write, fsck failed before");
+	else
+		run_interactive("mount -n -o remount,rw /",
+				"Remounting / as read-write");
+
+out:
+	endfsent();
+}
+#else
+static void fs_remount_root(int fsckerr)
+{
+	/*
+	 * XXX: Untested, in the initramfs age we should
+	 *      probably use switch_root instead.
+	 */
+	rc = mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+}
+#endif	/* SYSROOT */
+
+static void fs_init(void)
+{
+	int fsckerr;
+
+	if (!rescue) {
+		fsckerr = fsck_all();
+		fs_remount_root(fsckerr);
+	}
+
+
+	_d("Root FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_ROOTFS_UP);
+
+	if (run_interactive("mount -na", "Mounting filesystems"))
+		plugin_run_hooks(HOOK_MOUNT_ERROR);
+
+	_d("Calling extra mount hook, after mount -a ...");
+	plugin_run_hooks(HOOK_MOUNT_POST);
+
+	run("swapon -ea");
+	umask(0022);
 }
 
 /*
@@ -239,10 +302,6 @@ static void crank_worker(void *unused)
 	 */
 	sm_init(&sm);
 	sm_step(&sm);
-
-	/* Debian has this little script to copy generated rules while the system was read-only */
-	if (udev && fexist("/lib/udev/udev-finish"))
-		run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 }
 
 /*
@@ -281,9 +340,6 @@ int main(int argc, char *argv[])
 		.delay = 1000
 	};
 	uev_ctx_t loop;
-	char cmd[256];
-	char *path;
-	int rc = 0;
 
 	/*
 	 * finit/init/telinit client tool uses /dev/initctl pipe
@@ -297,19 +353,6 @@ int main(int argc, char *argv[])
 	 * Also calls log_init() to set correct log level
 	 */
 	conf_parse_cmdline(argc, argv);
-
-	/*
-	 * Hide command line arguments from ps (in particular for
-	 * forked children that don't execv()).  This is an ugly
-	 * hack that only works on Linux.
-	 * https://web.archive.org/web/20110227041321/http://netsplit.com/2007/01/10/hiding-arguments-from-ps/
-	 */
-	if (argc > 1) {
-		char *arg_end;
-
-		arg_end = argv[argc-1] + strlen (argv[argc-1]);
-		*arg_end = ' ';
-	}
 
 	/*
 	 * Initalize event context.
@@ -335,23 +378,8 @@ int main(int argc, char *argv[])
 	 */
 	emergency_shell();
 
-	/*
-	 * Initial setup of signals, ignore all until we're up.
-	 */
-	sig_init();
-
-	/*
-	 * Mount base file system
-	 */
-	if (!fismnt("/proc") && mount("none", "/proc", "proc", 0, NULL))
-		_pe("Failed mounting /proc");
-	if (fisdir("/proc/bus/usb"))
-		mount("none", "/proc/bus/usb", "usbfs", 0, NULL);
-
-	/*
-	 * Load plugins early, finit.conf may contain references to
-	 * features implemented by plugins.
-	 */
+	/* Load plugins early, the first hook is in banner(), so we
+	 * need plugins loaded before calling it. */
 	plugin_init(&loop);
 
 	/*
@@ -360,178 +388,37 @@ int main(int argc, char *argv[])
 	banner();
 
 	/*
-	 * Check file systems listed with pass > 0 in /etc/fstab
+	 * Initial setup of signals, ignore all until we're up.
 	 */
-	rc = 0;
-	for (int pass = 1; pass < 10 && !rescue; pass++) {
-		rc = fsck(pass);
-		if (rc)
-			break;
-	}
-
-	/*
-	 * Mount filesystems
-	 */
-	if (!rescue) {
-#ifndef SYSROOT
-		/*
-		 * Remount / read-write if it exists in fstab is not 'ro'.
-		 * This is what the Debian sysv initscripts does.
-		 */
-		if (setfsent()) {
-			struct fstab *fs;
-
-			while ((fs = getfsent())) {
-				if (strcmp(fs->fs_file, "/"))
-					continue;
-
-				if (strcmp(fs->fs_type, "ro")) {
-					if (rc)
-						print(1, "Cannot remount / as read-write, fsck failed before");
-					else
-						rc = run_interactive("mount -n -o remount,rw /", "Remounting / as read-write");
-				}
-				break;
-			}
-
-			endfsent();
-		}
-#else
-		/*
-		 * XXX: Untested, in the initramfs age we should
-		 *      probably use switch_root instead.
-		 */
-		rc = mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
-#endif
-	}
-
-	/* Create /sys if missing, some systems don't include it in their rootfs skeleton */
-	if (!rc && !fisdir("/sys"))
-		mkdir("/sys", 0755);
-
-	/* Only mount /sys if it's not already mounted */
-	if (!fismnt("/sys") && mount("none", "/sys", "sysfs", 0, NULL)) {
-		print(1, "Cannot mount /sys, your system may behave unusually");
-		_pe("Failed mounting /sys");
-	}
+	sig_init();
 
 	/*
 	 * Initialize default control groups, if available
 	 */
 	cgroup_init();
 
+
+	/* Check and mount filesystems. */
+	fs_init();
+
 	/*
-	 * Initialize .conf system and load static /etc/finit.conf
-	 * Also initializes global_rlimit[] for udevd, below.
+	 * Initialize .conf system and load static /etc/finit.conf.
 	 */
 	conf_init();
-
-	/*
-	 * Some non-embedded systems without an initramfs may not have /dev mounted yet
-	 * If they do, check if system has udevadm and perform cleanup from initramfs
-	 */
-	if (!fismnt("/dev"))
-		mount("udev", "/dev", "devtmpfs", MS_RELATIME, "size=10%,nr_inodes=61156,mode=755");
-	else if (whichp("udevadm"))
-		run_interactive("udevadm info --cleanup-db", "Cleaning up udev db");
-
-	/* Modern systems use /dev/pts */
-	makedir("/dev/pts", 0755);
-	mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620,ptmxmode=0666");
-
-	/*
-	 * Some systems rely on us to both create /dev/shm and, to mount
-	 * a tmpfs there.  Any system with dbus needs shared memory, so
-	 * mount it, unless its already mounted, but not if listed in
-	 * the /etc/fstab file already.
-	 */
-	makedir("/dev/shm", 0755);
-	if (!fismnt("/dev/shm") && !ismnt("/etc/fstab", "/dev/shm", NULL))
-		mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
-
-	/*
-	 * New tmpfs based /run for volatile runtime data
-	 * For details, see http://lwn.net/Articles/436012/
-	 */
-	if (fisdir("/run") && !fismnt("/run"))
-		mount("tmpfs", "/run", "tmpfs", MS_NODEV | MS_NOSUID | MS_NOEXEC, "mode=0755,size=10%");
-	umask(022);
 
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
 
-	/*
-	 * Populate /dev and prepare for runtime events from kernel.
-	 * Prefer udev if mdev is also available on the system.
-	 */
-	path = which("udevd");
-	if (!path)
-		path = which("/lib/systemd/systemd-udevd");
-	if (path) {
-		/* Desktop and server distros usually have a variant of udev */
-		udev = 1;
-
-		/* Register udevd as a monitored service */
-		snprintf(cmd, sizeof(cmd), "[S12345789] pid:udevd %s -- Device event managing daemon", path);
-		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
-			_pe("Failed registering %s", path);
-			udev = 0;
-		} else {
-			snprintf(cmd, sizeof(cmd), ":1 [S] <svc%s> "
-				 "udevadm trigger -c add -t devices "
-				 "-- Requesting device events", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
-
-			snprintf(cmd, sizeof(cmd), ":2 [S] <svc%s> "
-				 "udevadm trigger -c add -t subsystems "
-				 "-- Requesting subsystem events", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
-		}
-		free(path);
-	} else {
-		path = which("mdev");
-		if (path) {
-			/* Embedded Linux systems usually have BusyBox mdev */
-			if (log_is_debug())
-				touch("/dev/mdev.log");
-
-			snprintf(cmd, sizeof(cmd), "%s -s", path);
-			free(path);
-
-			run_interactive(cmd, "Populating device tree");
-		}
-	}
-
-	/*
-	 * Start bundled watchdogd as soon as possible, if enabled
-	 */
-	if (which(FINIT_LIBPATH_ "/watchdogd")) {
-		service_register(SVC_TYPE_SERVICE, FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
-		wdog = svc_find(FINIT_LIBPATH_ "/watchdogd", NULL);
-	}
-
-	if (!rescue) {
-		_d("Root FS up, calling hooks ...");
-		plugin_run_hooks(HOOK_ROOTFS_UP);
-
-		umask(0);
-		if (run_interactive("mount -na", "Mounting filesystems"))
-			plugin_run_hooks(HOOK_MOUNT_ERROR);
-
-		_d("Calling extra mount hook, after mount -a ...");
-		plugin_run_hooks(HOOK_MOUNT_POST);
-
-		run("swapon -ea");
-		umask(0022);
-	}
+	/* Emit conditions for early hooks that ran before the
+	 * condition system was initialized in case anyone . */
+	cond_set_oneshot(plugin_hook_str(HOOK_BANNER));
+	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
 
-	if (!rescue) {
-		_d("Base FS up, calling hooks ...");
-		plugin_run_hooks(HOOK_BASEFS_UP);
-	}
+	_d("Base FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
 	 * Set up inotify watcher for /etc/finit.d and read all .conf

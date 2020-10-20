@@ -201,7 +201,12 @@ void plugin_run_hook(hook_point_t no, void *arg)
 		}
 	}
 
-	cond_set_oneshot(hook_cond[no]);
+	/* Conditions are stored in /run, so don't try to signal
+	 * conditions for any hooks before filesystems have been
+	 * mounted. */
+	if (no >= HOOK_MOUNT_ERROR)
+		cond_set_oneshot(hook_cond[no]);
+
 	service_step_all(SVC_TYPE_RUNTASK);
 }
 

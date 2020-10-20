@@ -42,6 +42,9 @@ For your convenience a set of *optional* plugins are available:
 
 * *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
 
+* *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
+  available.
+
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
 
 * *initctl.so*: Extends finit with a traditional `initctl` functionality.

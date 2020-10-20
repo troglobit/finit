@@ -17,6 +17,10 @@ if BUILD_DBUS_PLUGIN
 libplug_la_SOURCES += dbus.c
 endif
 
+if BUILD_HOTPLUG_PLUGIN
+libplug_la_SOURCES += hotplug.c
+endif
+
 if INETD
 if BUILD_INETD_ECHO_PLUGIN
 libplug_la_SOURCES += echo.c
@@ -60,6 +64,10 @@ endif
 
 if BUILD_DBUS_PLUGIN
 pkglib_LTLIBRARIES += dbus.la
+endif
+
+if BUILD_HOTPLUG_PLUGIN
+pkglib_LTLIBRARIES += hotplug.la
 endif
 
 if INETD
