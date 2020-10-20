@@ -378,6 +378,10 @@ int main(int argc, char *argv[])
 	 */
 	emergency_shell();
 
+	/* Load plugins early, the first hook is in banner(), so we
+	 * need plugins loaded before calling it. */
+	plugin_init(&loop);
+
 	/*
 	 * Hello world.
 	 */
@@ -387,12 +391,6 @@ int main(int argc, char *argv[])
 	 * Initial setup of signals, ignore all until we're up.
 	 */
 	sig_init();
-
-	/*
-	 * Load plugins early, finit.conf may contain references to
-	 * features implemented by plugins.
-	 */
-	plugin_init(&loop);
 
 	/*
 	 * Initialize default control groups, if available
