@@ -12,7 +12,7 @@ endif
 
 # Compat hook
 install-dev:
-	@make -C src install-pkgincludeHEADERS
+	@cd src && $(MAKE) install-pkgincludeHEADERS
 
 # Target to run when building a release
 release: distcheck

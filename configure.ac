@@ -320,6 +320,6 @@ $($LD --version || true)
 ---------------------------------------------
 
 Check the above options and compile with:
- ${MAKE-make}
+ "${MAKE:-make}"
 
 EOF
