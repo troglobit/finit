@@ -8,7 +8,7 @@ install-exec-hook:
 	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
-		if [ -L $$lnk ]; then				\
+		if test -L $$lnk; then				\
 			echo "Skipping $$lnk exists.";		\
 		else						\
 			$(LN_S) $$src $$lnk;			\
@@ -20,7 +20,7 @@ uninstall-hook:
 	@for file in $(d_LINKS); do				\
 		lnk=$(DESTDIR)$(docsdir)/$$file;		\
 		src=available/$$file;				\
-		if [ "`readlink $$lnk`" != "$$src" ]; then 	\
+		if test "`readlink $$lnk`" != "$$src"; then 	\
 			continue; 				\
 		fi;						\
 		$(RM) $$lnk;					\

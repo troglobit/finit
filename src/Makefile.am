@@ -78,18 +78,18 @@ install-exec-hook:
 	@$(INSTALL_DATA) $(srcdir)/rescue.conf $(DESTDIR)$(pkglibdir)
 	@for file in $(INIT_LNKS); do				\
 		lnk=$(DESTDIR)$(sbindir)/$$file;		\
-		if [ -e $$lnk ]; then				\
+		if test -e $$lnk; then				\
 			echo "Skipping $$lnk exists.";		\
 		else						\
 			$(LN_S) finit $$lnk;			\
 		fi;						\
 	done
-	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
+	@if test -L $(DESTDIR)$(sbindir)/reboot; then		\
 		echo "Non-finit reboot, skipping install.";	\
 	else							\
 		for file in $(REBOOT_LNKS); do			\
 			lnk=$(DESTDIR)$(sbindir)/$$file;	\
-			if [ -e $$lnk ]; then			\
+			if test -e $$lnk; then			\
 				echo "Skipping $$lnk exists.";	\
 			else					\
 				$(LN_S) reboot $$lnk;		\
@@ -101,19 +101,19 @@ uninstall-hook:
 	@$(RM) $(DESTDIR)$(pkglibdir)/rescue.conf
 	@for file in $(INIT_LNKS); do				\
 		lnk=`readlink $(DESTDIR)$(sbindir)/$$file`;	\
-		if [ "$$lnk" != "finit" ]; then			\
+		if test "$$lnk" != "finit"; then		\
 			echo "Skipping non-finit $$file.";	\
 			continue;				\
 		fi;						\
 		$(RM) $(DESTDIR)$(sbindir)/$$file;		\
 	done
-	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
+	@if test -L $(DESTDIR)$(sbindir)/reboot; then		\
 		echo "Non-finit reboot, skipping uninstall.";	\
 	else							\
 		for file in $(REBOOT_LNKS); do			\
 		        lnk=$(DESTDIR)$(sbindir)/$$file;	\
 			dst=`readlink $$lnk`;			\
-			if [ "$$dst" != "reboot" ]; then 	\
+			if test "$$dst" != "reboot"; then 	\
 				continue; 			\
 			fi;					\
 			$(RM) $$lnk;				\

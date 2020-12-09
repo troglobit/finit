@@ -10,7 +10,7 @@
 echo
 echo "*** Configuring Finit for Debian"
 
-if [ ! -e configure ]; then
+if ! test -e configure; then
     echo "    The configure script is missing, maybe you're using a version from GIT?"
     echo "    Attempting to run the autogen.sh script, you will need these tools:"
     echo "    autoconf, automake, libtool, pkg-config ..."
@@ -30,7 +30,7 @@ echo
     --with-random-seed=/var/lib/urandom/random-seed				\
     --with-heading="Debian GNU/Linux" --with-hostname="stretch"
 
-if [ $? -ne 0 ]; then
+if test $? -ne 0; then
     echo
     echo "*** Configure script failed, have you installed libuEv and libite?"
     echo
@@ -42,7 +42,7 @@ echo "*** Building ..."
 echo
 make
 
-if [ $? -ne 0 ]; then
+if test $? -ne 0; then
     echo
     echo "*** The build failed for some reason"
     echo
@@ -54,7 +54,7 @@ echo "*** Done"
 echo
 
 read -p "*** Run (sudo) install script (y/N)? " yorn
-if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
+if test "x$yorn" = "xy" || test "x$yorn" = "xY"; then
     sudo contrib/debian/install.sh
 else
     echo
@@ -63,4 +63,4 @@ else
 fi
 
 
-    
+

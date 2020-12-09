@@ -8,7 +8,7 @@ usage() {
     exit 1
 }
 
-if [ $# -eq 0 ]; then
+if test $# -eq 0; then
     initctl show
     exit 0
 fi

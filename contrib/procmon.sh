@@ -4,7 +4,7 @@ LOG_FILE="/tmp/memusage.csv"
 ELAPSED_TIME=0
 PERIOD=1        # seconds
 
-if [ $# -ne 1 ]; then
+if test $# -ne 1; then
         echo $USAGE
         exit 1
 fi
@@ -22,21 +22,21 @@ do
         while :
         do
                 PROCESS_PIDS=`/bin/pidof $1`
-                if [ "$PROCESS_PIDS.X" != ".X" ]; then
+                if test "$PROCESS_PIDS.X" != ".X"; then
                         break
                 fi
         done
 
         for PID in ${PROCESS_PIDS} ; do
                 VM_SIZE=`awk '/VmSize/ {print $2}' < /proc/$PID/status`
-                if [ "$VM_SIZE.X" = ".X" ]; then
+                if test "$VM_SIZE.X" = ".X"; then
                         continue
                 fi
                 #echo exprVM_ $SUM_VM_SIZE + $VM_SIZE
                 SUM_VM_SIZE=`expr $SUM_VM_SIZE + $VM_SIZE`
 
                 VM_RSS=`awk '/VmRSS/ {print $2}' < /proc/$PID/status`
-                if [ "$VM_RSS.X" = ".X" ]; then
+                if test "$VM_RSS.X" = ".X"; then
                         continue
                 fi
                 SUM_RSS_SIZE=`expr $SUM_RSS_SIZE + $VM_RSS`

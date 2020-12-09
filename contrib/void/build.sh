@@ -3,7 +3,7 @@
 echo
 echo "*** Configuring Finit for Void Linux"
 
-if [ ! -e configure ]; then
+if ! test -e configure; then
     echo "    The configure script is missing, maybe you're using a version from GIT?"
     echo "    Attempting to run the autogen.sh script, you will need these tools:"
     echo "    autoconf, automake, libtool, pkg-config ..."
@@ -26,7 +26,7 @@ echo "*** Building ..."
 echo
 make
 
-if [ $? -ne 0 ]; then
+if test $? -ne 0; then
     echo
     echo "*** The build failed for some reason"
     echo

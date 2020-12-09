@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "x`id -u`" != "x0" ]; then
+if test "x`id -u`" != "x0"; then
     echo
     echo "=> Unfortunately this script must run as root (sudo) <="
     echo
@@ -9,9 +9,9 @@ fi
 
 # Adjust base directory
 grep -q Debian os-release 2>/dev/null
-if [ $? -eq 0 ]; then
+if test $? -eq 0; then
     cd ../..
-elif [ ! -e autogen.sh ]; then
+elif ! test -e autogen.sh; then
     echo "*** Please run this script from the Finit base directory."
     exit 1
 fi
@@ -28,7 +28,7 @@ echo
 read -p "Do you want to continue (y/N)? " yorn
 echo
 
-if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
+if test "x$yorn" = "xy" || test "x$yorn" = "xY"; then
     echo "Installing Finit files ..."
     make install
     cd `dirname $0`

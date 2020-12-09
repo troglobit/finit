@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "x`id -u`" != "x0" ]; then
+if test "x`id -u`" != "x0"; then
     echo
     echo "*** This script must run as root"
     echo
@@ -8,9 +8,9 @@ if [ "x`id -u`" != "x0" ]; then
 fi
 
 # Adjust base directory
-if [ -e xbps ]; then
+if test -e xbps; then
     cd ../..
-elif [ ! -e autogen.sh ]; then
+elif ! test -e autogen.sh; then
     echo "*** Please run this script from the Finit base directory."
     exit 1
 fi
@@ -26,7 +26,7 @@ echo "/etc/grub.d/40_custom - Add menu entry to the Grub boot loader"
 echo
 read -p "Do you want to continue (y/N)? " yorn
 
-if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
+if test "x$yorn" = "xy" || test "x$yorn" = "xY"; then
     echo
     echo "*** Installing Finit files ..."
     make install
@@ -37,7 +37,7 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     cp -va finit.d /etc/
 
     read -p "*** Install Finit as the system default Init (y/N)? " yorn
-    if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
+    if test "x$yorn" = "xy" || test "x$yorn" = "xY"; then
 	echo "*** Updating /sbin/init symlink --> finit ..."
 	cd /sbin
 	rm init
