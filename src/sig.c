@@ -517,11 +517,11 @@ void sig_setup(uev_ctx_t *ctx)
 
 	/* Standard SysV init calls ctrl-alt-delete handler */
 	uev_signal_init(ctx, &sigint_watcher, sigint_cb, NULL, SIGINT);
-	uev_signal_init(ctx, &sigpwr_watcher, sigint_cb, NULL, SIGPWR);
 
 	/* BusyBox init style signals for halt, power-off and reboot. */
 	uev_signal_init(ctx, &sigusr1_watcher, sigusr1_cb, NULL, SIGUSR1);
 	uev_signal_init(ctx, &sigusr2_watcher, sigusr2_cb, NULL, SIGUSR2);
+	uev_signal_init(ctx, &sigpwr_watcher, sigusr2_cb, NULL, SIGPWR);
 	uev_signal_init(ctx, &sigterm_watcher, sigterm_cb, NULL, SIGTERM);
 
 	/* Some C APIs may need SIGALRM for implementing timers. */
