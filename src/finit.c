@@ -31,6 +31,7 @@
 #endif
 #include <mntent.h>
 #include <time.h>		/* tzet() */
+#include <sys/klog.h>
 #include <sys/mount.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
 #include <sys/wait.h>
@@ -72,6 +73,17 @@ svc_t *wdog     = NULL;		/* No watchdog by default */
  */
 static void banner(void)
 {
+	/*
+	 * Silence kernel logs, assuming users have sysklogd or
+	 * similar enabled to start emptying /dev/kmsg, but for
+	 * our progress we want to own the console.
+	 */
+	klogctl(6, NULL, 0);
+
+	/*
+	 * First level hooks, if you want to run here, you're
+	 * pretty much on your own.  Nothing's up yet ...
+	 */
 	plugin_run_hooks(HOOK_BANNER);
 
 	if (log_is_silent())
