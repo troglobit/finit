@@ -175,13 +175,14 @@ static void fs_remount_root(int fsckerr)
 
 static void fs_init(void)
 {
-	int fsckerr;
-
 	if (!rescue) {
-		fsckerr = fsck_all();
-		fs_remount_root(fsckerr);
+		/*
+		 * /etc/fstab may mount over this later, we need /proc
+		 * to be able to remount / as read-write --Jocke
+		 */
+		mount("none", "/proc", "proc", 0, NULL);
+		fs_remount_root(fsck_all());
 	}
-
 
 	_d("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);
