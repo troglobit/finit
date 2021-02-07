@@ -160,8 +160,7 @@ static void fs_remount_root(int fsckerr)
 			break;
 	}
 
-	/* If / is not listed in fstab, or listed as 'ro', leave it
-	 * alone. */
+	/* If / is not listed in fstab, or listed as 'ro', leave it alone */
 	if (!fs || !strcmp(fs->fs_type, "ro"))
 		goto out;
 
@@ -185,16 +184,10 @@ static void fs_remount_root(int fsckerr)
 }
 #endif	/* SYSROOT */
 
-static void fs_init(void)
+static void fs_mount(void)
 {
-	if (!rescue) {
-		/*
-		 * /etc/fstab may mount over this later, we need /proc
-		 * to be able to remount / as read-write --Jocke
-		 */
-		mount("none", "/proc", "proc", 0, NULL);
+	if (!rescue)
 		fs_remount_root(fsck_all());
-	}
 
 	_d("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);
@@ -207,6 +200,27 @@ static void fs_init(void)
 
 	run("swapon -ea");
 	umask(0022);
+}
+
+/*
+ * We need /proc for rs_remount_root() and conf_parse_cmdline(), /dev
+ * for early multi-console, and /sys for the cgroups support.  Any
+ * occurrence of these file systems in /etc/fstab will replace these
+ * mounts later in fs_mount()
+ */
+static void fs_init(void)
+{
+	struct {
+		char *spec, *file, *type;
+	} fs[] = {
+		{ "proc",     "/proc", "proc"     },
+		{ "devtmpfs", "/dev",  "devtmpfs" },
+		{ "sysfs",    "/sys",  "sysfs"    },
+	};
+	size_t i;
+
+	for (i = 0; i < NELEMS(fs); i++)
+		mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
 }
 
 /*
@@ -362,7 +376,12 @@ int main(int argc, char *argv[])
 		return client(argc, argv);
 
 	/*
-	 * Parse kernel command line (debug, rescue, splash, etc.)
+	 * Need /dev, /proc, and /sys for console=, remount and cgroups
+	 */
+	fs_init();
+
+	/*
+	 * Parse /proc/cmdline (debug, rescue, splash, console=, etc.)
 	 * Also calls log_init() to set correct log level
 	 */
 	conf_parse_cmdline(argc, argv);
@@ -412,7 +431,7 @@ int main(int argc, char *argv[])
 
 
 	/* Check and mount filesystems. */
-	fs_init();
+	fs_mount();
 
 	/*
 	 * Initialize .conf system and load static /etc/finit.conf.
