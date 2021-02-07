@@ -67,6 +67,62 @@ static const char *status2[] = STATUS_CLASS;
 #define CHOOSE(x,y,z) z
 static const char *color[] = STATUS_CLASS;
 
+/*
+ * System consoles, can be given multiple times on the kernel cmdline.
+ * We support only three currently.
+ */
+#define MAX_CONS 3
+
+static int fds[MAX_CONS];
+static int num_cons = 0;
+
+
+void add_console(char *str)
+{
+	char *cons, *ptr;
+	char path[80];
+
+	if (num_cons == NELEMS(fds)) {
+		_e("too many consoles, max %d supported", NELEMS(fds));
+		return;
+	}
+
+	cons = strchr(str, '=');
+	if (!cons)
+		return;
+	cons++;
+
+	/* drop any options */
+	ptr = strchr(cons, ',');
+	if (ptr)
+		*ptr = 0;
+
+	snprintf(path, sizeof(path), "/dev/%s", cons);
+	fds[num_cons] = open(path, O_WRONLY);
+	if (fds[num_cons] < 0) {
+		_pe("Failed opening console %s", path);
+		return;
+	}
+	num_cons++;
+}
+
+ssize_t cprintf(const char *fmt, ...)
+{
+	const size_t len = strlen(fmt) * 2;
+	char buf[len < 256 ? 256 : len];
+	size_t size;
+	va_list ap;
+	int i;
+
+	va_start(ap, fmt);
+	size = vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	for (i = 0; i < num_cons; i++)
+		(void)write(fds[i], buf, size);
+
+	return size;
+}
 
 char *strip_line(char *line)
 {
@@ -162,8 +218,7 @@ void print_banner(const char *heading)
 		pad(buf, sizeof(buf), "═", wmax);
 	}
 	strlcat(buf, "\e[0m\n", sizeof(buf));
-
-	(void)write(STDERR_FILENO, buf, strlen(buf));
+	cprintf("%s", buf);
 }
 
 static size_t print_timestamp(char *buf, size_t len)
@@ -221,9 +276,9 @@ void printv(const char *fmt, va_list ap)
 	vsnprintf(&buf[len], sizeof(buf) - len, fmt, ap);
 
 	if (progress_style == 1)
-		fprintf(stderr, "\r%s ", pad(buf, sizeof(buf), ".", sizeof(buf)));
+		cprintf("\r%s ", pad(buf, sizeof(buf), ".", sizeof(buf)));
 	else
-		fprintf(stderr, "\r\e[2K%s%s", status(3), buf);
+		cprintf("\r\e[2K%s%s", status(3), buf);
 }
 
 void print(int rc, const char *fmt, ...)
@@ -243,9 +298,9 @@ void print(int rc, const char *fmt, ...)
 		return;
 
 	if (progress_style == 1)
-		fprintf(stderr, "%s\n", status(rc));
+		cprintf("%s\n", status(rc));
 	else
-		fprintf(stderr, "\r%s\n", status(rc));
+		cprintf("\r%s\n", status(rc));
 }
 
 void print_desc(char *action, char *desc)
