@@ -378,53 +378,10 @@ done:
 }
 
 /*
- * Some systems, e.g. lxc, come with loopback up by default.  We can try
- * all we want to take it down first or force reconfig, it will fail.
- * This was added to skip lo on such systems to keep the noise down.
- */
-static int skip_loopback(char *ifname)
-{
-	struct ifreq ifr;
-	int sd, rc = 0;
-
-	if (strcmp(ifname, "lo"))
-		return 0;	/* Not loopback */
-
-	if ((sd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0)
-		return 0;	/* We dunno, don't skip */
-
-	memset(&ifr, 0, sizeof (ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	ifr.ifr_addr.sa_family = AF_INET;
-	if (!ioctl(sd, SIOCGIFFLAGS, &ifr)) {
-		if (ifr.ifr_flags & IFF_UP)
-			rc = 1;	/* Already up, skip it */
-	}
-	close(sd);
-
-	return rc;
-}
-
-static void ifup(char *ifname, int updown)
-{
-	char cmd[80];
-
-	if (updown) {
-		snprintf(cmd, sizeof(cmd), "ifup %s", ifname);
-		run_interactive(cmd, "Bringing up interface %s", ifname);
-	} else {
-		snprintf(cmd, sizeof(cmd), "ifdown -f %s", ifname);
-		run_interactive(cmd, "Taking down interface %s", ifname);
-	}
-}
-
-/*
  * Bring up networking, but only if not single-user or rescue mode
  */
 void networking(int updown)
 {
-	FILE *fp;
-
 	/* No need to report errors if network is already down */
 	if (!prevlevel && !updown)
 		return;
@@ -444,32 +401,19 @@ void networking(int updown)
 	if (!whichp("ifup"))
 		goto done;
 
-	fp = fopen("/etc/network/interfaces", "r");
-	if (fp) {
-		char buf[160];
+	if (fexist("/etc/network/interfaces")) {
+		pid_t pid;
 
-		/* Bring up, or down, all 'auto' interfaces */
-		while (fgets(buf, sizeof(buf), fp)) {
-			char *line, *ifname = NULL;
-
-			chomp(buf);
-			line = strip_line(buf);
-
-			if (!strncmp(line, "auto", 4))
-				ifname = &line[5];
-			if (!strncmp(line, "allow-hotplug", 13))
-				ifname = &line[14];
-
-			if (!ifname)
-				continue;
-
-			if (skip_loopback(ifname))
-				continue;
-
-			ifup(ifname, updown);
+		pid = fork();
+		if (pid == 0) {
+			if (updown)
+				run("ifup -a");
+			else
+				run("ifdown -a");
+			_exit(0);
 		}
 
-		fclose(fp);
+		print(pid > 0 ? 0 : 1, "%s networking", updown ? "Starting" : "Stopping");
 	}
 
 done:
