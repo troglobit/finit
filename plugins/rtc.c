@@ -141,7 +141,7 @@ static void rtc_restore(void *arg)
 		else if (ENOENT == errno)
 			logit(LOG_ERR, "RTC has no previously saved (valid) time.");
 		else
-			logit(LOG_ERR, "RTC error code %d: %m", errno);
+			logit(LOG_ERR, "RTC error code %d: %s", errno, strerror(errno));
 		rc = 2;
 		goto out;
 	}

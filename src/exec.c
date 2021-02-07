@@ -249,7 +249,7 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 
 	fd = open(tty, O_RDWR);
 	if (fd < 0) {
-		logit(LOG_ERR, "Failed opening %s: %m", tty);
+		logit(LOG_ERR, "Failed opening %s: %s", tty, strerror(errno));
 		_exit(1);
 	}
 
@@ -259,7 +259,7 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	close(fd);
 
 	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
-		logit(LOG_WARNING, "Failed TIOCSCTTY on %s: %m", tty);
+		logit(LOG_WARNING, "Failed TIOCSCTTY on %s: %s", tty, strerror(errno));
 
 	/*
 	 * Reset to sane defaults in case of messup from prev. session

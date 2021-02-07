@@ -43,7 +43,7 @@
 #define  _d(fmt, args...) logit(LOG_DEBUG,   "%s():" fmt "\n", __func__, ##args)
 #define  _w(fmt, args...) logit(LOG_WARNING, "%s():" fmt "\n", __func__, ##args)
 #define  _e(fmt, args...) logit(LOG_ERR,     "%s():" fmt "\n", __func__, ##args)
-#define _pe(fmt, args...) logit(LOG_ERR,     "%s():" fmt ": %m\n", __func__, ##args)
+#define _pe(fmt, args...) logit(LOG_ERR,     "%s():" fmt ": %s\n", __func__, ##args, strerror(errno))
 
 void    log_init        (int dbg);
 void    log_exit        (void);

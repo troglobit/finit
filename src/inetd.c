@@ -174,7 +174,7 @@ static void socket_cb(uev_t *w, void *arg, int events)
 
 	_d("%s: Got socket event ...", svc->cmd);
 	if (UEV_ERROR == events) {
-		logit(LOG_INFO, "%s: Socket error, aborting: %m", svc->cmd);
+		logit(LOG_INFO, "%s: Socket error, aborting: %s", svc->cmd, strerror(errno));
 		return;
 	}
 
