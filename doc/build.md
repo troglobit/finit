@@ -38,6 +38,17 @@ Configure
 
 Below are a few of the main switches to configure:
 
+* `--prefix=..`: Usually you want to set this to `/usr`, default is the GNU
+  default: `/usr/local`
+
+* `--exec-prefix=..`: This you want to set to the empty string, or `/`, to
+  ensure the programs `finit` and `initctl` are installed to the proper
+  locations.  Linux expects an "init" in `/sbin`, default: `--prefix`
+
+* `--sysconfdir=..`: follows `--prefix`, you likely want it to be `/etc`
+
+* `--localstatedir=..`: follows `--prefix`, you likely want `/var`
+
 * `--disable-inetd`: Disable the built-in inetd server.
 
 * `--enable-static`: Build Finit statically.  The plugins will be
@@ -61,22 +72,24 @@ Example
 First, unpack the archive:
 
 ```shell
-    $ tar xf finit-3.0.tar.xz
-    $ cd finit-3.0/
+$ tar xf finit-3.0.tar.xz
+$ cd finit-3.0/
 ```
 
 Then configure, build and install:
 
 ```shell
-    $ ./configure --prefix=/usr --exec-prefix=  --enable-inetd-echo-plugin        \
-                  --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
-                  --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
-                  --with-heading="Alpine Linux 3.4" --with-hostname=alpine
-    $ make
-    .
-    .
-    .
-    $ DESTDIR=/tmp/finit make install
+$ ./configure --prefix=/usr                 --exec-prefix=                    \
+              --sysconfdir=/etc             --localstatedir=/var              \
+                                            --enable-inetd-echo-plugin        \
+              --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
+              --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
+              --with-heading="Alpine Linux 3.13" --with-hostname=alpine
+$ make
+.
+.
+.
+$ DESTDIR=/tmp/finit make install
 ```
 
 In this example the [finit-3.0.tar.xz][1] archive is unpacked to the

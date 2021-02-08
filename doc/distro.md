@@ -34,6 +34,9 @@ build time:
 ./configure --with-rcsd=/etc/init.d --with-config=/etc/init.d/init.conf
 ```
 
+> **Note:** remember `--prefix` et al as well, the default is likely
+>           *not* what you want.  See the [build docs][1] for details.
+
 The resulting directory structure is depicted below.  Please notice how
 `/etc/finit.conf` now resides in the same sub-directory as a non-symlink
 `/etc/init.d/init.conf`:
@@ -73,3 +76,4 @@ requires the `available/` sub-directory.  Any non-symlink in the parent
 directory, here `/etc/init.d/`, will be considered a system override by
 `initctl`.
 
+[1]: build.md#configure

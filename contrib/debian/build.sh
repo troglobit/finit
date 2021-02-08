@@ -21,13 +21,15 @@ echo
 
 # The plugins are optional, but you may need D-Bus and X11 if you want
 # to run X-Window, the other configure flags are however required.
-./configure									\
-    --prefix=/usr --exec-prefix=      --enable-progress				\
-    --enable-dbus-plugin              --enable-x11-common-plugin		\
-    --enable-alsa-utils-plugin        --enable-inetd-echo-plugin		\
-    --enable-inetd-chargen-plugin     --enable-inetd-daytime-plugin		\
-    --enable-inetd-discard-plugin     --enable-inetd-time-plugin		\
-    --with-random-seed=/var/lib/urandom/random-seed				\
+./configure                                                                     \
+    --prefix=/usr                     --exec-prefix=                            \
+    --sysconfdir=/etc                 --localstatedir=/var                      \
+                                      --enable-progress                         \
+    --enable-dbus-plugin              --enable-x11-common-plugin                \
+    --enable-alsa-utils-plugin        --enable-inetd-echo-plugin                \
+    --enable-inetd-chargen-plugin     --enable-inetd-daytime-plugin             \
+    --enable-inetd-discard-plugin     --enable-inetd-time-plugin                \
+    --with-random-seed=/var/lib/urandom/random-seed                             \
     --with-heading="Debian GNU/Linux" --with-hostname="stretch"
 
 if [ $? -ne 0 ]; then
