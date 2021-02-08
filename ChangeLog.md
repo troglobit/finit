@@ -4,12 +4,17 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[3.2][UNRELEASED] - 2020-04-xx
+[3.2][UNRELEASED] - 2021-03-xx
 ------------------------------
 
-Bug fix release, but also cgroups and a new progress!
+Major bug fix release.  New features include cgroups and a new progress!
 
   https://twitter.com/b0rk/status/1214341831049252870?s=20
+
+> **Note:** deprecation warning, this is likely the last release with
+>           built-in inetd support!  Current plan is to rip it out at
+>           the start of the next release cycle.  It *may* return as
+>           a separate stand-alone daemon.
 
 ### Changes
 * Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
