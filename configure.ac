@@ -130,10 +130,6 @@ AC_ARG_WITH(rc-local,
         AS_HELP_STRING([--with-rc-local=FILE], [SysV init /etc/rc.local file, default /etc/rc.local]),
 	[rclocal=$withval], [rclocal=$sysconfdir/rc.local])
 
-AC_ARG_WITH(console,
-        AS_HELP_STRING([--with-console=DEV], [Console to use, default: /dev/console]),
-	[console=$withval], [console=/dev/console])
-
 AC_ARG_WITH(hostname,
         AS_HELP_STRING([--with-hostname=NAME], [If /etc/hostname is missing, default: noname]),
 	[hostname=$withval], [hostname=noname])
@@ -290,7 +286,6 @@ Optional features:
   Fallback shell........: $enable_fallback_shell
   Modern progress.......: $enable_progress
   Classic progress......: $enable_progress_classic
-  Default console dev...: $console
   Default hostname......: $hostname
   Default runlevel......: $runlevel
 
