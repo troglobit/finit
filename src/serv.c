@@ -61,14 +61,12 @@ static int calc_width(char *arr[], size_t len)
 	return width;
 }
 
-static void do_list(const char *heading, const char *path)
+static void do_list(const char *path)
 {
-	int num;
-	int prev;
-	int width;
  	char buf[screen_cols];
-	size_t i, len;
+	int width, num, prev;
 	glob_t gl;
+	size_t i;
 
 	pushd(path);
 	if (glob("*.conf", 0, NULL, &gl)) {
@@ -79,12 +77,8 @@ static void do_list(const char *heading, const char *path)
 	if (gl.gl_pathc <= 0)
 		goto done;
 
-	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), "%s :: %s ", heading, path);
-	len = strlen(buf);
-	for (size_t i = len; i < (sizeof(buf) - 1); i++)
-		buf[i] = '-';
-	printf("\e[1m%s\e[0m\n", buf);
+	snprintf(buf, sizeof(buf), "%s ", path);
+	printheader(NULL, buf, 0);
 
 	width = calc_width(gl.gl_pathv, gl.gl_pathc);
 	if (width <= 0)
@@ -116,11 +110,11 @@ done:
 int serv_list(char *arg)
 {
 	if (fisdir(available))
-		do_list("AVAILABLE", available);
+		do_list(available);
 	if (fisdir(enabled))
-		do_list("ENABLED  ", enabled);
+		do_list(enabled);
 	if (fisdir(FINIT_RCSD))
-		do_list("STATIC   ", FINIT_RCSD);
+		do_list(FINIT_RCSD);
 
 	return 0;
 }
