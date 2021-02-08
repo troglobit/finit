@@ -387,6 +387,11 @@ int main(int argc, char *argv[])
 	conf_parse_cmdline(argc, argv);
 
 	/*
+	 * Figure out system console(s)
+	 */
+	console_init();
+
+	/*
 	 * Initalize event context.
 	 */
 	uev_init1(&loop, 1);

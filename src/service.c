@@ -265,11 +265,11 @@ static int redirect(svc_t *svc)
 		if (svc->log.null)
 			return fredirect("/dev/null");
 		if (svc->log.console)
-			return fredirect(CONSOLE);
+			return fredirect(console());
 
 		return lredirect(svc);
 	} else if (log_is_debug())
-		return fredirect(CONSOLE);
+		return fredirect(console());
 #ifdef REDIRECT_OUTPUT
 	else
 		return fredirect("/dev/null");

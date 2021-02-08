@@ -218,11 +218,6 @@ AS_IF([test "x$with_heading" != "xno"], [
 		heading="$PACKAGE_NAME v$PACKAGE_VERSION"])])
 AC_DEFINE_UNQUOTED(INIT_HEADING, "$heading", [Displayed by Finit at boot])
 
-AS_IF([test "x$with_console" != "xno"], [
-	AS_IF([test "x$console" = "xyes"], [
-		console=/dev/console])])
-AC_DEFINE_UNQUOTED(CONSOLE, "$console", [Default console to use])
-
 AS_IF([test "x$with_hostname" != "xno"], [
 	AS_IF([test "x$hostname" = "xyes"], [
 		hostname=noname])])

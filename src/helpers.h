@@ -50,7 +50,8 @@ void          endfsent  (void);
 struct fstab *getfsent  (void);
 #endif	/* HAVE_GETFSENT */
 
-void    add_console     (char *str);
+char   *console         (void);
+void    console_init    (void);
 ssize_t cprintf         (const char *fmt, ...);
 
 char   *strip_line      (char *line);

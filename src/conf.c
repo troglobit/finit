@@ -89,9 +89,6 @@ static void parse_arg(char *arg, int *dbg)
 
 	if (string_compare(arg, "splash"))
 		splash = 1;
-
-	if (string_match(arg, "console="))
-		add_console(arg);
 }
 
 void conf_parse_cmdline(int argc, char *argv[])

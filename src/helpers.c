@@ -69,28 +69,33 @@ static const char *color[] = STATUS_CLASS;
 
 /*
  * System consoles, can be given multiple times on the kernel cmdline.
- * We support only three currently.
+ * We support only three currently.  If none are given on the cmdline
+ * we probe /sys/class/tty/console/active and use the first (default).
  */
 #define MAX_CONS 3
 
+static char *consoles[MAX_CONS];
 static int fds[MAX_CONS];
 static int num_cons = 0;
 
-
-void add_console(char *str)
+/*
+ * System default console is always the first
+ */
+char *console(void)
 {
-	char *cons, *ptr;
+	return consoles[0];
+}
+
+static void add_console(char *cons)
+{
 	char path[80];
+	char *ptr;
+	int i;
 
 	if (num_cons == NELEMS(fds)) {
 		_e("too many consoles, max %d supported", NELEMS(fds));
 		return;
 	}
-
-	cons = strchr(str, '=');
-	if (!cons)
-		return;
-	cons++;
 
 	/* drop any options */
 	ptr = strchr(cons, ',');
@@ -98,12 +103,48 @@ void add_console(char *str)
 		*ptr = 0;
 
 	snprintf(path, sizeof(path), "/dev/%s", cons);
+
+	/* check for and skip duplicates */
+	for (i = 0; i < num_cons; i++) {
+		if (string_compare(path, consoles[i]))
+			return;
+	}
+
+	/* this requires we have /dev mounted && a device there */
 	fds[num_cons] = open(path, O_WRONLY);
 	if (fds[num_cons] < 0) {
 		_pe("Failed opening console %s", path);
 		return;
 	}
+	consoles[num_cons] = strdup(path);
 	num_cons++;
+}
+
+void console_init(void)
+{
+	char *cons, *ptr, *tok;
+	char buf[512];
+	FILE *fp;
+
+	fp = fopen("/sys/class/tty/console/active", "r");
+	if (!fp) {
+	fallback:
+		_d("Using fallback /dev/console");
+		add_console("/dev/console");
+		return;
+	}
+
+	ptr = fgets(buf, sizeof(buf), fp);
+	fclose(fp);
+	if (!ptr)
+		goto fallback;
+
+	cons = chomp(ptr);
+	_d("Using these system consoles: %s", cons);
+	while ((tok = strtok(cons, " \t"))) {
+		cons = NULL;
+		add_console(tok);
+	}
 }
 
 ssize_t cprintf(const char *fmt, ...)
