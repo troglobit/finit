@@ -18,9 +18,6 @@ AC_CONFIG_FILES([Makefile
 #m4_include([m4/expand.m4])
 AC_CONFIG_MACRO_DIR([m4])
 
-# Change default prefix, we're PID 1 after all ...
-AC_PREFIX_DEFAULT([])
-
 # Handle building plugins either as dynamically loadable, or built-in
 LT_INIT([shared disable-static dlopen aix-soname=both disable-fast-install])
 
@@ -271,6 +268,7 @@ cat <<EOF
 ------------------ Summary ------------------
  $PACKAGE_NAME version $PACKAGE_VERSION
   Prefix................: $prefix
+  Exec prefix...........: $eprefix
   Sysconfdir............: `eval echo $sysconfdir`
   Localstatedir.........: `eval echo $localstatedir`
   FIFO path.............: $fifo_path

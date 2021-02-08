@@ -68,7 +68,7 @@ First, unpack the archive:
 Then configure, build and install:
 
 ```shell
-    $ ./configure                               --enable-inetd-echo-plugin        \
+    $ ./configure --prefix=/usr --exec-prefix=  --enable-inetd-echo-plugin        \
                   --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
                   --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
                   --with-heading="Alpine Linux 3.4" --with-hostname=alpine
