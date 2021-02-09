@@ -54,7 +54,7 @@
  * support changing runlevel, reloading the configuration and setenv
  * with the old-style /dev/initctl FIFO.
  */
-#define INIT_SOCKET             _PATH_VARRUN "finit.sock"
+#define INIT_SOCKET             _PATH_VARRUN "finit/socket"
 #define INIT_MAGIC              0x03091969
 
 #define INIT_CMD_START          0
