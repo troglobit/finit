@@ -192,7 +192,14 @@ Syntax
   
   The `<...>` is the condition for starting `ospfd`.  In this example
   Finit waits for another service, `/sbin/zebra`, to have created its
-  PID file in `/var/run/zebra.pid` before starting `ospfd`.
+  PID file in `/var/run/zebra.pid` before starting `ospfd`.  Modern
+  setups omit the absolute path and Quagga places its PID files in a
+  subdirectory, `/run/quagga/zebra.pid`.  In which case the example is
+  slightly different:
+
+```shell
+        service [2345] <pid/quagga/zebra> ospfd -- OSPF daemon
+```
 
   Some services do not maintain a PID file and rather than patching each
   application Finit provides a workaround.  A `pid` keyword can be set
