@@ -184,7 +184,7 @@ Syntax
   from forking (daemonizing):
 
 ```shell
-        service [2345] <svc/sbin/zebra> /sbin/ospfd -- OSPF daemon
+        service [2345] <pid/sbin/zebra> /sbin/ospfd -- OSPF daemon
 ```
 
   The `[2345]` is the runlevels `ospfd` is allowed to run in, they are
@@ -206,7 +206,7 @@ Syntax
   For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`
   that PID file will, not only be created and removed automatically, but
   also be used by the Finit condition subsystem.  So a service/run/task
-  can depend on `<svc/sbin/foo>`, notice the composition of conditions.
+  can depend on `<pid/sbin/foo>`, notice the composition of conditions.
 
   However, if a service `bar` *does* create a PID file, using `foo.pid`,
   we can inform Finit of this by prepending an `!`:

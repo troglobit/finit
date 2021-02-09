@@ -32,28 +32,31 @@
 #include "service.h"
 
 /*
- * The service condition name is constructed from the 'svc/' prefix, the
- * dirname of the svc->cmd, e.g., '/usr/bin/teamd' => 'usr/bin', and the
- * service's pid:filename, including an optional subdirectory, without
- * the .pid extension.
+ * The service condition name is constructed from the 'pid/' prefix,
+ * the dirname of the svc->cmd, e.g., '/usr/bin/teamd' => 'usr/bin', and
+ * the service's pid:filename, including an optional subdirectory,
+ * without the .pid extension.
  *
  * The following example uses the team (aggregate) service:
  *
  *    service pid:!/run/teamd/a1.pid /usr/bin/teamd -f /etc/teamd/a1.conf
  *
- * => 'svc/' + 'usr/bin' + 'teamd/a1' => svc/usr/bin/teamd/a1
+ * => 'pid/' + 'usr/bin' + 'teamd/a1' => pid/usr/bin/teamd/a1
  *
  * The next example uses the dbus-daemon:
  *
  *    service pid:!/run/dbus/pid /usr/bin/dbus-daemon
  *
- * => 'svc/' + 'usr/bin' + 'dbus' => svc/usr/bin/dbus
+ * => 'pid/' + 'usr/bin' + 'dbus' => pid/usr/bin/dbus
  *
  * The last example uses lxc-start to start container foo:
  *
  *    service pid:!/run/lxc/foo.pid lxc-start -n foo -F -p /run/lxc/foo.pid -- Container foo
  *
- * => 'svc/' + '' + 'lxc/foo' => svc/lxc/foo
+ * => 'pid/' + '' + 'lxc/foo' => pid/lxc/foo
+ *
+ * Note: previously the condition ws called 'svc/..', the conf.c parser
+ *       automatically translates to the 'pid/..' prefix and warns.
  */
 char *mkcond(svc_t *svc, char *buf, size_t len)
 {
@@ -81,12 +84,12 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 	else
 		ptr = rindex(pidfile, '/');
 
-	/* Custom name:foo declaration found => svc/foo instead of /svc/bin/path/pidfile-.pid */
+	/* Custom name:foo declaration found => pid/foo instead of /pid/bin/path/pidfile-.pid */
 	if (strcmp(nm, svc->name)) {
-		snprintf(buf, len, "svc/%s", svc->name);
+		snprintf(buf, len, "pid/%s", svc->name);
 		_d("Composed condition from svc->name %s => %s", svc->name, buf);
 	} else {
-		snprintf(buf, len, "svc%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
+		snprintf(buf, len, "pid%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
 		_d("Composed condition from cmd %s (path %s) and pidfile %s => %s", svc->cmd, path, ptr, buf);
 	}
 
@@ -306,7 +309,7 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
 
 /*
  * Used only by netlink plugin atm.
- * type: is a one of svc/, net/, etc.
+ * type: is a one of pid/, net/, etc.
  */
 void cond_reassert(const char *type)
 {

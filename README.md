@@ -140,7 +140,7 @@ Here is another example where we instruct Finit to not start BusyBox
 `ntpd` until `syslogd` has started properly.  Finit waits for `syslogd`
 to create its PID file, by default `/var/run/syslogd.pid`.
 
-    service [2345] log <svc/sbin/syslogd> /usr/sbin/ntpd -n -N -p pool.ntp.org
+    service [2345] log <pid/sbin/syslogd> /usr/sbin/ntpd -n -N -p pool.ntp.org
     service [S12345] /sbin/syslogd -n -- Syslog daemon
 
 Notice the `log` keyword, BusyBox `ntpd` uses `stderr` for logging when
@@ -150,7 +150,7 @@ to the system log daemon using the command line `logger(1)` tool.
 A service, or task, can have multiple dependencies listed.  Here we wait
 for *both* `syslogd` to have started and basic networking to be up:
 
-    service [2345] log <svc/sbin/syslogd,net/route/default> /usr/sbin/ntpd -n -N -p pool.ntp.org
+    service [2345] log <pid/sbin/syslogd,net/route/default> /usr/sbin/ntpd -n -N -p pool.ntp.org
 
 If either condition fails, e.g. loss of networking, `ntpd` is stopped
 and as soon as it comes back up again `ntpd` is restarted automatically.

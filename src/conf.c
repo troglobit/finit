@@ -236,7 +236,11 @@ void conf_parse_cond(svc_t *svc, char *cond)
 		return;
 	}
 
-	strlcpy(svc->cond, ptr, sizeof(svc->cond));
+	if (!strncmp(ptr, "svc/", 4)) {
+		snprintf(svc->cond, sizeof(svc->cond), "pid/%s", &ptr[4]);
+		logit(LOG_INFO, "Migrating cond syntax of %s: %s -> %s", svc->cmd, ptr, svc->cond);
+	} else
+		strlcpy(svc->cond, ptr, sizeof(svc->cond));
 }
 
 struct rlimit_name {

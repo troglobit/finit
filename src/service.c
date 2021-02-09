@@ -825,7 +825,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  * special case when a service is declared with <!> means it does not
  * support SIGHUP but must be STOP/START'ed at system reconfiguration.
  *
- * Service conditions can be: svc/<PATH> for PID files, net/<IFNAME>/up
+ * Service conditions can be: pid/<PATH> for PID files, net/<IFNAME>/up
  * and net/<IFNAME>/exists.  The condition handling is further described
  * in doc/conditions.md, but worth mentioning here is that the condition
  * name itself can be modified using the :ID and name:foo syntax.

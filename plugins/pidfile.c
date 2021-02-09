@@ -323,7 +323,7 @@ static struct context pidfile_ctx;
  *
  *     service <net/iface/lo> /sbin/dropbear ...
  *
- * Which provides the <svc/sbin/dropbear> condition, will not be
+ * Which provides the <pid/sbin/dropbear> condition, will not be
  * set by pidfile.so during `initctl reload` because dropbear is
  * still SIGSTP:ed waiting for <net/iface/lo>.
  */
