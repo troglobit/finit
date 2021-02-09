@@ -18,6 +18,16 @@ Major bug fix release.  New features include cgroups and a new progress!
 
 ### Changes
 * Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
+* Incompatible `configure` script changes, i.e., you must give proper
+  path arguments to the script, no more guessing just GNU defaults.
+  There are examples in the documentation and the `contrib/` section
+* Change service PID file conditions from `<svc/foo>` to `<pid/foo>`.
+  This will hopefully make it more clear that one service's 'pid:!foo'
+  pidfile is another service's <pid/foo> condition
+* Major refactor of Finit's `main()` function to be able to start the
+  event loop earlier.  This also facilitated factoring out functionality
+  previously hard-coded in Finit, e.g., starting the bundled watchdogd,
+  various distro packed udevd and other hotplugging tools
 * Support for `sysv` start/stop scripts as well as monitoring forking
   services, stared using `sysv` or `service` stanza
 * Support for custom `kill:DELAY`, default 3 sec.
@@ -76,6 +86,13 @@ Major bug fix release.  New features include cgroups and a new progress!
   different runlevels.  Allow custom condition path with `name:foo`
   syntax, creates conditions w/o a path, and ...
 * Always append `:ID` qualifier to conditions if set for a service
+* The IPC socket has moved from `/run/finit.sock` to `/run/finit/socket`
+  officially only supported for use by the `initctl` tool
+* Improved support for modern `/etc/network/interfaces`, which has
+  include statements.  No more native `ifup` of individual interfaces,
+  Finit now calls `ifup -a`, or `ifdown -a`, delegating all details to
+  the operating system.  Also, this is now done in the background, by
+  popular request
 
 ### Fixes
 
@@ -129,6 +146,8 @@ Major bug fix release.  New features include cgroups and a new progress!
 * Fix C++ compilation issues, by Robert Andersson, Atlas Copco
 * Build fixes for uClibc
 * Provide service description for built-in watchdog daemon
+* Fix #138: Handle `SIGPWR` like `SIGSUR2`, i.e., power off the system
+* Drop the '%m' GNUism, for compat with older musl libc
 
 
 [3.1][] - 2018-01-23
