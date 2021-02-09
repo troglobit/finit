@@ -438,11 +438,6 @@ int main(int argc, char *argv[])
 	/* Check and mount filesystems. */
 	fs_mount();
 
-	/*
-	 * Initialize .conf system and load static /etc/finit.conf.
-	 */
-	conf_init();
-
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
 
@@ -450,6 +445,11 @@ int main(int argc, char *argv[])
 	 * condition system was initialized in case anyone . */
 	cond_set_oneshot(plugin_hook_str(HOOK_BANNER));
 	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
+
+	/*
+	 * Initialize .conf system and load static /etc/finit.conf.
+	 */
+	conf_init();
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
