@@ -116,8 +116,10 @@ static void setup(void *arg)
 		_d("System with new /run tmpfs ...");
 		makedir("/run/lock",       1777);
 		symlink("/run/lock", "/var/lock");
-		symlink("/run",      "/var/run");
 		symlink("/dev/shm",  "/run/shm");
+
+		/* compat only, should really be set up by OS/dist */
+		symlink("/run",      "/var/run");
 	} else {
 		makedir("/var/lock",       1777);
 		makedir("/var/run",        0755);
@@ -191,6 +193,7 @@ static plugin_t plugin = {
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
+	.depends = { "pidfile" },
 };
 
 PLUGIN_INIT(plugin_init)

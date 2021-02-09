@@ -314,8 +314,18 @@ static void pidfile_init(void *arg)
 static struct context pidfile_ctx;
 
 /*
- * We require /var/run to be set up before calling pidfile_init(),
- * so the bootmisc plugin must run first.
+ * When performing an `initctl reload` with one (unchanged) service
+ * depending on, e.g. `net/iface/lo`, its condition will not be set
+ * to ON by the pidfile plugin unless the netlink plugin hook runs
+ * first.
+ *
+ * Example:
+ *
+ *     service <net/iface/lo> /sbin/dropbear ...
+ *
+ * Which provides the <svc/sbin/dropbear> condition, will not be
+ * set by pidfile.so during `initctl reload` because dropbear is
+ * still SIGSTP:ed waiting for <net/iface/lo>.
  */
 static plugin_t plugin = {
 	.name = __FILE__,
@@ -325,7 +335,7 @@ static plugin_t plugin = {
 		.cb    = pidfile_callback,
 		.flags = PLUGIN_IO_READ,
 	},
-	.depends = { "bootmisc", "netlink" },
+	.depends = { "netlink" },
 };
 
 PLUGIN_INIT(plugin_init)
