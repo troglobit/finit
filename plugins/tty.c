@@ -55,12 +55,14 @@ static void setup(void)
 
 static void watcher(void *arg, int fd, int events)
 {
+	char buf[EVENT_SIZE];
 	int len = 0;
-	char buf[EVENT_SIZE], name[256];
-	struct tty *entry;
-	struct inotify_event *notified = (struct inotify_event *)buf;
 
 	while ((len = read(fd, buf, sizeof(buf)))) {
+		struct inotify_event *notified = (struct inotify_event *)buf;
+		char name[notified->len + 6];
+		struct tty *entry;
+
 		if (-1 == len) {
 			if (errno == EINVAL)
 				setup();
