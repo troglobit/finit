@@ -56,7 +56,7 @@ static void setup(void)
 static void watcher(void *arg, int fd, int events)
 {
 	int len = 0;
-	char buf[EVENT_SIZE], name[42];
+	char buf[EVENT_SIZE], name[256];
 	struct tty *entry;
 	struct inotify_event *notified = (struct inotify_event *)buf;
 
