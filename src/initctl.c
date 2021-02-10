@@ -108,8 +108,9 @@ static int do_runlevel(char *arg)
 	};
 
 	if (!rq.runlevel) {
+		int prevlevel = 0;
+		int runlevel;
 		char prev;
-		int runlevel, prevlevel;
 
 		runlevel = runlevel_get(&prevlevel);
 		if (255 == runlevel) {
