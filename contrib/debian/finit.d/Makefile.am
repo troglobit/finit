@@ -5,23 +5,18 @@ d_LINKS    = console-setup.conf getty.conf keyboard-setup.conf	\
 
 install-exec-hook:
 	@$(MKDIR_P) $(DESTDIR)$(docsdir)/available
+	@$(MKDIR_P) $(DESTDIR)$(docsdir)/enabled
 	@for file in $(d_LINKS); do				\
-		lnk=$(DESTDIR)$(docsdir)/$$file;		\
+		lnk=$(DESTDIR)$(docsdir)/enabled/$$file;	\
 		src=available/$$file;				\
-		if [ -L $$lnk ]; then				\
-			echo "Skipping $$lnk exists.";		\
-		else						\
-			$(LN_S) $$src $$lnk;			\
-		fi;						\
+		rm -f $$lnk;					\
+		$(LN_S) ../$$src $$lnk;				\
 	done
 
 
 uninstall-hook:
 	@for file in $(d_LINKS); do				\
-		lnk=$(DESTDIR)$(docsdir)/$$file;		\
+		lnk=$(DESTDIR)$(docsdir)/enabled/$$file;	\
 		src=available/$$file;				\
-		if [ "`readlink $$lnk`" != "$$src" ]; then 	\
-			continue; 				\
-		fi;						\
-		$(RM) $$lnk;					\
+		$(RM) -f $$lnk;					\
 	done
