@@ -1,5 +1,5 @@
-AC_INIT(Finit, 3.2-rc3, https://github.com/troglobit/finit/issues, finit, https://troglobit.com/finit.html)
-AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz subdir-objects])
+AC_INIT(Finit, 4.0-beta1, https://github.com/troglobit/finit/issues, finit, https://troglobit.com/finit.html)
+AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_SRCDIR([src/finit.c])
