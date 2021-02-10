@@ -31,8 +31,10 @@ echo
 if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     echo "Installing Finit files ..."
     make install
-    cd `dirname $0`
-    install -vbD finit.conf /etc/finit.conf
+    cd /usr/share/doc/finit/contrib/debian
+    for file in finit.conf; do
+	install -vbD $file /etc/$file
+    done
     cp -va finit.d /etc/
 
     echo "*** Setting up a GRUB boot entry ..."
