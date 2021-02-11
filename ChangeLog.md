@@ -4,17 +4,12 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[3.2][UNRELEASED] - 2021-03-xx
+[4.0][UNRELEASED] - 2021-02-21
 ------------------------------
 
-Major bug fix release.  New features include cgroups and a new progress!
-
-  https://twitter.com/b0rk/status/1214341831049252870?s=20
-
-> **Note:** deprecation warning, this is likely the last release with
->           built-in inetd support!  Current plan is to rip it out at
->           the start of the next release cycle.  It *may* return as
->           a separate stand-alone daemon.
+This release became v4.0, and not v3.2, because of incompatible changes
+to service conditions.  There are other significant changes as well, so
+make sure to read the whole changelog when upgrading.
 
 ### Changes
 * Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
@@ -24,6 +19,8 @@ Major bug fix release.  New features include cgroups and a new progress!
 * Change service conditions from the non-obvious `<svc/path/to/foo>` to
   `<pid/foo:id>`.  This to hopefully make it clear that one service's
   'pid:!foo' pidfile is another service's `<pid/foo>` condition
+* Initial support for cgroups, every service now runs in its own cgroup
+  https://twitter.com/b0rk/status/1214341831049252870?s=20
 * Major refactor of Finit's `main()` function to be able to start the
   event loop earlier.  This also facilitated factoring out functionality
   previously hard-coded in Finit, e.g., starting the bundled watchdogd,
@@ -856,7 +853,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/3.1...HEAD
-[3.2]: https://github.com/troglobit/finit/compare/3.1...3.2
+[4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
 [3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
 [3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
 [2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
