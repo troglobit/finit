@@ -287,7 +287,7 @@ static void pidfile_reconf(void *arg)
 	 * WAITING to RUNNING will reassert their conditions in that loop,
 	 * which in turn may unlock other services, and so on.
 	 */
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK);
 }
 
 static void pidfile_init(void *arg)

@@ -37,7 +37,6 @@
 #include "cond.h"
 #include "finit.h"
 #include "helpers.h"
-#include "inetd.h"
 #include "pid.h"
 #include "private.h"
 #include "sig.h"
@@ -248,17 +247,6 @@ static int lredirect(svc_t *svc)
  */
 static int redirect(svc_t *svc)
 {
-	/* Redirect inetd socket to stdin for connection */
-#ifdef INETD_ENABLED
-	if (svc_is_inetd_conn(svc)) {
-		dup2(svc->stdin_fd, STDIN_FILENO);
-		close(svc->stdin_fd);
-		dup2(STDIN_FILENO, STDOUT_FILENO);
-		dup2(STDIN_FILENO, STDERR_FILENO);
-
-		return 0;
-	}
-#endif
 	stdin_redirect();
 
 	if (svc->log.enabled) {
@@ -306,19 +294,14 @@ static int service_start(svc_t *svc)
 		return 1;
 
 	/* Don't try and start service if it doesn't exist. */
-	if (!whichp(svc->cmd) && !svc->inetd.cmd) {
+	if (!whichp(svc->cmd)) {
 		print(1, "Service %s does not exist", svc->cmd);
 		svc_missing(svc);
 		return 1;
 	}
 
-#ifdef INETD_ENABLED
-	if (svc_is_inetd(svc))
-		return inetd_start(&svc->inetd);
-#endif
-	if (svc_is_sysv(svc)) {
+	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", svc->cmd);
-	}
 
 	if (!svc->desc[0])
 		do_progress = 0;
@@ -404,22 +387,11 @@ static int service_start(svc_t *svc)
 		redirect(svc);
 		sig_unblock();
 
-		if (svc->inetd.cmd)
-			status = svc->inetd.cmd(svc->inetd.type);
-		else if (svc_is_runtask(svc))
+		if (svc_is_runtask(svc))
 			status = exec_runtask(svc->cmd, args);
 		else
 			status = execvp(svc->cmd, args);
 
-#ifdef INETD_ENABLED
-		if (svc_is_inetd_conn(svc)) {
-			if (svc->inetd.type == SOCK_STREAM) {
-				close(STDIN_FILENO);
-				close(STDOUT_FILENO);
-				close(STDERR_FILENO);
-			}
-		} else
-#endif
 		_exit(status);
 	} else if (log_is_debug()) {
 		char buf[CMD_SIZE] = "";
@@ -454,13 +426,6 @@ static int service_start(svc_t *svc)
 	case SVC_TYPE_SERVICE:
 		pid_file_create(svc);
 		break;
-
-#ifdef INETD_ENABLED
-	case SVC_TYPE_INETD_CONN:
-		if (svc->inetd.type == SOCK_STREAM)
-			close(svc->stdin_fd);
-		break;
-#endif
 
 	default:
 		break;
@@ -519,22 +484,6 @@ static int service_stop(svc_t *svc)
 	if (svc->state <= SVC_STOPPING_STATE)
 		return 0;
 
-#ifdef INETD_ENABLED
-	if (svc_is_inetd(svc)) {
-		int do_progress = runlevel != 1 && !svc_is_busy(svc);
-
-		if (do_progress)
-			print_desc("Stopping ", svc->desc);
-
-		inetd_stop(&svc->inetd);
-
-		if (do_progress)
-			print_result(0);
-
-		svc_set_state(svc, SVC_STOPPING_STATE);
-		return 0;
-	} else
-#endif
 	service_timeout_cancel(svc);
 
 	if (!svc_is_sysv(svc)) {
@@ -792,7 +741,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  * service_register - Register service, task or run commands
  * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
  * @cfg:    Configuration, complete command, with -- for description text
- * @rlimit: Limits for this service/task/run/inetd, may be global limits
+ * @rlimit: Limits for this service/task/run, may be global limits
  * @file:   The file name service was loaded from
  *
  * This function is used to register commands to be run on different
@@ -807,7 +756,6 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  *     service @username [!0-6,S] <!COND> /path/to/daemon arg -- Description
  *     task @username [!0-6,S] /path/to/task arg              -- Description
  *     run  @username [!0-6,S] /path/to/cmd arg               -- Description
- *     inetd tcp/ssh nowait [2345] @root:root /sbin/sshd -i   -- Description
  *
  * If the username is left out the command is started as root.  The []
  * brackets denote the allowed runlevels, if left out the default for a
@@ -817,46 +765,43 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  * command is listed in more than the [S] runlevel they will be called
  * when changing runlevel.
  *
- * Services (daemons, not inetd services) also support an optional <!EV>
- * argument.  This is for services that, e.g., require a system gateway
- * or interface to be up before they are started.  Or restarted, or even
- * SIGHUP'ed, when the gateway changes or interfaces come and go.  The
- * special case when a service is declared with <!> means it does not
- * support SIGHUP but must be STOP/START'ed at system reconfiguration.
+ * Services (daemons) also support an optional <!condition> argument.
+ * This is for services that depend on another service, e.g. Quagga ripd
+ * depends on zebra, or require a system gateway or interface to be up
+ * before they are started.  Or restarted, or even SIGHUP'ed, when the
+ * gateway changes or interfaces come and go.  The special case when a
+ * service is declared with <!> means it does not support SIGHUP but
+ * must be STOP/START'ed at system reconfiguration.
  *
- * Service conditions can be: pid/<PATH> for PID files, net/<IFNAME>/up
- * and net/<IFNAME>/exists.  The condition handling is further described
- * in doc/conditions.md, but worth mentioning here is that the condition
- * name itself can be modified using the :ID and name:foo syntax.
+ * Conditions can for example be: pid/NAME:ID for process dependencies,
+ * net/<IFNAME>/up or net/<IFNAME>/exists.  The condition handling is
+ * further described in doc/conditions.md, but worth mentioning here is
+ * that the condition a services *provides* can be modified using the
+ * :ID and name:foo syntax.
  *
  * For multiple instances of the same command, e.g. multiple DHCP
  * clients, the user must enter an ID, using the :ID syntax.
  *
- *     service :1 /sbin/udhcpc -i eth1
- *     service :2 /sbin/udhcpc -i eth2
+ *     service :eth1 /sbin/udhcpc -i eth1
+ *     service :eth2 /sbin/udhcpc -i eth2
  *
- * Without the :ID syntax Finit will overwrite the first service line
- * with the contents of the second.  The :ID must be [1,MAXINT].
+ * Without the :ID syntax, Finit replaces the first service line with
+ * the contents of the second.  The :ID can be any string value and
+ * defaults to "" (emtpy string).
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
  */
 int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 {
-#ifdef INETD_ENABLED
-	char id_str[MAX_ID_LEN];
-	int forking = 0;
-#endif
+	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
+	char *username = NULL, *log = NULL, *pid = NULL;
+	char *name = NULL, *halt = NULL, *delay = NULL;
+	char *id = NULL;
 	int levels = 0;
 	int manual = 0;
 	char *line;
-	char *id = NULL;
-	char *username = NULL, *log = NULL, *pid = NULL;
-	char *service = NULL, *proto = NULL, *ifaces = NULL;
-	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
-	char *name = NULL, *halt = NULL, *delay = NULL;
 	svc_t *svc;
-	plugin_t *plugin = NULL;
 
 	if (!cfg) {
 		_e("Invalid input argument");
@@ -902,12 +847,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			cond = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
 			id = &cmd[1];
-#ifdef INETD_ENABLED
-		else if (!strncasecmp(cmd, "nowait", 6))
-			forking = 1;
-		else if (!strncasecmp(cmd, "wait", 4))
-			forking = 0;
-#endif
 		else if (!strncasecmp(cmd, "log", 3))
 			log = cmd;
 		else if (!strncasecmp(cmd, "pid", 3))
@@ -920,8 +859,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			halt = &cmd[5];
 		else if (!strncasecmp(cmd, "kill:", 5))
 			delay = &cmd[5];
-		else if (cmd[0] != '/' && strchr(cmd, '/'))
-			service = cmd;   /* inetd service/proto */
 		else
 			break;
 
@@ -937,55 +874,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		free(line);
 		return 0;
 	}
-
-	/* Example: inetd ssh/tcp@eth0,eth1 or 222/tcp@eth2 */
-	if (service) {
-		ifaces = strchr(service, '@');
-		if (ifaces)
-			*ifaces++ = 0;
-
-		proto = strchr(service, '/');
-		if (!proto)
-			goto incomplete;
-		*proto++ = 0;
-	}
-
-#ifdef INETD_ENABLED
-	/* Find plugin that provides a callback for this inetd service */
-	if (type == SVC_TYPE_INETD) {
-		if (!strncasecmp(cmd, "internal", 8)) {
-			char *ptr, *ps = service;
-
-			/* internal.service */
-			ptr = strchr(cmd, '.');
-			if (ptr) {
-				*ptr++ = 0;
-				ps = ptr;
-			}
-
-			plugin = plugin_find(ps);
-			if (!plugin || !plugin->inetd.cmd) {
-				_w("Inetd service %s has no internal plugin, skipping ...", service);
-				free(line);
-				return errno = ENOENT;
-			}
-		}
-
-		/* Check if known inetd, update command line, then add ifnames for filtering only. */
-		svc = inetd_find_svc(cmd, service, proto);
-		if (svc) {
-			parse_cmdline_args(svc, cmd);
-			goto inetd_setup;
-		}
-
-		/* inetd services need a unique ID, so we must always set one. */
-		if (!id) {
-			snprintf(id_str, sizeof(id_str), "%d", svc_next_id_int(cmd));
-			id = id_str;
-		}
-	}
-recreate:
-#endif
 
 	if (!id)
 		id = "";
@@ -1004,16 +892,6 @@ recreate:
 			svc_stop(svc);
 		}
 	}
-#ifdef INETD_ENABLED
-	else {
-		if (svc_is_inetd(svc) && type != SVC_TYPE_INETD) {
-			_d("Service was previously inetd, deregistering ...");
-			inetd_del(&svc->inetd);
-			svc_del(svc);
-			goto recreate;
-		}
-	}
-#endif
 
 	/* Always clear svc PID file, for now.  See TODO */
 	svc->pidfile[0] = 0;
@@ -1031,12 +909,7 @@ recreate:
 		strlcpy(svc->username, username, sizeof(svc->username));
 	}
 
-	if (plugin) {
-		/* Internal plugin provides this service */
-		svc->inetd.cmd = plugin->inetd.cmd;
-		svc->inetd.builtin = 1;
-	} else
-		parse_cmdline_args(svc, cmd);
+	parse_cmdline_args(svc, cmd);
 
 	svc->runlevels = levels;
 	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
@@ -1053,35 +926,6 @@ recreate:
 	if (desc)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
 
-#ifdef INETD_ENABLED
-	if (svc_is_inetd(svc)) {
-		char *iface, *name = service;
-
-		if (svc->inetd.cmd && plugin)
-			name = plugin->name;
-
-		if (inetd_new(&svc->inetd, name, service, proto, forking, svc)) {
-			_e("Failed registering new inetd service %s/%s", service, proto);
-			free(line);
-			return svc_del(svc);
-		}
-
-	inetd_setup:
-		inetd_flush(&svc->inetd);
-
-		if (!ifaces) {
-			_d("No specific iface listed for %s, allowing ANY", service);
-			inetd_allow(&svc->inetd, NULL);
-		} else {
-			for (iface = strtok(ifaces, ","); iface; iface = strtok(NULL, ",")) {
-				if (iface[0] == '!')
-					inetd_deny(&svc->inetd, &iface[1]);
-				else
-					inetd_allow(&svc->inetd, iface);
-			}
-		}
-	}
-#endif
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
 
@@ -1101,44 +945,18 @@ recreate:
 
 /*
  * This function is called when cleaning up lingering (stopped) services
- * after a .conf reload, as well as when an inetd connection terminates.
+ * after a .conf reload.
  *
  * We need to ensure we properly stop the service before removing it,
  * including stopping any pending restart or SIGKILL timers before we
  * proceed to free() the svc itself.
- *
- * Remember to not try to stop inetd connections, they only get here
- * when already stopped, if we do we end up in a recursive loop.
  */
 void service_unregister(svc_t *svc)
 {
 	if (!svc)
 		return;
 
-	/*
-	 * Only try stopping @svc if it's *not* an inetd connection.
-	 * Prevents infinite recursion when called from service_step()
-	 */
-	switch (svc->type) {
-#ifdef INETD_ENABLED
-	case SVC_TYPE_INETD:
-		inetd_del(&svc->inetd);
-		break;
-
-	case SVC_TYPE_INETD_CONN:
-		/* inetd connection, if UDP unblock parent */
-		if (svc_is_busy(svc->inetd.svc)) {
-			svc_unblock(svc->inetd.svc);
-			service_step(svc->inetd.svc);
-		}
-		break;
-#endif
-
-	default:
-		service_stop(svc);
-		break;
-	}
-
+	service_stop(svc);
 	svc_del(svc);
 }
 
@@ -1238,7 +1056,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	*state = new;
 
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
-	if ((*state == SVC_STOPPING_STATE) && !svc_is_inetd(svc)) {
+	if ((*state == SVC_STOPPING_STATE)) {
 		_d("%s is stopping, wait %d sec before sending SIGKILL ...",
 		   svc->cmd, svc->killdelay / 1000);
 		service_timeout_cancel(svc);
@@ -1247,7 +1065,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 }
 
 /*
- * Transition inetd/task/run/service
+ * Transition task/run/service
  *
  * Returns: non-zero if the @svc is no longer valid (removed)
  */
@@ -1275,12 +1093,6 @@ restart:
 		break;
 
 	case SVC_DONE_STATE:
-#ifdef INETD_ENABLED
-		if (svc_is_inetd_conn(svc)) {
-			service_unregister(svc);
-			return -1;
-		}
-#endif
 		if (svc_is_changed(svc))
 			svc_set_state(svc, SVC_HALTED_STATE);
 		break;
@@ -1293,11 +1105,8 @@ restart:
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
-			case SVC_TYPE_INETD:
-				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 
-			case SVC_TYPE_INETD_CONN:
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
 			case SVC_TYPE_SYSV:
@@ -1322,8 +1131,7 @@ restart:
 			err = service_start(svc);
 			if (err) {
 				(*restart_cnt)++;
-				if (!svc_is_inetd_conn(svc))
-					break;
+				break;
 			}
 
 			/* Everything went fine, clean and set state */
@@ -1349,12 +1157,6 @@ restart:
 				 */
 				_d("delayed restart of %s", svc->cmd);
 				service_timeout_after(svc, 1, service_retry);
-				break;
-			}
-
-			/* Collected inetd connection, drive it to stopping */
-			if (svc_is_inetd_conn(svc)) {
-				svc_set_state(svc, SVC_STOPPING_STATE);
 				break;
 			}
 
@@ -1384,18 +1186,16 @@ restart:
 		case COND_ON:
 			if (svc_is_changed(svc)) {
 				if (svc->sighup) {
-					/* wait until all processes has been stopped before continuing... */
+					/*
+					 * wait until all processes have been
+					 * stopped before continuing...
+					 */
 					if (sm_is_in_teardown(&sm))
 						break;
 					service_restart(svc);
-				} else {
-#ifdef INETD_ENABLED
-					if (svc_is_inetd(svc))
-						inetd_stop_children(&svc->inetd, 1);
-					else
-#endif
-						service_stop(svc);
-				}
+				} else
+					service_stop(svc);
+
 				svc_mark_clean(svc);
 			}
 			break;
@@ -1465,7 +1265,7 @@ void service_step_all(int types)
 
 void service_worker(void *unused)
 {
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK | SVC_TYPE_INETD);
+	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK);
 }
 
 /**

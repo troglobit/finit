@@ -421,17 +421,14 @@ static int show_status(char *arg)
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char jobid[20], args[512] = "", *lvls;
+		int i;
 
 		if (!svc->id[0])
 			snprintf(jobid, sizeof(jobid), "%d", svc->job);
 		else
 			snprintf(jobid, sizeof(jobid), "%d:%s", svc->job, svc->id);
 
-		printf("%-9s %8s ", jobid, svc_status(svc));
-		if (svc_is_inetd(svc))
-			printf("inetd   ");
-		else
-			printf("%-6d  ", svc->pid);
+		printf("%-9s %8s %-6d  ", jobid, svc_status(svc), svc->pid);
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
@@ -445,47 +442,12 @@ static int show_status(char *arg)
 			continue;
 		}
 
-#ifdef INETD_ENABLED
-		if (svc_is_inetd(svc)) {
-			char *info;
-			struct init_request rq = {
-				.magic = INIT_MAGIC,
-				.cmd = INIT_CMD_QUERY_INETD,
-			};
-
-			snprintf(rq.data, sizeof(rq.data), "%s", jobid);
-			if (client_send(&rq, sizeof(rq))) {
-				snprintf(args, sizeof(args), "Unknown inetd");
-				info = args;
-			} else {
-				size_t len = sizeof(rq.data);
-
-				info = rq.data;
-				info[len - 1] = 0;
-
-				if (!string_match("internal", svc->cmd)) {
-					char *ptr;
-
-					ptr = strchr(info, ' ');
-					if (ptr)
-						info = ptr + 1;
-				}
-			}
-
-			printf("%s %s\n", svc->cmd, info);
+		for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+			strlcat(args, svc->args[i], sizeof(args));
+			strlcat(args, " ", sizeof(args));
 		}
-		else
-#endif /* INETD_ENABLED */
-		{
-			int i;
 
-			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
-				strlcat(args, svc->args[i], sizeof(args));
-				strlcat(args, " ", sizeof(args));
-			}
-
-			printf("%s %s\n", svc->cmd, args);
-		}
+		printf("%s %s\n", svc->cmd, args);
 	}
 
 	return 0;

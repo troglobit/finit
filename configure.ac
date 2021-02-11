@@ -74,10 +74,6 @@ AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--enable-redirect], [Redirect service output to /dev/null, default: no]),,[
 	enable_redirect_output=no])
 
-AC_ARG_ENABLE(inetd,
-        AS_HELP_STRING([--disable-inetd], [Disable built-in inetd super server, default enabled]),,[
-	enable_inetd=yes])
-
 AC_ARG_ENABLE(logit,
      AS_HELP_STRING([--disable-logit], [Disable logit, used for log redirection, default: enable]),,[
      enable_logit=yes])
@@ -99,11 +95,6 @@ enable_all_plugins=auto
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],          [no],  [Setup and start system message bus, D-Bus])
 AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
-AC_PLUGIN([inetd-echo],    [no],  [Inetd plugin: echo server, RFC862])
-AC_PLUGIN([inetd-chargen], [no],  [Inetd plugin: character generator, RFC864])
-AC_PLUGIN([inetd-daytime], [no],  [Inetd plugin: daytime server, RFC867])
-AC_PLUGIN([inetd-discard], [no],  [Inetd plugin: discard server, RFC863])
-AC_PLUGIN([inetd-time],    [no],  [Inetd plugin: time (rdate) server, RFC868])
 AC_PLUGIN([modules-load],  [no],  [Scans /etc/modules-load.d for modules to load])
 AC_PLUGIN([resolvconf],    [no],  [Setup necessary files for resolvconf])
 AC_PLUGIN([x11-common],    [no],  [Console setup (for X)])
@@ -174,10 +165,6 @@ AS_IF([test "x$enable_redirect" = "xyes"], [
 	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])
 
 ### Disable features ###########################################################################
-AS_IF([test "x$enable_inetd" != "xno"], [
-	enable_inetd="yes"
-	AC_DEFINE(INETD_ENABLED,  1, [Enable built-in inetd])])
-
 AS_IF([test "x$enable_logit" != "xno"], [
 	AC_DEFINE(LOGIT_ENABLED,  1, [Enable logit tool, used for log redirection by Finit])])
 
@@ -232,7 +219,6 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
-AM_CONDITIONAL(INETD,     [test "x$enable_inetd" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
 AM_CONDITIONAL(LOGIT,     [test "x$enable_logit" = "xyes"])
 AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
@@ -278,7 +264,6 @@ Behavior:
 Optional features:
   Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
-  Built-in inetd........: $enable_inetd
   Built-in watchdogd....: $enable_watchdog
   Built-in logrotate....: $enable_logrotate
   Scripting tool logit..: $enable_logit

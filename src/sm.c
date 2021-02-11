@@ -222,7 +222,7 @@ restart:
 		_d("Stopping services not allowed after reconf ...");
 		sm->in_teardown = 1;
 		cond_reload();
-		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+		service_step_all(SVC_TYPE_SERVICE);
 		tty_reload(NULL);
 
 		sm->state = SM_RELOAD_WAIT_STATE;
@@ -244,12 +244,12 @@ restart:
 		svc_clean_dynamic(service_unregister);
 
 		_d("Starting services after reconf ...");
-		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+		service_step_all(SVC_TYPE_SERVICE);
 
 		_d("Calling reconf hooks ...");
 		plugin_run_hooks(HOOK_SVC_RECONF);
 
-		service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_INETD);
+		service_step_all(SVC_TYPE_SERVICE);
 		_d("Reconfiguration done");
 
 		sm->state = SM_RUNNING_STATE;

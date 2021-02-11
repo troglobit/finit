@@ -13,6 +13,9 @@ make sure to read the whole changelog when upgrading.
 
 ### Changes
 * Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
+* Removed built-in inetd super server.  If you need this functionality,
+  use an external inetd, like xinetd, instead.  A pull request for a
+  stand-alone inetd, like watchdogd and getty, is most welcome!
 * Incompatible `configure` script changes, i.e., you must give proper
   path arguments to the script, no more guessing just GNU defaults.
   There are examples in the documentation and the `contrib/` section
@@ -76,8 +79,7 @@ make sure to read the whole changelog when upgrading.
 * Drop `--enable-rw-roots` configure option, use `rw` for your `/`
   partition in `/etc/fstab` instead to trigger remount at boot
 * Drop default tty speed (38400) and use 0 (kernel default) instead
-* Make `:ID` optional for real, use NULL/zero internally and only
-  force :ID (numbered) for inetd services, this allows ...
+* Make `:ID` optional, use NULL/zero internally this allows ...
 * Handle use-cases where multiple services share the same PID filem
   and thus the same condition path, e.g. different instances for
   different runlevels.  Allow custom condition path with `name:foo`
@@ -95,14 +97,8 @@ make sure to read the whole changelog when upgrading.
 
 * Fix #96: Start udevd as a proper service
 * Ensure we track run commands as well as task/service, once per runlevel
-* Fix #98: FTBFS with `--disable-inetd`
-* Make sure to unblock UDP inetd services when connection terminates.
-  Regression introduced in v3.1
 * Ensure run/tasks also go to stopping state on exit, like services,
   otherwise it is unnecessarily hard to restart them
-* Fix #99: Do not try to `SIGKILL` inetd services, they are not backed
-  by a PID.  This caused a use after free issue crashing finit.  Found
-  and fixed by Tobias Waldekranz, Westermo
 * Fix missing OS/Finit title bug, adds leading newline before banner
 * Remove "Failed connecting to watchdog ..." error message on systems
   that do not have a watchdog
@@ -110,23 +106,14 @@ make sure to read the whole changelog when upgrading.
   not yet exist (symlink to `/run`).  Added compat layer for access
 * Fix #103: Register multiple getty if `@console` resolves to >1 TTY,
 * Fix #105: Only remove /etc/nologin when moving from runlevel 0, 1, 6
-* Fix #106: Don't mark inetd connections for deletion at .conf reload.
-  Fixed by Jonas Johansson, Westermo
-* Fix #107: Stop spawned inetd conncections when stopping inetd service.
   Fixed by Jonas Johansson, Westermo
 * Fix #109: Support for PID files in sub-directories to `/var/run`
 * Handle rename of PID files, by Robert Andersson, Atlas Copco
-* Fix #111: Only restart inetd services when necessary.  E.g., if the
-  listening interface is changed.  Only stop established connections
-  which are no longer allowed, i.e. do not touch already allowed
-  established connections.  Fixed by Jonas Johansson, Westermo
 * Fix #120: Redirect `stdin` to `/dev/null` for services by default
 * Fix #122: Switch to `nanosleep()` to achieve "signal safe" sleep,
   fixed by Jacques de Laval, Westermo
 * Fix #124: Lingering processes in process group when session leader
   exits.  E.g., lingering `logit` processes when parent dies
-* Fix: update inetd service args on config change.  Found and fixed by
-  Petrus Hellgren, Westermo
 * Fix service name matching, e.g. for condition handling, may match with
   wrong service, by Jonas Holmberg, Westermo
 * Run all run-parts scripts using `/bin/sh -c foo` just like the standard

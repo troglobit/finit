@@ -158,19 +158,6 @@ static svc_t *do_find(char *buf, size_t len)
 	return svc_find_by_nameid(input, id);
 }
 
-#ifdef INETD_ENABLED
-static int do_query_inetd(char *buf, size_t len)
-{
-	svc_t *svc;
-
-	svc = do_find(buf, len);
-	if (!svc || !svc_is_inetd(svc))
-		return 1;
-
-	return inetd_filter_str(&svc->inetd, buf, len);
-}
-#endif /* INETD_ENABLED */
-
 typedef struct {
 	char *event;
 	void (*cb)(void);
@@ -290,14 +277,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 			strterm(rq.data, sizeof(rq.data));
 			result = do_restart(rq.data, sizeof(rq.data));
 			break;
-
-#ifdef INETD_ENABLED
-		case INIT_CMD_QUERY_INETD:
-			_d("query inetd");
-			strterm(rq.data, sizeof(rq.data));
-			result = do_query_inetd(rq.data, sizeof(rq.data));
-			break;
-#endif
 
 		case INIT_CMD_GET_RUNLEVEL:
 			_d("get runlevel");

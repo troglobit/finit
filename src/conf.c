@@ -500,16 +500,6 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 		return;
 	}
 
-	/* Classic inetd service */
-	if (MATCH_CMD(line, "inetd ", x)) {
-#ifdef INETD_ENABLED
-		service_register(SVC_TYPE_INETD, x, rlimit, file);
-#else
-		_e("Finit built with inetd support disabled, cannot register service inetd %s!", x);
-#endif
-		return;
-	}
-
 	/* Read resource limits */
 	if (MATCH_CMD(line, "rlimit ", x)) {
 		conf_parse_rlimit(x, rlimit);
@@ -574,8 +564,8 @@ static int parse_conf(char *file)
 
 	/*
 	 * Get current global limits, which may be overridden from both
-	 * finit.conf, for Finit and its services like inetd+getty, and
-	 * *.conf in finit.d/, for each service(s) listed there.
+	 * finit.conf, for Finit and its services like getty+watchdogd,
+	 * and *.conf in finit.d/, for each service(s) listed there.
 	 */
 	for (int i = 0; i < RLIMIT_NLIMITS; i++)
 		getrlimit(i, &global_rlimit[i]);

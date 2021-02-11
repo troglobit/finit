@@ -30,8 +30,8 @@
 #include <sys/types.h>		/* pid_t */
 #include <lite/lite.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
+#include <uev/uev.h>
 
-#include "inetd.h"
 #include "helpers.h"
 
 typedef int svc_cmd_t;
@@ -41,8 +41,6 @@ typedef enum {
 	SVC_TYPE_SERVICE    = 1,	/* Monitored, will be respawned */
 	SVC_TYPE_TASK       = 2,	/* One-shot, runs in parallell */
 	SVC_TYPE_RUN        = 4,	/* Like task, but wait for completion */
-	SVC_TYPE_INETD      = 8,	/* Classic inetd service */
-	SVC_TYPE_INETD_CONN = 16,	/* Single inetd connection */
 	SVC_TYPE_SYSV       = 32,	/* SysV style init.d script w/ start/stop */
 } svc_type_t;
 
@@ -103,7 +101,7 @@ typedef struct svc {
 	int            started;	       /* Set for run/task/sysv to track if started */
 	int            status;	       /* From waitpid() when process is collected */
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
-	svc_type_t     type;	       /* Service, run, task, inetd, ... */
+	svc_type_t     type;	       /* Service, run, task, ... */
 	int            protect;        /* Services like dbus-daemon & udev by Finit */
 	const int      dirty;	       /* -1: removal, 0: unmodified, 1: modified */
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
@@ -116,11 +114,6 @@ typedef struct svc {
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
 	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
-
-	/* For inetd services */
-	inetd_t        inetd;
-	int            stdin_fd;
-	char           iifname[IF_NAMESIZE + 1]; /* Ingress interface for connection */
 
 	/* Set for services we need to redirect stdout/stderr to syslog */
 	struct {
@@ -162,7 +155,6 @@ svc_t	   *svc_find_by_nameid     (char *name, char *id);
 svc_t      *svc_find_by_pidfile    (char *fn);
 
 svc_t      *svc_iterator           (svc_t **iter, int first);
-svc_t      *svc_inetd_iterator     (svc_t **iter, int first);
 svc_t      *svc_named_iterator     (svc_t **iter, int first, char *cmd);
 svc_t      *svc_job_iterator       (svc_t **iter, int first, int job);
 
@@ -179,13 +171,10 @@ int	    svc_clean_bootstrap    (svc_t *svc);
 void	    svc_prune_bootstrap	   (void);
 
 int         svc_enabled            (svc_t *svc);
-int         svc_next_id_int        (char  *cmd);
 int         svc_is_unique          (svc_t *svc);
 
 int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *));
 
-static inline int svc_is_inetd     (svc_t *svc) { return svc && SVC_TYPE_INETD      == svc->type; }
-static inline int svc_is_inetd_conn(svc_t *svc) { return svc && SVC_TYPE_INETD_CONN == svc->type; }
 static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
 static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV       == svc->type; }
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
@@ -246,7 +235,6 @@ static inline char *svc_status(svc_t *svc)
 
 	case SVC_STOPPING_STATE:
 		switch (svc->type) {
-		case SVC_TYPE_INETD_CONN:
 		case SVC_TYPE_RUN:
 		case SVC_TYPE_TASK:
 			return "active";

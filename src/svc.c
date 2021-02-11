@@ -72,9 +72,9 @@ static void svc_gc(void *arg)
 
 /**
  * svc_new - Create a new service
- * @cmd:  External program to call, or 'internal' for internal inetd services
+ * @cmd:  External program to call
  * @id:   Instance id
- * @type: Service type, one of service, task, run or inetd
+ * @type: Service type, one of service, task, run
  *
  * Returns:
  * A pointer to a new &svc_t object, or %NULL if out of empty slots.
@@ -168,28 +168,6 @@ svc_t *svc_iterator(svc_t **iter, int first)
 
 	return svc;
 }
-
-/**
- * svc_inetd_iterator - Naive iterator over all registered inetd services.
- * @iter:  Iterator, must be a valid pointer
- * @first: If set, get first &svc_t, otherwise get next
- *
- * Returns:
- * The first inetd &svc_t when %NULL is given as argument, otherwise the
- * next inetd &svc_t until the end when %NULL is returned.
- */
-svc_t *svc_inetd_iterator(svc_t **iter, int first)
-{
-	svc_t *svc;
-
-	for (svc = svc_iterator(iter, first); svc; svc = svc_iterator(iter, 0)) {
-		if (svc_is_inetd(svc))
-			return svc;
-	}
-
-	return NULL;
-}
-
 
 /**
  * svc_named_iterator - Iterates over all instances of a service.
@@ -455,8 +433,6 @@ void svc_mark_dynamic(void)
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (svc->protect)
 			continue;
-		if (svc_is_inetd_conn(svc))
-			continue;
 
 		*((int *)&svc->dirty) = -1;
 	}
@@ -543,29 +519,6 @@ int svc_enabled(svc_t *svc)
 
 	if (svc_is_removed(svc) || svc_is_blocked(svc))
 		return 0;
-
-	return 1;
-}
-
-/*
- * Same base service, return unique ID as an integer
- * Note: intended for use with INETD services.
- */
-int svc_next_id_int(char *cmd)
-{
-	int n = 1;
-	svc_t *svc, *iter = NULL;
-
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		char id[MAX_ID_LEN];
-
-		snprintf(id, sizeof(id), "%d", n);
-
-		if (!strcmp(svc->cmd, cmd) && strcmp(svc->id, id))
-			return n;
-
-		n++;
-	}
 
 	return 1;
 }

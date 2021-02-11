@@ -39,10 +39,7 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     tty.c	tty.h				\
 		     util.c	util.h				\
 		     utmp-api.c	utmp-api.h
-pkginclude_HEADERS = cond.h finit.h helpers.h inetd.h log.h plugin.h svc.h
-if INETD
-finit_SOURCES     += inetd.c	inetd.h
-endif
+pkginclude_HEADERS = cond.h finit.h helpers.h log.h plugin.h svc.h
 
 finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
