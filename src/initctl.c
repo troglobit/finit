@@ -450,6 +450,7 @@ static int show_status(char *arg)
 		if (!svc)
 			return 1;
 
+		printf("Job         : %d\n", svc->job);
 		printf("Service     : %s\n", svc->cmd);
 		printf("Description : %s\n", svc->desc);
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
