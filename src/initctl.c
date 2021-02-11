@@ -48,6 +48,7 @@ struct command {
 	int  (*cb)(char *arg);
 };
 
+int heading  = 1;
 int verbose  = 0;
 int runlevel = 0;
 
@@ -220,7 +221,8 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 
 static int do_cond_dump(char *arg)
 {
-	printheader(NULL, "CONDITION                     STATUS", 0);
+	if (heading)
+		printheader(NULL, "CONDITION                     STATUS", 0);
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		warnx("Failed parsing %s", _PATH_COND);
@@ -235,7 +237,8 @@ static int do_cond_show(char *arg)
 	svc_t *svc;
 	enum cond_state cond;
 
-	printheader(NULL, "PID     SERVICE               STATUS  CONDITION (+ ON, ~ FLUX, - OFF)", 0);
+	if (heading)
+		printheader(NULL, "PID     SERVICE               STATUS  CONDITION (+ ON, ~ FLUX, - OFF)", 0);
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		if (!svc->cond[0])
@@ -300,7 +303,8 @@ int utmp_show(char *file)
 	int pid;
 	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
 
-	printheader(NULL, file, 0);
+	if (heading)
+		printheader(NULL, file, 0);
 	utmpname(file);
 
 	setutent();
@@ -418,10 +422,12 @@ static int show_status(char *arg)
 		return do_log(svc->cmd);
 	}
 
-	if (!verbose)
-		printheader(NULL, "IDENT              STATUS PID     RUNLEVELS     DESCRIPTION", 0);
-	else
-		printheader(NULL, "IDENT       STATUS PID     RUNLEVELS     COMMAND", 0);
+	if (heading) {
+		if (!verbose)
+			printheader(NULL, "IDENT              STATUS PID     RUNLEVELS     DESCRIPTION", 0);
+		else
+			printheader(NULL, "IDENT       STATUS PID     RUNLEVELS     COMMAND", 0);
+	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char *lvls;
@@ -529,6 +535,7 @@ static int usage(int rc)
 		"\n"
 		"Options:\n"
 		"  -b, --batch               Batch mode, no screen size probing\n"
+		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
 		"\n"
@@ -616,7 +623,7 @@ int main(int argc, char *argv[])
 	};
 
 	progname(argv[0]);
-	while ((c = getopt_long(argc, argv, "bh?v", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bh?tv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':
 			interactive = 0;
@@ -625,6 +632,10 @@ int main(int argc, char *argv[])
 		case 'h':
 		case '?':
 			return usage(0);
+
+		case 't':
+			heading = 0;
+			break;
 
 		case 'v':
 			verbose = 1;
