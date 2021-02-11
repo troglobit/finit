@@ -663,11 +663,11 @@ int main(int argc, char *argv[])
 		{ NULL, NULL }
 	};
 	struct option long_options[] = {
-		{"batch",   0, NULL, 'b'},
-		{"help",    0, NULL, 'h'},
-		{"debug",   0, NULL, 'd'},
-		{"verbose", 0, NULL, 'v'},
-		{NULL, 0, NULL, 0}
+		{ "batch",      0, NULL, 'b' },
+		{ "help",       0, NULL, 'h' },
+		{ "no-heading", 0, NULL, 't' },
+		{ "verbose",    0, NULL, 'v' },
+		{ NULL, 0, NULL, 0 }
 	};
 
 	progname(argv[0]);
