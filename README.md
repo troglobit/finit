@@ -58,27 +58,27 @@ runlevel 2
 log size=100k count=4
 
 # Services to be monitored and respawned as needed
-service [S12345] /sbin/watchdogd -L -f                       -- System watchdog daemon
-service [S12345] /sbin/syslogd -n -b 3 -D                    -- System log daemon
-service [S12345] /sbin/klogd -n                              -- Kernel log daemon
-service   [2345] /sbin/lldpd -d -c -M1 -H0 -i                -- LLDP daemon (IEEE 802.1ab)
+service [S12345] watchdogd -L -f                 -- System watchdog daemon
+service [S12345] syslogd -n -b 3 -D              -- System log daemon
+service [S12345] <pid/syslogd> klogd -n          -- Kernel log daemon
+service   [2345] lldpd -d -c -M1 -H0 -i          -- LLDP daemon (IEEE 802.1ab)
 
 # The BusyBox ntpd does not use syslog when running in the foreground
 # So we use this trick to redirect stdout/stderr to a log file.  The
 # log file is rotated with the above settings.  The condition declares
 # a dependency on a system default route (gateway) to be set.  A single
 # <!> at the beginning means ntpd does not respect SIGHUP for restart.
-service [2345] log:/var/log/ntpd.log <!net/route/default> /sbin/ntpd -n -l -I eth0 -- NTP daemon
+service [2345] log:/var/log/ntpd.log <!net/route/default> ntpd -n -l -I eth0 -- NTP daemon
 
 # For multiple instances of the same service, add :ID somewhere between
 # the service/run/task keyword and the command.
-service :1 [2345] /sbin/merecat -n -p 80   /var/www          -- Web server
-service :2 [2345] /sbin/merecat -n -p 8080 /var/www          -- Old web server
+service :80   [2345] merecat -n -p 80   /var/www -- Web server
+service :8080 [2345] merecat -n -p 8080 /var/www -- Old web server
 
 # Alternative method instead of below runparts, can also use /etc/rc.local
-#task [S] /etc/init.d/keyboard-setup start                   -- Setting up preliminary keymap
-#task [S] /etc/init.d/acpid start                            -- Starting ACPI Daemon
-#task [S] /etc/init.d/kbd start                              -- Preparing console
+#task [S] /etc/init.d/keyboard-setup start       -- Setting up preliminary keymap
+#task [S] /etc/init.d/acpid start                -- Starting ACPI Daemon
+#task [S] /etc/init.d/kbd start                  -- Preparing console
 
 # Run start scripts from this directory
 # runparts /etc/start.d
@@ -115,20 +115,20 @@ Some components are optional: runlevel(s), condition(s) and description,
 making it easy to create simple start scripts and still possible for more
 advanced uses as well:
 
-    service /usr/sbin/sshd -D
+    service sshd -D
 
 Dependencies are handled using [conditions](doc/conditions.md).  One of
 the most common conditions is to wait for basic networking to become
 available:
 
-    service <net/route/default> /usr/sbin/nginx -- High performace HTTP server
+    service <net/route/default> nginx -- High performace HTTP server
 
 Here is another example where we instruct Finit to not start BusyBox
 `ntpd` until `syslogd` has started properly.  Finit waits for `syslogd`
 to create its PID file, by default `/var/run/syslogd.pid`.
 
-    service [2345] log <pid/sbin/syslogd> /usr/sbin/ntpd -n -N -p pool.ntp.org
-    service [S12345] /sbin/syslogd -n -- Syslog daemon
+    service [2345] log <!pid/syslogd> ntpd -n -N -p pool.ntp.org
+    service [S12345] syslogd -n -- Syslog daemon
 
 Notice the `log` keyword, BusyBox `ntpd` uses `stderr` for logging when
 run in the foreground.  With `log` Finit redirects `stdout` + `stderr`
@@ -137,7 +137,7 @@ to the system log daemon using the command line `logger(1)` tool.
 A service, or task, can have multiple dependencies listed.  Here we wait
 for *both* `syslogd` to have started and basic networking to be up:
 
-    service [2345] log <pid/sbin/syslogd,net/route/default> /usr/sbin/ntpd -n -N -p pool.ntp.org
+    service [2345] log <pid/syslogd,net/route/default> ntpd -n -N -p pool.ntp.org
 
 If either condition fails, e.g. loss of networking, `ntpd` is stopped
 and as soon as it comes back up again `ntpd` is restarted automatically.
@@ -299,10 +299,10 @@ To specify an allowed set of runlevels for a `service`, `run` command,
 `task`, or `tty`, add `[NNN]` to your `/etc/finit.conf`, like this:
 
 ```
-service [S12345] /sbin/syslogd -n -x     -- System log daemon
-run     [S]      /etc/init.d/acpid start -- Starting ACPI Daemon
-task    [S]      /etc/init.d/kbd start   -- Preparing console
-service [S12345] /sbin/klogd -n -x       -- Kernel log daemon
+service [S12345] syslogd -n -x             -- System log daemon
+run     [S]      /etc/init.d/acpid start   -- Starting ACPI Daemon
+task    [S]      /etc/init.d/kbd start     -- Preparing console
+service [S12345] <pid/syslogd> klogd -n -x -- Kernel log daemon
 
 tty     [12345]  /dev/tty1
 tty     [2]      /dev/tty2
@@ -443,7 +443,7 @@ done slightly differently and on systems with udev you might want to add
 the following one-shot task early in your `/etc/finit.conf`:
 
 ```conf
-run [S] /sbin/udevadm settle --timeout=120 -- Waiting for udev
+run [S] udevadm settle --timeout=120 -- Waiting for udev
 ```
 
 Finit has a built-in Getty for TTYs, but requires a working `/bin/login`

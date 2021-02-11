@@ -354,7 +354,7 @@ Every `run`, `task`, or `service` can also list the privileges the
 `[@USR[:GRP]]` like this:
 
 ```shell
-    run [2345] @joe:users /usr/bin/logger "Hello world"
+    run [2345] @joe:users logger "Hello world"
 ```
 
 For multiple instances of the same command, e.g. a DHCP client or
@@ -362,8 +362,8 @@ multiple web servers, add `:ID` somewhere between the `run`, `task`,
 `service` keyword and the command, like this:
 
 ```shell
-    service :1 [2345] /sbin/httpd -f -h /http -p 80   -- Web server
-    service :2 [2345] /sbin/httpd -f -h /http -p 8080 -- Old web server
+    service :80  [2345] httpd -f -h /http -p 80   -- Web server
+    service :8080[2345] httpd -f -h /http -p 8080 -- Old web server
 ```
 
 Without the `:ID` to the service the latter will overwrite the former
