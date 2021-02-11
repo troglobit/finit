@@ -214,7 +214,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 		return 0;
 
 	len = strlen(_PATH_COND);
-	printf("%-28s  %s\n", &fpath[len], condstr(cond_get_path(fpath)));
+	printf("%6s %s\n", condstr(cond_get_path(fpath)), &fpath[len]);
 
 	return 0;
 }
@@ -222,7 +222,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 static int do_cond_dump(char *arg)
 {
 	if (heading)
-		printheader(NULL, "CONDITION                     STATUS", 0);
+		printheader(NULL, "STATUS CONDITION", 0);
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		warnx("Failed parsing %s", _PATH_COND);
@@ -234,11 +234,38 @@ static int do_cond_dump(char *arg)
 
 static int do_cond_show(char *arg)
 {
-	svc_t *svc;
+	char ident[MAX_IDENT_LEN];
 	enum cond_state cond;
+	svc_t *svc;
+	int iw = 0;
+	int pw = 0;
 
-	if (heading)
-		printheader(NULL, "PID     SERVICE               STATUS  CONDITION (+ ON, ~ FLUX, - OFF)", 0);
+	/* figure ut width of IDENT and PID columns */
+	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
+		char pid[10];
+		int w, p;
+
+		if (!verbose)
+			svc_ident(svc, ident, sizeof(ident));
+		else
+			svc_jobid(svc, ident, sizeof(ident));
+
+		w = (int)strlen(ident);
+		if (w > iw)
+			iw = w;
+
+		p = snprintf(pid, sizeof(pid), "%d", svc->pid);
+		if (p > pw)
+			pw = p;
+	}
+
+	if (heading) {
+		char title[80];
+
+		snprintf(title, sizeof(title), "%-*s %-*s %6s  %s", pw, "PID",
+			 iw, "IDENT", "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
+		printheader(NULL, title, 0);
+	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		if (!svc->cond[0])
@@ -246,7 +273,7 @@ static int do_cond_show(char *arg)
 
 		cond = cond_get_agg(svc->cond);
 
-		printf("%-6d  %-20.20s  ", svc->pid, svc->cmd);
+		printf("%-*d %-*s ", pw, svc->pid, iw, svc_ident(svc, ident, sizeof(ident)));
 
 		if (cond == COND_ON)
 			printf("%-6.6s  ", condstr(cond));
@@ -397,6 +424,7 @@ char *runlevel_string(int runlevel, int levels)
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
+	int iw = 0, pw = 0;
 	svc_t *svc;
 
 	/* Fetch UTMP runlevel, needed for svc_status() call below */
@@ -422,29 +450,56 @@ static int show_status(char *arg)
 		return do_log(svc->cmd);
 	}
 
-	if (heading) {
+	/* figure ut width of IDENT and PID columns */
+	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
+		char pid[10];
+		int w, p;
+
 		if (!verbose)
-			printheader(NULL, "IDENT              STATUS PID     RUNLEVELS     DESCRIPTION", 0);
+			svc_ident(svc, ident, sizeof(ident));
 		else
-			printheader(NULL, "IDENT       STATUS PID     RUNLEVELS     COMMAND", 0);
+			svc_jobid(svc, ident, sizeof(ident));
+
+		w = (int)strlen(ident);
+		if (w > iw)
+			iw = w;
+
+		p = snprintf(pid, sizeof(pid), "%d", svc->pid);
+		if (p > pw)
+			pw = p;
+	}
+
+	if (heading) {
+		char title[80];
+
+		snprintf(title, sizeof(title), "%-*s %-*s %-8s %-12s ",
+			 pw, "PID", iw, "IDENT", "STATUS", "RUNLEVELS");
+		if (!verbose)
+			strlcat(title, "DESCRIPTION", sizeof(title)); 
+		else
+			strlcat(title, "COMMAND", sizeof(title)); 
+
+		printheader(NULL, title, 0);
 	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char *lvls;
 		int i;
 
-		if (!verbose)
-			printf("%-16s ", svc_ident(svc, ident, sizeof(ident)));
-		else
-			printf("%-9s ", svc_jobid(svc, ident, sizeof(ident)));
+		printf("%-*d ", pw, svc->pid);
 
-		printf("%8s %-6d  ", svc_status(svc), svc->pid);
+		if (!verbose)
+			printf("%-*s ", iw, svc_ident(svc, ident, sizeof(ident)));
+		else
+			printf("%-*s ", iw, svc_jobid(svc, ident, sizeof(ident)));
+
+		printf("%-8s ", svc_status(svc));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
-			printf("%-20.20s  ", lvls);
+			printf("%-20.20s ", lvls);
 		else
-			printf("%-12.12s  ", lvls);
+			printf("%-12.12s ", lvls);
 
 		if (!verbose) {
 			printf("%s\n", svc->desc);
