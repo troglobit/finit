@@ -15,6 +15,7 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     rm -rf /usr/share/doc/finit
     rm -rf /etc/finit.conf
     rm -rf /etc/finit.d
+    rm -rf /lib/finit
     if [ -e /etc/rc.local ]; then
 	echo "*** Skipping /etc/rc.local, not sure if we installed it ..."
     fi
