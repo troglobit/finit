@@ -67,6 +67,7 @@ typedef enum {
 
 #define MAX_ID_LEN       16
 #define MAX_ARG_LEN      64
+#define MAX_IDENT_LEN    (MAX_ARG_LEN + MAX_ID_LEN + 1)
 #define MAX_STR_LEN      64
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
 #define MAX_USER_LEN     16
@@ -278,7 +279,7 @@ static inline const char *svc_dirtystr(svc_t *svc)
  */
 static inline char *svc_ident(svc_t *svc, char *buf, size_t len)
 {
-	static char ident[sizeof(svc->name) + sizeof(svc->id) + 2];
+	static char ident[MAX_IDENT_LEN];
 
 	if (!buf) {
 		buf = ident;
@@ -293,6 +294,30 @@ static inline char *svc_ident(svc_t *svc, char *buf, size_t len)
 		strlcat(buf, ":", len);
 		strlcat(buf, svc->id, len);
 	}
+
+	return buf;
+}
+
+/*
+ * Returns svc unique identifier tuple 'job:id', or just 'job',
+ * if that's enough to identify the service.
+ */
+static inline char *svc_jobid(svc_t *svc, char *buf, size_t len)
+{
+	static char ident[MAX_IDENT_LEN];
+
+	if (!buf) {
+		buf = ident;
+		len = sizeof(ident);
+	}
+
+	if (!svc)
+		return "nul";
+
+	if (strlen(svc->id))
+		snprintf(buf, len, "%d:%s", svc->job, svc->id);
+	else
+		snprintf(buf, len, "%d", svc->job);
 
 	return buf;
 }

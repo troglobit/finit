@@ -392,6 +392,7 @@ char *runlevel_string(int runlevel, int levels)
  */
 static int show_status(char *arg)
 {
+	char ident[MAX_IDENT_LEN];
 	svc_t *svc;
 
 	/* Fetch UTMP runlevel, needed for svc_status() call below */
@@ -407,6 +408,7 @@ static int show_status(char *arg)
 
 		printf("Service     : %s\n", svc->cmd);
 		printf("Description : %s\n", svc->desc);
+		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("PID         : %d\n", svc->pid);
 		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
@@ -417,18 +419,20 @@ static int show_status(char *arg)
 	}
 
 	if (!verbose)
-		printheader(NULL, "#           STATUS PID     RUNLEVELS     SERVICE           DESCRIPTION", 0);
+		printheader(NULL, "IDENT              STATUS PID     RUNLEVELS     DESCRIPTION", 0);
+	else
+		printheader(NULL, "IDENT       STATUS PID     RUNLEVELS     COMMAND", 0);
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
-		char jobid[20], args[512] = "", *lvls;
+		char *lvls;
 		int i;
 
-		if (!svc->id[0])
-			snprintf(jobid, sizeof(jobid), "%d", svc->job);
+		if (!verbose)
+			printf("%-16s ", svc_ident(svc, ident, sizeof(ident)));
 		else
-			snprintf(jobid, sizeof(jobid), "%d:%s", svc->job, svc->id);
+			printf("%-9s ", svc_jobid(svc, ident, sizeof(ident)));
 
-		printf("%-9s %8s %-6d  ", jobid, svc_status(svc), svc->pid);
+		printf("%8s %-6d  ", svc_status(svc), svc->pid);
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
@@ -437,17 +441,17 @@ static int show_status(char *arg)
 			printf("%-12.12s  ", lvls);
 
 		if (!verbose) {
-			int adj = screen_cols - 60;
-			printf("%-16.16s  %-*.*s\n", svc->name, adj, adj, svc->desc);
-			continue;
-		}
+			printf("%s\n", svc->desc);
+		} else {
+			char args[512] = "";
 
-		for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
-			strlcat(args, svc->args[i], sizeof(args));
-			strlcat(args, " ", sizeof(args));
-		}
+			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+				strlcat(args, svc->args[i], sizeof(args));
+				strlcat(args, " ", sizeof(args));
+			}
 
-		printf("%s %s\n", svc->cmd, args);
+			printf("%s %s\n", svc->cmd, args);
+		}
 	}
 
 	return 0;
