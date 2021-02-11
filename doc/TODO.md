@@ -12,9 +12,6 @@ value in the project turned out to be:
 Near Future
 -----------
 
-* Remove native inetd support.  Relocate to a stand-alone application,
-  possibly even outside of the Finit project.  Will greatly simplify
-  the remaining bits ...
 * ... when inetd support has been removed, we can refactor the .conf
   parser, parse user input in a separate process, move process monitor
   to separate process (same as parser?), and possibly even ...

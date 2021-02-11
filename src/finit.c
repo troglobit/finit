@@ -295,7 +295,7 @@ static void finalize(void)
 	_d("Clean up all bootstrap-only tasks/services ...");
 	svc_prune_bootstrap();
 
-	/* All services/tasks/inetd/etc. in configure runlevel have started */
+	/* All services/tasks/etc. in configure runlevel have started */
 	_d("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 	service_step_all(SVC_TYPE_ANY);

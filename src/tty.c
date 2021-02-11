@@ -99,7 +99,7 @@ void tty_sweep(void)
 /**
  * tty_register - Register a getty on a device
  * @line:   Configuration, text after initial "tty"
- * @rlimit: Limits for this service/task/run/inetd, may be global limits
+ * @rlimit: Limits for this service/run/task, may be global limits
  * @file:   The file name TTY was loaded from
  *
  * A Finit tty line can use the internal getty implementation or an

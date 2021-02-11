@@ -45,10 +45,10 @@ install:
 # Custom build script for the time being, no "make test" yet
 script:
   - ./autogen.sh
-  - ./configure --prefix=/tmp --disable-inetd --enable-static
+  - ./configure --prefix=/tmp --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix=/tmp --enable-inetd-echo-plugin --enable-inetd-time-plugin --enable-x11-common-plugin --enable-inetd-chargen-plugin --enable-fallback-shell --enable-watchdog --enable-logit
+  - ./configure --prefix=/tmp --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog --enable-logit
   - cat config.log
   - make clean
   - make V=1 -j5

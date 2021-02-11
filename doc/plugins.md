@@ -8,7 +8,7 @@ Hooks & Plugins
   * [Shutdown Hooks](#shutdown-hooks)
 
 Finit can be extended to add general functionality in the form of I/O
-monitors, built-in inetd services, or hook plugins.
+monitors, or hook plugins.
 
 The following sections detail existing plugins and hook points.  For
 more information, see the plugins listed below.
@@ -34,14 +34,6 @@ For your convenience a set of *optional* plugins are available:
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
   _Optional plugin._
 
-* *echo.so*: RFC 862 plugin.  Start as inetd service, like time below.
-
-* *chargen.so*: RFC 864 plugin.  Start as inetd service, like time below.
-
-* *daytime.so*: RFC 867 plugin.  Start as inetd service, like time below.
-
-* *discard.so*: RFC 863 plugin.  Start as inetd service, like time below.
-
 * *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
   available.
 
@@ -56,9 +48,6 @@ For your convenience a set of *optional* plugins are available:
 
 * *resolvconf.so*: Setup necessary files for `resolvconf` at startup.
   _Optional plugin._
-
-* *time.so*: RFC 868 (rdate) plugin.  Start as inetd service.  Useful
-  for testing inetd filtering — BusyBox has an rdate (TCP) client.
 
 * *tty.so*: Watches `/dev`, using inotify, for new device nodes (TTY's)
   to start/stop getty consoles on them on demand.  Useful when plugging

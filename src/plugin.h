@@ -120,8 +120,7 @@ typedef struct plugin {
 	/* Event loop handler, used internally by Finit */
 	uev_t watcher;
 
-	/* Plugin name, defaults to basename of plugin path if unset.
-	 * NOTE: Must match cmd for services or inetd plugins! */
+	/* Plugin name, defaults to basename of plugin path if unset. */
 	char *name;
 
 	/* List of hook callbacks. */
@@ -136,12 +135,6 @@ typedef struct plugin {
 		void  *arg;
 		void (*cb)(void *arg, int fd, int events);
 	} io;
-
-	/* Inetd Plugin, stdio used as client socket.
-	 * @type argument will be either SOCK_DGRAM or SOCK_STREAM */
-	struct {
-		int (*cmd)(int type);
-	} inetd;
 
 	char *depends[PLUGIN_DEP_MAX]; /* List of other .name's this depends on. */
 } plugin_t;

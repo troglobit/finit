@@ -6,7 +6,6 @@
 * [Bootstrap](doc/bootstrap.md#bootstrap)
 * [Runlevels](#runlevels)
 * [Syntax](doc/config.md#syntax)
-  * [Inetd](doc/inetd.md#inetd)
   * [Runparts & /etc/rc.local](#runparts--etcrclocal)
   * [Hooks, Callbacks & Plugins](doc/plugins.md#hooks-callbacks--plugins)
 * [Rebooting & Halting](#rebooting--halting)
@@ -81,17 +80,6 @@ service :2 [2345] /sbin/merecat -n -p 8080 /var/www          -- Old web server
 #task [S] /etc/init.d/acpid start                            -- Starting ACPI Daemon
 #task [S] /etc/init.d/kbd start                              -- Preparing console
 
-# Inetd services to start on demand, with alternate ports and filtering
-inetd ftp/tcp          nowait [2345] /sbin/in.ftpd           -- FTP daemon
-inetd tftp/udp           wait [2345] /sbin/in.tftpd          -- TFTP daemon
-inetd time/udp           wait [2345] internal                -- UNIX rdate service
-inetd time/tcp         nowait [2345] internal                -- UNIX rdate service
-inetd 3737/tcp         nowait [2345] internal.time           -- UNIX rdate service
-inetd telnet/tcp       nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
-inetd 2323/tcp         nowait [2345] /sbin/telnetd -i -F     -- Telnet daemon
-inetd 222/tcp@eth0     nowait [2345] /sbin/dropbear -i -R -F -- SSH service
-inetd ssh/tcp@*,!eth0  nowait [2345] /sbin/dropbear -i -R -F -- SSH service
-
 # Run start scripts from this directory
 # runparts /etc/start.d
 
@@ -108,10 +96,9 @@ tty [12345] /dev/ttyUSB0 noclear
 tty [12345] @console noclear nologin
 ```
 
-The `service` stanza, as well as `task`, `run`, `inetd` and others are
-described in full in [doc/config.md](doc/config.md).  Here's a quick
-overview of some of the most common components needed to start a UNIX
-daemon:
+The `service` stanza, as well as `task`, `run` and others are described
+in full in [doc/config.md](doc/config.md).  Here's a quick overview of
+some of the most common components needed to start a UNIX daemon:
 
 ```
 service [LVLS] <COND> /path/to/daemon ARGS -- Some text
@@ -169,26 +156,6 @@ Features
 Start, monitor and restart services should they fail.
 
 
-**Inetd**
-
-Finit comes with a built-in [inetd server](doc/inetd.md).  No need to
-maintain a separate config file for services that you want to start on
-demand.
-
-All inetd services started can be filtered per port and inbound
-interface, reducing the need for a full blown firewall.
-
-Built-in optional inetd services:
-
-- echo [RFC862][]
-- chargen [RFC864][]
-- daytime [RFC867][]
-- discard [RFC863][]
-- time (rdate) [RFC868][]
-
-For more information, see [doc/inetd.md](doc/inetd.md).
-
-
 **Getty**
 
 Finit supports external getty but also comes with a limited built-in
@@ -220,7 +187,7 @@ see [doc/config.md](doc/config.md#syntax).
 
 Support for SysV init-style [runlevels][5] is available, in the same
 minimal style as everything else in Finit.  The `[2345]` syntax can be
-applied to service, task, run, inetd, and TTY stanzas.
+applied to service, task, run, and TTY stanzas.
 
 Reserved runlevels are 0 and 6, halt and reboot, respectively just like
 SysV init.  Runlevel 1 can be configured freely, but is recommended to
@@ -250,9 +217,6 @@ Capabilities:
   Hook into the boot at predefined points to extend Finit
 - **I/O**  
   Listen to external events and control Finit behavior/services
-- **Inetd**  
-  Extend Finit with internal inetd services, for an example, see
-  `plugins/time.c`
 
 Extensions and functionality not purely related to what an `/sbin/init`
 needs to start a system are available as a set of plugins that either
@@ -487,9 +451,6 @@ or `/bin/sh`, if no TTYs are configured in `/etc/finit.conf`.
 
 For a fully operational system `/var`, `/run` and `/tmp` must be set up
 properly in `/etc/fstab` -- which is iterated over at boot.
-
-The built-in Inetd requires `/etc/services` and `/etc/protocols` to work
-with port names rather than numbers.
 
 
 Origin & References

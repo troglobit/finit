@@ -69,7 +69,7 @@
 #define INIT_CMD_STOP_SVC       11
 #define INIT_CMD_RELOAD_SVC     12   /* SIGHUP service */
 #define INIT_CMD_RESTART_SVC    13   /* STOP + START service */
-#define INIT_CMD_QUERY_INETD    14
+#define INIT_CMD_UNUSED2        14   /* Unused, was INIT_CMD_QUERY_INETD */
 #define INIT_CMD_UNUSED1        15   /* Unused, was INIT_CMD_EMIT */
 #define INIT_CMD_GET_RUNLEVEL   16
 #define INIT_CMD_WDOG_HELLO     128  /* Watchdog register and hello */

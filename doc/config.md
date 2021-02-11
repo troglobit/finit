@@ -247,33 +247,6 @@ Syntax
   use the option `kill:SEC`, e.g., `kill:10` to wait 10 seconds before
   sending `SIGKILL`.
 
-* `inetd service/proto[@iflist] <wait|nowait> [LVLS] /path/to/daemon args`  
-  Launch a daemon when a client initiates a connection on an Internet
-  port.  Available services are listed in the UNIX `/etc/services` file.
-  Finit can filter access to from a list of interfaces, `@iflist`, per
-  inetd service as well as listen to custom ports.
-
-```shell
-        inetd ftp/tcp	nowait	@root	/usr/sbin/uftpd -i -f
-        inetd tftp/udp	wait	@root	/usr/sbin/uftpd -i -t
-```
-
-  The following example listens to port 2323 for telnet connections and
-  only allows clients connecting from `eth0`:
-
-```shell
-        inetd 2323/tcp@eth0 nowait [2345] /sbin/telnetd -i -F
-```
-
-  The interface list, `@iflist`, is of the format `@iface,!iface,iface`,
-  where a single `!` means to deny access.  Notice how interfaces are
-  comma separated with no spaces.
-
-  The `inetd` directive can also have ` -- Optional Description`, only
-  Finit does not output this text on the console when launching inetd
-  services.  Instead this text is sent to syslog and also shown by the
-  `initctl` tool.  More on inetd below.
-
 * `runparts <DIR>`  
   Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
   files, or scripts, in the directory are called, in alphabetic order.
@@ -376,8 +349,8 @@ be installed since system requirements differ too much.  Try out the
 Debian 6.0 example `/usr/share/doc/finit/finit.conf` configuration that
 is capable of service monitoring SSH, sysklogd, gdm and getty!
 
-Every `run`, `task`, `service`, or `inetd` can also list the privileges
-the `/path/to/cmd` should be executed with.  Simply prefix the path with
+Every `run`, `task`, or `service` can also list the privileges the
+`/path/to/cmd` should be executed with.  Simply prefix the path with
 `[@USR[:GRP]]` like this:
 
 ```shell
@@ -396,9 +369,9 @@ multiple web servers, add `:ID` somewhere between the `run`, `task`,
 Without the `:ID` to the service the latter will overwrite the former
 and only the old web server would be started and supervised.
 
-The `run`, `task`, `service`, or `inetd` stanzas also allow the keyword
-`log` to redirect `stderr` and `stdout` of the application to a file or
-syslog using the native `logit` tool.  The full syntax is:
+The `run`, `task`, and `service` stanzas also allow the keyword `log` to
+redirect `stderr` and `stdout` of the application to a file or syslog
+using the native `logit` tool.  The full syntax is:
 
     log:/path/to/file
     log:prio:facility.level,tag:ident
@@ -455,7 +428,6 @@ the following:
 - `service`
 - `task`
 - `run`
-- `inetd`
 - `rlimit`
 - `tty`
 

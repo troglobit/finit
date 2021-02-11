@@ -49,8 +49,6 @@ Below are a few of the main switches to configure:
 
 * `--localstatedir=..`: follows `--prefix`, you likely want `/var`
 
-* `--disable-inetd`: Disable the built-in inetd server.
-
 * `--enable-static`: Build Finit statically.  The plugins will be
   built-ins (.o files) and all external libraries, except the C library
   will be linked statically.
@@ -81,9 +79,6 @@ Then configure, build and install:
 ```shell
 $ ./configure --prefix=/usr                 --exec-prefix=                    \
               --sysconfdir=/etc             --localstatedir=/var              \
-                                            --enable-inetd-echo-plugin        \
-              --enable-inetd-chargen-plugin --enable-inetd-daytime-plugin     \
-              --enable-inetd-discard-plugin --enable-inetd-time-plugin        \
               --with-heading="Alpine Linux 3.13" --with-hostname=alpine
 $ make
 .
