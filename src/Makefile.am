@@ -22,7 +22,6 @@ endif
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     cond.c	cond-w.c	cond.h		\
-		     telinit.c					\
 		     conf.c	conf.h				\
 		     exec.c	finit.c		finit.h		\
 		     getty.c	stty.c				\
@@ -61,7 +60,7 @@ reboot_SOURCES     = reboot.c util.c util.h
 reboot_CFLAGS      = $(lite_CFLAGS)
 reboot_LDADD       = $(lite_LIBS)
 
-INIT_LNKS          = telinit init
+INIT_LNKS          = init
 REBOOT_LNKS        = shutdown halt poweroff suspend
 
 if WATCHDOGD

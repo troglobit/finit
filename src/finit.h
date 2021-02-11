@@ -49,11 +49,7 @@
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
 
-/*
- * We extend the INIT_CMD_ range for the new initctl tool, Finit only
- * support changing runlevel, reloading the configuration and setenv
- * with the old-style /dev/initctl FIFO.
- */
+/* We extend the INIT_CMD_ range for the new initctl tool. */
 #define INIT_SOCKET             _PATH_VARRUN "finit/socket"
 #define INIT_MAGIC              0x03091969
 

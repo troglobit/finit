@@ -105,10 +105,6 @@ AC_ARG_WITH(heading,
         AS_HELP_STRING([--with-heading=GREET], [Display GREET instead of Finit version at boot]),
 	[heading=$withval], [heading="$PACKAGE_NAME v$PACKAGE_VERSION"])
 
-AC_ARG_WITH(fifo,
-        AS_HELP_STRING([--with-fifo=FIFO], [FIFO for init/telinit clients, default /var/run/initctl]),
-	[fifo=$withval], [fifo=$localstatedir/run/initctl])
-
 AC_ARG_WITH(config,
         AS_HELP_STRING([--with-config=CONFIG], [Finit bootstrap config file, default /etc/finit.conf]),
 	[conf=$withval], [conf=$sysconfdir/finit.conf])
@@ -172,12 +168,6 @@ AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
 
 ### With features ##############################################################################
-AS_IF([test "x$with_fifo" != "xno"], [
-	AS_IF([test "x$fifo" = "xyes"], [
-		    fifo='$localstatedir/run/initctl'])])
-AC_EXPAND_DIR(fifo_path, "$fifo")
-AC_DEFINE_UNQUOTED(FINIT_FIFO, "$fifo_path", [FIFO for old style init/telinit client programs])
-
 AS_IF([test "x$with_config" != "xno"], [
 	AS_IF([test "x$config" = "xyes"], [
 		conf=$sysconfdir/finit.conf])])
@@ -248,7 +238,6 @@ cat <<EOF
   Exec prefix...........: $eprefix
   Sysconfdir............: `eval echo $sysconfdir`
   Localstatedir.........: `eval echo $localstatedir`
-  FIFO path.............: $fifo_path
   Finit config file.....: $conf_path
   Finit config.d path...: $rcsd_path
   Finit plugin path.....: $plugin_path

@@ -26,7 +26,7 @@
  * the following signals have been adopted:
  *
  * SIGHUP
- *      Same effect as init/telinit q, reloads *.conf in /etc/finit.d/
+ *      Same effect as initctl reload, reloads *.conf in /etc/finit.d/
  *      Also restarts API (initctl) socket, like SysV init and systemd
  *      does on USR1 with their FIFO/D-Bus.
  *
@@ -88,7 +88,7 @@ extern svc_t *wdog;
 /*
  * Old-style SysV shutdown sends a setenv cmd INIT_HALT with "=HALT",
  * "=POWERDOWN", or "" to cancel shutdown, before requesting change to
- * runlevel 6 over the /dev/initctl FIFO.  See plugins/initctl.c
+ * runlevel 6 over the /dev/initctl FIFO.
  */
 shutop_t halt = SHUT_DEFAULT;
 
