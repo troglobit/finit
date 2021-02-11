@@ -214,7 +214,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 		return 0;
 
 	len = strlen(_PATH_COND);
-	printf("%6s %s\n", condstr(cond_get_path(fpath)), &fpath[len]);
+	printf("%6s  %s\n", condstr(cond_get_path(fpath)), &fpath[len]);
 
 	return 0;
 }
@@ -222,7 +222,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 static int do_cond_dump(char *arg)
 {
 	if (heading)
-		printheader(NULL, "STATUS CONDITION", 0);
+		printheader(NULL, "STATUS  CONDITION", 0);
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		warnx("Failed parsing %s", _PATH_COND);
@@ -274,7 +274,7 @@ static int do_cond_show(char *arg)
 	if (heading) {
 		char title[80];
 
-		snprintf(title, sizeof(title), "%-*s %-*s %6s  %s", pw, "PID",
+		snprintf(title, sizeof(title), "%-*s  %-*s  %6s  %s", pw, "PID",
 			 iw, "IDENT", "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
 		printheader(NULL, title, 0);
 	}
@@ -290,7 +290,7 @@ static int do_cond_show(char *arg)
 		else
 			svc_jobid(svc, ident, sizeof(ident));
 
-		printf("%-*d %-*s ", pw, svc->pid, iw, ident);
+		printf("%-*d  %-*s  ", pw, svc->pid, iw, ident);
 
 		if (cond == COND_ON)
 			printf("%-6.6s  ", condstr(cond));
@@ -466,7 +466,7 @@ static int show_status(char *arg)
 	if (heading) {
 		char title[80];
 
-		snprintf(title, sizeof(title), "%-*s %-*s %-8s %-12s ",
+		snprintf(title, sizeof(title), "%-*s  %-*s  %-8s %-12s ",
 			 pw, "PID", iw, "IDENT", "STATUS", "RUNLEVELS");
 		if (!verbose)
 			strlcat(title, "DESCRIPTION", sizeof(title)); 
@@ -480,14 +480,14 @@ static int show_status(char *arg)
 		char *lvls;
 		int i;
 
-		printf("%-*d ", pw, svc->pid);
+		printf("%-*d  ", pw, svc->pid);
 
 		if (!numeric)
 			svc_ident(svc, ident, sizeof(ident));
 		else
 			svc_jobid(svc, ident, sizeof(ident));
 
-		printf("%-*s %-8s ", iw, ident, svc_status(svc));
+		printf("%-*s  %-8s ", iw, ident, svc_status(svc));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
