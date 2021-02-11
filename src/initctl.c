@@ -203,6 +203,35 @@ static int do_start  (char *arg) { return do_startstop(INIT_CMD_START_SVC,   arg
 static int do_stop   (char *arg) { return do_startstop(INIT_CMD_STOP_SVC,    arg); }
 static int do_restart(char *arg) { return do_startstop(INIT_CMD_RESTART_SVC, arg); }
 
+static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
+{
+	int len;
+
+	if (tflag != FTW_F)
+		return 0;
+
+	if (!strcmp(fpath, _PATH_COND "reconf"))
+		return 0;
+
+	len = strlen(_PATH_COND);
+	printf("%6s %s\n", condstr(cond_get_path(fpath)), &fpath[len]);
+
+	return 0;
+}
+
+static int do_cond_dump(char *arg)
+{
+	if (heading)
+		printheader(NULL, "STATUS CONDITION", 0);
+
+	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
+		warnx("Failed parsing %s", _PATH_COND);
+		return 1;
+	}
+
+	return 0;
+}
+
 static void show_cond_one(const char *_conds)
 {
 	static char conds[MAX_COND_LEN];
@@ -232,35 +261,6 @@ static void show_cond_one(const char *_conds)
 	}
 
 	putchar('>');
-}
-
-static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
-{
-	int len;
-
-	if (tflag != FTW_F)
-		return 0;
-
-	if (!strcmp(fpath, _PATH_COND "reconf"))
-		return 0;
-
-	len = strlen(_PATH_COND);
-	printf("%6s %s\n", condstr(cond_get_path(fpath)), &fpath[len]);
-
-	return 0;
-}
-
-static int do_cond_dump(char *arg)
-{
-	if (heading)
-		printheader(NULL, "STATUS CONDITION", 0);
-
-	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
-		warnx("Failed parsing %s", _PATH_COND);
-		return 1;
-	}
-
-	return 0;
 }
 
 static int do_cond_show(char *arg)
