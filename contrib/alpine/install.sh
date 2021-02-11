@@ -42,10 +42,9 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
 	rm init
 	ln -s finit init
 
-	rm halt shutdown reboot suspend
+	rm halt shutdown suspend
 	ln -s reboot halt
 	ln -s reboot shutdown
-	ln -s reboot reboot
 	ln -s reboot suspend
     fi
     echo "*** Done"
