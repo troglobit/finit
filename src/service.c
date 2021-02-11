@@ -1105,6 +1105,7 @@ restart:
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
+				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 
 			case SVC_TYPE_TASK:
