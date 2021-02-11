@@ -49,6 +49,7 @@ struct command {
 };
 
 int heading  = 1;
+int numeric  = 0;
 int verbose  = 0;
 int runlevel = 0;
 
@@ -284,7 +285,12 @@ static int do_cond_show(char *arg)
 
 		cond = cond_get_agg(svc->cond);
 
-		printf("%-*d %-*s ", pw, svc->pid, iw, svc_ident(svc, ident, sizeof(ident)));
+		if (!numeric)
+			svc_ident(svc, ident, sizeof(ident));
+		else
+			svc_jobid(svc, ident, sizeof(ident));
+
+		printf("%-*d %-*s ", pw, svc->pid, iw, ident);
 
 		if (cond == COND_ON)
 			printf("%-6.6s  ", condstr(cond));
@@ -427,11 +433,6 @@ char *runlevel_string(int runlevel, int levels)
 	return lvl;
 }
 
-/*
- * In verbose mode we skip the header and each service description.
- * This in favor of having all info on one line so a machine can more
- * easily parse it.
- */
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
@@ -481,12 +482,12 @@ static int show_status(char *arg)
 
 		printf("%-*d ", pw, svc->pid);
 
-		if (!verbose)
-			printf("%-*s ", iw, svc_ident(svc, ident, sizeof(ident)));
+		if (!numeric)
+			svc_ident(svc, ident, sizeof(ident));
 		else
-			printf("%-*s ", iw, svc_jobid(svc, ident, sizeof(ident)));
+			svc_jobid(svc, ident, sizeof(ident));
 
-		printf("%-8s ", svc_status(svc));
+		printf("%-*s %-8s ", iw, ident, svc_status(svc));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
@@ -583,6 +584,7 @@ static int usage(int rc)
 		"\n"
 		"Options:\n"
 		"  -b, --batch               Batch mode, no screen size probing\n"
+		"  -n, --numeric             Show JOB:ID instead of NAME:ID\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
@@ -665,13 +667,14 @@ int main(int argc, char *argv[])
 	struct option long_options[] = {
 		{ "batch",      0, NULL, 'b' },
 		{ "help",       0, NULL, 'h' },
+		{ "numeric",    0, NULL, 'n' },
 		{ "no-heading", 0, NULL, 't' },
 		{ "verbose",    0, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
 	};
 
 	progname(argv[0]);
-	while ((c = getopt_long(argc, argv, "bh?tv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bh?ntv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':
 			interactive = 0;
@@ -680,6 +683,10 @@ int main(int argc, char *argv[])
 		case 'h':
 		case '?':
 			return usage(0);
+
+		case 'n':
+			numeric = 1;
+			break;
 
 		case 't':
 			heading = 0;
@@ -726,7 +733,6 @@ void logit(int prio, const char *fmt, ...)
 		vwarnx(fmt, ap);
 	va_end(ap);
 }
-
 
 /**
  * Local Variables:
