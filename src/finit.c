@@ -368,12 +368,12 @@ int main(int argc, char *argv[])
 	};
 	uev_ctx_t loop;
 
-	/*
-	 * finit/init/telinit client tool uses /dev/initctl pipe
-	 * for compatibility but initctl client tool uses socket
-	 */
-	if (getpid() != 1)
-		return client(argc, argv);
+	if (getpid() != 1) {
+		fprintf(stderr, "Running Finit as anything other than PID 1 "
+			"is not supported.\n"
+			"The initctl tool is the new command line API.\n");
+		return 1;
+	}
 
 	/*
 	 * Need /dev, /proc, and /sys for console=, remount and cgroups

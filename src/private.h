@@ -31,8 +31,6 @@
 int       api_init         (uev_ctx_t *ctx);
 int       api_exit         (void);
 
-int       client           (int argc, char *argv[]);
-
 void      service_monitor  (pid_t lost, int status);
 
 const char *plugin_hook_str(hook_point_t no);

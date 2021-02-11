@@ -385,42 +385,19 @@ Rebooting & Halting
 
 Traditionally, rebooting and halting a UNIX system is done by changing
 its runlevel.  Finit comes with its own tooling providing: `shutdown`,
-`reboot`, `poweroff`, and `suspend`, but also the traditional `init` and
-`telinit`, as well as a more modern `initctl` tool, detailed in the next
-section.
+`reboot`, `poweroff`, and `suspend`, but also the `initctl` tool,
+detailed in the next section.
 
 For compatibility reasons Finit listens to the same set of signals as
 BusyBox init.  This is not 100% compatible with SysV init, but clearly
 the more common combination for Finit.  For more details, see
 [doc/signals.md](doc/signals.md).
 
-Finit also listens to the classic SysV init FIFO, used by `telinit`.
-Support for this is implemented by the `initctl.so` plugin.  Hence,
-`telinit q` will work as the UNIX beards intended.
-
-```shell
-~ # telinit -h
-Usage: telinit [OPTIONS] [q | Q | 0-9]
-
-Options:
-  -h, --help      This help text
-  -V, --version   Show Finit version
-
-Commands:
-  0               Power-off the system, same as initctl poweroff
-  6               Reboot the system, same as initctl reboot
-  2, 3, 4, 5      Change runlevel. Starts services in new runlevel, stops any
-                  services in prev. runlevel that are not allowed in new.
-  q, Q            Reload *.conf in /etc/finit.d/, same as initctl reload or
-                  sending SIGHUP to PID 1
-  1, s, S         Enter system rescue mode, runlevel 1
-```
-
 
 Commands & Status
 -----------------
 
-Finit also implements a more modern API to query status, and start/stop
+Finit also implements a modern API to query status, and start/stop
 services, called `initctl`.  Unlike `telinit` the `initctl` tool does
 not return until the given command has fully completed.
 

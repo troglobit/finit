@@ -183,12 +183,6 @@ static void send_svc(int sd, svc_t *svc)
 		_d("Failed sending svc_t to client");
 }
 
-
-/*
- * In contrast to the SysV compat handling in plugins/initctl.c, when
- * `initctl runlevel 0` is issued we default to POWERDOWN the system
- * instead of just halting.
- */
 static void api_cb(uev_t *w, void *arg, int events)
 {
 	int sd, lvl;

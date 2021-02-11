@@ -1,4 +1,4 @@
-/* New client tool, complements old /dev/initctl API and telinit tool
+/* New client tool, replaces old /dev/initctl API and telinit tool
  *
  * Copyright (c) 2015-2021  Joachim Wiberg <troglobit@gmail.com>
  *

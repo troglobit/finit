@@ -47,8 +47,6 @@ For your convenience a set of *optional* plugins are available:
 
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
 
-* *initctl.so*: Extends finit with a traditional `initctl` functionality.
-
 * *modules-load.so*: Scans /etc/modules-load.d for modules to modprobe.
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
@@ -113,7 +111,7 @@ Hooks
 * `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
   services are sent `SIGTERM`
 
-Plugins like `initctl.so` and `tty.so` extend finit by acting on events,
-they are called I/O plugins and are called from the finit main loop when
-`poll()` detects an event.  See the source code for `plugins/*.c` for
-more help and ideas.
+Plugins like `tty.so` extend finit by acting on events, they are called
+I/O plugins and are called from the finit main loop when `poll()`
+detects an event.  See the source code for `plugins/*.c` for more help
+and ideas.
