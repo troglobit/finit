@@ -52,6 +52,36 @@ int heading  = 1;
 int verbose  = 0;
 int runlevel = 0;
 
+/* figure ut width of IDENT and PID columns */
+static void col_widths(int *identw, int *pidw)
+{
+	char ident[MAX_IDENT_LEN];
+	char pid[10];
+	svc_t *svc;
+	int iw = 0;
+	int pw = 0;
+
+	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
+		int w, p;
+
+		if (!numeric)
+			svc_ident(svc, ident, sizeof(ident));
+		else
+			svc_jobid(svc, ident, sizeof(ident));
+
+		w = (int)strlen(ident);
+		if (w > iw)
+			iw = w;
+
+		p = snprintf(pid, sizeof(pid), "%d", svc->pid);
+		if (p > pw)
+			pw = p;
+	}
+
+	*identw = iw;
+	*pidw = pw;
+}
+
 static int runlevel_get(int *prevlevel)
 {
 	int result;
@@ -237,28 +267,9 @@ static int do_cond_show(char *arg)
 	char ident[MAX_IDENT_LEN];
 	enum cond_state cond;
 	svc_t *svc;
-	int iw = 0;
-	int pw = 0;
+	int iw, pw;
 
-	/* figure ut width of IDENT and PID columns */
-	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
-		char pid[10];
-		int w, p;
-
-		if (!verbose)
-			svc_ident(svc, ident, sizeof(ident));
-		else
-			svc_jobid(svc, ident, sizeof(ident));
-
-		w = (int)strlen(ident);
-		if (w > iw)
-			iw = w;
-
-		p = snprintf(pid, sizeof(pid), "%d", svc->pid);
-		if (p > pw)
-			pw = p;
-	}
-
+	col_widths(&iw, &pw);
 	if (heading) {
 		char title[80];
 
@@ -424,8 +435,8 @@ char *runlevel_string(int runlevel, int levels)
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
-	int iw = 0, pw = 0;
 	svc_t *svc;
+	int iw, pw;
 
 	/* Fetch UTMP runlevel, needed for svc_status() call below */
 	runlevel = runlevel_get(NULL);
@@ -450,25 +461,7 @@ static int show_status(char *arg)
 		return do_log(svc->cmd);
 	}
 
-	/* figure ut width of IDENT and PID columns */
-	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
-		char pid[10];
-		int w, p;
-
-		if (!verbose)
-			svc_ident(svc, ident, sizeof(ident));
-		else
-			svc_jobid(svc, ident, sizeof(ident));
-
-		w = (int)strlen(ident);
-		if (w > iw)
-			iw = w;
-
-		p = snprintf(pid, sizeof(pid), "%d", svc->pid);
-		if (p > pw)
-			pw = p;
-	}
-
+	col_widths(&iw, &pw);
 	if (heading) {
 		char title[80];
 
