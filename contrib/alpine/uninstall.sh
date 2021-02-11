@@ -24,6 +24,12 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     cd /sbin
     rm init
     ln -s /bin/busybox init
+
+    rm halt shutdown reboot suspend
+    ln -s /bin/busybox halt
+    ln -s /bin/busybox shutdown
+    ln -s /bin/busybox reboot
+    ln -s /bin/busybox suspend
     echo "*** Done"
     echo
 else

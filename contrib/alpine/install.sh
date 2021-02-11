@@ -41,6 +41,12 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
 	cd /sbin
 	rm init
 	ln -s finit init
+
+	rm halt shutdown reboot suspend
+	ln -s reboot halt
+	ln -s reboot shutdown
+	ln -s reboot reboot
+	ln -s reboot suspend
     fi
     echo "*** Done"
     echo
