@@ -32,84 +32,46 @@
 #include "service.h"
 
 /*
- * The service condition name is constructed from the 'pid/' prefix,
- * the dirname of the svc->cmd, e.g., '/usr/bin/teamd' => 'usr/bin', and
- * the service's pid:filename, including an optional subdirectory,
- * without the .pid extension.
+ * The service condition name is constructed from the 'pid/' prefix and
+ * the unique NAME:ID tuple that identify each process in Finit.  Here
+ * are a few examples:
  *
- * The following example uses the team (aggregate) service:
+ * The Linux aggregate helper teamd creates PID files in a subdirectory,
+ * /run/teamd/lag1.pid:
  *
- *    service pid:!/run/teamd/a1.pid /usr/bin/teamd -f /etc/teamd/a1.conf
+ *    service teamd -f /etc/teamd/lag1.conf -- Aggregate lag1
  *
- * => 'pid/' + 'usr/bin' + 'teamd/a1' => pid/usr/bin/teamd/a1
+ *    => 'pid/' + 'teamd' + '' = condition <pid/teamd>
  *
- * The next example uses the dbus-daemon:
+ * When you add a second aggrate you need to tell Finit it's a different
+ * instance usugin the :ID syntax:
  *
- *    service pid:!/run/dbus/pid /usr/bin/dbus-daemon
+ *    service :lag2 teamd -f /etc/teamd/lag2.conf -- Aggregate lag2
  *
- * => 'pid/' + 'usr/bin' + 'dbus' => pid/usr/bin/dbus
+ *    => 'pid/' + 'teamd' + ':lag2' = condition <pid/teamd:lag2>
  *
- * The last example uses lxc-start to start container foo:
+ * The next example is for the dbus-daemon.  It also use a subdirectory,
+ * /run/dbus/pid:
  *
- *    service pid:!/run/lxc/foo.pid lxc-start -n foo -F -p /run/lxc/foo.pid -- Container foo
+ *    service dbus-daemon -- DBus daemon
  *
- * => 'pid/' + '' + 'lxc/foo' => pid/lxc/foo
+ *    => 'pid/' + 'dbus-daemon' = condition <pid/dbus-daemon>
  *
- * Note: previously the condition ws called 'svc/..', the conf.c parser
- *       automatically translates to the 'pid/..' prefix and warns.
+ * The last example uses lxc-start to start container foo, again in a
+ * subdirectory, /run/lxc/foo.pid.  We set an ID to be user-friendly to
+ * ourselves and override the name usually derivedd using the basename
+ * of the path:
+ *
+ *    service name:lxc :foo lxc-start -n foo -F -p /run/lxc/foo.pid -- Container foo
+ *
+ *    => 'pid/' + 'lxc' + ':foo' = condition <pid/lxc:foo>
  */
 char *mkcond(svc_t *svc, char *buf, size_t len)
 {
-	char path[256];
-	char *pidfile;
-	char *ptr, *nm;
+	char ident[sizeof(svc->name) + sizeof(svc->id) + 2];
 
-	strlcpy(path, svc->cmd, sizeof(path));
-	ptr = rindex(path, '/');
-	if (ptr)
-		*ptr++ = 0;
-	else
-		path[0] = 0;
-
-	/* Figure out default name used when registering service */
-	if (ptr)
-		nm = ptr;
-	else
-		nm = svc->cmd;
-
-	pidfile = pid_file(svc);
-	ptr = strstr(pidfile, "run");
-	if (ptr)
-		ptr += 3;
-	else
-		ptr = rindex(pidfile, '/');
-
-	/* Custom name:foo declaration found => pid/foo instead of /pid/bin/path/pidfile-.pid */
-	if (strcmp(nm, svc->name)) {
-		snprintf(buf, len, "pid/%s", svc->name);
-		_d("Composed condition from svc->name %s => %s", svc->name, buf);
-	} else {
-		snprintf(buf, len, "pid%s%s%s", path[0] != 0 && path[0] != '/' ? "/" : "", path, ptr);
-		_d("Composed condition from cmd %s (path %s) and pidfile %s => %s", svc->cmd, path, ptr, buf);
-	}
-
-	/* Case: /var/run/dbus/pid */
-	ptr = strstr(buf, "/pid");
-	if (ptr && !strcmp(ptr, "/pid"))
-		*ptr = 0;
-
-	/* Case /var/run/teamd/a1.pid */
-	ptr = strstr(buf, ".pid");
-	if (ptr && !strcmp(ptr, ".pid"))
-		*ptr = 0;
-
-	/* Always append /ID if service is declared with :ID */
-	if (svc->id[0]) {
-		strlcat(buf, "/", len);
-		strlcat(buf, svc->id, len);
-	}
-
-	_d("Creating condition => %s", buf);
+	snprintf(buf, len, "pid/%s", svc_ident(svc, ident, sizeof(ident)));
+	_d("Created condition => %s", buf);
 
 	return buf;
 }

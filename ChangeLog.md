@@ -21,9 +21,9 @@ Major bug fix release.  New features include cgroups and a new progress!
 * Incompatible `configure` script changes, i.e., you must give proper
   path arguments to the script, no more guessing just GNU defaults.
   There are examples in the documentation and the `contrib/` section
-* Change service PID file conditions from `<svc/foo>` to `<pid/foo>`.
-  This will hopefully make it more clear that one service's 'pid:!foo'
-  pidfile is another service's <pid/foo> condition
+* Change service conditions from the non-obvious `<svc/path/to/foo>` to
+  `<pid/foo:id>`.  This to hopefully make it clear that one service's
+  'pid:!foo' pidfile is another service's `<pid/foo>` condition
 * Major refactor of Finit's `main()` function to be able to start the
   event loop earlier.  This also facilitated factoring out functionality
   previously hard-coded in Finit, e.g., starting the bundled watchdogd,
