@@ -284,6 +284,31 @@ static inline const char *svc_dirtystr(svc_t *svc)
 	return "clean";
 }
 
+/*
+ * Returns svc unique identifier tuple 'name:id', or just 'name',
+ * if that's enough to identify the service.
+ */
+static inline char *svc_ident(svc_t *svc, char *buf, size_t len)
+{
+	static char ident[sizeof(svc->name) + sizeof(svc->id) + 2];
+
+	if (!buf) {
+		buf = ident;
+		len = sizeof(ident);
+	}
+
+	if (!svc)
+		return "nil";
+
+	strlcpy(buf, svc->name, len);
+	if (strlen(svc->id)) {
+		strlcat(buf, ":", len);
+		strlcat(buf, svc->id, len);
+	}
+
+	return buf;
+}
+
 #endif /* FINIT_SVC_H_ */
 
 /**
