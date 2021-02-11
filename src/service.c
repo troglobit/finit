@@ -434,8 +434,7 @@ static int service_start(svc_t *svc)
 		_d("Starting %s: %s", svc->cmd, buf);
 	}
 
-	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s:%s, PID: %d",
-	      basename(svc->cmd), svc->id, pid);
+	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
 
 	svc->pid = pid;
 	svc->start_time = jiffies();
@@ -491,8 +490,8 @@ static void service_kill(svc_t *svc)
 	}
 
 	_d("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
-	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending SIGKILL ...",
-	      basename(svc->cmd), svc->id, svc->pid);
+	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending SIGKILL ...",
+	      svc_ident(svc, NULL, 0), svc->pid);
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
@@ -544,8 +543,8 @@ static int service_stop(svc_t *svc)
 
 		_d("Sending %s to pid:%d name:%s", sig_name(svc->sighalt),
 		   svc->pid, pid_get_name(svc->pid, NULL, 0));
-		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s:%s, PID: %d, sending %s ...",
-		      basename(svc->cmd), svc->id, svc->pid, sig_name(svc->sighalt));
+		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...",
+		      svc_ident(svc, NULL, 0), svc->pid, sig_name(svc->sighalt));
 	} else {
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", svc->cmd);
 	}
@@ -638,8 +637,8 @@ static int service_restart(svc_t *svc)
 		print_desc("Restarting ", svc->desc);
 
 	_d("Sending SIGHUP to PID %d", svc->pid);
-	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s:%s, PID: %d, sending SIGHUP ...",
-	      basename(svc->cmd), svc->id, svc->pid);
+	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s[%d], sending SIGHUP ...",
+	      svc_ident(svc, NULL, 0), svc->pid);
 	rc = kill(svc->pid, SIGHUP);
 
 	/* Declare we're waiting for svc to re-assert/touch its pidfile */
@@ -1211,8 +1210,8 @@ static void service_retry(svc_t *svc)
 	}
 
 	if (*restart_cnt >= RESPAWN_MAX) {
-		logit(LOG_CONSOLE | LOG_WARNING, "Service %s:%s keeps crashing, not restarting.",
-		      basename(svc->cmd), svc->id);
+		logit(LOG_CONSOLE | LOG_WARNING, "Service %s keeps crashing, not restarting.",
+		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);
 		*restart_cnt = 0;
 		service_step(svc);
@@ -1222,8 +1221,8 @@ static void service_retry(svc_t *svc)
 	(*restart_cnt)++;
 
 	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
-	logit(LOG_CONSOLE | LOG_WARNING, "Service %s:%s died, restarting (%d/%d)",
-	      basename(svc->cmd), svc->id, *restart_cnt, RESPAWN_MAX);
+	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
+	      svc_ident(svc, NULL, 0), svc->pid, *restart_cnt, RESPAWN_MAX);
 	svc_unblock(svc);
 	service_step(svc);
 
