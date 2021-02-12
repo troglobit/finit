@@ -451,6 +451,8 @@ int run_parts(char *dir, char *cmd)
 		};
 		char *name = e[i]->d_name;
 		pid_t pid = 0;
+		int status;
+		int exit_status;
 
 		snprintf(path, sizeof(path), "%s/%s", dir, name);
 		if (stat(path, &st)) {
@@ -475,13 +477,20 @@ int run_parts(char *dir, char *cmd)
 			strlcat(path, cmd, sizeof(path));
 		}
 
+		print_desc("Calling ", path);
 		pid = fork();
 		if (!pid) {
 			sig_unblock();
 			return execvp(_PATH_BSHELL, argv);
 		}
 
-                complete(path, pid);
+		status = complete(path, pid);
+		exit_status = WEXITSTATUS(status);
+		if (WIFEXITED(status) && exit_status)
+			_w("%s exited with status %d", path, exit_status);
+		else if (WIFSIGNALED(status))
+			_w("%s terminated by signad %d", path, WTERMSIG(status));
+		print_result(status);
 	}
 
 	while (num--)
