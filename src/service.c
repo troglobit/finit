@@ -403,7 +403,7 @@ static int service_start(svc_t *svc)
 			if (strlen(arg) < (sizeof(buf) - strlen(buf)))
 				strlcat(buf, arg, sizeof(buf));
 		}
-		_d("Starting %s: %s", svc->cmd, buf);
+		_d("Starting %s %s", svc->cmd, buf);
 	}
 
 	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
@@ -704,6 +704,9 @@ static void parse_name(svc_t *svc, char *arg)
 	}
 
 	strlcpy(svc->name, name, sizeof(svc->name));
+
+	/* Warn if svc generates same condition as an existing service */
+	svc_validate(svc);
 }
 
 /**
@@ -888,9 +891,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			return errno = ENOMEM;
 		}
 
-		if (type == SVC_TYPE_SERVICE && manual) {
+		if (type == SVC_TYPE_SERVICE && manual)
 			svc_stop(svc);
-		}
 	}
 
 	/* Always clear svc PID file, for now.  See TODO */

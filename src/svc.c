@@ -142,6 +142,37 @@ int svc_del(svc_t *svc)
 }
 
 /**
+ * svc_validate - Check if service asserts same condition as another service
+ * @svc: Pointer to an &svc_t object
+ *
+ * Logs to syslog if there is a name clash with existing services.
+ */
+void svc_validate(svc_t *svc)
+{
+	char ident[MAX_IDENT_LEN];
+	char cond[MAX_COND_LEN];
+	svc_t *iter = NULL;
+	svc_t *s;
+
+	mkcond(svc, cond, sizeof(cond));
+	svc_ident(svc, ident, sizeof(ident));
+
+	for (s = svc_iterator(&iter, 1); s; s = svc_iterator(&iter, 0)) {
+		char c[MAX_COND_LEN];
+
+		if (s == svc)
+			continue;
+
+		mkcond(s, c, sizeof(c));
+		if (!string_compare(cond, c))
+			continue;
+
+		logit(LOG_WARNING, "%s (%s) asserts the same condition as %s (%s) => %s",
+		      svc->cmd, ident, s->cmd, svc_ident(s, NULL, 0), c);
+	}
+}
+
+/**
  * svc_iterator - Naive iterator over all registered services.
  * @iter:  Iterator, must be a valid pointer
  * @first: If set, get first &svc_t, otherwise get next
