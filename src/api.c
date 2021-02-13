@@ -158,6 +158,30 @@ static svc_t *do_find(char *buf, size_t len)
 	return svc_find_by_nameid(input, id);
 }
 
+static svc_t *do_find_byc(char *buf, size_t len)
+{
+	svc_t *svc, *iter = NULL;
+	char *input;
+
+	input = sanitize(buf, len);
+	if (!input) {
+		_d("Invalid input");
+		return NULL;
+	}
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		char cond[MAX_COND_LEN];
+
+		mkcond(svc, cond, sizeof(cond));
+		_d("Comparing input %s with cond %s", input, cond);
+		if (string_compare(cond, input))
+			return svc;
+	}
+
+	_d("None found");
+	return NULL;
+}
+
 typedef struct {
 	char *event;
 	void (*cb)(void);
@@ -327,6 +351,12 @@ static void api_cb(uev_t *w, void *arg, int events)
 			_d("svc find: %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			send_svc(sd, do_find(rq.data, sizeof(rq.data)));
+			goto leave;
+
+		case INIT_CMD_SVC_FIND_BYC:
+			_d("svc find by cond: %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
+			send_svc(sd, do_find_byc(rq.data, sizeof(rq.data)));
 			goto leave;
 
 		default:

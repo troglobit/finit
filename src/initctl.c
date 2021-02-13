@@ -210,7 +210,9 @@ static int do_restart(char *arg) { return do_startstop(INIT_CMD_RESTART_SVC, arg
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
-	int len;
+	const char *cond, *asserted;
+	char *nm = "init";
+	pid_t pid = 1;
 
 	if (tflag != FTW_F)
 		return 0;
@@ -218,16 +220,36 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 	if (!strcmp(fpath, _PATH_COND "reconf"))
 		return 0;
 
-	len = strlen(_PATH_COND);
-	printf("%6s  %s\n", condstr(cond_get_path(fpath)), &fpath[len]);
+	asserted = condstr(cond_get_path(fpath));
+	cond = &fpath[strlen(_PATH_COND)];
+	if (strncmp("pid/", cond, 4) == 0) {
+		svc_t *svc;
+
+		svc= client_svc_find_by_cond(cond);
+		if (!svc) {
+			nm  = "unknown";
+			pid = 0;
+		} else {
+			nm  = svc_ident(svc, NULL, 0);
+			pid = svc->pid;
+		}
+	}
+
+	printf("%-*d  %-*s  %-6s  %s\n", pw, pid, iw, nm, asserted, cond);
 
 	return 0;
 }
 
 static int do_cond_dump(char *arg)
 {
-	if (heading)
-		printheader(NULL, "STATUS  CONDITION", 0);
+	col_widths();
+	if (heading) {
+		char title[80];
+
+		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
+			 iw, "IDENT", "STATUS", "CONDITION");
+		printheader(NULL, title, 0);
+	}
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		warnx("Failed parsing %s", _PATH_COND);
@@ -278,7 +300,7 @@ static int do_cond_show(char *arg)
 	if (heading) {
 		char title[80];
 
-		snprintf(title, sizeof(title), "%-*s  %-*s  %6s  %s", pw, "PID",
+		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
 			 iw, "IDENT", "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
 		printheader(NULL, title, 0);
 	}

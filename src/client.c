@@ -125,14 +125,14 @@ error:
 	return NULL;
 }
 
-svc_t *client_svc_find(const char *arg)
+svc_t *do_cmd(int cmd, const char *arg)
 {
-	int sd = -1;
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
-		.cmd   = INIT_CMD_SVC_FIND,
+		.cmd   = cmd,
 	};
 	static svc_t svc;
+	int sd = -1;
 
 	sd = client_connect();
 	if (sd == -1)
@@ -152,9 +152,19 @@ svc_t *client_svc_find(const char *arg)
 error:
 	client_disconnect();
 	perror("Failed communicating with finit");
-	sd = -1;
 
 	return NULL;
+}
+
+svc_t *client_svc_find(const char *arg)
+{
+	return do_cmd(INIT_CMD_SVC_FIND, arg);
+}
+
+
+svc_t *client_svc_find_by_cond(const char *arg)
+{
+	return do_cmd(INIT_CMD_SVC_FIND_BYC, arg);
 }
 
 /**
