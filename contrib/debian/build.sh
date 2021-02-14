@@ -24,7 +24,6 @@ echo
 ./configure								\
     --prefix=/usr                     --exec-prefix=			\
     --sysconfdir=/etc                 --localstatedir=/var		\
-                                      --enable-progress			\
     --enable-dbus-plugin              --enable-x11-common-plugin	\
     --enable-alsa-utils-plugin						\
     --with-random-seed=/var/lib/urandom/random-seed			\
