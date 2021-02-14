@@ -24,6 +24,13 @@
 #ifndef FINIT_UTMP_API_H_
 #define FINIT_UTMP_API_H_
 
+#include <paths.h>
+#include <utmp.h>
+
+#ifndef _PATH_BTMP
+#define _PATH_BTMP "/var/log/btmp"
+#endif
+
 int utmp_set         (int type, int pid, char *line, char *id, char *user);
 int utmp_set_boot    (void);
 int utmp_set_halt    (void);
