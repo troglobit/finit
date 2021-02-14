@@ -133,9 +133,6 @@ static int do_log(char *svc)
 	return system(cmd);
 }
 
-/*
- * XXX: Convert to read UTMP instead, like runlevel(8) does
- */
 static int do_runlevel(char *arg)
 {
 	struct init_request rq = {
@@ -407,6 +404,9 @@ int utmp_show(char *file)
 
 static int do_utmp(char *file)
 {
+	if (!has_utmp())
+		return 1;
+
 	if (fexist(file))
 		return utmp_show(file);
 
@@ -464,7 +464,6 @@ static int show_status(char *arg)
 	char ident[MAX_IDENT_LEN];
 	svc_t *svc;
 
-	/* Fetch UTMP runlevel, needed for svc_status() call below */
 	runlevel = runlevel_get(NULL);
 
 	if (arg && arg[0]) {
@@ -642,10 +641,15 @@ static int usage(int rc)
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
-		"  poweroff                  Halt and power off system\n"
-		"\n"
-		"  utmp     show             Raw dump of UTMP/WTMP db\n"
-		"\n", prognm);
+		"  poweroff                  Halt and power off system\n", prognm);
+
+	if (has_utmp())
+		fprintf(stderr,
+			"\n"
+			"  utmp     show             Raw dump of UTMP/WTMP db\n"
+			"\n");
+	else
+		fprintf(stderr, "\n");
 
 	return rc;
 }
@@ -730,6 +734,16 @@ int main(int argc, char *argv[])
 	if (optind >= argc)
 		return show_status(NULL);
 
+	if (!has_utmp()) {
+		for (c = 0; command[c].cmd; c++) {
+			if (!string_compare(command[c].cmd, "utmp"))
+				continue;
+
+			command[c].cb = NULL;
+			break;
+		}
+	}
+
 	memset(arg, 0, sizeof(arg));
 	cmd = argv[optind++];
 	while (optind < argc) {
@@ -740,6 +754,8 @@ int main(int argc, char *argv[])
 
 	for (c = 0; command[c].cmd; c++) {
 		if (!string_match(command[c].cmd, cmd))
+			continue;
+		if (!command[c].cb)
 			continue;
 
 		return command[c].cb(arg);
