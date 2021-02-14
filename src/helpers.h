@@ -34,6 +34,14 @@
 #include <lite/lite.h>
 #include "log.h"
 
+#define PROGRESS_DEFAULT PROGRESS_MODERN
+
+typedef enum {
+	PROGRESS_SILENT,
+	PROGRESS_CLASSIC,
+	PROGRESS_MODERN,
+} pstyle_t;
+
 #ifndef HAVE_GETFSENT
 struct fstab {
 	char       *fs_spec;       /* block device name */
@@ -55,7 +63,9 @@ void    console_init    (void);
 ssize_t cprintf         (const char *fmt, ...);
 
 char   *strip_line      (char *line);
-void    show_progress   (int onoff);
+
+void    enable_progress (int onoff);
+void    show_progress   (pstyle_t style);
 
 int     getty           (char *tty, speed_t speed, char *term, char *user);
 int     sh              (char *tty);

@@ -39,13 +39,7 @@
 #include "util.h"
 #include "utmp-api.h"
 
-typedef enum {
-	PROGRESS_SILENT,
-	PROGRESS_CLASSIC,
-	PROGRESS_MODERN,
-} pstyle_t;
-
-#define PROGRESS_DEFAULT PROGRESS_MODERN
+static pstyle_t progress_onoff = PROGRESS_DEFAULT;
 static pstyle_t progress_style = PROGRESS_DEFAULT;
 
 #ifndef HOSTNAME_PATH
@@ -189,12 +183,20 @@ char *strip_line(char *line)
 	return line;
 }
 
-void show_progress(int onoff)
+void enable_progress(int onoff)
 {
+	if (debug)
+		return;
+
 	if (onoff)
-		progress_style = PROGRESS_DEFAULT;
+		progress_style = progress_onoff;
 	else
 		progress_style = PROGRESS_SILENT;
+}
+
+void show_progress(pstyle_t style)
+{
+	progress_onoff = style;
 }
 
 /*

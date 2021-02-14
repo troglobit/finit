@@ -75,11 +75,53 @@ static void hide_args(int argc, char *argv[])
 	}
 }
 
+int get_bool(char *ptr, int default_value)
+{
+	if (string_compare(ptr, "true") || string_compare(ptr, "on") || string_compare(ptr, "1"))
+		return 1;
+	if (string_compare(ptr, "false") || string_compare(ptr, "off") || string_compare(ptr, "0"))
+		return 0;
+
+	return default_value;
+}
+
+/*
+ * finit.debug = [on,off]
+ * finit.show_status = [on,off]
+ */
+static void parse_finit_opts(char *opt)
+{
+	char *ptr;
+
+	ptr = strchr(opt, '=');
+	if (ptr)
+		*ptr++ = 0;
+
+	if (string_compare(opt, "debug")) {
+		debug = get_bool(ptr, 1);
+		return;
+	}
+
+	if (string_compare(opt, "status_style")) {
+		if (string_compare(ptr, "old") || string_compare(ptr, "classic"))
+			show_progress(PROGRESS_CLASSIC);
+		else
+			show_progress(PROGRESS_MODERN);
+		return;
+	}
+
+	if (string_compare(opt, "show_status")) {
+		show_progress(get_bool(ptr, 1) ? PROGRESS_DEFAULT : PROGRESS_SILENT);
+		return;
+	}
+}
+
 static void parse_arg(char *arg)
 {
-	/* Catches finit_debug, --debug, and debug */
-	if (strstr(arg, "debug"))
-		debug = 1;
+	if (!strncmp(arg, "finit.", 6)) {
+		parse_finit_opts(&arg[6]);
+		return;
+	}
 
 	if (string_compare(arg, "rescue") || string_compare(arg, "recover"))
 		rescue = 1;

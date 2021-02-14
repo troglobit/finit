@@ -307,11 +307,8 @@ static void finalize(void)
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 	service_step_all(SVC_TYPE_ANY);
 
-	/* Enable silent mode before starting TTYs */
-	if (!debug) {
-		_d("Going silent ...");
-		show_progress(0);
-	}
+	/* Disable progress output at normal runtime */
+	enable_progress(0);
 
 	/* Delayed start of TTYs at bootstrap */
 	_d("Launching all getty services ...");
@@ -409,6 +406,9 @@ int main(int argc, char *argv[])
 	/* Set up canvas */
 	if (!rescue && !debug)
 		screen_init();
+
+	/* Allow progress, if enabled */
+	enable_progress(1);
 
 	/*
 	 * In case of emergency.
