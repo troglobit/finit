@@ -144,10 +144,12 @@ static void setup(void *arg)
 	/*
 	 * UTMP actually needs multiple db files
 	 */
-	create("/var/run/utmp",    0644, 0, gid); /* Currently logged in */
-	create("/var/log/wtmp",    0644, 0, gid); /* Login history       */
-	create("/var/log/btmp",    0600, 0, gid); /* Failed logins       */
-	create("/var/log/lastlog", 0644, 0, gid);
+	if (has_utmp()) {
+		create("/var/run/utmp",    0644, 0, gid); /* Currently logged in */
+		create("/var/log/wtmp",    0644, 0, gid); /* Login history       */
+		create("/var/log/btmp",    0600, 0, gid); /* Failed logins       */
+		create("/var/log/lastlog", 0644, 0, gid);
+	}
 
 	/* Set BOOT_TIME UTMP entry */
 	utmp_set_boot();
