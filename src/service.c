@@ -256,7 +256,7 @@ static int redirect(svc_t *svc)
 			return fredirect(console());
 
 		return lredirect(svc);
-	} else if (log_is_debug())
+	} else if (debug)
 		return fredirect(console());
 #ifdef REDIRECT_OUTPUT
 	else
@@ -393,7 +393,7 @@ static int service_start(svc_t *svc)
 			status = execvp(svc->cmd, args);
 
 		_exit(status);
-	} else if (log_is_debug()) {
+	} else if (debug) {
 		char buf[CMD_SIZE] = "";
 
 		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++) {

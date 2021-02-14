@@ -75,20 +75,17 @@ static void hide_args(int argc, char *argv[])
 	}
 }
 
-static void parse_arg(char *arg, int *dbg)
+static void parse_arg(char *arg)
 {
-	/* Catches finit_debug (deprecated), --debug, and debug */
+	/* Catches finit_debug, --debug, and debug */
 	if (strstr(arg, "debug"))
-		*dbg = 1;
+		debug = 1;
 
 	if (string_compare(arg, "rescue") || string_compare(arg, "recover"))
 		rescue = 1;
 
 	if (string_compare(arg, "single") || string_compare(arg, "S"))
 		single = 1;
-
-	if (string_compare(arg, "splash"))
-		splash = 1;
 }
 
 void conf_parse_cmdline(int argc, char *argv[])
@@ -98,7 +95,7 @@ void conf_parse_cmdline(int argc, char *argv[])
 	char line[LINE_SIZE], *cmdline, *tok;
 
 	for (int i = 1; i < argc; i++)
-		parse_arg(argv[i], &dbg);
+		parse_arg(argv[i]);
 
 	hide_args(argc, argv);
 
@@ -116,7 +113,7 @@ void conf_parse_cmdline(int argc, char *argv[])
 
 	while ((tok = strtok(cmdline, " \t"))) {
 		cmdline = NULL;
-		parse_arg(tok, &dbg);
+		parse_arg(tok);
 	}
 	fclose(fp);
 

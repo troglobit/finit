@@ -92,9 +92,9 @@ struct init_request {
 extern int    runlevel;
 extern int    cfglevel;
 extern int    prevlevel;
+extern int    debug;
 extern int    rescue;
 extern int    single;
-extern int    splash;
 extern char  *rcsd;
 extern char  *sdown;
 extern char  *network;

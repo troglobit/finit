@@ -74,7 +74,7 @@ static void setup(void *arg)
 		path = which("mdev");
 		if (path) {
 			/* Embedded Linux systems usually have BusyBox mdev */
-			if (log_is_debug())
+			if (debug)
 				touch("/dev/mdev.log");
 
 			snprintf(cmd, sizeof(cmd), "%s -s", path);

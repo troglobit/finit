@@ -48,11 +48,7 @@
 void    log_init        (int dbg);
 void    log_exit        (void);
 
-void    log_silent      (void);
-int     log_is_silent   (void);
-
 void    log_debug       (void);
-int     log_is_debug    (void);
 
 void    logit           (int prio, const char *fmt, ...);
 

@@ -2,12 +2,11 @@ Tips & Tricks with the kernel cmdline
 =====================================
 
 This document summarizes the different boot parameters that can be
-passed on the Linux kernel command line.  Not just limited to Finit.
+passed on the Linux kernel command line.  Not limited to Finit.
 
-* `debug`, or `--debug`  
-    Enable debug mode.  The former syntax also enable kernel debug, and
-    the latter only in Finit.  Debug messages are printed to the console
-    until a syslog daemon has been started.
+* `debug`__
+    Enable kernel debug.  Debug messages are printed to the console
+    until Finit starts up, the syslog daemon then empties `/dev/kmsg`
 
 * `init=/bin/sh`  
     Bypass system default init and tell kernel to start a shell.  Note,
@@ -31,8 +30,5 @@ passed on the Linux kernel command line.  Not just limited to Finit.
     the regular runlevel.  All services and TTYs in `[1]` will be started,
     so a `tty [1] @console nologin` configuration presents you with a
     root console without login.
-
-* `splash`  
-    Display Finit splash screen with progress at bootstrap and shutdown.
 
 For more on kernel boot paramaters, see the man page `bootparam(7)`.

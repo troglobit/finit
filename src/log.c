@@ -28,43 +28,24 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "helpers.h"
 #include "log.h"
 #include "util.h"
 
 static int up       = 0;
-static int debug    = 0;
-static int silent   = SILENT_MODE;	/* Completely silent, including boot */
 static int loglevel = LOG_NOTICE;
-
-static void muffler(void)
-{
-	silent = SILENT_MODE;
-
-	/* User override from kernel cmdline */
-	if (splash)
-		silent = 0;
-}
 
 void log_init(int dbg)
 {
-	if (dbg)
-		debug = 1;
-
 	if (debug)
 		loglevel = LOG_DEBUG;
 	else
 		loglevel = LOG_NOTICE;
-
-	muffler();
 }
 
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
 void log_exit(void)
 {
-	muffler();
-	if (!silent)
-		sched_yield();
-
 	/*
 	 * Unless in debug mode at shutdown, Reinitialize screen,
 	 * terminal may have been resized at runtime
@@ -73,6 +54,8 @@ void log_exit(void)
 		screen_exit();
 	else
 		screen_init();
+
+	show_progress(1);
 }
 
 void log_open(void)
@@ -89,46 +72,21 @@ void log_open(void)
 	up = 1;
 }
 
-void log_silent(void)
-{
-	if (debug)
-		silent = 0;
-	else
-		silent = 1;
-}
-
-int log_is_silent(void)
-{
-	return silent;
-}
-
 /* Toggle debug mode */
 void log_debug(void)
 {
 	debug = !debug;
 
 	if (debug) {
-		silent   = 0;
 		loglevel = LOG_DEBUG;
-
 		screen_exit();
 	} else {
-		silent   = SILENT_MODE;
 		loglevel = LOG_NOTICE;
-
 		screen_init();
 	}
 	log_open();
 
-	/* Also toggle silent mode (progress) */
-	log_silent();
-
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
-}
-
-int log_is_debug(void)
-{
-	return debug;
 }
 
 /*

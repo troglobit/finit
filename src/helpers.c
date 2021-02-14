@@ -39,7 +39,14 @@
 #include "util.h"
 #include "utmp-api.h"
 
-static int progress_style = PROGRESS_STYLE;
+typedef enum {
+	PROGRESS_SILENT,
+	PROGRESS_CLASSIC,
+	PROGRESS_MODERN,
+} pstyle_t;
+
+#define PROGRESS_DEFAULT PROGRESS_MODERN
+static pstyle_t progress_style = PROGRESS_DEFAULT;
 
 #ifndef HOSTNAME_PATH
 #define HOSTNAME_PATH "/etc/hostname"
@@ -182,6 +189,14 @@ char *strip_line(char *line)
 	return line;
 }
 
+void show_progress(int onoff)
+{
+	if (onoff)
+		progress_style = PROGRESS_DEFAULT;
+	else
+		progress_style = PROGRESS_SILENT;
+}
+
 /*
  * Return screen length of string, not counting escape chars, and
  * accounting for unicode characters as only one screen byte wide
@@ -234,9 +249,13 @@ void print_banner(const char *heading)
 {
 	char buf[4 * SCREEN_WIDTH];
 
+	if (progress_style == PROGRESS_SILENT)
+		return;
+
 	memset(buf, 0, sizeof(buf));
 	strlcat(buf, "\r\e[2K", sizeof(buf));
-	if (progress_style == 1) {
+
+	if (progress_style == PROGRESS_CLASSIC) {
 		strlcat(buf, "\e[1m", sizeof(buf));
 		strlcat(buf, heading, sizeof(buf));
 		pad(buf, sizeof(buf), "=", SCREEN_WIDTH - 2);
@@ -289,7 +308,7 @@ static char *status(int rc)
 	if (rc < 0 || rc >= (int)NELEMS(status1))
 		rc = NELEMS(status1) - 1;	/* Default to "⋯" (pending) */
 
-	if (progress_style == 1) {
+	if (progress_style == PROGRESS_CLASSIC) {
 		int hl = 1;
 
 		if (rc == 1 || rc == 2)
@@ -307,7 +326,7 @@ void printv(const char *fmt, va_list ap)
 	char buf[SCREEN_WIDTH];
 	size_t len;
 
-	if (!fmt || log_is_silent())
+	if (!fmt || progress_style == PROGRESS_SILENT)
 		return;
 
 	delline();
@@ -316,7 +335,7 @@ void printv(const char *fmt, va_list ap)
 	len = print_timestamp(buf, sizeof(buf));
 	vsnprintf(&buf[len], sizeof(buf) - len, fmt, ap);
 
-	if (progress_style == 1)
+	if (progress_style == PROGRESS_CLASSIC)
 		cprintf("\r%s ", pad(buf, sizeof(buf), ".", sizeof(buf)));
 	else
 		cprintf("\r\e[2K%s%s", status(3), buf);
@@ -324,7 +343,7 @@ void printv(const char *fmt, va_list ap)
 
 void print(int rc, const char *fmt, ...)
 {
-	if (log_is_silent())
+	if (progress_style == PROGRESS_SILENT)
 		return;
 
 	if (fmt) {
@@ -338,7 +357,7 @@ void print(int rc, const char *fmt, ...)
 	if (rc < 0)
 		return;
 
-	if (progress_style == 1)
+	if (progress_style == PROGRESS_CLASSIC)
 		cprintf("%s\n", status(rc));
 	else
 		cprintf("\r%s\n", status(rc));

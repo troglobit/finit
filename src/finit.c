@@ -55,9 +55,9 @@
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   prevlevel = -1;
+int   debug     = 0;		/* debug mode from kernel cmdline */
 int   rescue    = 0;		/* rescue mode from kernel cmdline */
 int   single    = 0;		/* single user mode from kernel cmdline */
-int   splash    = 0;		/* splash + progress enabled on kernel cmdline */
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
@@ -78,16 +78,14 @@ static void banner(void)
 	 * similar enabled to start emptying /dev/kmsg, but for
 	 * our progress we want to own the console.
 	 */
-	klogctl(6, NULL, 0);
+	if (!debug)
+		klogctl(6, NULL, 0);
 
 	/*
 	 * First level hooks, if you want to run here, you're
 	 * pretty much on your own.  Nothing's up yet ...
 	 */
 	plugin_run_hooks(HOOK_BANNER);
-
-	if (log_is_silent())
-		return;
 
 	print_banner(INIT_HEADING);
 }
@@ -310,8 +308,10 @@ static void finalize(void)
 	service_step_all(SVC_TYPE_ANY);
 
 	/* Enable silent mode before starting TTYs */
-	_d("Going silent ...");
-	log_silent();
+	if (!debug) {
+		_d("Going silent ...");
+		show_progress(0);
+	}
 
 	/* Delayed start of TTYs at bootstrap */
 	_d("Launching all getty services ...");
@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
 	fs_init();
 
 	/*
-	 * Parse /proc/cmdline (debug, rescue, splash, console=, etc.)
+	 * Parse /proc/cmdline (debug, rescue, console=, etc.)
 	 * Also calls log_init() to set correct log level
 	 */
 	conf_parse_cmdline(argc, argv);
@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
 	umask(0);
 
 	/* Set up canvas */
-	if (!rescue && !log_is_debug())
+	if (!rescue && !debug)
 		screen_init();
 
 	/*

@@ -55,6 +55,7 @@ void    console_init    (void);
 ssize_t cprintf         (const char *fmt, ...);
 
 char   *strip_line      (char *line);
+void    show_progress   (int onoff);
 
 int     getty           (char *tty, speed_t speed, char *term, char *user);
 int     sh              (char *tty);
