@@ -127,6 +127,9 @@ void utmp_logrotate(void)
 		NULL
 	};
 
+	if (!has_utmp())
+		return 0;
+
 	for (i = 0; files[i]; i++)
 		logrotate(files[i], MAX_NO, MAX_SZ);
 #endif /* LOGROTATE_ENABLED */
@@ -137,6 +140,9 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 	int result = 0;
 	struct utmp ut;
 	struct utsname uts;
+
+	if (!has_utmp())
+		return 0;
 
 	switch (type) {
 	case RUN_LVL:
@@ -187,6 +193,9 @@ int utmp_set_halt(void)
 static int set_getty(int type, char *tty, char *id, char *user)
 {
 	char *line;
+
+	if (!has_utmp())
+		return 0;
 
 	if (!tty)
 		line = "";
