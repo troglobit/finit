@@ -30,6 +30,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "util.h"
 #include "utmp-api.h"
 
 static int is_tmpfs(char *path)
