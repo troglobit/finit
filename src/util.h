@@ -40,6 +40,7 @@ extern char *prognm;
 
 char *progname     (char *arg0);
 int   echo         (char *file, int append, char *fmt, ...);
+int   has_utmp     (void);
 int   strtobytes   (char *arg);
 void  do_sleep     (unsigned int sec);
 

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <utmp.h>
 #include <sys/sysinfo.h>	/* sysinfo() */
 #include <lite/lite.h>		/* strlcat() */
 #include "util.h"
@@ -73,6 +74,16 @@ int echo(char *file, int append, char *fmt, ...)
 		fclose(fp);
 
 	return 0;
+}
+
+/*
+ * musl libc default to /dev/null/utmp and /dev/null/wtmp, respectively.
+ * See https://www.openwall.com/lists/musl/2012/03/04/4 for reasoning.
+ * Also, there's no __MUSL__, so we cannot make a libc-specific #ifdef
+ */
+int has_utmp(void)
+{
+	return strncmp(_PATH_UTMP, "/dev/null", 9);
 }
 
 int strtobytes(char *arg)
