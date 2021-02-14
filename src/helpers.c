@@ -260,7 +260,7 @@ void print_banner(const char *heading)
 	if (progress_style == PROGRESS_CLASSIC) {
 		strlcat(buf, "\e[1m", sizeof(buf));
 		strlcat(buf, heading, sizeof(buf));
-		pad(buf, sizeof(buf), "=", SCREEN_WIDTH - 2);
+		pad(buf, sizeof(buf), "=", SCREEN_WIDTH + 10);
 	} else {
 		size_t wmax = 80 <= SCREEN_WIDTH ? 80 : SCREEN_WIDTH;
 
