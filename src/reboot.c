@@ -51,9 +51,9 @@ static void transform(char *nm)
 		nm = prognm;
 
 	if (cmd == CMD_UNKNOWN) {
-		if (!strcmp(nm, "halt") || !strcmp(nm, "shutdown"))
+		if (!strcmp(nm, "halt"))
 			cmd = CMD_HALT;
-		else if (!strcmp(nm, "poweroff"))
+		else if (!strcmp(nm, "poweroff") || !strcmp(nm, "shutdown"))
 			cmd = CMD_POWEROFF;
 		else if (!strcmp(nm, "suspend"))
 			cmd = CMD_SUSPEND;
@@ -94,11 +94,12 @@ static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS]\n\n"
 		"Options:\n"
-		"  -h, --help      This help text\n"
+		"      --help      This help text\n"
 		"  -f, --force     Force unsafe %s now, do not contact the init system.\n"
 		"      --halt      Halt system, regardless of how the command is called.\n"
-		"  -p, --poweroff  Power-off system, regardless of how the command is called.\n"
-		"      --reboot    Reboot system, regardless of how the command is called.\n"
+		"  -h              Halt or power off after shutdown.\n"
+		"  -P, --poweroff  Power-off system, regardless of how the command is called.\n"
+		"  -r, --reboot    Reboot system, regardless of how the command is called.\n"
 		"\n", prognm, msg);
 
 	return rc;
@@ -119,9 +120,8 @@ int main(int argc, char *argv[])
 	/* Initial command taken from program name */
 	transform(progname(argv[0]));
 
-	while ((c = getopt_long(argc, argv, "h?fHpr", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "h?fHPpr", long_options, NULL)) != EOF) {
 		switch(c) {
-		case 'h':
 		case '?':
 			return usage(0);
 
@@ -133,6 +133,8 @@ int main(int argc, char *argv[])
 			cmd = CMD_HALT;
 			break;
 
+		case 'h':
+		case 'P':
 		case 'p':
 			cmd = CMD_POWEROFF;
 			break;
