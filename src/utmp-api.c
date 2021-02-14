@@ -25,12 +25,16 @@
 
 #include <paths.h>
 #include <time.h>
+#include <utmp.h>
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <lite/lite.h>
 
 #include "helpers.h"
-#include "utmp-api.h"
+
+#ifndef _PATH_BTMP
+#define _PATH_BTMP "/var/log/btmp"
+#endif
 
 #define MAX_NO 5
 #define MAX_SZ 100 * 1024

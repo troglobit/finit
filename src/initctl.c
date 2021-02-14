@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
+#include <utmp.h>
 #include <arpa/inet.h>
 #include <lite/lite.h>
 
@@ -39,7 +40,6 @@
 #include "serv.h"
 #include "service.h"
 #include "util.h"
-#include "utmp-api.h"
 
 #define _PATH_COND _PATH_VARRUN "finit/cond/"
 

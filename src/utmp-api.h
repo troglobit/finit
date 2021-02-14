@@ -24,24 +24,6 @@
 #ifndef FINIT_UTMP_API_H_
 #define FINIT_UTMP_API_H_
 
-#include <utmp.h>
-
-/*
- * musl libc default to /dev/null/utmp and /dev/null/wtmp, respectively.
- * See https://www.openwall.com/lists/musl/2012/03/04/4 for reasoning.
- *
- * Also, there's no __MUSL__, so we cannot make a libc-specific check
- * here to work around this, that's why everyone pays.
- */
-#undef _PATH_UTMP
-#undef _PATH_WTMP
-#undef _PATH_BTMP
-
-#define _PATH_UTMP "/var/run/wtmp"
-#define _PATH_WTMP "/var/log/wtmp"
-#define _PATH_BTMP "/var/log/btmp"
-
-
 int utmp_set         (int type, int pid, char *line, char *id, char *user);
 int utmp_set_boot    (void);
 int utmp_set_halt    (void);
