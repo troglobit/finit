@@ -29,7 +29,7 @@
 #include <sys/resource.h>
 #include <lite/lite.h>
 #include <lite/queue.h>		/* BSD sys/queue.h API */
-#include <sys/time.h>
+#include <time.h>
 #include <glob.h>
 
 #include "finit.h"
@@ -645,6 +645,11 @@ int conf_reload(void)
 {
 	size_t i;
 	glob_t gl;
+
+	/* Set time according to current time zone */
+	tzset();
+	_d("Set time  daylight: %d  timezone: %ld  tzname: %s %s",
+	   daylight, timezone, tzname[0], tzname[1]);
 
 	/* Mark and sweep */
 	svc_mark_dynamic();
