@@ -217,9 +217,10 @@ static int lredirect(svc_t *svc)
 			snprintf(num, sizeof(num), "%d", logfile_count_max);
 
 			execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
-			_exit(0);
 #else
 			logit(LOG_INFO, "logit disabled, logging %s to syslog instead", svc->name);
+			fallback_logger(tag, prio);
+			_exit(0);
 #endif
 		}
 
