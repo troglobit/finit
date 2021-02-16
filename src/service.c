@@ -191,9 +191,6 @@ static int lredirect(svc_t *svc)
 		return -1;
 	}
 
-	dup2(fd, STDOUT_FILENO);
-	dup2(fd, STDERR_FILENO);
-
 	pid = fork();
 	if (pid == 0) {
 		int fds;
@@ -239,6 +236,9 @@ static int lredirect(svc_t *svc)
 #endif
 		_exit(0);
 	}
+
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
 
 	return close(fd);
 }
