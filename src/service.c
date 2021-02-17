@@ -191,9 +191,6 @@ static int lredirect(svc_t *svc)
 		return -1;
 	}
 
-	dup2(fd, STDOUT_FILENO);
-	dup2(fd, STDERR_FILENO);
-
 	pid = fork();
 	if (pid == 0) {
 		int fds;
@@ -239,6 +236,9 @@ static int lredirect(svc_t *svc)
 #endif
 		_exit(0);
 	}
+
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
 
 	return close(fd);
 }
@@ -371,6 +371,9 @@ static int service_start(svc_t *svc)
 		}
 		args[i] = NULL;
 
+		redirect(svc);
+		sig_unblock();
+
 		/*
 		 * The setsid() call is the most humble of all in this
 		 * function.  It takes care to detach the process from
@@ -384,9 +387,6 @@ static int service_start(svc_t *svc)
 		 * have a look at redirect() and log.console instead.
 		 */
 		setsid();
-
-		redirect(svc);
-		sig_unblock();
 
 		if (svc_is_runtask(svc))
 			status = exec_runtask(svc->cmd, args);
