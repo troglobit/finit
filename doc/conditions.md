@@ -81,7 +81,7 @@ file touched (re-created).
 
 Built-in conditions:
 
-- `pid/<PATH>`
+- `pid/<SERVICE>`
 - `net/route/default`
 - `net/<IFNAME>/exist`
 - `net/<IFNAME>/up`
