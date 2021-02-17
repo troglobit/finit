@@ -213,7 +213,7 @@ static int lredirect(svc_t *svc)
 			snprintf(sz, sizeof(sz), "%d", logfile_size_max);
 			snprintf(num, sizeof(num), "%d", logfile_count_max);
 
-			execlp("logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+			execlp(FINIT_LIBPATH_ "/logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
 #else
 			logit(LOG_INFO, "logit disabled, logging %s to syslog instead", svc->name);
 			fallback_logger(tag, prio);
@@ -227,7 +227,7 @@ static int lredirect(svc_t *svc)
 			prio = svc->log.prio;
 
 #ifdef LOGIT_ENABLED
-		execlp("logit", "logit", "-t", tag, "-p", prio, NULL);
+		execlp("FINIT_LIBPATH_ logit", "logit", "-t", tag, "-p", prio, NULL);
 #else
 		if (whichp("logger"))
 			execlp("logger", "logger", "-t", tag, "-p", prio, NULL);
