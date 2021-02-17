@@ -227,7 +227,7 @@ static int lredirect(svc_t *svc)
 			prio = svc->log.prio;
 
 #ifdef LOGIT_ENABLED
-		execlp("FINIT_LIBPATH_ logit", "logit", "-t", tag, "-p", prio, NULL);
+		execlp(FINIT_LIBPATH_ "logit", "logit", "-t", tag, "-p", prio, NULL);
 #else
 		if (whichp("logger"))
 			execlp("logger", "logger", "-t", tag, "-p", prio, NULL);
