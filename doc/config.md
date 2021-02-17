@@ -4,6 +4,8 @@ Configuration
 * [Introduction](#introduction)
 * [Service Wrapper Scripts](#service-wrapper-scripts)
 * [Syntax](#syntax)
+  * [Non-privileged Services](#non-privileged-services)
+  * [Redirecting Output](#redirecting-output)
 * [Limitations](#limitations)
   * [/etc/finit.conf](#etcfinitconf)
   * [/etc/finit.d](#etcfinitd)
@@ -13,8 +15,7 @@ Introduction
 ------------
 
 Finit can be configured using only the original `/etc/finit.conf` file
-or in combination with `/etc/finit.d/*.conf`.  Finit 3 can even start a
-system using only `/etc/finit.d/*.conf`, highly useful for package-based
+or in combination with `/etc/finit.d/*.conf`.  Useful for package-based
 Linux distributions -- each package can provide its own "script" file.
 
 - `/etc/finit.conf`: main configuration file
@@ -49,6 +50,10 @@ On `initctl reload` the following is checked for all services:
 For more info on the different states of a service, see the separate
 document [Finit Services](service.md).
 
+> When running <kbd>make install</kbd> no default `/etc/finit.conf` is
+> installed since system requirements differ too much.  There are some
+> examples in the `contrib/` directory, which can be used as a base.
+
 
 Service Wrapper Scripts
 -----------------------
@@ -65,24 +70,21 @@ example employs a wrapper script in `/etc/start.d`.
 **Example:**
 
 * `/etc/finit.d/available/program.conf`:
-```conf
-service [235] <!> /etc/start.d/program -- Example Program
-```
+
+        service [235] <!> /etc/start.d/program -- Example Program
 
 * `/etc/start.d/program:`
-```shell
-#!/bin/sh
 
-# Prepare the command line options
-OPTIONS="-u $(cat /etc/username)"
+        #!/bin/sh
+        # Prepare the command line options
+        OPTIONS="-u $(cat /etc/username)"
 
-# Execute the program
-exec /usr/bin/program $OPTIONS
-```
+        # Execute the program
+        exec /usr/bin/program $OPTIONS
 
-**Note:**, that the example sets `<!>` to denote that it doesn't support
-  `SIGHUP`. That way Finit will stop/start such the service instead of
-  sending SIGHUP at restart/reload.
+> **Note:** the example sets `<!>` to denote that it doesn't support
+>           `SIGHUP`.  That way Finit will stop/start the service
+>           instead of sending SIGHUP at restart/reload events.
 
 
 Syntax
@@ -117,7 +119,6 @@ Syntax
   Finit versions before v3.1 used `infinity` for `unlimited`, which is
   still supported, albeit deprecated.
 
-```shell
         # No process is allowed more than 8MB of address space
         rlimit hard as 8388608
 
@@ -126,7 +127,6 @@ Syntax
 
         # CPU limit for all services, soft & hard = 10 sec
         rlimit cpu 10
-```
 
   `rlimit` can be set globally, in `/etc/finit.conf`, or locally for
   a set of task/run/services, in `/etc/finit.d/*.conf`.
@@ -148,9 +148,7 @@ Syntax
   Both `run` and `task` commands are run in a shell, so pipes and
   redirects can be freely used:
 
-```shell
         task [s] echo "foo" | cat >/tmp/bar
-```
 
 * `sysv [LVLS] <COND> /path/to/init-script -- Optional description`__
   Similar to `task` is the `sysv` stanza, which can be used to call SysV
@@ -168,60 +166,47 @@ Syntax
   
 * `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
   Service, or daemon, to be monitored and automatically restarted if it
-  exits prematurely.
+  exits prematurely.  Finit tries to restart services that die 10 times
+  before giving up, then you have to `initctl restart NAME` it manually.
   
-  For daemons that support it, we recommend appending `--foreground`, or
-  `--no-background`, argument to prevent them from forking off a
-  sub-process in the background.  This is the most reliable way to
-  monitor a service.
+  For daemons that support it, we recommend appending `--foreground`,
+  `--no-background`, `-n`, `-F`, or similar command line argument to
+  prevent them from forking off a sub-process in the background.  This
+  is the most reliable way to monitor a service.
 
   However, not all daemons support running in the foreground, or they
   may start logging to the foreground as well, these are called forking
   services and are supported using the same syntax as forking `sysv`
   services, using the `pid:!/path/to/pidfile.pid` syntax.
   
-  In the case of `ospfd` (below), we omit the `-d` flag to prevent it
-  from forking (daemonizing):
+  **Example:**  
+  In the case of `ospfd` (below), we omit the `-d` flag (daemonize) to
+  prevent it from forking to the background:
 
-```shell
-        service [2345] <pid/sbin/zebra> /sbin/ospfd -- OSPF daemon
-```
+        service [2345] <pid/zebra> /sbin/ospfd -- OSPF daemon
 
-  The `[2345]` is the runlevels `ospfd` is allowed to run in, they are
-  optional and default to level 2-5 if left out.
+  `[2345]` denote the runlevels `ospfd` is allowed to run in, they are
+  optional and default to level 2-5 if omitted.
   
-  The `<...>` is the condition for starting `ospfd`.  In this example
-  Finit waits for another service, `/sbin/zebra`, to have created its
-  PID file in `/var/run/zebra.pid` before starting `ospfd`.  Modern
-  setups omit the absolute path and Quagga places its PID files in a
-  subdirectory, `/run/quagga/zebra.pid`.  In which case the example is
-  slightly different:
-
-```shell
-        service [2345] <pid/quagga/zebra> ospfd -- OSPF daemon
-```
+  `<...>` is the condition for starting `ospfd`.  In this example Finit
+  waits for another service, `zebra`, to have created its PID file in
+  `/var/run/quagga/zebra.pid` before starting `ospfd`.  Finit watches
+  *all* files in `/var/run`, for each file named `*.pid`, or `*/pid`,
+  Finit opens it and find the matching `NAME:ID` using the PID.
 
   Some services do not maintain a PID file and rather than patching each
   application Finit provides a workaround.  A `pid` keyword can be set
   to have Finit automatically create (when starting) and later remove
   (when stopping) the PID file.  The file is created in the `/var/run`
   directory using the `basename(1)` of the service.  The default can be
-  modified with an optional argument:
+  modified with an optional `pid:`-argument:
 
         pid[:[/path/to/]filename[.pid]]
 
-  For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`
+  For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`,
   that PID file will, not only be created and removed automatically, but
   also be used by the Finit condition subsystem.  So a service/run/task
-  can depend on `<pid/sbin/foo>`, notice the composition of conditions.
-
-  However, if a service `bar` *does* create a PID file, using `foo.pid`,
-  we can inform Finit of this by prepending an `!`:
-
-        pid:!/run/foo.pid
-
-  Here Finit will *not* create/remove/touch the PID file, only use it
-  for the condition handling instead of the default PID file name.
+  can depend on `<pid/bar>`.
 
 >  For a detailed description of conditions, and how to debug them, see
 >  the [Finit Conditions](conditions.md) document.
@@ -286,9 +271,8 @@ Syntax
   The default baud rate is 0, i.e., keep kernel default.
 
   **Example:**
-```conf
+
         tty [12345] /dev/ttyAMA0 115200 noclear vt220
-```
 
   The second `tty` syntax variant is for using an external getty, like
   agetty or the BusyBox getty.
@@ -297,10 +281,9 @@ Syntax
   press enter before starting getty.
 
   **Example:**
-```conf
+
         tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
         tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100 nowait
-```
 
   The `noclear` option disables clearing the TTY after each session.
   Clearing the TTY when a user logs out is usually preferable.
@@ -325,53 +308,47 @@ Syntax
   can be omitted to keep the kernel default.
 
   **Example:**
-```conf
+
         tty [12345] @console noclear vt220
-```
 
   On really bare bones systems Finit offers a fallback shell, which
   should not be enabled on production systems since.  This because it
   may give a user root access without having to log in.  However, for
   bringup and system debugging it can come in handy:
 
-```shell
         configure --enable-fallback-shell
-```
 
   One can also use the `service` stanza to start a stand-alone shell:
 
-```conf
         service [12345] /bin/sh -l
-```
 
-When running <kbd>make install</kbd> no default `/etc/finit.conf` will
-be installed since system requirements differ too much.  Try out the
-Debian 6.0 example `/usr/share/doc/finit/finit.conf` configuration that
-is capable of service monitoring SSH, sysklogd, gdm and getty!
+### Non-privileged Services
 
 Every `run`, `task`, or `service` can also list the privileges the
 `/path/to/cmd` should be executed with.  Simply prefix the path with
 `[@USR[:GRP]]` like this:
 
-```shell
     run [2345] @joe:users logger "Hello world"
-```
 
 For multiple instances of the same command, e.g. a DHCP client or
 multiple web servers, add `:ID` somewhere between the `run`, `task`,
 `service` keyword and the command, like this:
 
-```shell
     service :80  [2345] httpd -f -h /http -p 80   -- Web server
     service :8080[2345] httpd -f -h /http -p 8080 -- Old web server
-```
 
 Without the `:ID` to the service the latter will overwrite the former
 and only the old web server would be started and supervised.
 
+### Redirecting Output
+
 The `run`, `task`, and `service` stanzas also allow the keyword `log` to
 redirect `stderr` and `stdout` of the application to a file or syslog
-using the native `logit` tool.  The full syntax is:
+using the native `logit` tool.  This is useful for programs that do not
+support syslog on their own, which is sometimes the case when running
+in the foreground.
+
+The full syntax is:
 
     log:/path/to/file
     log:prio:facility.level,tag:ident
@@ -431,8 +408,9 @@ the following:
 - `rlimit`
 - `tty`
 
-**NOTE:** The `/etc/finit.d` directory was previously the default Finit
-  `runparts` directory.  Finit no longer has a default `runparts`, make
-  sure to update your setup, or the finit configuration, accordingly.
+> **Note:** The `/etc/finit.d` directory was previously the default
+>          Finit `runparts` directory.  Finit no longer has a default
+>          `runparts`, make sure to update your setup, or the finit
+>          configuration, accordingly.
 
 [run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
