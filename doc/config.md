@@ -182,6 +182,8 @@ optional arguments and description.
 `run` commands are guaranteed to be completed before running the next
 command.  Highly useful if true serialization is needed.
 
+> `<COND>` is described in the [Services](#services) section.
+
 
 ### One-shot Commands (parallel)
 
@@ -193,6 +195,8 @@ Both `run` and `task` commands are run in a shell, so pipes and
 redirects can be freely used:
 
     task [s] echo "foo" | cat >/tmp/bar
+
+> `<COND>` is described in the [Services](#services) section.
 
 
 ### SysV Init Scripts
@@ -211,6 +215,8 @@ calls `init-script restart` on `initctl reload`.  Similar to how
 
 Forking services started with `sysv` scripts can be monitored by Finit
 by declaring the PID file to look for: `pid:!/path/to/pidfile.pid`.
+
+> `<COND>` is described in the [Services](#services) section.
 
 
 ### Services
