@@ -523,11 +523,14 @@ static int show_status(char *arg)
 		if (!verbose) {
 			printf("%s\n", svc->desc);
 		} else {
-			char args[512] = "";
+			char args[CMD_SIZE] = "";
 
 			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+				if (strlen(svc->args[i]) == 0)
+					continue;
+				if (args[0])
+					strlcat(args, " ", sizeof(args));
 				strlcat(args, svc->args[i], sizeof(args));
-				strlcat(args, " ", sizeof(args));
 			}
 
 			printf("%s %s\n", svc->cmd, args);
