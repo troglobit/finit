@@ -335,7 +335,7 @@ static int service_start(svc_t *svc)
 		int uid = getuser(svc->username, &home);
 		int gid = getgroup(svc->group);
 #endif
-		char *args[MAX_NUM_SVC_ARGS];
+		char *args[MAX_NUM_SVC_ARGS + 1];
 
 		/* Set configured limits */
 		for (int i = 0; i < RLIMIT_NLIMITS; i++) {
@@ -362,8 +362,11 @@ static int service_start(svc_t *svc)
 		}
 
 		if (!svc_is_sysv(svc)) {
-			for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++)
+			for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
+				if (strlen(svc->args[i]) == 0)
+					continue;
 				args[i] = svc->args[i];
+			}
 		} else {
 			i = 0;
 			args[i++] = svc->cmd;
@@ -397,12 +400,12 @@ static int service_start(svc_t *svc)
 	} else if (debug) {
 		char buf[CMD_SIZE] = "";
 
-		for (i = 0; i < (MAX_NUM_SVC_ARGS - 1) && svc->args[i][0] != 0; i++) {
-			char arg[MAX_ARG_LEN + 1];
-
-			snprintf(arg, sizeof(arg), "%s ", svc->args[i]);
-			if (strlen(arg) < (sizeof(buf) - strlen(buf)))
-				strlcat(buf, arg, sizeof(buf));
+		for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+			if (strlen(svc->args[i]) == 0)
+				continue;
+			if (buf[0])
+				strlcat(buf, " ", sizeof(buf));
+			strlcat(buf, svc->args[i], sizeof(buf));
 		}
 		_d("Starting %s %s", svc->cmd, buf);
 	}
