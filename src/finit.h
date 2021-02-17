@@ -45,6 +45,8 @@
 #define _PATH_VARRUN    "/var/run/"
 #endif
 
+#define LOGIT_PATH              FINIT_LIBPATH_ "/logit"
+
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096

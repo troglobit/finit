@@ -27,6 +27,7 @@
 #include <ctype.h>		/* isblank() */
 #include <sched.h>		/* sched_yield() */
 #include <string.h>
+#include <sys/prctl.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <net/if.h>
@@ -149,7 +150,6 @@ static int fredirect(const char *file)
 	return -1;
 }
 
-#ifndef LOGIT_ENABLED
 /*
  * Fallback in case we don't even have logger on the system.
  * XXX: we should parse 'prio' here to get facility.level
@@ -160,13 +160,13 @@ static void fallback_logger(char *ident, char *prio)
 	int level = LOG_NOTICE;
 	char buf[256];
 
+	prctl(PR_SET_NAME, "finitlog", 0, 0, 0);
 	openlog(ident, LOG_NOWAIT | LOG_PID, facility);
 	while ((fgets(buf, sizeof(buf), stdin)))
 		syslog(level, "%s", buf);
 
 	closelog();
 }
-#endif
 
 /*
  * Redirect output to syslog using the command line logit tool
@@ -206,19 +206,20 @@ static int lredirect(svc_t *svc)
 		/* Reset signals */
 		sig_unblock();
 
+		if (!whichp(LOGIT_PATH)) {
+			logit(LOG_INFO, LOGIT_PATH " missing, using syslog for %s instead", svc->name);
+			fallback_logger(tag, prio);
+			_exit(0);
+		}
+
 		if (svc->log.file[0] == '/') {
-#ifdef LOGIT_ENABLED
 			char sz[20], num[3];
 
 			snprintf(sz, sizeof(sz), "%d", logfile_size_max);
 			snprintf(num, sizeof(num), "%d", logfile_count_max);
 
-			execlp(FINIT_LIBPATH_ "/logit", "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
-#else
-			logit(LOG_INFO, "logit disabled, logging %s to syslog instead", svc->name);
-			fallback_logger(tag, prio);
-			_exit(0);
-#endif
+			execlp(LOGIT_PATH, "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+			_exit(1);
 		}
 
 		if (svc->log.ident[0])
@@ -226,15 +227,8 @@ static int lredirect(svc_t *svc)
 		if (svc->log.prio[0])
 			prio = svc->log.prio;
 
-#ifdef LOGIT_ENABLED
-		execlp(FINIT_LIBPATH_ "/logit", "logit", "-t", tag, "-p", prio, NULL);
-#else
-		if (whichp("logger"))
-			execlp("logger", "logger", "-t", tag, "-p", prio, NULL);
-
-		fallback_logger(tag, prio);
-#endif
-		_exit(0);
+		execlp(LOGIT_PATH, "logit", "-t", tag, "-p", prio, NULL);
+		_exit(1);
 	}
 
 	dup2(fd, STDOUT_FILENO);
