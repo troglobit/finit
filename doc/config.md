@@ -3,7 +3,20 @@ Configuration
 
 * [Introduction](#introduction)
 * [Service Wrapper Scripts](#service-wrapper-scripts)
-* [Syntax](#syntax)
+* [Configuration File Syntax](#configuration-file-syntax)
+  * [Hostname](#hostname)
+  * [Kernel Modules](#kernel-modules)
+  * [Networking](#networking)
+  * [Resource Limits](#resource-limits)
+  * [Runlevels](#runlevels)
+  * [One-shot Commands (sequence)](#one-shot-commands--sequence-)
+  * [One-shot Commands (parallel)](#one-shot-commands--parallel-)
+  * [SysV Init Scripts](#sysv-init-scripts)
+  * [Services](#services)
+  * [Run-parts Scripts](#run-parts-scripts)
+  * [Including Finit Configs](#including-finit-configs)
+  * [General Logging](#general-logging)
+  * [TTYs and Consoles](#ttys-and-consoles)
   * [Non-privileged Services](#non-privileged-services)
   * [Redirecting Output](#redirecting-output)
 * [Limitations](#limitations)
@@ -87,240 +100,295 @@ example employs a wrapper script in `/etc/start.d`.
 >           instead of sending SIGHUP at restart/reload events.
 
 
-Syntax
-------
+Configuration File Syntax
+-------------------------
 
-* `host <NAME>`, or `hostname <NAME>`  
-  Set system hostname to NAME, unless `/etc/hostname` exists in which
-  case the contents of that file is used.
+### Hostname
 
-* `module <MODULE> [ARGS]`  
-  Load a kernel module, with optional arguments.  Similar to `insmod`
-  command line tool.
+**Syntax:** `host <NAME>`, or `hostname <NAME>`
 
-  Note, there is both a `modules-load.so` and a `modprobe.so` plugin
-  that can handle module loading better.  The former supports loading
-  from `/etc/modules-load.d/`, and the latter uses kernel modinfo to
-  automatically load (or coldplug) every required module.  For hotplug
-  we recommend the BusyBox mdev tool, add to `/etc/mdev.conf`:
+Set system hostname to NAME, unless `/etc/hostname` exists in which case
+the contents of that file is used.
 
-        $MODALIAS=.*  root:root       0660    @modprobe -b "$MODALIAS"
 
-* `network <PATH>`  
-  Script or program to bring up networking, with optional arguments
+### Kernel Modules
 
-* `rlimit [hard|soft] RESOURCE <LIMIT|unlimited>` Set the hard or soft
-  limit for a resource, or both if that argument is omitted.  `RESOURCE`
-  is the lower-case `RLIMIT_` string constants from `setrlimit(2)`,
-  without the prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.
+**Syntax:** `module <MODULE> [ARGS]`
+
+Load a kernel module, with optional arguments.  Similar to `insmod`
+command line tool.
+
+Note, there is both a `modules-load.so` and a `modprobe.so` plugin
+that can handle module loading better.  The former supports loading
+from `/etc/modules-load.d/`, and the latter uses kernel modinfo to
+automatically load (or coldplug) every required module.  For hotplug
+we recommend the BusyBox mdev tool, add to `/etc/mdev.conf`:
+
+    $MODALIAS=.*  root:root       0660    @modprobe -b "$MODALIAS"
+
+
+### Networking
+
+**Syntax:** `network <PATH>`
+
+Script or program to bring up networking, with optional arguments.
+
+Deprecated.  We recommend using task/run or `/etc/network/interfaces` if
+you have a system with ifupdown.
+
+
+### Resource Limits
+
+**Syntax:** `rlimit [hard|soft] RESOURCE <LIMIT|unlimited>`
+
+Set the hard or soft limit for a resource, or both if that argument is
+omitted.  `RESOURCE` is the lower-case `RLIMIT_` string constants from
+`setrlimit(2)`, without prefix.  E.g. to set `RLIMIT_CPU`, use `cpu`.
   
-  LIMIT is an integer that depends on the resource being modified, see
-  the man page, or the kernel `/proc/PID/limits` file, for details.
-  Finit versions before v3.1 used `infinity` for `unlimited`, which is
-  still supported, albeit deprecated.
+LIMIT is an integer that depends on the resource being modified, see
+the man page, or the kernel `/proc/PID/limits` file, for details.
+Finit versions before v3.1 used `infinity` for `unlimited`, which is
+still supported, albeit deprecated.
 
-        # No process is allowed more than 8MB of address space
-        rlimit hard as 8388608
+    # No process is allowed more than 8MB of address space
+    rlimit hard as 8388608
 
-        # Core dumps may be arbitrarily large
-        rlimit soft core infinity
+    # Core dumps may be arbitrarily large
+    rlimit soft core infinity
 
-        # CPU limit for all services, soft & hard = 10 sec
-        rlimit cpu 10
+    # CPU limit for all services, soft & hard = 10 sec
+    rlimit cpu 10
 
-  `rlimit` can be set globally, in `/etc/finit.conf`, or locally for
-  a set of task/run/services, in `/etc/finit.d/*.conf`.
+`rlimit` can be set globally, in `/etc/finit.conf`, or locally for
+a set of task/run/services, in `/etc/finit.d/*.conf`.
 
-* `runlevel <N>`  
-  N is the runlevel number 1-9, where 6 is reserved for reboot.  
-  Default is 2.
 
-* `run [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
-  One-shot command to run in sequence when entering a runlevel, with
-  optional arguments and description.
+### Runlevels
+
+**Syntax:** `runlevel <N>`
+
+N is the runlevel number 1-9, where 6 is reserved for reboot.
+
+Default: 2
+
+
+### One-shot Commands (sequence)
+
+**Syntax:** `run [LVLS] <COND> /path/to/cmd ARGS -- Optional description`
+
+One-shot command to run in sequence when entering a runlevel, with
+optional arguments and description.
   
-  `run` commands are guaranteed to be completed before running the next
-  command.  Highly useful if true serialization is needed.
+`run` commands are guaranteed to be completed before running the next
+command.  Highly useful if true serialization is needed.
 
-* `task [LVLS] <COND> /path/to/cmd ARGS -- Optional description`  
-  One-shot like 'run', but starts in parallel with the next command.
+
+### One-shot Commands (parallel)
+
+**Syntax:** `task [LVLS] <COND> /path/to/cmd ARGS -- Optional description`
+
+One-shot like 'run', but starts in parallel with the next command.
   
-  Both `run` and `task` commands are run in a shell, so pipes and
-  redirects can be freely used:
+Both `run` and `task` commands are run in a shell, so pipes and
+redirects can be freely used:
 
-        task [s] echo "foo" | cat >/tmp/bar
+    task [s] echo "foo" | cat >/tmp/bar
 
-* `sysv [LVLS] <COND> /path/to/init-script -- Optional description`__
-  Similar to `task` is the `sysv` stanza, which can be used to call SysV
-  style scripts.  The primary intention for this command is to be able to
-  re-use much of existing setup and init scripts in Linux distributions.
+
+### SysV Init Scripts
+
+**Syntax:** `sysv [LVLS] <COND> /path/to/init-script -- Optional description`
+
+Similar to `task` is the `sysv` stanza, which can be used to call SysV
+style scripts.  The primary intention for this command is to be able to
+re-use much of existing setup and init scripts in Linux distributions.
   
-  When entering an allowed runlevel, Finit calls `init-script start`,
-  when entering a disallowed runlevel, Finit calls `init-script stop`,
-  and if the Finit .conf, where `sysv` stanza is declared, is modified,
-  Finit calls `init-script restart` on `initctl reload`.  Similar to
-  how `service` stanzas work.
+When entering an allowed runlevel, Finit calls `init-script start`, when
+entering a disallowed runlevel, Finit calls `init-script stop`, and if
+the Finit .conf, where `sysv` stanza is declared, is modified, Finit
+calls `init-script restart` on `initctl reload`.  Similar to how
+`service` stanzas work.
 
-  Forking services started with `sysv` scripts can be monitored by Finit
-  by declaring the PID file to look for: `pid:!/path/to/pidfile.pid`.
+Forking services started with `sysv` scripts can be monitored by Finit
+by declaring the PID file to look for: `pid:!/path/to/pidfile.pid`.
+
+
+### Services
+
+**Syntax:** `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`
+
+Service, or daemon, to be monitored and automatically restarted if it
+exits prematurely.  Finit tries to restart services that die 10 times
+before giving up, then you have to `initctl restart NAME` it manually.
   
-* `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`  
-  Service, or daemon, to be monitored and automatically restarted if it
-  exits prematurely.  Finit tries to restart services that die 10 times
-  before giving up, then you have to `initctl restart NAME` it manually.
+For daemons that support it, we recommend appending `--foreground`,
+`--no-background`, `-n`, `-F`, or similar command line argument to
+prevent them from forking off a sub-process in the background.  This is
+the most reliable way to monitor a service.
+
+However, not all daemons support running in the foreground, or they may
+start logging to the foreground as well, these are called forking
+services and are supported using the same syntax as forking `sysv`
+services, using the `pid:!/path/to/pidfile.pid` syntax.
   
-  For daemons that support it, we recommend appending `--foreground`,
-  `--no-background`, `-n`, `-F`, or similar command line argument to
-  prevent them from forking off a sub-process in the background.  This
-  is the most reliable way to monitor a service.
+**Example:**
 
-  However, not all daemons support running in the foreground, or they
-  may start logging to the foreground as well, these are called forking
-  services and are supported using the same syntax as forking `sysv`
-  services, using the `pid:!/path/to/pidfile.pid` syntax.
+In the case of `ospfd` (below), we omit the `-d` flag (daemonize) to
+prevent it from forking to the background:
+
+    service [2345] <pid/zebra> /sbin/ospfd -- OSPF daemon
+
+`[2345]` denote the runlevels `ospfd` is allowed to run in, they are
+optional and default to level 2-5 if omitted.
   
-  **Example:**  
-  In the case of `ospfd` (below), we omit the `-d` flag (daemonize) to
-  prevent it from forking to the background:
+`<...>` is the condition for starting `ospfd`.  In this example Finit
+waits for another service, `zebra`, to have created its PID file in
+`/var/run/quagga/zebra.pid` before starting `ospfd`.  Finit watches
+*all* files in `/var/run`, for each file named `*.pid`, or `*/pid`,
+Finit opens it and find the matching `NAME:ID` using the PID.
 
-        service [2345] <pid/zebra> /sbin/ospfd -- OSPF daemon
+Some services do not maintain a PID file and rather than patching each
+application Finit provides a workaround.  A `pid` keyword can be set
+to have Finit automatically create (when starting) and later remove
+(when stopping) the PID file.  The file is created in the `/var/run`
+directory using the `basename(1)` of the service.  The default can be
+modified with an optional `pid:`-argument:
 
-  `[2345]` denote the runlevels `ospfd` is allowed to run in, they are
-  optional and default to level 2-5 if omitted.
-  
-  `<...>` is the condition for starting `ospfd`.  In this example Finit
-  waits for another service, `zebra`, to have created its PID file in
-  `/var/run/quagga/zebra.pid` before starting `ospfd`.  Finit watches
-  *all* files in `/var/run`, for each file named `*.pid`, or `*/pid`,
-  Finit opens it and find the matching `NAME:ID` using the PID.
+    pid[:[/path/to/]filename[.pid]]
 
-  Some services do not maintain a PID file and rather than patching each
-  application Finit provides a workaround.  A `pid` keyword can be set
-  to have Finit automatically create (when starting) and later remove
-  (when stopping) the PID file.  The file is created in the `/var/run`
-  directory using the `basename(1)` of the service.  The default can be
-  modified with an optional `pid:`-argument:
+For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`,
+that PID file will, not only be created and removed automatically, but
+also be used by the Finit condition subsystem.  So a service/run/task
+can depend on `<pid/bar>`.
 
-        pid[:[/path/to/]filename[.pid]]
+>  For a detailed description of conditions, and how to debug them,
+>  see the [Finit Conditions](conditions.md) document.
 
-  For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`,
-  that PID file will, not only be created and removed automatically, but
-  also be used by the Finit condition subsystem.  So a service/run/task
-  can depend on `<pid/bar>`.
+If a service should not be automatically started, it can be configured
+as manual with the optional `manual` argument. The service can then be
+started at any time by running `initctl start <service>`.
 
->  For a detailed description of conditions, and how to debug them, see
->  the [Finit Conditions](conditions.md) document.
+    manual:yes
 
-  If a service should not be automatically started, it can be configured
-  as manual with the optional `manual` argument. The service can then be
-  started at any time by running `initctl start <service>`.
+The name of a service, shown by the `initctl` tool, defaults to the
+basename of the service executable. It can be changed with the
+optional `name` argument:
 
-        manual:yes
+    name:<service-name>
 
-  The name of a service, shown by the `initctl` tool, defaults to the
-  basename of the service executable. It can be changed with the
-  optional `name` argument:
+When stopping a service (run/task/sysv/service), either manually or
+when moving to another runlevel, Finit starts by sending `SIGTERM`, to
+allow the process to shut down gracefully.  If the process has not
+been collected within 3 seconds, Finit sends `SIGKILL`.  To halt the
+process using a different signal, use the option `halt:SIGNAL`, e.g.,
+`halt:SIGPWR`.  To change the delay between your halt signal and KILL,
+use the option `kill:SEC`, e.g., `kill:10` to wait 10 seconds before
+sending `SIGKILL`.
 
-        name:<service-name>
 
-  When stopping a service (run/task/sysv/service), either manually or
-  when moving to another runlevel, Finit starts by sending `SIGTERM`, to
-  allow the process to shut down gracefully.  If the process has not
-  been collected within 3 seconds, Finit sends `SIGKILL`.  To halt the
-  process using a different signal, use the option `halt:SIGNAL`, e.g.,
-  `halt:SIGPWR`.  To change the delay between your halt signal and KILL,
-  use the option `kill:SEC`, e.g., `kill:10` to wait 10 seconds before
-  sending `SIGKILL`.
+### Run-parts Scripts
 
-* `runparts <DIR>`  
-  Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
-  files, or scripts, in the directory are called, in alphabetic order.
-  The scripts in this directory are executed at the very end of runlevel
-  `S`, bootstrap.
+**Syntax:** `runparts <DIR>`
 
-  It can be beneficial to use `S01name`, `S02othername`, etc. if there
-  is a dependency order between the scripts.  Symlinks to existing
-  daemons can talso be used, but make sure they daemonize by default.
+Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
+files, or scripts, in the directory are called, in alphabetic order.
+The scripts in this directory are executed at the very end of runlevel
+`S`, bootstrap.
 
-  Similar to the `/etc/rc.local` shell script, make sure that all your
-  services and programs either terminate or start in the background or
-  you will block Finit.
+It can be beneficial to use `S01name`, `S02othername`, etc. if there
+is a dependency order between the scripts.  Symlinks to existing
+daemons can talso be used, but make sure they daemonize by default.
 
-* `include <CONF>`  
-  Include another configuration file.  Absolute path required.
+Similar to the `/etc/rc.local` shell script, make sure that all your
+services and programs either terminate or start in the background or
+you will block Finit.
 
-* `log size:200k count:5`
 
-  Log rotation for run/task/services using the `log` sub-option with
-  redirection to a log file.  Global setting, applies to all services.
+### Including Finit Configs
 
-  The size can be given as bytes, without a specifier, or in `k`, `M`,
-  or `G`, e.g. `size:10M`, or `size:3G`.  A value of `size:0` disables
-  log rotation.  The default is `200k`.
+**Syntax:** `include <CONF>`
 
-  The count value is recommended to be between 1-5, with a default 5.
-  Setting count to 0 means the logfile will be truncated when the MAX
-  size limit is reached.
+Include another configuration file.  Absolute path required.
 
-* `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [nologin] [TERM]`  
-  `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`  
-  The first variant of this option uses the built-in getty on the given
-  TTY device DEV, in the given runlevels.  The DEV may be the special
-  keyword `@console`, or `console`, useful on embedded systems.
 
-  The default baud rate is 0, i.e., keep kernel default.
+### General Logging
 
-  **Example:**
+**Syntax:** `log size:200k count:5`
 
-        tty [12345] /dev/ttyAMA0 115200 noclear vt220
+Log rotation for run/task/services using the `log` sub-option with
+redirection to a log file.  Global setting, applies to all services.
 
-  The second `tty` syntax variant is for using an external getty, like
-  agetty or the BusyBox getty.
+The size can be given as bytes, without a specifier, or in `k`, `M`,
+or `G`, e.g. `size:10M`, or `size:3G`.  A value of `size:0` disables
+log rotation.  The default is `200k`.
+
+The count value is recommended to be between 1-5, with a default 5.
+Setting count to 0 means the logfile will be truncated when the MAX
+size limit is reached.
+
+### TTYs and Consoles
+
+**Syntax:** `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [nologin] [TERM]`  
+  `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`
+
+The first variant of this option uses the built-in getty on the given
+TTY device DEV, in the given runlevels.  The DEV may be the special
+keyword `@console`, or `console`, useful on embedded systems.
+
+The default baud rate is 0, i.e., keep kernel default.
+
+**Example:**
+
+    tty [12345] /dev/ttyAMA0 115200 noclear vt220
+
+The second `tty` syntax variant is for using an external getty, like
+agetty or the BusyBox getty.
     
-  By default both variants *clear* the TTY and *wait* for the user to
-  press enter before starting getty.
+By default both variants *clear* the TTY and *wait* for the user to
+press enter before starting getty.
 
-  **Example:**
+**Example:**
 
-        tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
-        tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100 nowait
+    tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
+    tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100 nowait
 
-  The `noclear` option disables clearing the TTY after each session.
-  Clearing the TTY when a user logs out is usually preferable.
+The `noclear` option disables clearing the TTY after each session.
+Clearing the TTY when a user logs out is usually preferable.
   
-  The `nowait` option disables the `press Enter to activate console`
-  message before actually starting the getty program.  On small and
-  embedded systems running multiple unused getty wastes both memory
-  and CPU cycles, so `wait` is the preferred default.
+The `nowait` option disables the `press Enter to activate console`
+message before actually starting the getty program.  On small and
+embedded systems running multiple unused getty wastes both memory
+and CPU cycles, so `wait` is the preferred default.
 
-  The `nologin` option disables getty and `/bin/login`, and gives the
-  user a root (login) shell on the given TTY `<DEV>` immediately.
-  Needless to say, this is a rather insecure option, but can be very
-  useful for developer builds, during board bringup, or similar.
+The `nologin` option disables getty and `/bin/login`, and gives the
+user a root (login) shell on the given TTY `<DEV>` immediately.
+Needless to say, this is a rather insecure option, but can be very
+useful for developer builds, during board bringup, or similar.
 
-  Notice the ordering, the `TERM` option to the built-in getty must be
-  the last argument.
+Notice the ordering, the `TERM` option to the built-in getty must be
+the last argument.
 
-  Embedded systems may want to enable automatic `DEV` by supplying the
-  special `@console` device.  This works regardless weather the system
-  uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit figures
-  it out by querying sysfs: `/sys/class/tty/console/active`.  The speed
-  can be omitted to keep the kernel default.
+Embedded systems may want to enable automatic `DEV` by supplying the
+special `@console` device.  This works regardless weather the system
+uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit figures
+it out by querying sysfs: `/sys/class/tty/console/active`.  The speed
+can be omitted to keep the kernel default.
 
-  **Example:**
+**Example:**
 
-        tty [12345] @console noclear vt220
+    tty [12345] @console noclear vt220
 
-  On really bare bones systems Finit offers a fallback shell, which
-  should not be enabled on production systems since.  This because it
-  may give a user root access without having to log in.  However, for
-  bringup and system debugging it can come in handy:
+On really bare bones systems Finit offers a fallback shell, which
+should not be enabled on production systems since.  This because it
+may give a user root access without having to log in.  However, for
+bringup and system debugging it can come in handy:
 
-        configure --enable-fallback-shell
+    configure --enable-fallback-shell
 
-  One can also use the `service` stanza to start a stand-alone shell:
+One can also use the `service` stanza to start a stand-alone shell:
 
-        service [12345] /bin/sh -l
+    service [12345] /bin/sh -l
+
 
 ### Non-privileged Services
 
@@ -339,6 +407,7 @@ multiple web servers, add `:ID` somewhere between the `run`, `task`,
 
 Without the `:ID` to the service the latter will overwrite the former
 and only the old web server would be started and supervised.
+
 
 ### Redirecting Output
 
