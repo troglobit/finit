@@ -1,9 +1,12 @@
+.PHONY: clean check test-check
+
 ARCH ?= x86_64
 
-finit_bin = ../src/finit
+FINITBIN ?= ../src/finit
 
-busybox_ver = 1.31.0
-busybox_bin = busybox-$(ARCH)
+BBVER ?= 1.31.0
+BBBIN = busybox-$(ARCH)
+BBURL ?= https://www.busybox.net/downloads/binaries/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
 
 testroot = test_root
 testroot_bin = $(testroot)/bin
@@ -35,51 +38,50 @@ dirs = $(testroot)/bin \
        $(testroot)/tmp \
        $(testroot)/usr/lib
 
+all: check
+
 $(dirs):
 	mkdir -p $@
 
-$(busybox_bin):
-	wget 'https://www.busybox.net/downloads/binaries/$(busybox_ver)-defconfig-multiarch-musl/$(busybox_bin)'
-	md5sum -c $(busybox_bin).md5
+$(BBBIN):
+	wget -O $@ $(BBURL)
+	md5sum -c $@.md5
 
 $(testroot):
 	mkdir $(testroot)
 
-$(testroot_bin)/$(busybox_bin): $(busybox_bin)
+$(testroot_bin)/$(BBBIN): $(BBBIN)
 	mkdir -p $(testroot_bin)
-	cp $(busybox_bin) $(testroot_bin)/
-	chmod +x $(testroot_bin)/$(busybox_bin)
+	cp $(BBBIN) $(testroot_bin)/
+	chmod +x $(testroot_bin)/$(BBBIN)
 
-$(binaries): $(testroot_bin)/$(busybox_bin)
+$(binaries): $(testroot_bin)/$(BBBIN)
 	cd $(testroot_bin); \
-	  ln -s $(busybox_bin) $(notdir $@)
+	  ln -s $(BBBIN) $(notdir $@)
 
 $(testroot_bin)/chrootsetup.sh: chrootsetup.sh
 	cp $< $@
 
-libs_src = $(shell ldd $(finit_bin) | grep -v lib64 | grep '=>' | cut -d' ' -f3)
+libs_src = $(shell ldd $(FINITBIN) | grep -v lib64 | grep '=>' | cut -d' ' -f3)
 libs = $(foreach path,$(libs_src),$(testroot)/usr/lib/$(shell basename $(path)))
-libs64_src = $(shell ldd $(finit_bin) | grep lib64 | grep '=>' | cut -d' ' -f3)
+libs64_src = $(shell ldd $(FINITBIN) | grep lib64 | grep '=>' | cut -d' ' -f3)
 libs64 = $(foreach path,$(libs64_src),$(testroot)/lib64/$(shell basename $(path)))
 
-$(testroot)/sbin/finit: $(finit_bin) $(libs) $(libs64)
+$(testroot)/sbin/finit: $(FINITBIN) $(libs) $(libs64)
 	cp $< $@
 
-.PHONY: test
-test: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit
-	./runtest.sh test_start_stop_service/test.sh
-
 $(libs): $@
-	cp $(shell ldd $(finit_bin) | cut -d' ' -f3 | grep $(notdir $@)) $@
+	cp $(shell ldd $(FINITBIN) | cut -d' ' -f3 | grep $(notdir $@)) $@
 
 $(libs64): $@
-	cp $(shell ldd $(finit_bin) | cut -d' ' -f3 | grep $(notdir $@)) $@
+	cp $(shell ldd $(FINITBIN) | cut -d' ' -f3 | grep $(notdir $@)) $@
 
-.PHONY: test-check
+check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit
+	./runtest.sh test_start_stop_service/test.sh
+
 test-check:
 	shellcheck $(shell find . -name '*.sh')
 
-.PHONY: clean
 clean:
 	rm -rf $(testroot)
-	rm -f $(busybox_bin)
+	rm -f $(BBBIN)
