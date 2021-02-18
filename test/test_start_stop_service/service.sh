@@ -2,6 +2,6 @@
 
 set -eu
 
-while [ 1 ]; do
+while true; do
   sleep 5
 done

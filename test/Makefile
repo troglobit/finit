@@ -75,8 +75,8 @@ $(libs): $@
 $(libs64): $@
 	cp $(shell ldd $(finit_bin) | cut -d' ' -f3 | grep $(notdir $@)) $@
 
-.PHONY: lint
-lint:
+.PHONY: test-check
+test-check:
 	shellcheck $(shell find . -name '*.sh')
 
 .PHONY: clean

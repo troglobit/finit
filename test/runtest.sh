@@ -51,7 +51,7 @@ log "$color_reset" '--' ''
 # Setup
 ./testenv_start.sh finit &
 finit_ppid=$!
-for i in $(seq 1 50); do
+for _ in $(seq 1 50); do
     sleep 0.1
     pgrep -P "$finit_ppid" > /dev/null || continue
     break
@@ -60,4 +60,5 @@ done
 texec cat /dev/tty0 &
 sleep 1
 
-. "$1"
+# shellcheck source=/dev/null
+. "$TEST"
