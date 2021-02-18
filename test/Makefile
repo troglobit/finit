@@ -66,7 +66,11 @@ $(testroot)/usr/local/lib/libuev.so.2:
 
 .PHONY: test
 test: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit
-	./runtest.sh ./test_start_stop_service/test.sh
+	./runtest.sh test_start_stop_service/test.sh
+
+.PHONY: lint
+lint:
+	shellcheck $(shell find . -name '*.sh')
 
 .PHONY: clean
 clean:

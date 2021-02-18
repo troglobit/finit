@@ -3,14 +3,14 @@
 set -eu
 
 texec() {
-    ./testenv_exec.sh $(pgrep -P $finit_ppid) "$@"
+    ./testenv_exec.sh "$(pgrep -P "$finit_ppid")" "$@"
 }
 
 fg_red='31'
 fg_green='32'
 fg_yellow='33'
 log() {
-    printf "< TEST > \e[1;%dm%s\e[0m %s\n" "$1" "$2" "$3"
+    printf "< $TEST_DIR > \e[1;%dm%s\e[0m %s\n" "$1" "$2" "$3"
 }
 
 assert() {
@@ -40,13 +40,13 @@ trap teardown EXIT
 finit_ppid=$!
 for i in $(seq 1 50); do
     sleep 0.1
-    finit_pid=$(pgrep -P "$finit_ppid") || continue
+    pgrep -P "$finit_ppid" > /dev/null || continue
     break
 done
 
 texec cat /dev/tty0 &
 sleep 1
 
-TEST_DIR=$(dirname $1)
+TEST_DIR=$(dirname "$1")
 
-source "$1"
+. "$1"
