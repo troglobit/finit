@@ -11,6 +11,7 @@ BBURL ?= https://www.busybox.net/downloads/binaries/$(BBVER)-defconfig-multiarch
 testroot = test_root
 testroot_bin = $(testroot)/bin
 binaries = $(testroot_bin)/cat \
+           $(testroot_bin)/cp \
            $(testroot_bin)/date \
            $(testroot_bin)/echo \
            $(testroot_bin)/kill \
@@ -30,13 +31,13 @@ binaries = $(testroot_bin)/cat \
 dirs = $(testroot)/bin \
        $(testroot)/dev \
        $(testroot)/etc \
-       $(testroot)/lib \
-       $(testroot)/lib64 \
        $(testroot)/proc \
        $(testroot)/sbin \
        $(testroot)/sys \
-       $(testroot)/tmp \
-       $(testroot)/usr/lib
+       $(testroot)/tmp
+
+_libs_src = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
+libs = $(foreach path,$(_libs_src),$(testroot)$(path))
 
 all: check
 
@@ -62,19 +63,12 @@ $(binaries): $(testroot_bin)/$(BBBIN)
 $(testroot_bin)/chrootsetup.sh: chrootsetup.sh
 	cp $< $@
 
-libs_src = $(shell ldd $(FINITBIN) | grep -v lib64 | grep '=>' | cut -d' ' -f3)
-libs = $(foreach path,$(libs_src),$(testroot)/usr/lib/$(shell basename $(path)))
-libs64_src = $(shell ldd $(FINITBIN) | grep lib64 | grep '=>' | cut -d' ' -f3)
-libs64 = $(foreach path,$(libs64_src),$(testroot)/lib64/$(shell basename $(path)))
-
-$(testroot)/sbin/finit: $(FINITBIN) $(libs) $(libs64)
+$(testroot)/sbin/finit: $(FINITBIN) $(libs)
 	cp $< $@
 
-$(libs): $@
-	cp $(shell ldd $(FINITBIN) | cut -d' ' -f3 | grep $(notdir $@)) $@
-
-$(libs64): $@
-	cp $(shell ldd $(FINITBIN) | cut -d' ' -f3 | grep $(notdir $@)) $@
+$(libs):
+	mkdir -p $(dir $@)
+	cp $(shell echo $@ | sed s/^$(testroot)//) $@
 
 check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit
 	./runtest.sh test_start_stop_service/test.sh
