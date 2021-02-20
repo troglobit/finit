@@ -13,8 +13,10 @@ shift
 TEST_DIR=$(dirname "$0")
 TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
 
+nsenter=$(which nsenter)
+
 export PATH=/sbin:/bin
-nsenter \
+"$nsenter" \
     --preserve-credentials \
     --user \
     --mount \
