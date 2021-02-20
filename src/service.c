@@ -358,7 +358,7 @@ static int service_start(svc_t *svc)
 		if (!svc_is_sysv(svc)) {
 			for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
 				if (strlen(svc->args[i]) == 0)
-					continue;
+					break;
 				args[i] = svc->args[i];
 			}
 		} else {
@@ -394,7 +394,7 @@ static int service_start(svc_t *svc)
 	} else if (debug) {
 		char buf[CMD_SIZE] = "";
 
-		for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+		for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
 			if (strlen(svc->args[i]) == 0)
 				continue;
 			if (buf[0])
