@@ -14,6 +14,7 @@ TEST_DIR=$(dirname "$0")
 TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
 
 nsenter=$(which nsenter)
+chroot=$(which chroot)
 
 export PATH=/sbin:/bin
 "$nsenter" \
@@ -25,4 +26,4 @@ export PATH=/sbin:/bin
     --net \
     --pid \
     -w -t "$target" \
-    chroot "$TESTS_ROOT" "$@"
+    "$chroot" "$TESTS_ROOT" "$@"

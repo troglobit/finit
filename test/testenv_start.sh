@@ -8,6 +8,7 @@ TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
 >&2 echo "Hint: Execute '${TEST_DIR}/testenv_exec.sh \$(pgrep -P $$) /bin/sh; reset' to enter the test namespace"
 
 unshare=$(which unshare)
+chroot=$(which chroot)
 
 # Not supported by Busybox unshare:
 #  --cgroup --time
@@ -18,4 +19,4 @@ exec "$unshare" \
     --mount \
     --mount-proc \
     --uts --ipc --net \
-    chroot "$TESTS_ROOT" /bin/chrootsetup.sh "$@"
+    "$chroot" "$TESTS_ROOT" /bin/chrootsetup.sh "$@"

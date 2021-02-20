@@ -41,7 +41,9 @@ teardown() {
     wait
 }
 
-TEST_DIR=$(dirname "$1")
+TEST="$1"
+TEST_DIR=$(dirname "$TEST")
+shift
 
 trap teardown EXIT
 
