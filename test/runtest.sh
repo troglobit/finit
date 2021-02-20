@@ -45,11 +45,19 @@ TEST="$1"
 TEST_DIR=$(dirname "$TEST")
 shift
 
-trap teardown EXIT
+# trap teardown EXIT
 
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''
 
+
+>&2 echo Environment:
+>&2 ./testenv_start.sh env
+>&2 echo --
+>&2 echo Filesystem:
+>&2 ./testenv_start.sh find /
+>&2 echo --
+exit
 # Setup
 ./testenv_start.sh finit &
 finit_ppid=$!

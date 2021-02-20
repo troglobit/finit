@@ -14,6 +14,8 @@ binaries = $(testroot_bin)/cat \
            $(testroot_bin)/cp \
            $(testroot_bin)/date \
            $(testroot_bin)/echo \
+           $(testroot_bin)/env \
+           $(testroot_bin)/find \
            $(testroot_bin)/kill \
            $(testroot_bin)/ls \
            $(testroot_bin)/mkdir \
