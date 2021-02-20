@@ -67,7 +67,8 @@ for _ in $(seq 1 50); do
     break
 done
 
-texec cat /dev/tty0 &
+tty=/dev/$(texec cat /sys/class/tty/console/active)
+texec cat "$tty" &
 sleep 1
 
 # shellcheck source=/dev/null
