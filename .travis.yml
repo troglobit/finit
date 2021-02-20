@@ -59,4 +59,7 @@ script:
   - size /tmp/sbin/initctl
   - size /tmp/sbin/reboot
   - LD_LIBRARY_PATH=/tmp/lib /tmp/sbin/initctl -h
+  - unshare -V
+  - nsenter -V
+  - chroot --version
   - LD_LIBRARY_PATH=/tmp/lib make -C test/ check
