@@ -59,3 +59,4 @@ script:
   - size /tmp/sbin/initctl
   - size /tmp/sbin/reboot
   - LD_LIBRARY_PATH=/tmp/lib /tmp/sbin/initctl -h
+  - LD_LIBRARY_PATH=/tmp/lib make -C test/ check
