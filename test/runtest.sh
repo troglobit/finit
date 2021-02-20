@@ -45,7 +45,7 @@ TEST="$1"
 TEST_DIR=$(dirname "$TEST")
 shift
 
-# trap teardown EXIT
+trap teardown EXIT
 
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''
