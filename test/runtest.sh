@@ -55,9 +55,9 @@ log "$color_reset" '--' ''
 >&2 ./testenv_start.sh env
 >&2 echo --
 >&2 echo Filesystem:
->&2 ./testenv_start.sh find /
+>&2 ./testenv_start.sh find / -path /sys -prune -o -print -path /proc -prune -o -print
 >&2 echo --
-exit
+
 # Setup
 ./testenv_start.sh finit &
 finit_ppid=$!
