@@ -27,12 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/reboot.h>
 #include "util.h"
-
-#ifndef RB_SW_SUSPEND /* Since Linux 2.5.18, but not in GLIBC until 2.19 */
-#define RB_SW_SUSPEND	0xd000fce2
-#endif
 
 typedef enum {
 	CMD_UNKNOWN = -1,
