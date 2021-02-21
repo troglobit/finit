@@ -3,7 +3,7 @@
 set -eu
 
 texec() {
-    ./testenv_exec.sh "$(pgrep -P "$finit_ppid")" "$@"
+    ./testenv_exec.sh "$finit_pid" "$@"
 }
 
 color_reset='\e[0m'
@@ -15,17 +15,17 @@ log() {
 }
 
 assert() {
-    msg=$1
+    __assert_msg=$1
     shift
     if [ ! "$@" ]; then
-        log "$fg_red" ✘ "$msg"
+        log "$fg_red" ✘ "$__assert_msg ($*)"
         exit 1
     fi
-    log "$fg_green" ✔ "$msg"
+    log "$fg_green" ✔ "$__assert_msg"
 }
 
 say() {
-    log "$fg_yellow" ● "$@"
+    log "$fg_yellow" • "$@"
 }
 
 teardown() {
@@ -63,8 +63,10 @@ log "$color_reset" '--' ''
 finit_ppid=$!
 for _ in $(seq 1 50); do
     sleep 0.1
-    pgrep -P "$finit_ppid" > /dev/null || continue
-    break
+    finit_pid=$(pgrep -P "$finit_ppid")
+    if [ "$finit_pid" ]; then
+        break
+    fi
 done
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
