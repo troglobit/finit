@@ -54,6 +54,9 @@ int verbose  = 0;
 int runlevel = 0;
 int iw, pw;
 
+extern int reboot_main(int argc, char *argv[]);
+
+
 /* figure ut width of IDENT and PID columns */
 static void col_widths(void)
 {
@@ -349,17 +352,30 @@ static int do_cond(char *cmd)
 	return do_cond_show(NULL);
 }
 
-static int do_signal(int signo, const char *msg)
+static int do_cmd(int cmd)
 {
-	if (kill(1, signo))
-		err(1, "Failed signalling init to %s", msg);
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd = cmd,
+	};
+
+	if (client_send(&rq, sizeof(rq))) {
+		if (rq.cmd == INIT_CMD_NACK)
+			puts(rq.data);
+
+		return 1;
+	}
+
+	/* Wait here for systemd to shutdown/reboot */
+	sleep(5);
 
 	return 0;
 }
 
-static int do_halt    (char *arg) { return do_signal(SIGUSR1, "halt");      }
-static int do_poweroff(char *arg) { return do_signal(SIGUSR2, "power off"); }
-static int do_reboot  (char *arg) { return do_signal(SIGTERM, "reboot");    }
+int do_reboot  (char *arg) { return do_cmd(INIT_CMD_REBOOT);   }
+int do_halt    (char *arg) { return do_cmd(INIT_CMD_HALT);     }
+int do_poweroff(char *arg) { return do_cmd(INIT_CMD_POWEROFF); }
+int do_suspend (char *arg) { return do_cmd(INIT_CMD_SUSPEND);  }
 
 int utmp_show(char *file)
 {
@@ -605,6 +621,22 @@ static int show_cgroup(char *arg)
 	return 0;
 }
 
+static int transform(char *nm)
+{
+	char *names[] = {
+		"reboot", "shutdown", "poweroff", "halt", "suspend",
+		NULL
+	};
+	size_t i;
+
+	for (i = 0; names[i]; i++) {
+		if (!strcmp(nm, names[i]))
+			return 1;
+	}
+
+	return 0;
+}
+
 static int usage(int rc)
 {
 	fprintf(stderr,
@@ -644,7 +676,8 @@ static int usage(int rc)
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
-		"  poweroff                  Halt and power off system\n", prognm);
+		"  poweroff                  Halt and power off system\n"
+		"  suspend                   Suspend system\n", prognm);
 
 	if (has_utmp())
 		fprintf(stderr,
@@ -693,6 +726,7 @@ int main(int argc, char *argv[])
 		{ "reboot",   do_reboot    },
 		{ "halt",     do_halt      },
 		{ "poweroff", do_poweroff  },
+		{ "suspend",  do_suspend   },
 
 		{ "utmp",     do_utmp      },
 		{ NULL, NULL }
@@ -706,7 +740,9 @@ int main(int argc, char *argv[])
 		{ NULL, 0, NULL, 0 }
 	};
 
-	progname(argv[0]);
+	if (transform(progname(argv[0])))
+		return reboot_main(argc, argv);
+
 	while ((c = getopt_long(argc, argv, "bh?ntv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':

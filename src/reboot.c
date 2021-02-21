@@ -22,6 +22,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
@@ -39,6 +40,13 @@ typedef enum {
 
 static cmd_t cmd = CMD_UNKNOWN;
 static char *msg = NULL;
+
+/* initctl API */
+extern int do_reboot  (char *arg);
+extern int do_halt    (char *arg);
+extern int do_poweroff(char *arg);
+extern int do_suspend (char *arg);
+
 
 static void transform(char *nm)
 {
@@ -80,6 +88,16 @@ static void transform(char *nm)
 	}
 }
 
+/*
+ * fallback in case of initctl API failure
+ */
+static void do_kill(int signo, char *msg)
+{
+	if (kill(1, signo))
+		err(1, "Failed signalling init to %s", msg);
+	do_sleep(5);
+}
+
 static void sig(int signo)
 {
 	(void)signo;		/* NOP */
@@ -100,7 +118,7 @@ static int usage(int rc)
 	return rc;
 }
 
-int main(int argc, char *argv[])
+int reboot_main(int argc, char *argv[])
 {
 	int c, force = 0;
 	struct option long_options[] = {
@@ -113,7 +131,7 @@ int main(int argc, char *argv[])
 	};
 
 	/* Initial command taken from program name */
-	transform(progname(argv[0]));
+	transform(prognm);
 
 	while ((c = getopt_long(argc, argv, "h?fHPpr", long_options, NULL)) != EOF) {
 		switch(c) {
@@ -165,6 +183,8 @@ int main(int argc, char *argv[])
 
 		case CMD_SUSPEND:
 			c = reboot(RB_SW_SUSPEND);
+			if (c && errno == EINVAL)
+				errx(1, "Kernel does not support suspend.");
 			break;
 
 		case CMD_UNKNOWN:
@@ -173,22 +193,25 @@ int main(int argc, char *argv[])
 		}
 
 		if (c)
-			warn("Failed forced %s", msg);
-		else
-			return 0;
+			err(1, "Failed forced %s", msg);
+
+		return 0;
 	}
 
 	switch (cmd) {
 	case CMD_REBOOT:
-		c = kill(1, SIGTERM);
+		if (do_reboot(NULL))
+			do_kill(SIGTERM, msg);
 		break;
 
 	case CMD_HALT:
-		c = kill(1, SIGUSR1);
+		if (do_halt(NULL))
+			do_kill(SIGUSR1, msg);
 		break;
 
 	case CMD_POWEROFF:
-		c = kill(1, SIGUSR2);
+		if (do_poweroff(NULL))
+			do_kill(SIGUSR2, msg);
 		break;
 
 	case CMD_SUSPEND:
@@ -196,15 +219,14 @@ int main(int argc, char *argv[])
 		 * Only initctl supports suspend, we avoid adding
 		 * another signal to finit for compat reasons.
 		 */
+		do_suspend(NULL);
+		break;
+
 
 	case CMD_UNKNOWN:
 		errx(1, "Invalid command");
 		break;
 	}
-
-	if (c)
-		err(1, "Failed signalling init to %s", msg);
-	do_sleep(5);
 
 	return 0;
 }

@@ -12,6 +12,11 @@ to service conditions.  There are other significant changes as well, so
 make sure to read the whole changelog when upgrading.
 
 ### Changes
+* The stand-alone `reboot` tool has been replaced with a symlink to
+  `initctl`, like its siblings: halt, shutdown, poweroff, and suspend.
+  Calling `reboot` & C:o now defaults to the corresponding `initctl cmd`
+  with a fallback to sending signals as per traditional SysV init.  The
+  `-f` (force) flag remains, where `reboot(2)` is called directly
 * Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
 * Removed built-in inetd super server.  If you need this functionality,
   use an external inetd, like xinetd, instead.  A pull request for a
