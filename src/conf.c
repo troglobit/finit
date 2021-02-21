@@ -77,11 +77,14 @@ static void hide_args(int argc, char *argv[])
 
 int get_bool(char *ptr, int default_value)
 {
+	if (!ptr)
+		goto fallback;
+
 	if (string_compare(ptr, "true") || string_compare(ptr, "on") || string_compare(ptr, "1"))
 		return 1;
 	if (string_compare(ptr, "false") || string_compare(ptr, "off") || string_compare(ptr, "0"))
 		return 0;
-
+fallback:
 	return default_value;
 }
 
