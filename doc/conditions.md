@@ -17,8 +17,8 @@ Conditions are a new addition to Finit, introduced in v3, with the
 intention of providing a mechanism for common synchronization problems.
 For example:
 
-- *"do not start this service until another process has started"*, or
-- *"do not starty until basic network access is available"*
+- *"wait for service A to start before starting service B"*, or
+- *"wait for basic network access to be available"*
 
 Conditions are similar in syntax to declaring runlevels per service.
 They are specified within angle brackets `<>` and can be applied to any
@@ -30,14 +30,12 @@ service to run.
 
 ### Example
 
-```shell
-service [2345] <pid/setupd,pid/zebra> /sbin/netd -- Network monitor
-```
+    service [2345] <pid/setupd,pid/zebra> /sbin/netd -- Network monitor
 
 In this example the Network monitor daemon `netd` is not started until
-both the `pid/sbin/setupd` *and* `pid/sbin/zebra` conditions are
-satisfied.  An `svc` condition is satisfied by the corresponding
-service's PID file being created.
+both the `pid/setupd` *and* `pid/zebra` conditions are satisfied.  A
+`pid/` condition is satisfied by the corresponding service's PID file
+being created.
 
 **NOTE:** Conditions also stop services when a condition is no longer
   asserted.  I.e., if the Zebra process above stops or restarts, netd
@@ -56,32 +54,33 @@ on this, see [Internals](#internals).)  Thus, after a reconfiguration it
 is up to the "owner" of the condition to convey the new (or possibly
 unchanged) state of it.
 
+> **Note:** For `pid/` conditions it is expected that services "touch"
+>           or recreate their PID file on `SIGHUP`.
+
 
 Built-in Conditions
 -------------------
 
-Finit is distributed with a `pidfile` and `netlink` plugin.  If enabled,
-the `pidfile` plugin watches `/var/run/` for PID files created by the
-monitored services, and sets a corresponding condition in the `pid/`
-namespace.  Similarily, the `netlink` plugin provides basic conditions
-for when an interface is brought up/down and when a default route
-(gateway) is set, in the `net/` namespace.
+Finit comes with a `pidfile` and `netlink` plugin.  When enabled, the
+`pidfile` plugin watches `/var/run/` (recursively) for PID files created
+by the monitored services, and sets a corresponding condition in the
+`pid/` namespace.  Similarily, the `netlink` plugin provides basic
+conditions for when an interface is brought up/down and when a default
+route (gateway) is set, in the `net/` namespace.
 
 With the example listed above, finit does not start the `/sbin/netd`
 daemon until `setupd` and `zebra` has started *and* created their PID
 files.  Which they do when they have completed their initial set up and
 are ready to receive signals.
 
-The full path to the dependency is needed by finit to match the PID file
-to a monitored process.  Finit expects monitored services to touch their
-PID files, i.e. update the mtime, when they reload their configuration
-files after a `SIGHUP`.  Some services do not support `SIGHUP` and are
-instead restarted, which is a crude but effective way to have the PID
-file touched (re-created).
+Finit expects monitored services to touch their PID files, i.e. update
+the mtime, when they reload their configuration files after a `SIGHUP`.
+Some services do not support `SIGHUP` and are instead restarted, which
+is a crude but effective way to have the PID file touched (re-created).
 
 Built-in conditions:
 
-- `pid/<PATH>`
+- `pid/<SERVICE>`
 - `net/route/default`
 - `net/<IFNAME>/exist`
 - `net/<IFNAME>/up`
@@ -107,9 +106,9 @@ the daemon and the empty string.
 | /usr/bin/dbus-daemon                               | pid/dbus-daemon  |
 | :222 dropbear -p 222                               | pid/dropbear:222 |
 
-The condition is asserted when `pidfile.so` receives an inotify event for a file
-matching `/run/*.pid`, `/run/**/*.pid`, or `/run/**/pid`, which contains the
-PID of the service Finit has started.
+The condition is asserted when `pidfile.so` receives an inotify event
+for a file matching `/run/*.pid`, `/run/**/*.pid`, or `/run/**/pid`,
+which contains the PID of the service Finit has started.
 
 When Finit configuration files are changed and the `initctl reload`
 command is called, it is expected of services to touch their PID files
@@ -140,10 +139,10 @@ conditions that are not satisfied.  Listed as `off` below.
 
 ```shell
 ~ # initctl cond show
-PID     Service               Status  Condition (+ on, ~ flux, - off)
-===============================================================================
-1419    /sbin/netd            on      <+pid/sbin/setupd,+pid/sbin/zebra>
-0       /sbin/udhcpc          off     <-net/vlan1/exist>
+PID     IDENT         STATUS  CONDITION (+ ON, ~ FLUX, - OFF)
+=======================================================================
+1419    /sbin/netd    on      <+pid/setupd,+pid/zebra>
+0       /sbin/udhcpc  off     <-net/vlan1/exist>
 ```
 
 Here we can see that `netd` is allowed to run since both its conditions
@@ -165,7 +164,7 @@ from `initctl cond show` again.  The client will likely have failed to
 start, but at least the condition is now satisfied.
 
 There is also the `initctl cond dump` command, which dumps all known
-conditions and their current status.
+conditions, their current status, and their origin.
 
 
 Internals

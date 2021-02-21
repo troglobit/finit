@@ -182,6 +182,49 @@ static svc_t *do_find_byc(char *buf, size_t len)
 	return NULL;
 }
 
+static int do_reboot(int cmd, char *buf, size_t len)
+{
+	int rc = 1;
+
+	switch (cmd) {
+	case INIT_CMD_REBOOT:
+		_d("reboot");
+		halt = SHUT_REBOOT;
+		service_runlevel(6);
+		break;
+
+	case INIT_CMD_HALT:
+		_d("halt");
+		halt = SHUT_HALT;
+		service_runlevel(0);
+		break;
+
+	case INIT_CMD_POWEROFF:
+		_d("poweroff");
+		halt = SHUT_OFF;
+		service_runlevel(0);
+		break;
+
+	case INIT_CMD_SUSPEND:
+		_d("suspend");
+		sync();
+		rc = reboot(RB_SW_SUSPEND);
+		if (rc) {
+			if (errno == EINVAL)
+				snprintf(buf, len, "Kernel does not support suspend.");
+			else
+				snprintf(buf, len, "Failed: %s", strerror(errno));
+		}
+		break;
+
+	default:
+		rc = 255;
+		break;
+	}
+
+	return rc;
+}
+
 typedef struct {
 	char *event;
 	void (*cb)(void);
@@ -300,6 +343,13 @@ static void api_cb(uev_t *w, void *arg, int events)
 			_d("get runlevel");
 			rq.runlevel  = runlevel;
 			rq.sleeptime = prevlevel;
+			break;
+
+		case INIT_CMD_REBOOT:
+		case INIT_CMD_HALT:
+		case INIT_CMD_POWEROFF:
+		case INIT_CMD_SUSPEND:
+			result = do_reboot(rq.cmd, rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_ACK:

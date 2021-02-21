@@ -4,9 +4,22 @@ Tips & Tricks with the kernel cmdline
 This document summarizes the different boot parameters that can be
 passed on the Linux kernel command line.  Not limited to Finit.
 
+The `bool` setting is one of `on, off, true false, 1, 0`.
+
+
 * `debug`__
     Enable kernel debug.  Debug messages are printed to the console
-    until Finit starts up, the syslog daemon then empties `/dev/kmsg`
+    until Finit starts up.
+
+* `finit.debug[=bool]`
+    Enable finit debug.  This is operated independently of the kerne
+	debug setting.  New as of Finit v4.
+
+* `finit.show_status[=bool]`
+    Control finit boot progress, including banner.
+
+* `finit.status_style=<classic,modern>`
+    Set Finit boot progress style, when enabled.
 
 * `init=/bin/sh`  
     Bypass system default init and tell kernel to start a shell.  Note,

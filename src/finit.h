@@ -45,6 +45,8 @@
 #define _PATH_VARRUN    "/var/run/"
 #endif
 
+#define LOGIT_PATH              FINIT_LIBPATH_ "/logit"
+
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
@@ -72,6 +74,10 @@
 #define INIT_CMD_UNUSED2        14   /* Unused, was INIT_CMD_QUERY_INETD */
 #define INIT_CMD_UNUSED1        15   /* Unused, was INIT_CMD_EMIT */
 #define INIT_CMD_GET_RUNLEVEL   16
+#define INIT_CMD_REBOOT         20
+#define INIT_CMD_HALT           21
+#define INIT_CMD_POWEROFF       22
+#define INIT_CMD_SUSPEND        23
 #define INIT_CMD_WDOG_HELLO     128  /* Watchdog register and hello */
 #define INIT_CMD_SVC_ITER       129
 #define INIT_CMD_SVC_QUERY      130

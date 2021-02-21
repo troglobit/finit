@@ -80,7 +80,10 @@ int client_send(struct init_request *rq, ssize_t len)
 	if (read(sd, rq, len) != len)
 		goto error;
 
-	result = 0;
+	if (rq->cmd == INIT_CMD_NACK)
+		result = 1;
+	else
+		result = 0;
 	goto exit;
 error:
 	perror("Failed communicating with finit");

@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <lite/lite.h>
@@ -474,6 +475,7 @@ int tty_fallback(pid_t lost)
 	setsid();
 	ioctl(STDIN_FILENO, TIOCSCTTY, 1);
 
+	prctl(PR_SET_NAME, "finitsh", 0, 0, 0);
 	_exit(execl(_PATH_BSHELL, _PATH_BSHELL, NULL));
 #else
 	(void)lost;

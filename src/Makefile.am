@@ -8,16 +8,16 @@ else
 AM_LDFLAGS         = -export-dynamic
 endif
 
-sbin_PROGRAMS      = finit initctl reboot
+sbin_PROGRAMS      = finit initctl
 pkglibexec_SCRIPTS = cgreaper.sh
 if WATCHDOGD
 pkglibexec_PROGRAMS = watchdogd
 endif
 
 if LOGIT
-bin_PROGRAMS       = logit
-logit_SOURCES      = logit.c
-logit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+pkglibexec_PROGRAMS = logit
+logit_SOURCES       = logit.c
+logit_CFLAGS        = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 endif
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
@@ -49,19 +49,15 @@ else
 finit_LDADD       += -ldl
 endif
 
-initctl_SOURCES    = initctl.c client.c client.h \
-		     serv.c serv.h svc.h   \
+initctl_SOURCES    = initctl.c client.c client.h 	\
+		     reboot.c serv.c serv.h svc.h	\
 		     cond.c cond.h util.c util.h
 initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 initctl_CFLAGS    += $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
-reboot_SOURCES     = reboot.c util.c util.h
-reboot_CFLAGS      = $(lite_CFLAGS)
-reboot_LDADD       = $(lite_LIBS)
-
 INIT_LNKS          = init
-REBOOT_LNKS        = shutdown halt poweroff suspend
+REBOOT_LNKS        = reboot shutdown halt poweroff suspend
 
 if WATCHDOGD
 watchdogd_SOURCES  = watchdog.c watchdog.h
@@ -72,46 +68,38 @@ endif
 # Hook in install to add finit and reboot symlink(s)
 install-exec-hook:
 	@$(INSTALL_DATA) $(srcdir)/rescue.conf $(DESTDIR)$(pkglibdir)
-	@for file in $(INIT_LNKS); do				\
-		lnk=$(DESTDIR)$(sbindir)/$$file;		\
-		if [ -e $$lnk ]; then				\
-			echo "Skipping $$lnk exists.";		\
-		else						\
-			$(LN_S) finit $$lnk;			\
-		fi;						\
+	@for file in $(INIT_LNKS); do			\
+		lnk=$(DESTDIR)$(sbindir)/$$file;	\
+		if [ -e $$lnk ]; then			\
+			echo "Skipping $$lnk exists.";	\
+		else					\
+			$(LN_S) finit $$lnk;		\
+		fi;					\
 	done
-	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
-		echo "Non-finit reboot, skipping install.";	\
-	else							\
-		for file in $(REBOOT_LNKS); do			\
-			lnk=$(DESTDIR)$(sbindir)/$$file;	\
-			if [ -e $$lnk ]; then			\
-				echo "Skipping $$lnk exists.";	\
-			else					\
-				$(LN_S) reboot $$lnk;		\
-			fi;					\
-		done;						\
-	fi
+	@for file in $(REBOOT_LNKS); do			\
+		lnk=$(DESTDIR)$(sbindir)/$$file;	\
+		if [ -e $$lnk ]; then			\
+			echo "Skipping $$lnk exists.";	\
+		else					\
+			$(LN_S) initctl $$lnk;		\
+		fi;					\
+	done
 
 uninstall-hook:
 	@$(RM) $(DESTDIR)$(pkglibdir)/rescue.conf
-	@for file in $(INIT_LNKS); do				\
-		lnk=`readlink $(DESTDIR)$(sbindir)/$$file`;	\
-		if [ "$$lnk" != "finit" ]; then			\
-			echo "Skipping non-finit $$file.";	\
-			continue;				\
-		fi;						\
-		$(RM) $(DESTDIR)$(sbindir)/$$file;		\
+	@for file in $(INIT_LNKS); do			\
+		lnk=$(DESTDIR)$(sbindir)/$$file;	\
+		dst=`readlink $$lnk`;			\
+		if [ "$$dst" != "finit" ]; then		\
+			continue;			\
+		fi;					\
+		$(RM) $(DESTDIR)$(sbindir)/$$file;	\
 	done
-	@if [ -L $(DESTDIR)$(sbindir)/reboot ]; then		\
-		echo "Non-finit reboot, skipping uninstall.";	\
-	else							\
-		for file in $(REBOOT_LNKS); do			\
-		        lnk=$(DESTDIR)$(sbindir)/$$file;	\
-			dst=`readlink $$lnk`;			\
-			if [ "$$dst" != "reboot" ]; then 	\
-				continue; 			\
-			fi;					\
-			$(RM) $$lnk;				\
-		done;						\
-	fi
+	@for file in $(REBOOT_LNKS); do			\
+	        lnk=$(DESTDIR)$(sbindir)/$$file;	\
+		dst=`readlink $$lnk`;			\
+		if [ "$$dst" != "initctl" ]; then 	\
+			continue; 			\
+		fi;					\
+		$(RM) $$lnk;				\
+	done
