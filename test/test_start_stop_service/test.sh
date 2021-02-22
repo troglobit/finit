@@ -3,7 +3,6 @@
 set -eu
 
 assert_num_children() {
-    texec ps -opid,ppid,args
     assert "$1 services are running" "$(texec pgrep -P 1 | wc -l)" -eq "$1"
 }
 
