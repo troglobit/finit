@@ -17,6 +17,11 @@ nsenter=$(which nsenter)
 chroot=$(which chroot)
 
 export PATH=/sbin:/bin
+export PS1='\w \$ '
+export PS2='> '
+export PS3='#? '
+export PS4='+ '
+
 "$nsenter" \
     --preserve-credentials \
     --user \

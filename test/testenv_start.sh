@@ -10,9 +10,14 @@ TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
 unshare=$(which unshare)
 chroot=$(which chroot)
 
+export PATH=/sbin:/bin
+export PS1='\w \$ '
+export PS2='> '
+export PS3='#? '
+export PS4='+ '
+
 # Not supported by Busybox unshare:
 #  --cgroup --time
-export PATH=/sbin:/bin
 exec "$unshare" \
     --user --map-root-user \
     --fork --pid --mount-proc \
