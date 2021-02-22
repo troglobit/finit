@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS    = -I m4
-SUBDIRS            = plugins src
+SUBDIRS            = plugins src test
 doc_DATA           = README.md LICENSE contrib/finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
 
@@ -9,9 +9,6 @@ endif
 if DOC
 SUBDIRS           += doc
 endif
-
-AM_TESTS_ENVIRONMENT = make -C $(srcdir)/test test_root;
-TESTS                = test/test_start_stop_service/test.sh
 
 # Compat hook
 install-dev:

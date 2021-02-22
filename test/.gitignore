@@ -1,3 +1,5 @@
-busybox-x86_64
+# GNU configure and build system
 *.log
 *.trs
+/Makefile
+/Makefile.in

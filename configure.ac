@@ -11,7 +11,8 @@ AC_CONFIG_FILES([Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
 	doc/Makefile
 	plugins/Makefile
-	src/Makefile])
+	src/Makefile
+	test/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/plugin.m4])

@@ -52,6 +52,8 @@ script:
   - cat config.log
   - make clean
   - make V=1 -j5
+  - LD_LIBRARY_PATH=/tmp/lib make check
+  - cat ./test/test-suite.log
   - make install-strip
   - tree /tmp
   - ldd /tmp/sbin/finit
@@ -63,5 +65,4 @@ script:
   - nsenter -V
   - chroot --version
   - LD_LIBRARY_PATH=/tmp/lib make check
-  - cat ./test-suite.log
-  - make -C test/ clean
+  - cat ./test/test-suite.log
