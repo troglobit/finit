@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eu
+set -eux
 
 TEST_DIR=$(dirname "$0")
 TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"

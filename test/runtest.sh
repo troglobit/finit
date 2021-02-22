@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eu
+set -eux
 
 texec() {
     ./testenv_exec.sh "$finit_pid" "$@"
