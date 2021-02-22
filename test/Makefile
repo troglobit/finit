@@ -3,6 +3,7 @@
 ARCH ?= x86_64
 
 FINITBIN ?= ../src/finit
+INITCTLBIN ?= ../src/initctl
 
 BBVER ?= 1.31.0
 BBBIN = busybox-$(ARCH)
@@ -68,11 +69,14 @@ $(testroot_bin)/chrootsetup.sh: chrootsetup.sh
 $(testroot)/sbin/finit: $(FINITBIN) $(libs)
 	cp $< $@
 
+$(testroot)/bin/initctl: $(INITCTLBIN) $(libs)
+	cp $< $@
+
 $(libs):
 	mkdir -p $(dir $@)
 	cp $(shell echo $@ | sed s/^$(testroot)//) $@
 
-check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit
+check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit $(testroot)/bin/initctl
 	./runtest.sh test_start_stop_service/test.sh
 
 test-check:
