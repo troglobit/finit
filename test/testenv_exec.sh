@@ -13,8 +13,8 @@ shift
 TEST_DIR=$(dirname "$0")
 TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
 
-nsenter=$(which nsenter)
-chroot=$(which chroot)
+nsenter=$(command -v nsenter)
+chroot=$(command -v chroot)
 
 export PATH=/sbin:/bin
 export PS1='\w \$ '

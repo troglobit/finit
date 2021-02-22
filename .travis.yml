@@ -62,4 +62,6 @@ script:
   - unshare -V
   - nsenter -V
   - chroot --version
-  - LD_LIBRARY_PATH=/tmp/lib make -C test/ check
+  - LD_LIBRARY_PATH=/tmp/lib make check
+  - cat ./test-suite.log
+  - make -C test/ clean

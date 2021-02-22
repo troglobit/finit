@@ -1,10 +1,8 @@
 #!/bin/sh
 
-set -eu
-
 texec() {
     # shellcheck disable=SC2154
-    ./testenv_exec.sh "$finit_pid" "$@"
+    "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
 }
 
 pause() {
@@ -23,7 +21,7 @@ fg_red='\e[1;31m'
 fg_green='\e[1;32m'
 fg_yellow='\e[1;33m'
 log() {
-    printf "< $TEST_DIR > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
+    printf "< TEST > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
 }
 
 assert() {
@@ -59,7 +57,7 @@ retry() {
         eval "$__retry_cmd" || continue
         return 0
     done
-    return 1
+    eval "$__retry_cmd"
 }
 
 say() {
@@ -79,13 +77,9 @@ teardown() {
     wait
 }
 
-TEST="$1"
-TEST_DIR=$(dirname "$TEST")
-shift
-
 trap teardown EXIT
 
-FINIT_CONF=$(grep FINIT_CONF "$(dirname "$0")/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
+FINIT_CONF=$(grep FINIT_CONF "$TEST_DIR/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
 export FINIT_CONF
 FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
 export FINIT_CONF_DIR
@@ -93,18 +87,8 @@ export FINIT_CONF_DIR
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''
 
-
->&2 echo Environment:
->&2 ./testenv_start.sh env
->&2 echo --
->&2 echo Filesystem:
->&2 ./testenv_start.sh find / -path /sys -prune -o -print -path /proc -prune -o -print
->&2 echo --
->&2 echo "FINIT_CONF='$FINIT_CONF'"
->&2 echo "FINIT_CONF_DIR='$FINIT_CONF_DIR/'"
-
 # Setup
-./testenv_start.sh finit &
+"$TEST_DIR/testenv_start.sh" finit &
 finit_ppid=$!
 # shellcheck disable=SC2016
 retry 'finit_pid=$(pgrep -P '"$finit_ppid"')'
@@ -112,6 +96,3 @@ retry 'finit_pid=$(pgrep -P '"$finit_ppid"')'
 tty=/dev/$(texec cat /sys/class/tty/console/active)
 texec cat "$tty" &
 sleep 1
-
-# shellcheck source=/dev/null
-. "$TEST"

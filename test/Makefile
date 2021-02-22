@@ -51,8 +51,7 @@ $(BBBIN):
 	wget -O $@ $(BBURL)
 	md5sum -c $@.md5
 
-$(testroot):
-	mkdir $(testroot)
+$(testroot): $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit $(testroot)/bin/initctl test-check
 
 $(testroot_bin)/$(BBBIN): $(BBBIN)
 	mkdir -p $(testroot_bin)
@@ -76,12 +75,14 @@ $(libs):
 	mkdir -p $(dir $@)
 	cp $(shell echo $@ | sed s/^$(testroot)//) $@
 
-check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit $(testroot)/bin/initctl test-check
-	./runtest.sh test_start_stop_service/test.sh
+check: $(testroot)
+	./test_start_stop_service/test.sh
 
 test-check:
 	shellcheck $(shell find . -name '*.sh')
 
 clean:
-	rm -rf $(testroot)
+	rm -rf $(testroot)/*
 	rm -f $(BBBIN)
+	rm -f ./test_start_stop_service/*.log
+	rm -f ./test_start_stop_service/*.trs

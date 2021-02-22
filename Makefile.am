@@ -10,6 +10,9 @@ if DOC
 SUBDIRS           += doc
 endif
 
+AM_TESTS_ENVIRONMENT = make -C $(srcdir)/test test_root;
+TESTS                = test/test_start_stop_service/test.sh
+
 # Compat hook
 install-dev:
 	@make -C src install-pkgincludeHEADERS

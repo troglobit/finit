@@ -1,2 +1,3 @@
 busybox-x86_64
-test_root
+*.log
+*.trs
