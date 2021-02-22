@@ -83,6 +83,7 @@ teardown() {
     texec kill -SIGUSR2 1
 
     wait
+    rm "$TEST_DIR"/running_test.pid
 }
 
 trap teardown EXIT
@@ -98,6 +99,7 @@ log "$color_reset" '--' ''
 # Setup
 "$TEST_DIR/testenv_start.sh" finit &
 finit_ppid=$!
+echo "$finit_ppid" > "$TEST_DIR"/running_test.pid
 finit_pid=$(retry "pgrep -P $finit_ppid")
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
