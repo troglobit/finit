@@ -32,6 +32,7 @@
 #include <sys/wait.h>
 #include <net/if.h>
 #include <lite/lite.h>
+#include <wordexp.h>
 
 #include "cgroup.h"
 #include "conf.h"
@@ -261,6 +262,121 @@ static int redirect(svc_t *svc)
 	return 0;
 }
 
+/*
+ * non-zero env, no checking if file exists or not
+ */
+static char *svc_getenv(svc_t *svc)
+{
+	int v = 0;
+
+	if (!svc->env[0])
+		return NULL;
+
+	if (svc->env[0] == '-')
+		v = 1;
+
+	return &svc->env[v];
+}
+
+/*
+ * Check if svc has env, if env file exists returns true
+ * if it doesn't exist, but has '-', also true.  if svc
+ * doesn't have env, also true.
+ */
+static int check_env(svc_t *svc)
+{
+	char *env = svc_getenv(svc);
+
+	if (!env)
+		return 1;
+
+	return fexist(env);
+}
+
+/*
+ * Source environment file, if it exists
+ * Note: must be called from privsepped child
+ */
+static void source_env(svc_t *svc)
+{
+	char buf[LINE_SIZE];
+	char *line;
+	size_t len;
+	FILE *fp;
+	char *fn;
+
+	fn = svc_getenv(svc);
+	if (!fn)
+		return;
+
+	/* Warning in service_start() after check_env() */
+	fp = fopen(fn, "r");
+	if (!fp)
+		return;
+
+	line = buf;
+	len = sizeof(buf);
+	while (fgets(line, len, fp)) {
+		char *key = chomp(line);
+		char *value, *end;
+
+		/* skip any leading whitespace */
+		while (isspace(*key))
+			key++;
+
+		/* skip comments */
+		if (*key == '#' || *key == ';')
+			continue;
+
+		/* find end of line */
+		end = key;
+		while (*end)
+			end++;
+
+		/* strip trailing whitespace */
+		if (end > key) {
+			end--;
+			while (isspace(*end))
+				*end-- = 0;
+		}
+
+		value = strchr(key, '=');
+		if (!value)
+			continue;
+		*value++ = 0;
+
+		/* strip leading whitespace from value */
+		while (isspace(*value))
+			value++;
+
+		/* unquote value, if quoted */
+		if (value[0] == '"' || value[0] == '\'') {
+			char q = value[0];
+
+			if (*end == q) {
+				value = &value[1];
+				*end = 0;
+			}
+		}
+
+		/* find end of key */
+		end = key;
+		while (*end)
+			end++;
+
+		/* strip trailing whitespace */
+		if (end > key) {
+			end--;
+			while (isspace(*end))
+				*end-- = 0;
+		}
+
+		setenv(key, value, 1);
+	}
+
+	fclose(fp);
+}
+
 static int is_norespawn(void)
 {
 	return  sig_stopped()            ||
@@ -277,9 +393,10 @@ static int is_norespawn(void)
  */
 static int service_start(svc_t *svc)
 {
-	int i, result = 0, do_progress = 1;
-	pid_t pid;
+	int result = 0, do_progress = 1;
 	sigset_t nmask, omask;
+	pid_t pid;
+	size_t i;
 
 	if (!svc)
 		return 1;
@@ -290,8 +407,14 @@ static int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!whichp(svc->cmd)) {
-		print(1, "Service %s does not exist", svc->cmd);
+		print(1, "%s: does not exist", svc->cmd);
 		svc_missing(svc);
+		return 1;
+	}
+
+	/* Unlike systemd we do not allow starting service if env is missing, unless - */
+	if (!check_env(svc)) {
+		print(1, "%s: environment file %s does not exist (yet)", svc->cmd, svc->env);
 		return 1;
 	}
 
@@ -355,12 +478,45 @@ static int service_start(svc_t *svc)
 			}
 		}
 
+		/* Source any environment from env:/path/to/file */
+		source_env(svc);
+
 		if (!svc_is_sysv(svc)) {
+			wordexp_t we = { 0 };
+			int rc;
+
+			if ((rc = wordexp(svc->cmd, &we, 0))) {
+			nomem:
+				_e("%s: failed wordexp(): %d", svc->cmd, rc);
+				wordfree(&we);
+				_exit(1);
+			}
+
 			for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
 				if (strlen(svc->args[i]) == 0)
 					break;
+
+				if ((rc = wordexp(svc->args[i], &we, WRDE_APPEND)))
+					goto nomem;
+			}
+
+			if (we.we_wordc > MAX_NUM_SVC_ARGS) {
+				logit(LOG_ERR, "%s: too man args after expansion.", svc->cmd);
+				goto nomem;
+			}
+
+			for (i = 0; i < we.we_wordc; i++) {
+				if (strlen(we.we_wordv[i]) >= sizeof(svc->args[i])) {
+					logit(LOG_ERR, "%s: expanded arg. '%s' too long", we.we_wordv[i]);
+					rc = WRDE_NOSPACE;
+					goto nomem;
+				}
+
+				/* overwrite the child's svc with expanded args */
+				strlcpy(svc->args[i], we.we_wordv[i], sizeof(svc->args[i]));
 				args[i] = svc->args[i];
 			}
+			wordfree(&we);
 		} else {
 			i = 0;
 			args[i++] = svc->cmd;
@@ -372,12 +528,11 @@ static int service_start(svc_t *svc)
 		sig_unblock();
 
 		/*
-		 * The setsid() call is the most humble of all in this
-		 * function.  It takes care to detach the process from
-		 * its controlling terminal, preventing daemons from
-		 * leaking to the console, and allowing us to run such
-		 * programs like `lxc-start -F` in the foreground to
-		 * properly monitor them.
+		 * The setsid() call takes care to detach the process
+		 * from its controlling terminal, preventing daemons
+		 * from leaking to the console, and allowing us to run
+		 * such programs like `lxc-start -F` in the foreground
+		 * to properly monitor them.
 		 *
 		 * If you find yourself here wanting to fix the output
 		 * to the console at boot, for debugging or similar,
@@ -386,9 +541,9 @@ static int service_start(svc_t *svc)
 		setsid();
 
 		if (svc_is_runtask(svc))
-			status = exec_runtask(svc->cmd, args);
+			status = exec_runtask(args[0], &args[1]);
 		else
-			status = execvp(svc->cmd, args);
+			status = execvp(args[0], &args[1]);
 
 		_exit(status);
 	} else if (debug) {
@@ -396,7 +551,7 @@ static int service_start(svc_t *svc)
 
 		for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
 			if (strlen(svc->args[i]) == 0)
-				continue;
+				break;
 			if (buf[0])
 				strlcat(buf, " ", sizeof(buf));
 			strlcat(buf, svc->args[i], sizeof(buf));
@@ -661,6 +816,19 @@ static void parse_log(svc_t *svc, char *arg)
 	}
 }
 
+static void parse_env(svc_t *svc, char *env)
+{
+	if (!env)
+		return;
+
+	if (strlen(env) >= sizeof(svc->env)) {
+		_e("%s: env file is too long (>%d chars)", svc->cmd, sizeof(svc->env));
+		return;
+	}
+
+	strlcpy(svc->env, env, sizeof(svc->env));
+}
+
 static void parse_sighalt(svc_t *svc, char *arg)
 {
 	int signo;
@@ -798,7 +966,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *name = NULL, *halt = NULL, *delay = NULL;
-	char *id = NULL;
+	char *id = NULL, *env = NULL;
 	int levels = 0;
 	int manual = 0;
 	char *line;
@@ -860,6 +1028,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			halt = &cmd[5];
 		else if (!strncasecmp(cmd, "kill:", 5))
 			delay = &cmd[5];
+		else if (!strncasecmp(cmd, "env:", 4))
+			env = &cmd[4];
 		else
 			break;
 
@@ -925,6 +1095,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_log(svc, log);
 	if (desc)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
+	if (env)
+		parse_env(svc, env);
 
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));

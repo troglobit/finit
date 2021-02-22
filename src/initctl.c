@@ -494,6 +494,7 @@ static int show_status(char *arg)
 		printf("Service     : %s\n", svc->cmd);
 		printf("Description : %s\n", svc->desc);
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
+		printf("Environment : %s\n", svc->env);
 		printf("PID         : %d\n", svc->pid);
 		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
