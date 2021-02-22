@@ -96,13 +96,17 @@ TEST_NAME="$(dirname "$0")"
 TEST_NAME=${TEST_NAME#*/}
 export TEST_NAME
 
-log "$color_reset" 'Test start' ''
-log "$color_reset" '--' ''
+# Setup test environment
 
-# Setup
 "$TEST_DIR/testenv_start.sh" finit &
 finit_ppid=$!
 echo "$finit_ppid" > "$TEST_DIR"/running_test.pid
+
+>&2 echo "Hint: Execute 'test/testenv_enter.sh' to enter the test namespace"
+>&2 echo "finit conf '$FINIT_CONF'"
+>&2 echo "finit_conf dir '$FINIT_CONF_DIR'"
+log "$color_reset" 'Setup of test environment done' ''
+
 finit_pid=$(retry "pgrep -P $finit_ppid")
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
