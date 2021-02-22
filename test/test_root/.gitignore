@@ -26,6 +26,7 @@
 /proc
 /sbin
 /sys
+/test_assets
 /tmp
 /usr
 /var

@@ -34,6 +34,7 @@ dirs = ./dev \
        ./proc \
        ./sbin \
        ./sys \
+       ./test_assets \
        ./tmp
 
 _libs_src = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
@@ -74,6 +75,7 @@ clean:
 	rm -rf ./proc
 	rm -rf ./sbin
 	rm -rf ./sys
+	rm -rf ./test_assets
 	rm -rf ./tmp
 	rm -rf ./usr
 	rm -rf ./var
