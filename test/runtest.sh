@@ -1,8 +1,9 @@
 #!/bin/sh
 
-set -eux
+set -eu
 
 texec() {
+    # shellcheck disable=SC2154
     ./testenv_exec.sh "$finit_pid" "$@"
 }
 
@@ -30,9 +31,35 @@ assert() {
     shift
     if [ ! "$@" ]; then
         log "$fg_red" ✘ "$__assert_msg ($*)"
-        exit 1
+        return 1
     fi
     log "$fg_green" ✔ "$__assert_msg"
+}
+
+retry() {
+    __retry_cmd=$1
+    shift
+    case "$#" in
+        2)
+            __retry_n=$1
+            __retry_sleep=$2
+            ;;
+        1)
+            __retry_n=$1
+            __retry_sleep=0.1
+            ;;
+        *)
+            __retry_n=50
+            __retry_sleep=0.1
+            ;;
+    esac
+
+    for _ in $(seq 1 "$__retry_n"); do
+        sleep "$__retry_sleep"
+        eval "$__retry_cmd" || continue
+        return 0
+    done
+    return 1
 }
 
 say() {
@@ -75,11 +102,8 @@ log "$color_reset" '--' ''
 # Setup
 ./testenv_start.sh finit &
 finit_ppid=$!
-for _ in $(seq 1 50); do
-    sleep 0.1
-    finit_pid=$(pgrep -P "$finit_ppid") || continue
-    break
-done
+# shellcheck disable=SC2016
+retry 'finit_pid=$(pgrep -P '"$finit_ppid"')'
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
 texec cat "$tty" &
