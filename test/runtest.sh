@@ -85,8 +85,10 @@ shift
 
 trap teardown EXIT
 
-export FINIT_CONF=$(grep FINIT_CONF "$(dirname "$0")/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
-export FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
+FINIT_CONF=$(grep FINIT_CONF "$(dirname "$0")/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
+export FINIT_CONF
+FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
+export FINIT_CONF_DIR
 
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''

@@ -9,7 +9,6 @@ assert_num_children() {
 # Test
 say 'Set up a service'
 cp "$TEST_DIR"/service.sh test_root/bin
-texec mkdir -p "$(dirname "$FINIT_CONF")"
 texec sh -c "echo 'service [2345] kill:20 log /bin/service.sh' > $FINIT_CONF"
 
 say 'Reload Finit'
