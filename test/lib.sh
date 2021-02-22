@@ -54,10 +54,13 @@ retry() {
 
     for _ in $(seq 1 "$__retry_n"); do
         sleep "$__retry_sleep"
-        eval "$__retry_cmd" || continue
-        return 0
+        __retry_cmd_out=$(eval "$__retry_cmd") && \
+            echo "$__retry_cmd_out" && \
+            return 0
     done
-    eval "$__retry_cmd"
+    __retry_cmd_exit="$?"
+    echo "$__retry_cmd_out"
+    return "$__retry_cmd_exit"
 }
 
 say() {
@@ -90,8 +93,7 @@ log "$color_reset" '--' ''
 # Setup
 "$TEST_DIR/testenv_start.sh" finit &
 finit_ppid=$!
-# shellcheck disable=SC2016
-retry 'finit_pid=$(pgrep -P '"$finit_ppid"')'
+finit_pid=$(retry "pgrep -P $finit_ppid")
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
 texec cat "$tty" &
