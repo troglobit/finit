@@ -19,6 +19,7 @@ test_teardown() {
 }
 
 # Test
+say "Test start $(date)"
 say 'Set up a service'
 cp "$TEST_DIR"/test_start_stop_service/service.sh "$TEST_DIR"/test_root/test_assets/
 texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh' > $FINIT_CONF"
