@@ -69,6 +69,11 @@ say() {
 
 teardown() {
     test_status="$?"
+
+    if type test_teardown > /dev/null 2>&1 ; then
+	test_teardown
+    fi
+
     log "$color_reset" '--' ''
     if [ "$test_status" -eq 0 ]; then
         log "$fg_green" 'TEST PASS' ''
