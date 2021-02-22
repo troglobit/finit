@@ -66,10 +66,8 @@ log "$color_reset" '--' ''
 finit_ppid=$!
 for _ in $(seq 1 50); do
     sleep 0.1
-    finit_pid=$(pgrep -P "$finit_ppid")
-    if [ "$finit_pid" ]; then
-        break
-    fi
+    finit_pid=$(pgrep -P "$finit_ppid") || continue
+    break
 done
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
