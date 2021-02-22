@@ -47,6 +47,8 @@ shift
 
 trap teardown EXIT
 
+FINIT_CONF=$(grep FINIT_CONF "$(dirname "$0")/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
+
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''
 
@@ -57,6 +59,7 @@ log "$color_reset" '--' ''
 >&2 echo Filesystem:
 >&2 ./testenv_start.sh find / -path /sys -prune -o -print -path /proc -prune -o -print
 >&2 echo --
+>&2 echo "FINIT_CONF='$FINIT_CONF"
 
 # Setup
 ./testenv_start.sh finit &
