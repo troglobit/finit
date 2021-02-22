@@ -4,7 +4,7 @@ set -eu
 
 TEST_DIR=$(dirname "$0")/..
 # shellcheck source=/dev/null
-. "$TEST_DIR/runtest.sh"
+. "$TEST_DIR/lib.sh"
 
 assert_num_children() {
     assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
