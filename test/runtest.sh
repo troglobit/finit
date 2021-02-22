@@ -6,6 +6,17 @@ texec() {
     ./testenv_exec.sh "$finit_pid" "$@"
 }
 
+pause() {
+    echo "Press any key to continue... "
+    read -r REPLY
+}
+
+toggle_finit_debug() {
+    say 'Toggle finit debug'
+    texec sh -c "/bin/initctl debug"
+    sleep 0.5
+}
+
 color_reset='\e[0m'
 fg_red='\e[1;31m'
 fg_green='\e[1;32m'
