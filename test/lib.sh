@@ -21,7 +21,7 @@ fg_red='\e[1;31m'
 fg_green='\e[1;32m'
 fg_yellow='\e[1;33m'
 log() {
-    printf "< TEST > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
+    printf "< $TEST_NAME > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
 }
 
 assert() {
@@ -92,6 +92,9 @@ FINIT_CONF=$(grep FINIT_CONF "$TEST_DIR/../config.h" | cut -d' ' -f3 | cut -d'"'
 export FINIT_CONF
 FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
 export FINIT_CONF_DIR
+TEST_NAME="$(dirname "$0")"
+TEST_NAME=${TEST_NAME#*/}
+export TEST_NAME
 
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''
