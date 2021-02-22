@@ -76,7 +76,7 @@ $(libs):
 	mkdir -p $(dir $@)
 	cp $(shell echo $@ | sed s/^$(testroot)//) $@
 
-check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit $(testroot)/bin/initctl
+check: $(binaries) $(testroot_bin)/chrootsetup.sh $(dirs) $(testroot)/sbin/finit $(testroot)/bin/initctl test-check
 	./runtest.sh test_start_stop_service/test.sh
 
 test-check:
