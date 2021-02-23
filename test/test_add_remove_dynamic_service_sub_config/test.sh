@@ -20,15 +20,13 @@ test_teardown() {
 
 # Test
 say "Test start $(date)"
-# toggle_finit_debug
+
 say "Add a dynamic service in $FINIT_CONF_DIR/service.conf"
 cp "$TEST_DIR"/common/service.sh "$TEST_DIR"/test_root/test_assets/
-texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh pid:/run/service.pid' > $FINIT_CONF_DIR/service.conf"
+texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh' > $FINIT_CONF_DIR/service.conf"
 
 say 'Reload Finit'
 texec kill -SIGHUP 1
-
-pause
 
 retry 'assert_num_children 1 service.sh' 5
 
