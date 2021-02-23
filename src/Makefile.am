@@ -26,6 +26,7 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     exec.c	finit.c		finit.h		\
 		     getty.c	stty.c				\
 		     helpers.c	helpers.h			\
+		     iwatch.c   iwatch.h			\
 		     log.c	log.h				\
 		     mdadm.c	mount.c				\
 		     pid.c      pid.h				\
