@@ -90,14 +90,17 @@ trap teardown EXIT
 
 FINIT_CONF=$(grep FINIT_CONF "$TEST_DIR/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
 export FINIT_CONF
+
 FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
 export FINIT_CONF_DIR
+
 TEST_NAME="$(dirname "$0")"
 TEST_NAME=${TEST_NAME#*/}
 export TEST_NAME
 
 # Setup test environment
 
+# Setup test environment
 "$TEST_DIR/testenv_start.sh" finit &
 finit_ppid=$!
 echo "$finit_ppid" > "$TEST_DIR"/running_test.pid
