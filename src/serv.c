@@ -27,6 +27,7 @@
 #include <fcntl.h> /* Definition of AT_* constants */
 #include <glob.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <lite/lite.h>
 
 #include "util.h"
@@ -195,6 +196,36 @@ int serv_touch(char *arg)
 	/* libite:touch() follows symlinks */
 	if (utimensat(AT_FDCWD, arg, NULL, AT_SYMLINK_NOFOLLOW))
 		err(1, "Failed marking %s for reload", arg);
+
+	return 0;
+}
+
+int serv_edit(char *arg)
+{
+	char corr[40];
+	char path[256];
+
+	if (!arg || !arg[0])
+		return serv_list(NULL);
+
+	if (!strstr(arg, ".conf")) {
+		snprintf(corr, sizeof(corr), "%s.conf", arg);
+		arg = corr;
+	}
+
+	pushd(FINIT_RCSD);
+	if (mkdir("available", 0755) && EEXIST != errno)
+		err(1, "Failed creating %s/available directory", FINIT_RCSD);
+
+	snprintf(path, sizeof(path), "%s/%s", available, arg);
+	if (!fexist(path))
+		return serv_list(NULL);
+
+	if (systemf("[ -x \"$(command -v sensible-editor)\" ] && sensible-editor %s", path) != 0)
+		if (systemf("[ -x \"$(command -v editor)\" ] && editor %s", path) != 0)
+			if (systemf("${VISUAL:-${EDITOR:-$(command -v vi)}} %s", path) != 0)
+				if (systemf("[ -x \"$(command -v mg)\" ] && mg %s", path) != 0)
+					systemf("[ -x \"$(command -v vi)\" ] && vi %s", path);
 
 	return 0;
 }
