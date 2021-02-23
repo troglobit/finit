@@ -75,7 +75,7 @@ teardown() {
     else
         log "$fg_red" 'TEST FAIL' ''
     fi
-    texec kill 1
+    texec kill -SIGUSR2 1
 
     wait
 }
