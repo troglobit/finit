@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -eux
+set -eu
+
+testdir="${srcdir:-$(dirname "$0")}"
 
 # shellcheck disable=SC2046
-shellcheck $(find ./ -name '*.sh')
+shellcheck $(find "$testdir" -name '*.sh')

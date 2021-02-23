@@ -11,7 +11,7 @@ target="$1"
 shift
 
 TEST_DIR=$(dirname "$0")
-TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
+TESTS_ROOT="${TESTS_ROOT:-$(pwd)/${TEST_DIR}/test_root}"
 
 nsenter=$(command -v nsenter)
 chroot=$(command -v chroot)

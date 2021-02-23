@@ -12,7 +12,7 @@ assert_num_children() {
 
 # Test
 say 'Set up a service'
-cp "$TEST_DIR"/test_start_stop_service/service.sh "$TEST_DIR"/test_root/test_assets/
+cp "$TEST_DIR"/test_start_stop_service/service.sh "$TESTS_ROOT"/test_assets/
 texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh' > $FINIT_CONF"
 
 say 'Reload Finit'
@@ -29,4 +29,4 @@ texec kill -SIGHUP 1
 retry 'assert_num_children 0 service.sh'
 
 # Teardown
-rm -f test_root/bin/service.sh
+rm -f "$TESTS_ROOT"/bin/service.sh

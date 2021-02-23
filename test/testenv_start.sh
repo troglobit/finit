@@ -3,7 +3,7 @@
 set -eu
 
 TEST_DIR=$(dirname "$0")
-TESTS_ROOT="$(pwd)/${TEST_DIR}/test_root"
+TESTS_ROOT="${TESTS_ROOT:-$(pwd)/${TEST_DIR}/test_root}"
 
 >&2 echo "Hint: Execute '${TEST_DIR}/testenv_exec.sh \$(pgrep -P $$) /bin/sh; reset' to enter the test namespace"
 

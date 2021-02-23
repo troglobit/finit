@@ -2,7 +2,7 @@
 
 texec() {
     # shellcheck disable=SC2154
-    "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
+    TESTS_ROOT=. "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
 }
 
 pause() {
@@ -75,14 +75,16 @@ teardown() {
     else
         log "$fg_red" 'TEST FAIL' ''
     fi
-    texec kill -SIGUSR2 1
+    if [ -n "${finit_pid+x}" ]; then
+        texec kill -SIGUSR2 1
+    fi
 
     wait
 }
 
 trap teardown EXIT
 
-FINIT_CONF=$(grep FINIT_CONF "$TEST_DIR/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
+FINIT_CONF=$(grep FINIT_CONF "$TESTS_ROOT/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
 export FINIT_CONF
 FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
 export FINIT_CONF_DIR

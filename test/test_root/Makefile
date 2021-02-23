@@ -2,8 +2,8 @@
 
 ARCH ?= x86_64
 
-FINITBIN   ?= ../../src/finit
-INITCTLBIN ?= ../../src/initctl
+FINITBIN   ?= ./sbin/finit
+INITCTLBIN ?= ./sbin/initctl
 
 BBVER ?= 1.31.0
 BBBIN  = busybox-$(ARCH)
@@ -40,7 +40,7 @@ dirs = ./dev \
 _libs_src = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
 libs = $(foreach path,$(_libs_src),.$(path))
 
-all: $(binaries) $(dirs) ./sbin/finit ./bin/initctl
+all: $(binaries) $(dirs) $(libs)
 
 $(dirs):
 	mkdir -p $@
@@ -55,19 +55,12 @@ $(binaries): ./bin/$(BBBIN)
 	  rm -f $(notdir $@); \
 	  ln -s $(BBBIN) $(notdir $@)
 
-./sbin/finit: $(FINITBIN) $(libs)
-	cp $< $@
-
-./bin/initctl: $(INITCTLBIN) $(libs)
-	cp $< $@
-
 $(libs):
 	mkdir -p $(dir $@)
 	cp /$@ $@
 
 clean:
 	rm -f ./bin/$(BBBIN)
-	rm -f ./bin/initctl
 	rm -rf $(binaries)
 	rm -rf ./dev
 	rm -rf ./etc
