@@ -35,7 +35,8 @@ dirs = ./dev \
        ./sbin \
        ./sys \
        ./test_assets \
-       ./tmp
+       ./tmp \
+       ./etc
 
 _libs_src = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
 libs = $(foreach path,$(_libs_src),.$(path))
