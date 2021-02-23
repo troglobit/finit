@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <fnmatch.h>
 #include <glob.h>
 #include <limits.h>
 #include <paths.h>
@@ -68,6 +69,9 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 
 	_d("Got dir: %s, name: %s, mask: %08x", dir, name, mask);
 	snprintf(fn, sizeof(fn), "%s/%s", dir, name);
+
+	if (fnmatch("*\\.pid", fn, 0) && fnmatch("*/pid", fn, 0))
+		return;
 
 	svc = svc_find_by_pidfile(fn);
 	if (!svc) {
