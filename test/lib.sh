@@ -1,5 +1,9 @@
 #!/bin/sh
 
+assert_num_children() {
+    assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
+}
+
 texec() {
     # shellcheck disable=SC2154
     "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
