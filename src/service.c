@@ -1172,7 +1172,7 @@ void service_monitor(pid_t lost, int status)
 	}
 
 	/* Terminate any children in the same proess group, e.g. logit */
-	kill(-svc->pid, SIGTERM);
+	kill(-svc->pid, SIGKILL);
 
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;
