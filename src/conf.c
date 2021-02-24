@@ -675,8 +675,8 @@ int conf_reload(void)
 	parse_conf(FINIT_CONF);
 
 	/* Next, read all *.conf in /etc/finit.d/ */
-	glob("/etc/finit.d/*.conf", 0, NULL, &gl);
-	glob("/etc/finit.d/enabled/*.conf", GLOB_APPEND, NULL, &gl);
+	glob(FINIT_RCSD "/*.conf", 0, NULL, &gl);
+	glob(FINIT_RCSD "/enabled/*.conf", GLOB_APPEND, NULL, &gl);
 
 	for (i = 0; i < gl.gl_pathc; i++) {
 		char *path = gl.gl_pathv[i];
