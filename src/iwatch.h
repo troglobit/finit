@@ -29,9 +29,16 @@
 #include <lite/queue.h>
 #include <sys/inotify.h>
 
+#ifndef IN_MASK_CREATE
+#define IN_MASK_CREATE 0x10000000	/* since Linux 4.18 */
+#endif
 
-/* Monitors changes to both directories and files by default */
-#define IWATCH_MASK (IN_CREATE | IN_DELETE | IN_MODIFY | IN_ATTRIB | IN_MOVE)
+/*
+ * Monitors changes to both directories and files by default, but only
+ * add watcher once (IN_MASK_CREATE) to avoid clobbering any already
+ * monitored paths.
+ */
+#define IWATCH_MASK (IN_CREATE | IN_DELETE | IN_MODIFY | IN_ATTRIB | IN_MOVE | IN_MASK_CREATE)
 
 struct iwatch_path {
 	TAILQ_ENTRY(iwatch_path) link;
