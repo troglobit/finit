@@ -722,6 +722,7 @@ static int service_stop(svc_t *svc)
 static int service_restart(svc_t *svc)
 {
 	int do_progress = 1;
+	pid_t lost = 0;
 	int rc;
 
 	/* Ignore if finit is SIGSTOP'ed */
@@ -748,18 +749,25 @@ static int service_restart(svc_t *svc)
 	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s[%d], sending SIGHUP ...",
 	      svc_ident(svc, NULL, 0), svc->pid);
 	rc = kill(svc->pid, SIGHUP);
+	if (rc == -1 && errno == ESRCH) {
+		/* nobody home, reset internal state machine */
+		lost = svc->pid;
+	} else {
+		/* Declare we're waiting for svc to re-assert/touch its pidfile */
+		svc_starting(svc);
 
-	/* Declare we're waiting for svc to re-assert/touch its pidfile */
-	svc_starting(svc);
-
-	/* Service does not maintain a PID file on its own */
-	if (svc_has_pidfile(svc)) {
-		sched_yield();
-		touch(pid_file(svc));
+		/* Service does not maintain a PID file on its own */
+		if (svc_has_pidfile(svc)) {
+			sched_yield();
+			touch(pid_file(svc));
+		}
 	}
 
 	if (do_progress)
 		print_result(rc);
+
+	if (lost)
+		service_monitor(lost, 0);
 
 	return rc;
 }
