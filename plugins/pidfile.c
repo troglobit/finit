@@ -138,8 +138,8 @@ static void pidfile_handle_dir(struct iwatch *iw, char *dir, char *name, int mas
 
 	if (mask & IN_CREATE) {
 		if (!iwp) {
-			pidfile_add_path(iw, path);
-			pidfile_scandir(iw, path, sizeof(path));
+			if (!pidfile_add_path(iw, path))
+				pidfile_scandir(iw, path, sizeof(path));
 		}
 	} else if (mask & IN_DELETE) {
 		if (iwp)
@@ -265,9 +265,9 @@ static void pidfile_init(void *arg)
  *
  *     service <net/iface/lo> /sbin/dropbear ...
  *
- * Which provides the <pid/sbin/dropbear> condition, will not be
- * set by pidfile.so during `initctl reload` because dropbear is
- * still SIGSTP:ed waiting for <net/iface/lo>.
+ * Which provides the <pid/dropbear> condition, will not be set by
+ * pidfile.so during `initctl reload` because dropbear is still
+ * SIGSTP:ed waiting for <net/iface/lo>.
  */
 static plugin_t plugin = {
 	.name = __FILE__,
