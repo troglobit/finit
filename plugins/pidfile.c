@@ -273,10 +273,6 @@ static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP]  = { .cb = pidfile_init   },
 	.hook[HOOK_SVC_RECONF] = { .cb = pidfile_reconf },
-	.io = {
-		.cb    = pidfile_callback,
-		.flags = PLUGIN_IO_READ,
-	},
 	.depends = { "netlink" },
 };
 
@@ -289,6 +285,9 @@ PLUGIN_INIT(plugin_init)
 		return;
 
 	plugin.io.fd = fd;
+	plugin.io.cb = pidfile_callback;
+	plugin.io.flags = PLUGIN_IO_READ;
+
 	plugin_register(&plugin);
 }
 
