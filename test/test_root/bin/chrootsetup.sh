@@ -22,7 +22,7 @@ mount -t tmpfs none /etc
 # mkdir -p /dev/pts
 # mount -t devpts none /dev/pts
 
-mkdir -p "$FINIT_CONF_DIR"
+mkdir -p "$FINIT_RCSD"
 
 tty=/dev/$(cat /sys/class/tty/console/active)
 mkfifo "$tty"

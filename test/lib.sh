@@ -84,10 +84,8 @@ teardown() {
 
 trap teardown EXIT
 
-FINIT_CONF=$(grep FINIT_CONF "$TESTS_ROOT/../config.h" | cut -d' ' -f3 | cut -d'"' -f2)
-export FINIT_CONF
-FINIT_CONF_DIR="$(dirname "$FINIT_CONF")"/finit.d
-export FINIT_CONF_DIR
+# shellcheck source=/dev/null
+. "$TESTS_ROOT/../test.env"
 
 log "$color_reset" 'Test start' ''
 log "$color_reset" '--' ''

@@ -3,7 +3,6 @@
 ARCH ?= x86_64
 
 FINITBIN   ?= ./sbin/finit
-INITCTLBIN ?= ./sbin/initctl
 
 BBVER ?= 1.31.0
 BBBIN  = busybox-$(ARCH)

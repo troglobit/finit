@@ -10,6 +10,8 @@ EXTRA_DIST		+= test_start_stop_service/service.sh
 AM_TESTS_ENVIRONMENT	 = TESTS_ROOT='$(builddir)/test_root/';
 AM_TESTS_ENVIRONMENT	+= export TESTS_ROOT;
 AM_TESTS_ENVIRONMENT	+= export LD_LIBRARY_PATH;
+AM_TESTS_ENVIRONMENT	+= PREFIX=$(prefix);
+AM_TESTS_ENVIRONMENT	+= export PREFIX;
 
 TESTS			 = checkself.sh
 TESTS			+= setup_root.sh

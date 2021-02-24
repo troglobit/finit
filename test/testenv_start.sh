@@ -10,7 +10,6 @@ TESTS_ROOT="${TESTS_ROOT:-$(pwd)/${TEST_DIR}/test_root}"
 unshare=$(command -v unshare)
 chroot=$(command -v chroot)
 
-export PATH=/sbin:/bin
 export PS1='\w \$ '
 export PS2='> '
 export PS3='#? '
