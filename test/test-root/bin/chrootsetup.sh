@@ -17,7 +17,7 @@ mount -n -t tmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
 # mount -t tmpfs none /tmp
-mount -t tmpfs none /etc
+# mount -t tmpfs none /etc
 
 # mkdir -p /dev/pts
 # mount -t devpts none /dev/pts

@@ -22,11 +22,10 @@
  * THE SOFTWARE.
  */
 
+#include <fnmatch.h>
 #include <glob.h>
 #include <limits.h>
 #include <paths.h>
-#include <lite/queue.h>
-#include <sys/inotify.h>
 
 #include "finit.h"
 #include "cond.h"
@@ -34,28 +33,15 @@
 #include "pid.h"
 #include "plugin.h"
 #include "service.h"
+#include "iwatch.h"
 
-struct wd_entry {
-	TAILQ_ENTRY(wd_entry) link;
-	char *path;
-	int fd;
-};
+static struct iwatch iw_pidfile;
 
-struct context {
-	int fd;
-	TAILQ_HEAD(, wd_entry) wd_list;
-};
 
-static struct context pidfile_ctx;
-
-static int watcher_add(struct context *ctx, char *path)
+static int pidfile_add_path(struct iwatch *iw, char *path)
 {
-	struct wd_entry *wd;
-	uint32_t mask = IN_ONLYDIR | IN_CREATE | IN_ATTRIB | IN_DELETE | IN_MODIFY | IN_MOVED_TO;
 	char *ptr;
-	int fd;
 
-	_d("pidfile: Adding new watcher for path %s", path);
 	ptr = strstr(path, "run/");
 	if (ptr) {
 		char *slash;
@@ -66,44 +52,16 @@ static int watcher_add(struct context *ctx, char *path)
 			ptr = slash++;
 			slash = strchr(ptr, '/');
 			if (slash) {
-				_d("pidfile: Path too deep, skipping.");
+				_d("Path too deep, skipping.");
 				return -1;
 			}
 		}
 	}
 
-	fd = inotify_add_watch(ctx->fd, path, mask);
-	if (fd < 0) {
-		_pe("inotify_add_watch()");
-		return -1;
-	}
-
-	wd = malloc(sizeof(struct wd_entry));
-	if (!wd) {
-		_pe("Failed allocating new `struct wd_entry`");
-		inotify_rm_watch(ctx->fd, fd);
-		return -1;
-	}
-
-	wd->path = path;
-	wd->fd = fd;
-	TAILQ_INSERT_HEAD(&ctx->wd_list, wd, link);
-
-	return 0;
+	return iwatch_add(iw, path, IN_ONLYDIR);
 }
 
-static int watcher_del(struct context *ctx, struct wd_entry *wde)
-{
-	_d("pidfile: Removing watcher for removed path %s", wde->path);
-	TAILQ_REMOVE(&ctx->wd_list, wde, link);
-	inotify_rm_watch(ctx->fd, wde->fd);
-	free(wde->path);
-	free(wde);
-
-	return 0;
-}
-
-static void update_conds(char *dir, char *name, uint32_t mask)
+static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 {
 	char cond[MAX_COND_LEN];
 	char fn[PATH_MAX];
@@ -112,13 +70,16 @@ static void update_conds(char *dir, char *name, uint32_t mask)
 	_d("Got dir: %s, name: %s, mask: %08x", dir, name, mask);
 	snprintf(fn, sizeof(fn), "%s/%s", dir, name);
 
+	if (fnmatch("*\\.pid", fn, 0) && fnmatch("*/pid", fn, 0))
+		return;
+
 	svc = svc_find_by_pidfile(fn);
 	if (!svc) {
-		_d("pidfile: No matching svc for %s", fn);
+		_d("No matching svc for %s", fn);
 		return;
 	}
 
-	_d("pidfile: Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
+	_d("Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
 
 	mkcond(svc, cond, sizeof(cond));
 	if (mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
@@ -138,7 +99,7 @@ static void update_conds(char *dir, char *name, uint32_t mask)
 }
 
 /* synthesize events in case of new run dirs */
-static void scan_for_pidfiles(struct context *ctx, char *dir, int len)
+static void pidfile_scandir(struct iwatch *iw, char *dir, int len)
 {
 	glob_t gl;
 	size_t i;
@@ -157,47 +118,33 @@ static void scan_for_pidfiles(struct context *ctx, char *dir, int len)
 
 	for (i = 0; i < gl.gl_pathc; i++) {
 		_d("scan found %s", gl.gl_pathv[i]);
-		update_conds(dir, gl.gl_pathv[i], IN_CREATE);
+		pidfile_update_conds(dir, gl.gl_pathv[i], IN_CREATE);
 	}
 	globfree(&gl);
 }
 
-static void handle_dir(struct context *ctx, struct wd_entry *wde, char *name, int mask)
+/*
+ * create/remove sub-directory in monitored directory
+ */
+static void pidfile_handle_dir(struct iwatch *iw, char *dir, char *name, int mask)
 {
-	char *path;
-	int plen;
-	int exist = 0;
+	char path[strlen(dir) + strlen(name) + 2];
+	struct iwatch_path *iwp;
 
-	plen = snprintf(NULL, 0, "%s/%s", wde->path, name) + 1;
-	path = malloc(plen);
-	if (!path) {
-		_pe("Failed allocating path buffer for watcher");
-		return;
-	}
-	snprintf(path, plen, "%s/%s", wde->path, name);
-	_d("pidfile: path is %s", path);
+	snprintf(path, sizeof(path), "%s/%s", dir, name);
+	_d("path: %s", path);
 
-	TAILQ_FOREACH(wde, &ctx->wd_list, link) {
-		if (!strcmp(wde->path, path)) {
-			exist = 1;
-			break;
-		}
-	}
+	iwp = iwatch_find_by_path(iw, path);
 
 	if (mask & IN_CREATE) {
-		if (!exist) {
-			int rc = watcher_add(ctx, path);
-
-			scan_for_pidfiles(ctx, path, plen);
-			if (!rc)
-				return;
+		if (!iwp) {
+			pidfile_add_path(iw, path);
+			pidfile_scandir(iw, path, sizeof(path));
 		}
 	} else if (mask & IN_DELETE) {
-		if (exist)
-			watcher_del(&pidfile_ctx, wde);
+		if (iwp)
+			iwatch_del(&iw_pidfile, iwp);
 	}
-
-	free(path);
 }
 
 static void pidfile_callback(void *arg, int fd, int events)
@@ -213,43 +160,42 @@ static void pidfile_callback(void *arg, int fd, int events)
 		return;
 	}
 
-	_d("pidfile: Entering ... reading %zu bytes into ev_buf[]", buflen - 1);
+	_d("Entering ... reading %zu bytes into ev_buf[]", buflen - 1);
 	sz = read(fd, buf, buflen - 1);
 	if (sz <= 0) {
 		_pe("invalid inotify event");
 		goto done;
 	}
 	buf[sz] = 0;
-	_d("pidfile: Read %zd bytes, processing ...", sz);
+	_d("Read %zd bytes, processing ...", sz);
 
 	off = 0;
 	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
-		struct wd_entry *wde;
+		struct iwatch_path *iwp;
 
 		ev = (struct inotify_event *)&buf[off];
 
-		_d("pidfile: path %s, event: 0x%08x", ev->name, ev->mask);
+		_d("path %s, event: 0x%08x", ev->name, ev->mask);
 		if (!ev->mask)
 			continue;
 
 		/* Find base path for this event */
-		TAILQ_FOREACH(wde, &pidfile_ctx.wd_list, link) {
-			if (wde->fd == ev->wd)
-				break;
-		}
+		iwp = iwatch_find_by_wd(&iw_pidfile, ev->wd);
+		if (!iwp)
+			continue;
 
 		if (ev->mask & IN_ISDIR) {
-			handle_dir(&pidfile_ctx, wde, ev->name, ev->mask);
+			pidfile_handle_dir(&iw_pidfile, iwp->path, ev->name, ev->mask);
 			continue;
 		}
 
 		if (ev->mask & IN_DELETE) {
-			_d("pidfile %s/%s removed ...", wde->path, ev->name);
+			_d("pidfile %s/%s removed ...", iwp->path, ev->name);
 			continue;
 		}
 
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
-			update_conds(wde->path, ev->name, ev->mask);
+			pidfile_update_conds(iwp->path, ev->name, ev->mask);
 	}
 done:
 	free(buf);
@@ -305,13 +251,9 @@ static void pidfile_init(void *arg)
 		return;
 	}
 
-	TAILQ_INIT(&pidfile_ctx.wd_list);
-	if (watcher_add(&pidfile_ctx, path))
-		close(pidfile_ctx.fd);
-	_d("pidfile monitor active");
+	if (pidfile_add_path(&iw_pidfile, path))
+		iwatch_exit(&iw_pidfile);
 }
-
-static struct context pidfile_ctx;
 
 /*
  * When performing an `initctl reload` with one (unchanged) service
@@ -331,36 +273,27 @@ static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP]  = { .cb = pidfile_init   },
 	.hook[HOOK_SVC_RECONF] = { .cb = pidfile_reconf },
-	.io = {
-		.cb    = pidfile_callback,
-		.flags = PLUGIN_IO_READ,
-	},
 	.depends = { "netlink" },
 };
 
 PLUGIN_INIT(plugin_init)
 {
-	pidfile_ctx.fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
-	if (pidfile_ctx.fd < 0) {
-		_pe("inotify_init()");
-		return;
-	}
+	int fd;
 
-	plugin.io.fd = pidfile_ctx.fd;
+	fd = iwatch_init(&iw_pidfile);
+	if (fd < 0)
+		return;
+
+	plugin.io.fd = fd;
+	plugin.io.cb = pidfile_callback;
+	plugin.io.flags = PLUGIN_IO_READ;
+
 	plugin_register(&plugin);
 }
 
 PLUGIN_EXIT(plugin_exit)
 {
-	struct wd_entry *wde, *tmp;
-
-	TAILQ_FOREACH_SAFE(wde, &pidfile_ctx.wd_list, link, tmp) {
-		inotify_rm_watch(pidfile_ctx.fd, wde->fd);
-		free(wde->path);
-		free(wde);
-	}
-	close(pidfile_ctx.fd);
-
+	iwatch_exit(&iw_pidfile);
 	plugin_unregister(&plugin);
 }
 

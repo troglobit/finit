@@ -1,8 +1,12 @@
 #!/bin/sh
 
+assert_num_children() {
+    assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
+}
+
 texec() {
     # shellcheck disable=SC2154
-    TESTS_ROOT=. "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
+    "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
 }
 
 pause() {
@@ -21,7 +25,7 @@ fg_red='\e[1;31m'
 fg_green='\e[1;32m'
 fg_yellow='\e[1;33m'
 log() {
-    printf "< TEST > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
+    printf "< $TEST_NAME > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
 }
 
 assert() {
@@ -69,6 +73,11 @@ say() {
 
 teardown() {
     test_status="$?"
+
+    if type test_teardown > /dev/null 2>&1 ; then
+	test_teardown
+    fi
+
     log "$color_reset" '--' ''
     if [ "$test_status" -eq 0 ]; then
         log "$fg_green" 'TEST PASS' ''
@@ -80,6 +89,7 @@ teardown() {
     fi
 
     wait
+    rm -f "$TESTS_ROOT"/running_test.pid
 }
 
 trap teardown EXIT
@@ -87,12 +97,22 @@ trap teardown EXIT
 # shellcheck source=/dev/null
 . "$TESTS_ROOT/../test.env"
 
-log "$color_reset" 'Test start' ''
-log "$color_reset" '--' ''
+TEST_NAME="$(dirname "$0")"
+TEST_NAME=${TEST_NAME#*/}
+export TEST_NAME
 
-# Setup
+# Setup test environment
+
+# Setup test environment
 "$TEST_DIR/testenv_start.sh" finit &
 finit_ppid=$!
+echo "$finit_ppid" > "$TESTS_ROOT"/running_test.pid
+
+>&2 echo "Hint: Execute 'test/testenv_enter.sh' to enter the test namespace"
+>&2 echo "finit conf '$FINIT_CONF'"
+>&2 echo "finit_conf dir '$FINIT_RCSD'"
+log "$color_reset" 'Setup of test environment done' ''
+
 finit_pid=$(retry "pgrep -P $finit_ppid")
 
 tty=/dev/$(texec cat /sys/class/tty/console/active)
