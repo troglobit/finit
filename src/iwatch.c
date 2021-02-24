@@ -48,7 +48,7 @@ int iwatch_init(struct iwatch *iw)
 
 	iw->fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 	if (iw->fd < 0) {
-		_pe("inotify_init()");
+		_pe("Failed creating inotify descriptor");
 		return -1;
 	}
 	initialized = 1;
@@ -90,7 +90,7 @@ int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
 
 	wd = inotify_add_watch(iw->fd, path, IWATCH_MASK | mask);
 	if (wd < 0) {
-		_pe("inotify_add_watch(%s)", path);
+		_pe("Failed adding watcher for %s", path);
 		free(path);
 		return -1;
 	}

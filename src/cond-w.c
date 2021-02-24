@@ -71,7 +71,6 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 	char ident[sizeof(svc->name) + sizeof(svc->id) + 2];
 
 	snprintf(buf, len, "pid/%s", svc_ident(svc, ident, sizeof(ident)));
-	_d("Created condition => %s", buf);
 
 	return buf;
 }
@@ -243,7 +242,6 @@ void cond_reload(void)
 	_d("");
 
 	cond_bump_reconf();
-	cond_update(NULL);
 }
 
 static int reassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)

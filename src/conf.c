@@ -626,7 +626,7 @@ static int parse_conf(char *file)
 		_d("%s", line);
 
 		parse_static(line);
-		parse_dynamic(line, global_rlimit, NULL);
+		parse_dynamic(line, global_rlimit, file);
 	}
 
 	fclose(fp);

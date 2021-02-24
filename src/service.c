@@ -1107,6 +1107,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	else
 		svc_mark_clean(svc);
 
+	/* for finit native services only, e.g. plugins/hotplug.c */
 	if (!file)
 		svc->protect = 1;
 
