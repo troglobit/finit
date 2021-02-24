@@ -71,7 +71,6 @@ char *mkcond(svc_t *svc, char *buf, size_t len)
 	char ident[sizeof(svc->name) + sizeof(svc->id) + 2];
 
 	snprintf(buf, len, "pid/%s", svc_ident(svc, ident, sizeof(ident)));
-	_d("Created condition => %s", buf);
 
 	return buf;
 }
