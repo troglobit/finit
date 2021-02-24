@@ -395,7 +395,7 @@ svc_t *svc_find_by_nameid(char *name, char *id)
 }
 
 /**
- * svc_find_by_plidfile - Find an service object by its PID file
+ * svc_find_by_plidfile - Find a service by its PID file
  * @fn: PID file, can be absolute path or relative to /run
  *
  * This function is primarily used by the pidfile plugin to track the
@@ -412,32 +412,13 @@ svc_t *svc_find_by_nameid(char *name, char *id)
 svc_t *svc_find_by_pidfile(char *fn)
 {
 	svc_t *svc, *iter = NULL;
-	char adjpath[strlen(fn) + 10]; /* + sizeof("/var/run/") */
-	char fnpath[PATH_MAX];
+	pid_t pid;
 
-	pid_runpath(fn, adjpath, sizeof(adjpath));
-	if (!realpath(adjpath, fnpath)) {
-		if (errno != ENOENT)
-			_pe("adjpath: %s, errno %d", adjpath, errno);
+	pid = pid_file_read(fn);
+	if (pid == -1)
 		return NULL;
-	}
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		char path[PATH_MAX];
-		char *pidfn;
-		pid_t pid;
-
-		pidfn = pid_file(svc);
-		if (!pidfn || !realpath(pidfn, path)) {
-			if (errno != ENOENT)
-				_pe("pidfn: %s, errno %d", pidfn ?: "<NULL>", errno);
-			continue;
-		}
-
-		if (!string_compare(fnpath, path))
-			continue;
-
-		pid = pid_file_read(path);
 		if (svc->pid != pid)
 			continue;
 

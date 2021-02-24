@@ -167,6 +167,8 @@ static void setup(void *arg)
 	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
 	makedir("/var/run/quagga", 0755); /* Needed by Quagga */
 	makedir("/var/log/quagga", 0755); /* Needed by Quagga */
+	makedir("/var/run/frr",    0755); /* Needed by FRR */
+	makedir("/var/log/frr",    0755); /* Needed by FRR */
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
 
 	gid = getgroup("tty");
