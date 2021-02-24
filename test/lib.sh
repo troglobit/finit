@@ -16,7 +16,7 @@ pause() {
 
 toggle_finit_debug() {
     say 'Toggle finit debug'
-    texec sh -c "/bin/initctl debug"
+    texec initctl debug
     sleep 0.5
 }
 
@@ -104,7 +104,11 @@ export TEST_NAME
 # Setup test environment
 
 # Setup test environment
-"$TEST_DIR/testenv_start.sh" finit &
+if [ -n "${DEBUG:-}" ]; then
+    FINIT_ARGS="${FINIT_ARGS:-} finit.debug=on"
+fi
+# shellcheck disable=2086
+"$TEST_DIR/testenv_start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
 echo "$finit_ppid" > "$TESTS_ROOT"/running_test.pid
 
