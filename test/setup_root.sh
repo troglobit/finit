@@ -16,7 +16,6 @@ if [ ! -f "$srcdir"/../config.status ]; then
     config_h='./config.h'
     echo "export PATH=/bin:/sbin" > test.env
 else
-    # make
     make -C ../ DESTDIR="$(pwd)/test_root/" install
     FINITBIN=../../src/finit make -C test_root/
     config_h='../config.h'
