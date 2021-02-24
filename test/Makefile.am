@@ -1,10 +1,10 @@
-AM_TESTS_ENVIRONMENT = make --silent --no-print-directory -C test_root/;
+AM_TESTS_ENVIRONMENT = make --silent --no-print-directory -C test-root/;
 
-TESTS		     = checkself.sh
-TESTS		     += test_add_remove_dynamic_service/test.sh
-TESTS		     += test_add_remove_dynamic_service_sub_config/test.sh
-TESTS                += test_start_stop_service/test.sh
-TESTS                += test_start_stop_service_sub_config/test.sh
+TESTS                = checkself.sh
+TESTS                += add-remove-dynamic-service/test.sh
+TESTS                += add-remove-dynamic-service-sub-config/test.sh
+TESTS                += start-stop-service/test.sh
+TESTS                += start-stop-service-sub-config/test.sh
 
 clean-local:
-	make -C test_root/ clean
+	make -C test-root/ clean
