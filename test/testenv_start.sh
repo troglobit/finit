@@ -13,6 +13,9 @@ export PS2='> '
 export PS3='#? '
 export PS4='+ '
 
+PATH="$TESTENV_PATH"
+export PATH
+
 # Not supported by Busybox unshare:
 #  --cgroup --time
 exec "$unshare" \

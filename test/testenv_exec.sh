@@ -21,6 +21,9 @@ export PS2='> '
 export PS3='#? '
 export PS4='+ '
 
+PATH="$TESTENV_PATH"
+export PATH
+
 "$nsenter" \
     --preserve-credentials \
     --user \

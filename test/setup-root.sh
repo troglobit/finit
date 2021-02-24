@@ -14,12 +14,12 @@ if [ ! -f "$srcdir"/../config.status ]; then
     cp "${srcdir}/test-root/Makefile" test-root/
     make -C test-root/
     config_h='./config.h'
-    echo "export PATH=/bin:/sbin" > test.env
+    echo "export TESTENV_PATH=/bin:/sbin" > test.env
 else
     make -C ../ DESTDIR="$(pwd)/test-root/" install
     FINITBIN=../../src/finit make -C test-root/
     config_h='../config.h'
-    echo "export PATH=/bin:/sbin:$PREFIX/sbin:$PREFIX/bin" > test.env
+    echo "export TESTENV_PATH=/bin:/sbin:$PREFIX/sbin:$PREFIX/bin" > test.env
 fi
 
 echo "export FINIT_CONF=$(grep FINIT_CONF $config_h | cut -d' ' -f3 | cut -d'"' -f2)" >> test.env

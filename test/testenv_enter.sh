@@ -20,4 +20,7 @@ else
     exit 1
 fi
 
+PATH="$TESTENV_PATH"
+export PATH
+
 "$(dirname "$0")"/testenv_exec.sh "$target" "$cmd" "$@"
