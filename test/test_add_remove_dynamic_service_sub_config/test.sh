@@ -24,7 +24,7 @@ say "Add a dynamic service in $FINIT_CONF_DIR/service.conf"
 texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh' > $FINIT_CONF_DIR/service.conf"
 
 say 'Reload Finit'
-texec kill -SIGHUP 1
+texec sh -c "initctl reload"
 
 retry 'assert_num_children 1 service.sh'
 
@@ -32,6 +32,6 @@ say 'Remove the dynamic service from /etc/finit.d/service.conf'
 texec sh -c "echo > $FINIT_CONF_DIR/service.conf"
 
 say 'Reload Finit'
-texec kill -SIGHUP 1
+texec sh -c "initctl reload"
 
 retry 'assert_num_children 0 service.sh'
