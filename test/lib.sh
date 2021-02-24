@@ -4,6 +4,12 @@ assert_num_children() {
     assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
 }
 
+remove_thing() {
+    THING="$(realpath "$1")"
+    say "Remove ${THING#*/test/*}"
+    rm -f "$THING"
+}
+
 texec() {
     # shellcheck disable=SC2154
     "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
