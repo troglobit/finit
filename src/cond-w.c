@@ -242,7 +242,6 @@ void cond_reload(void)
 	_d("");
 
 	cond_bump_reconf();
-	cond_update(NULL);
 }
 
 static int reassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)
