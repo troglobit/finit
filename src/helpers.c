@@ -185,9 +185,6 @@ char *strip_line(char *line)
 
 void enable_progress(int onoff)
 {
-	if (debug)
-		return;
-
 	if (onoff)
 		progress_style = progress_onoff;
 	else
