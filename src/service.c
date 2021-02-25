@@ -620,6 +620,22 @@ static void service_kill(svc_t *svc)
 		print(2, NULL);
 }
 
+/*
+ * Clean up any lingering state from dead/killed services
+ */
+static void service_cleanup(svc_t *svc)
+{
+	char *fn;
+
+	fn = pid_file(svc);
+	if (remove(fn) && errno != ENOENT)
+		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
+		      basename(svc->cmd), fn);
+
+	/* No longer running, update books. */
+	svc->start_time = svc->pid = 0;
+}
+
 /**
  * service_stop - Stop service
  * @svc: Service to stop
@@ -629,7 +645,7 @@ static void service_kill(svc_t *svc)
  */
 static int service_stop(svc_t *svc)
 {
-	int res = 0;
+	int rc = 0;
 
 	if (!svc)
 		return 1;
@@ -657,25 +673,15 @@ static int service_stop(svc_t *svc)
 		print_desc("Stopping ", svc->desc);
 
 	if (!svc_is_sysv(svc)) {
-		if (svc->pid <= 1)
-			goto cleanup;
+		if (svc->pid > 1) {
+			/* Kill all children in the same proess group, e.g. logit */
+			rc = kill(-svc->pid, svc->sighalt);
 
-		res = kill(-svc->pid, svc->sighalt);
-
-		/* PID lost or forking process never really started */
-		if (res == -1 && ESRCH == errno) {
-			char *fn;
-
-			/* XXX: Same clenup as done by service_monitor(), refactor */
-		cleanup:
-			fn = pid_file(svc);
-			if (remove(fn) && errno != ENOENT)
-				logit(LOG_CRIT, "Failed removing service %s pidfile %s",
-				      basename(svc->cmd), fn);
-
-			/* No longer running, update books. */
-			svc->start_time = svc->pid = 0;
-		}
+			/* PID lost or forking process never really started */
+			if (rc == -1 && ESRCH == errno)
+				service_cleanup(svc);
+		} else
+				service_cleanup(svc);
 	} else {
 		char *args[] = { svc->cmd, "stop", NULL };
 		pid_t pid;
@@ -689,18 +695,18 @@ static int service_stop(svc_t *svc)
 			break;
 		case -1:
 			_pe("Failed fork() to call sysv script '%s stop'", svc->cmd);
-			res = 1;
+			rc = 1;
 			break;
 		default:
-			res = WEXITSTATUS(complete(svc->cmd, pid));
+			rc = WEXITSTATUS(complete(svc->cmd, pid));
 			break;
 		}
 	}
 
 	if (runlevel != 1)
-		print_result(res);
+		print_result(rc);
 
-	return res;
+	return rc;
 }
 
 /**
@@ -716,6 +722,7 @@ static int service_stop(svc_t *svc)
 static int service_restart(svc_t *svc)
 {
 	int do_progress = 1;
+	pid_t lost = 0;
 	int rc;
 
 	/* Ignore if finit is SIGSTOP'ed */
@@ -742,18 +749,25 @@ static int service_restart(svc_t *svc)
 	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s[%d], sending SIGHUP ...",
 	      svc_ident(svc, NULL, 0), svc->pid);
 	rc = kill(svc->pid, SIGHUP);
+	if (rc == -1 && errno == ESRCH) {
+		/* nobody home, reset internal state machine */
+		lost = svc->pid;
+	} else {
+		/* Declare we're waiting for svc to re-assert/touch its pidfile */
+		svc_starting(svc);
 
-	/* Declare we're waiting for svc to re-assert/touch its pidfile */
-	svc_starting(svc);
-
-	/* Service does not maintain a PID file on its own */
-	if (svc_has_pidfile(svc)) {
-		sched_yield();
-		touch(pid_file(svc));
+		/* Service does not maintain a PID file on its own */
+		if (svc_has_pidfile(svc)) {
+			sched_yield();
+			touch(pid_file(svc));
+		}
 	}
 
 	if (do_progress)
 		print_result(rc);
+
+	if (lost)
+		service_monitor(lost, 0);
 
 	return rc;
 }
@@ -1159,11 +1173,7 @@ void service_monitor(pid_t lost, int status)
 
 	/* Try removing PID file (in case service does not clean up after itself) */
 	if (svc_is_daemon(svc)) {
-		char *fn;
-
-		fn = pid_file(svc);
-		if (remove(fn) && errno != ENOENT)
-			logit(LOG_CRIT, "Failed removing service %s pidfile %s", basename(svc->cmd), fn);
+		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
 		if (WIFEXITED(status) && !WEXITSTATUS(status))
 			svc->started = 1;
@@ -1172,7 +1182,7 @@ void service_monitor(pid_t lost, int status)
 	}
 
 	/* Terminate any children in the same proess group, e.g. logit */
-	kill(-svc->pid, SIGTERM);
+	kill(-svc->pid, SIGKILL);
 
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;

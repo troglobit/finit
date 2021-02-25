@@ -149,35 +149,25 @@ static void pidfile_handle_dir(struct iwatch *iw, char *dir, char *name, int mas
 
 static void pidfile_callback(void *arg, int fd, int events)
 {
+	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
 	struct inotify_event *ev;
 	ssize_t sz, off;
-	size_t buflen = 8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1;
-	char *buf;
 
-        buf= malloc(buflen);
-	if (!buf) {
-		_pe("Failed allocating buffer for inotify events");
-		return;
-	}
-
-	_d("Entering ... reading %zu bytes into ev_buf[]", buflen - 1);
-	sz = read(fd, buf, buflen - 1);
+	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
 		_pe("invalid inotify event");
-		goto done;
+		return;
 	}
-	buf[sz] = 0;
-	_d("Read %zd bytes, processing ...", sz);
+	ev_buf[sz] = 0;
 
-	off = 0;
 	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
 		struct iwatch_path *iwp;
 
-		ev = (struct inotify_event *)&buf[off];
-
-		_d("path %s, event: 0x%08x", ev->name, ev->mask);
+		ev = (struct inotify_event *)&ev_buf[off];
 		if (!ev->mask)
 			continue;
+
+		_d("name %s, event: 0x%08x", ev->name, ev->mask);
 
 		/* Find base path for this event */
 		iwp = iwatch_find_by_wd(&iw_pidfile, ev->wd);
@@ -197,8 +187,6 @@ static void pidfile_callback(void *arg, int fd, int events)
 		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
 			pidfile_update_conds(iwp->path, ev->name, ev->mask);
 	}
-done:
-	free(buf);
 }
 
 /*

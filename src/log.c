@@ -85,7 +85,6 @@ void log_debug(void)
 		screen_init();
 	}
 	log_open();
-	enable_progress(1);
 
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
 }

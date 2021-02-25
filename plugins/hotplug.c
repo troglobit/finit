@@ -43,17 +43,17 @@ static void setup(void *arg)
 		path = which("/lib/systemd/systemd-udevd");
 	if (path) {
 		/* Register udevd as a monitored service */
-		snprintf(cmd, sizeof(cmd), "[S12345789] pid:udevd name:udevd %s "
+		snprintf(cmd, sizeof(cmd), "[S12345789] pid:udevd name:udevd log %s "
 			 "-- Device event managing daemon", path);
 		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
 			_pe("Failed registering %s", path);
 		} else {
-			snprintf(cmd, sizeof(cmd), ":1 [S] log <pid/udevd> "
+			snprintf(cmd, sizeof(cmd), ":1 [S] <pid/udevd> log "
 				 "udevadm trigger -c add -t devices "
 				 "-- Requesting device events");
 			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
 
-			snprintf(cmd, sizeof(cmd), ":2 [S] log <pid/udevd> "
+			snprintf(cmd, sizeof(cmd), ":2 [S] <pid/udevd> log "
 				 "udevadm trigger -c add -t subsystems "
 				 "-- Requesting subsystem events");
 			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
