@@ -631,6 +631,9 @@ static void service_cleanup(svc_t *svc)
 	if (remove(fn) && errno != ENOENT)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      basename(svc->cmd), fn);
+
+	/* No longer running, update books. */
+	svc->start_time = svc->pid = 0;
 }
 
 /**
@@ -679,9 +682,6 @@ static int service_stop(svc_t *svc)
 				service_cleanup(svc);
 		} else
 				service_cleanup(svc);
-
-		/* No longer running, update books. */
-		svc->start_time = svc->pid = 0;
 	} else {
 		char *args[] = { svc->cmd, "stop", NULL };
 		pid_t pid;
