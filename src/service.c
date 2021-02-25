@@ -1116,7 +1116,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
 
 	/* New, recently modified or unchanged ... used on reload. */
-	if (file && conf_changed(file))
+	if ((file && conf_changed(file)) || conf_changed(svc_getenv(svc)))
 		svc_mark_dirty(svc);
 	else
 		svc_mark_clean(svc);

@@ -772,13 +772,13 @@ static void drop_changes(void)
 
 static int do_change(char *dir, char *name, uint32_t mask)
 {
-	char path[strlen(dir) + strlen(name) + 2];
+	char fn[strlen(dir) + strlen(name) + 2];
 	struct conf_change *node;
 
-	snprintf(path, sizeof(path), "%s%s", dir, name);
-	_d("path: %s", path);
+	snprintf(fn, sizeof(fn), "%s%s%s", dir, fisslashdir(dir) ? "" : "/", name);
+	_d("path: %s mask: %08x", fn, mask);
 
-	node = conf_find(path);
+	node = conf_find(fn);
 	if (mask & (IN_DELETE | IN_MOVED_FROM)) {
 		drop_change(node);
 		return 0;
@@ -793,13 +793,13 @@ static int do_change(char *dir, char *name, uint32_t mask)
 	if (!node)
 		return 1;
 
-	node->name = strdup(path);
+	node->name = strdup(fn);
 	if (!node->name) {
 		free(node);
 		return 1;
 	}
 
-	_d("Event registered for %s, mask 0x%x", path, mask);
+	_d("Event registered for %s, mask 0x%x", fn, mask);
 	TAILQ_INSERT_HEAD(&conf_change_list, node, link);
 
 	return 0;
@@ -880,6 +880,14 @@ int conf_monitor(void)
 	rc += iwatch_add(&iw_conf, FINIT_RCSD "/available/", IN_ONLYDIR | IN_DONT_FOLLOW);
 	rc += iwatch_add(&iw_conf, FINIT_RCSD "/enabled/",   IN_ONLYDIR | IN_DONT_FOLLOW);
 	rc += iwatch_add(&iw_conf, FINIT_CONF, 0);
+
+	/*
+	 * Systems with /etc/default, or similar, can also monitor changes
+	 * in env files sourced by .conf files (above)
+	 */
+#ifdef FINIT_SYSCONFIG
+	rc += iwatch_add(&iw_conf, FINIT_SYSCONFIG, IN_ONLYDIR);
+#endif
 
 	return rc + conf_reload();
 }
