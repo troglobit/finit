@@ -89,6 +89,10 @@ teardown() {
     fi
 
     wait
+
+    if [ -d "$TESTS_ROOT/var/lock" ]; then
+        chmod +r test-root/var/lock
+    fi
     rm -f "$TESTS_ROOT"/running_test.pid
 }
 
