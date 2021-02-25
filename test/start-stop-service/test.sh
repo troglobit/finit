@@ -17,7 +17,7 @@ test_teardown() {
 
 say "Test start $(date)"
 
-cp "$TEST_DIR"/common/service.sh "$TESTS_ROOT"/test_assets/
+cp "$TEST_DIR"/common/service.sh "$TESTENV_ROOT"/test_assets/
 
 say "Add service stanza in $FINIT_CONF"
 texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh' > $FINIT_CONF"

@@ -90,16 +90,19 @@ teardown() {
 
     wait
 
-    if [ -d "$TESTS_ROOT/var/lock" ]; then
+    if [ -d "$TESTENV_ROOT/var/lock" ]; then
         chmod +r test-root/var/lock
     fi
-    rm -f "$TESTS_ROOT"/running_test.pid
+    rm -f "$TESTENV_ROOT"/running_test.pid
 }
 
 trap teardown EXIT
 
+TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/test-root}"
+export TESTENV_ROOT
+
 # shellcheck source=/dev/null
-. "$TESTS_ROOT/../test.env"
+. "$TESTENV_ROOT/../test.env"
 
 TEST_NAME="$(dirname "$0")"
 TEST_NAME=${TEST_NAME#*/}
@@ -114,7 +117,7 @@ fi
 # shellcheck disable=2086
 "$TEST_DIR/testenv_start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
-echo "$finit_ppid" > "$TESTS_ROOT"/running_test.pid
+echo "$finit_ppid" > "$TESTENV_ROOT"/running_test.pid
 
 >&2 echo "Hint: Execute 'test/testenv_enter.sh' to enter the test namespace"
 >&2 echo "finit conf '$FINIT_CONF'"

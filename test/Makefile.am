@@ -9,8 +9,8 @@ EXTRA_DIST		+= add-remove-dynamic-service-sub-config/test.sh
 EXTRA_DIST		+= start-stop-service/test.sh
 EXTRA_DIST		+= start-stop-service-sub-config/test.sh
 
-AM_TESTS_ENVIRONMENT	 = TESTS_ROOT='$(abs_builddir)/test-root/';
-AM_TESTS_ENVIRONMENT	+= export TESTS_ROOT;
+AM_TESTS_ENVIRONMENT	 = TESTENV_ROOT='$(abs_builddir)/test-root/';
+AM_TESTS_ENVIRONMENT	+= export TESTENV_ROOT;
 AM_TESTS_ENVIRONMENT	+= export LD_LIBRARY_PATH;
 AM_TESTS_ENVIRONMENT	+= top_srcdir=$(top_srcdir);
 AM_TESTS_ENVIRONMENT	+= export top_srcdir;
