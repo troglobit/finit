@@ -449,7 +449,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Initialize .conf system and load static /etc/finit.conf.
 	 */
-	conf_init();
+	conf_init(&loop);
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
@@ -458,10 +458,10 @@ int main(int argc, char *argv[])
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
-	 * Set up inotify watcher for /etc/finit.d and read all .conf
-	 * files to figure out how to bootstrap the system.
+	 * Set up inotify watcher for /etc/finit.conf, /etc/finit.d, and
+	 * their deps, to figure out how to bootstrap the system.
 	 */
-	conf_monitor(&loop);
+	conf_monitor();
 
 	_d("Starting initctl API responder ...");
 	api_init(&loop);

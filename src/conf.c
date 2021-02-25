@@ -34,6 +34,7 @@
 
 #include "finit.h"
 #include "cond.h"
+#include "iwatch.h"
 #include "service.h"
 #include "tty.h"
 #include "helpers.h"
@@ -53,7 +54,9 @@ struct conf_change {
 	char *name;
 };
 
-static uev_t w1, w2, w3, w4;
+static struct iwatch iw_conf;
+static uev_t etcw;
+
 static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
 
 static int parse_conf(char *file);
@@ -680,8 +683,9 @@ int conf_reload(void)
 
 	for (i = 0; i < gl.gl_pathc; i++) {
 		char *path = gl.gl_pathv[i];
-		size_t len;
+		char *rp = NULL;
 		struct stat st;
+		size_t len;
 
 		/* Check that it's an actual file ... beyond any symlinks */
 		if (lstat(path, &st)) {
@@ -697,25 +701,22 @@ int conf_reload(void)
 
 		/* Check for dangling symlinks */
 		if (S_ISLNK(st.st_mode)) {
-			char *rp;
-
-			rp = realpath(path, NULL);
+			path = rp = realpath(path, NULL);
 			if (!rp) {
 				logit(LOG_WARNING, "Skipping %s, dangling symlink: %s", path, strerror(errno));
 				continue;
 			}
-
-			free(rp);
 		}
 
 		/* Check that file ends with '.conf' */
 		len = strlen(path);
-		if (len < 6 || strcmp(&path[len - 5], ".conf")) {
+		if (len < 6 || strcmp(&path[len - 5], ".conf"))
 			_d("Skipping %s, not a valid .conf ... ", path);
-			continue;
-		}
+		else
+			parse_conf_dynamic(path);
 
-		parse_conf_dynamic(path);
+		if (rp)
+			free(rp);
 	}
 
 	globfree(&gl);
@@ -742,6 +743,7 @@ static struct conf_change *conf_find(char *file)
 	struct conf_change *node, *tmp;
 
 	TAILQ_FOREACH_SAFE(node, &conf_change_list, link, tmp) {
+		_d("file: %s vs changed file: %s", file, node->name);
 		if (string_compare(node->name, file))
 			return node;
 	}
@@ -768,13 +770,15 @@ static void drop_changes(void)
 		drop_change(node);
 }
 
-static int do_change(char *name, uint32_t mask)
+static int do_change(char *dir, char *name, uint32_t mask)
 {
+	char path[strlen(dir) + strlen(name) + 2];
 	struct conf_change *node;
 
-	_d("Change detected for %s, mask 0x%08x", name, mask);
+	snprintf(path, sizeof(path), "%s%s", dir, name);
+	_d("path: %s", path);
 
-	node = conf_find(name);
+	node = conf_find(path);
 	if (mask & (IN_DELETE | IN_MOVED_FROM)) {
 		drop_change(node);
 		return 0;
@@ -789,14 +793,14 @@ static int do_change(char *name, uint32_t mask)
 	if (!node)
 		return 1;
 
-	node->name = strdup(name);
+	node->name = strdup(path);
 	if (!node->name) {
 		free(node);
 		return 1;
 	}
 
-	_d("Event registered for %s, mask 0x%x", name, mask);
-	TAILQ_INSERT_HEAD(&conf_change_list, node,link);
+	_d("Event registered for %s, mask 0x%x", path, mask);
+	TAILQ_INSERT_HEAD(&conf_change_list, node, link);
 
 	return 0;
 }
@@ -811,13 +815,8 @@ int conf_any_change(void)
 
 int conf_changed(char *file)
 {
-	char *ptr;
-
 	if (!file)
 		return 0;
-
-	if ((ptr = strrchr(file, '/')))
-		file = ++ptr;
 
 	if (conf_find(file))
 		return 1;
@@ -829,7 +828,7 @@ static void conf_cb(uev_t *w, void *arg, int events)
 {
 	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
 	struct inotify_event *ev;
-	ssize_t sz, len;
+	ssize_t sz, off;
 
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
@@ -837,17 +836,23 @@ static void conf_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 	ev_buf[sz] = 0;
-	ev = (struct inotify_event *)ev_buf;
 
-	if (arg) {
-		do_change(arg, ev->mask);
-		return;
-	}
+	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
+		struct iwatch_path *iwp;
 
-	for (ev = (void *)ev_buf; sz > (ssize_t)sizeof(*ev);
-	     len = sizeof(*ev) + ev->len, ev = (void *)ev + len, sz -= len) {
-		if (do_change(ev->name, ev->mask)) {
-			_pe("conf_monitor: Out of memory");
+		ev = (struct inotify_event *)&ev_buf[off];
+		if (!ev->mask)
+			continue;
+
+		_d("name %s, event: 0x%08x", ev->name, ev->mask);
+
+		/* Find base path for this event */
+		iwp = iwatch_find_by_wd(&iw_conf, ev->wd);
+		if (!iwp)
+			continue;
+
+		if (do_change(iwp->path, ev->name, ev->mask)) {
+			_pe(" Out of memory");
 			break;
 		}
 	}
@@ -858,71 +863,12 @@ static void conf_cb(uev_t *w, void *arg, int events)
 #endif
 }
 
-static int add_watcher(uev_ctx_t *ctx, uev_t *w, char *path, uint32_t opt)
-{
-	struct stat st;
-	uint32_t mask = IN_CREATE | IN_DELETE | IN_MODIFY | IN_ATTRIB | IN_MOVE;
-	char *arg = NULL;
-	int fd, wd;
-
-	if (!ctx)
-		return 0;
-
-	if (stat(path, &st)) {
-		_d("No such file or directory, skipping %s", path);
-		w->fd = -1;
-		return 0;
-	}
-	if (!S_ISDIR(st.st_mode)) {
-		arg = strrchr(path, '/');
-		if (!arg)
-			arg = path;
-		else
-			arg++;
-	}
-
-	if (w->fd >= 0)
-		close(w->fd);
-
-	fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
-	if (fd < 0) {
-		_pe("Failed creating inotify descriptor");
-		w->fd = -1;
-		return 1;
-	}
-
-	/*
-	 * Only forward error, don't report error,
-	 * user may not have @path and that's OK
-	 */
-	wd = inotify_add_watch(fd, path, mask | opt);
-	if (wd < 0) {
-		w->fd = -1;
-		close(fd);
-		return 1;
-	}
-
-	if (uev_io_init(ctx, w, conf_cb, arg, fd, UEV_READ)) {
-		_pe("Failed setting up I/O callback for %s watcher", path);
-		w->fd = -1;
-		close(fd);
-		return 1;
-	}
-	_d("Set up inotify watcher for %s ...", path);
-
-	return 0;
-}
-
 /*
  * Set up inotify watcher and load all *.conf in /etc/finit.d/
  */
-int conf_monitor(uev_ctx_t *ctx)
+int conf_monitor(void)
 {
 	int rc = 0;
-
-	/* Skip second run, when called from finit.c in rescue mode */
-	if (ctx && rescue)
-		return 0;
 
 	/*
 	 * If only one watcher fails, that's OK.  A user may have only
@@ -930,10 +876,10 @@ int conf_monitor(uev_ctx_t *ctx)
 	 * have or not have symlinks in place.  We need to monitor for
 	 * changes to either symlink or target.
 	 */
-	rc += add_watcher(ctx, &w1, FINIT_RCSD, 0);
-	rc += add_watcher(ctx, &w2, FINIT_RCSD "/available/", IN_DONT_FOLLOW);
-	rc += add_watcher(ctx, &w3, FINIT_RCSD "/enabled/", 0);
-	rc += add_watcher(ctx, &w4, FINIT_CONF, 0);
+	rc += iwatch_add(&iw_conf, FINIT_RCSD, IN_ONLYDIR);
+	rc += iwatch_add(&iw_conf, FINIT_RCSD "/available/", IN_ONLYDIR | IN_DONT_FOLLOW);
+	rc += iwatch_add(&iw_conf, FINIT_RCSD "/enabled/",   IN_ONLYDIR | IN_DONT_FOLLOW);
+	rc += iwatch_add(&iw_conf, FINIT_CONF, 0);
 
 	return rc + conf_reload();
 }
@@ -941,12 +887,25 @@ int conf_monitor(uev_ctx_t *ctx)
 /*
  * Prepare .conf parser and load all .conf files
  */
-int conf_init(void)
+int conf_init(uev_ctx_t *ctx)
 {
-	hostname = strdup(DEFHOST);
-	w1.fd = w2.fd = w3.fd = w4.fd = -1;
+	int fd;
 
-	return conf_monitor(NULL);
+	/* default hostname */
+	hostname = strdup(DEFHOST);
+
+	/* prepare /etc watcher */
+	fd = iwatch_init(&iw_conf);
+	if (fd < 0)
+		return 1;
+
+	if (uev_io_init(ctx, &etcw, conf_cb, NULL, fd, UEV_READ)) {
+		_pe("Failed setting up I/O callback for /etc watcher");
+		close(fd);
+		return 1;
+	}
+
+	return 0;
 }
 
 /**
