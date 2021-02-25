@@ -14,12 +14,12 @@ fi
 # The plugins are optional, but you may need D-Bus and X11 if you want
 # to run X-Window, the other configure flags are however required.
 PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig ./configure	\
-		 --prefix=/usr                 --exec-prefix=			\
-		 --sysconfdir=/etc             --localstatedir=/var		\
-                 --enable-dbus-plugin          --enable-x11-common-plugin	\
-		 --enable-alsa-utils-plugin    					\
-		 --enable-watchdog						\
-		 --with-heading="Alpine Linux 3.13" --with-hostname=alpine
+		 --prefix=/usr			--exec-prefix=			\
+		 --sysconfdir=/etc		--localstatedir=/var		\
+		 --enable-dbus-plugin		--enable-x11-common-plugin	\
+		 --enable-alsa-utils-plugin	--enable-watchdog		\
+		 --with-sysconfig=/etc/conf.d	--with-hostname=alpine		\
+		 --with-heading="Alpine Linux 3.13"
 
 echo
 echo "*** Building ..."
