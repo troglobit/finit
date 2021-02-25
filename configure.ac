@@ -97,21 +97,19 @@ AC_PLUGIN([netlink],       [yes], [Basic netlink plugin for IFUP/IFDN and GW eve
 # Check for extra arguments or packages
 AC_ARG_WITH(heading,
         AS_HELP_STRING([--with-heading=GREET], [Display GREET instead of Finit version at boot]),
-	[heading=$withval], [heading="$PACKAGE_NAME v$PACKAGE_VERSION"])
+	[heading=$withval], [heading=yes])
 
 AC_ARG_WITH(config,
         AS_HELP_STRING([--with-config=CONFIG], [Finit bootstrap config file, default /etc/finit.conf]),
-	[conf=$withval], [conf=$sysconfdir/finit.conf])
-AC_SUBST(FINIT_CONF, $conf)
+	[conf=$withval], [conf=yes])
 
 AC_ARG_WITH(rcsd,
         AS_HELP_STRING([--with-rcsd=DIR], [Finit rcS.d/ directory, default /etc/finit.d]),
-	[rcsd=$withval], [rcsd=$sysconfdir/finit.d])
-AC_SUBST(FINIT_RCSD, $rcsd)
+	[rcsd=$withval], [rcsd=yes])
 
 AC_ARG_WITH(rc-local,
         AS_HELP_STRING([--with-rc-local=FILE], [SysV init /etc/rc.local file, default /etc/rc.local]),
-	[rclocal=$withval], [rclocal=$sysconfdir/rc.local])
+	[rclocal=$withval], [rclocal=yes])
 
 AC_ARG_WITH(sysconfig,
         AS_HELP_STRING([--with-sysconfig=DIR], [Enviroment config directory, default /etc/default]),
@@ -119,15 +117,15 @@ AC_ARG_WITH(sysconfig,
 
 AC_ARG_WITH(hostname,
         AS_HELP_STRING([--with-hostname=NAME], [If /etc/hostname is missing, default: noname]),
-	[hostname=$withval], [hostname=noname])
+	[hostname=$withval], [hostname=yes])
 
 AC_ARG_WITH(runlevel,
         AS_HELP_STRING([--with-runlevel=N], [Runlevel to switch to after bootstrap, default: 2]),
-	[runlevel=$withval], [runlevel=2])
+	[runlevel=$withval], [runlevel=yes])
 
 AC_ARG_WITH(random-seed,
         AS_HELP_STRING([--with-random-seed=FILE], [Save a random seed for /dev/urandom across reboots, default /var/lib/misc/random-seed]),
-	[random_seed=$withval], [random_seed=/var/lib/misc/random-seed])
+	[random_seed=$withval], [random_seed=yes])
 
 ### Enable features ###########################################################################
 
@@ -156,16 +154,18 @@ AS_IF([test "x$enable_logrotate" != "xno"], [
 
 ### With features ##############################################################################
 AS_IF([test "x$with_config" != "xno"], [
-	AS_IF([test "x$config" = "xyes"], [
+	AS_IF([test "x$conf" = "xyes"], [
 		conf=$sysconfdir/finit.conf])])
 AC_EXPAND_DIR(conf_path, "$conf")
 AC_DEFINE_UNQUOTED(FINIT_CONF, "$conf_path", [Main Finit configuration file, default /etc/finit.conf])
+AC_SUBST(FINIT_CONF, "$conf_path")
 
 AS_IF([test "x$with_rcsd" != "xno"], [
 	AS_IF([test "x$rcsd" = "xyes"], [
 		rcsd=$sysconfdir/finit.d])])
 AC_EXPAND_DIR(rcsd_path, "$rcsd")
 AC_DEFINE_UNQUOTED(FINIT_RCSD, "$rcsd_path", [Finit rcS.d/, default /etc/finit.d])
+AC_SUBST(FINIT_RCSD, "$rcsd_path")
 
 AS_IF([test "x$with_rc_local" != "xno"], [
 	AS_IF([test "x$rclocal" = "xyes"], [
@@ -192,7 +192,8 @@ AC_DEFINE_UNQUOTED(DEFHOST, "$hostname", [For /etc/hostname])
 
 AS_IF([test "x$with_runlevel" != "xno"], [
 	AS_IF([test "x$runlevel" = "xyes"], [
-		AC_DEFINE_UNQUOTED(RUNLEVEL, 2, [Default runlevel to start after S])])
+		runlevel=2
+		AC_DEFINE_UNQUOTED(RUNLEVEL, $runlevel, [Default runlevel to start after S])])
 	AC_DEFINE_UNQUOTED(RUNLEVEL, $runlevel, [Runlevel to start after S])])
 
 AS_IF([test "x$with_random_seed" != "xno"], [
