@@ -62,7 +62,7 @@ static inline char *pid_runpath(const char *file, char *path, size_t len)
 	else if (!strncmp(file, "/run/", 5))
 		file += 5;
 
-	rc = snprintf(path, len, "%s/%s", prefix, file);
+	rc = paste(path, len, prefix, file);
 	if (rc < 0 || (size_t)rc >= len)
 		_e("File path '%s' truncated, should end with '%s'", path, file);
 
