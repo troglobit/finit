@@ -175,10 +175,10 @@ AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$rclocal_path", [Compat SysV /etc/rc.local f
 
 AS_IF([test "x$with_sysconfig" != "xno"], [
 	AS_IF([test "x$sysconfig" = "xyes"], [
-		sysconfig=$sysconfdir/default
-		AC_EXPAND_DIR(sysconfig_path, "$sysconfig")
-		AC_DEFINE_UNQUOTED(FINIT_SYSCONFIG, "$sysconfig_path",
-				    [System environment, default /etc/default])])])
+		sysconfig=$sysconfdir/default])
+	AC_EXPAND_DIR(sysconfig_path, "$sysconfig")
+	AC_DEFINE_UNQUOTED(FINIT_SYSCONFIG, "$sysconfig_path",
+			    [System environment, default /etc/default])])
 
 AS_IF([test "x$with_heading" != "xno"], [
 	AS_IF([test "x$heading" = "xyes"], [
