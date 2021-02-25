@@ -454,7 +454,7 @@ int run_parts(char *dir, char *cmd)
 		int status;
 		int exit_status;
 
-		snprintf(path, sizeof(path), "%s/%s", dir, name);
+		snprintf(path, sizeof(path), "%s%s%s", dir, fisslashdir(dir) ? "" : "/", name);
 		if (stat(path, &st)) {
 			_d("Failed stat(%s): %s", path, strerror(errno));
 			continue;
