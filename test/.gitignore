@@ -3,3 +3,5 @@
 *.trs
 /Makefile
 /Makefile.in
+
+/test.env

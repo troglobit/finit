@@ -12,6 +12,7 @@ AC_CONFIG_FILES([Makefile
 	doc/Makefile
 	plugins/Makefile
 	src/Makefile
+	test/test.env
 	test/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
@@ -101,10 +102,12 @@ AC_ARG_WITH(heading,
 AC_ARG_WITH(config,
         AS_HELP_STRING([--with-config=CONFIG], [Finit bootstrap config file, default /etc/finit.conf]),
 	[conf=$withval], [conf=$sysconfdir/finit.conf])
+AC_SUBST(FINIT_CONF, $conf)
 
 AC_ARG_WITH(rcsd,
         AS_HELP_STRING([--with-rcsd=DIR], [Finit rcS.d/ directory, default /etc/finit.d]),
 	[rcsd=$withval], [rcsd=$sysconfdir/finit.d])
+AC_SUBST(FINIT_RCSD, $rcsd)
 
 AC_ARG_WITH(rc-local,
         AS_HELP_STRING([--with-rc-local=FILE], [SysV init /etc/rc.local file, default /etc/rc.local]),
