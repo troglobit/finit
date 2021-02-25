@@ -441,20 +441,20 @@ int run_parts(char *dir, char *cmd)
 	}
 
 	for (i = 0; i < num; i++) {
+		const char *name = e[i]->d_name;
+		char path[strlen(dir) + strlen(name) + 2];
 		struct stat st;
-		char path[512];
 		char *argv[4] = {
 			"sh",
 			"-c",
 			path,
 			NULL
 		};
-		char *name = e[i]->d_name;
 		pid_t pid = 0;
 		int status;
 		int exit_status;
 
-		snprintf(path, sizeof(path), "%s%s%s", dir, fisslashdir(dir) ? "" : "/", name);
+		paste(path, sizeof(path), dir, name);
 		if (stat(path, &st)) {
 			_d("Failed stat(%s): %s", path, strerror(errno));
 			continue;

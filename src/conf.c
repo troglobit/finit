@@ -775,7 +775,7 @@ static int do_change(char *dir, char *name, uint32_t mask)
 	char fn[strlen(dir) + strlen(name) + 2];
 	struct conf_change *node;
 
-	snprintf(fn, sizeof(fn), "%s%s%s", dir, fisslashdir(dir) ? "" : "/", name);
+	paste(fn, sizeof(fn), dir, name);
 	_d("path: %s mask: %08x", fn, mask);
 
 	node = conf_find(fn);

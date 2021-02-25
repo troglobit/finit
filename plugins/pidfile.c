@@ -67,8 +67,8 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	char fn[PATH_MAX];
 	svc_t *svc;
 
-	_d("Got dir: %s, name: %s, mask: %08x", dir, name, mask);
-	snprintf(fn, sizeof(fn), "%s%s%s", dir, fisslashdir(dir) ? "" : "/", name);
+	paste(fn, sizeof(fn), dir, name);
+	_d("path: %s, mask: %08x", fn, mask);
 
 	if (fnmatch("*\\.pid", fn, 0) && fnmatch("*/pid", fn, 0))
 		return;
@@ -131,7 +131,7 @@ static void pidfile_handle_dir(struct iwatch *iw, char *dir, char *name, int mas
 	char path[strlen(dir) + strlen(name) + 2];
 	struct iwatch_path *iwp;
 
-	snprintf(path, sizeof(path), "%s%s%s", dir, fisslashdir(dir) ? "" : "/", name);
+	paste(path, sizeof(path), dir, name);
 	_d("path: %s", path);
 
 	iwp = iwatch_find_by_path(iw, path);
