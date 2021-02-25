@@ -14,6 +14,10 @@ AM_TESTS_ENVIRONMENT	+= export TESTS_ROOT;
 AM_TESTS_ENVIRONMENT	+= export LD_LIBRARY_PATH;
 AM_TESTS_ENVIRONMENT	+= PREFIX=$(prefix);
 AM_TESTS_ENVIRONMENT	+= export PREFIX;
+AM_TESTS_ENVIRONMENT	+= top_srcdir=$(top_srcdir);
+AM_TESTS_ENVIRONMENT	+= export top_srcdir;
+AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
+AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
 TESTS			 = checkself.sh
 TESTS			+= setup-root.sh
