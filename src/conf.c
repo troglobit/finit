@@ -902,6 +902,14 @@ int conf_init(uev_ctx_t *ctx)
 	/* default hostname */
 	hostname = strdup(DEFHOST);
 
+	/*
+	 * Get current global limits, which may be overridden from both
+         * finit.conf, for Finit and its services like getty+watchdogd,
+         * and *.conf in finit.d/, for each service(s) listed there.
+         */
+        for (int i = 0; i < RLIMIT_NLIMITS; i++)
+                getrlimit(i, &global_rlimit[i]);
+
 	/* prepare /etc watcher */
 	fd = iwatch_init(&iw_conf);
 	if (fd < 0)
