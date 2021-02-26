@@ -17,6 +17,11 @@ AM_TESTS_ENVIRONMENT	+= export top_srcdir;
 AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
 AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
+checkself.sh:
+	echo '#!/bin/sh' > $@
+	echo shellcheck $(addprefix '"$$srcdir"'/,$(filter %$(TEST_EXTENSIONS),$(filter-out $@, $(EXTRA_DIST)))) >> $@
+	chmod +x $@
+
 TEST_EXTENSIONS		 = .sh
 TESTS			 = checkself.sh
 TESTS			+= setup-root.sh
@@ -27,3 +32,4 @@ TESTS			+= start-stop-service-sub-config/test.sh
 
 clean-local:
 	make -C test-root/ clean
+	-rm checkself.sh
