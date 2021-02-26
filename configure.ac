@@ -152,7 +152,7 @@ AS_IF([test "x$enable_logrotate" != "xno"], [
 
 ### With features ##############################################################################
 AS_IF([test "x$with_config" != "xno"], [
-	AS_IF([test "x$config" = "xyes"], [
+	AS_IF([test "x$conf" = "xyes"], [
 		conf=$sysconfdir/finit.conf])])
 AC_EXPAND_DIR(conf_path, "$conf")
 AC_DEFINE_UNQUOTED(FINIT_CONF, "$conf_path", [Main Finit configuration file, default /etc/finit.conf])
