@@ -10,7 +10,7 @@ else
     shift
 fi
 
-PID_FILE=$(dirname "$0")/test-root/running_test.pid
+PID_FILE=$(dirname "$0")/testenv-root/running_test.pid
 
 if [ -f  "$PID_FILE" ] ; then
     target=$(cat "$PID_FILE")

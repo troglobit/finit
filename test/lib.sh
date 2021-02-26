@@ -91,14 +91,14 @@ teardown() {
     wait
 
     if [ -d "$TESTENV_ROOT/var/lock" ]; then
-        chmod +r test-root/var/lock
+        chmod +r "$TESTENV_ROOT/var/lock"
     fi
     rm -f "$TESTENV_ROOT"/running_test.pid
 }
 
 trap teardown EXIT
 
-TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/test-root}"
+TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/testenv-root}"
 export TESTENV_ROOT
 
 # shellcheck source=/dev/null

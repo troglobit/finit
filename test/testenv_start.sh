@@ -3,7 +3,7 @@
 set -eu
 
 TEST_DIR=$(dirname "$0")
-TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/test-root}"
+TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/testenv-root}"
 
 unshare=$(command -v unshare)
 chroot=$(command -v chroot)
