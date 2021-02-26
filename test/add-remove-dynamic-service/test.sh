@@ -7,6 +7,19 @@ TEST_DIR=$(dirname "$0")/..
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib.sh"
 
+say 'environment:'
+texec env
+say 'initctl:'
+texec busybox-x86_64 which initctl
+say 'ldd initctl:'
+texec sh -c 'LD_TRACE_LOADED_OBJECTS=1 initctl'
+say 'finit:'
+texec busybox-x86_64 which finit
+say 'ldd finit:'
+texec sh -c 'LD_TRACE_LOADED_OBJECTS=1 finit'
+say 'tree:'
+texec find / | grep -v '^/sys' | grep -v '^/proc'
+
 test_teardown() {
     say "Test done $(date)"
     say "Running test teardown."
