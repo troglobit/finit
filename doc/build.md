@@ -29,8 +29,8 @@ optional plugins to enable.  It depends on two external libraries:
 The configure script checks for all dependencies, including the correct
 version of the above mentioned libraries.  Currently requried versions:
 
-- libite v2.0.1
-- libuEv v2.1.0
+- libite v2.3.1
+- libuEv v2.3.2
 
 
 Configure
