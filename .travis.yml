@@ -62,4 +62,4 @@ script:
   - unshare -V
   - nsenter -V
   - chroot --version
-  - 'LD_LIBRARY_PATH=/tmp/lib make distcheck || (cat finit-4.0-beta1/_build/sub/test/test-suite.log'; exit 1)
+  - 'LD_LIBRARY_PATH=/tmp/lib make distcheck || (cat finit-4.0-beta1/_build/sub/test/test-suite.log; exit 1)'
