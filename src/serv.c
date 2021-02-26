@@ -221,13 +221,11 @@ int serv_edit(char *arg)
 	if (!fexist(path))
 		return serv_list(NULL);
 
-	if (systemf("[ -x \"$(command -v sensible-editor)\" ] && sensible-editor %s", path) != 0)
-		if (systemf("[ -x \"$(command -v editor)\" ] && editor %s", path) != 0)
-			if (systemf("${VISUAL:-${EDITOR:-$(command -v vi)}} %s", path) != 0)
-				if (systemf("[ -x \"$(command -v mg)\" ] && mg %s", path) != 0)
-					systemf("[ -x \"$(command -v vi)\" ] && vi %s", path);
-
-	return 0;
+	return 	systemf("[ -x \"$(command -v sensible-editor)\" ] && sensible-editor %s", path) || \
+		systemf("[ -x \"$(command -v editor)\" ] && editor %s", path) || \
+		systemf("${VISUAL:-${EDITOR:-$(command -v vi)}} %s", path) || \
+		systemf("[ -x \"$(command -v mg)\" ] && mg %s", path) || \
+		systemf("[ -x \"$(command -v vi)\" ] && vi %s", path);
 }
 
 /**
