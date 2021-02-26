@@ -493,10 +493,25 @@ static int service_start(svc_t *svc)
 			}
 
 			for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
-				if (strlen(svc->args[i]) == 0)
+				char *arg = svc->args[i];
+				size_t len = strlen(arg);
+				char str[len + 2] = {0};
+				char ch = *arg;
+
+				if (len == 0)
 					break;
 
-				if ((rc = wordexp(svc->args[i], &we, WRDE_APPEND)))
+				/*
+				 * Escape forbidden characters in wordexp()
+				 * but allowed in Finit run/task stanzas,
+				 *
+				 * XXX: escapes only leading characters ...
+				 */
+				if (strchr("|<>&:", ch))
+					str[0] = '\\';
+				strlcat(str, arg, sizeof(str));
+
+				if ((rc = wordexp(str, &we, WRDE_APPEND)))
 					goto nomem;
 			}
 
