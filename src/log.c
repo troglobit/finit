@@ -130,6 +130,28 @@ done:
 	va_end(ap);
 }
 
+/*
+ * Log to file, intended for debug only.
+ */
+void flog(char *file, const char *fmt, ...)
+{
+        char fn[80];
+        va_list ap;
+        FILE *fp;
+
+        snprintf(fn, sizeof(fn), "/tmp/%s.log", file);
+        fp = fopen(fn, "a");
+        if (!fp)
+                return;
+
+        va_start(ap, fmt);
+        vfprintf(fp, fmt, ap);
+        va_end(ap);
+
+        fclose(fp);
+}
+
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t
