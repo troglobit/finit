@@ -486,8 +486,8 @@ static int service_start(svc_t *svc)
 			int rc;
 
 			if ((rc = wordexp(svc->cmd, &we, 0))) {
+				_e("%s: failed wordexp(%s): %d", svc->cmd, svc->cmd, rc);
 			nomem:
-				_e("%s: failed wordexp(): %d", svc->cmd, rc);
 				wordfree(&we);
 				_exit(1);
 			}
@@ -495,7 +495,7 @@ static int service_start(svc_t *svc)
 			for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
 				char *arg = svc->args[i];
 				size_t len = strlen(arg);
-				char str[len + 2] = {0};
+				char str[len + 2];
 				char ch = *arg;
 
 				if (len == 0)
@@ -508,11 +508,15 @@ static int service_start(svc_t *svc)
 				 * XXX: escapes only leading characters ...
 				 */
 				if (strchr("|<>&:", ch))
-					str[0] = '\\';
+					sprintf(str, "\\");
+				else
+					str[0] = 0;
 				strlcat(str, arg, sizeof(str));
 
-				if ((rc = wordexp(str, &we, WRDE_APPEND)))
+				if ((rc = wordexp(str, &we, WRDE_APPEND))) {
+					_e("%s: failed wordexp(%s): %d", svc->cmd, str, rc);
 					goto nomem;
+				}
 			}
 
 			if (we.we_wordc > MAX_NUM_SVC_ARGS) {
