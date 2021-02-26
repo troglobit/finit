@@ -660,7 +660,8 @@ static int usage(int rc)
 		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
 		"  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload\n"
 		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
-//		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"
+//		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"  
+		"  edit     <CONF>           Edit     .conf in /etc/finit.d/available/\n"
 		"\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Dump all conditions and their status\n"
@@ -710,6 +711,7 @@ int main(int argc, char *argv[])
 		{ "enable",   serv_enable  },
 		{ "disable",  serv_disable },
 		{ "touch",    serv_touch   },
+		{ "edit",     serv_edit    },
 		{ "reload",   do_reload    },
 
 		{ "cond",     do_cond      },

@@ -27,6 +27,7 @@
 #include <fcntl.h> /* Definition of AT_* constants */
 #include <glob.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <lite/lite.h>
 
 #include "util.h"
@@ -197,6 +198,34 @@ int serv_touch(char *arg)
 		err(1, "Failed marking %s for reload", arg);
 
 	return 0;
+}
+
+int serv_edit(char *arg)
+{
+	char corr[40];
+	char path[256];
+
+	if (!arg || !arg[0])
+		return serv_list(NULL);
+
+	if (!strstr(arg, ".conf")) {
+		snprintf(corr, sizeof(corr), "%s.conf", arg);
+		arg = corr;
+	}
+
+	pushd(FINIT_RCSD);
+	if (mkdir("available", 0755) && EEXIST != errno)
+		err(1, "Failed creating %s/available directory", FINIT_RCSD);
+
+	snprintf(path, sizeof(path), "%s/%s", available, arg);
+	if (!fexist(path))
+		return serv_list(NULL);
+
+	return 	systemf("[ -x \"$(command -v sensible-editor)\" ] && sensible-editor %s", path) || \
+		systemf("[ -x \"$(command -v editor)\" ] && editor %s", path) || \
+		systemf("${VISUAL:-${EDITOR:-$(command -v vi)}} %s", path) || \
+		systemf("[ -x \"$(command -v mg)\" ] && mg %s", path) || \
+		systemf("[ -x \"$(command -v vi)\" ] && vi %s", path);
 }
 
 /**
