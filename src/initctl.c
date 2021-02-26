@@ -655,7 +655,8 @@ static int usage(int rc)
 		"  help                      This help text\n"
 		"  version                   Show Finit version\n"
 		"\n"
-		"  ls|list                   List all .conf in /etc/finit.d/\n"
+		"  ls | list                 List all .conf in /etc/finit.d/\n"
+		"  create   <CONF>           Create   .conf in /etc/finit.d/available/\n"
 		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
 		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
 		"  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload\n"
@@ -712,6 +713,7 @@ int main(int argc, char *argv[])
 		{ "disable",  serv_disable },
 		{ "touch",    serv_touch   },
 		{ "edit",     serv_edit    },
+		{ "create",   serv_creat   },
 		{ "reload",   do_reload    },
 
 		{ "cond",     do_cond      },

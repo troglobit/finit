@@ -200,7 +200,7 @@ int serv_touch(char *arg)
 	return 0;
 }
 
-int serv_edit(char *arg)
+static int do_edit(char *arg, int creat)
 {
 	char *editor[] = {
 		"sensible-editor",
@@ -225,8 +225,12 @@ int serv_edit(char *arg)
 		err(1, "Failed creating %s/available directory", FINIT_RCSD);
 
 	snprintf(path, sizeof(path), "%s/%s", available, arg);
-	if (!fexist(path))
-		return serv_list(NULL);
+	if (!fexist(path)) {
+		if (!creat)
+			return serv_list(NULL);
+
+		/* XXX: fill with template/commented-out examples */
+	}
 
 	for (size_t i = 0; i < NELEMS(editor); i++) {
 		if (systemf("%s %s 2>/dev/null", editor[i], path))
@@ -235,6 +239,16 @@ int serv_edit(char *arg)
 	}
 
 	return 1;
+}
+
+int serv_edit(char *arg)
+{
+	return do_edit(arg, 0);
+}
+
+int serv_creat(char *arg)
+{
+	return do_edit(arg, 1);
 }
 
 /**
