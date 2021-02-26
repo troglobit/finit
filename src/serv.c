@@ -202,6 +202,13 @@ int serv_touch(char *arg)
 
 int serv_edit(char *arg)
 {
+	char *editor[] = {
+		"sensible-editor",
+		"editor",
+		"${VISUAL:-${EDITOR}}",
+		"mg",
+		"vi"
+	};
 	char corr[40];
 	char path[256];
 
@@ -221,11 +228,13 @@ int serv_edit(char *arg)
 	if (!fexist(path))
 		return serv_list(NULL);
 
-	return	!systemf("[ -x \"$(command -v sensible-editor)\" ] && sensible-editor %s", path) || \
-		!systemf("[ -x \"$(command -v editor)\" ] && editor %s", path) || \
-		!systemf("${VISUAL:-${EDITOR:-$(command -v vi)}} %s", path) || \
-		!systemf("[ -x \"$(command -v mg)\" ] && mg %s", path) || \
-		!systemf("[ -x \"$(command -v vi)\" ] && vi %s", path);
+	for (size_t i = 0; i < NELEMS(editor); i++) {
+		if (systemf("%s %s 2>/dev/null", editor[i], path))
+			continue;
+		return 0;
+	}
+
+	return 1;
 }
 
 /**
