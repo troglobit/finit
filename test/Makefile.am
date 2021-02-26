@@ -17,6 +17,7 @@ AM_TESTS_ENVIRONMENT	+= export top_srcdir;
 AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
 AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
+TEST_EXTENSIONS		 = .sh
 TESTS			 = checkself.sh
 TESTS			+= setup-root.sh
 TESTS			+= add-remove-dynamic-service/test.sh
