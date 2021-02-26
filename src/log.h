@@ -51,5 +51,6 @@ void    log_exit        (void);
 void    log_debug       (void);
 
 void    logit           (int prio, const char *fmt, ...);
+void    flog            (char *file, const char *fmt, ...);
 
 #endif /* FINIT_LOG_H_ */
