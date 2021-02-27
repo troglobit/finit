@@ -6,7 +6,7 @@ assert_num_children() {
 
 texec() {
     # shellcheck disable=SC2154
-    "$TEST_DIR/testenv_exec.sh" "$finit_pid" "$@"
+    "$TEST_DIR/tenv/exec.sh" "$finit_pid" "$@"
 }
 
 pause() {
@@ -25,7 +25,7 @@ fg_red='\e[1;31m'
 fg_green='\e[1;32m'
 fg_yellow='\e[1;33m'
 log() {
-    printf "< $TEST_NAME > %b%b%b %s\n" "$1" "$2" "$color_reset" "$3"
+    printf "< %s > %b%b%b %s\n" "$0" "$1" "$2" "$color_reset" "$3"
 }
 
 assert() {
@@ -90,38 +90,30 @@ teardown() {
 
     wait
 
-    if [ -d "$TESTENV_ROOT/var/lock" ]; then
-        chmod +r "$TESTENV_ROOT/var/lock"
+    if [ -d "$TENV_ROOT/var/lock" ]; then
+        chmod +r "$TENV_ROOT/var/lock"
     fi
-    rm -f "$TESTENV_ROOT"/running_test.pid
+    rm -f "$TENV_ROOT"/running_test.pid
 }
 
 trap teardown EXIT
 
-TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/testenv-root}"
-export TESTENV_ROOT
+TENV_ROOT="${TENV_ROOT:-$(pwd)/${TEST_DIR}/tenv-root}"
+export TENV_ROOT
 
 # shellcheck source=/dev/null
-. "$TESTENV_ROOT/../test.env"
-
-TEST_NAME="$(dirname "$0")"
-TEST_NAME=${TEST_NAME#*/}
-export TEST_NAME
-
-# Setup test environment
+. "$TENV_ROOT/../test.env"
 
 # Setup test environment
 if [ -n "${DEBUG:-}" ]; then
     FINIT_ARGS="${FINIT_ARGS:-} finit.debug=on"
 fi
 # shellcheck disable=2086
-"$TEST_DIR/testenv_start.sh" finit ${FINIT_ARGS:-} &
+"$TEST_DIR/tenv/start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
-echo "$finit_ppid" > "$TESTENV_ROOT"/running_test.pid
+echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
 
->&2 echo "Hint: Execute 'test/testenv_enter.sh' to enter the test namespace"
->&2 echo "finit conf '$FINIT_CONF'"
->&2 echo "finit_conf dir '$FINIT_RCSD'"
+>&2 echo "Hint: Execute 'TENV_ROOT=$TENV_ROOT $TEST_DIR/tenv/enter.sh' to enter the test namespace"
 log "$color_reset" 'Setup of test environment done' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")

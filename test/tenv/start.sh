@@ -2,8 +2,8 @@
 
 set -eu
 
-TEST_DIR=$(dirname "$0")
-TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/testenv-root}"
+TEST_DIR=$(dirname "$0"../)
+TENV_ROOT="${TENV_ROOT:-$(pwd)/${TEST_DIR}/tenv-root}"
 
 unshare=$(command -v unshare)
 chroot=$(command -v chroot)
@@ -24,4 +24,4 @@ exec "$unshare" \
     --mount \
     --mount-proc \
     --uts --ipc --net \
-    "$chroot" "$TESTENV_ROOT" /bin/chrootsetup.sh "$@"
+    "$chroot" "$TENV_ROOT" /bin/chrootsetup.sh "$@"

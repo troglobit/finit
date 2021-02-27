@@ -10,7 +10,9 @@ else
     shift
 fi
 
-PID_FILE=$(dirname "$0")/testenv-root/running_test.pid
+TEST_DIR=$(dirname "$0")/..
+TENV_ROOT="${TENV_ROOT:-$(pwd)/${TEST_DIR}/tenv-root}"
+PID_FILE="$TENV_ROOT/running_test.pid"
 
 if [ -f  "$PID_FILE" ] ; then
     target=$(cat "$PID_FILE")
@@ -20,7 +22,6 @@ else
     exit 1
 fi
 
-PATH="$TESTENV_PATH"
-export PATH
+source "$TEST_DIR/test.env"
 
-"$(dirname "$0")"/testenv_exec.sh "$target" "$cmd" "$@"
+"$(dirname "$0")"/exec.sh "$target" "$cmd" "$@"

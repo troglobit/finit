@@ -1,7 +1,7 @@
 .PHONY: clean check
 
-DEST		?= ./testenv-root
-srcdir		?= ./
+DEST		?= ../tenv-root
+srcdir		?= ../
 
 ARCH		?= x86_64
 
@@ -49,13 +49,17 @@ all: $(dirs) $(binaries) $(libs) $(DEST)/bin/chrootsetup.sh
 $(dirs):
 	mkdir -p $@
 
-$(DEST)/bin/$(BBBIN):
+$(DEST)/bin/$(BBBIN).md5:
+	cp $(srcdir)/tenv/$(notdir $@) $@
+
+$(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
 	wget -O $@ $(BBURL)
 	chmod +x $@
-	# md5sum -c $(BBBIN).md5
+	cd $(dir $@); \
+	  md5sum -c $(BBBIN).md5
 
 $(DEST)/bin/chrootsetup.sh:
-	cp $(srcdir)/$(notdir $@) $@
+	cp $(srcdir)/tenv/$(notdir $@) $@
 
 $(binaries): $(DEST)/bin/$(BBBIN)
 	cd $(DEST)/bin; \

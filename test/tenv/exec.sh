@@ -10,8 +10,8 @@ fi
 target="$1"
 shift
 
-TEST_DIR=$(dirname "$0")
-TESTENV_ROOT="${TESTENV_ROOT:-$(pwd)/${TEST_DIR}/testenv-root}"
+TEST_DIR=$(dirname "$0"../)
+TENV_ROOT="${TENV_ROOT:-$(pwd)/${TEST_DIR}/tenv-root}"
 
 nsenter=$(command -v nsenter)
 chroot=$(command -v chroot)
@@ -33,4 +33,4 @@ export PATH
     --net \
     --pid \
     -w -t "$target" \
-    "$chroot" "$TESTENV_ROOT" "$@"
+    "$chroot" "$TENV_ROOT" "$@"
