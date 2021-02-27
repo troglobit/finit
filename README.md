@@ -101,14 +101,16 @@ in full in [doc/config.md](doc/config.md).  Here's a quick overview of
 some of the most common components needed to start a UNIX daemon:
 
 ```
-service [LVLS] <COND> /path/to/daemon ARGS -- Some text
-^       ^      ^      ^               ^       ^
-|       |      |      |               |        `-- Optional description
-|       |      |      |                `---------- Daemon arguments
-|       |      |       `-------------------------- Path to daemon
-|       |       `--------------------------------- Optional conditions
-|        `---------------------------------------- Optional Runlevels
- `------------------------------------------------ Monitored application
+service [LVLS] <COND> log env:[-]/etc/default/daemon daemon ARGS -- Daemon daemon
+^       ^      ^      ^   ^                          ^              ^       ^
+|       |      |      |   |                          |              |        `-- Optional description
+|       |      |      |   |                          |              `----------- Daemon arguments
+|       |      |      |   |                          `-------------------------- Path to daemon
+|       |      |      |    `---------------------------------------------------- Optional env. file
+|       |      |       `-------------------------------------------------------- Redirect output to log
+|       |       `--------------------------------------------------------------- Optional conditions
+|        `---------------------------------------------------------------------- Optional Runlevels
+ `------------------------------------------------------------------------------ Monitored application
 ```
 
 Some components are optional: runlevel(s), condition(s) and description,

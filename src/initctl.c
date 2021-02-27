@@ -48,6 +48,7 @@ struct command {
 	int  (*cb)(char *arg);
 };
 
+int icreate  = 0;
 int heading  = 1;
 int numeric  = 0;
 int verbose  = 0;
@@ -638,13 +639,33 @@ static int transform(char *nm)
 	return 0;
 }
 
+static int has_conf(char *path, size_t len, char *name)
+{
+	paste(path, len, FINIT_RCSD, name);
+	if (!fisdir(path)) {
+		strlcpy(path, FINIT_RCSD, len);
+		return 0;
+	}
+
+	return 1;
+}
+
 static int usage(int rc)
 {
+	int has_rcsd = fisdir(FINIT_RCSD);
+	int has_ena;
+	char avail[256];
+	char ena[256];
+
+	has_conf(avail, sizeof(avail), "available");
+	has_ena = has_conf(ena, sizeof(ena), "enabled");
+
 	fprintf(stderr,
 		"Usage: %s [OPTIONS] [COMMAND]\n"
 		"\n"
 		"Options:\n"
 		"  -b, --batch               Batch mode, no screen size probing\n"
+		"  -c, --create              Create missing paths (and files) as needed\n"
 		"  -n, --numeric             Show JOB:ID instead of NAME:ID\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
@@ -654,15 +675,30 @@ static int usage(int rc)
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
 		"  version                   Show Finit version\n"
-		"\n"
-		"  ls | list                 List all .conf in /etc/finit.d/\n"
-		"  create   <CONF>           Create   .conf in /etc/finit.d/available/\n"
-		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
-		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
-		"  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload\n"
-		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
+		"\n", prognm);
+
+	if (has_rcsd)
+		fprintf(stderr,
+			"  ls | list                 List all .conf in " FINIT_RCSD "\n"
+			"  create   <CONF>           Create   .conf in %s\n"
+			"  edit     <CONF>           Edit     .conf in %s\n"
+			"  touch    <CONF>           Change   .conf in %s\n",
+			avail, avail, avail);
+	if (has_ena)
+		fprintf(stderr,
+			"  enable   <CONF>           Enable   .conf in %s\n", avail);
+	if (has_ena)
+		fprintf(stderr,
+			"  disable  <CONF>           Disable  .conf in %s\n", ena);
+	if (has_rcsd)
+		fprintf(stderr,
+			"  reload                    Reload  *.conf in " FINIT_RCSD " (activate changes)\n");
+	else
+		fprintf(stderr,
+			"  reload                    Reload " FINIT_CONF " (activate changes)\n");
+
+	fprintf(stderr,
 //		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"  
-		"  edit     <CONF>           Edit     .conf in /etc/finit.d/available/\n"
 		"\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Dump all conditions and their status\n"
@@ -680,7 +716,7 @@ static int usage(int rc)
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
 		"  poweroff                  Halt and power off system\n"
-		"  suspend                   Suspend system\n", prognm);
+		"  suspend                   Suspend system\n");
 
 	if (has_utmp())
 		fprintf(stderr,
@@ -738,6 +774,7 @@ int main(int argc, char *argv[])
 	};
 	struct option long_options[] = {
 		{ "batch",      0, NULL, 'b' },
+		{ "create",     0, NULL, 'c' },
 		{ "help",       0, NULL, 'h' },
 		{ "numeric",    0, NULL, 'n' },
 		{ "no-heading", 0, NULL, 't' },
@@ -748,10 +785,14 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "bh?ntv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bch?ntv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':
 			interactive = 0;
+			break;
+
+		case 'c':
+			icreate = 1;
 			break;
 
 		case 'h':

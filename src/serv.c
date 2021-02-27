@@ -32,20 +32,8 @@
 
 #include "util.h"
 
-static const char *cwd;
-static const char *available = FINIT_RCSD "/available";
-static const char *enabled   = FINIT_RCSD "/enabled";
+extern int icreate;			/* initctl -c */
 
-static void pushd(const char *dir)
-{
-	cwd = get_current_dir_name();
-	chdir(dir);
-}
-
-static void popd(void)
-{
-	chdir(cwd);
-}
 
 static int calc_width(char *arr[], size_t len)
 {
@@ -69,11 +57,9 @@ static void do_list(const char *path)
 	glob_t gl;
 	size_t i;
 
-	pushd(path);
-	if (glob("*.conf", 0, NULL, &gl)) {
-		chdir(cwd);
+	chdir(path);
+	if (glob("*.conf", 0, NULL, &gl))
 		return;
-	}
 
 	if (gl.gl_pathc <= 0)
 		goto done;
@@ -105,97 +91,155 @@ static void do_list(const char *path)
 
 done:
 	globfree(&gl);
-	popd();
 }
 
 int serv_list(char *arg)
 {
-	if (fisdir(available))
-		do_list(available);
-	if (fisdir(enabled))
-		do_list(enabled);
+	char path[256];
+
+	if (arg && arg[0]) {
+		paste(path, sizeof(path), FINIT_RCSD, arg);
+		if (fisdir(path)) {
+			do_list(path);
+			return 0;
+		}
+		/* fall back to list all */
+	}
+
+	paste(path, sizeof(path), FINIT_RCSD, "available");
+	if (fisdir(path))
+		do_list(path);
+
+	paste(path, sizeof(path), FINIT_RCSD, "enabled");
+	if (fisdir(path))
+		do_list(path);
+
 	if (fisdir(FINIT_RCSD))
 		do_list(FINIT_RCSD);
 
 	return 0;
 }
 
+/*
+ * Return path to configuration file for 'name', relative to FINIT_RCSD.
+ * This may be any of the following, provided sysconfdir is /etc:
+ *
+ *   - /etc/finit.d/$name.conf
+ *   - /etc/finit.d/available/$name.conf
+ *
+ * The system *may* have a /etc/finit.d/available/ directory, or it may
+ * just use a plain /etc/finit.d/ -- we do not set policy.
+ *
+ * If the resulting file doesn't exist, and creat is not set, *or*
+ * the base directory doesn't exist, we return NULL.
+.*/
+static char *conf(char *path, size_t len, char *name, int creat)
+{
+	char corr[40];
+
+	if (!strstr(name, ".conf")) {
+		snprintf(corr, sizeof(corr), "%s.conf", name);
+		name = corr;
+	}
+
+	if (!fisdir(FINIT_RCSD))
+		return NULL;
+
+	paste(path, len, FINIT_RCSD, "available/");
+	if (!fisdir(path)) {
+		if (creat && mkdir(path, 0755) && errno != EEXIST)
+			return NULL;
+		else
+			paste(path, len, FINIT_RCSD, name);
+	} else
+		strlcat(path, name, len);
+
+	return path;
+}
+
 int serv_enable(char *arg)
 {
 	char corr[40];
-	char link[256];
 	char path[256];
+	int ena;
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
+	if (!arg || !arg[0]) {
+		warnx("missing argument to enable, may be one of:");
+		return serv_list("available");
+	}
 
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
 		arg = corr;
 	}
 
-	pushd(FINIT_RCSD);
-	if (mkdir("enabled", 0755) && EEXIST != errno)
-		err(1, "Failed creating %s/enabled directory", FINIT_RCSD);
+	if (chdir(FINIT_RCSD))
+		err(1, "failed cd %s", FINIT_RCSD);
 
-	snprintf(path, sizeof(path), "%s/%s", available, arg);
+	if (icreate && mkdir("enabled", 0755) && EEXIST != errno)
+		err(1, "failed creating %s/enabled directory", FINIT_RCSD);
+	ena = !chdir("enabled");   /* System *may* have enabled/ dir. */
+
+	snprintf(path, sizeof(path), "%savailable/%s", ena ? "../" : "", arg);
 	if (!fexist(path))
-		errx(1, "Cannot find %s", path);
+		errx(1, "cannot find %s", conf(path, sizeof(path), arg, 0));
 
-	snprintf(link, sizeof(link), "%s/%s", enabled, arg);
-	if (fexist(link))
-		errx(1, "%s already exists", link);
+	if (fexist(arg))
+		errx(1, "%s already enabled", arg);
 
-	return symlink(path, link) != 0;
+	return symlink(path, arg) != 0;
 }
 
 int serv_disable(char *arg)
 {
-	char corr[40];
-	char link[256];
 	struct stat st;
+	char corr[40];
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
+	if (!arg || !arg[0]) {
+		warnx("missing argument to disable, may be one of:");
+		return serv_list("enabled");
+	}
 
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
 		arg = corr;
 	}
 
-	snprintf(link, sizeof(link), "%s/%s", enabled, arg);
-	if (stat(link, &st))
-		err(1, "Cannot find %s", link);
+	if (chdir(FINIT_RCSD))
+		err(1, "failed cd %s", FINIT_RCSD);
+	chdir("enabled");	   /* System *may* have enabled/ dir. */
+
+	if (stat(arg, &st))
+		errx(1, "%s not (an) enabled (service).", arg);
 
 	if ((st.st_mode & S_IFMT) == S_IFLNK)
-		errx(1, "%s is not a symlink, move manually to %s first", link, available);
+		errx(1, "cannot disable %s, not a symlink.", arg);
 
-	return remove(link) != 0;
+	return remove(arg) != 0;
 }
 
 int serv_touch(char *arg)
 {
-	char corr[40];
+	char path[256];
+	char *fn;
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
-
-	if (!strstr(arg, ".conf")) {
-		snprintf(corr, sizeof(corr), "%s.conf", arg);
-		arg = corr;
+	if (!arg || !arg[0]) {
+		warnx("missing argument to touch, may be one of:");
+		return serv_list("enabled");
 	}
 
-	pushd(FINIT_RCSD);
-	if (!fexist(arg)) {
-		popd();
+	fn = conf(path, sizeof(path), arg, 0);
+	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
-			errx(1, "Service %s is not enabled", arg);
-		arg = FINIT_CONF;
+			errx(1, "%s not available.", arg);
+
+		strlcpy(path, FINIT_CONF, sizeof(path));
+		fn = path;
 	}
 
 	/* libite:touch() follows symlinks */
-	if (utimensat(AT_FDCWD, arg, NULL, AT_SYMLINK_NOFOLLOW))
-		err(1, "Failed marking %s for reload", arg);
+	if (utimensat(AT_FDCWD, fn, NULL, AT_SYMLINK_NOFOLLOW))
+		err(1, "failed marking %s for reload", fn);
 
 	return 0;
 }
@@ -209,28 +253,19 @@ static int do_edit(char *arg, int creat)
 		"mg",
 		"vi"
 	};
-	char corr[40];
 	char path[256];
+	char *fn;
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
-
-	if (!strstr(arg, ".conf")) {
-		snprintf(corr, sizeof(corr), "%s.conf", arg);
-		arg = corr;
-	}
-
-	pushd(FINIT_RCSD);
-	if (mkdir("available", 0755) && EEXIST != errno)
-		err(1, "Failed creating %s/available directory", FINIT_RCSD);
-
-	snprintf(path, sizeof(path), "%s/%s", available, arg);
-	if (!fexist(path)) {
-		if (!creat)
-			return serv_list(NULL);
+	fn = conf(path, sizeof(path), arg, creat);
+	if (!fexist(fn)) {
+		if (!creat) {
+			warnx("Cannot find %s, use create command, or select one of:", arg);
+			return serv_list("available");
+		}
 
 		/* XXX: fill with template/commented-out examples */
-	}
+	} else if (creat)
+		warnx("the file %s already exists, falling back to edit.", fn);
 
 	for (size_t i = 0; i < NELEMS(editor); i++) {
 		if (systemf("%s %s 2>/dev/null", editor[i], path))
@@ -243,12 +278,45 @@ static int do_edit(char *arg, int creat)
 
 int serv_edit(char *arg)
 {
-	return do_edit(arg, 0);
+	if (!arg || !arg[0]) {
+		warnx("missing argument to edit, may be one of:");
+		return serv_list("available");
+	}
+
+	return do_edit(arg, icreate);
 }
 
 int serv_creat(char *arg)
 {
-	return do_edit(arg, 1);
+	char buf[256];
+	char *fn;
+	FILE *fp;
+
+	if (!arg || !arg[0])
+		errx(1, "missing argument to create");
+
+	/* Input from a pipe or a proper TTY? */
+	if (isatty(STDIN_FILENO))
+		return do_edit(arg, 1);
+
+	/* Open fn for writing from pipe */
+	fn = conf(buf, sizeof(buf), arg, 1);
+	if (!fn)
+		err(1, "failed creating conf %s", arg);
+
+	if (!icreate && fexist(fn)) {
+		warnx("%s already exists, skipping (use -c to override)", fn);
+		fn = "/dev/null";
+	}
+
+	fp = fopen(fn, "w");
+	if (!fp)
+		err(1, "failed opening %s for writing", fn);
+
+	while (fgets(buf, sizeof(buf), stdin))
+		fputs(buf, fp);
+
+	return fclose(fp);
 }
 
 /**
