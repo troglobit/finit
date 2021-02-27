@@ -32,21 +32,8 @@
 
 #include "util.h"
 
-static const char *cwd;
-static const char *available = FINIT_RCSD "/available";
-static const char *enabled   = FINIT_RCSD "/enabled";
 extern int icreate;			/* initctl -c */
 
-static void pushd(const char *dir)
-{
-	cwd = get_current_dir_name();
-	chdir(dir);
-}
-
-static void popd(void)
-{
-	chdir(cwd);
-}
 
 static int calc_width(char *arr[], size_t len)
 {
@@ -70,11 +57,9 @@ static void do_list(const char *path)
 	glob_t gl;
 	size_t i;
 
-	pushd(path);
-	if (glob("*.conf", 0, NULL, &gl)) {
-		chdir(cwd);
+	chdir(path);
+	if (glob("*.conf", 0, NULL, &gl))
 		return;
-	}
 
 	if (gl.gl_pathc <= 0)
 		goto done;
@@ -106,15 +91,29 @@ static void do_list(const char *path)
 
 done:
 	globfree(&gl);
-	popd();
 }
 
 int serv_list(char *arg)
 {
-	if (fisdir(available))
-		do_list(available);
-	if (fisdir(enabled))
-		do_list(enabled);
+	char path[256];
+
+	if (arg && arg[0]) {
+		paste(path, sizeof(path), FINIT_RCSD, arg);
+		if (fisdir(path)) {
+			do_list(path);
+			return 0;
+		}
+		/* fall back to list all */
+	}
+
+	paste(path, sizeof(path), FINIT_RCSD, "available");
+	if (fisdir(path))
+		do_list(path);
+
+	paste(path, sizeof(path), FINIT_RCSD, "enabled");
+	if (fisdir(path))
+		do_list(path);
+
 	if (fisdir(FINIT_RCSD))
 		do_list(FINIT_RCSD);
 
