@@ -120,6 +120,43 @@ int serv_list(char *arg)
 	return 0;
 }
 
+/*
+ * Return path to configuration file for 'name', relative to FINIT_RCSD.
+ * This may be any of the following, provided sysconfdir is /etc:
+ *
+ *   - /etc/finit.d/$name.conf
+ *   - /etc/finit.d/available/$name.conf
+ *
+ * The system *may* have a /etc/finit.d/available/ directory, or it may
+ * just use a plain /etc/finit.d/ -- we do not set policy.
+ *
+ * If the resulting file doesn't exist, and creat is not set, *or*
+ * the base directory doesn't exist, we return NULL.
+.*/
+static char *conf(char *path, size_t len, char *name, int creat)
+{
+	char corr[40];
+
+	if (!strstr(name, ".conf")) {
+		snprintf(corr, sizeof(corr), "%s.conf", name);
+		name = corr;
+	}
+
+	if (!fisdir(FINIT_RCSD))
+		return NULL;
+
+	paste(path, len, FINIT_RCSD, "available/");
+	if (!fisdir(path)) {
+		if (creat && mkdir(path, 0755) && errno != EEXIST)
+			return NULL;
+
+		paste(path, len, FINIT_RCSD, name);
+	} else
+		strlcat(path, name, len);
+
+	return path;
+}
+
 int serv_enable(char *arg)
 {
 	char corr[40];
@@ -248,7 +285,35 @@ int serv_edit(char *arg)
 
 int serv_creat(char *arg)
 {
-	return do_edit(arg, 1);
+	char buf[256];
+	char *fn;
+	FILE *fp;
+
+	if (!arg || !arg[0])
+		errx(1, "missing argument to create");
+
+	/* Input from a pipe or a proper TTY? */
+	if (isatty(STDIN_FILENO))
+		return do_edit(arg, 1);
+
+	/* Open fn for writing from pipe */
+	fn = conf(buf, sizeof(buf), arg, 1);
+	if (!fn)
+		err(1, "failed creating conf %s", arg);
+
+	if (!icreate && fexist(fn)) {
+		warnx("%s already exists, skipping (use -c to override)", fn);
+		fn = "/dev/null";
+	}
+
+	fp = fopen(fn, "w");
+	if (!fp)
+		err(1, "failed opening %s for writing", fn);
+
+	while (fgets(buf, sizeof(buf), stdin))
+		fputs(buf, fp);
+
+	return fclose(fp);
 }
 
 /**
