@@ -639,8 +639,27 @@ static int transform(char *nm)
 	return 0;
 }
 
+static int has_conf(char *path, size_t len, char *name)
+{
+	paste(path, len, FINIT_RCSD, name);
+	if (!fisdir(path)) {
+		strlcpy(path, FINIT_RCSD, len);
+		return 0;
+	}
+
+	return 1;
+}
+
 static int usage(int rc)
 {
+	int has_rcsd = fisdir(FINIT_RCSD);
+	int has_ena;
+	char avail[256];
+	char ena[256];
+
+	has_conf(avail, sizeof(avail), "available");
+	has_ena = has_conf(ena, sizeof(ena), "enabled");
+
 	fprintf(stderr,
 		"Usage: %s [OPTIONS] [COMMAND]\n"
 		"\n"
@@ -656,15 +675,30 @@ static int usage(int rc)
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
 		"  version                   Show Finit version\n"
-		"\n"
-		"  ls | list                 List all .conf in /etc/finit.d/\n"
-		"  create   <CONF>           Create   .conf in /etc/finit.d/available/\n"
-		"  enable   <CONF>           Enable   .conf in /etc/finit.d/available/\n"
-		"  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]\n"
-		"  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload\n"
-		"  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)\n"
+		"\n", prognm);
+
+	if (has_rcsd)
+		fprintf(stderr,
+			"  ls | list                 List all .conf in " FINIT_RCSD "\n"
+			"  create   <CONF>           Create   .conf in %s\n"
+			"  edit     <CONF>           Edit     .conf in %s\n"
+			"  touch    <CONF>           Change   .conf in %s\n",
+			avail, avail, avail);
+	if (has_ena)
+		fprintf(stderr,
+			"  enable   <CONF>           Enable   .conf in %s\n", avail);
+	if (has_ena)
+		fprintf(stderr,
+			"  disable  <CONF>           Disable  .conf in %s\n", ena);
+	if (has_rcsd)
+		fprintf(stderr,
+			"  reload                    Reload  *.conf in " FINIT_RCSD " (activate changes)\n");
+	else
+		fprintf(stderr,
+			"  reload                    Reload " FINIT_CONF " (activate changes)\n");
+
+	fprintf(stderr,
 //		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"  
-		"  edit     <CONF>           Edit     .conf in /etc/finit.d/available/\n"
 		"\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Dump all conditions and their status\n"
@@ -682,7 +716,7 @@ static int usage(int rc)
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
 		"  poweroff                  Halt and power off system\n"
-		"  suspend                   Suspend system\n", prognm);
+		"  suspend                   Suspend system\n");
 
 	if (has_utmp())
 		fprintf(stderr,
