@@ -12,8 +12,6 @@ EXTRA_DIST		+= start-stop-service-sub-config.sh
 AM_TESTS_ENVIRONMENT	 = TENV_ROOT='$(abs_builddir)/tenv-root/';
 AM_TESTS_ENVIRONMENT	+= export TENV_ROOT;
 AM_TESTS_ENVIRONMENT	+= export LD_LIBRARY_PATH;
-AM_TESTS_ENVIRONMENT	+= top_srcdir=$(top_srcdir);
-AM_TESTS_ENVIRONMENT	+= export top_srcdir;
 AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
 AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
@@ -32,3 +30,4 @@ TESTS			+= start-stop-service-sub-config.sh
 
 clean-local:
 	-rm -rf $(builddir)/tenv-root/
+	-rm -f checkself.sh
