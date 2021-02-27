@@ -35,6 +35,7 @@
 static const char *cwd;
 static const char *available = FINIT_RCSD "/available";
 static const char *enabled   = FINIT_RCSD "/enabled";
+extern int icreate;			/* initctl -c */
 
 static void pushd(const char *dir)
 {
@@ -246,28 +247,19 @@ static int do_edit(char *arg, int creat)
 		"mg",
 		"vi"
 	};
-	char corr[40];
 	char path[256];
+	char *fn;
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
-
-	if (!strstr(arg, ".conf")) {
-		snprintf(corr, sizeof(corr), "%s.conf", arg);
-		arg = corr;
-	}
-
-	pushd(FINIT_RCSD);
-	if (mkdir("available", 0755) && EEXIST != errno)
-		err(1, "Failed creating %s/available directory", FINIT_RCSD);
-
-	snprintf(path, sizeof(path), "%s/%s", available, arg);
-	if (!fexist(path)) {
-		if (!creat)
+	fn = conf(path, sizeof(path), arg, creat);
+	if (!fexist(fn)) {
+		if (!creat) {
+			warnx("Cannot find %s, use create command, or select one of:", arg);
 			return serv_list(NULL);
+		}
 
 		/* XXX: fill with template/commented-out examples */
-	}
+	} else if (creat)
+		warnx("the file %s already exists, falling back to edit.", fn);
 
 	for (size_t i = 0; i < NELEMS(editor); i++) {
 		if (systemf("%s %s 2>/dev/null", editor[i], path))
@@ -280,7 +272,12 @@ static int do_edit(char *arg, int creat)
 
 int serv_edit(char *arg)
 {
-	return do_edit(arg, 0);
+	if (!arg || !arg[0]) {
+		warnx("missing argument to edit, may be one of:");
+		return serv_list("available");
+	}
+
+	return do_edit(arg, icreate);
 }
 
 int serv_creat(char *arg)
