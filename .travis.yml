@@ -35,12 +35,12 @@ addons:
     branch_pattern: dev
 
 install:
-  - wget https://github.com/troglobit/libuev/releases/download/v2.2.0/libuev-2.2.0.tar.xz
-  - wget https://github.com/troglobit/libite/releases/download/v2.0.1/libite-2.0.1.tar.xz
-  - tar xf libuev-2.2.0.tar.xz
-  - tar xf libite-2.0.1.tar.xz
-  - (cd libuev-2.2.0 && ./configure --prefix=/tmp && make && make install-strip)
-  - (cd libite-2.0.1 && ./configure --prefix=/tmp && make && make install-strip)
+  - wget https://github.com/troglobit/libuev/releases/download/v2.3.2/libuev-2.3.2.tar.xz
+  - wget https://github.com/troglobit/libite/releases/download/v2.3.1/libite-2.3.1.tar.gz
+  - tar xf libuev-2.3.2.tar.xz
+  - tar xf libite-2.3.1.tar.gz
+  - (cd libuev-2.3.2 && ./configure --prefix=/tmp && make && make install-strip)
+  - (cd libite-2.3.1 && ./configure --prefix=/tmp && make && make install-strip)
 
 # Custom build script for the time being, no "make test" yet
 script:

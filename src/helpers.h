@@ -103,17 +103,6 @@ static inline int create(char *path, mode_t mode, uid_t uid, gid_t gid)
 	return 0;
 }
 
-/* paste dir/file into buf */
-static inline int paste(char *buf, size_t len, const char *dir, const char *file)
-{
-	if (!dir)
-		dir = "";
-	if (!file)
-		file = "";
-
-	return snprintf(buf, len, "%s%s%s", dir, fisslashdir(dir) ? "" : "/", file);
-}
-
 int	ismnt		(char *file, char *dir, char *mode);
 int	fismnt		(char *dir);
 

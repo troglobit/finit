@@ -31,6 +31,7 @@
 #include <sys/reboot.h>
 #include <termios.h>
 #endif
+#include <lite/lite.h>
 
 #ifndef RB_SW_SUSPEND /* Since Linux 2.5.18, but not in GLIBC until 2.19 */
 #define RB_SW_SUSPEND	0xd000fce2
@@ -62,6 +63,17 @@ static inline char *strterm(char *str, size_t len)
 {
 	str[len - 1] = 0;
 	return str;
+}
+
+/* paste dir/file into buf */
+static inline int paste(char *buf, size_t len, const char *dir, const char *file)
+{
+	if (!dir)
+		dir = "";
+	if (!file)
+		file = "";
+
+	return snprintf(buf, len, "%s%s%s", dir, fisslashdir(dir) ? "" : "/", file);
 }
 
 #endif /* FINIT_UTIL_H_ */

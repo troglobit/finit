@@ -27,6 +27,7 @@
 #include <fcntl.h> /* Definition of AT_* constants */
 #include <glob.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <lite/lite.h>
 
 #include "util.h"
@@ -197,6 +198,57 @@ int serv_touch(char *arg)
 		err(1, "Failed marking %s for reload", arg);
 
 	return 0;
+}
+
+static int do_edit(char *arg, int creat)
+{
+	char *editor[] = {
+		"sensible-editor",
+		"editor",
+		"${VISUAL:-${EDITOR}}",
+		"mg",
+		"vi"
+	};
+	char corr[40];
+	char path[256];
+
+	if (!arg || !arg[0])
+		return serv_list(NULL);
+
+	if (!strstr(arg, ".conf")) {
+		snprintf(corr, sizeof(corr), "%s.conf", arg);
+		arg = corr;
+	}
+
+	pushd(FINIT_RCSD);
+	if (mkdir("available", 0755) && EEXIST != errno)
+		err(1, "Failed creating %s/available directory", FINIT_RCSD);
+
+	snprintf(path, sizeof(path), "%s/%s", available, arg);
+	if (!fexist(path)) {
+		if (!creat)
+			return serv_list(NULL);
+
+		/* XXX: fill with template/commented-out examples */
+	}
+
+	for (size_t i = 0; i < NELEMS(editor); i++) {
+		if (systemf("%s %s 2>/dev/null", editor[i], path))
+			continue;
+		return 0;
+	}
+
+	return 1;
+}
+
+int serv_edit(char *arg)
+{
+	return do_edit(arg, 0);
+}
+
+int serv_creat(char *arg)
+{
+	return do_edit(arg, 1);
 }
 
 /**

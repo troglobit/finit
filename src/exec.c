@@ -38,6 +38,7 @@
 #include "conf.h"
 #include "helpers.h"
 #include "sig.h"
+#include "util.h"
 #include "utmp-api.h"
 
 #define NUM_ARGS    16

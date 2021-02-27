@@ -26,6 +26,7 @@
 #define FINIT_PID_H_
 
 #include "svc.h"
+#include "util.h"
 
 int   pid_alive       (pid_t pid);
 char *pid_get_name    (pid_t pid, char *name, size_t len);
