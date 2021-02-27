@@ -149,8 +149,8 @@ static char *conf(char *path, size_t len, char *name, int creat)
 	if (!fisdir(path)) {
 		if (creat && mkdir(path, 0755) && errno != EEXIST)
 			return NULL;
-
-		paste(path, len, FINIT_RCSD, name);
+		else
+			paste(path, len, FINIT_RCSD, name);
 	} else
 		strlcat(path, name, len);
 
