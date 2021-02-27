@@ -161,54 +161,62 @@ static char *conf(char *path, size_t len, char *name, int creat)
 int serv_enable(char *arg)
 {
 	char corr[40];
-	char link[256];
 	char path[256];
+	int ena;
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
+	if (!arg || !arg[0]) {
+		warnx("missing argument to enable, may be one of:");
+		return serv_list("available");
+	}
 
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
 		arg = corr;
 	}
 
-	pushd(FINIT_RCSD);
-	if (mkdir("enabled", 0755) && EEXIST != errno)
-		err(1, "Failed creating %s/enabled directory", FINIT_RCSD);
+	if (chdir(FINIT_RCSD))
+		err(1, "failed cd %s", FINIT_RCSD);
 
-	snprintf(path, sizeof(path), "%s/%s", available, arg);
+	if (icreate && mkdir("enabled", 0755) && EEXIST != errno)
+		err(1, "failed creating %s/enabled directory", FINIT_RCSD);
+	ena = !chdir("enabled");   /* System *may* have enabled/ dir. */
+
+	snprintf(path, sizeof(path), "%savailable/%s", ena ? "../" : "", arg);
 	if (!fexist(path))
-		errx(1, "Cannot find %s", path);
+		errx(1, "cannot find %s", conf(path, sizeof(path), arg, 0));
 
-	snprintf(link, sizeof(link), "%s/%s", enabled, arg);
-	if (fexist(link))
-		errx(1, "%s already exists", link);
+	if (fexist(arg))
+		errx(1, "%s already enabled", arg);
 
-	return symlink(path, link) != 0;
+	return symlink(path, arg) != 0;
 }
 
 int serv_disable(char *arg)
 {
-	char corr[40];
-	char link[256];
 	struct stat st;
+	char corr[40];
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
+	if (!arg || !arg[0]) {
+		warnx("missing argument to disable, may be one of:");
+		return serv_list("enabled");
+	}
 
 	if (!strstr(arg, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", arg);
 		arg = corr;
 	}
 
-	snprintf(link, sizeof(link), "%s/%s", enabled, arg);
-	if (stat(link, &st))
-		err(1, "Cannot find %s", link);
+	if (chdir(FINIT_RCSD))
+		err(1, "failed cd %s", FINIT_RCSD);
+	chdir("enabled");	   /* System *may* have enabled/ dir. */
+
+	if (stat(arg, &st))
+		errx(1, "%s not (an) enabled (service).", arg);
 
 	if ((st.st_mode & S_IFMT) == S_IFLNK)
-		errx(1, "%s is not a symlink, move manually to %s first", link, available);
+		errx(1, "cannot disable %s, not a symlink.", arg);
 
-	return remove(link) != 0;
+	return remove(arg) != 0;
 }
 
 int serv_touch(char *arg)
