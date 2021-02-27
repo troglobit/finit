@@ -260,7 +260,7 @@ static int do_edit(char *arg, int creat)
 	if (!fexist(fn)) {
 		if (!creat) {
 			warnx("Cannot find %s, use create command, or select one of:", arg);
-			return serv_list(NULL);
+			return serv_list("available");
 		}
 
 		/* XXX: fill with template/commented-out examples */
