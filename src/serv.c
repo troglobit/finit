@@ -213,27 +213,26 @@ int serv_disable(char *arg)
 
 int serv_touch(char *arg)
 {
-	char corr[40];
+	char path[256];
+	char *fn;
 
-	if (!arg || !arg[0])
-		return serv_list(NULL);
-
-	if (!strstr(arg, ".conf")) {
-		snprintf(corr, sizeof(corr), "%s.conf", arg);
-		arg = corr;
+	if (!arg || !arg[0]) {
+		warnx("missing argument to touch, may be one of:");
+		return serv_list("enabled");
 	}
 
-	pushd(FINIT_RCSD);
-	if (!fexist(arg)) {
-		popd();
+	fn = conf(path, sizeof(path), arg, 0);
+	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
-			errx(1, "Service %s is not enabled", arg);
-		arg = FINIT_CONF;
+			errx(1, "%s not available.", arg);
+
+		strlcpy(path, FINIT_CONF, sizeof(path));
+		fn = path;
 	}
 
 	/* libite:touch() follows symlinks */
-	if (utimensat(AT_FDCWD, arg, NULL, AT_SYMLINK_NOFOLLOW))
-		err(1, "Failed marking %s for reload", arg);
+	if (utimensat(AT_FDCWD, fn, NULL, AT_SYMLINK_NOFOLLOW))
+		err(1, "failed marking %s for reload", fn);
 
 	return 0;
 }
