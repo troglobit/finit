@@ -9,11 +9,13 @@ GSYMS
 GTAGS
 
 # GNU configure and build system
+/aux
 /.deps
 /autom4te.cache
 /aclocal.m4
 /ar-lib
 /compile
+/config.cache
 /config.h
 /config.mk
 /config.guess
