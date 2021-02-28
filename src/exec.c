@@ -386,12 +386,15 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 	pid = fork();
 	if (!pid) {
 		speed_t speed;
+		int rc = 1;
 
 		speed = stty_parse_speed(baud);
 		logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
 		prepare_tty(tty, speed, "tty", rlimit);
 		if (activate_console(noclear, nowait))
-			_exit(getty(tty, speed, term, NULL));
+			rc = getty(tty, speed, term, NULL);
+
+		_exit(rc);
 	}
 
 	return pid;
@@ -403,14 +406,16 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 
 	pid = fork();
 	if (!pid) {
+		int rc = 1;
+
 		/* Dunno speed, tell stty() to not mess with it */
 		logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
 		prepare_tty(tty, B0, "getty", rlimit);
 		if (activate_console(noclear, nowait))
-			_exit(execv(cmd, args));
+			rc = execv(cmd, args);
 
 		vhangup();
-		exit(0);
+		_exit(rc);
 	}
 
 	return pid;
@@ -422,9 +427,13 @@ pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])
 
 	pid = fork();
 	if (!pid) {
+		int rc = 1;
+
 		prepare_tty(tty, B0, "finit-sh", rlimit);
 		if (activate_console(noclear, nowait))
-			_exit(sh(tty));
+			rc = sh(tty);
+
+		_exit(rc);
 	}
 
 	return pid;
