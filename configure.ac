@@ -45,7 +45,7 @@ PKG_PROG_PKG_CONFIG
 
 # Check for required libraries
 PKG_CHECK_MODULES([uev],  [libuev >= 2.2.0])
-PKG_CHECK_MODULES([lite], [libite >= 2.0.1])
+PKG_CHECK_MODULES([lite], [libite >= 2.2.0])
 
 # Check for configured Finit features
 AC_ARG_ENABLE(emergency_shell,
