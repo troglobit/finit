@@ -138,6 +138,10 @@ Configuration File Syntax
 Set system hostname to NAME, unless `/etc/hostname` exists in which case
 the contents of that file is used.
 
+Deprecated.  We recommend using `/etc/hostname` instead.
+
+> **Note:** only read and executed in runlevel S (bootstrap).
+
 
 ### Kernel Modules
 
@@ -146,13 +150,15 @@ the contents of that file is used.
 Load a kernel module, with optional arguments.  Similar to `insmod`
 command line tool.
 
-Note, there is both a `modules-load.so` and a `modprobe.so` plugin
-that can handle module loading better.  The former supports loading
-from `/etc/modules-load.d/`, and the latter uses kernel modinfo to
-automatically load (or coldplug) every required module.  For hotplug
-we recommend the BusyBox mdev tool, add to `/etc/mdev.conf`:
+Deprecated, there is both a `modules-load.so` and a `modprobe.so` plugin
+that can handle module loading better.  The former supports loading from
+`/etc/modules-load.d/`, the latter uses kernel modinfo to automatically
+load (or coldplug) every required module.  For hotplug we recommend the
+BusyBox mdev tool, add to `/etc/mdev.conf`:
 
     $MODALIAS=.*  root:root       0660    @modprobe -b "$MODALIAS"
+
+> **Note:** only read and executed in runlevel S (bootstrap).
 
 
 ### Networking
@@ -161,8 +167,11 @@ we recommend the BusyBox mdev tool, add to `/etc/mdev.conf`:
 
 Script or program to bring up networking, with optional arguments.
 
-Deprecated.  We recommend using task/run or `/etc/network/interfaces` if
-you have a system with ifupdown.
+Deprecated.  We recommend using dedicated task/run stanzas per runlevel,
+or `/etc/network/interfaces` if you have a system with `ifupdown`, like
+Debian, Ubuntu, Linux Mint, or an embedded BusyBox system.
+
+> **Note:** only read and executed in runlevel S (bootstrap).
 
 
 ### Resource Limits
@@ -187,17 +196,22 @@ still supported, albeit deprecated.
     # CPU limit for all services, soft & hard = 10 sec
     rlimit cpu 10
 
-`rlimit` can be set globally, in `/etc/finit.conf`, or locally for
-a set of task/run/services, in `/etc/finit.d/*.conf`.
+`rlimit` can be set globally, in `/etc/finit.conf`, or locally per
+each `/etc/finit.d/*.conf` read.  I.e., a set of task/run/service
+stanzas can share the same rlimits if they are in the same .conf.
 
 
 ### Runlevels
 
 **Syntax:** `runlevel <N>`
 
-N is the runlevel number 1-9, where 6 is reserved for reboot.
+Defines the system runlevel to go to after bootstrap (S) has completed.
+N is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
+halt.
 
 Default: 2
+
+> **Note:** only read and executed in runlevel S (bootstrap).
 
 
 ### One-shot Commands (sequence)
@@ -337,6 +351,7 @@ Similar to the `/etc/rc.local` shell script, make sure that all your
 services and programs either terminate or start in the background or
 you will block Finit.
 
+> **Note:** only read and executed in runlevel S (bootstrap).
 
 ### Including Finit Configs
 
@@ -475,41 +490,17 @@ detailed description, see the [Conditions](conditions.md) document.
 Limitations
 -----------
 
-To understand the limitations of `finit.conf` vs `finit.d` it is useful
-to picture the different phases of the system: bootstrap, runtime, and
-shutdown.
+As of Finit v4 there are no limitations to where `.conf` settings can be
+placed.  Except for the system/global `rlimit`, which can only be set
+from `/etc/finit.conf`, since it is the first `.conf` file Finit reads.
 
-### /etc/finit.conf
+Originally, `/etc/finit.conf` was the only way to set up a Finit system.
+Today it is mainly used for bootstrap settings like system hostname,
+network bringup and system shutdown.  These can now also be set in any
+`.conf` file in `/etc/finit.d`.
 
-This file used to be the only way to set up and boot a Finit system.
-Today it is mainly used for pre-runtime settings like system hostname,
-network bringup and shutdown:
-
-- `host`, only at bootstrap, (runlevel `S`)
-- `mknod`, only at bootstrap
-- `network`, only at bootstrap
-- `runparts`, only at bootstrap
-- `include`
-- `log`, global setting
-- `shutdown`
-- `runlevel`, only at bootstrap
-- ... and all configuration stanzas from `/etc/finit.d` below
-
-### /etc/finit.d
-
-Support for per-service `.conf` files in `/etc/finit.d` was added in
-v3.0 to handle changes of the system configuration at runtime.  As of
-v3.1 `finit.conf` is also handled at runtime, except of course for any
-stanza that only runs at bootstrap.  However, a `/etc/finit.d/*.conf`
-does *not support* the above `finit.conf` settings described above, only
-the following:
-
-- `module`, but only at bootstrap
-- `service`
-- `task`
-- `run`
-- `rlimit`
-- `tty`
+There is, however, nothing preventing you from having all configuration
+settings in `/etc/finit.conf`.
 
 > **Note:** The `/etc/finit.d` directory was previously the default
 >          Finit `runparts` directory.  Finit no longer has a default
