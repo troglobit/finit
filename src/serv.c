@@ -264,7 +264,7 @@ static int do_edit(char *arg, int creat)
 	char *editor[] = {
 		"sensible-editor",
 		"editor",
-		"${VISUAL:-${EDITOR:$(command -v mg vi | head -1)}}"
+		"${VISUAL:-${EDITOR:-$(command -v mg vi | head -1)}}"
 	};
 	char path[256];
 	char *fn;
