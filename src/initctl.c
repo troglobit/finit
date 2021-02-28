@@ -737,8 +737,6 @@ static int do_help(char *arg)
 
 int main(int argc, char *argv[])
 {
-	int interactive = 1, c;
-	char *cmd, arg[120];
 	struct command command[] = {
 		{ "debug",    toggle_debug },
 		{ "help",     do_help      },
@@ -783,6 +781,8 @@ int main(int argc, char *argv[])
 		{ "verbose",    0, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
 	};
+	int interactive = 1, c;
+	char *cmd;
 
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
@@ -831,21 +831,23 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	memset(arg, 0, sizeof(arg));
 	cmd = argv[optind++];
-	while (optind < argc) {
-		strlcat(arg, argv[optind++], sizeof(arg));
-		if (optind < argc)
-			strlcat(arg, " ", sizeof(arg));
-	}
-
 	for (c = 0; command[c].cmd; c++) {
+		int rc = 0;
+
 		if (!string_match(command[c].cmd, cmd))
 			continue;
 		if (!command[c].cb)
 			continue;
 
-		return command[c].cb(arg);
+		/* no arg, just a command, e.g. initctl ls */
+		if (optind >= argc)
+			return command[c].cb(NULL);
+
+		/* >=1 arg, e.g., initctl del foo bar baz */
+		while (optind < argc)
+			rc |= command[c].cb(argv[optind++]);
+		return rc;
 	}
 
 	return usage(1);
