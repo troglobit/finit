@@ -244,14 +244,27 @@ int serv_touch(char *arg)
 	return 0;
 }
 
+/*
+ * Try to open an editor for the given file, if creat is given we
+ * create a new file based on /lib/finit/sample.conf
+ *
+ * The order of editors that this command checks for is evaluated
+ * as follows, in order:
+ *
+ *     sensible-editor :: debian based systems
+ *     editor          :: debian + most other systems
+ *     VISUAL          :: full-screen editor program
+ *     EDITOR          :: line-mode editor program
+ *     $(command ...)  :: fallback to mg or vi
+ *
+ * For details: https://jdebp.uk/FGA/unix-editors-and-pagers.html
+ */
 static int do_edit(char *arg, int creat)
 {
 	char *editor[] = {
 		"sensible-editor",
 		"editor",
-		"${VISUAL:-${EDITOR}}",
-		"mg",
-		"vi"
+		"${VISUAL:-${EDITOR:$(command -v mg vi | head -1)}}"
 	};
 	char path[256];
 	char *fn;
@@ -259,7 +272,7 @@ static int do_edit(char *arg, int creat)
 	fn = conf(path, sizeof(path), arg, creat);
 	if (!fexist(fn)) {
 		if (!creat) {
-			warnx("Cannot find %s, use create command, or select one of:", arg);
+			warnx("Cannot find %s, use -c flag, create command, or select one of:", arg);
 			return serv_list("available");
 		}
 
