@@ -33,6 +33,7 @@
 #include "util.h"
 
 extern int icreate;			/* initctl -c */
+extern int iforce;			/* initctl -f */
 
 
 static int calc_width(char *arr[], size_t len)
@@ -352,12 +353,10 @@ int serv_delete(char *arg)
 	if (!fn)
 		errx(1, FINIT_RCSD " missing on system.");
 
-	if (!fexist(fn)) {
-		warnx("Cannot find %s", fn);
-		return 1;
-	}
+	if (!fexist(fn))
+		warnx("cannot find %s", fn);
 
-	if (yorn("Remove file and symlink(s) to %s (y/N)? ", fn)) {
+	if (iforce || yorn("Remove file and symlink(s) to %s (y/N)? ", fn)) {
 		do_disable(arg, 0);
 		remove(fn);
 	}

@@ -49,6 +49,7 @@ struct command {
 };
 
 int icreate  = 0;
+int iforce   = 0;
 int heading  = 1;
 int numeric  = 0;
 int verbose  = 0;
@@ -666,6 +667,7 @@ static int usage(int rc)
 		"Options:\n"
 		"  -b, --batch               Batch mode, no screen size probing\n"
 		"  -c, --create              Create missing paths (and files) as needed\n"
+		"  -f, --force               Ignore missing files and arguments, never prompt\n"
 		"  -n, --numeric             Show JOB:ID instead of NAME:ID\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
@@ -775,6 +777,7 @@ int main(int argc, char *argv[])
 	struct option long_options[] = {
 		{ "batch",      0, NULL, 'b' },
 		{ "create",     0, NULL, 'c' },
+		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
 		{ "numeric",    0, NULL, 'n' },
 		{ "no-heading", 0, NULL, 't' },
@@ -787,7 +790,7 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "bch?ntv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bcfh?ntv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':
 			interactive = 0;
@@ -795,6 +798,10 @@ int main(int argc, char *argv[])
 
 		case 'c':
 			icreate = 1;
+			break;
+
+		case 'f':
+			iforce = 1;
 			break;
 
 		case 'h':
