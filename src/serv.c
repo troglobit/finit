@@ -190,7 +190,7 @@ int serv_enable(char *arg)
 	return symlink(path, arg) != 0;
 }
 
-int serv_disable(char *arg)
+int do_disable(char *arg, int check)
 {
 	struct stat st;
 	char corr[40];
@@ -209,13 +209,18 @@ int serv_disable(char *arg)
 		err(1, "failed cd %s", FINIT_RCSD);
 	chdir("enabled");	   /* System *may* have enabled/ dir. */
 
-	if (stat(arg, &st))
+	if (check && stat(arg, &st))
 		errx(1, "%s not (an) enabled (service).", arg);
 
-	if ((st.st_mode & S_IFMT) == S_IFLNK)
+	if (check && (st.st_mode & S_IFMT) == S_IFLNK)
 		errx(1, "cannot disable %s, not a symlink.", arg);
 
 	return remove(arg) != 0;
+}
+
+int serv_disable(char *arg)
+{
+	return do_disable(arg, 1);
 }
 
 int serv_touch(char *arg)
@@ -351,7 +356,7 @@ int serv_delete(char *arg)
 		errx(1, "Cannot find %s", fn);
 
 	if (yorn("Remove %s and any enabled symlink (y/N)? ", fn)) {
-		serv_disable(arg);
+		do_disable(arg, 0);
 		remove(fn);
 	}
 
