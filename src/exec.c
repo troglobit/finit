@@ -311,11 +311,11 @@ static int activate_console(int noclear, int nowait)
 	struct termios orig;
 	int ret = 0;
 
+	if (nowait || rescue)
+		return 1;
+
 	if (!noclear)
 		(void)write(STDERR_FILENO, "\e[r\e[H\e[J", 9);
-
-	if (nowait)
-		return 1;
 
 	/* Disable ECHO, XON/OFF while waiting for <CR> */
 	if (!tcgetattr(STDIN_FILENO, &orig)) {
