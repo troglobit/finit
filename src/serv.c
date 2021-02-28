@@ -322,6 +322,29 @@ int serv_creat(char *arg)
 	return fclose(fp);
 }
 
+int serv_delete(char *arg)
+{
+	char buf[256];
+	char *fn;
+
+	if (!arg || !arg[0])
+		errx(1, "missing argument to delete");
+
+	fn = conf(buf, sizeof(buf), arg, 0);
+	if (!fn)
+		errx(1, FINIT_RCSD " missing on system.");
+
+	if (!fexist(fn))
+		errx(1, "Cannot find %s", fn);
+
+	if (yorn("Remove %s and any enabled symlink (y/N)? ", fn)) {
+		serv_disable(arg);
+		remove(fn);
+	}
+
+	return 0;
+}
+
 /**
  * Local Variables:
  *  indent-tabs-mode: t

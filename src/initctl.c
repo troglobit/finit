@@ -681,9 +681,10 @@ static int usage(int rc)
 		fprintf(stderr,
 			"  ls | list                 List all .conf in " FINIT_RCSD "\n"
 			"  create   <CONF>           Create   .conf in %s\n"
+			"  delete   <CONF>           Delete   .conf in %s\n"
 			"  edit     <CONF>           Edit     .conf in %s\n"
 			"  touch    <CONF>           Change   .conf in %s\n",
-			avail, avail, avail);
+			avail, avail, avail, avail);
 	if (has_ena)
 		fprintf(stderr,
 			"  enable   <CONF>           Enable   .conf in %s\n", avail);
@@ -750,6 +751,7 @@ int main(int argc, char *argv[])
 		{ "touch",    serv_touch   },
 		{ "edit",     serv_edit    },
 		{ "create",   serv_creat   },
+		{ "delete",   serv_delete  },
 		{ "reload",   do_reload    },
 
 		{ "cond",     do_cond      },
