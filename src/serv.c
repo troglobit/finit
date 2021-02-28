@@ -352,10 +352,12 @@ int serv_delete(char *arg)
 	if (!fn)
 		errx(1, FINIT_RCSD " missing on system.");
 
-	if (!fexist(fn))
-		errx(1, "Cannot find %s", fn);
+	if (!fexist(fn)) {
+		warnx(1, "Cannot find %s", fn);
+		return 1;
+	}
 
-	if (yorn("Remove %s and any enabled symlink (y/N)? ", fn)) {
+	if (yorn("Remove file and symlink(s) to %s (y/N)? ", fn)) {
 		do_disable(arg, 0);
 		remove(fn);
 	}
