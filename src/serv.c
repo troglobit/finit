@@ -353,7 +353,7 @@ int serv_delete(char *arg)
 		errx(1, FINIT_RCSD " missing on system.");
 
 	if (!fexist(fn)) {
-		warnx(1, "Cannot find %s", fn);
+		warnx("Cannot find %s", fn);
 		return 1;
 	}
 
