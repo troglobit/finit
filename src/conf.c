@@ -855,9 +855,12 @@ int conf_monitor(void)
 	rc += iwatch_add(&iw_conf, FINIT_CONF, 0);
 
 	/*
-	 * Systems with /etc/default, or similar, can also monitor changes
-	 * in env files sourced by .conf files (above)
+	 * Systems with /etc/default, /etc/conf.d, or similar, can also
+	 * monitor changes in env files sourced by .conf files (above)
+	 * define your own with --with-sysconfig=/path/to/envfiles
 	 */
+	rc += iwatch_add(&iw_conf, "/etc/default/", IN_ONLYDIR);
+	rc += iwatch_add(&iw_conf, "/etc/conf.d/", IN_ONLYDIR);
 #ifdef FINIT_SYSCONFIG
 	rc += iwatch_add(&iw_conf, FINIT_SYSCONFIG, IN_ONLYDIR);
 #endif

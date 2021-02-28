@@ -18,7 +18,6 @@ PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig ./configure	\
 		 --sysconfdir=/etc		--localstatedir=/var		\
 		 --enable-dbus-plugin		--enable-x11-common-plugin	\
 		 --enable-alsa-utils-plugin	--enable-watchdog		\
-		 --with-sysconfig=/etc/conf.d	--with-hostname=alpine		\
 		 --with-heading="Alpine Linux 3.13"
 
 echo

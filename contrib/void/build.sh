@@ -14,11 +14,11 @@ fi
 # The plugins are optional, but you may need D-Bus and X11 if you want
 # to run X-Window, the other configure flags are however required.
 PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig ./configure	\
-		 --prefix=/usr                 --exec-prefix=			\
-		 --sysconfdir=/etc             --localstatedir=/var		\
-                 --enable-dbus-plugin          --enable-x11-common-plugin	\
-		 --enable-alsa-utils-plugin    					\
-		 --with-heading="Void Linux"   --with-hostname=void
+		 --prefix=/usr                  --exec-prefix=			\
+		 --sysconfdir=/etc              --localstatedir=/var		\
+                 --enable-dbus-plugin           --enable-x11-common-plugin	\
+		 --enable-alsa-utils-plugin	--enable-watchdog		\
+		 --with-heading="Void Linux"
 
 echo
 echo "*** Building ..."

@@ -110,8 +110,8 @@ AC_ARG_WITH(rc-local,
 	[rclocal=$withval], [rclocal=yes])
 
 AC_ARG_WITH(sysconfig,
-        AS_HELP_STRING([--with-sysconfig=DIR], [Enviroment config directory, default /etc/default]),
-	[sysconfig=$withval], [sysconfig=yes])
+        AS_HELP_STRING([--with-sysconfig=DIR], [System environment, default /etc/default & /etc/conf.d]),
+	[sysconfig=$withval], [sysconfig=default])
 
 AC_ARG_WITH(hostname,
         AS_HELP_STRING([--with-hostname=NAME], [If /etc/hostname is missing, default: noname]),
@@ -170,11 +170,10 @@ AC_EXPAND_DIR(rclocal_path, "$rclocal")
 AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$rclocal_path", [Compat SysV /etc/rc.local file to run last at boot.])
 
 AS_IF([test "x$with_sysconfig" != "xno"], [
-	AS_IF([test "x$sysconfig" = "xyes"], [
-		sysconfig=$sysconfdir/default])
-	AC_EXPAND_DIR(sysconfig_path, "$sysconfig")
-	AC_DEFINE_UNQUOTED(FINIT_SYSCONFIG, "$sysconfig_path",
-			    [System environment, default /etc/default])])
+	AS_IF([test "x$sysconfig" != "xdefault"], [
+		    AC_EXPAND_DIR(sysconfig_path, "$sysconfig")
+		    AC_DEFINE_UNQUOTED(FINIT_SYSCONFIG, "$sysconfig_path",
+			    [System environment, default /etc/default & /etc/conf.d])])])
 
 AS_IF([test "x$with_heading" != "xno"], [
 	AS_IF([test "x$heading" = "xyes"], [
@@ -233,7 +232,7 @@ cat <<EOF
   Finit config.d path...: $rcsd_path
   Finit plugin path.....: $plugin_path
   Compat rc.local path..: $rclocal_path
-  System environment....: $sysconfig_path
+  System environment....: ${sysconfig_path:-${sysconfig}}
   Random seed path......: $random_path
   C Compiler............: $CC $CFLAGS $CPPFLAGS $LDFLAGS $LIBS
   Linker................: $LD $LLDP_LDFLAGS $LLDP_BIN_LDFLAGS $LDFLAGS $LIBS

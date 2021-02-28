@@ -27,7 +27,7 @@ echo
     --enable-dbus-plugin              --enable-x11-common-plugin	\
     --enable-alsa-utils-plugin						\
     --with-random-seed=/var/lib/urandom/random-seed			\
-    --with-heading="Debian GNU/Linux" --with-hostname="stretch"
+    --with-heading="Debian GNU/Linux"
 
 if [ $? -ne 0 ]; then
     echo
