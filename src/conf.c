@@ -59,7 +59,7 @@ static uev_t etcw;
 
 static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
 
-static int parse_conf(char *file);
+static int  parse_conf(char *file, int is_rcsd);
 static void drop_changes(void);
 
 static void hide_args(int argc, char *argv[])
@@ -417,7 +417,7 @@ error:
 	logit(LOG_WARNING, "rlimit: parse error");
 }
 
-static void parse_static(char *line)
+static void parse_static(char *line, int is_rcsd)
 {
 	char *x;
 	char cmd[CMD_SIZE];
@@ -459,7 +459,7 @@ static void parse_static(char *line)
 			return;
 		}
 
-		parse_conf(cmd);
+		parse_conf(cmd, is_rcsd);
 		return;
 	}
 
@@ -569,77 +569,34 @@ static void tabstospaces(char *line)
 	}
 }
 
-static int parse_conf_dynamic(char *file)
+static int parse_conf(char *file, int is_rcsd)
 {
-	FILE *fp;
 	struct rlimit rlimit[RLIMIT_NLIMITS];
-
-	fp = fopen(file, "r");
-	if (!fp) {
-		_pe("Failed opening %s", file);
-		return 1;
-	}
-
-	/* Prepare default limits for each service */
-	memcpy(rlimit, global_rlimit, sizeof(rlimit));
-
-	_d("Parsing %s <<<<<<", file);
-	while (!feof(fp)) {
-		char line[LINE_SIZE] = "";
-
-		if (!fgets(line, sizeof(line), fp))
-			continue;
-
-		chomp(line);
-		tabstospaces(line);
-		_d("%s", line);
-
-		parse_dynamic(line, rlimit, file);
-	}
-
-	fclose(fp);
-
-	return 0;
-}
-
-static int parse_conf(char *file)
-{
-	FILE *fp;
 	char line[LINE_SIZE] = "";
-
-	/*
-	 * Get current global limits, which may be overridden from both
-	 * finit.conf, for Finit and its services like getty+watchdogd,
-	 * and *.conf in finit.d/, for each service(s) listed there.
-	 */
-	for (int i = 0; i < RLIMIT_NLIMITS; i++)
-		getrlimit(i, &global_rlimit[i]);
+	FILE *fp;
 
 	fp = fopen(file, "r");
 	if (!fp)
 		return 1;
 
-	_d("Parsing %s", file);
+	/* Prepare default limits for each service in /etc/finit.d/ */
+	if (is_rcsd)
+		memcpy(rlimit, global_rlimit, sizeof(rlimit));
+
+	_d("*** Parsing %s", file);
 	while (!feof(fp)) {
 		if (!fgets(line, sizeof(line), fp))
 			continue;
 
 		chomp(line);
 		tabstospaces(line);
-		_d("%s", line);
+//		_d("%s", line);
 
-		parse_static(line);
-		parse_dynamic(line, global_rlimit, file);
+		parse_static(line, is_rcsd);
+		parse_dynamic(line, is_rcsd ? rlimit : global_rlimit, file);
 	}
 
 	fclose(fp);
-
-	/* Set global limits */
-	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
-		if (setrlimit(i, &global_rlimit[i]) == -1)
-			logit(LOG_WARNING, "rlimit: Failed setting %s: %s",
-			      rlim2str(i), lim2str(&global_rlimit[i]));
-	}
 
 	return 0;
 }
@@ -661,12 +618,20 @@ int conf_reload(void)
 	svc_mark_dynamic();
 	tty_mark();
 
+	/*
+	 * Get current global limits, which may be overridden from both
+	 * finit.conf, for Finit and its services like getty+watchdogd,
+	 * and *.conf in finit.d/, for each service(s) listed there.
+	 */
+	for (int i = 0; i < RLIMIT_NLIMITS; i++)
+		getrlimit(i, &global_rlimit[i]);
+
 	if (rescue) {
 		int rc;
 		char line[80] = "tty [12345] @console noclear nologin";
 
 		/* If rescue.conf is missing, fall back to a root shell */
-		rc = parse_conf(RESCUE_CONF);
+		rc = parse_conf(RESCUE_CONF, 0);
 		if (rc)
 			tty_register(line, global_rlimit, NULL);
 
@@ -675,7 +640,14 @@ int conf_reload(void)
 	}
 
 	/* First, read /etc/finit.conf */
-	parse_conf(FINIT_CONF);
+	parse_conf(FINIT_CONF, 0);
+
+	/* Set global limits */
+	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
+		if (setrlimit(i, &global_rlimit[i]) == -1)
+			logit(LOG_WARNING, "rlimit: Failed setting %s: %s",
+			      rlim2str(i), lim2str(&global_rlimit[i]));
+	}
 
 	/* Next, read all *.conf in /etc/finit.d/ */
 	glob(FINIT_RCSD "/*.conf", 0, NULL, &gl);
@@ -713,7 +685,7 @@ int conf_reload(void)
 		if (len < 6 || strcmp(&path[len - 5], ".conf"))
 			_d("Skipping %s, not a valid .conf ... ", path);
 		else
-			parse_conf_dynamic(path);
+			parse_conf(path, 1);
 
 		if (rp)
 			free(rp);
