@@ -10,6 +10,10 @@ endif
 
 sbin_PROGRAMS      = finit initctl
 pkglibexec_SCRIPTS = cgreaper.sh
+
+finit_pkglibdir      = $(pkglibdir)
+finit_pkglib_SCRIPTS = rescue.conf
+
 if WATCHDOGD
 pkglibexec_PROGRAMS = watchdogd
 endif
@@ -68,7 +72,6 @@ endif
 
 # Hook in install to add finit and reboot symlink(s)
 install-exec-hook:
-	@$(INSTALL_DATA) $(srcdir)/rescue.conf $(DESTDIR)$(pkglibdir)
 	@for file in $(INIT_LNKS); do			\
 		lnk=$(DESTDIR)$(sbindir)/$$file;	\
 		if [ -e $$lnk ]; then			\
@@ -87,7 +90,6 @@ install-exec-hook:
 	done
 
 uninstall-hook:
-	@$(RM) $(DESTDIR)$(pkglibdir)/rescue.conf
 	@for file in $(INIT_LNKS); do			\
 		lnk=$(DESTDIR)$(sbindir)/$$file;	\
 		dst=`readlink $$lnk`;			\
