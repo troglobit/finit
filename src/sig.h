@@ -28,8 +28,8 @@
 #include <signal.h>
 #include <uev/uev.h>
 
-#define SYNC_SHUTDOWN   "/var/lock/finit.shutdown"
-#define SYNC_STOPPED    "/var/lock/finit.stopped"
+#define SYNC_SHUTDOWN   "/var/run/finit/.shutdown"
+#define SYNC_STOPPED    "/var/run/finit/.stopped"
 
 #define SETSIG(sa, sig, fun, flags)			\
 	do {						\
