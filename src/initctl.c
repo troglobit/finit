@@ -175,7 +175,8 @@ static int do_svc(int cmd, char *arg)
 		.cmd = cmd,
 	};
 
-	strlcpy(rq.data, arg, sizeof(rq.data));
+	if (arg)
+		strlcpy(rq.data, arg, sizeof(rq.data));
 
 	return client_send(&rq, sizeof(rq));
 }
