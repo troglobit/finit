@@ -29,6 +29,7 @@
 #ifdef HAVE_FSTAB_H
 #include <fstab.h>
 #endif
+#include <getopt.h>
 #include <mntent.h>
 #include <time.h>		/* tzet() */
 #include <sys/klog.h>
@@ -354,6 +355,83 @@ static void final_worker(void *work)
 	finalize();
 }
 
+static int usage(int rc)
+{
+	printf("Usage: telinit [OPTIONS] [q | Q | 0-9]\n\n"
+	       "Options:\n"
+//	       "  -a       Ignored, compat SysV init\n"
+//	       "  -b       Ignored, compat SysV init\n"
+//	       "  -e arg   Ignored, compat SysV init\n"
+	       "  -h       This help text\n"
+//	       "  -s       Ignored, compat SysV init\n"
+//	       "  -t sec   Ignored, compat SysV init\n"
+	       "  -v       Show Finit version\n"
+//	       "  -z xxx   Ignored, compat SysV init\n"
+	       "\n"
+	       "Commands:\n"
+	       "  0        Power-off the system, same as initctl poweroff\n"
+	       "  6        Reboot the system, same as initctl reboot\n"
+	       "  2-9      Change runlevel\n"
+	       "  q, Q     Reload /etc/finit.conf and/or any *.conf in /etc/finit.d/\n"
+	       "           if modified, same as initctl reload or SIGHUP to PID 1\n"
+	       "  1, s, S  Enter system rescue mode, runlevel 1\n"
+	       "\n");
+
+	printf("Bug report address: %-40s\n", PACKAGE_BUGREPORT);
+#ifdef PACKAGE_URL
+	printf("Project homepage: %s\n", PACKAGE_URL);
+#endif
+
+	return rc;
+}
+
+/*
+ * wrapper for old-style init/telinit commands, for compat with
+ * /usr/bin/shutdown from sysvinit, and old fingers
+ */
+static int telinit(int argc, char *argv[])
+{
+	int c;
+
+	while ((c = getopt(argc, argv, "abe:h?st:vVz:")) != EOF) {
+		switch(c) {
+		case 'a': case 'b': case 'e': case 's': case 'z':
+			break;		/* ign, compat */
+
+		case 't':		/* optarg == killdelay */
+			break;
+
+		case 'v': case 'V':
+			return puts("v" VERSION) == EOF;
+
+		case 'h':
+		case '?':
+			return usage(0);
+		}
+	}
+
+	if (optind < argc) {
+		int req = (int)argv[optind][0];
+
+		if (isdigit(req))
+			return systemf("initctl runlevel %c", req);
+
+		if (req == 'q' || req == 'Q')
+			return systemf("initctl reload");
+
+		if (req == 's' || req == 'S')
+			return systemf("initctl runlevel %c", req);
+	}
+
+	/* XXX: add non-pid1 process monitor here
+	 *
+	 *       finit -f ~/.config/finit.conf &
+	 *
+	 */
+
+	return usage(1);
+}
+
 int main(int argc, char *argv[])
 {
 	struct wq crank = {
@@ -365,12 +443,9 @@ int main(int argc, char *argv[])
 	};
 	uev_ctx_t loop;
 
-	if (getpid() != 1) {
-		fprintf(stderr, "Running Finit as anything other than PID 1 "
-			"is not supported.\n"
-			"The initctl tool is the new command line API.\n");
-		return 1;
-	}
+	/* telinit or stand-alone process monitor */
+	if (getpid() != 1)
+		return telinit(argc, argv);
 
 	/*
 	 * Need /dev, /proc, and /sys for console=, remount and cgroups
