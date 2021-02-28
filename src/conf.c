@@ -419,8 +419,8 @@ error:
 
 static void parse_static(char *line, int is_rcsd)
 {
-	char *x;
 	char cmd[CMD_SIZE];
+	char *x;
 
 	if (BOOTSTRAP && (MATCH_CMD(line, "host ", x) || MATCH_CMD(line, "hostname ", x))) {
 		if (hostname) free(hostname);
@@ -434,7 +434,12 @@ static void parse_static(char *line, int is_rcsd)
 		strcpy(cmd, "mknod ");
 		strlcat(cmd, dev, sizeof(cmd));
 		run_interactive(cmd, "Creating device node %s", dev);
+		return;
+	}
 
+	/* Kernel module to load */
+	if (BOOTSTRAP && MATCH_CMD(line, "module ", x)) {
+		kmod_load(x);
 		return;
 	}
 
@@ -511,16 +516,6 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 {
 	char *x;
 
-	/* Skip comments, i.e. lines beginning with # */
-	if (MATCH_CMD(line, "#", x))
-		return;
-
-	/* Kernel module to load at bootstrap */
-	if (MATCH_CMD(line, "module ", x)) {
-		kmod_load(x);
-		return;
-	}
-
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
 		service_register(SVC_TYPE_SERVICE, x, rlimit, file);
@@ -585,12 +580,18 @@ static int parse_conf(char *file, int is_rcsd)
 
 	_d("*** Parsing %s", file);
 	while (!feof(fp)) {
+		char *x;
+
 		if (!fgets(line, sizeof(line), fp))
 			continue;
 
 		chomp(line);
 		tabstospaces(line);
-//		_d("%s", line);
+//DEV		_d("%s", line);
+
+		/* Skip comments, i.e. lines beginning with # */
+		if (MATCH_CMD(line, "#", x))
+			continue;
 
 		parse_static(line, is_rcsd);
 		parse_dynamic(line, is_rcsd ? rlimit : global_rlimit, file);
