@@ -216,6 +216,8 @@ AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])
 
 AC_EXPAND_DIR(rescue_conf, "$libdir/finit/rescue.conf")
 AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
+AC_EXPAND_DIR(sample_conf, "$libdir/finit/sample.conf")
+AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl create])
 
 # Generate all files
 AC_OUTPUT

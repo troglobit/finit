@@ -1,4 +1,4 @@
-EXTRA_DIST         = rescue.conf cgreaper.sh
+EXTRA_DIST         = cgreaper.sh rescue.conf sample.conf
 AM_CPPFLAGS        = -U_FORTIFY_SOURCE
 AM_CPPFLAGS       += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 if STATIC
@@ -12,7 +12,7 @@ sbin_PROGRAMS      = finit initctl
 pkglibexec_SCRIPTS = cgreaper.sh
 
 finit_pkglibdir      = $(pkglibdir)
-finit_pkglib_SCRIPTS = rescue.conf
+finit_pkglib_SCRIPTS = rescue.conf sample.conf
 
 if WATCHDOGD
 pkglibexec_PROGRAMS = watchdogd

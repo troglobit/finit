@@ -263,7 +263,10 @@ static int do_edit(char *arg, int creat)
 			return serv_list("available");
 		}
 
-		/* XXX: fill with template/commented-out examples */
+#ifdef SAMPLE_CONF
+		/* Try copying file, it may have been removed by sysop */
+		copyfile(SAMPLE_CONF, fn, 0, 0);
+#endif
 	} else if (creat)
 		warnx("the file %s already exists, falling back to edit.", fn);
 
