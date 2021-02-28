@@ -33,6 +33,9 @@ GTAGS
 /Makefile.in
 /stamp-h1
 
+/test-driver
+/test-suite.log
+
 # TroglOS build system
 /.config
 /.stamp

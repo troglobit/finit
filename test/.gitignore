@@ -1,0 +1,9 @@
+# GNU configure and build system
+*.log
+*.trs
+/Makefile
+/Makefile.in
+
+/test.env
+/checkself.sh
+/tenv-root

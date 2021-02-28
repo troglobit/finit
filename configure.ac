@@ -12,7 +12,9 @@ AC_CONFIG_FILES([Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
 	doc/Makefile
 	plugins/Makefile
-	src/Makefile])
+	src/Makefile
+	test/test.env
+	test/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/plugin.m4])
@@ -157,12 +159,14 @@ AS_IF([test "x$with_config" != "xno"], [
 		conf=$sysconfdir/finit.conf])])
 AC_EXPAND_DIR(conf_path, "$conf")
 AC_DEFINE_UNQUOTED(FINIT_CONF, "$conf_path", [Main Finit configuration file, default /etc/finit.conf])
+AC_SUBST(FINIT_CONF, "$conf_path")
 
 AS_IF([test "x$with_rcsd" != "xno"], [
 	AS_IF([test "x$rcsd" = "xyes"], [
 		rcsd=$sysconfdir/finit.d])])
 AC_EXPAND_DIR(rcsd_path, "$rcsd")
 AC_DEFINE_UNQUOTED(FINIT_RCSD, "$rcsd_path", [Finit rcS.d/, default /etc/finit.d])
+AC_SUBST(FINIT_RCSD, "$rcsd_path")
 
 AS_IF([test "x$with_rc_local" != "xno"], [
 	AS_IF([test "x$rclocal" = "xyes"], [
