@@ -343,6 +343,9 @@ static int do_cond(char *cmd)
 		{ NULL, NULL }
 	};
 
+	if (!cmd)
+		goto fallback;
+
 	arg = strpbrk(cmd, " \0");
 	if (arg)
 		*arg++ = 0;
@@ -352,6 +355,7 @@ static int do_cond(char *cmd)
 			return command[c].cb(arg);
 	}
 
+fallback:
 	return do_cond_show(NULL);
 }
 
