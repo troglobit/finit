@@ -235,8 +235,11 @@ static void pidfile_init(void *arg)
 	 */
 	path = realpath(_PATH_VARRUN, NULL);
 	if (!path) {
-		_pe("Failed ");
-		return;
+		path = realpath("/run", NULL);
+		if (!path) {
+			_e("System does not have %s or /run, aborting.", _PATH_VARRUN);
+			return;
+		}
 	}
 
 	if (pidfile_add_path(&iw_pidfile, path))
