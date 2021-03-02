@@ -143,10 +143,9 @@ static int do_runlevel(char *arg)
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
 		.cmd = INIT_CMD_RUNLVL,
-		.runlevel = (int)arg[0],
 	};
 
-	if (!rq.runlevel) {
+	if (!arg) {
 		int prevlevel = 0;
 		int runlevel;
 		char prev;
@@ -164,6 +163,9 @@ static int do_runlevel(char *arg)
 		printf("%c %d\n", prev , runlevel);
 		return 0;
 	}
+
+	/* set runlevel */
+	rq.runlevel = (int)arg[0];
 
 	return client_send(&rq, sizeof(rq));
 }
@@ -194,6 +196,13 @@ static int do_startstop(int cmd, char *arg)
 		.magic = INIT_MAGIC,
 		.cmd   = INIT_CMD_SVC_QUERY
 	};
+
+	if (!arg || !arg[0])
+		errx(1, "missing argument to %s", (cmd == INIT_CMD_START_SVC
+						   ? "start"
+						   : (cmd == INIT_CMD_STOP_SVC
+						      ? "stop"
+						      : "restart")));
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
 	if (client_send(&rq, sizeof(rq))) {
