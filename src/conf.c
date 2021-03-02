@@ -716,7 +716,6 @@ static struct conf_change *conf_find(char *file)
 	struct conf_change *node, *tmp;
 
 	TAILQ_FOREACH_SAFE(node, &conf_change_list, link, tmp) {
-		_d("file: %s vs changed file: %s", file, node->name);
 		if (string_compare(node->name, file))
 			return node;
 	}
