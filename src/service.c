@@ -918,24 +918,56 @@ static void parse_name(svc_t *svc, char *arg)
  */
 static void parse_cmdline_args(svc_t *svc, char *cmd)
 {
-	int i;
+	char sep = 0;
 	char *arg;
+	int i = 0;
 
-	strlcpy(svc->args[0], cmd, sizeof(svc->args[0]));
+	strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
+
+	while (i < MAX_NUM_SVC_ARGS)
+		svc->args[i++][0] = 0;
 
 	/*
 	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
 	 * array to be zero-terminated.
 	 */
-	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1); i++)
-		strlcpy(svc->args[i], arg, sizeof(svc->args[0]));
+	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1);) {
+		char ch = arg[0];
+		size_t len;
+
+		/* XXX: ugly string arg re-concatenation, fixme */
+		if (ch == '"' || ch == '\'')
+			sep = ch;
+		else if (sep)
+			strlcat(svc->args[i], " ", sizeof(svc->args[0]));
+
+		strlcat(svc->args[i], arg, sizeof(svc->args[0]));
+
+		/* string arg contained already? */
+		len = strlen(arg);
+		if (sep && len >= 1) {
+			ch = arg[len - 1];
+			if (ch != sep)
+				continue;
+		}
+
+		sep = 0;
+		i++;
+	}
 
 	/*
 	 * Clear remaining args in case they were set earlier.
 	 * This also zero-terminates the args array.
 	 */
-	for (; i < MAX_NUM_SVC_ARGS; i++)
-		svc->args[i][0] = 0;
+	while (i < MAX_NUM_SVC_ARGS)
+		svc->args[i++][0] = 0;
+#if 0
+	for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
+		if (!svc->args[i][0])
+			break;
+		_d("%s ", svc->args[i]);
+	}
+#endif
 }
 
 
