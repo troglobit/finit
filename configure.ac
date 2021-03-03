@@ -113,7 +113,7 @@ AC_ARG_WITH(rc-local,
 	[rclocal=$withval], [rclocal=yes])
 
 AC_ARG_WITH(sysconfig,
-        AS_HELP_STRING([--with-sysconfig=DIR], [System environment, default /etc/default & /etc/conf.d]),
+        AS_HELP_STRING([--with-sysconfig=DIR], [System environment directory, sourced by .conf files, default /etc/default & /etc/conf.d]),
 	[sysconfig=$withval], [sysconfig=default])
 
 AC_ARG_WITH(hostname,
