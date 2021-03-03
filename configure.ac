@@ -89,11 +89,11 @@ AC_ARG_ENABLE(contrib,
 enable_all_plugins=auto
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],          [no],  [Setup and start system message bus, D-Bus])
-AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
 AC_PLUGIN([modules-load],  [no],  [Scans /etc/modules-load.d for modules to load])
 AC_PLUGIN([resolvconf],    [no],  [Setup necessary files for resolvconf])
 AC_PLUGIN([x11-common],    [no],  [Console setup (for X)])
 AC_PLUGIN([netlink],       [yes], [Basic netlink plugin for IFUP/IFDN and GW events. Can be replaced with externally built plugin that links with libnl or similar.])
+AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
 
 # Check for extra arguments or packages
 AC_ARG_WITH(heading,
