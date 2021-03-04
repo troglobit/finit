@@ -55,9 +55,7 @@ char *uptime       (long secs, char *buf, size_t len);
 
 char *sanitize     (char *arg, size_t len);
 
-void  screen_init  (void);
-void  screen_exit  (void);
-int   screen_width (void);
+int   screen_init  (void);
 
 static inline char *strterm(char *str, size_t len)
 {

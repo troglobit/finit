@@ -28,9 +28,15 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#ifdef HAVE_TERMIOS_H
+# include <termios.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 #include <utmp.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <sys/sysinfo.h>	/* sysinfo() */
 #include <lite/lite.h>		/* strlcat() */
 #include "util.h"
@@ -202,25 +208,66 @@ char *sanitize(char *arg, size_t len)
 }
 
 /*
- * Called at boot, and shutdown, to (re)initialize the
- * screen size for print() et al.
+ * Called by initctl, and by finit at boot and shutdown, to
+ * (re)initialize the screen size for print() et al.
  */
-void screen_init(void)
+int screen_init(void)
 {
-	if (!isatty(STDOUT_FILENO))
-		return;
+#ifdef HAVE_TERMIOS_H
+	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
+	struct winsize ws = { 0 };
+	struct termios tc, saved;
 
-	initscr(&screen_rows, &screen_cols);
-}
+	/*
+	 * Basic TTY init, CLOCaL is important or TIOCWINSZ will block
+	 * until DCD is asserted, and we won't ever get it.
+	 */
+	tcgetattr(STDERR_FILENO, &tc);
+	saved = tc;
+	tc.c_cflag |= (CLOCAL | CREAD);
+	tc.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+	tcsetattr(STDERR_FILENO, TCSANOW, &tc);
 
-/*
- * Called when debug mode is enabled to revert back
- * to old-school safe defaults.
- */
-void screen_exit(void)
-{
-	screen_rows = 24;
-	screen_cols = 80;
+	/* 1. Try TIOCWINSZ to query window size from kernel */
+	if (!ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws)) {
+		screen_rows = ws.ws_row;
+		screen_cols = ws.ws_col;
+
+		/* Likely doesn't work in PID 1 after kernel starts us ... */
+		if (!ws.ws_row && !ws.ws_col)
+			goto fallback;
+	} else if (!isatty(STDOUT_FILENO)) {
+		/* 2. We may be running under watch(1) */
+		screen_cols = atonum(getenv("COLUMNS"));
+		screen_rows = atonum(getenv("LINES"));
+	} else {
+	fallback:
+		/* 3. ANSI goto + query cursor position trick as fallback */
+		fprintf(stderr, "\e7\e[r\e[999;999H\e[6n");
+
+		if (poll(&fd, 1, 300) > 0) {
+			int row, col;
+
+			if (scanf("\e[%d;%dR", &row, &col) == 2) {
+				screen_cols = col;
+				screen_rows = row;
+			}
+		}
+
+		/* Jump back to where we started (\e7) */
+		fprintf(stderr, "\e8");
+	}
+
+	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
+
+	/* Sanity check */
+	if (screen_cols <= 0)
+		screen_cols = 80;
+	if (screen_rows <= 0)
+		screen_rows = 24;
+#endif
+
+	return screen_cols;
 }
 
 /**

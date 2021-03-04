@@ -478,10 +478,6 @@ int main(int argc, char *argv[])
 	chdir("/");
 	umask(0);
 
-	/* Set up canvas */
-	if (!rescue && !debug)
-		screen_init();
-
 	/* Allow progress, if enabled */
 	enable_progress(1);
 
@@ -490,8 +486,10 @@ int main(int argc, char *argv[])
 	 */
 	emergency_shell();
 
-	/* Load plugins early, the first hook is in banner(), so we
-	 * need plugins loaded before calling it. */
+	/*
+	 * Load plugins early, the first hook is in banner(), so we
+	 * need plugins loaded before calling it.
+	 */
 	plugin_init(&loop);
 
 	/*

@@ -50,9 +50,7 @@ void log_exit(void)
 	 * Unless in debug mode at shutdown, Reinitialize screen,
 	 * terminal may have been resized at runtime
 	 */
-	if (debug)
-		screen_exit();
-	else
+	if (!debug)
 		screen_init();
 
 	enable_progress(1);
@@ -79,7 +77,6 @@ void log_debug(void)
 
 	if (debug) {
 		loglevel = LOG_DEBUG;
-		screen_exit();
 	} else {
 		loglevel = LOG_NOTICE;
 		screen_init();

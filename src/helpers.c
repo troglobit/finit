@@ -121,7 +121,7 @@ static void add_console(char *cons)
 	num_cons++;
 }
 
-void console_init(void)
+static void find_active_consoles(void)
 {
 	char *cons, *ptr, *tok;
 	char buf[512];
@@ -146,6 +146,12 @@ void console_init(void)
 		cons = NULL;
 		add_console(tok);
 	}
+}
+
+void console_init(void)
+{
+	find_active_consoles();
+	screen_init();
 }
 
 ssize_t cprintf(const char *fmt, ...)
