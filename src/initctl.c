@@ -506,7 +506,9 @@ static int show_status(char *arg)
 			return 1;
 
 		strlcat(cmd, svc->cmd, sizeof(cmd));
-		for (int i = 1; svc->args[i] && i < MAX_NUM_SVC_ARGS; i++) {
+		for (int i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+			if (!svc->args[i][0])
+				break;
 			strlcat(cmd, " ", sizeof(cmd));
 			strlcat(cmd, svc->args[i], sizeof(cmd));
 		}
