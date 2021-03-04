@@ -489,9 +489,24 @@ char *runlevel_string(int runlevel, int levels)
 	return lvl;
 }
 
+static char *svc_command(svc_t *svc, char *cmd, size_t len)
+{
+	strlcpy(cmd, svc->cmd, len);
+	for (int i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+		if (!svc->args[i][0])
+			break;
+
+		strlcat(cmd, " ", len);
+		strlcat(cmd, svc->args[i], len);
+	}
+
+	return cmd;
+}
+
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
+	char cmd[512];
 	svc_t *svc;
 
 	runlevel = runlevel_get(NULL);
@@ -499,25 +514,16 @@ static int show_status(char *arg)
 	if (arg && arg[0]) {
 		long now = jiffies();
 		char buf[42] = "N/A";
-		char cmd[512];
 
 		svc = client_svc_find(arg);
 		if (!svc)
 			return 1;
 
-		strlcat(cmd, svc->cmd, sizeof(cmd));
-		for (int i = 1; i < MAX_NUM_SVC_ARGS; i++) {
-			if (!svc->args[i][0])
-				break;
-			strlcat(cmd, " ", sizeof(cmd));
-			strlcat(cmd, svc->args[i], sizeof(cmd));
-		}
-
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
 		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
 		printf("Environment : %s\n", svc->env);
-		printf("Command     : %s\n", cmd);
+		printf("Command     : %s\n", svc_command(svc, cmd, sizeof(cmd)));
 		printf("PID         : %d\n", svc->pid);
 		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
@@ -543,7 +549,6 @@ static int show_status(char *arg)
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char *lvls;
-		int i;
 
 		printf("%-*d  ", pw, svc->pid);
 
@@ -556,21 +561,10 @@ static int show_status(char *arg)
 		else
 			printf("%-12.12s ", lvls);
 
-		if (!verbose) {
-			printf("%s\n", svc->desc);
-		} else {
-			char args[CMD_SIZE] = "";
-
-			for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
-				if (strlen(svc->args[i]) == 0)
-					continue;
-				if (args[0])
-					strlcat(args, " ", sizeof(args));
-				strlcat(args, svc->args[i], sizeof(args));
-			}
-
-			printf("%s %s\n", svc->cmd, args);
-		}
+		if (!verbose)
+			puts(svc->desc);
+		else
+			puts(svc_command(svc, cmd, sizeof(cmd)));
 	}
 
 	return 0;
