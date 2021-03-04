@@ -18,7 +18,7 @@ The current state depends on the two following conditions:
   
   A service may be stopped, or blocked, for several reasons:
 
-  - The user has manually stopped the service using `initctl stop JOB`
+  - The user has manually stopped the service using `initctl stop NAME`
   - The program exits immediately. I.e. keeps crashing (make sure to use
     the 'run this service in the foreground' command line option)
   - The binary is missing in the filesystem

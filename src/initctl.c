@@ -51,7 +51,6 @@ struct command {
 int icreate  = 0;
 int iforce   = 0;
 int heading  = 1;
-int numeric  = 0;
 int verbose  = 0;
 int runlevel = 0;
 int iw, pw;
@@ -72,11 +71,7 @@ static void col_widths(void)
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		int w, p;
 
-		if (!numeric)
-			svc_ident(svc, ident, sizeof(ident));
-		else
-			svc_jobid(svc, ident, sizeof(ident));
-
+		svc_ident(svc, ident, sizeof(ident));
 		w = (int)strlen(ident);
 		if (w > iw)
 			iw = w;
@@ -206,8 +201,8 @@ static int do_startstop(int cmd, char *arg)
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
 	if (client_send(&rq, sizeof(rq))) {
-		fprintf(stderr, "No such job(s) or service(s): %s\n\n", rq.data);
-		fprintf(stderr, "Usage: initctl %s <JOB|NAME>[:ID]\n",
+		fprintf(stderr, "No such task or service(s): %s\n\n", rq.data);
+		fprintf(stderr, "Usage: initctl %s <NAME>[:ID]\n",
 			cmd == INIT_CMD_START_SVC ? "start" :
 			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
 		return 1;
@@ -323,11 +318,7 @@ static int do_cond_show(char *arg)
 
 		cond = cond_get_agg(svc->cond);
 
-		if (!numeric)
-			svc_ident(svc, ident, sizeof(ident));
-		else
-			svc_jobid(svc, ident, sizeof(ident));
-
+		svc_ident(svc, ident, sizeof(ident));
 		printf("%-*d  %-*s  ", pw, svc->pid, iw, ident);
 
 		if (cond == COND_ON)
@@ -506,7 +497,6 @@ static int show_status(char *arg)
 		if (!svc)
 			return 1;
 
-		printf("Job         : %d\n", svc->job);
 		printf("Service     : %s\n", svc->cmd);
 		printf("Description : %s\n", svc->desc);
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
@@ -540,11 +530,7 @@ static int show_status(char *arg)
 
 		printf("%-*d  ", pw, svc->pid);
 
-		if (!numeric)
-			svc_ident(svc, ident, sizeof(ident));
-		else
-			svc_jobid(svc, ident, sizeof(ident));
-
+		svc_ident(svc, ident, sizeof(ident));
 		printf("%-*s  %-8s ", iw, ident, svc_status(svc));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
@@ -682,7 +668,6 @@ static int usage(int rc)
 		"  -b, --batch               Batch mode, no screen size probing\n"
 		"  -c, --create              Create missing paths (and files) as needed\n"
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
-		"  -n, --numeric             Show JOB:ID instead of NAME:ID\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
@@ -715,17 +700,17 @@ static int usage(int rc)
 			"  reload                    Reload " FINIT_CONF " (activate changes)\n");
 
 	fprintf(stderr,
-//		"  reload   <JOB|NAME>[:ID]  Reload (SIGHUP) service by job# or name\n"  
+//		"  reload   <NAME>[:ID]      Reload (SIGHUP) service by name\n"  
 		"\n"
 		"  cond     show             Show condition status\n"
 		"  cond     dump             Dump all conditions and their status\n"
 		"\n"
 		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
-		"  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID\n"
-		"  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name\n"
-		"  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name\n"
-		"  status   <JOB|NAME>[:ID]  Show service status, by job# or name\n"
-		"  status | show             Show status of services, default command\n"
+		"  start    <NAME>[:ID]      Start service by name, with optional ID\n"
+		"  stop     <NAME>[:ID]      Stop/Pause a running service by name\n"
+		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
+		"  status   <NAME>[:ID]      Show service status, by name\n"
+		"  status                    Show status of services, default command\n"
 		"\n"
 		"  ps                        List processes based on cgroups\n"
 		"\n"
@@ -793,7 +778,6 @@ int main(int argc, char *argv[])
 		{ "create",     0, NULL, 'c' },
 		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
-		{ "numeric",    0, NULL, 'n' },
 		{ "no-heading", 0, NULL, 't' },
 		{ "verbose",    0, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
@@ -804,7 +788,7 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "bcfh?ntv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bcfh?tv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':
 			interactive = 0;
@@ -821,10 +805,6 @@ int main(int argc, char *argv[])
 		case 'h':
 		case '?':
 			return usage(0);
-
-		case 'n':
-			numeric = 1;
-			break;
 
 		case 't':
 			heading = 0;
