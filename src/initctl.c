@@ -26,6 +26,7 @@
 #include <err.h>
 #include <ftw.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <getopt.h>
 #include <paths.h>
 #include <signal.h>
@@ -43,6 +44,11 @@
 
 #define _PATH_COND _PATH_VARRUN "finit/cond/"
 
+#define NONE " "
+#define PIPE plain ? "|"  : "│"
+#define FORK plain ? "|-" : "├─"
+#define END  plain ? "`-" : "└─"
+
 struct command {
 	char  *cmd;
 	int  (*cb)(char *arg);
@@ -52,6 +58,7 @@ int icreate  = 0;
 int iforce   = 0;
 int heading  = 1;
 int verbose  = 0;
+int plain    = 0;
 int runlevel = 0;
 int iw, pw;
 
@@ -567,69 +574,115 @@ static int show_status(char *arg)
 	return 0;
 }
 
-static int dump_cgroup(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
+static int cgroup_filter(const struct dirent *entry)
 {
+	/* Skip current dir ".", and prev dir "..", from list of files */
+	if ((1 == strlen(entry->d_name) && entry->d_name[0] == '.') ||
+	    (2 == strlen(entry->d_name) && !strcmp(entry->d_name, "..")))
+		return 0;
+
+	if (entry->d_name[0] == '.')
+		return 0;
+
+	if (entry->d_type != DT_DIR)
+		return 0;
+
+	return 1;
+}
+
+static int dump_cgroup(char *path, char *pfx)
+{
+	struct dirent **namelist = NULL;
+	struct stat st;
+	char buf[512];
+	int rc = 0;
 	FILE *fp;
-	char *group;
-	char path[256];
-	char buf[256];
-	int user = 0;
-	int num = 0;
+	int i, n;
+	int num;
 
-	if (tflag == FTW_F)
-		return 0;
+	if (-1 == lstat(path, &st))
+		return 1;
 
-	snprintf(path, sizeof(path), "%s/cgroup.procs", fpath);
-	fp = fopen(path, "r");
-	if (!fp)
-		return 0;
-
-	if (strstr(fpath, "finit/user"))
-		user = 1;
-
-	group = strrchr(fpath, '/');
-	if (!group)
-		goto err;
-	group++;
-
-	while (fgets(buf, sizeof(buf), fp)) {
-		FILE *cfp;
-		int pid;
-
-		if (num == 0)
-			printf("%c  :- %s/", user ? ' ' : '|', group);
-		num++;
-
-		pid = atoi(chomp(buf));
-		snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
-		cfp = fopen(path, "r");
-		if (!cfp)
-			continue;
-		fgets(buf, sizeof(buf), cfp);
-		fclose(cfp);
-
-		printf("\n%c      :- %d %s", user ? ' ' : '|', pid, buf);
+	if ((st.st_mode & S_IFMT) != S_IFDIR) {
+		errno = ENOTDIR;
+		return -1;
 	}
 
-err:
-	fclose(fp);
-	if (num)
-		printf("\r%c\n", user ? ' ' : '|');
+	fp = fopenf("r", "%s/cgroup.procs", path);
+	if (!fp)
+		return -1;
+	num = 0;
+	while (fgets(buf, sizeof(buf), fp))
+		num++;
 
-	return 0;
+	if (!pfx) {
+		pfx = "";
+		puts(path);
+	}
+
+	n = scandir(path, &namelist, cgroup_filter, alphasort);
+	if (n > 0) {
+		for (i = 0; i < n; i++) {
+			char *nm = namelist[i]->d_name;
+			char dir[80];
+
+			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
+
+			if (i + 1 == n) {
+				printf("%s%s ", pfx, END);
+				snprintf(dir, sizeof(dir), "%s     ", pfx);
+			} else {
+				printf("%s%s ", pfx, FORK);
+				snprintf(dir, sizeof(dir), "%s%s    ", pfx, PIPE);
+			}
+			puts(nm);
+
+			rc += dump_cgroup(buf, dir);
+
+			free(namelist[i]);
+		}
+
+		free(namelist);
+	}
+
+	if (num > 0) {
+		rewind(fp);
+
+		i = 0;
+		while (fgets(buf, sizeof(buf), fp)) {
+			FILE *cfp;
+			pid_t pid;
+
+			pid = atoi(chomp(buf));
+			cfp = fopenf("r", "/proc/%d/cmdline", pid);
+			if (!cfp)
+				continue;
+
+			if (fgets(buf, sizeof(buf), cfp))
+				printf("%s%s %d %s\n", pfx, ++i == num ? END : FORK, pid, buf);
+			fclose(cfp);
+		}
+
+		return fclose(fp);
+	}
+
+	fclose(fp);
+
+	return rc;
 }
 
 static int show_cgroup(char *arg)
 {
-	puts("finit/");
-	puts("|- init/");
-	nftw("/sys/fs/cgroup/finit/init", dump_cgroup, 20, 0);
-	puts("|- system/");
-	nftw("/sys/fs/cgroup/finit/system", dump_cgroup, 20, 0);
-	puts("`- user/");
-	nftw("/sys/fs/cgroup/finit/user", dump_cgroup, 20, 0);
+	char path[512];
 
-	return 0;
+	if (!arg)
+		arg = FINIT_CGPATH;
+	else if (arg[0] != '/') {
+		paste(path, sizeof(path), FINIT_CGPATH, arg);
+		arg = path;
+	}
+
+	return dump_cgroup(arg, NULL);
 }
 
 static int transform(char *nm)
