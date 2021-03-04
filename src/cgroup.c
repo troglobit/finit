@@ -102,7 +102,11 @@ static int move_pid(char *group, char *name, char *id, int pid)
 {
 	char path[256];
 
-	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s:%s", group, name, id);
+	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
+	if (id && strlen(id)) {
+		strlcat(path, ":", sizeof(path));
+		strlcat(path, id, sizeof(path));
+	}
 	if (mkdir(path, 0755) && errno != EEXIST)
 		return 1;
 
