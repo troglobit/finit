@@ -1162,6 +1162,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
 	if (env)
 		parse_env(svc, env);
+	if (file)
+		strlcpy(svc->file, file, sizeof(svc->file));
 
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));

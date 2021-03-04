@@ -492,15 +492,23 @@ static int show_status(char *arg)
 	if (arg && arg[0]) {
 		long now = jiffies();
 		char buf[42] = "N/A";
+		char cmd[512];
 
 		svc = client_svc_find(arg);
 		if (!svc)
 			return 1;
 
-		printf("Service     : %s\n", svc->cmd);
-		printf("Description : %s\n", svc->desc);
+		strlcat(cmd, svc->cmd, sizeof(cmd));
+		for (int i = 1; svc->args[i] && i < MAX_NUM_SVC_ARGS; i++) {
+			strlcat(cmd, " ", sizeof(cmd));
+			strlcat(cmd, svc->args[i], sizeof(cmd));
+		}
+
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
+		printf("Description : %s\n", svc->desc);
+		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
 		printf("Environment : %s\n", svc->env);
+		printf("Command     : %s\n", cmd);
 		printf("PID         : %d\n", svc->pid);
 		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
@@ -760,7 +768,7 @@ int main(int argc, char *argv[])
 		{ "stop",     do_stop      },
 		{ "restart",  do_restart   },
 		{ "status",   show_status  },
-		{ "show",     show_status  }, /* Convenience alias */
+		{ "show",     show_status  }, /* Convenience alias, for now */
 
 		{ "ps",       show_cgroup  },
 

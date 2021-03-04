@@ -86,9 +86,8 @@ typedef enum {
 typedef struct svc {
 	TAILQ_ENTRY(svc) link;
 
-	/* Instance specifics */
-	int            job;	       /* JOB: */
-	char           id[MAX_ID_LEN]; /* :ID */
+	/* Origin of service */
+	char           file[MAX_ARG_LEN];
 
 	/* Limits and scoping */
 	struct rlimit  rlimit[RLIMIT_NLIMITS];
@@ -110,7 +109,11 @@ typedef struct svc {
 	int            sighup;	       /* This service supports SIGHUP :) */
 	svc_block_t    block;	       /* Reason that this service is currently stopped */
 	char           cond[MAX_COND_LEN];
+
+	/* Instance specifics */
+	int            job;	       /* For intenal use only, canonical ref is NAME:ID */
 	char           name[MAX_ARG_LEN];
+	char           id[MAX_ID_LEN]; /* :ID */
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
