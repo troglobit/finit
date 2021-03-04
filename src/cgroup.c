@@ -27,6 +27,7 @@
 #include <lite/lite.h>
 #include <sys/mount.h>
 
+#include "finit.h"
 #include "log.h"
 #include "util.h"
 
@@ -70,27 +71,27 @@ void cgroup_init(void)
 	}
 
 	/* Default cgroups for process monitoring */
-	if (mkdir("/sys/fs/cgroup/finit", 0755) && EEXIST != errno)
+	if (mkdir(FINIT_CGPATH, 0755) && EEXIST != errno)
 		goto fail;
-	if (mount("none", "/sys/fs/cgroup/finit", "cgroup", opts, "none,name=finit")) {
+	if (mount("none", FINIT_CGPATH, "cgroup", opts, "none,name=finit")) {
 		_pe("Failed mounting Finit cgroup hierarchy");
 		goto fail;
 	}
 
 	/* Set up reaper and enable callbacks */
-	echo("/sys/fs/cgroup/finit/release_agent", 0, FINIT_LIBPATH_ "/cgreaper.sh");
-	echo("/sys/fs/cgroup/finit/notify_on_release", 0, "1");
+	echo(FINIT_CGPATH "/release_agent", 0, FINIT_LIBPATH_ "/cgreaper.sh");
+	echo(FINIT_CGPATH "/notify_on_release", 0, "1");
 
 	/* Default groups, PID 1, services, and user/login processes */
-	if (mkdir("/sys/fs/cgroup/finit/init", 0755) && EEXIST != errno)
+	if (mkdir(FINIT_CGPATH "/init", 0755) && EEXIST != errno)
 		goto fail;
-	if (mkdir("/sys/fs/cgroup/finit/system", 0755) && EEXIST != errno)
+	if (mkdir(FINIT_CGPATH "/system", 0755) && EEXIST != errno)
 		goto fail;
-	if (mkdir("/sys/fs/cgroup/finit/user", 0755) && EEXIST != errno)
+	if (mkdir(FINIT_CGPATH "/user", 0755) && EEXIST != errno)
 		goto fail;
 
 	/* Move ourselves to init */
-	echo("/sys/fs/cgroup/finit/init/cgroup.procs", 0, "1");
+	echo(FINIT_CGPATH "/init/cgroup.procs", 0, "1");
 
 	/* We have signal, main screen turn on! */
 	cg_init = 1;
