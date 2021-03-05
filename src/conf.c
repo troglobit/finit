@@ -47,6 +47,7 @@
 int logfile_size_max = 200000;	/* 200 kB */
 int logfile_count_max = 5;
 
+struct rlimit initial_rlimit[RLIMIT_NLIMITS];
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
 
 struct conf_change {
@@ -625,12 +626,9 @@ int conf_reload(void)
 	tty_mark();
 
 	/*
-	 * Get current global limits, which may be overridden from both
-	 * finit.conf, for Finit and its services like getty+watchdogd,
-	 * and *.conf in finit.d/, for each service(s) listed there.
+	 * Reset global rlimit to bootstrap values from conf_init().
 	 */
-	for (int i = 0; i < RLIMIT_NLIMITS; i++)
-		getrlimit(i, &global_rlimit[i]);
+	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
 
 	if (rescue) {
 		int rc;
@@ -887,8 +885,11 @@ int conf_init(uev_ctx_t *ctx)
          * finit.conf, for Finit and its services like getty+watchdogd,
          * and *.conf in finit.d/, for each service(s) listed there.
          */
-        for (int i = 0; i < RLIMIT_NLIMITS; i++)
-                getrlimit(i, &global_rlimit[i]);
+        for (int i = 0; i < RLIMIT_NLIMITS; i++) {
+                if (getrlimit(i, &initial_rlimit[i]))
+			logit(LOG_WARNING, "rlimit: Failed reading setting %s: %s",
+			      rlim2str(i), strerror(errno));
+	}
 
 	/* prepare /etc watcher */
 	fd = iwatch_init(&iw_conf);
