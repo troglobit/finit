@@ -5,13 +5,8 @@ language: c
 # Use docker for quicker builds, it now allows https://docs.travis-ci.com/user/apt/
 sudo: false
 
-# Use non-docker builds atm. to install libuEv and libite from source
-#sudo: true
-
-# Test build with both GCC and Clang (LLVM)
 compiler:
   - gcc
-  - clang
 
 # The secure: declaration is the encrypted COVERITY_SCAN_TOKEN, created
 #   via the "travis encrypt" command using the project repo's public key
@@ -30,7 +25,7 @@ addons:
       name: "troglobit/finit"
       description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./autogen.sh && ./configure --prefix=/tmp"
+    build_command_prepend: "./autogen.sh && ./configure --prefix=/tmp --disable-doc --disable-contrib --enable-watchdog --enable-fallback-shell"
     build_command: "make"
     branch_pattern: dev
 
@@ -48,18 +43,8 @@ script:
   - ./configure --prefix=/tmp --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix=/tmp --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog --enable-logit
+  - ./configure --prefix=/tmp --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog
   - cat config.log
   - make clean
   - make V=1 -j5
   - make install-strip
-  - tree /tmp
-  - ldd /tmp/sbin/finit
-  - size /tmp/sbin/finit
-  - size /tmp/sbin/initctl
-  - size /tmp/sbin/reboot
-  - LD_LIBRARY_PATH=/tmp/lib /tmp/sbin/initctl -h
-  - unshare -V
-  - nsenter -V
-  - chroot --version
-  - 'LD_LIBRARY_PATH=/tmp/lib make distcheck || (cat finit-4.0-beta1/_build/sub/test/test-suite.log; exit 1)'
