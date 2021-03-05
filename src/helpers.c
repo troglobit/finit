@@ -563,10 +563,12 @@ int ismnt(char *file, char *dir, char *mode)
 
 	while ((mnt = getmntent(fp))) {
 		if (!strcmp(mnt->mnt_dir, dir)) {
-			if (mode && hasopt(mnt->mnt_opts, mode))
+			if (mode) {
+				if (hasopt(mnt->mnt_opts, mode))
+					found = 1;
+			} else
 				found = 1;
-			else
-				found = 1;
+
 			break;
 		}
 	}
