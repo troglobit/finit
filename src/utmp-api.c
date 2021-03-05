@@ -194,13 +194,13 @@ static int set_getty(int type, char *tty, char *id, char *user)
 		return 0;
 
 	if (!tty)
-		line = "";
+		line = NULL;
 	else if (!strncmp(tty, "/dev/", 5))
 		line = tty + 5;
 	else
 		line = tty;
 
-	if (!id) {
+	if (!id && line) {
 		id = line;
 		if (!strncmp(id, "pts/", 4))
 			id += 4;
