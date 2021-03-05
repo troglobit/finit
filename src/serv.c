@@ -58,7 +58,9 @@ static void do_list(const char *path)
 	glob_t gl;
 	size_t i;
 
-	chdir(path);
+	if (chdir(path))
+		return;
+
 	if (glob("*.conf", 0, NULL, &gl))
 		return;
 
@@ -213,7 +215,7 @@ int do_disable(char *arg, int check)
 
 	if (chdir(FINIT_RCSD))
 		err(1, "failed cd %s", FINIT_RCSD);
-	chdir("enabled");	   /* System *may* have enabled/ dir. */
+	(void)chdir("enabled");	   /* System *may* have enabled/ dir. */
 
 	if (check && stat(arg, &st))
 		errx(1, "%s not (an) enabled (service).", arg);

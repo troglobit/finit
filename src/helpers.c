@@ -432,14 +432,14 @@ void set_hostname(char **hostname)
 			return;
 		}
 
-		fgets(*hostname, st.st_size, fp);
-		chomp(*hostname);
+		if (fgets(*hostname, st.st_size, fp))
+			chomp(*hostname);
 		fclose(fp);
 	}
 
 done:
 	if (*hostname)
-		sethostname(*hostname, strlen(*hostname));
+		(void)sethostname(*hostname, strlen(*hostname));
 }
 
 /*

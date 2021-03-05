@@ -54,7 +54,7 @@ void cgroup_init(void)
 	}
 
 	/* Skip first line, header */
-	fgets(buf, sizeof(buf), fp);
+	(void)fgets(buf, sizeof(buf), fp);
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *cgroup;
 		char rc[80];

@@ -97,7 +97,7 @@ static int logrotate(char *file, int num, off_t sz)
 			(void)rename(file, nfile);
 			create(file, st.st_mode, st.st_uid, st.st_gid);
 		} else {
-			truncate(file, 0);
+			(void)truncate(file, 0);
 		}
 	}
 

@@ -464,17 +464,18 @@ static int service_start(svc_t *svc)
 
 		/* Set desired user+group */
 		if (gid >= 0)
-			setgid(gid);
+			(void)setgid(gid);
 
 		if (uid >= 0) {
-			setuid(uid);
+			(void)setuid(uid);
 
 			/* Set default path for regular users */
 			if (uid > 0)
 				setenv("PATH", _PATH_DEFPATH, 1);
 			if (home) {
 				setenv("HOME", home, 1);
-				chdir(home);
+				if (chdir(home))
+					(void)chdir("/");
 			}
 		}
 
