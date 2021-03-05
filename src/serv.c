@@ -260,7 +260,7 @@ int serv_show(char *arg)
 	char path[256];
 	char *fn;
 
-	fn = conf(path, sizeof(path), arg, creat);
+	fn = conf(path, sizeof(path), arg, 0);
 	if (!fexist(fn)) {
 		warnx("Cannot find %s", arg);
 		return 1;
