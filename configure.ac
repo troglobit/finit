@@ -224,6 +224,9 @@ AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
 AC_EXPAND_DIR(sample_conf, "$libdir/finit/sample.conf")
 AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl create])
 
+AC_EXPAND_DIR(path_stdpath, "$sbindir:$bindir:/usr/sbin:/usr/bin:/sbin:/bin")
+AC_DEFINE_UNQUOTED(_PATH_STDPATH, "$path_stdpath", [Default PATH])
+
 # Generate all files
 AC_OUTPUT
 
@@ -232,7 +235,7 @@ cat <<EOF
 ------------------ Summary ------------------
  $PACKAGE_NAME version $PACKAGE_VERSION
   Prefix................: $prefix
-  Exec prefix...........: $eprefix
+  Exec prefix...........: `eval echo $exec_prefix`
   Sysconfdir............: `eval echo $sysconfdir`
   Localstatedir.........: `eval echo $localstatedir`
   Finit config file.....: $conf_path

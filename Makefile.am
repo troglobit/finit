@@ -29,3 +29,19 @@ release: distcheck
 		printf "$$file.md5\t";    cat ../$$file.md5    | cut -f1 -d' ';	\
 		printf "$$file.sha256\t"; cat ../$$file.sha256 | cut -f1 -d' ';	\
 	done
+
+run:
+	srcdir=@srcdir@/test \
+	top_builddir=@top_builddir@ \
+	TENV_ROOT=$(tenv_root) \
+		@srcdir@/test/setup-root.sh
+
+	mkdir -p $(dir $(tenv_root)/@FINIT_CONF@)
+	echo 'tty [12345] @console linux noclear nologin' > $(tenv_root)/@FINIT_CONF@
+
+	-TENV_ROOT=$(tenv_root) \
+	 TESTENV_PATH=@sbindir@:/bin \
+	 FINIT_RCSD=@FINIT_RCSD@ \
+		test/tenv/start.sh finit
+
+run : tenv_root ?= @abs_top_builddir@/run-rootfs
