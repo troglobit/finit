@@ -208,7 +208,7 @@ static int do_startstop(int cmd, char *arg)
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
 	if (client_send(&rq, sizeof(rq))) {
-		fprintf(stderr, "No such task or service(s): %s\n\n", rq.data);
+		fprintf(stderr, "No such task or service(s): %s\n\n", arg);
 		fprintf(stderr, "Usage: initctl %s <NAME>[:ID]\n",
 			cmd == INIT_CMD_START_SVC ? "start" :
 			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
