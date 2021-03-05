@@ -237,7 +237,7 @@ ev_t ev_list[] = {
 
 static void send_svc(int sd, svc_t *svc)
 {
-	svc_t empty;
+	svc_t empty = { 0 };
 	size_t len;
 
 	if (!svc) {
