@@ -179,7 +179,8 @@ static void fs_remount_root(int fsckerr)
 	 * XXX: Untested, in the initramfs age we should
 	 *      probably use switch_root instead.
 	 */
-	rc = mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
+	if (mount(SYSROOT, "/", NULL, MS_MOVE, NULL))
+		_pe("Failed %s / MS_MOVE");
 }
 #endif	/* SYSROOT */
 
@@ -218,8 +219,13 @@ static void fs_init(void)
 	};
 	size_t i;
 
-	for (i = 0; i < NELEMS(fs); i++)
-		mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
+	for (i = 0; i < NELEMS(fs); i++) {
+		int rc;
+
+		rc = mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
+		if (rc)
+			_pe("Failed mounting %s on %s", fs[i].spec, fs[i].file);
+	}
 }
 
 /*
