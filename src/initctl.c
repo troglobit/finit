@@ -793,6 +793,15 @@ static int usage(int rc)
 	return rc;
 }
 
+static int do_devel(char *arg)
+{
+	(void)arg;
+
+	printf("Screen %dx%d\n", screen_cols, screen_rows);
+
+	return 0;
+}
+
 static int do_help(char *arg)
 {
 	return usage(0);
@@ -802,6 +811,7 @@ int main(int argc, char *argv[])
 {
 	struct command command[] = {
 		{ "debug",    toggle_debug },
+		{ "devel",    do_devel     },
 		{ "help",     do_help      },
 		{ "version",  show_version },
 
