@@ -38,6 +38,7 @@ binaries = $(DEST)/bin/cat \
 	$(DEST)/bin/env \
 	$(DEST)/bin/find \
 	$(DEST)/bin/kill \
+	$(DEST)/bin/ln \
 	$(DEST)/bin/ls \
 	$(DEST)/bin/mkdir \
 	$(DEST)/bin/mkfifo \
@@ -57,6 +58,7 @@ dirs = $(DEST)/bin \
 	$(DEST)/etc \
 	$(DEST)/proc \
 	$(DEST)/sbin \
+	$(DEST)/shared \
 	$(DEST)/sys \
 	$(DEST)/test_assets \
 	$(DEST)/tmp

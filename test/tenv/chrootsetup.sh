@@ -44,6 +44,6 @@ fi
 mkdir -p "$FINIT_RCSD"
 
 tty=/dev/$(cat /sys/class/tty/console/active)
-mkfifo "$tty"
+ln -fs /shared/pts "$tty"
 
 exec "$@"

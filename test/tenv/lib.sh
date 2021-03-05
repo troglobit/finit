@@ -138,7 +138,3 @@ echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
 log "$color_reset" 'Setup of test environment done' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
-
-tty=/dev/$(texec cat /sys/class/tty/console/active)
-texec cat "$tty" &
-sleep 1
