@@ -28,6 +28,7 @@ int serv_list    (char *arg);
 int serv_enable  (char *arg);
 int serv_disable (char *arg);
 int serv_touch   (char *arg);
+int serv_show    (char *arg);
 int serv_edit    (char *arg);
 int serv_creat   (char *arg);
 int serv_delete  (char *arg);

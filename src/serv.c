@@ -138,6 +138,11 @@ static char *conf(char *path, size_t len, char *name, int creat)
 {
 	char corr[40];
 
+	if (!name || !name[0]) {
+		strlcpy(path, FINIT_CONF, len);
+		return path;
+	}
+
 	if (!strstr(name, ".conf")) {
 		snprintf(corr, sizeof(corr), "%s.conf", name);
 		name = corr;
@@ -248,6 +253,20 @@ int serv_touch(char *arg)
 		err(1, "failed marking %s for reload", fn);
 
 	return 0;
+}
+
+int serv_show(char *arg)
+{
+	char path[256];
+	char *fn;
+
+	fn = conf(path, sizeof(path), arg, creat);
+	if (!fexist(fn)) {
+		warnx("Cannot find %s", arg);
+		return 1;
+	}
+
+	return systemf("cat %s", fn);
 }
 
 /*
