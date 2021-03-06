@@ -22,7 +22,6 @@
  */
 
 #include "config.h"
-#include <sched.h>		/* sched_yield() */
 #include <stdio.h>
 #include <stdarg.h>
 #include <lite/lite.h>
@@ -56,7 +55,7 @@ void log_exit(void)
 	enable_progress(1);
 }
 
-void log_open(void)
+static void log_open(void)
 {
 	int opts = LOG_PID;
 
@@ -100,11 +99,12 @@ void logit(int prio, const char *fmt, ...)
 	if (up || fexist("/dev/log")) {
 		if (!up)
 			log_open();
+
 		vsyslog(prio, fmt, ap);
 		goto done;
 	}
 
-	if (!debug && prio > loglevel)
+	if (prio > loglevel)
 		goto done;
 
 	fp = fopen("/dev/kmsg", "w");
