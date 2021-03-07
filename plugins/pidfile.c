@@ -163,7 +163,13 @@ static void pidfile_callback(void *arg, int fd, int events)
 	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
 		struct iwatch_path *iwp;
 
+		if (off + sizeof(*ev) >= sizeof(ev_buf))
+			break;
+
 		ev = (struct inotify_event *)&ev_buf[off];
+		if (off + sizeof(*ev) + ev->len >= sizeof(ev_buf))
+			break;
+
 		if (!ev->mask)
 			continue;
 
