@@ -207,6 +207,9 @@ static void fs_mount(void)
  * for early multi-console, and /sys for the cgroups support.  Any
  * occurrence of these file systems in /etc/fstab will replace these
  * mounts later in fs_mount()
+ *
+ * Ignore any mount errors with EBUSY, kernel likely alread mounted
+ * the filesystem for us automatically, e.g., CONFIG_DEVTMPFS_MOUNT.
  */
 static void fs_init(void)
 {
@@ -223,7 +226,7 @@ static void fs_init(void)
 		int rc;
 
 		rc = mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
-		if (rc)
+		if (rc && errno != EBUSY)
 			_pe("Failed mounting %s on %s", fs[i].spec, fs[i].file);
 	}
 }
