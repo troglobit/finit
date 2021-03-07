@@ -153,6 +153,8 @@ AS_IF([test "x$enable_logit" != "xno"], [
 AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
 
+AM_CONDITIONAL(LOGROTATE, [test "x$enable_logrotate" = "xyes"])
+
 ### With features ##############################################################################
 AS_IF([test "x$with_config" != "xno"], [
 	AS_IF([test "x$conf" = "xyes"], [

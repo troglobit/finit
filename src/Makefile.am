@@ -19,7 +19,7 @@ endif
 
 if LOGIT
 pkglibexec_PROGRAMS = logit
-logit_SOURCES       = logit.c
+logit_SOURCES       = logit.c logrotate.c
 logit_CFLAGS        = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 logit_CFLAGS       += $(lite_CFLAGS)
 logit_LDADD         = $(lite_LIBS)
@@ -44,6 +44,10 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     tty.c	tty.h				\
 		     util.c	util.h				\
 		     utmp-api.c	utmp-api.h
+if LOGROTATE
+finit_SOURCES     += logrotate.c
+endif
+
 pkginclude_HEADERS = cond.h finit.h helpers.h log.h plugin.h svc.h
 
 finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99

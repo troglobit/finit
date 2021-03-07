@@ -35,6 +35,9 @@
 #define MAX_NO 5
 #define MAX_SZ 100 * 1024
 
+extern int logrotate(char *file, int num, off_t sz);
+
+
 static void utmp_strncpy(char *dst, const char *src, size_t dlen)
 {
 	size_t i;
@@ -45,72 +48,6 @@ static void utmp_strncpy(char *dst, const char *src, size_t dlen)
 	if (i < dlen)
 		dst[i] = 0;
 }
-
-#ifdef LOGROTATE_ENABLED
-/*
- * This function triggers a log rotates of @file when size >= @sz bytes
- * At most @num old versions are kept and by default it starts gzipping
- * .2 and older log files.  If gzip is not available in $PATH then @num
- * files are kept uncompressed.
- */
-static int logrotate(char *file, int num, off_t sz)
-{
-	int cnt;
-	struct stat st;
-
-	if (stat(file, &st))
-		return 1;
-
-	if (sz > 0 && S_ISREG(st.st_mode) && st.st_size > sz) {
-		if (num > 0) {
-			size_t len = strlen(file) + 10 + 1;
-			char   ofile[len];
-			char   nfile[len];
-
-			/* First age zipped log files */
-			for (cnt = num; cnt > 2; cnt--) {
-				snprintf(ofile, len, "%s.%d.gz", file, cnt - 1);
-				snprintf(nfile, len, "%s.%d.gz", file, cnt);
-
-				/* May fail because ofile doesn't exist yet, ignore. */
-				if (rename(ofile, nfile) && errno != ENOENT)
-					logit(LOG_ERR, "Failed logrotate %s: %s",
-					       ofile, strerror(errno));
-			}
-
-			for (cnt = num; cnt > 0; cnt--) {
-				snprintf(ofile, len, "%s.%d", file, cnt - 1);
-				snprintf(nfile, len, "%s.%d", file, cnt);
-
-				/* May fail because ofile doesn't exist yet, ignore. */
-				if (rename(ofile, nfile) && errno != ENOENT) {
-					logit(LOG_ERR, "Failed logrotate %s: %s",
-					       ofile, strerror(errno));
-					continue;
-				}
-
-				if (cnt == 2 && fexist(nfile)) {
-					if (systemf("gzip %s", nfile))
-						continue; /* no gzip, probably */
-
-					(void)remove(nfile);
-				}
-			}
-
-			if (rename(file, nfile))
-				goto fallback;
-			create(file, st.st_mode, st.st_uid, st.st_gid);
-		} else {
-		fallback:
-			if (truncate(file, 0))
-				logit(LOG_ERR, "Failed truncating %s during logrotate: %s",
-				      file, strerror(errno));
-		}
-	}
-
-	return 0;
-}
-#endif /* LOGROTATE_ENABLED */
 
 /*
  * Rotate /var/log/wtmp (+ btmp?) and /run/utmp
