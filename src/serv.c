@@ -379,7 +379,8 @@ int serv_delete(char *arg)
 
 	if (iforce || yorn("Remove file and symlink(s) to %s (y/N)? ", fn)) {
 		do_disable(arg, 0);
-		remove(fn);
+		if (remove(fn))
+			err(1, "Failed removing %s", fn);
 	}
 
 	return 0;
