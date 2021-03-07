@@ -473,6 +473,6 @@ and proposed extensions.
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
 [Travis]:           https://travis-ci.org/troglobit/finit
-[Travis Status]:    https://travis-ci.org/troglobit/finit.png?branch=master
+[Travis Status]:    https://travis-ci.org/troglobit/finit.svg?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
 [Coverity Status]:  https://scan.coverity.com/projects/3545/badge.svg
