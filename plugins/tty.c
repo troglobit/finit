@@ -72,7 +72,8 @@ static void watcher(void *arg, int fd, int events)
 {
 	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
 	struct inotify_event *ev;
-	ssize_t sz, off;
+	ssize_t sz;
+	size_t off;
 
 	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
@@ -81,12 +82,12 @@ static void watcher(void *arg, int fd, int events)
 	}
 	ev_buf[sz] = 0;
 
-	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
-		if (off + sizeof(*ev) >= sizeof(ev_buf))
+	for (off = 0; off < (size_t)sz; off += sizeof(*ev) + ev->len) {
+		if (off + sizeof(*ev) > (size_t)sz)
 			break;
 
 		ev = (struct inotify_event *)&ev_buf[off];
-		if (off + sizeof(*ev) + ev->len >= sizeof(ev_buf))
+		if (off + sizeof(*ev) + ev->len > (size_t)sz)
 			break;
 
 		if (!ev->mask)
