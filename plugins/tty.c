@@ -53,33 +53,47 @@ static void setup(void)
 		_pe("Failed starting TTY watcher");
 }
 
+static void do_tty(char *tty, size_t len, int creat)
+{
+	char name[len + 6];
+	struct tty *entry;
+
+	snprintf(name, sizeof(name), "/dev/%s", tty);
+	entry = tty_find(name);
+	if (entry && tty_enabled(entry)) {
+		if (creat)
+			tty_start(entry);
+		else if (entry->pid)
+			tty_stop(entry);
+	}
+}
+
 static void watcher(void *arg, int fd, int events)
 {
-	char buf[EVENT_SIZE];
-	int len = 0;
+	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
+	struct inotify_event *ev;
+	ssize_t sz, off;
 
-	while ((len = read(fd, buf, sizeof(buf)))) {
-		struct inotify_event *notified = (struct inotify_event *)buf;
-		char name[notified->len + 6];
-		struct tty *entry;
+	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
+	if (sz <= 0) {
+		_pe("invalid inotify event");
+		return;
+	}
+	ev_buf[sz] = 0;
 
-		if (-1 == len) {
-			if (errno == EINVAL)
-				setup();
-			if (errno == EINTR)
-				continue;
+	for (off = 0; off < sz; off += sizeof(*ev) + ev->len) {
+		if (off + sizeof(*ev) >= sizeof(ev_buf))
+			break;
 
-			break;	/* Likely EAGAIN */
-		}
+		ev = (struct inotify_event *)&ev_buf[off];
+		if (off + sizeof(*ev) + ev->len >= sizeof(ev_buf))
+			break;
 
-		snprintf(name, sizeof(name), "/dev/%s", notified->name);
-		entry = tty_find(name);
-		if (entry && tty_enabled(entry)) {
-			if (notified->mask & IN_CREATE)
-				tty_start(entry);
-			else if (entry->pid)
-				tty_stop(entry);
-		}
+		if (!ev->mask)
+			continue;
+
+		_d("tty %s, event: 0x%08x", ev->name, ev->mask);
+		do_tty(ev->name, ev->len, ev->mask & IN_CREATE);
 	}
 }
 

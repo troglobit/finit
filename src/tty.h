@@ -30,7 +30,6 @@
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 
 #define TTY_MAX_ARGS 16
-#define EVENT_SIZE ((sizeof(struct inotify_event) + NAME_MAX + 1))
 
 struct tty {
 	LIST_ENTRY(tty) link;
