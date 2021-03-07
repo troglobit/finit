@@ -131,44 +131,43 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 		return;
 	}
 
-	while (RTA_OK(a, la)) {
-		if (a->rta_type == IFLA_IFNAME) {
-			strlcpy(ifname, RTA_DATA(a), sizeof(ifname));
-			switch (nlmsg->nlmsg_type) {
-			case RTM_NEWLINK:
-				/*
-				 * New interface has appeared, or interface flags has changed.
-				 * Check ifi_flags here to see if the interface is UP/DOWN
-				 */
-				_d("%s: New link, flags 0x%x, change 0x%x", ifname, i->ifi_flags, i->ifi_change);
-				net_cond_set(ifname, "exist",   1);
-				net_cond_set(ifname, "up",      i->ifi_flags & IFF_UP);
-				net_cond_set(ifname, "running", i->ifi_flags & IFF_RUNNING);
-				break;
+	for (; RTA_OK(a, la); a = RTA_NEXT(a, la)) {
+		if (a->rta_type != IFLA_IFNAME)
+			continue;
 
-			case RTM_DELLINK:
-				/* NOTE: Interface has disappeared, not link down ... */
-				_d("%s: Delete link", ifname);
-				net_cond_set(ifname, "exist",   0);
-				net_cond_set(ifname, "up",      0);
-				net_cond_set(ifname, "running", 0);
-				break;
+		strlcpy(ifname, RTA_DATA(a), sizeof(ifname));
+		switch (nlmsg->nlmsg_type) {
+		case RTM_NEWLINK:
+			/*
+			 * New interface has appeared, or interface flags has changed.
+			 * Check ifi_flags here to see if the interface is UP/DOWN
+			 */
+			_d("%s: New link, flags 0x%x, change 0x%x", ifname, i->ifi_flags, i->ifi_change);
+			net_cond_set(ifname, "exist",   1);
+			net_cond_set(ifname, "up",      i->ifi_flags & IFF_UP);
+			net_cond_set(ifname, "running", i->ifi_flags & IFF_RUNNING);
+			break;
 
-			case RTM_NEWADDR:
-				_d("%s: New Address", ifname);
-				break;
+		case RTM_DELLINK:
+			/* NOTE: Interface has disappeared, not link down ... */
+			_d("%s: Delete link", ifname);
+			net_cond_set(ifname, "exist",   0);
+			net_cond_set(ifname, "up",      0);
+			net_cond_set(ifname, "running", 0);
+			break;
 
-			case RTM_DELADDR:
-				_d("%s: Deconfig Address", ifname);
-				break;
+		case RTM_NEWADDR:
+			_d("%s: New Address", ifname);
+			break;
 
-			default:
-				_d("%s: Msg 0x%x", ifname, nlmsg->nlmsg_type);
-				break;
-			}
+		case RTM_DELADDR:
+			_d("%s: Deconfig Address", ifname);
+			break;
+
+		default:
+			_d("%s: Msg 0x%x", ifname, nlmsg->nlmsg_type);
+			break;
 		}
-
-		a = RTA_NEXT(a, la);
 	}
 }
 
