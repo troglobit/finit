@@ -26,6 +26,9 @@ Finit is a simple alternative to [SysV init][4] and [systemd][6].  It
 was reverse engineered from the [EeePC fastinit][] over ten years ago
 by [Claudio Matsuoka][] — "gaps filled with frog DNA …"
 
+![Alpine screenshot](img/finit4-screenshot.png)  
+*Figure 1: Screenshot showing Finit booting [Alpine Linux](https://www.alpinelinux.org/).*
+
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
 [contrib/](contrib/) section with tutorials for:
@@ -33,9 +36,6 @@ on server and desktop systems as well.  For working examples, see the
   * [Void Linux](contrib/void/),
   * [Alpine Linux](contrib/alpine/), and
   * [Debian GNU/Linux](contrib/debian/)
-
-![Alpine screenshot](img/finit4-screenshot.png)  
-The screenshot shows Finit4 booting [Alpine Linux](https://www.alpinelinux.org/).
 
 
 Example
@@ -348,11 +348,15 @@ Finit also implements a modern API to query status, and start/stop
 services, called `initctl`.  Unlike `telinit` the `initctl` tool does
 not return until the given command has fully completed.
 
-```shell
-~ $ initctl -h
+```
+alpine:~# initctl help
 Usage: initctl [OPTIONS] [COMMAND]
 
 Options:
+  -b, --batch               Batch mode, no screen size probing
+  -c, --create              Create missing paths (and files) as needed
+  -f, --force               Ignore missing files and arguments, never prompt
+  -t, --no-heading          Skip table headings
   -v, --verbose             Verbose output
   -h, --help                This help text
 
@@ -360,29 +364,34 @@ Commands:
   debug                     Toggle Finit (daemon) debug
   help                      This help text
   version                   Show Finit version
-  
-  list                      List all .conf in /etc/finit.d/
-  enable   <CONF>           Enable   .conf in /etc/finit.d/available/
-  disable  <CONF>           Disable  .conf in /etc/finit.d/[enabled/]
-  touch    <CONF>           Mark     .conf in /etc/finit.d/ for reload
-  reload                    Reload  *.conf in /etc/finit.d/ (activates changes)
-  
+
+  ls | list                 List all .conf in /etc/finit.d
+  create   <CONF>           Create   .conf in /etc/finit.d/available
+  delete   <CONF>           Delete   .conf in /etc/finit.d/available
+  show     <CONF>           Show     .conf in /etc/finit.d/available
+  edit     <CONF>           Edit     .conf in /etc/finit.d/available
+  touch    <CONF>           Change   .conf in /etc/finit.d/available
+  enable   <CONF>           Enable   .conf in /etc/finit.d/available
+  disable  <CONF>           Disable  .conf in /etc/finit.d/enabled
+  reload                    Reload  *.conf in /etc/finit.d (activate changes)
+
   cond     show             Show condition status
   cond     dump             Dump all conditions and their status
-  
+
   log      [NAME]           Show ten last Finit, or NAME, messages from syslog
-  start    <JOB|NAME>[:ID]  Start service by job# or name, with optional ID
-  stop     <JOB|NAME>[:ID]  Stop/Pause a running service by job# or name
-  restart  <JOB|NAME>[:ID]  Restart (stop/start) service by job# or name
-  status   <JOB|NAME>[:ID]  Show service status, by job# or name
-  status | show             Show status of services, default command
-  
+  start    <NAME>[:ID]      Start service by name, with optional ID
+  stop     <NAME>[:ID]      Stop/Pause a running service by name
+  restart  <NAME>[:ID]      Restart (stop/start) service by name
+  status   <NAME>[:ID]      Show service status, by name
+  status                    Show status of services, default command
+
+  ps                        List processes based on cgroups
+
   runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
   reboot                    Reboot system
   halt                      Halt system
   poweroff                  Halt and power off system
-  
-  utmp     show             Raw dump of UTMP/WTMP db
+  suspend                   Suspend system
 ```
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
@@ -395,18 +404,31 @@ the current runlevel these services will not be respawned automatically
 by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
 Dropbear SSH service will not be restarted if it is killed or exits.
 
-```shell
-~ $ initctl status -v
-1       running  476     [S12345]   /sbin/watchdog -T 16 -t 2 -F /dev/watchdog
-2       running  477     [S12345]   /sbin/syslogd -n -b 3 -D
-3       running  478     [S12345]   /sbin/klogd -n
-4:1       inetd  0       [2345]     internal time allow *:37,!eth0
-4:2       inetd  0       [2345]     internal time allow eth0:3737
-5:1       inetd  0       [2345]     /sbin/telnetd allow *:23 deny eth0,eth1
-5:2       inetd  0       [2345]     /sbin/telnetd allow eth0:2323,eth2:2323,eth1:2323
-6:1       inetd  0       [345]      /sbin/dropbear allow eth0:222
-6:2       inetd  0       [345]      /sbin/dropbear allow *:22 deny eth0
 ```
+alpine:~# initctl 
+PID   IDENT     STATUS   RUNLEVELS    DESCRIPTION
+======================================================================
+1506  acpid     running  [--2345----] ACPI daemon
+1509  crond     running  [--2345----] Cron daemon
+1489  dropbear  running  [--2345----] Dropbear SSH daemon
+1511  klogd     running  [S12345----] Kernel log daemon
+1512  ntpd      running  [--2345----] NTP daemon
+1473  syslogd   running  [S12345----] Syslog daemon
+
+alpine:~# initctl -v
+PID   IDENT     STATUS   RUNLEVELS    COMMAND
+======================================================================
+1506  acpid     running  [--2345----] acpid -f
+1509  crond     running  [--2345----] crond -f -S $CRON_OPTS
+1489  dropbear  running  [--2345----] dropbear -R -F $DROPBEAR_OPTS
+1511  klogd     running  [S12345----] klogd -n $KLOGD_OPTS
+1512  ntpd      running  [--2345----] ntpd -n $NTPD_OPTS
+1473  syslogd   running  [S12345----] syslogd -n
+```
+
+The environment variables to each of the services above are read from,
+in the case of Alpine Linux, `/etc/conf.d/`.  Other distributions may
+have other directories, e.g., Debian use `/etc/default/`.
 
 
 Requirements
