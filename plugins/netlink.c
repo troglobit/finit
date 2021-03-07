@@ -120,6 +120,9 @@ static int validate_ifname(const char *ifname)
 	if (strlen(ifname) >= IFNAMSIZ)
 		return 1;
 
+	if (strstr(ifname, ".."))
+		return 1;
+
 	while (*ifname) {
 		if (*ifname == '/' || isspace(*ifname))
 			return 1;
