@@ -5,9 +5,6 @@ language: c
 # Use docker for quicker builds, it now allows https://docs.travis-ci.com/user/apt/
 sudo: false
 
-# Use non-docker builds atm. to install libuEv and libite from source
-#sudo: true
-
 # Test build with both GCC and Clang (LLVM)
 compiler:
   - gcc
@@ -30,7 +27,7 @@ addons:
       name: "troglobit/finit"
       description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./autogen.sh && ./configure --prefix=/tmp"
+    build_command_prepend: "./autogen.sh && ./configure --prefix=/tmp --disable-doc --disable-contrib --enable-watchdog --enable-fallback-shell"
     build_command: "make"
     branch_pattern: dev
 
@@ -48,7 +45,7 @@ script:
   - ./configure --prefix=/tmp --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix=/tmp --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog --enable-logit
+  - ./configure --prefix=/tmp --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog
   - cat config.log
   - make clean
   - make V=1 -j5
