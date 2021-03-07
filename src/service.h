@@ -33,6 +33,7 @@ void      service_unregister     (svc_t *svc);
 
 void      service_runtask_clean  (void);
 void      service_reload_dynamic (void);
+void      service_update_rdeps   (void);
 
 int       service_step           (svc_t *svc);
 void      service_step_all       (int types);

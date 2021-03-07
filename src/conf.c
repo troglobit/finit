@@ -697,6 +697,8 @@ int conf_reload(void)
 
 	globfree(&gl);
 
+	/* Mark any reverse deps as chenaged. */
+	service_update_rdeps();
 done:
 	/* Drop record of all .conf changes */
 	drop_changes();

@@ -1250,6 +1250,38 @@ void service_monitor(pid_t lost, int status)
 	sm_step(&sm);
 }
 
+static void svc_mark_affected(char *cond)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (!svc_has_cond(svc))
+			continue;
+
+		if (cond_affects(cond, svc->cond))
+			svc_mark_dirty(svc);
+	}
+}
+
+/*
+ * Called on conf_reload() to update service reverse dependencies.
+ * E.g., if ospfd depends on zebra and the zebra Finit conf has
+ * changed, we need to mark the ospfd Finit conf as changed too.
+ */
+void service_update_rdeps(void)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		char cond[MAX_COND_LEN];
+
+		if (!svc_is_changed(svc))
+			continue;
+
+		svc_mark_affected(mkcond(svc, cond, sizeof(cond)));
+	}
+}
+
 static void service_retry(svc_t *svc)
 {
 	int timeout;

@@ -208,6 +208,26 @@ static inline void svc_missing     (svc_t *svc) { if (svc) svc->block = SVC_BLOC
 static inline void svc_restarting  (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_RESTARTING; }
 static inline void svc_crashing    (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_CRASHING; }
 
+/* Has condition in configuration and cond is allowed? */
+static inline int svc_has_cond(svc_t *svc)
+{
+	if (!svc->cond[0])
+		return 0;
+
+	switch (svc->type) {
+	case SVC_TYPE_SERVICE:
+	case SVC_TYPE_TASK:
+	case SVC_TYPE_RUN:
+	case SVC_TYPE_SYSV:
+		return 1;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static inline char *svc_status(svc_t *svc)
 {
 	if (!svc)

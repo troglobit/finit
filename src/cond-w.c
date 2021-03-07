@@ -162,26 +162,6 @@ int cond_set_path(const char *path, enum cond_state new)
 	return new != old;
 }
 
-/* Has condition in configuration and cond is allowed? */
-static int svc_has_cond(svc_t *svc)
-{
-	if (!svc->cond[0])
-		return 0;
-
-	switch (svc->type) {
-	case SVC_TYPE_SERVICE:
-	case SVC_TYPE_TASK:
-	case SVC_TYPE_RUN:
-	case SVC_TYPE_SYSV:
-		return 1;
-
-	default:
-		break;
-	}
-
-	return 0;
-}
-
 static void cond_update(const char *name)
 {
 	svc_t *svc, *iter = NULL;
