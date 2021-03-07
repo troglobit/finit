@@ -95,6 +95,22 @@ static void col_widths(void)
 		pw = 3;
 }
 
+static void print_header(FILE *fp, const char *line, int nl)
+{
+	if (plain) {
+		int len;
+
+		if (!fp)
+			fp = stdout;
+
+		fprintf(fp, "%s%s\n", nl ? "\n" : "", line);
+		for (len = 0; len < screen_cols; len++)
+			fputc('=', fp);
+		fputs("\n", fp);
+	} else
+		printheader(fp, line, nl);
+}
+
 static int runlevel_get(int *prevlevel)
 {
 	int result;
@@ -262,7 +278,7 @@ static int do_cond_dump(char *arg)
 
 		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
 			 iw, "IDENT", "STATUS", "CONDITION");
-		printheader(NULL, title, 0);
+		print_header(NULL, title, 0);
 	}
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
@@ -316,7 +332,7 @@ static int do_cond_show(char *arg)
 
 		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
 			 iw, "IDENT", "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
-		printheader(NULL, title, 0);
+		print_header(NULL, title, 0);
 	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
@@ -401,7 +417,7 @@ int utmp_show(char *file)
 	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
 
 	if (heading)
-		printheader(NULL, file, 0);
+		print_header(NULL, file, 0);
 	utmpname(file);
 
 	setutent();
@@ -544,7 +560,7 @@ static int show_status(char *arg)
 		else
 			strlcat(title, "COMMAND", sizeof(title)); 
 
-		printheader(NULL, title, 0);
+		print_header(NULL, title, 0);
 	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
@@ -725,6 +741,7 @@ static int usage(int rc)
 		"  -b, --batch               Batch mode, no screen size probing\n"
 		"  -c, --create              Create missing paths (and files) as needed\n"
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
+		"  -p, --plain               Use plain table headings, no ctrl chars\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
@@ -851,6 +868,7 @@ int main(int argc, char *argv[])
 		{ "create",     0, NULL, 'c' },
 		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
+		{ "plain",      0, NULL, 'p' },
 		{ "no-heading", 0, NULL, 't' },
 		{ "verbose",    0, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
@@ -861,7 +879,7 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "bcfh?tv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "bcfh?ptv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'b':
 			interactive = 0;
@@ -878,6 +896,10 @@ int main(int argc, char *argv[])
 		case 'h':
 		case '?':
 			return usage(0);
+
+		case 'p':
+			plain = 1;
+			break;
 
 		case 't':
 			heading = 0;
