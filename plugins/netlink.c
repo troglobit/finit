@@ -48,7 +48,7 @@ static int nlmsg_validate(struct nlmsghdr *nh, size_t len)
 	return 0;
 }
 
-static void nl_route(struct nlmsghdr *nlmsg)
+static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 {
 	struct rtmsg *r;
 	struct rtattr *a;
@@ -63,8 +63,14 @@ static void nl_route(struct nlmsghdr *nlmsg)
 	r  = NLMSG_DATA(nlmsg);
 	a  = RTM_RTA(r);
 	la = RTM_PAYLOAD(nlmsg);
+	if (la >= len) {
+		_e("Packet too large!");
+		return;
+	}
+
 	while (RTA_OK(a, la)) {
 		void *data = RTA_DATA(a);
+
 		switch (a->rta_type) {
 		case RTA_GATEWAY:
 			gw = *((int *)data);
@@ -105,7 +111,7 @@ static void net_cond_set(char *ifname, char *cond, int set)
 		cond_clear(msg);
 }
 
-static void nl_link(struct nlmsghdr *nlmsg)
+static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 {
 	int la;
 	char ifname[IFNAMSIZ + 1];
@@ -120,6 +126,10 @@ static void nl_link(struct nlmsghdr *nlmsg)
 	i  = NLMSG_DATA(nlmsg);
 	a  = (struct rtattr *)((char *)i + NLMSG_ALIGN(sizeof(struct ifinfomsg)));
 	la = NLMSG_PAYLOAD(nlmsg, sizeof(struct ifinfomsg));
+	if (la >= len) {
+		_e("Packet too large!");
+		return;
+	}
 
 	while (RTA_OK(a, la)) {
 		if (a->rta_type == IFLA_IFNAME) {
@@ -164,9 +174,9 @@ static void nl_link(struct nlmsghdr *nlmsg)
 
 static void nl_callback(void *arg, int sd, int events)
 {
-	ssize_t len;
 	static char buf[4096];
 	struct nlmsghdr *nh;
+	ssize_t len;
 
 	memset(buf, 0, sizeof(buf));
 	len = recv(sd, buf, sizeof(buf), 0);
@@ -179,9 +189,9 @@ static void nl_callback(void *arg, int sd, int events)
 	for (nh = (struct nlmsghdr *)buf; !nlmsg_validate(nh, len); nh = NLMSG_NEXT(nh, len)) {
 		//_d("Well formed netlink message received. type %d ...", nh->nlmsg_type);
 		if (nh->nlmsg_type == RTM_NEWROUTE || nh->nlmsg_type == RTM_DELROUTE)
-			nl_route(nh);
+			nl_route(nh, len);
 		else
-			nl_link(nh);
+			nl_link(nh, len);
 	}
 }
 
