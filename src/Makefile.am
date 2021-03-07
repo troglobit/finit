@@ -21,6 +21,8 @@ if LOGIT
 pkglibexec_PROGRAMS = logit
 logit_SOURCES       = logit.c
 logit_CFLAGS        = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+logit_CFLAGS       += $(lite_CFLAGS)
+logit_LDADD         = $(lite_LIBS)
 endif
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\

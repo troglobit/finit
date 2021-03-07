@@ -73,7 +73,9 @@ static int logrotate(char *file, int num, off_t sz)
 				snprintf(nfile, len, "%s.%d.gz", file, cnt);
 
 				/* May fail because ofile doesn't exist yet, ignore. */
-				(void)rename(ofile, nfile);
+				if (rename(ofile, nfile) && errno != ENOENT)
+					logit(LOG_ERR, "Failed logrotate %s: %s",
+					       ofile, strerror(errno));
 			}
 
 			for (cnt = num; cnt > 0; cnt--) {
@@ -81,23 +83,28 @@ static int logrotate(char *file, int num, off_t sz)
 				snprintf(nfile, len, "%s.%d", file, cnt);
 
 				/* May fail because ofile doesn't exist yet, ignore. */
-				(void)rename(ofile, nfile);
+				if (rename(ofile, nfile) && errno != ENOENT) {
+					logit(LOG_ERR, "Failed logrotate %s: %s",
+					       ofile, strerror(errno));
+					continue;
+				}
 
 				if (cnt == 2 && fexist(nfile)) {
-					size_t len = 5 + strlen(nfile) + 1;
-					char cmd[len];
+					if (systemf("gzip %s", nfile))
+						continue; /* no gzip, probably */
 
-					snprintf(cmd, len, "gzip %s", nfile);
-					run(cmd);
-
-					remove(nfile);
+					(void)remove(nfile);
 				}
 			}
 
-			(void)rename(file, nfile);
+			if (rename(file, nfile))
+				goto fallback;
 			create(file, st.st_mode, st.st_uid, st.st_gid);
 		} else {
-			(void)truncate(file, 0);
+		fallback:
+			if (truncate(file, 0))
+				logit(LOG_ERR, "Failed truncating %s during logrotate: %s",
+				      file, strerror(errno));
 		}
 	}
 

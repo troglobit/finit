@@ -30,6 +30,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <lite/lite.h>
 
 static const char version_info[] = PACKAGE_NAME " v" PACKAGE_VERSION;
 
@@ -65,7 +66,9 @@ static int logrotate(char *file, int num, off_t sz)
 				snprintf(nfile, len, "%s.%d.gz", file, cnt);
 
 				/* May fail because ofile doesn't exist yet, ignore. */
-				(void)rename(ofile, nfile);
+				if (rename(ofile, nfile) && errno != ENOENT)
+					syslog(LOG_ERR, "Failed logrotate %s: %s",
+					       ofile, strerror(errno));
 			}
 
 			for (cnt = num; cnt > 0; cnt--) {
@@ -73,26 +76,28 @@ static int logrotate(char *file, int num, off_t sz)
 				snprintf(nfile, len, "%s.%d", file, cnt);
 
 				/* May fail because ofile doesn't exist yet, ignore. */
-				(void)rename(ofile, nfile);
+				if (rename(ofile, nfile) && errno != ENOENT) {
+					syslog(LOG_ERR, "Failed logrotate %s: %s",
+					       ofile, strerror(errno));
+					continue;
+				}
 
-				if (cnt == 2 && !access(nfile, F_OK)) {
-					size_t len = 5 + strlen(nfile) + 1;
-					char cmd[len];
+				if (cnt == 2 && fexist(nfile)) {
+					if (systemf("gzip %s", nfile))
+						continue; /* no gzip, probably */
 
-					snprintf(cmd, len, "gzip %s", nfile);
-					system(cmd);
-
-					remove(nfile);
+					(void)remove(nfile);
 				}
 			}
 
 			if (rename(file, nfile))
-				(void)truncate(file, 0);
-			else
-				create(file, st.st_mode, st.st_uid, st.st_gid);
+				goto fallback;
+			create(file, st.st_mode, st.st_uid, st.st_gid);
 		} else {
+		fallback:
 			if (truncate(file, 0))
-				syslog(LOG_ERR | LOG_PERROR, "Failed truncating %s during logrotate: %s", file, strerror(errno));
+				syslog(LOG_ERR, "Failed truncating %s during logrotate: %s",
+				       file, strerror(errno));
 		}
 	}
 
