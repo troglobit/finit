@@ -17,6 +17,7 @@
  */
 
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <errno.h>
 #include <net/if.h>		/* IFNAMSIZ */
 #include <sys/socket.h>
@@ -111,6 +112,23 @@ static void net_cond_set(char *ifname, char *cond, int set)
 		cond_clear(msg);
 }
 
+static int validate_ifname(const char *ifname)
+{
+	if (!ifname || !ifname[0])
+		return 1;
+
+	if (strlen(ifname) >= IFNAMSIZ)
+		return 1;
+
+	while (*ifname) {
+		if (*ifname == '/' || isspace(*ifname))
+			return 1;
+		ifname++;
+	}
+
+	return 0;
+}
+
 static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 {
 	int la;
@@ -136,6 +154,11 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 			continue;
 
 		strlcpy(ifname, RTA_DATA(a), sizeof(ifname));
+		if (validate_ifname(ifname)) {
+			_d("Invalid interface name '%s', skipping ...", ifname);
+			continue;
+		}
+
 		switch (nlmsg->nlmsg_type) {
 		case RTM_NEWLINK:
 			/*
