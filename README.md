@@ -34,8 +34,8 @@ on server and desktop systems as well.  For working examples, see the
   * [Alpine Linux](contrib/alpine/), and
   * [Debian GNU/Linux](contrib/debian/)
 
-![Alpine screenshot](img/alpine-screenshot.png)  
-The screenshot shows [Alpine Linux](https://www.alpinelinux.org/).
+![Alpine screenshot](img/finit4-screenshot.png)  
+The screenshot shows Finit4 booting [Alpine Linux](https://www.alpinelinux.org/).
 
 
 Example
