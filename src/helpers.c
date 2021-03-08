@@ -103,6 +103,9 @@ static void add_console(char *cons)
 	if (ptr)
 		*ptr = 0;
 
+	if (!strncmp(cons, "/dev/", 5))
+		cons += 5;
+
 	snprintf(path, sizeof(path), "/dev/%s", cons);
 
 	/* check for and skip duplicates */
@@ -131,7 +134,7 @@ static void find_active_consoles(void)
 	if (!fp) {
 	fallback:
 		_d("Using fallback /dev/console");
-		add_console("/dev/console");
+		add_console("console");
 		return;
 	}
 
