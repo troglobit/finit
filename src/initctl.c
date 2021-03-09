@@ -95,20 +95,28 @@ static void col_widths(void)
 		pw = 3;
 }
 
-static void print_header(FILE *fp, const char *line, int nl)
+void print_header(const char *fmt, ...)
 {
+	va_list ap;
+
+	va_start(ap, fmt);
+
 	if (plain) {
 		int len;
 
-		if (!fp)
-			fp = stdout;
-
-		fprintf(fp, "%s%s\n", nl ? "\n" : "", line);
+		vfprintf(stdout, fmt, ap);
+		fputs("\n", stdout);
 		for (len = 0; len < screen_cols; len++)
-			fputc('=', fp);
-		fputs("\n", fp);
-	} else
-		printheader(fp, line, nl);
+			fputc('=', stdout);
+		fputs("\n", stdout);
+	} else {
+		char buf[screen_cols];
+
+		vsnprintf(buf, sizeof(buf), fmt, ap);
+		printheader(stdout, buf, 0);
+	}
+
+        va_end(ap);
 }
 
 static int runlevel_get(int *prevlevel)
@@ -278,7 +286,7 @@ static int do_cond_dump(char *arg)
 
 		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
 			 iw, "IDENT", "STATUS", "CONDITION");
-		print_header(NULL, title, 0);
+		print_header(title);
 	}
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
@@ -332,7 +340,7 @@ static int do_cond_show(char *arg)
 
 		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
 			 iw, "IDENT", "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
-		print_header(NULL, title, 0);
+		print_header(title);
 	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
@@ -409,15 +417,18 @@ int do_suspend (char *arg) { return do_cmd(INIT_CMD_SUSPEND);  }
 
 int utmp_show(char *file)
 {
-	time_t sec;
-	struct utmp *ut;
+	static int once = 0;
 	struct tm *sectm;
+	struct utmp *ut;
+	time_t sec;
 
 	int pid;
 	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
 
-	if (heading)
-		print_header(NULL, file, 0);
+	if (heading) {
+		print_header("%s%s ", once ? "\n" : "", file);
+		once++;
+	}
 	utmpname(file);
 
 	setutent();
@@ -560,7 +571,7 @@ static int show_status(char *arg)
 		else
 			strlcat(title, "COMMAND", sizeof(title)); 
 
-		print_header(NULL, title, 0);
+		print_header(title);
 	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {

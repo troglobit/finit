@@ -34,6 +34,10 @@
 
 extern int icreate;			/* initctl -c */
 extern int iforce;			/* initctl -f */
+extern int plain;			/* initctl -p */
+extern int heading;			/* initctl -t */
+
+extern void print_header(const char *fmt, ...);
 
 
 static int calc_width(char *arr[], size_t len)
@@ -53,7 +57,7 @@ static int calc_width(char *arr[], size_t len)
 
 static void do_list(const char *path)
 {
- 	char buf[screen_cols];
+	static int once = 0;
 	int width, num, prev;
 	glob_t gl;
 	size_t i;
@@ -67,8 +71,26 @@ static void do_list(const char *path)
 	if (gl.gl_pathc <= 0)
 		goto done;
 
-	snprintf(buf, sizeof(buf), "%s ", path);
-	printheader(NULL, buf, 0);
+	if (plain) {
+		if (heading)
+			print_header("%s%s ", once ? "\n" : "", path);
+		once++;
+
+		for (i = 0; i < gl.gl_pathc; i++) {
+			if (!heading) {
+				char buf[512];
+
+				paste(buf, sizeof(buf), path, gl.gl_pathv[i]);
+				puts(buf);
+			} else
+				puts(gl.gl_pathv[i]);
+		}
+
+		goto done;
+	}
+
+	if (heading)
+		print_header("%s ", path);
 
 	width = calc_width(gl.gl_pathv, gl.gl_pathc);
 	if (width <= 0)
