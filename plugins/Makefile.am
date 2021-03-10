@@ -7,7 +7,7 @@ AM_CPPFLAGS        += $(lite_CFLAGS)
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = bootmisc.c modprobe.c rtc.c pidfile.c procps.c tty.c urandom.c
+libplug_la_SOURCES  = bootmisc.c modprobe.c rtc.c pidfile.c procps.c tty.c urandom.c usr.c
 
 if BUILD_ALSA_UTILS_PLUGIN
 libplug_la_SOURCES += alsa-utils.c
@@ -34,7 +34,7 @@ libplug_la_SOURCES += resolvconf.c
 endif
 
 else
-pkglib_LTLIBRARIES  = bootmisc.la modprobe.la rtc.la pidfile.la procps.la tty.la urandom.la
+pkglib_LTLIBRARIES  = bootmisc.la modprobe.la rtc.la pidfile.la procps.la tty.la urandom.la usr.la
 
 if BUILD_ALSA_UTILS_PLUGIN
 pkglib_LTLIBRARIES += alsa-utils.la

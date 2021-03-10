@@ -242,6 +242,7 @@ static void pidfile_init(void *arg)
 	 */
 	path = realpath(_PATH_VARRUN, NULL);
 	if (!path) {
+		_d("Failed querying realpath(%s): %s", _PATH_VARRUN, strerror(errno));
 		path = realpath("/run", NULL);
 		if (!path) {
 			_e("System does not have %s or /run, aborting.", _PATH_VARRUN);

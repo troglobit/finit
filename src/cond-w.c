@@ -162,7 +162,8 @@ int cond_set_path(const char *path, enum cond_state new)
 	return new != old;
 }
 
-static void cond_update(const char *name)
+/* Should only be used by cond_set*(), cond_clear(), and usr plugin! */
+void cond_update(const char *name)
 {
 	svc_t *svc, *iter = NULL;
 

@@ -270,6 +270,12 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 			nm  = svc_ident(svc, NULL, 0);
 			pid = svc->pid;
 		}
+	} else if (strncmp("usr/", cond, 4) == 0) {
+		nm  = "static";
+		pid = 0;
+	} else if (strncmp("hook/", cond, 4) == 0) {
+		nm  = "static";
+		pid = 1;
 	}
 
 	printf("%-*d  %-*s  %-6s  %s\n", pw, pid, iw, nm, asserted, cond);
@@ -295,6 +301,38 @@ static int do_cond_dump(char *arg)
 
 	return 0;
 }
+
+static int do_cond_act(char *arg, int creat)
+{
+	char oneshot[256];
+	size_t off;
+
+	if (arg && strncmp(arg, COND_USR, strlen(COND_USR)) == 0)
+		arg += strlen(COND_USR);
+
+	if (!arg || !arg[0])
+		errx(1, "Invalid condition (empty)");
+	if (strchr(arg, '/'))
+		errx(1, "Invalid condition (slashes)");
+	if (strchr(arg, '.'))
+		errx(1, "Invalid condition (periods)");
+
+	snprintf(oneshot, sizeof(oneshot), _PATH_CONDUSR "%s", arg);
+	off = strlen(_PATH_COND);
+
+	if (creat) {
+		if (symlink(_PATH_RECONF, oneshot) && errno != EEXIST)
+			err(1, "Failed asserting condition <%s>", &oneshot[off]);
+	} else {
+		if (erase(oneshot))
+			err(1, "Failed deasserting condition <%s>", &oneshot[off]);
+	}
+
+	return 0;
+}
+
+static int do_cond_set(char *arg) { return do_cond_act(arg, 1); }
+static int do_cond_clr(char *arg) { return do_cond_act(arg, 0); }
 
 static void show_cond_one(const char *_conds)
 {
@@ -765,7 +803,9 @@ static int usage(int rc)
 	fprintf(stderr,
 //		"  reload   <NAME>[:ID]      Reload (SIGHUP) service by name\n"  
 		"\n"
-		"  cond     show             Show condition status\n"
+		"  cond     set   <COND>     Set (assert) user-defined condition     +usr/COND\n"
+		"  cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND\n"
+		"  cond     status           Show condition status, default cond command\n"
 		"  cond     dump             Dump all conditions and their status\n"
 		"\n"
 		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
@@ -850,6 +890,9 @@ int main(int argc, char *argv[])
 	struct cmd cond[] = {
 		{ "status",   NULL, do_cond_show }, /* default cmd */
 		{ "dump",     NULL, do_cond_dump },
+		{ "set",      NULL, do_cond_set  },
+		{ "clr",      NULL, do_cond_clr  },
+		{ "clear",    NULL, do_cond_clr  },
 		{ NULL, NULL, NULL }
 	};
 	struct cmd command[] = {
