@@ -45,7 +45,31 @@ being created.
 Triggering
 ----------
 
-Conditions can only be triggered by built-in plugins.
+Conditions are mainly triggered (asserted) by built-in plugins, e.g.,
+`netlink.so` and `pidfile.so`, see below for built-in conditions.  Finit
+also supports user-defined conditions, sometimes referred to as static
+or one-shot conditions.  They live in the `<usr/...` namespace and are
+constrained to a flat hierarchy without any sub-directories, unlike the
+pidfile plugin, for instance.
+
+User-defined conditions are controlled using the `initctl cond set` and
+`initctl cond clear` commands:
+
+    initctl cond set foo
+    initctl cond clear foo
+
+The purpose of user-defined conditions is to be able to start or stop
+services, or run/task jobs, on external site-dependent stimuli.
+Example:
+
+    service [2345] <usr/foo> alarm --arg foo -- Foo alarm
+
+For convenience, prefixing with `usr/` is allowed, but any other slashes
+or period characters are disallowed.  E.g., to trigger the `Foo alarm`,
+the same as above, can also be achieved like this:
+
+    initctl cond set usr/foo
+    initctl cond clear usr/foo
 
 Conditions retain their current state until the next reconfiguration or
 runlevel change.  At that point all set conditions transition into the
@@ -56,6 +80,8 @@ unchanged) state of it.
 
 > **Note:** For `pid/` conditions it is expected that services "touch"
 >           or recreate their PID file on `SIGHUP`.
+
+Static (one-shot) conditions, like `usr/`, never enter the `flux` state.
 
 
 Built-in Conditions

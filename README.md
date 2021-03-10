@@ -356,6 +356,7 @@ Options:
   -b, --batch               Batch mode, no screen size probing
   -c, --create              Create missing paths (and files) as needed
   -f, --force               Ignore missing files and arguments, never prompt
+  -p, --plain               Use plain table headings, no ctrl chars
   -t, --no-heading          Skip table headings
   -v, --verbose             Verbose output
   -h, --help                This help text
@@ -375,6 +376,8 @@ Commands:
   disable  <CONF>           Disable  .conf in /etc/finit.d/enabled
   reload                    Reload  *.conf in /etc/finit.d (activate changes)
 
+  cond     set   <COND>     Set (assert) user-defined condition     +usr/COND
+  cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND
   cond     show             Show condition status
   cond     dump             Dump all conditions and their status
 
