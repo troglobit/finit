@@ -49,9 +49,10 @@
 #define FORK plain ? "|-" : "├─"
 #define END  plain ? "`-" : "└─"
 
-struct command {
-	char  *cmd;
-	int  (*cb)(char *arg);
+struct cmd {
+	char        *cmd;
+	struct cmd  *ctx;
+	int        (*cb)(char *arg);
 };
 
 int icreate  = 0;
@@ -362,32 +363,6 @@ static int do_cond_show(char *arg)
 	}
 
 	return 0;
-}
-
-static int do_cond(char *cmd)
-{
-	int c;
-	char *arg;
-	struct command command[] = {
-		{ "show",    do_cond_show  },
-		{ "dump",    do_cond_dump  },
-		{ NULL, NULL }
-	};
-
-	if (!cmd)
-		goto fallback;
-
-	arg = strpbrk(cmd, " \0");
-	if (arg)
-		*arg++ = 0;
-
-	for (c = 0; command[c].cmd; c++) {
-		if (string_match(command[c].cmd, cmd))
-			return command[c].cb(arg);
-	}
-
-fallback:
-	return do_cond_show(NULL);
 }
 
 static int do_cmd(int cmd)
@@ -835,45 +810,35 @@ static int do_help(char *arg)
 	return usage(0);
 }
 
+static int cmd_parse(int argc, char *argv[], struct cmd *command)
+{
+	int i, j;
+
+	for (i = 0; argc > 0 && command[i].cmd; i++) {
+		if (!string_match(command[i].cmd, argv[0]))
+			continue;
+
+		if (command[i].ctx)
+			return cmd_parse(argc - 1, &argv[1], command[i].ctx);
+
+		if (command[i].cb) {
+			int rc = 0;
+
+			if (argc == 1)
+				return command[i].cb(NULL);
+
+			for (j = 1; j < argc; j++)
+				rc |= command[i].cb(argv[j]);
+
+			return rc;
+		}
+	}
+
+	return command[0].cb(NULL);	/* default cmd */
+}
+
 int main(int argc, char *argv[])
 {
-	struct command command[] = {
-		{ "debug",    toggle_debug },
-		{ "devel",    do_devel     },
-		{ "help",     do_help      },
-		{ "version",  show_version },
-
-		{ "list",     serv_list    },
-		{ "ls",       serv_list    },
-		{ "enable",   serv_enable  },
-		{ "disable",  serv_disable },
-		{ "touch",    serv_touch   },
-		{ "show",     serv_show    },
-		{ "edit",     serv_edit    },
-		{ "create",   serv_creat   },
-		{ "delete",   serv_delete  },
-		{ "reload",   do_reload    },
-
-		{ "cond",     do_cond      },
-
-		{ "log",      do_log       },
-		{ "start",    do_start     },
-		{ "stop",     do_stop      },
-		{ "restart",  do_restart   },
-		{ "status",   show_status  },
-		{ "show",     show_status  }, /* Convenience alias, for now */
-
-		{ "ps",       show_cgroup  },
-
-		{ "runlevel", do_runlevel  },
-		{ "reboot",   do_reboot    },
-		{ "halt",     do_halt      },
-		{ "poweroff", do_poweroff  },
-		{ "suspend",  do_suspend   },
-
-		{ "utmp",     do_utmp      },
-		{ NULL, NULL }
-	};
 	struct option long_options[] = {
 		{ "batch",      0, NULL, 'b' },
 		{ "create",     0, NULL, 'c' },
@@ -884,8 +849,49 @@ int main(int argc, char *argv[])
 		{ "verbose",    0, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
 	};
+	struct cmd cond[] = {
+		{ "status",   NULL, do_cond_show }, /* default cmd */
+		{ "dump",     NULL, do_cond_dump },
+		{ NULL, NULL, NULL }
+	};
+	struct cmd command[] = {
+		{ "status",   NULL, show_status  }, /* default cmd */
+
+		{ "debug",    NULL, toggle_debug },
+		{ "devel",    NULL, do_devel     },
+		{ "help",     NULL, do_help      },
+		{ "version",  NULL, show_version },
+
+		{ "list",     NULL, serv_list    },
+		{ "ls",       NULL, serv_list    },
+		{ "enable",   NULL, serv_enable  },
+		{ "disable",  NULL, serv_disable },
+		{ "touch",    NULL, serv_touch   },
+		{ "show",     NULL, serv_show    },
+		{ "edit",     NULL, serv_edit    },
+		{ "create",   NULL, serv_creat   },
+		{ "delete",   NULL, serv_delete  },
+		{ "reload",   NULL, do_reload    },
+
+		{ "cond",     cond, NULL         },
+
+		{ "log",      NULL, do_log       },
+		{ "start",    NULL, do_start     },
+		{ "stop",     NULL, do_stop      },
+		{ "restart",  NULL, do_restart   },
+
+		{ "ps",       NULL, show_cgroup  },
+
+		{ "runlevel", NULL, do_runlevel  },
+		{ "reboot",   NULL, do_reboot    },
+		{ "halt",     NULL, do_halt      },
+		{ "poweroff", NULL, do_poweroff  },
+		{ "suspend",  NULL, do_suspend   },
+
+		{ "utmp",     NULL, do_utmp      },
+		{ NULL, NULL, NULL }
+	};
 	int interactive = 1, c;
-	char *cmd;
 
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
@@ -925,10 +931,8 @@ int main(int argc, char *argv[])
 	if (interactive)
 		screen_init();
 
-	if (optind >= argc)
-		return show_status(NULL);
-
 	if (!has_utmp()) {
+		/* system w/o utmp support, disable 'utmp' command */
 		for (c = 0; command[c].cmd; c++) {
 			if (!string_compare(command[c].cmd, "utmp"))
 				continue;
@@ -938,26 +942,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	cmd = argv[optind++];
-	for (c = 0; command[c].cmd; c++) {
-		int rc = 0;
-
-		if (!string_match(command[c].cmd, cmd))
-			continue;
-		if (!command[c].cb)
-			continue;
-
-		/* no arg, just a command, e.g. initctl ls */
-		if (optind >= argc)
-			return command[c].cb(NULL);
-
-		/* >=1 arg, e.g., initctl del foo bar baz */
-		while (optind < argc)
-			rc |= command[c].cb(argv[optind++]);
-		return rc;
-	}
-
-	return usage(1);
+	return cmd_parse(argc - optind, &argv[optind], command);
 }
 
 void logit(int prio, const char *fmt, ...)
