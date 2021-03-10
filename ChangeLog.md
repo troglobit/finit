@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.0][UNRELEASED] - 2021-02-21
+[4.0][UNRELEASED] - 2021-03-xx
 ------------------------------
 
 This release became v4.0, and not v3.2, because of incompatible changes
@@ -18,6 +18,9 @@ make sure to read the whole changelog when upgrading.
   with a fallback to sending signals as per traditional SysV init.  The
   `-f` (force) flag remains, where `reboot(2)` is called directly
 * Introducing Finit progress 𝓜𝓸𝓭𝓮𝓻𝓷
+* The `inictl cond set|clear COND` have changed completely.  Constrained
+  to a flat `<usr/...>` namespace and automatically activated by a new
+  `usr.so` plugin that checks services for usr condition changes
 * Removed built-in inetd super server.  If you need this functionality,
   use an external inetd, like xinetd, instead.  A pull request for a
   stand-alone inetd, like watchdogd and getty, is most welcome!
