@@ -42,8 +42,6 @@
 #include "service.h"
 #include "util.h"
 
-#define _PATH_COND _PATH_VARRUN "finit/cond/"
-
 #define NONE " "
 #define PIPE plain ? "|"  : "│"
 #define FORK plain ? "|-" : "├─"
@@ -256,7 +254,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 	if (tflag != FTW_F)
 		return 0;
 
-	if (!strcmp(fpath, _PATH_COND "reconf"))
+	if (!strcmp(fpath, _PATH_RECONF))
 		return 0;
 
 	asserted = condstr(cond_get_path(fpath));

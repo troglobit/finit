@@ -45,7 +45,7 @@ const char *cond_path(const char *name)
 	static char path[256];
 	char tmp[MAX_ARG_LEN];
 
-	snprintf(tmp, sizeof(tmp), COND_PATH "/%s", name);
+	snprintf(tmp, sizeof(tmp), _PATH_COND "%s", name);
 
 	return pid_runpath(tmp, path, sizeof(path));
 }
@@ -74,12 +74,12 @@ enum cond_state cond_get_path(const char *path)
 {
 	int cgen, rgen;
 
-	rgen = cond_get_gen(COND_RECONF);
-	if (!rgen)
-		return COND_OFF;
-
 	cgen = cond_get_gen(path);
 	if (!cgen)
+		return COND_OFF;
+
+	rgen = cond_get_gen(_PATH_RECONF);
+	if (!rgen)
 		return COND_OFF;
 
 	return (cgen == rgen) ? COND_ON : COND_FLUX;

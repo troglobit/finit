@@ -4,9 +4,12 @@
 #include <paths.h>
 #include <svc.h>
 
-#define COND_DIR      "finit/cond"
-#define COND_PATH     _PATH_VARRUN COND_DIR
-#define COND_RECONF   COND_PATH "/reconf"
+#define COND_BASE      "finit/cond"
+#define COND_USR       "usr/"
+
+#define _PATH_COND     _PATH_VARRUN COND_BASE "/"
+#define _PATH_CONDUSR  _PATH_COND   COND_USR
+#define _PATH_RECONF   _PATH_COND   "reconf"
 
 typedef enum cond_state {
 	COND_OFF = 0,

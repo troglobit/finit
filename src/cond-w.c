@@ -99,13 +99,13 @@ static void cond_bump_reconf(void)
 	unsigned int rgen;
 
 	/*
-	 * If %COND_RECONF does not exist, cond_get_gen() returns 0
+	 * If %_PATH_RECONF does not exist, cond_get_gen() returns 0
 	 * meaning that rgen++ is always what we want.
 	 */
-	rgen = cond_get_gen(COND_RECONF);
+	rgen = cond_get_gen(_PATH_RECONF);
 	rgen++;
 
-	cond_set_gen(COND_RECONF, rgen);
+	cond_set_gen(_PATH_RECONF, rgen);
 }
 
 static int cond_checkpath(const char *path)
@@ -119,7 +119,7 @@ static int cond_checkpath(const char *path)
 		return 1;
 	}
 
-	if (makepath(dir) && errno != EEXIST) {
+	if (mkpath(dir, 0755) && errno != EEXIST) {
 		_pe("Failed creating dir '%s' for condition '%s'", dir, path);
 		return 1;
 	}
@@ -134,7 +134,7 @@ int cond_set_path(const char *path, enum cond_state new)
 
 	_d("%s", path);
 
-	rgen = cond_get_gen(COND_RECONF);
+	rgen = cond_get_gen(_PATH_RECONF);
 	if (!rgen) {
 		_e("Unable to read configuration generation (%s)", path);
 		return -1;
@@ -201,7 +201,8 @@ void cond_set_oneshot(const char *name)
 	if (cond_checkpath(path))
 		return;
 
-	symlink(COND_RECONF, path);
+	if (symlink(_PATH_RECONF, path) && errno != EEXIST)
+		_pe("Failed creating onshot cond %s", name);
 	cond_update(name);
 }
 
@@ -234,13 +235,13 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
 	if (tflg != FTW_F)
 		return 0;
 
-	nm = strstr((char *)fpath, COND_DIR);
+	nm = strstr((char *)fpath, COND_BASE);
 	if (!nm) {
 		_e("Incorrect condtion path %s, cannot reassert", fpath);
 		return 1;
 	}
 
-	nm += sizeof(COND_DIR);
+	nm += strlen(COND_BASE);
 	_d("Reasserting %s => %s", fpath, nm);
 	cond_set(nm);
 
@@ -261,8 +262,8 @@ void cond_init(void)
 {
 	char path[MAX_ARG_LEN];
 
-	if (makepath(pid_runpath(COND_PATH, path, sizeof(path))) && errno != EEXIST) {
-		_pe("Failed creating condition base directory '%s'", COND_PATH);
+	if (mkpath(pid_runpath(_PATH_COND, path, sizeof(path)), 0755) && errno != EEXIST) {
+		_pe("Failed creating condition base directory '%s'", _PATH_COND);
 		return;
 	}
 
