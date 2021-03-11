@@ -49,8 +49,6 @@
 #include "utmp-api.h"
 #include "schedule.h"
 
-#define RESPAWN_MAX    10	/* Prevent endless respawn of faulty services. */
-
 static struct wq work = {
 	.cb = service_worker,
 };
@@ -1301,7 +1299,7 @@ static void service_retry(svc_t *svc)
 		return;
 	}
 
-	if (*restart_cnt >= RESPAWN_MAX) {
+	if (*restart_cnt >= SVC_RESPAWN_MAX) {
 		logit(LOG_CONSOLE | LOG_WARNING, "Service %s keeps crashing, not restarting.",
 		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);
@@ -1314,12 +1312,12 @@ static void service_retry(svc_t *svc)
 
 	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
 	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
-	      svc_ident(svc, NULL, 0), svc->pid, *restart_cnt, RESPAWN_MAX);
+	      svc_ident(svc, NULL, 0), svc->pid, *restart_cnt, SVC_RESPAWN_MAX);
 	svc_unblock(svc);
 	service_step(svc);
 
 	/* Wait 2s for the first 5 respawns, then back off to 5s */
-	timeout = ((*restart_cnt) <= (RESPAWN_MAX / 2)) ? 2000 : 5000;
+	timeout = ((*restart_cnt) <= (SVC_RESPAWN_MAX / 2)) ? 2000 : 5000;
 	service_timeout_after(svc, timeout, service_retry);
 }
 

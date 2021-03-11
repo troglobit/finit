@@ -77,6 +77,9 @@ typedef enum {
 /* Default kill delay (msec) after SIGTERM (svc->sighalt) that we SIGKILL processes */
 #define SVC_TERM_TIMEOUT 3000
 
+/* Prevent endless respawn of faulty services. */
+#define SVC_RESPAWN_MAX  10
+
 /*
  * Default enable for all services, can be stopped by means
  * of issuing an initctl call. E.g.
