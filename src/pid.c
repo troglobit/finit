@@ -143,12 +143,13 @@ int pid_file_create(svc_t *svc)
 	return fclose(fp);
 }
 
-static int pid_realpath(svc_t *svc, char *file)
+int pid_file_set(svc_t *svc, char *file, int not)
 {
-	int not = 0;
-
-	if (!file)
+	if (!file) {
 		file = pid_file(svc);
+		if (!file)
+			return -1;
+	}
 
 	if (file[0] == '!') {
 		not = 1;
@@ -202,7 +203,7 @@ int pid_file_parse(svc_t *svc, char *arg)
 
 		arg += 4;
 		if ((arg[0] == '!' && arg[1] == '/') || arg[0] == '/')
-			return pid_realpath(svc, arg);
+			return pid_file_set(svc, arg, 0);
 
 		if (arg[0] == '!') {
 			arg++;
@@ -213,12 +214,12 @@ int pid_file_parse(svc_t *svc, char *arg)
 		if (len > 4 && strcmp(&path[len - 4], ".pid"))
 			strlcat(path, ".pid", sizeof(path));
 
-		return pid_realpath(svc, path);
+		return pid_file_set(svc, path, 0);
 	}
 
 	/* 'pid' arg, no argument following */
 	if (!strcmp(arg, "pid"))
-		return pid_realpath(svc, NULL);
+		return pid_file_set(svc, NULL, 0);
 
 	return 1;
 }
