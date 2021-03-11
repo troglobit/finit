@@ -58,7 +58,7 @@ static int pidfile_add_path(struct iwatch *iw, char *path)
 		}
 	}
 
-	return iwatch_add(iw, path, IN_ONLYDIR);
+	return iwatch_add(iw, path, IN_ONLYDIR | IN_CLOSE_WRITE);
 }
 
 static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
@@ -68,10 +68,10 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	svc_t *svc;
 
 	paste(fn, sizeof(fn), dir, name);
-	_d("path: %s, mask: %08x", fn, mask);
-
 	if (fnmatch("*\\.pid", fn, 0) && fnmatch("*/pid", fn, 0))
 		return;
+
+	_d("path: %s, mask: %08x", fn, mask);
 
 	svc = svc_find_by_pidfile(fn);
 	if (!svc) {
@@ -82,7 +82,7 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	_d("Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
 
 	mkcond(svc, cond, sizeof(cond));
-	if (mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
+	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
 		svc_started(svc);
 		if (svc_is_forking(svc)) {
 			pid_t pid;
@@ -174,8 +174,6 @@ static void pidfile_callback(void *arg, int fd, int events)
 		if (!ev->mask)
 			continue;
 
-		_d("name %s, event: 0x%08x", ev->name, ev->mask);
-
 		/* Find base path for this event */
 		iwp = iwatch_find_by_wd(&iw_pidfile, ev->wd);
 		if (!iwp)
@@ -186,12 +184,7 @@ static void pidfile_callback(void *arg, int fd, int events)
 			continue;
 		}
 
-		if (ev->mask & IN_DELETE) {
-			_d("pidfile %s/%s removed ...", iwp->path, ev->name);
-			continue;
-		}
-
-		if (ev->mask & (IN_CREATE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
+		if (ev->mask & (IN_CLOSE_WRITE | IN_DELETE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO))
 			pidfile_update_conds(iwp->path, ev->name, ev->mask);
 	}
 }
