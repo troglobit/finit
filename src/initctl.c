@@ -567,7 +567,7 @@ static int show_status(char *arg)
 
 	if (arg && arg[0]) {
 		long now = jiffies();
-		char buf[42] = "N/A";
+		char uptm[42] = "N/A";
 
 		svc = client_svc_find(arg);
 		if (!svc)
@@ -583,7 +583,7 @@ static int show_status(char *arg)
 		printf("PID         : %d\n", svc->pid);
 		printf("User        : %s\n", svc->username);
 		printf("Group       : %s\n", svc->group);
-		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
+		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
 		printf("\n");
 
