@@ -557,15 +557,18 @@ static int show_status(char *arg)
 		if (!svc)
 			return 1;
 
+		printf("Status      : %s%s%s\n", !plain ? "\e[1m" : "", svc_status(svc), !plain ? "\e[0m" : "");
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
 		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
 		printf("Environment : %s\n", svc->env);
+		printf("Condition(s): %s\n", svc->cond);
 		printf("Command     : %s\n", svc_command(svc, cmd, sizeof(cmd)));
 		printf("PID         : %d\n", svc->pid);
+		printf("User        : %s\n", svc->username);
+		printf("Group       : %s\n", svc->group);
 		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, buf, sizeof(buf)) : buf);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
-		printf("Status      : %s\n", svc_status(svc));
 		printf("\n");
 
 		return do_log(svc->cmd);
