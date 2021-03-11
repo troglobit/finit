@@ -84,6 +84,9 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	mkcond(svc, cond, sizeof(cond));
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
 		svc_started(svc);
+		if (!svc_has_pidfile(svc))
+			pid_file_set(svc, fn, 1);
+
 		if (svc_is_forking(svc)) {
 			pid_t pid;
 

@@ -416,7 +416,17 @@ svc_t *svc_find_by_pidfile(char *fn)
 
 	pid = pid_file_read(fn);
 	if (pid <= 0) {
-		_d("pid_file_read(%s) => %d", fn, pid);
+		for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+			int v = 0;
+
+			if (svc->pidfile[0] == '!')
+				v = 1;
+			if (strcmp(&svc->pidfile[v], fn))
+				continue;
+
+			return svc;
+		}
+
 		return NULL;
 	}
 
