@@ -278,7 +278,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 		pid = 1;
 	}
 
-	printf("%-*d  %-*s  %-6s  %s\n", pw, pid, iw, nm, asserted, cond);
+	printf("%-*d  %-*s  %-6s  <%s>\n", pw, pid, iw, nm, asserted, cond);
 
 	return 0;
 }
@@ -334,41 +334,61 @@ static int do_cond_act(char *arg, int creat)
 static int do_cond_set(char *arg) { return do_cond_act(arg, 1); }
 static int do_cond_clr(char *arg) { return do_cond_act(arg, 0); }
 
-static void show_cond_one(const char *_conds)
+static char *svc_cond(svc_t *svc, char *buf, size_t len)
 {
-	static char conds[MAX_COND_LEN];
-	char *cond;
+	char *cond, *conds;
 
-	strlcpy(conds, _conds, sizeof(conds));
+	memset(buf, 0, len);
 
-	putchar('<');
+	if (!svc->cond[0])
+		return buf;
+
+	conds = strdup(svc->cond);
+	if (!conds)
+		return buf;
+
+	strlcat(buf, "<", len);
 
 	for (cond = strtok(conds, ","); cond; cond = strtok(NULL, ",")) {
 		if (cond != conds)
-			putchar(',');
+			strlcat(buf, ",", len);
 
 		switch (cond_get(cond)) {
 		case COND_ON:
-			printf("+%s", cond);
+			strlcat(buf, "+", len);
+			strlcat(buf, cond, len);
 			break;
 
 		case COND_FLUX:
-			printf("\e[1m~%s\e[0m", cond);
+			if (!plain)
+				strlcat(buf, "\e[1m", len);
+			strlcat(buf, "~", len);
+			strlcat(buf, cond, len);
+			if (!plain)
+				strlcat(buf, "\e[0m", len);
 			break;
 
 		case COND_OFF:
-			printf("\e[1m-%s\e[0m", cond);
+			if (!plain)
+				strlcat(buf, "\e[1m", len);
+			strlcat(buf, "-", len);
+			strlcat(buf, cond, len);
+			if (!plain)
+				strlcat(buf, "\e[0m", len);
 			break;
 		}
 	}
 
-	putchar('>');
+	strlcat(buf, ">", len);
+	free(conds);
+
+	return buf;
 }
 
 static int do_cond_show(char *arg)
 {
-	char ident[MAX_IDENT_LEN];
 	enum cond_state cond;
+	char buf[512];
 	svc_t *svc;
 
 	col_widths();
@@ -386,16 +406,15 @@ static int do_cond_show(char *arg)
 
 		cond = cond_get_agg(svc->cond);
 
-		svc_ident(svc, ident, sizeof(ident));
-		printf("%-*d  %-*s  ", pw, svc->pid, iw, ident);
+		svc_ident(svc, buf, sizeof(buf));
+		printf("%-*d  %-*s  ", pw, svc->pid, iw, buf);
 
 		if (cond == COND_ON)
 			printf("%-6.6s  ", condstr(cond));
 		else
 			printf("\e[1m%-6.6s\e[0m  ", condstr(cond));
 
-		show_cond_one(svc->cond);
-		puts("");
+		puts(svc_cond(svc, buf, sizeof(buf)));
 	}
 
 	return 0;
@@ -609,8 +628,9 @@ static int show_status(char *arg)
 		printf("Description : %s\n", svc->desc);
 		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
 		printf("Environment : %s\n", svc_environ(svc, buf, sizeof(buf)));
-		printf("Condition(s): %s\n", svc->cond);
+		printf("Condition(s): %s\n", svc_cond(svc, buf, sizeof(buf)));
 		printf("Command     : %s\n", svc_command(svc, buf, sizeof(buf)));
+		printf("PID file    : %s\n", svc->pidfile);
 		printf("PID         : %d\n", svc->pid);
 		printf("User        : %s\n", svc->username);
 		printf("Group       : %s\n", svc->group);
