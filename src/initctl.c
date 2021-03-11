@@ -506,7 +506,7 @@ char *runlevel_string(int runlevel, int levels)
 
 	for (i = 0; i < 10; i++) {
 		if (ISSET(levels, i)) {
-			if (runlevel == i)
+			if (!plain && runlevel == i)
 				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
 
 			if (i == 0)
@@ -514,7 +514,7 @@ char *runlevel_string(int runlevel, int levels)
 			else
 				lvl[pos++] = '0' + i;
 
-			if (runlevel == i)
+			if (!plain && runlevel == i)
 				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
 		} else {
 			lvl[pos++] = '-';
