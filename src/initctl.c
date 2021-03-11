@@ -527,18 +527,49 @@ char *runlevel_string(int runlevel, int levels)
 	return lvl;
 }
 
-static char *svc_command(svc_t *svc, char *cmd, size_t len)
+static int missing(svc_t *svc)
 {
-	strlcpy(cmd, svc->cmd, len);
+	if (svc->state == SVC_HALTED_STATE && svc_is_missing(svc))
+		return 1;
+
+	return 0;
+}
+
+static char *svc_command(svc_t *svc, char *buf, size_t len)
+{
+	int bold = missing(svc);
+
+	if (plain || whichp(svc->cmd))
+		bold = 0;
+
+	strlcpy(buf, bold ? "\e[1m" : "", len);
+	strlcat(buf, svc->cmd, len);
+
 	for (int i = 1; i < MAX_NUM_SVC_ARGS; i++) {
 		if (!svc->args[i][0])
 			break;
 
-		strlcat(cmd, " ", len);
-		strlcat(cmd, svc->args[i], len);
+		strlcat(buf, " ", len);
+		strlcat(buf, svc->args[i], len);
 	}
 
-	return cmd;
+	strlcat(buf, bold ? "\e[0m" : "", len);
+
+	return buf;
+}
+
+static char *svc_environ(svc_t *svc, char *buf, size_t len)
+{
+	int bold = missing(svc);
+
+	if (plain || svc_checkenv(svc))
+		bold = 0;
+
+	strlcpy(buf, bold ? "\e[1m" : "", len);
+	strlcat(buf, svc->env, len);
+	strlcat(buf, bold ? "\e[0m" : "", len);
+
+	return buf;
 }
 
 static char *status(svc_t *svc)
@@ -560,7 +591,7 @@ static char *status(svc_t *svc)
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
-	char cmd[512];
+	char buf[512];
 	svc_t *svc;
 
 	runlevel = runlevel_get(NULL);
@@ -577,9 +608,9 @@ static int show_status(char *arg)
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
 		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
-		printf("Environment : %s\n", svc->env);
+		printf("Environment : %s\n", svc_environ(svc, buf, sizeof(buf)));
 		printf("Condition(s): %s\n", svc->cond);
-		printf("Command     : %s\n", svc_command(svc, cmd, sizeof(cmd)));
+		printf("Command     : %s\n", svc_command(svc, buf, sizeof(buf)));
 		printf("PID         : %d\n", svc->pid);
 		printf("User        : %s\n", svc->username);
 		printf("Group       : %s\n", svc->group);
@@ -621,7 +652,7 @@ static int show_status(char *arg)
 		if (!verbose)
 			puts(svc->desc);
 		else
-			puts(svc_command(svc, cmd, sizeof(cmd)));
+			puts(svc_command(svc, buf, sizeof(buf)));
 	}
 
 	return 0;
