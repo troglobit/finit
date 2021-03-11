@@ -66,7 +66,7 @@ initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 initctl_CFLAGS    += $(lite_CFLAGS)
 initctl_LDADD      = $(lite_LIBS)
 
-INIT_LNKS          = init
+INIT_LNKS          = init telinit
 REBOOT_LNKS        = reboot shutdown halt poweroff suspend
 
 if WATCHDOGD
