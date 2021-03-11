@@ -407,14 +407,15 @@ static int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!whichp(svc->cmd)) {
-		print(1, "%s: does not exist", svc->cmd);
+		logit(LOG_WARNING, "%s: missing or not in $PATH", svc->cmd);
 		svc_missing(svc);
 		return 1;
 	}
 
 	/* Unlike systemd we do not allow starting service if env is missing, unless - */
 	if (!check_env(svc)) {
-		print(1, "%s: environment file %s does not exist (yet)", svc->cmd, svc->env);
+		logit(LOG_WARNING, "%s: missing env file %s", svc->cmd, svc->env);
+		svc_missing(svc);
 		return 1;
 	}
 
@@ -1127,6 +1128,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (type == SVC_TYPE_SERVICE && manual)
 			svc_stop(svc);
+	} else {
+		/* e.g., if missing cmd or env before */
+		svc_unblock(svc);
 	}
 
 	/* Always clear svc PID file, for now.  See TODO */
@@ -1229,6 +1233,7 @@ void service_monitor(pid_t lost, int status)
 	if (svc_is_daemon(svc)) {
 		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
+		/* run/task should run at least once per runlevel */
 		if (WIFEXITED(status) && !WEXITSTATUS(status))
 			svc->started = 1;
 		else
@@ -1400,6 +1405,10 @@ restart:
 
 			err = service_start(svc);
 			if (err) {
+				if (svc_is_missing(svc)) {
+					svc_set_state(svc, SVC_HALTED_STATE);
+					break;
+				}
 				(*restart_cnt)++;
 				break;
 			}

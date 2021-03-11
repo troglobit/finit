@@ -534,6 +534,9 @@ int svc_enabled(svc_t *svc)
 	if (svc_is_removed(svc) || svc_is_blocked(svc))
 		return 0;
 
+	if (svc_is_missing(svc))
+		return 0;
+
 	return 1;
 }
 

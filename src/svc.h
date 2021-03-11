@@ -194,12 +194,14 @@ static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;   
 static inline void svc_started     (svc_t *svc) { if (svc) svc->starting = 0;       }
 static inline int  svc_is_starting (svc_t *svc) { return svc && 0 != svc->starting; }
 
-static inline int svc_is_removed   (svc_t *svc) { return svc && -1 == svc->dirty; }
-static inline int svc_is_changed   (svc_t *svc) { return svc &&  0 != svc->dirty; }
-static inline int svc_is_updated   (svc_t *svc) { return svc &&  1 == svc->dirty; }
+static inline int  svc_is_removed  (svc_t *svc) { return svc && -1 == svc->dirty; }
+static inline int  svc_is_changed  (svc_t *svc) { return svc &&  0 != svc->dirty; }
+static inline int  svc_is_updated  (svc_t *svc) { return svc &&  1 == svc->dirty; }
 
 static inline int  svc_is_blocked  (svc_t *svc) { return svc && svc->block != SVC_BLOCK_NONE; }
 static inline int  svc_is_busy     (svc_t *svc) { return svc && svc->block == SVC_BLOCK_BUSY; }
+static inline int  svc_is_missing  (svc_t *svc) { return svc && svc->block == SVC_BLOCK_MISSING; }
+
 static inline void svc_unblock     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_NONE;       }
 #define            svc_start(svc)  svc_unblock(svc)
 static inline void svc_stop        (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_USER; }
