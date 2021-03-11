@@ -95,18 +95,15 @@ char *pid_get_name(pid_t pid, char *name, size_t len)
 
 char *pid_file(svc_t *svc)
 {
-	static char path[256];
-	char fn[MAX_ARG_LEN];
-
 	if (svc->pidfile[0]) {
 		if (svc->pidfile[0] == '!')
 			return &svc->pidfile[1];
 		return svc->pidfile;
 	}
 
-	snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, basename(svc->cmd));
+	errno = ENOENT;
 
-	return pid_runpath(fn, path, sizeof(path));
+	return NULL;
 }
 
 pid_t pid_file_read(const char *fn)

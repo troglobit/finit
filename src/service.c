@@ -616,7 +616,7 @@ static void service_cleanup(svc_t *svc)
 	char *fn;
 
 	fn = pid_file(svc);
-	if (remove(fn) && errno != ENOENT)
+	if (fn && remove(fn) && errno != ENOENT)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      basename(svc->cmd), fn);
 
