@@ -352,6 +352,37 @@ static inline char *svc_jobid(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
+/*
+ * non-zero env, no checking if file exists or not
+ */
+static inline char *svc_getenv(svc_t *svc)
+{
+	int v = 0;
+
+	if (!svc->env[0])
+		return NULL;
+
+	if (svc->env[0] == '-')
+		v = 1;
+
+	return &svc->env[v];
+}
+
+/*
+ * Check if svc has env, if env file exists returns true
+ * if it doesn't exist, but has '-', also true.  if svc
+ * doesn't have env, also true.
+ */
+static inline int svc_checkenv(svc_t *svc)
+{
+	char *env = svc_getenv(svc);
+
+	if (!env)
+		return 1;
+
+	return fexist(env);
+}
+
 #endif /* FINIT_SVC_H_ */
 
 /**

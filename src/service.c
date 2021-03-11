@@ -261,37 +261,6 @@ static int redirect(svc_t *svc)
 }
 
 /*
- * non-zero env, no checking if file exists or not
- */
-static char *svc_getenv(svc_t *svc)
-{
-	int v = 0;
-
-	if (!svc->env[0])
-		return NULL;
-
-	if (svc->env[0] == '-')
-		v = 1;
-
-	return &svc->env[v];
-}
-
-/*
- * Check if svc has env, if env file exists returns true
- * if it doesn't exist, but has '-', also true.  if svc
- * doesn't have env, also true.
- */
-static int check_env(svc_t *svc)
-{
-	char *env = svc_getenv(svc);
-
-	if (!env)
-		return 1;
-
-	return fexist(env);
-}
-
-/*
  * Source environment file, if it exists
  * Note: must be called from privsepped child
  */
@@ -307,7 +276,7 @@ static void source_env(svc_t *svc)
 	if (!fn)
 		return;
 
-	/* Warning in service_start() after check_env() */
+	/* Warning in service_start() after svc_checkenv() */
 	fp = fopen(fn, "r");
 	if (!fp)
 		return;
@@ -411,7 +380,7 @@ static int service_start(svc_t *svc)
 	}
 
 	/* Unlike systemd we do not allow starting service if env is missing, unless - */
-	if (!check_env(svc)) {
+	if (!svc_checkenv(svc)) {
 		logit(LOG_WARNING, "%s: missing env file %s", svc->cmd, svc->env);
 		svc_missing(svc);
 		return 1;
