@@ -81,6 +81,10 @@ int     print_result    (int fail);
 
 int     getuser         (char *username, char **home);
 int     getgroup        (char *group);
+
+int     getcuser        (char *buf, size_t len);
+int     getcgroup       (char *buf, size_t len);
+
 void    set_hostname    (char **hostname);
 void    networking      (int updown);
 

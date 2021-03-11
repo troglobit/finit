@@ -1145,6 +1145,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			strlcpy(svc->group, ptr, sizeof(svc->group));
 		}
 		strlcpy(svc->username, username, sizeof(svc->username));
+	} else {
+		getcuser(svc->username, sizeof(svc->username));
+		getcgroup(svc->group, sizeof(svc->group));
 	}
 
 	parse_cmdline_args(svc, cmd);

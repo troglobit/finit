@@ -413,6 +413,40 @@ int getgroup(char *group)
 #endif
 }
 
+/* get current user */
+int getcuser(char *buf, size_t len)
+{
+	char *ptr = "root";
+
+#ifndef ENABLE_STATIC
+	struct passwd *pw = getpwuid(getuid());
+
+	if (pw)
+		ptr = pw->pw_name;
+#endif
+	if (strlcpy(buf, ptr, len) > len)
+		return -1;
+
+	return 0;
+}
+
+/* get current group */
+int getcgroup(char *buf, size_t len)
+{
+	char *ptr = "root";
+
+#ifndef ENABLE_STATIC
+	struct group *gr = getgrgid(getgid());
+
+	if (gr)
+		ptr = gr->gr_name;
+#endif
+	if (strlcpy(buf, ptr, len) > len)
+		return -1;
+
+	return 0;
+}
+
 void set_hostname(char **hostname)
 {
 	FILE *fp;
