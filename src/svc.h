@@ -98,7 +98,7 @@ typedef struct svc {
 	/* Service details */
 	int            sighalt;        /* Signal to stop prorcess, default: SIGTERM */
 	int            killdelay;      /* Delay in msec before sending SIGKILL */
-	pid_t          pid;
+	pid_t          oldpid, pid;
 	char           pidfile[256];
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */
 	int            started;	       /* Set for run/task/sysv to track if started */

@@ -621,6 +621,7 @@ static void service_cleanup(svc_t *svc)
 		      basename(svc->cmd), fn);
 
 	/* No longer running, update books. */
+	svc->oldpid = svc->pid;
 	svc->start_time = svc->pid = 0;
 }
 
@@ -1284,7 +1285,7 @@ static void service_retry(svc_t *svc)
 
 	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
 	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
-	      svc_ident(svc, NULL, 0), svc->pid, *restart_cnt, SVC_RESPAWN_MAX);
+	      svc_ident(svc, NULL, 0), svc->oldpid, *restart_cnt, SVC_RESPAWN_MAX);
 	svc_unblock(svc);
 	service_step(svc);
 
