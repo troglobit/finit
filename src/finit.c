@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
 	};
 	struct wq final = {
 		.cb = final_worker,
-		.delay = 1000
+		.delay = 100
 	};
 	uev_ctx_t loop;
 
