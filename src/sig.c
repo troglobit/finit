@@ -192,10 +192,10 @@ void do_kill(int signo)
 			if (fgets(file, sizeof(file), fp)) {
 				if (strstr(file, "gdbserver"))
 					_d("Skipping %s ...", file);
-				else if (file[0] != '@')
-					kill(pid, signo);
-				else
+				else if (file[0] == '@')
 					_d("Skipping %s ...", &file[1]);
+				else
+					kill(pid, signo);
 			}
 			fclose(fp);
 		}
@@ -214,11 +214,11 @@ void do_shutdown(shutop_t op)
 	utmp_set_halt();
 
 	/*
-	 * Tell all remaining non-monitored processes to exit, give them
-	 * some time to exit gracefully, 2 sec is customary.
+	 * Tell remaining non-monitored processes to exit, give them
+	 * time to exit gracefully, 2 sec was customary, we go for 1.
 	 */
 	do_kill(SIGTERM);
-	do_sleep(2);
+	do_sleep(1);
 	do_kill(SIGKILL);
 
 	/* Exit plugins and API gracefully */
@@ -274,15 +274,15 @@ void do_shutdown(shutop_t op)
 				do_sleep(1);
 		}
 
-		_e("Rebooting ...");
+		_d("Rebooting ...");
 		reboot(RB_AUTOBOOT);
 	} else if (op == SHUT_OFF) {
-		_e("Powering down ...");
+		_d("Powering down ...");
 		reboot(RB_POWER_OFF);
 	}
 
 	/* Also fallback if any of the other two fails */
-	_e("Halting ...");
+	_d("Halting ...");
 	reboot(RB_HALT_SYSTEM);
 }
 
