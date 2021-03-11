@@ -1373,9 +1373,14 @@ restart:
 
 	case SVC_STOPPING_STATE:
 		if (!svc->pid) {
+			char cond[MAX_COND_LEN];
+
 			/* PID was collected normally, no need to kill it */
-			_d("%s: Stopped normally, no need to send SIGKILL :)", svc->cmd);
+			_d("%s: stopped normally, no need to send SIGKILL :)", svc->cmd);
 			service_timeout_cancel(svc);
+
+			_d("%s: clearing pid condition ...", svc->name);
+			cond_clear(mkcond(svc, cond, sizeof(cond)));
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
