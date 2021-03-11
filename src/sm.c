@@ -156,9 +156,11 @@ restart:
 		/* Disable login in single-user mode as well as shutdown/reboot */
 		nologin();
 
-		/* Make sure to (re)load all *.conf in /etc/finit.d/ */
-		if (conf_any_change())
-			conf_reload();
+		if (runlevel != 0 && runlevel != 6) {
+			/* Make sure to (re)load all *.conf in /etc/finit.d/ */
+			if (conf_any_change())
+				conf_reload();
+		}
 
 		/* Reset once flag of runtasks */
 		service_runtask_clean();
