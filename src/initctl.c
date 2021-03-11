@@ -541,6 +541,22 @@ static char *svc_command(svc_t *svc, char *cmd, size_t len)
 	return cmd;
 }
 
+static char *status(svc_t *svc)
+{
+	static char buf[25];
+	int bold = !plain;
+	char *s;
+
+	s = svc_status(svc);
+	if (svc->state != SVC_HALTED_STATE)
+		bold = 0;
+
+	snprintf(buf, sizeof(buf), "%s%-8.8s%s",
+		 bold ? "\e[1m" : "", s, bold ? "\e[0m" : "");
+
+	return buf;
+}
+
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
@@ -557,7 +573,7 @@ static int show_status(char *arg)
 		if (!svc)
 			return 1;
 
-		printf("Status      : %s%s%s\n", !plain ? "\e[1m" : "", svc_status(svc), !plain ? "\e[0m" : "");
+		printf("Status      : %s\n", status(svc));
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
 		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
@@ -594,7 +610,7 @@ static int show_status(char *arg)
 		printf("%-*d  ", pw, svc->pid);
 
 		svc_ident(svc, ident, sizeof(ident));
-		printf("%-*s  %-8s ", iw, ident, svc_status(svc));
+		printf("%-*s  %s ", iw, ident, status(svc));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
