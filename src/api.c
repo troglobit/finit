@@ -381,7 +381,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_SVC_ITER:
-			_d("svc iter, first: %d", rq.runlevel);
+//			_d("svc iter, first: %d", rq.runlevel);
 			/*
 			 * XXX: This severly limits the number of
 			 * simultaneous client connections, but will
