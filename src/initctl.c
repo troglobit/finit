@@ -942,7 +942,10 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 		}
 	}
 
-	return command[0].cb(NULL);	/* default cmd */
+	if (argv[0] && strlen(argv[0]) > 0)
+		errx(1, "No such command.  See 'initctl help' for an overview of available commands.");
+
+	return command[0].cb(NULL); /* default cmd */
 }
 
 int main(int argc, char *argv[])
