@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -38,17 +39,12 @@ int client_connect(void)
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (-1 == sd)
-		goto error;
+		err(1, "Failed creating UNIX domain socket");
 
-	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
-		close(sd);
-		goto error;
-	}
+	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
+		err(1, "Failed connecting to finit");
 
 	return sd;
-error:
-	perror("Failed connecting to finit");
-	return -1;
 }
 
 int client_disconnect(void)
