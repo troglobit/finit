@@ -578,7 +578,7 @@ static char *svc_environ(svc_t *svc, char *buf, size_t len)
 {
 	int bold = missing(svc);
 
-	if (plain || svc_checkenv(svc))
+	if (plain || svc_checkenv(svc) || svc->env[0] == '-')
 		bold = 0;
 
 	strlcpy(buf, bold ? "\e[1m" : "", len);
