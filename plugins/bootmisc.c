@@ -99,8 +99,6 @@ static void bootclean(void)
  */
 static void setup(void *arg)
 {
-	int uid, gid;
-
 	/* Cleanup stale files, if any still linger on. */
 	bootclean();
 
@@ -134,18 +132,20 @@ static void setup(void *arg)
 	makedir("/var/empty",      0755);
 
 	/*
-	 * If /etc/group or "utmp" group is missing,
-	 * default to "root"/"wheel" group
-	 */
-	_d("Setting up necessary UTMP files ...");
-	gid = getgroup("utmp");
-	if (gid < 0)
-		gid = 0;
-
-	/*
 	 * UTMP actually needs multiple db files
 	 */
 	if (has_utmp()) {
+		int gid;
+
+		/*
+		 * If /etc/group or "utmp" group is missing, default to
+		 * "root", or "wheel", group.
+		 */
+		_d("Setting up necessary UTMP files ...");
+		gid = getgroup("utmp");
+		if (gid < 0)
+			gid = 0;
+
 		create("/var/run/utmp",    0644, 0, gid); /* Currently logged in */
 		create("/var/log/wtmp",    0644, 0, gid); /* Login history       */
 		create("/var/log/btmp",    0600, 0, gid); /* Failed logins       */
@@ -165,30 +165,17 @@ static void setup(void *arg)
 	makedir("/var/run/network",0755); /* Needed by Debian/Ubuntu ifupdown */
 	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
 	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
-	makedir("/var/run/quagga", 0755); /* Needed by Quagga */
-	makedir("/var/log/quagga", 0755); /* Needed by Quagga */
-	makedir("/var/run/frr",    0755); /* Needed by FRR */
-	makedir("/var/log/frr",    0755); /* Needed by FRR */
+	mksubsys("/var/run/quagga", 0755, "quagga", "quagga");
+	mksubsys("/var/log/quagga", 0755, "quagga", "quagga");
+	mksubsys("/var/run/frr",    0755, "frr", "frr");
+	mksubsys("/var/log/frr",    0755, "frr", "frr");
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
-
-	gid = getgroup("tty");
-	if (gid < 0)
-		gid = 0;
-	makefifo("/dev/xconsole",  0640); /* sysklogd */
-	chown("/dev/xconsole", 0, gid);
 
 	if (!fexist("/etc/mtab"))
 		symlink("../proc/self/mounts", "/etc/mtab");
 
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
-	uid = getuser("uuidd", NULL);
-	if (uid >= 0) {
-		gid = getgroup("uuidd");
-		if (gid < 0)
-			gid = 0;
-		makedir("/var/run/uuidd", 0755);
-		chown("/var/run/uuidd", uid, gid);
-	}
+	mksubsys("/var/run/uuidd", 0755, "uuidd", "uuidd");
 
 	umask(022);
 }
