@@ -85,6 +85,8 @@ int     getgroup        (char *group);
 int     getcuser        (char *buf, size_t len);
 int     getcgroup       (char *buf, size_t len);
 
+int     mksubsys        (const char *dir, mode_t mode, char *user, char *group);
+
 void    set_hostname    (char **hostname);
 void    networking      (int updown);
 

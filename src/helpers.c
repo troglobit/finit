@@ -447,6 +447,29 @@ int getcgroup(char *buf, size_t len)
 	return 0;
 }
 
+int mksubsys(const char *dir, mode_t mode, char *user, char *group)
+{
+	mode_t omask;
+	int uid, gid;
+	int rc = 0;
+
+	omask = umask(0);
+
+	uid = getuser(user, NULL);
+	if (uid >= 0) {
+		gid = getgroup(group);
+		if (gid < 0)
+			gid = 0;
+
+		rc = makedir(dir, mode);
+		chown(dir, uid, gid);
+	}
+
+	umask(omask);
+
+	return rc;
+}
+
 void set_hostname(char **hostname)
 {
 	FILE *fp;
