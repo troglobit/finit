@@ -898,6 +898,11 @@ static int usage(int rc)
 	else
 		fprintf(stderr, "\n");
 
+	printf("Bug report address: %-40s\n", PACKAGE_BUGREPORT);
+#ifdef PACKAGE_URL
+	printf("Project homepage: %s\n", PACKAGE_URL);
+#endif
+
 	return rc;
 }
 
