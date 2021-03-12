@@ -80,7 +80,7 @@ int logrotate(char *file, int num, off_t sz)
 				}
 
 				if (cnt == 2 && fexist(nfile)) {
-					if (systemf("gzip %s", nfile))
+					if (systemf("gzip %s 2>/dev/null", nfile))
 						continue; /* no gzip, probably */
 
 					(void)remove(nfile);
