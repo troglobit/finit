@@ -32,8 +32,10 @@
 #include "conf.h"
 
 #define DAEMON "dbus-daemon"
-#define ARGS   "--nofork --system"
+#define ARGS   "--nofork --system --syslog-only"
 #define DESC   "D-Bus message bus daemon"
+
+#define DAEMONUSER "messagebus"
 
 static void setup(void *arg)
 {
@@ -48,17 +50,16 @@ static void setup(void *arg)
 
 	umask(0);
 
-	makedir("/var/run/dbus", 0755);
-	makedir("/var/lock/subsys", 0755);
-	makedir("/var/lock/subsys/messagebus", 0755);
+	mksubsys("/var/run/dbus", 0755, DAEMONUSER, DAEMONUSER);
 	if (whichp("dbus-uuidgen"))
-		run("dbus-uuidgen --ensure");
+		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
 
 	/* Clean up from any previous pre-bootstrap run */
-	erase("/var/run/dbus/pid");
+	remove("/var/run/dbus/pid");
 
 	/* Register service with Finit */
-	snprintf(line, sizeof(line), "[S12345] pid:!/run/dbus/pid log:prio:daemon.info,tag:dbus %s %s -- %s", cmd, ARGS, DESC);
+	snprintf(line, sizeof(line), "[S12345] @%s:%s %s %s -- %s",
+		 DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
 		_pe("Failed registering %s", DAEMON);
 	free(cmd);
