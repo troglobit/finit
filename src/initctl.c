@@ -149,7 +149,6 @@ static int toggle_debug(char *arg)
 
 static int do_log(char *svc)
 {
-	char cmd[128];
 	char *logfile = "/var/log/syslog";
 
 	if (!svc || !svc[0])
@@ -158,9 +157,7 @@ static int do_log(char *svc)
 	if (!fexist(logfile))
 		logfile = "/var/log/messages";
 
-	snprintf(cmd, sizeof(cmd), "cat %s | grep %s | tail -10", logfile, svc);
-
-	return system(cmd);
+	return systemf("cat %s | grep %s | tail -10", logfile, svc);
 }
 
 static int do_runlevel(char *arg)
