@@ -900,6 +900,9 @@ int conf_init(uev_ctx_t *ctx)
 			      rlim2str(i), strerror(errno));
 	}
 
+	/* Initialize global rlimits, e.g. for built-in services */
+	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
+
 	/* prepare /etc watcher */
 	fd = iwatch_init(&iw_conf);
 	if (fd < 0)
