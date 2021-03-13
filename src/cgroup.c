@@ -31,8 +31,6 @@
 #include "log.h"
 #include "util.h"
 
-static int cg_init = 0;
-
 /*
  * Called by Finit at early boot to mount initial cgroups
  */
@@ -93,8 +91,6 @@ void cgroup_init(void)
 	/* Move ourselves to init */
 	echo(FINIT_CGPATH "/init/cgroup.procs", 0, "1");
 
-	/* We have signal, main screen turn on! */
-	cg_init = 1;
 fail:
 	fclose(fp);
 }
@@ -118,17 +114,11 @@ static int move_pid(char *group, char *name, char *id, int pid)
 
 int cgroup_user(char *name)
 {
-	if (!cg_init)
-		return 0;
-
-	return move_pid("finit/user", name, "0", getpid());
+	return move_pid("finit/user", name, NULL, getpid());
 }
 
 int cgroup_service(char *nm, char *id, int pid)
 {
-	if (!cg_init)
-		return 0;
-
 	if (pid <= 0) {
 		errno = EINVAL;
 		return 1;
