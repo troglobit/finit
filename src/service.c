@@ -351,6 +351,30 @@ static int is_norespawn(void)
 		fexist("/tmp/norespawn");
 }
 
+/* used for process group name, derived from originating filename,
+ * so to group multiple services, place them in the same .conf
+ */
+static char *group_name(svc_t *svc, char *buf, size_t len)
+{
+	char *ptr;
+
+	if (!svc->file[0])
+		return svc_ident(svc, buf, len);
+
+	ptr = strrchr(svc->file, '/');
+	if (ptr)
+		ptr++;
+	else
+		ptr = svc->file;
+
+	strlcpy(buf, ptr, len);
+	ptr = strstr(buf, ".conf");
+	if (ptr)
+		*ptr = 0;
+
+	return buf;
+}
+
 /**
  * service_start - Start service
  * @svc: Service to start
@@ -362,6 +386,7 @@ static int service_start(svc_t *svc)
 {
 	int result = 0, do_progress = 1;
 	sigset_t nmask, omask;
+	char grnam[80];
 	pid_t pid;
 	size_t i;
 
@@ -408,8 +433,6 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = fork();
-	cgroup_service(svc->name, svc->id, pid);
-
 	if (pid == 0) {
 		int status;
 		char *home = NULL;
@@ -546,6 +569,8 @@ static int service_start(svc_t *svc)
 		}
 		_d("Starting %s %s", svc->cmd, buf);
 	}
+
+	cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid);
 
 	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
 

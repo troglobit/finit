@@ -26,7 +26,7 @@
 
 void cgroup_init   (void);
 
-int cgroup_user    (char *name);
-int cgroup_service (char *cmd, char *id, int pid);
+int cgroup_user    (char *name, int pid);
+int cgroup_service (char *name, int pid);
 
 #endif /* FINIT_CGROUP_H_ */

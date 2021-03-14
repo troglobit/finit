@@ -26,19 +26,61 @@
 #include <string.h>
 #include <lite/lite.h>
 #include <sys/mount.h>
+#include <sys/sysinfo.h>
 
 #include "finit.h"
 #include "log.h"
 #include "util.h"
+
+static char controllers[256] = "none";
+
+static void group_init(char *path, char *nproc, int share)
+{
+	char file[strlen(path) + 64];
+
+	paste(file, sizeof(file), path, "cgroup.clone_children");
+	echo(file, 0, "1");
+
+	paste(file, sizeof(file), path, "cpuset.cpus");
+	echo(file, 0, nproc);
+
+	paste(file, sizeof(file), path, "cpuset.mems");
+	echo(file, 0, "0");
+
+	echo(FINIT_CGPATH "/init/cpu.shares", 0, "%d", share);
+}
+
+static void append_ctrl(char *ctrl)
+{
+	char *wanted[] = {
+		"cpu",
+		"cpuacct",
+		"cpuset",
+		"memory"
+	};
+	size_t i;
+
+	for (i = 0; i < NELEMS(wanted); i++) {
+		if (strcmp(wanted[i], ctrl))
+			continue;
+
+		if (strcmp(controllers, "none"))
+			strlcat(controllers, ",", sizeof(controllers));
+		else
+			strlcpy(controllers, "", sizeof(controllers));
+
+		strlcat(controllers, ctrl, sizeof(controllers));
+	}
+}
 
 /*
  * Called by Finit at early boot to mount initial cgroups
  */
 void cgroup_init(void)
 {
-	FILE *fp;
-	char buf[80];
 	int opts = MS_NODEV | MS_NOEXEC | MS_NOSUID;
+	char buf[80];
+	FILE *fp;
 
 	fp = fopen("/proc/cgroups", "r");
 	if (!fp) {
@@ -53,25 +95,40 @@ void cgroup_init(void)
 
 	/* Skip first line, header */
 	(void)fgets(buf, sizeof(buf), fp);
+
+	/* Create and mount traditional cgroups v1 hier */
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *cgroup;
+#if 0
 		char rc[80];
+#endif
 
 		cgroup = strtok(buf, "\t ");
 		if (!cgroup)
 			continue;
 
+#if 0
 		snprintf(rc, sizeof(rc), "/sys/fs/cgroup/%s", cgroup);
 		if (mkdir(rc, 0755) && EEXIST != errno)
 			continue;
+
 		if (mount("cgroup", rc, "cgroup", opts, cgroup))
 			_d("Failed mounting %s cgroup on %s", cgroup, rc);
+#else
+		append_ctrl(cgroup);
+#endif
 	}
 
-	/* Default cgroups for process monitoring */
+	/* Finit default cgroups for process monitoring */
 	if (mkdir(FINIT_CGPATH, 0755) && EEXIST != errno)
 		goto fail;
-	if (mount("none", FINIT_CGPATH, "cgroup", opts, "none,name=finit")) {
+
+#if 0
+	strlcpy(controllers, "none,name=finit", sizeof(controllers));
+#else
+	strlcat(controllers, ",name=finit", sizeof(controllers));
+#endif
+	if (mount("none", FINIT_CGPATH, "cgroup", opts, controllers)) {
 		_pe("Failed mounting Finit cgroup hierarchy");
 		goto fail;
 	}
@@ -88,6 +145,21 @@ void cgroup_init(void)
 	if (mkdir(FINIT_CGPATH "/user", 0755) && EEXIST != errno)
 		goto fail;
 
+	/*
+	 * Set up basic limits for our groups.  Finit optimized defaults
+	 * for embedded and server systems include limiting the groups
+	 * init and user to a single CPU with 10% share, the system
+	 * group gets the rest.  Override this from finit.conf
+	 */
+#if 0
+#else
+	snprintf(buf, sizeof(buf), "0-%d", get_nprocs_conf() - 1);
+
+	group_init(FINIT_CGPATH "/init",   "0", 50);
+	group_init(FINIT_CGPATH "/user",   "0", 75);
+	group_init(FINIT_CGPATH "/system", buf, 900);
+#endif
+
 	/* Move ourselves to init */
 	echo(FINIT_CGPATH "/init/cgroup.procs", 0, "1");
 
@@ -95,15 +167,11 @@ fail:
 	fclose(fp);
 }
 
-static int move_pid(char *group, char *name, char *id, int pid)
+static int move_pid(char *group, char *name, int pid)
 {
 	char path[256];
 
 	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
-	if (id && strlen(id)) {
-		strlcat(path, ":", sizeof(path));
-		strlcat(path, id, sizeof(path));
-	}
 	if (mkdir(path, 0755) && errno != EEXIST)
 		return 1;
 
@@ -112,19 +180,19 @@ static int move_pid(char *group, char *name, char *id, int pid)
 	return echo(path, 0, "%d", pid);
 }
 
-int cgroup_user(char *name)
+int cgroup_user(char *name, int pid)
 {
-	return move_pid("finit/user", name, NULL, getpid());
+	return move_pid("finit/user", name, pid);
 }
 
-int cgroup_service(char *nm, char *id, int pid)
+int cgroup_service(char *name, int pid)
 {
 	if (pid <= 0) {
 		errno = EINVAL;
 		return 1;
 	}
 
-	return move_pid("finit/system", nm, id, pid);
+	return move_pid("finit/system", name, pid);
 }
 
 /**
