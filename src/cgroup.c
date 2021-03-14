@@ -47,7 +47,11 @@ static void group_init(char *path, char *nproc, int share)
 	paste(file, sizeof(file), path, "cpuset.mems");
 	echo(file, 0, "0");
 
-	echo(FINIT_CGPATH "/init/cpu.shares", 0, "%d", share);
+	paste(file, sizeof(file), path, "cpu.shares");
+	echo(file, 0, "%d", share);
+
+	paste(file, sizeof(file), path, "memory.use_hierarchy");
+	echo(file, 0, "1");
 }
 
 static void append_ctrl(char *ctrl)
