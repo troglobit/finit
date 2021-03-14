@@ -199,7 +199,6 @@ static void fs_mount(void)
 	plugin_run_hooks(HOOK_MOUNT_POST);
 
 	run("swapon -ea");
-	umask(0022);
 }
 
 /*
@@ -221,6 +220,9 @@ static void fs_init(void)
 		{ "sysfs",    "/sys",  "sysfs"    },
 	};
 	size_t i;
+
+	/* mask writable bit for g and o */
+	umask(022);
 
 	for (i = 0; i < NELEMS(fs); i++) {
 		int rc;
@@ -479,14 +481,13 @@ int main(int argc, char *argv[])
 	ctx = &loop;
 
 	/*
-	 * Set PATH, SHELL, PWD, and umask early to something sane
+	 * Set PATH, SHELL, and PWD early to something sane
 	 */
 	setenv("PATH", _PATH_STDPATH, 1);
 	setenv("SHELL", _PATH_BSHELL, 1);
 
 	if (chdir("/"))
 		_pe("Failed cd /");
-	umask(0);
 
 	/* Allow progress, if enabled */
 	enable_progress(1);
@@ -548,7 +549,6 @@ int main(int argc, char *argv[])
 
 	_d("Starting initctl API responder ...");
 	api_init(&loop);
-	umask(022);
 
 	_d("Starting the big state machine ...");
 	schedule_work(&crank);
