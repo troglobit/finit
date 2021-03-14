@@ -37,10 +37,11 @@ static void setup(void *arg)
 #ifdef RANDOMSEED
 	if (!fexist(RANDOMSEED)) {
 		int ret = 1;
+		mode_t prev;
 		FILE *fp;
 
 		print_desc("Bootstrapping random seed", NULL);
-		umask(077);
+		prev = umask(077);
 		fp = fopen(RANDOMSEED, "w");
 		if (fp) {
 			int iter = 128;
@@ -57,7 +58,7 @@ static void setup(void *arg)
 			ret = fclose(fp);
 		}
 		print_result(ret);
-		umask(0);
+		umask(prev);
 	}
 
 	print_desc("Initializing random number generator", NULL);
@@ -68,10 +69,14 @@ static void setup(void *arg)
 static void save(void *arg)
 {
 #ifdef RANDOMSEED
-	umask(077);
+	mode_t prev;
+
+	prev = umask(077);
+
 	print_desc("Saving random seed", NULL);
 	print_result(512 != copyfile("/dev/urandom", RANDOMSEED, 512, 0));
-	umask(0);
+
+	umask(prev);
 #endif
 }
 

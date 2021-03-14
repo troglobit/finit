@@ -32,13 +32,14 @@
 
 static void setup(void *arg)
 {
+	const char *username = "nobody";
+	char line[LINE_SIZE];
+	mode_t prev;
 #ifdef PAM_CONSOLE
 	int fd;
 #endif
-	char line[LINE_SIZE];
-	const char *username = "nobody";
 
-	umask(0);
+	prev = umask(0);
 
 	makedir("/var/run/console", 01777);
 	snprintf(line, sizeof(line), "/var/run/console/%s", username);
@@ -58,7 +59,7 @@ static void setup(void *arg)
 	if (whichp("restorecon"))
 		run("restorecon /tmp/.ICE-unix /tmp/.X11-unix");
 
-	umask(022);
+	umask(prev);
 }
 
 static plugin_t plugin = {

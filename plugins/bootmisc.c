@@ -99,11 +99,14 @@ static void bootclean(void)
  */
 static void setup(void *arg)
 {
+	mode_t prev;
+
 	/* Cleanup stale files, if any still linger on. */
 	bootclean();
 
+	prev = umask(0);
+
 	_d("Setting up FHS structure in /var ...");
-	umask(0);
 	makedir("/var/cache",      0755);
 	makedir("/var/db",         0755); /* _PATH_VARDB on some systems */
 	makedir("/var/games",      0755);
@@ -177,7 +180,7 @@ static void setup(void *arg)
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
 	mksubsys("/var/run/uuidd", 0755, "uuidd", "uuidd");
 
-	umask(022);
+	umask(prev);
 }
 
 static plugin_t plugin = {

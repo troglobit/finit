@@ -39,8 +39,9 @@
 
 static void setup(void *arg)
 {
-	char *cmd;
 	char line[256];
+	mode_t prev;
+	char *cmd;
 
 	cmd = which(DAEMON);
 	if (!cmd) {
@@ -48,7 +49,7 @@ static void setup(void *arg)
 		return;
 	}
 
-	umask(0);
+	prev =umask(0);
 
 	mksubsys("/var/run/dbus", 0755, DAEMONUSER, DAEMONUSER);
 	if (whichp("dbus-uuidgen"))
@@ -64,7 +65,7 @@ static void setup(void *arg)
 		_pe("Failed registering %s", DAEMON);
 	free(cmd);
 
-	umask(022);
+	umask(prev);
 }
 
 static plugin_t plugin = {
