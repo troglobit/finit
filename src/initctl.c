@@ -675,6 +675,54 @@ static int show_status(char *arg)
 	return 0;
 }
 
+static char *pid_cmdline(int pid, char *buf, size_t len)
+{
+	size_t i, sz;
+	char *ptr;
+	FILE *fp;
+
+	fp = fopenf("r", "/proc/%d/cmdline", pid);
+	if (!fp) {
+		buf[0] = 0;
+		return buf;
+	}
+
+	sz = fread(buf, sizeof(buf[0]), len - 1, fp);
+	fclose(fp);
+	if (!sz)
+		return NULL;		/* kernel thread */
+
+	buf[sz] = 0;
+
+	ptr = strchr(buf, 0);
+	if (ptr && ptr != buf) {
+		ptr++;
+		sz -= ptr - buf;
+		memmove(buf, ptr, sz + 1);
+	}
+
+	for (i = 0; i < sz; i++) {
+		if (buf[i] == 0)
+			buf[i] = ' ';
+	}
+
+	return buf;
+}
+
+static char *pid_comm(int pid, char *buf, size_t len)
+{
+	FILE *fp;
+
+	fp = fopenf("r", "/proc/%d/comm", pid);
+	if (!fp)
+		return NULL;
+
+	fgets(buf, len, fp);
+	fclose(fp);
+
+	return chomp(buf);
+}
+
 static int cgroup_filter(const struct dirent *entry)
 {
 	/* Skip current dir ".", and prev dir "..", from list of files */
@@ -751,17 +799,17 @@ static int dump_cgroup(char *path, char *pfx)
 
 		i = 0;
 		while (fgets(buf, sizeof(buf), fp)) {
-			FILE *cfp;
+			char comm[80] = { 0 };
 			pid_t pid;
 
 			pid = atoi(chomp(buf));
-			cfp = fopenf("r", "/proc/%d/cmdline", pid);
-			if (!cfp)
+			if (pid <= 0)
 				continue;
 
-			if (fgets(buf, sizeof(buf), cfp))
-				printf("%s%s %d %s\n", pfx, ++i == num ? END : FORK, pid, buf);
-			fclose(cfp);
+			/* skip kernel threads for now */
+			pid_comm(pid, comm, sizeof(comm));
+			if (pid_cmdline(pid, buf, sizeof(buf)))
+				printf("%s%s %d %s %s\n", pfx, ++i == num ? END : FORK, pid, comm, buf);
 		}
 
 		return fclose(fp);
