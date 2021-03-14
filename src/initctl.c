@@ -723,6 +723,53 @@ static char *pid_comm(int pid, char *buf, size_t len)
 	return chomp(buf);
 }
 
+static uint64_t cgroup_uint64(char *path, char *file)
+{
+	uint64_t val = 0;
+	char buf[42];
+	FILE *fp;
+
+	fp = fopenf("r", "%s/%s", path, file);
+	if (!fp)
+		return val;
+
+	if (fgets(buf, sizeof(buf), fp))
+		val = strtoull(buf, NULL, 10);
+	fclose(fp);
+
+	return val;
+}
+
+static int cgroup_shares(char *path)
+{
+	return (int)cgroup_uint64(path, "cpu.shares");
+}
+
+static char *cgroup_memuse(char *path)
+{
+        static char buf[32];
+        int gb, mb, kb, b;
+	uint64_t num;
+
+	num = cgroup_uint64(path, "memory.usage_in_bytes");
+
+        gb  = num / (1024 * 1024 * 1024);
+        num = num % (1024 * 1024 * 1024);
+        mb  = num / (1024 * 1024);
+        num = num % (1024 * 1024);
+        kb  = num / (1024);
+        b   = num % (1024);
+
+        if (gb)
+                snprintf(buf, sizeof(buf), "%d.%dG", gb, mb / 102);
+        else if (mb)
+                snprintf(buf, sizeof(buf), "%d.%dM", mb, kb / 102);
+        else
+                snprintf(buf, sizeof(buf), "%d.%dk", kb, b / 102);
+
+        return buf;
+}
+
 static int cgroup_filter(const struct dirent *entry)
 {
 	/* Skip current dir ".", and prev dir "..", from list of files */
@@ -738,6 +785,9 @@ static int cgroup_filter(const struct dirent *entry)
 
 	return 1;
 }
+
+#define CDIM (plain ? "" : "\e[2m")
+#define CRST (plain ? "" : "\e[0m")
 
 static int dump_cgroup(char *path, char *pfx)
 {
@@ -784,7 +834,7 @@ static int dump_cgroup(char *path, char *pfx)
 				printf("%s%s ", pfx, FORK);
 				snprintf(dir, sizeof(dir), "%s%s    ", pfx, PIPE);
 			}
-			puts(nm);
+			printf("%s/ [cpu.shares: %d mem.usage: %s]\n", nm, cgroup_shares(buf), cgroup_memuse(buf));
 
 			rc += dump_cgroup(buf, dir);
 
@@ -809,7 +859,9 @@ static int dump_cgroup(char *path, char *pfx)
 			/* skip kernel threads for now */
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf)))
-				printf("%s%s %d %s %s\n", pfx, ++i == num ? END : FORK, pid, comm, buf);
+				printf("%s%s %s%d %s %s%s\n",
+				       pfx, ++i == num ? END : FORK,
+				       CDIM, pid, comm, buf, CRST);
 		}
 
 		return fclose(fp);
