@@ -770,6 +770,95 @@ static char *cgroup_memuse(char *path)
         return buf;
 }
 
+struct cg {
+	struct cg *cg_next;
+
+	char      *cg_path;		/* path in /sys/fs/cgroup   */
+	uint64_t   cg_prev;		/* cpuacct.usage            */
+	float      cg_load;		/* curr - prev / 10000000.0 */
+};
+
+struct cg *list;
+
+static struct cg *append(char *path)
+{
+	struct cg *cg;
+	char fn[256];
+
+	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", path);
+	if (access(fn, F_OK)) {
+		warn("not a cgroup path with cpuacct controller, %s", path);
+		return NULL;
+	}
+
+	cg = calloc(1, sizeof(struct cg));
+	if (!cg)
+		err(1, "failed allocating struct cg");
+
+	cg->cg_path = path;
+	if (!list)
+		list = cg;
+	else {
+		struct cg *tmp = list;
+
+		while (tmp->cg_next)
+			tmp = tmp->cg_next;
+		tmp->cg_next = cg;
+	}
+
+	return cg;
+}
+
+static struct cg *find(char *path)
+{
+	struct cg *cg;
+
+	for (cg = list; cg; cg = cg->cg_next) {
+		if (strcmp(cg->cg_path, path))
+			continue;
+
+		return cg;
+	}
+
+	return append(path);
+}
+
+static float cgroup_cpuload(char *path)
+{
+	struct cg *cg;
+	char fn[256];
+	char buf[64];
+	FILE *fp;
+
+	cg = find(path);
+	if (cg)
+		return 0.0;
+
+	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", cg->cg_path);
+	fp = fopen(fn, "r");
+	if (!fp)
+		err(1, "Cannot open %s", fn);
+
+	if (fgets(buf, sizeof(buf), fp)) {
+		uint64_t curr;
+
+		curr = strtoull(buf, NULL, 10);
+		if (cg->cg_prev != 0) {
+			uint64_t diff = curr - cg->cg_prev;
+
+			/* this expects 1 sec poll interval */
+			cg->cg_load = (float)(diff / 1000000);
+			cg->cg_load /= 10.0;
+		}
+
+		cg->cg_prev = curr;
+	}
+
+	fclose(fp);
+
+	return cg->cg_load;
+}
+
 static int cgroup_filter(const struct dirent *entry)
 {
 	/* Skip current dir ".", and prev dir "..", from list of files */
@@ -789,7 +878,7 @@ static int cgroup_filter(const struct dirent *entry)
 #define CDIM (plain ? "" : "\e[2m")
 #define CRST (plain ? "" : "\e[0m")
 
-static int dump_cgroup(char *path, char *pfx)
+static int dump_cgroup(char *path, char *pfx, int top)
 {
 	struct dirent **namelist = NULL;
 	struct stat st;
@@ -816,27 +905,34 @@ static int dump_cgroup(char *path, char *pfx)
 
 	if (!pfx) {
 		pfx = "";
-		puts(path);
+		if (top)
+			printf(" %6.6s %5.1f  [%s]\n", cgroup_memuse(path),
+			       cgroup_cpuload(path), path);
+		else
+			puts(path);
 	}
 
 	n = scandir(path, &namelist, cgroup_filter, alphasort);
 	if (n > 0) {
 		for (i = 0; i < n; i++) {
 			char *nm = namelist[i]->d_name;
-			char dir[80];
+			char prefix[80];
 
 			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
+			if (top)
+				printf(" %6.6s %5.1f  ", cgroup_memuse(buf),
+				       cgroup_cpuload(buf));
 
 			if (i + 1 == n) {
 				printf("%s%s ", pfx, END);
-				snprintf(dir, sizeof(dir), "%s     ", pfx);
+				snprintf(prefix, sizeof(prefix), "%s     ", pfx);
 			} else {
 				printf("%s%s ", pfx, FORK);
-				snprintf(dir, sizeof(dir), "%s%s    ", pfx, PIPE);
+				snprintf(prefix, sizeof(prefix), "%s%s    ", pfx, PIPE);
 			}
-			printf("%s/ [cpu.shares: %d mem.usage: %s]\n", nm, cgroup_shares(buf), cgroup_memuse(buf));
+			printf("%s/ [cpu.shares: %d]\n", nm, cgroup_shares(buf));
 
-			rc += dump_cgroup(buf, dir);
+			rc += dump_cgroup(buf, prefix, top);
 
 			free(namelist[i]);
 		}
@@ -859,7 +955,8 @@ static int dump_cgroup(char *path, char *pfx)
 			/* skip kernel threads for now */
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf)))
-				printf("%s%s %s%d %s %s%s\n",
+				printf("%s%s%s %s%d %s %s%s\n",
+				       top ? "               " : "",
 				       pfx, ++i == num ? END : FORK,
 				       CDIM, pid, comm, buf, CRST);
 		}
@@ -883,7 +980,29 @@ static int show_cgroup(char *arg)
 		arg = path;
 	}
 
-	return dump_cgroup(arg, NULL);
+	return dump_cgroup(arg, NULL, 0);
+}
+
+static int show_cgtop(char *arg)
+{
+	char path[512];
+
+	if (!arg)
+		arg = FINIT_CGPATH;
+	else if (arg[0] != '/') {
+		paste(path, sizeof(path), FINIT_CGPATH, arg);
+		arg = path;
+	}
+
+	while (1) {
+		fputs("\e[2J\e[1;1H", stdout);
+		if (heading)
+			print_header(" MEMORY  %%CPU  GROUP/SERVICE");
+		dump_cgroup(arg, NULL, 1);
+		sleep(1);
+	}
+
+	return 0;
 }
 
 static int transform(char *nm)
@@ -983,6 +1102,7 @@ static int usage(int rc)
 		"  status                    Show status of services, default command\n"
 		"\n"
 		"  ps                        List processes based on cgroups\n"
+		"  top                       Show top-like listing based on cgroups\n"
 		"\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
@@ -1097,6 +1217,7 @@ int main(int argc, char *argv[])
 		{ "restart",  NULL, do_restart   },
 
 		{ "ps",       NULL, show_cgroup  },
+		{ "top",      NULL, show_cgtop   },
 
 		{ "runlevel", NULL, do_runlevel  },
 		{ "reboot",   NULL, do_reboot    },
