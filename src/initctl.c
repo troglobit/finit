@@ -29,8 +29,10 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <paths.h>
+#include <search.h>
 #include <signal.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <time.h>
 #include <utmp.h>
 #include <arpa/inet.h>
@@ -784,6 +786,7 @@ static struct cg *append(char *path)
 {
 	struct cg *cg;
 	char fn[256];
+	ENTRY item;
 
 	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", path);
 	if (access(fn, F_OK)) {
@@ -795,30 +798,26 @@ static struct cg *append(char *path)
 	if (!cg)
 		err(1, "failed allocating struct cg");
 
-	cg->cg_path = path;
-	if (!list)
-		list = cg;
-	else {
-		struct cg *tmp = list;
+	cg->cg_path = strdup(path);
+	if (list)
+		cg->cg_next = list;
+	list = cg;
 
-		while (tmp->cg_next)
-			tmp = tmp->cg_next;
-		tmp->cg_next = cg;
-	}
+	item.key  = cg->cg_path;
+	item.data = cg;
+	if (!hsearch(item, ENTER))
+		err(1, "failed adding to hash table");
 
 	return cg;
 }
 
 static struct cg *find(char *path)
 {
-	struct cg *cg;
+	ENTRY *ep, item = { path, NULL };
 
-	for (cg = list; cg; cg = cg->cg_next) {
-		if (strcmp(cg->cg_path, path))
-			continue;
-
-		return cg;
-	}
+	ep = hsearch(item, FIND);
+	if (ep)
+		return ep->data;
 
 	return append(path);
 }
@@ -831,7 +830,7 @@ static float cgroup_cpuload(char *path)
 	FILE *fp;
 
 	cg = find(path);
-	if (cg)
+	if (!cg)
 		return 0.0;
 
 	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", cg->cg_path);
@@ -850,7 +849,6 @@ static float cgroup_cpuload(char *path)
 			cg->cg_load = (float)(diff / 1000000);
 			cg->cg_load /= 10.0;
 		}
-
 		cg->cg_prev = curr;
 	}
 
@@ -887,6 +885,9 @@ static int dump_cgroup(char *path, char *pfx, int top)
 	FILE *fp;
 	int i, n;
 	int num;
+
+	if (top >= screen_rows)
+		return 0;
 
 	if (-1 == lstat(path, &st))
 		return 1;
@@ -932,7 +933,7 @@ static int dump_cgroup(char *path, char *pfx, int top)
 			}
 			printf("%s/ [cpu.shares: %d]\n", nm, cgroup_shares(buf));
 
-			rc += dump_cgroup(buf, prefix, top);
+			rc += dump_cgroup(buf, prefix, top + i);
 
 			free(namelist[i]);
 		}
@@ -952,13 +953,16 @@ static int dump_cgroup(char *path, char *pfx, int top)
 			if (pid <= 0)
 				continue;
 
-			/* skip kernel threads for now */
+			/* skip kernel threads for now (no cmdline) */
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf)))
 				printf("%s%s%s %s%d %s %s%s\n",
 				       top ? "               " : "",
 				       pfx, ++i == num ? END : FORK,
 				       CDIM, pid, comm, buf, CRST);
+			top += i;
+			if (top >= screen_rows)
+				break;
 		}
 
 		return fclose(fp);
@@ -993,6 +997,9 @@ static int show_cgtop(char *arg)
 		paste(path, sizeof(path), FINIT_CGPATH, arg);
 		arg = path;
 	}
+
+	if (!hcreate(screen_rows + 25))
+		err(1, "failed creating hash table");
 
 	while (1) {
 		fputs("\e[2J\e[1;1H", stdout);
