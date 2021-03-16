@@ -30,6 +30,7 @@
 #include <search.h>
 #include <inttypes.h>
 #include <lite/lite.h>
+#include <sys/sysinfo.h>		/* sysinfo() */
 
 #include "initctl.h"
 
@@ -38,14 +39,21 @@
 #define FORK plain ? "|-" : "├─"
 #define END  plain ? "`-" : "└─"
 
+uint64_t total_ram;			/* From sysinfo() */
+
 struct cg {
 	struct cg *cg_next;
 
 	char      *cg_path;		/* path in /sys/fs/cgroup   */
 	uint64_t   cg_prev;		/* cpuacct.usage            */
+	uint64_t   cg_rss;		/* memory.stat              */
+	uint64_t   cg_vmlib;		/* memory.stat              */
+	uint64_t   cg_vmsize;		/* memory.usage_in_bytes    */
+	float      cg_mem;		/* cg_rss / total_ram * 100 */
 	float      cg_load;		/* curr - prev / 10000000.0 */
 };
 
+struct cg  dummy;			/* empty result "NULL"      */
 struct cg *list;
 
 
@@ -119,29 +127,82 @@ static int cgroup_shares(char *path)
 	return (int)cgroup_uint64(path, "cpu.shares");
 }
 
-static char *cgroup_memuse(char *path)
+static uint64_t cgroup_memuse(struct cg *cg)
 {
-        static char buf[32];
+	char buf[42];
+	FILE *fp;
+
+
+	fp = fopenf("r", "%s/memory.stat", cg->cg_path);
+	if (fp) {
+		while (fgets(buf, sizeof(buf), fp)) {
+			if (!strncmp(buf, "total_rss", 9)) {
+				cg->cg_rss = strtoull(&buf[10], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "total_mapped_file", 17)) {
+				cg->cg_vmlib = strtoull(&buf[18], NULL, 10);
+				break;	/* done */
+			}
+		}
+		fclose(fp);
+	}
+
+	cg->cg_mem = (float)(cg->cg_rss * 100 / total_ram);
+
+	/* "fuzz value for efficient access", sort of like total_cache + total_rss */
+	return cg->cg_vmsize = cgroup_uint64(cg->cg_path, "memory.usage_in_bytes");
+}
+
+static char *memsz(uint64_t sz, char *buf, size_t len)
+{
         int gb, mb, kb, b;
-	uint64_t num;
 
-	num = cgroup_uint64(path, "memory.usage_in_bytes");
-
-        gb  = num / (1024 * 1024 * 1024);
-        num = num % (1024 * 1024 * 1024);
-        mb  = num / (1024 * 1024);
-        num = num % (1024 * 1024);
-        kb  = num / (1024);
-        b   = num % (1024);
+        gb = sz / (1024 * 1024 * 1024);
+        sz = sz % (1024 * 1024 * 1024);
+        mb = sz / (1024 * 1024);
+        sz = sz % (1024 * 1024);
+        kb = sz / (1024);
+        b  = sz % (1024);
 
         if (gb)
-                snprintf(buf, sizeof(buf), "%d.%dG", gb, mb / 102);
+                snprintf(buf, len, "%d.%dG", gb, mb / 102);
         else if (mb)
-                snprintf(buf, sizeof(buf), "%d.%dM", mb, kb / 102);
+                snprintf(buf, len, "%d.%dM", mb, kb / 102);
         else
-                snprintf(buf, sizeof(buf), "%d.%dk", kb, b / 102);
+                snprintf(buf, len, "%d.%dk", kb, b / 102);
 
         return buf;
+}
+
+static float cgroup_cpuload(struct cg *cg)
+{
+	char fn[256];
+	char buf[64];
+	FILE *fp;
+
+	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", cg->cg_path);
+	fp = fopen(fn, "r");
+	if (!fp)
+		err(1, "Cannot open %s", fn);
+
+	if (fgets(buf, sizeof(buf), fp)) {
+		uint64_t curr;
+
+		curr = strtoull(buf, NULL, 10);
+		if (cg->cg_prev != 0) {
+			uint64_t diff = curr - cg->cg_prev;
+
+			/* this expects 1 sec poll interval */
+			cg->cg_load = (float)(diff / 1000000);
+			cg->cg_load /= 10.0;
+		}
+		cg->cg_prev = curr;
+	}
+
+	fclose(fp);
+
+	return cg->cg_load;
 }
 
 static struct cg *append(char *path)
@@ -184,39 +245,18 @@ static struct cg *find(char *path)
 	return append(path);
 }
 
-static float cgroup_cpuload(char *path)
+static struct cg *cg_update(char *path)
 {
 	struct cg *cg;
-	char fn[256];
-	char buf[64];
-	FILE *fp;
 
 	cg = find(path);
 	if (!cg)
-		return 0.0;
+		return &dummy;
 
-	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", cg->cg_path);
-	fp = fopen(fn, "r");
-	if (!fp)
-		err(1, "Cannot open %s", fn);
+	cgroup_cpuload(cg);
+	cgroup_memuse(cg);
 
-	if (fgets(buf, sizeof(buf), fp)) {
-		uint64_t curr;
-
-		curr = strtoull(buf, NULL, 10);
-		if (cg->cg_prev != 0) {
-			uint64_t diff = curr - cg->cg_prev;
-
-			/* this expects 1 sec poll interval */
-			cg->cg_load = (float)(diff / 1000000);
-			cg->cg_load /= 10.0;
-		}
-		cg->cg_prev = curr;
-	}
-
-	fclose(fp);
-
-	return cg->cg_load;
+	return cg;
 }
 
 static int cgroup_filter(const struct dirent *entry)
@@ -238,10 +278,12 @@ static int cgroup_filter(const struct dirent *entry)
 #define CDIM (plain ? "" : "\e[2m")
 #define CRST (plain ? "" : "\e[0m")
 
-static int dump_cgroup(char *path, char *pfx, int top)
+static int cgroup_tree(char *path, char *pfx, int top)
 {
 	struct dirent **namelist = NULL;
+	char s[32], r[32], l[32];
 	struct stat st;
+	struct cg *cg;
 	char buf[512];
 	int rc = 0;
 	FILE *fp;
@@ -268,10 +310,14 @@ static int dump_cgroup(char *path, char *pfx, int top)
 
 	if (!pfx) {
 		pfx = "";
-		if (top)
-			printf(" %6.6s %5.1f  [%s]\n", cgroup_memuse(path),
-			       cgroup_cpuload(path), path);
-		else
+		if (top) {
+			cg = cg_update(path);
+			printf(" %6.6s  %6.6s  %6.6s %5.1f %5.1f  [%s]\n",
+			       memsz(cg->cg_vmsize, s, sizeof(s)),
+			       memsz(cg->cg_rss,    r, sizeof(r)),
+			       memsz(cg->cg_vmlib,  l, sizeof(l)),
+			       cg->cg_mem, cg->cg_load, path);
+		} else
 			puts(path);
 	}
 
@@ -282,9 +328,14 @@ static int dump_cgroup(char *path, char *pfx, int top)
 			char prefix[80];
 
 			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
-			if (top)
-				printf(" %6.6s %5.1f  ", cgroup_memuse(buf),
-				       cgroup_cpuload(buf));
+			if (top) {
+				cg = cg_update(buf);
+				printf(" %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
+				       memsz(cg->cg_vmsize, s, sizeof(s)),
+				       memsz(cg->cg_rss,    r, sizeof(r)),
+				       memsz(cg->cg_vmlib,  l, sizeof(l)),
+				       cg->cg_mem, cg->cg_load);
+			}
 
 			if (i + 1 == n) {
 				printf("%s%s ", pfx, END);
@@ -295,7 +346,7 @@ static int dump_cgroup(char *path, char *pfx, int top)
 			}
 			printf("%s/ [cpu.shares: %d]\n", nm, cgroup_shares(buf));
 
-			rc += dump_cgroup(buf, prefix, top + i);
+			rc += cgroup_tree(buf, prefix, top ? top + i : 0);
 
 			free(namelist[i]);
 		}
@@ -319,12 +370,15 @@ static int dump_cgroup(char *path, char *pfx, int top)
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf)))
 				printf("%s%s%s %s%d %s %s%s\n",
-				       top ? "               " : "",
+				       top ? "                                     " : "",
 				       pfx, ++i == num ? END : FORK,
 				       CDIM, pid, comm, buf, CRST);
-			top += i;
-			if (top >= screen_rows)
-				break;
+
+			if (top) {
+				top += i;
+				if (top >= screen_rows)
+					break;
+			}
 		}
 
 		return fclose(fp);
@@ -346,11 +400,12 @@ int show_cgroup(char *arg)
 		arg = path;
 	}
 
-	return dump_cgroup(arg, NULL, 0);
+	return cgroup_tree(arg, NULL, 0);
 }
 
 int show_cgtop(char *arg)
 {
+	struct sysinfo si = { 0 };
 	char path[512];
 
 	if (!arg)
@@ -363,11 +418,14 @@ int show_cgtop(char *arg)
 	if (!hcreate(screen_rows + 25))
 		err(1, "failed creating hash table");
 
+	sysinfo(&si);
+	total_ram = si.totalram * si.mem_unit;
+
 	while (1) {
 		fputs("\e[2J\e[1;1H", stdout);
 		if (heading)
-			print_header(" MEMORY  %%CPU  GROUP/SERVICE");
-		dump_cgroup(arg, NULL, 1);
+			print_header(" VmSIZE     RSS   VmLIB  %%MEM  %%CPU  GROUP");
+		cgroup_tree(arg, NULL, 1);
 		sleep(1);
 	}
 
