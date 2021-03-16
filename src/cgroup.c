@@ -26,7 +26,7 @@
 #include <string.h>
 #include <lite/lite.h>
 #include <sys/mount.h>
-#include <sys/sysinfo.h>
+#include <sys/sysinfo.h>		/* get_nprocs_conf() */
 
 #include "finit.h"
 #include "log.h"
@@ -103,22 +103,21 @@ void cgroup_init(void)
 	/* Create and mount traditional cgroups v1 hier */
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *cgroup;
-#if 0
 		char rc[80];
-#endif
 
 		cgroup = strtok(buf, "\t ");
 		if (!cgroup)
 			continue;
 
-#if 0
 		snprintf(rc, sizeof(rc), "/sys/fs/cgroup/%s", cgroup);
+#if 0
 		if (mkdir(rc, 0755) && EEXIST != errno)
 			continue;
 
 		if (mount("cgroup", rc, "cgroup", opts, cgroup))
 			_d("Failed mounting %s cgroup on %s", cgroup, rc);
 #else
+		symlink("finit", rc);
 		append_ctrl(cgroup);
 #endif
 	}
