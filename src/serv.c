@@ -30,14 +30,7 @@
 #include <stdlib.h>
 #include <lite/lite.h>
 
-#include "util.h"
-
-extern int icreate;			/* initctl -c */
-extern int iforce;			/* initctl -f */
-extern int plain;			/* initctl -p */
-extern int heading;			/* initctl -t */
-
-extern void print_header(const char *fmt, ...);
+#include "initctl.h"
 
 
 static int calc_width(char *arr[], size_t len)
