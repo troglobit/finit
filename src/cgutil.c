@@ -34,8 +34,11 @@
 
 #include "initctl.h"
 
+#define CDIM plain ? "" : "\e[2m"
+#define CRST plain ? "" : "\e[0m"
+
 #define NONE " "
-#define PIPE plain ? "|"  : "│"
+#define PIPE plain ? "| " : "│ "
 #define FORK plain ? "|-" : "├─"
 #define END  plain ? "`-" : "└─"
 
@@ -275,13 +278,13 @@ static int cgroup_filter(const struct dirent *entry)
 	return 1;
 }
 
-#define CDIM (plain ? "" : "\e[2m")
-#define CRST (plain ? "" : "\e[0m")
-
 static int cgroup_tree(char *path, char *pfx, int top)
 {
 	struct dirent **namelist = NULL;
 	char s[32], r[32], l[32];
+	char row[screen_cols + 9];	/* + control codes */
+	size_t rlen = sizeof(row) - 1;
+	size_t rplen = rlen - 9;
 	struct stat st;
 	struct cg *cg;
 	char buf[512];
@@ -312,39 +315,51 @@ static int cgroup_tree(char *path, char *pfx, int top)
 		pfx = "";
 		if (top) {
 			cg = cg_update(path);
-			printf(" %6.6s  %6.6s  %6.6s %5.1f %5.1f  [%s]\n",
-			       memsz(cg->cg_vmsize, s, sizeof(s)),
-			       memsz(cg->cg_rss,    r, sizeof(r)),
-			       memsz(cg->cg_vmlib,  l, sizeof(l)),
-			       cg->cg_mem, cg->cg_load, path);
+			snprintf(row, rplen, " %6.6s  %6.6s  %6.6s %5.1f %5.1f  [%s]",
+				 memsz(cg->cg_vmsize, s, sizeof(s)),
+				 memsz(cg->cg_rss,    r, sizeof(r)),
+				 memsz(cg->cg_vmlib,  l, sizeof(l)),
+				 cg->cg_mem, cg->cg_load, path);
 		} else
-			puts(path);
+			strlcpy(row, path, rplen);
+
+		puts(row);
 	}
 
 	n = scandir(path, &namelist, cgroup_filter, alphasort);
 	if (n > 0) {
 		for (i = 0; i < n; i++) {
 			char *nm = namelist[i]->d_name;
-			char prefix[80];
+			char prefix[80], tmp[42];
 
 			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
 			if (top) {
 				cg = cg_update(buf);
-				printf(" %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
-				       memsz(cg->cg_vmsize, s, sizeof(s)),
-				       memsz(cg->cg_rss,    r, sizeof(r)),
-				       memsz(cg->cg_vmlib,  l, sizeof(l)),
-				       cg->cg_mem, cg->cg_load);
-			}
+				snprintf(row, rplen,
+					 " %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
+					 memsz(cg->cg_vmsize, s, sizeof(s)),
+					 memsz(cg->cg_rss,    r, sizeof(r)),
+					 memsz(cg->cg_vmlib,  l, sizeof(l)),
+					 cg->cg_mem, cg->cg_load);
+			} else
+				row[0] = 0;
 
+			strlcat(row, pfx, rplen);
 			if (i + 1 == n) {
-				printf("%s%s ", pfx, END);
+				strlcat(row, END, rplen);
 				snprintf(prefix, sizeof(prefix), "%s     ", pfx);
 			} else {
-				printf("%s%s ", pfx, FORK);
+				strlcat(row, FORK, rplen);
 				snprintf(prefix, sizeof(prefix), "%s%s    ", pfx, PIPE);
 			}
-			printf("%s/ [cpu.shares: %d]\n", nm, cgroup_shares(buf));
+			strlcat(row, " ", rplen);
+
+			strlcat(row, nm,   rplen);
+			strlcat(row, "/ ", rplen);
+
+			snprintf(tmp, sizeof(tmp), "[cpu.shares: %d]", cgroup_shares(buf));
+			strlcat(row, tmp, rplen);
+			puts(row);
 
 			rc += cgroup_tree(buf, prefix, top ? top + i : 0);
 
@@ -368,11 +383,35 @@ static int cgroup_tree(char *path, char *pfx, int top)
 
 			/* skip kernel threads for now (no cmdline) */
 			pid_comm(pid, comm, sizeof(comm));
-			if (pid_cmdline(pid, buf, sizeof(buf)))
-				printf("%s%s%s %s%d %s %s%s\n",
-				       top ? "                                     " : "",
-				       pfx, ++i == num ? END : FORK,
-				       CDIM, pid, comm, buf, CRST);
+			if (pid_cmdline(pid, buf, sizeof(buf))) {
+				char proc[screen_cols];
+				int len;
+
+				if (top)
+					snprintf(row, rplen, "%37s", " ");
+				else
+					row[0] = 0;
+
+				strlcat(row, pfx, rplen);
+				strlcat(row, ++i == num ? END : FORK, rlen);
+
+				snprintf(proc, sizeof(proc), " %d %s %s", pid, comm, buf);
+
+				if (plain) {
+					strlcat(row, proc, rplen);
+				} else {
+					strlcat(row, CDIM, rlen);
+					strlcat(row, proc, rlen);
+
+					len = strlen(row) + strlen(CRST);
+					if (len > (int)rlen)
+						row[rlen - strlen(CRST)] = 0;
+
+					strlcat(row, CRST, sizeof(row));
+				}
+
+				puts(row);
+			}
 
 			if (top) {
 				top += i;
