@@ -50,6 +50,7 @@ struct cmd {
 
 int icreate  = 0;
 int iforce   = 0;
+int ionce    = 0;
 int heading  = 1;
 int verbose  = 0;
 int plain    = 0;
@@ -714,6 +715,7 @@ static int usage(int rc)
 		"  -b, --batch               Batch mode, no screen size probing\n"
 		"  -c, --create              Create missing paths (and files) as needed\n"
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
+		"  -1, --once                Only one lap in commands like 'top'\n"
 		"  -p, --plain               Use plain table headings, no ctrl chars\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
@@ -842,6 +844,7 @@ int main(int argc, char *argv[])
 		{ "create",     0, NULL, 'c' },
 		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
+		{ "once",       0, NULL, '1' },
 		{ "plain",      0, NULL, 'p' },
 		{ "no-heading", 0, NULL, 't' },
 		{ "verbose",    0, NULL, 'v' },
@@ -898,8 +901,12 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "bcfh?ptv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "1bcfh?ptv", long_options, NULL)) != EOF) {
 		switch(c) {
+		case '1':
+			ionce = 1;
+			break;
+
 		case 'b':
 			interactive = 0;
 			break;

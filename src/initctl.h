@@ -29,6 +29,7 @@
 
 extern int icreate;			/* initctl -c */
 extern int iforce;			/* initctl -f */
+extern int ionce;			/* initctl -1 */
 extern int heading;			/* initctl -t */
 extern int verbose;			/* initctl -v */
 extern int plain;			/* initctl -p */

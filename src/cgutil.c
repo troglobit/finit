@@ -446,6 +446,7 @@ int show_cgtop(char *arg)
 {
 	struct sysinfo si = { 0 };
 	char path[512];
+	int laps = 0;
 
 	if (!arg)
 		arg = FINIT_CGPATH;
@@ -465,6 +466,9 @@ int show_cgtop(char *arg)
 		if (heading)
 			print_header(" VmSIZE     RSS   VmLIB  %%MEM  %%CPU  GROUP");
 		cgroup_tree(arg, NULL, 1);
+
+		if (ionce && laps++)
+			break;
 		sleep(1);
 	}
 
