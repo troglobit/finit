@@ -118,16 +118,18 @@ static uint64_t cgroup_uint64(char *path, char *file)
 	if (!fp)
 		return val;
 
-	if (fgets(buf, sizeof(buf), fp))
+	if (fgets(buf, sizeof(buf), fp)) {
+		chomp(buf);
 		val = strtoull(buf, NULL, 10);
+	}
 	fclose(fp);
 
 	return val;
 }
 
-static int cgroup_shares(char *path)
+static int cgroup_weight(char *path)
 {
-	return (int)cgroup_uint64(path, "cpu.shares");
+	return (int)cgroup_uint64(path, "cpu.weight");
 }
 
 static uint64_t cgroup_memuse(struct cg *cg)
@@ -135,16 +137,17 @@ static uint64_t cgroup_memuse(struct cg *cg)
 	char buf[42];
 	FILE *fp;
 
-
 	fp = fopenf("r", "%s/memory.stat", cg->cg_path);
 	if (fp) {
 		while (fgets(buf, sizeof(buf), fp)) {
-			if (!strncmp(buf, "total_rss", 9)) {
-				cg->cg_rss = strtoull(&buf[10], NULL, 10);
+			chomp(buf);
+
+			if (!strncmp(buf, "anon", 4)) {
+				cg->cg_rss = strtoull(&buf[5], NULL, 10);
 				continue;
 			}
-			if (!strncmp(buf, "total_mapped_file", 17)) {
-				cg->cg_vmlib = strtoull(&buf[18], NULL, 10);
+			if (!strncmp(buf, "file", 4)) {
+				cg->cg_vmlib = strtoull(&buf[5], NULL, 10);
 				break;	/* done */
 			}
 		}
@@ -153,8 +156,7 @@ static uint64_t cgroup_memuse(struct cg *cg)
 
 	cg->cg_mem = (float)(cg->cg_rss * 100 / total_ram);
 
-	/* "fuzz value for efficient access", sort of like total_cache + total_rss */
-	return cg->cg_vmsize = cgroup_uint64(cg->cg_path, "memory.usage_in_bytes");
+	return cg->cg_vmsize = cgroup_uint64(cg->cg_path, "memory.current");
 }
 
 static char *memsz(uint64_t sz, char *buf, size_t len)
@@ -184,23 +186,28 @@ static float cgroup_cpuload(struct cg *cg)
 	char buf[64];
 	FILE *fp;
 
-	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", cg->cg_path);
+	snprintf(fn, sizeof(fn), "%s/cpu.stat", cg->cg_path);
 	fp = fopen(fn, "r");
 	if (!fp)
 		err(1, "Cannot open %s", fn);
 
-	if (fgets(buf, sizeof(buf), fp)) {
+	while (fgets(buf, sizeof(buf), fp)) {
 		uint64_t curr;
 
-		curr = strtoull(buf, NULL, 10);
+		chomp(buf);
+		if (strncmp(buf, "usage_usec", 10))
+			continue;
+
+		curr = strtoull(&buf[11], NULL, 10);
 		if (cg->cg_prev != 0) {
 			uint64_t diff = curr - cg->cg_prev;
 
 			/* this expects 1 sec poll interval */
 			cg->cg_load = (float)(diff / 1000000);
-			cg->cg_load /= 10.0;
+			cg->cg_load *= 100.0;
 		}
 		cg->cg_prev = curr;
+		break;
 	}
 
 	fclose(fp);
@@ -214,9 +221,9 @@ static struct cg *append(char *path)
 	char fn[256];
 	ENTRY item;
 
-	snprintf(fn, sizeof(fn), "%s/cpuacct.usage", path);
+	snprintf(fn, sizeof(fn), "%s/cpu.stat", path);
 	if (access(fn, F_OK)) {
-		warn("not a cgroup path with cpuacct controller, %s", path);
+		warn("not a cgroup path with cpu controller, %s", path);
 		return NULL;
 	}
 
@@ -357,7 +364,7 @@ static int cgroup_tree(char *path, char *pfx, int top)
 			strlcat(row, nm,   rplen);
 			strlcat(row, "/ ", rplen);
 
-			snprintf(tmp, sizeof(tmp), "[cpu.shares: %d]", cgroup_shares(buf));
+			snprintf(tmp, sizeof(tmp), "[cpu.weight: %d]", cgroup_weight(buf));
 			strlcat(row, tmp, rplen);
 			puts(row);
 

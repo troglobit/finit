@@ -46,7 +46,7 @@
 #endif
 
 #ifndef FINIT_CGPATH
-#define FINIT_CGPATH            "/sys/fs/cgroup/finit"
+#define FINIT_CGPATH            "/sys/fs/cgroup"
 #endif
 
 #define LOGIT_PATH              FINIT_LIBPATH_ "/logit"

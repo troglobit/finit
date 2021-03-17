@@ -32,49 +32,64 @@
 #include "log.h"
 #include "util.h"
 
-static char controllers[256] = "none";
+static char controllers[256];
 
-static void group_init(char *path, char *nproc, int share)
+static void group_init(char *path, int leaf, int weight)
 {
 	char file[strlen(path) + 64];
 
-	paste(file, sizeof(file), path, "cgroup.clone_children");
-	echo(file, 0, "1");
+	if (mkdir(path, 0755) && EEXIST != errno) {
+		_pe("Failed creating cgroup %s", path);
+		return;
+	}
 
-	paste(file, sizeof(file), path, "cpuset.cpus");
-	echo(file, 0, nproc);
+	/* enable detected controllers on domain groups */
+	if (!leaf) {
+		paste(file, sizeof(file), path, "cgroup.subtree_control");
+		echo(file, 0, controllers);
+	}
 
-	paste(file, sizeof(file), path, "cpuset.mems");
-	echo(file, 0, "0");
+	/* set initial group weight */
+	if (weight) {
+		paste(file, sizeof(file), path, "cpu.weight");
+		echo(file, 0, "%d", weight);
+	}
+}
 
-	paste(file, sizeof(file), path, "cpu.shares");
-	echo(file, 0, "%d", share);
+static int cgroup_leaf_init(char *group, char *name, int pid)
+{
+	char path[256];
 
-	paste(file, sizeof(file), path, "memory.use_hierarchy");
-	echo(file, 0, "1");
+	if (pid <= 1) {
+		errno = EINVAL;
+		return 1;
+	}
+
+	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
+	group_init(path, 1, 0);
+
+	strlcat(path, "/cgroup.procs", sizeof(path));
+
+	return echo(path, 0, "%d", pid);
+}
+
+int cgroup_user(char *name, int pid)
+{
+	return cgroup_leaf_init("user", name, pid);
+}
+
+int cgroup_service(char *name, int pid)
+{
+	return cgroup_leaf_init("system", name, pid);
 }
 
 static void append_ctrl(char *ctrl)
 {
-	char *wanted[] = {
-		"cpu",
-		"cpuacct",
-		"cpuset",
-		"memory"
-	};
-	size_t i;
+	if (controllers[0])
+		strlcat(controllers, " ", sizeof(controllers));
 
-	for (i = 0; i < NELEMS(wanted); i++) {
-		if (strcmp(wanted[i], ctrl))
-			continue;
-
-		if (strcmp(controllers, "none"))
-			strlcat(controllers, ",", sizeof(controllers));
-		else
-			strlcpy(controllers, "", sizeof(controllers));
-
-		strlcat(controllers, ctrl, sizeof(controllers));
-	}
+	strlcat(controllers, "+", sizeof(controllers));
+	strlcat(controllers, ctrl, sizeof(controllers));
 }
 
 /*
@@ -86,116 +101,40 @@ void cgroup_init(void)
 	char buf[80];
 	FILE *fp;
 
-	fp = fopen("/proc/cgroups", "r");
-	if (!fp) {
-		_d("No cgroup support");
+	if (mount("none", FINIT_CGPATH, "cgroup2", opts, NULL)) {
+		_pe("Failed mounting cgroup v2");
 		return;
 	}
 
-	if (mount("none", "/sys/fs/cgroup", "tmpfs", opts, NULL)) {
-		_d("Failed mounting cgroups");
-		goto fail;
+	/* Find available controllers */
+	fp = fopen(FINIT_CGPATH "/cgroup.controllers", "r");
+	if (!fp) {
+		_pe("Failed opening %s", FINIT_CGPATH "/cgroup.controllers");
+		return;
 	}
 
-	/* Skip first line, header */
-	(void)fgets(buf, sizeof(buf), fp);
-
-	/* Create and mount traditional cgroups v1 hier */
-	while (fgets(buf, sizeof(buf), fp)) {
+	if (fgets(buf, sizeof(buf), fp)) {
 		char *cgroup;
-		char rc[80];
 
-		cgroup = strtok(buf, "\t ");
-		if (!cgroup)
-			continue;
-
-		snprintf(rc, sizeof(rc), "/sys/fs/cgroup/%s", cgroup);
-#if 0
-		if (mkdir(rc, 0755) && EEXIST != errno)
-			continue;
-
-		if (mount("cgroup", rc, "cgroup", opts, cgroup))
-			_d("Failed mounting %s cgroup on %s", cgroup, rc);
-#else
-		symlink("finit", rc);
-		append_ctrl(cgroup);
-#endif
+		cgroup = strtok(chomp(buf), "\t ");
+		while (cgroup) {
+			append_ctrl(cgroup);
+			cgroup = strtok(NULL, "\t ");
+		}
 	}
 
-	/* Finit default cgroups for process monitoring */
-	if (mkdir(FINIT_CGPATH, 0755) && EEXIST != errno)
-		goto fail;
+	fclose(fp);
 
-#if 0
-	strlcpy(controllers, "none,name=finit", sizeof(controllers));
-#else
-	strlcat(controllers, ",name=finit", sizeof(controllers));
-#endif
-	if (mount("none", FINIT_CGPATH, "cgroup", opts, controllers)) {
-		_pe("Failed mounting Finit cgroup hierarchy");
-		goto fail;
-	}
-
-	/* Set up reaper and enable callbacks */
-	echo(FINIT_CGPATH "/release_agent", 0, FINIT_LIBPATH_ "/cgreaper.sh");
-	echo(FINIT_CGPATH "/notify_on_release", 0, "1");
+	/* Enable all controllers */
+	echo(FINIT_CGPATH "/cgroup.subtree_control", 0, controllers);
 
 	/* Default groups, PID 1, services, and user/login processes */
-	if (mkdir(FINIT_CGPATH "/init", 0755) && EEXIST != errno)
-		goto fail;
-	if (mkdir(FINIT_CGPATH "/system", 0755) && EEXIST != errno)
-		goto fail;
-	if (mkdir(FINIT_CGPATH "/user", 0755) && EEXIST != errno)
-		goto fail;
-
-	/*
-	 * Set up basic limits for our groups.  Finit optimized defaults
-	 * for embedded and server systems include limiting the groups
-	 * init and user to a single CPU with 10% share, the system
-	 * group gets the rest.  Override this from finit.conf
-	 */
-#if 0
-#else
-	snprintf(buf, sizeof(buf), "0-%d", get_nprocs_conf() - 1);
-
-	group_init(FINIT_CGPATH "/init",   "0", 50);
-	group_init(FINIT_CGPATH "/user",   "0", 75);
-	group_init(FINIT_CGPATH "/system", buf, 900);
-#endif
+	group_init(FINIT_CGPATH "/init",   1,  100);
+	group_init(FINIT_CGPATH "/user",   0,  100);
+	group_init(FINIT_CGPATH "/system", 0, 9800);
 
 	/* Move ourselves to init */
 	echo(FINIT_CGPATH "/init/cgroup.procs", 0, "1");
-
-fail:
-	fclose(fp);
-}
-
-static int move_pid(char *group, char *name, int pid)
-{
-	char path[256];
-
-	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
-	if (mkdir(path, 0755) && errno != EEXIST)
-		return 1;
-
-	strlcat(path, "/cgroup.procs", sizeof(path));
-
-	return echo(path, 0, "%d", pid);
-}
-
-int cgroup_user(char *name, int pid)
-{
-	return move_pid("finit/user", name, pid);
-}
-
-int cgroup_service(char *name, int pid)
-{
-	if (pid <= 0) {
-		errno = EINVAL;
-		return 1;
-	}
-
-	return move_pid("finit/system", name, pid);
 }
 
 /**

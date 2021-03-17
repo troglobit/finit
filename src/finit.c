@@ -518,7 +518,6 @@ int main(int argc, char *argv[])
 	 */
 	cgroup_init();
 
-
 	/* Check and mount filesystems. */
 	fs_mount();
 

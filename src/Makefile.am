@@ -1,4 +1,4 @@
-EXTRA_DIST         = cgreaper.sh rescue.conf sample.conf
+EXTRA_DIST         = rescue.conf sample.conf
 AM_CPPFLAGS        = -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 if STATIC
 AM_CPPFLAGS       += -DENABLE_STATIC
@@ -8,7 +8,6 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS      = finit initctl
-pkglibexec_SCRIPTS = cgreaper.sh
 
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
