@@ -45,7 +45,10 @@ extern char *prognm;
 #include <lite/conio.h>
 
 char *progname     (char *arg0);
-int   echo         (char *file, int append, char *fmt, ...);
+
+char *str          (char *fmt, ...);
+int   fnwrite      (char *value, char *fmt, ...);
+
 int   has_utmp     (void);
 int   strtobytes   (char *arg);
 void  do_sleep     (unsigned int sec);

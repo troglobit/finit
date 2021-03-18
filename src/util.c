@@ -56,28 +56,41 @@ char *progname(char *arg0)
        return prognm;
 }
 
-int echo(char *file, int append, char *fmt, ...)
+char *str(char *fmt, ...)
 {
+	static char buf[32];
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	return buf;
+}
+
+int fnwrite(char *value, char *fmt, ...)
+{
+	char path[256];
 	va_list ap;
 	FILE *fp;
 
-	if (!file)
-		fp = stdout;
-	else
-		fp = fopen(file, append ? "a" : "w");
+	if (!value) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	va_start(ap, fmt);
+	vsnprintf(path, sizeof(path), fmt, ap);
+	va_end(ap);
+
+	fp = fopen(path, "w");
 	if (!fp)
 		return -1;
 
-	if (fmt) {
-		va_start(ap, fmt);
-		vfprintf(fp, fmt, ap);
-		va_end(ap);
-	}
-
 	/* echo(1) always adds a newline */
-	fprintf(fp, "\n");
-	if (file)
-		fclose(fp);
+	fputs(value, fp);
+	fputs("\n", fp);
+	fclose(fp);
 
 	return 0;
 }

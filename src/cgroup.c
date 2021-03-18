@@ -41,24 +41,18 @@ static uev_t cgw;
 
 static void group_init(char *path, int leaf, int weight)
 {
-	char file[strlen(path) + 64];
-
 	if (mkdir(path, 0755) && EEXIST != errno) {
 		_pe("Failed creating cgroup %s", path);
 		return;
 	}
 
 	/* enable detected controllers on domain groups */
-	if (!leaf) {
-		paste(file, sizeof(file), path, "cgroup.subtree_control");
-		echo(file, 0, controllers);
-	}
+	if (!leaf)
+		fnwrite(controllers, "%s/cgroup.subtree_control", path);
 
 	/* set initial group weight */
-	if (weight) {
-		paste(file, sizeof(file), path, "cpu.weight");
-		echo(file, 0, "%d", weight);
-	}
+	if (weight)
+		fnwrite(str("%d", weight), "%s/cgroup.subtree_control", path);
 }
 
 static int cgroup_leaf_init(char *group, char *name, int pid)
@@ -70,13 +64,14 @@ static int cgroup_leaf_init(char *group, char *name, int pid)
 		return 1;
 	}
 
+	/* create and initialize new group */
 	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
 	group_init(path, 1, 0);
 
-	strlcat(path, "/cgroup.procs", sizeof(path));
-	echo(path, 0, "%d", pid);
+	/* move process to new group */
+	fnwrite(str("%d", pid), "%s/cgroup.procs", path);
 
-	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s/cgroup.events", group, name);
+	strlcat(path, "/cgroup.events", sizeof(path));
 
 	return iwatch_add(&iw_cgroup, path, 0);
 }
@@ -207,7 +202,7 @@ void cgroup_init(uev_ctx_t *ctx)
 	fclose(fp);
 
 	/* Enable all controllers */
-	echo(FINIT_CGPATH "/cgroup.subtree_control", 0, controllers);
+	fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control");
 
 	/* Default groups, PID 1, services, and user/login processes */
 	group_init(FINIT_CGPATH "/init",   1,  100);
@@ -215,7 +210,7 @@ void cgroup_init(uev_ctx_t *ctx)
 	group_init(FINIT_CGPATH "/system", 0, 9800);
 
 	/* Move ourselves to init */
-	echo(FINIT_CGPATH "/init/cgroup.procs", 0, "1");
+	fnwrite("1", FINIT_CGPATH "/init/cgroup.procs");
 
 	/* prepare cgroup.events watcher */
 	fd = iwatch_init(&iw_cgroup);
