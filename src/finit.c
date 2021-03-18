@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Initialize default control groups, if available
 	 */
-	cgroup_init();
+	cgroup_init(&loop);
 
 	/* Check and mount filesystems. */
 	fs_mount();

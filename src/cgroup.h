@@ -24,9 +24,11 @@
 #ifndef FINIT_CGROUP_H_
 #define FINIT_CGROUP_H_
 
-void cgroup_init   (void);
+#include <uev/uev.h>
 
-int cgroup_user    (char *name, int pid);
-int cgroup_service (char *name, int pid);
+void cgroup_init    (uev_ctx_t *ctx);
+
+int  cgroup_user    (char *name, int pid);
+int  cgroup_service (char *name, int pid);
 
 #endif /* FINIT_CGROUP_H_ */

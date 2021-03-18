@@ -29,10 +29,15 @@
 #include <sys/sysinfo.h>		/* get_nprocs_conf() */
 
 #include "finit.h"
+#include "iwatch.h"
 #include "log.h"
 #include "util.h"
 
 static char controllers[256];
+
+static struct iwatch iw_cgroup;
+static uev_t cgw;
+
 
 static void group_init(char *path, int leaf, int weight)
 {
@@ -69,8 +74,11 @@ static int cgroup_leaf_init(char *group, char *name, int pid)
 	group_init(path, 1, 0);
 
 	strlcat(path, "/cgroup.procs", sizeof(path));
+	echo(path, 0, "%d", pid);
 
-	return echo(path, 0, "%d", pid);
+	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s/cgroup.events", group, name);
+
+	return iwatch_add(&iw_cgroup, path, 0);
 }
 
 int cgroup_user(char *name, int pid)
@@ -92,14 +100,87 @@ static void append_ctrl(char *ctrl)
 	strlcat(controllers, ctrl, sizeof(controllers));
 }
 
+static void cgroup_handle_event(char *event, uint32_t mask)
+{
+	char path[strlen(event)];
+	char buf[80];
+	char *ptr;
+	FILE *fp;
+
+	_d("event: '%s', mask: %08x", event, mask);
+	if (!(mask & IN_MODIFY))
+		return;
+
+	fp = fopen(event, "r");
+	while (fgets(buf, sizeof(buf), fp)) {
+		if (strncmp(buf, "populated", 9))
+			continue;
+
+		chomp(buf);
+		if (atoi(&buf[10]))
+			break;
+
+		strlcpy(path, event, sizeof(path));
+		ptr = strrchr(path, '/');
+		if (ptr) {
+			*ptr = 0;
+			rmdir(path);
+		}
+
+		break;
+	}
+}
+
+static void cgroup_events_cb(uev_t *w, void *arg, int events)
+{
+	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
+	struct inotify_event *ev;
+	ssize_t sz;
+	size_t off;
+
+	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
+	if (sz <= 0) {
+		_pe("invalid inotify event");
+		return;
+	}
+	ev_buf[sz] = 0;
+
+	for (off = 0; off < (size_t)sz; off += sizeof(*ev) + ev->len) {
+		struct iwatch_path *iwp;
+
+		if (off + sizeof(*ev) > (size_t)sz)
+			break;
+
+		ev = (struct inotify_event *)&ev_buf[off];
+		if (off + sizeof(*ev) + ev->len > (size_t)sz)
+			break;
+
+		if (!ev->mask)
+			continue;
+
+		/* Find base path for this event */
+		iwp = iwatch_find_by_wd(&iw_cgroup, ev->wd);
+		if (!iwp)
+			continue;
+
+		cgroup_handle_event(iwp->path, ev->mask);
+	}
+
+#ifdef ENABLE_AUTO_RELOAD
+	if (conf_any_change())
+		service_reload_dynamic();
+#endif
+}
+
 /*
  * Called by Finit at early boot to mount initial cgroups
  */
-void cgroup_init(void)
+void cgroup_init(uev_ctx_t *ctx)
 {
 	int opts = MS_NODEV | MS_NOEXEC | MS_NOSUID;
 	char buf[80];
 	FILE *fp;
+	int fd;
 
 	if (mount("none", FINIT_CGPATH, "cgroup2", opts, NULL)) {
 		_pe("Failed mounting cgroup v2");
@@ -135,6 +216,13 @@ void cgroup_init(void)
 
 	/* Move ourselves to init */
 	echo(FINIT_CGPATH "/init/cgroup.procs", 0, "1");
+
+	/* prepare cgroup.events watcher */
+	fd = iwatch_init(&iw_cgroup);
+	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
+		_pe("Failed setting up cgroup.events watcher");
+		close(fd);
+	}
 }
 
 /**
