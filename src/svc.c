@@ -617,7 +617,7 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 		char *ptr;
 
 		_d("Got token:'%s'", input);
-		token = sanitize(input, len);
+		token = sanitize(input, strlen(input) + 1);
 		if (!token) {
 			_d("Sanitation of token:'%s' failed", input);
 			goto next;

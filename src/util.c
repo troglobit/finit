@@ -193,7 +193,7 @@ char *sanitize(char *arg, size_t len)
 	regex_t preg;
 	int rc;
 
-	if (strlen(arg) > len)
+	if (!memchr(arg, 0, len))
 		return NULL;
 
 	if (regcomp(&preg, regex, REG_ICASE | REG_EXTENDED))
