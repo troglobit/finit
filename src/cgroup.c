@@ -47,12 +47,12 @@ static void group_init(char *path, int leaf, int weight)
 	}
 
 	/* enable detected controllers on domain groups */
-	if (!leaf)
-		fnwrite(controllers, "%s/cgroup.subtree_control", path);
+	if (!leaf && fnwrite(controllers, "%s/cgroup.subtree_control", path))
+		_pe("Failed %s for %s", controllers, path);
 
 	/* set initial group weight */
-	if (weight)
-		fnwrite(str("%d", weight), "%s/cgroup.subtree_control", path);
+	if (weight && fnwrite(str("%d", weight), "%s/cpu.weight", path))
+		_pe("Failed setting cpu.weight %d for %s", weight, path);
 }
 
 static int cgroup_leaf_init(char *group, char *name, int pid)
@@ -69,7 +69,8 @@ static int cgroup_leaf_init(char *group, char *name, int pid)
 	group_init(path, 1, 0);
 
 	/* move process to new group */
-	fnwrite(str("%d", pid), "%s/cgroup.procs", path);
+	if (fnwrite(str("%d", pid), "%s/cgroup.procs", path))
+		_pe("Failed moving pid %d to %s", pid, path);
 
 	strlcat(path, "/cgroup.events", sizeof(path));
 
@@ -202,7 +203,8 @@ void cgroup_init(uev_ctx_t *ctx)
 	fclose(fp);
 
 	/* Enable all controllers */
-	fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control");
+	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control"))
+		_pe("Failed %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
 
 	/* Default groups, PID 1, services, and user/login processes */
 	group_init(FINIT_CGPATH "/init",   1,  100);
