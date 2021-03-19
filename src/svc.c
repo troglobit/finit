@@ -458,7 +458,7 @@ void svc_mark_dynamic(void)
 		if (svc->protect)
 			continue;
 
-		*((int *)&svc->dirty) = -1;
+		*((int *)&svc->removed) = 1;
 	}
 }
 
@@ -470,6 +470,11 @@ void svc_mark_dirty(svc_t *svc)
 void svc_mark_clean(svc_t *svc)
 {
 	*((int *)&svc->dirty) = 0;
+}
+
+void svc_enable(svc_t *svc)
+{
+	*((int *)&svc->removed) = 0;
 }
 
 /**
@@ -484,7 +489,7 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->dirty == -1 && cb)
+		if (svc->removed && cb)
 			cb(svc);
 	}
 }

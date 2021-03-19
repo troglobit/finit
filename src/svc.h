@@ -106,7 +106,8 @@ typedef struct svc {
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, ... */
 	int            protect;        /* Services like dbus-daemon & udev by Finit */
-	const int      dirty;	       /* -1: removal, 0: unmodified, 1: modified */
+	const int      dirty;	       /* 0: unmodified, 1: modified */
+	const int      removed;
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
@@ -179,6 +180,7 @@ void	    svc_clean_dynamic      (void (*cb)(svc_t *));
 int	    svc_clean_bootstrap    (svc_t *svc);
 void	    svc_prune_bootstrap	   (void);
 
+void        svc_enable             (svc_t *svc);
 int         svc_enabled            (svc_t *svc);
 int         svc_is_unique          (svc_t *svc);
 
@@ -197,7 +199,7 @@ static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;   
 static inline void svc_started     (svc_t *svc) { if (svc) svc->starting = 0;       }
 static inline int  svc_is_starting (svc_t *svc) { return svc && 0 != svc->starting; }
 
-static inline int  svc_is_removed  (svc_t *svc) { return svc && -1 == svc->dirty; }
+static inline int  svc_is_removed  (svc_t *svc) { return svc && svc->removed; }
 static inline int  svc_is_changed  (svc_t *svc) { return svc &&  0 != svc->dirty; }
 static inline int  svc_is_updated  (svc_t *svc) { return svc &&  1 == svc->dirty; }
 
