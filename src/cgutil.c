@@ -60,7 +60,7 @@ struct cg  dummy;			/* empty result "NULL"      */
 struct cg *list;
 
 
-static char *pid_cmdline(int pid, char *buf, size_t len)
+char *pid_cmdline(int pid, char *buf, size_t len)
 {
 	size_t i, sz;
 	char *ptr;
@@ -94,7 +94,7 @@ static char *pid_cmdline(int pid, char *buf, size_t len)
 	return buf;
 }
 
-static char *pid_comm(int pid, char *buf, size_t len)
+char *pid_comm(int pid, char *buf, size_t len)
 {
 	FILE *fp;
 
@@ -264,7 +264,7 @@ static int cgroup_filter(const struct dirent *entry)
 	return 1;
 }
 
-static int cgroup_tree(char *path, char *pfx, int top)
+int cgroup_tree(char *path, char *pfx, int top)
 {
 	struct dirent **namelist = NULL;
 	char s[32], r[32], l[32];

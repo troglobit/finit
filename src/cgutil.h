@@ -24,8 +24,15 @@
 #ifndef FINIT_CGUTIL_H_
 #define FINIT_CGUTIL_H_
 
-int show_cgroup (char *arg);
-int show_cgtop  (char *arg);
+#include <stdlib.h>
+
+char *pid_cmdline (int pid, char *buf, size_t len);
+char *pid_comm    (int pid, char *buf, size_t len);
+
+int   cgroup_tree  (char *path, char *pfx, int top);
+
+int   show_cgroup (char *arg);
+int   show_cgtop  (char *arg);
 
 #endif /* FINIT_CGUTIL_H_ */
 
