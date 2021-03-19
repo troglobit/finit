@@ -600,6 +600,21 @@ static char *status(svc_t *svc)
 	return buf;
 }
 
+static void show_cgroup_tree(char *group, char *pfx)
+{
+	char path[256];
+
+	if (!group) {
+		puts("");
+		return;
+	}
+
+	strlcpy(path, FINIT_CGPATH, sizeof(path));
+	strlcat(path, group, sizeof(path));
+
+	cgroup_tree(path, pfx, 0);
+}
+
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
@@ -611,6 +626,7 @@ static int show_status(char *arg)
 	if (arg && arg[0]) {
 		long now = jiffies();
 		char uptm[42] = "N/A";
+		char *group;
 
 		svc = client_svc_find(arg);
 		if (!svc)
@@ -629,6 +645,10 @@ static int show_status(char *arg)
 		printf("Group       : %s\n", svc->group);
 		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
 		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
+		group = pid_cgroup(svc->pid, buf, sizeof(buf));
+		printf("Memory;     : %s\n", memsz(cgroup_memory(group), uptm, sizeof(uptm)));
+		printf("CGroup      : %s\n", group);
+		show_cgroup_tree(group, "              ");
 		printf("\n");
 
 		return do_log(svc->cmd);
