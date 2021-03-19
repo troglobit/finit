@@ -108,6 +108,25 @@ char *pid_comm(int pid, char *buf, size_t len)
 	return chomp(buf);
 }
 
+char *pid_cgroup(int pid, char *buf, size_t len)
+{
+	char *ptr;
+	FILE *fp;
+
+	fp = fopenf("r", "/proc/%d/cgroup", pid);
+	if (!fp)
+		return NULL;
+
+	fgets(buf, len, fp);
+	fclose(fp);
+
+	ptr = strchr(buf, '/');
+	if (!ptr)
+		return NULL;
+
+	return chomp(ptr);
+}
+
 static uint64_t cgroup_uint64(char *path, char *file)
 {
 	uint64_t val = 0;
@@ -157,6 +176,16 @@ static uint64_t cgroup_memuse(struct cg *cg)
 	cg->cg_mem = (float)(cg->cg_rss * 100 / total_ram);
 
 	return cg->cg_vmsize = cgroup_uint64(cg->cg_path, "memory.current");
+}
+
+uint64_t cgroup_memory(char *group)
+{
+	char path[256];
+
+	paste(path, sizeof(path), FINIT_CGPATH, group);
+	printf("DBG: %s (%s)\n", path, group);
+
+	return cgroup_uint64(path, "memory.current");
 }
 
 static float cgroup_cpuload(struct cg *cg)

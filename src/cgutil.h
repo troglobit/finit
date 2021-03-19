@@ -24,10 +24,14 @@
 #ifndef FINIT_CGUTIL_H_
 #define FINIT_CGUTIL_H_
 
+#include <stdint.h>
 #include <stdlib.h>
 
 char *pid_cmdline (int pid, char *buf, size_t len);
 char *pid_comm    (int pid, char *buf, size_t len);
+char *pid_cgroup  (int pid, char *buf, size_t len);
+
+uint64_t cgroup_memory(char *group);
 
 int   cgroup_tree  (char *path, char *pfx, int top);
 
