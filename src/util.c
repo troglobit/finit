@@ -195,6 +195,32 @@ char *uptime(long secs, char *buf, size_t len)
 	return buf;
 }
 
+char *memsz(uint64_t sz, char *buf, size_t len)
+{
+        int gb, mb, kb, b;
+
+	if (!sz) {
+		strlcpy(buf, "-.-", len);
+		return buf;
+	}
+
+        gb = sz / (1024 * 1024 * 1024);
+        sz = sz % (1024 * 1024 * 1024);
+        mb = sz / (1024 * 1024);
+        sz = sz % (1024 * 1024);
+        kb = sz / (1024);
+        b  = sz % (1024);
+
+        if (gb)
+                snprintf(buf, len, "%d.%dG", gb, mb / 102);
+        else if (mb)
+                snprintf(buf, len, "%d.%dM", mb, kb / 102);
+        else
+                snprintf(buf, len, "%d.%dk", kb, b / 102);
+
+        return buf;
+}
+
 /*
  * Verify string argument is NUL terminated
  * Verify string is a JOB[:ID], JOB and ID

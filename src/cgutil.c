@@ -159,27 +159,6 @@ static uint64_t cgroup_memuse(struct cg *cg)
 	return cg->cg_vmsize = cgroup_uint64(cg->cg_path, "memory.current");
 }
 
-static char *memsz(uint64_t sz, char *buf, size_t len)
-{
-        int gb, mb, kb, b;
-
-        gb = sz / (1024 * 1024 * 1024);
-        sz = sz % (1024 * 1024 * 1024);
-        mb = sz / (1024 * 1024);
-        sz = sz % (1024 * 1024);
-        kb = sz / (1024);
-        b  = sz % (1024);
-
-        if (gb)
-                snprintf(buf, len, "%d.%dG", gb, mb / 102);
-        else if (mb)
-                snprintf(buf, len, "%d.%dM", mb, kb / 102);
-        else
-                snprintf(buf, len, "%d.%dk", kb, b / 102);
-
-        return buf;
-}
-
 static float cgroup_cpuload(struct cg *cg)
 {
 	char fn[256];

@@ -55,6 +55,7 @@ void  do_sleep     (unsigned int sec);
 
 long  jiffies      (void);
 char *uptime       (long secs, char *buf, size_t len);
+char *memsz        (uint64_t sz, char *buf, size_t len);
 
 char *sanitize     (char *arg, size_t len);
 
