@@ -44,6 +44,36 @@ static int jobcounter = 1;
 static TAILQ_HEAD(, svc) svc_list = TAILQ_HEAD_INITIALIZER(svc_list);
 static TAILQ_HEAD(, svc) gc_list  = TAILQ_HEAD_INITIALIZER(gc_list);
 
+/*
+ * Before gc removal of svc, make sure we don't clear an active
+ * condition of a new instance of the svc.
+ */
+static void maybe_clear_cond(svc_t *svc)
+{
+	char ident[MAX_IDENT_LEN];
+	char cond[MAX_COND_LEN];
+	svc_t *iter = NULL;
+	svc_t *s;
+
+	mkcond(svc, cond, sizeof(cond));
+	svc_ident(svc, ident, sizeof(ident));
+
+	for (s = svc_iterator(&iter, 1); s; s = svc_iterator(&iter, 0)) {
+		char c[MAX_COND_LEN];
+
+		mkcond(s, c, sizeof(c));
+		if (!string_compare(cond, c))
+			continue;
+
+		_d("Not clearing cond %s from gc svc %s, provided by new active service %s",
+		   cond, ident, svc_ident(s, NULL, 0));
+		return;
+	}
+
+	_d("Cleaning out %s, clearing any conditions ...", svc->name);
+	cond_clear(mkcond(svc, cond, sizeof(cond)));
+}
+
 static void svc_gc(void *arg)
 {
 	struct timespec now;
@@ -52,7 +82,6 @@ static void svc_gc(void *arg)
 
 	clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
 	TAILQ_FOREACH_SAFE(svc, &gc_list, link, next) {
-		char cond[MAX_COND_LEN];
 		int msec;
 
 		msec  = (now.tv_sec  - svc->gc.tv_sec)  * 1000 +
@@ -61,8 +90,7 @@ static void svc_gc(void *arg)
 			continue;
 
 		TAILQ_REMOVE(&gc_list, svc, link);
-		_d("Cleaning out %s, clearing any conditions ...", svc->name);
-		cond_clear(mkcond(svc, cond, sizeof(cond)));
+		maybe_clear_cond(svc);
 		free(svc);
 	}
 
