@@ -81,10 +81,10 @@ int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
 		return -1;
 
 	if (!fexist(file)) {
-		_d("No such file or directory, skipping %s", file);
+		_d("skipping %s: no such file or directory", file);
 		return 0;
 	}
-	_d("Adding new watcher for path %s", file);
+	_d("adding new watcher for path %s", file);
 
 	path = strdup(file);
 	if (!path) {

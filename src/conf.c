@@ -687,7 +687,7 @@ int conf_reload(void)
 		/* Check that file ends with '.conf' */
 		len = strlen(path);
 		if (len < 6 || strcmp(&path[len - 5], ".conf"))
-			_d("Skipping %s, not a valid .conf ... ", path);
+			_d("Skipping %s, not a Finit .conf file ... ", path);
 		else
 			parse_conf(path, 1);
 
