@@ -138,7 +138,9 @@ static struct sigmap {
 	/* Nonstandard signals found in all modern POSIX systems
 	   (including both BSD and Linux).  */
 	{ SIGWINCH,  "SIGWINCH"  },
+#ifdef SIGSTKFLT
 	{ SIGSTKFLT, "SIGSTKFLT" },
+#endif
 	{ SIGPWR,    "SIGPWR"    },
 
 	/* Archaic names for compatibility.  */
