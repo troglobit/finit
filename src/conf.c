@@ -677,7 +677,7 @@ int conf_reload(void)
 
 		/* Check for dangling symlinks */
 		if (S_ISLNK(st.st_mode)) {
-			path = rp = realpath(path, NULL);
+			rp = realpath(path, NULL);
 			if (!rp) {
 				logit(LOG_WARNING, "Skipping %s, dangling symlink: %s", path, strerror(errno));
 				continue;
