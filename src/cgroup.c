@@ -103,11 +103,21 @@ static void cgroup_handle_event(char *event, uint32_t mask)
 	char *ptr;
 	FILE *fp;
 
+	if (!event) {
+		_d("Missing event with mask: %08x", mask);
+		return;
+	}
+
 	_d("event: '%s', mask: %08x", event, mask);
 	if (!(mask & IN_MODIFY))
 		return;
 
 	fp = fopen(event, "r");
+	if (!fp) {
+		_d("Failed opening %s, skipping ...", event);
+		return;
+	}
+
 	while (fgets(buf, sizeof(buf), fp)) {
 		if (strncmp(buf, "populated", 9))
 			continue;
