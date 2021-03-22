@@ -231,7 +231,9 @@ static struct cg *append(char *path)
 
 	snprintf(fn, sizeof(fn), "%s/cpu.stat", path);
 	if (access(fn, F_OK)) {
-		warn("not a cgroup path with cpu controller, %s", path);
+		/* older kernels, 4.19, don't have summary cpu.stat in root */
+		if (strcmp(path, FINIT_CGPATH))
+			warn("not a cgroup path with cpu controller, %s", path);
 		return NULL;
 	}
 
