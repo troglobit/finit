@@ -177,6 +177,10 @@ static char *conf(char *path, size_t len, char *name, int creat)
 	} else
 		strlcat(path, name, len);
 
+	/* fall back to static service unless edit/create */
+	if (!creat && !fexist(path))
+		paste(path, len, FINIT_RCSD, name);
+
 	return path;
 }
 
