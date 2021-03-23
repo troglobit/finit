@@ -379,7 +379,7 @@ static inline int svc_checkenv(svc_t *svc)
 {
 	char *env = svc_getenv(svc);
 
-	if (!env)
+	if (!env || svc->env[0] == '-')
 		return 1;
 
 	return fexist(env);
