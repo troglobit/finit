@@ -38,7 +38,7 @@ int client_connect(void)
 		.sun_path   = INIT_SOCKET,
 	};
 
-	sd = socket(AF_UNIX, SOCK_STREAM, 0);
+	sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 	if (-1 == sd)
 		err(1, "Failed creating UNIX domain socket");
 
