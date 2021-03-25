@@ -35,6 +35,7 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "cgroup.h"
 #include "conf.h"
 #include "helpers.h"
 #include "sig.h"
@@ -418,6 +419,15 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 		_exit(rc);
 	}
 
+	/*
+	 * at this point we're just guessing the username
+	 * would be nice to catch new logins dynamically
+	 * and add them to the correct group, this would
+	 * also work for SSH/Telnet logins.
+	 */
+	if (pid > 1)
+		cgroup_user("root", pid);
+
 	return pid;
 }
 
@@ -435,6 +445,9 @@ pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])
 
 		_exit(rc);
 	}
+
+	if (pid > 1)
+		cgroup_user("root", pid);
 
 	return pid;
 }
