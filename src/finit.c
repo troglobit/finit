@@ -287,20 +287,8 @@ static void emergency_shell(void)
  * finit.conf, or *.conf in finit.d/, run to completion before we
  * finalize the bootstrap process by calling this function.
  */
-static void finalize(void)
+static void finalize(void *unused)
 {
-	/*
-	 * Run startup scripts in the runparts directory, if any.
-	 */
-	if (runparts && fisdir(runparts) && !rescue)
-		run_parts(runparts, NULL);
-
-	/*
-	 * Start all tasks/services in the configured runlevel
-	 */
-	_d("Change to default runlevel, start all services ...");
-	service_runlevel(cfglevel);
-
 	/* Clean up bootstrap-only tasks/services that never started */
 	_d("Clean up all bootstrap-only tasks/services ...");
 	svc_prune_bootstrap();
@@ -342,12 +330,16 @@ static void crank_worker(void *unused)
 
 /*
  * Wait for system bootstrap to complete, all SVC_TYPE_RUNTASK must be
- * allowed to complete their work in [S], or timeout, before we call
- * finalize(), should not take more than 120 sec.
+ * allowed to complete their work in [S], or timeout, before we switch
+ * to the configured runlevel and call finalize(), should not take more
+ * than 120 sec.
  */
-static void final_worker(void *work)
+static void bootstrap_worker(void *work)
 {
 	static int cnt = 120;
+	struct wq  final = {
+		.cb = finalize
+	};
 
 	_d("Step all services ...");
 	service_step_all(SVC_TYPE_ANY);
@@ -363,7 +355,20 @@ static void final_worker(void *work)
 	else
 		_d("Timeout, resuming bootstrap.");
 
-	finalize();
+	_d("Starting runlevel change finalize ...");
+	schedule_work(&final);
+
+	/*
+	 * Run startup scripts in the runparts directory, if any.
+	 */
+	if (runparts && fisdir(runparts) && !rescue)
+		run_parts(runparts, NULL);
+
+	/*
+	 * Start all tasks/services in the configured runlevel
+	 */
+	_d("Change to default runlevel(%d), starting all services ...", cfglevel);
+	service_runlevel(cfglevel);
 }
 
 static int usage(int rc)
@@ -448,8 +453,8 @@ int main(int argc, char *argv[])
 	struct wq crank = {
 		.cb = crank_worker
 	};
-	struct wq final = {
-		.cb = final_worker,
+	struct wq bootstrap = {
+		.cb = bootstrap_worker,
 		.delay = 100
 	};
 	uev_ctx_t loop;
@@ -553,7 +558,7 @@ int main(int argc, char *argv[])
 	schedule_work(&crank);
 
 	_d("Starting bootstrap finalize timer ...");
-	schedule_work(&final);
+	schedule_work(&bootstrap);
 
 	/*
 	 * Enter main loop to monitor /dev/initctl and services
