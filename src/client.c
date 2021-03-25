@@ -23,6 +23,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -64,27 +65,44 @@ int client_disconnect(void)
 
 int client_send(struct init_request *rq, ssize_t len)
 {
+	struct pollfd pfd = { 0 };
 	int sd, result = 255;
 
 	sd = client_connect();
 	if (-1 == sd)
 		return -1;
 
-	if (write(sd, rq, len) != len)
-		goto error;
+	pfd.fd     = sd;
+	pfd.events = POLLOUT;
+	if (poll(&pfd, 1, 2000) <= 0) {
+		warn("Timed out waiting for Finit, errno %d", errno);
+		goto exit;
+	}
 
-	if (read(sd, rq, len) != len)
-		goto error;
+	if (write(sd, rq, len) != len) {
+		warn("Failed communicating with Finit, errno %d", errno);
+		goto exit;
+	}
+
+	pfd.fd = sd;
+	pfd.events = POLLIN;
+	if (poll(&pfd, 1, 2000) <= 0) {
+		warn("Timed out waiting for reply from Finit, errno %d", errno);
+		goto exit;
+	}
+
+	if (read(sd, rq, len) != len) {
+		warn("Failed reading reply from Finit, errno %d", errno);
+		goto exit;
+	}
 
 	if (rq->cmd == INIT_CMD_NACK)
 		result = 1;
 	else
 		result = 0;
-	goto exit;
-error:
-	perror("Failed communicating with finit");
 exit:
 	client_disconnect();
+
 	return result;
 }
 
