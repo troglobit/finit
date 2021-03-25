@@ -94,7 +94,8 @@ int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
 
 	wd = inotify_add_watch(iw->fd, path, IWATCH_MASK | mask);
 	if (wd < 0) {
-		_pe("Failed adding watcher for %s", path);
+		if (errno != EEXIST)
+			_pe("Failed adding watcher for %s", path);
 		free(path);
 		return -1;
 	}
