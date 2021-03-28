@@ -337,8 +337,9 @@ static void crank_worker(void *unused)
 static void bootstrap_worker(void *work)
 {
 	static int cnt = 120;
-	struct wq  final = {
-		.cb = finalize
+	static struct wq final = {
+		.cb = finalize,
+		.delay = 10
 	};
 
 	_d("Step all services ...");
@@ -451,7 +452,8 @@ static int telinit(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	struct wq crank = {
-		.cb = crank_worker
+		.cb = crank_worker,
+		.delay = 10
 	};
 	struct wq bootstrap = {
 		.cb = bootstrap_worker,
