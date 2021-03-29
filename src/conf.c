@@ -792,13 +792,21 @@ int conf_any_change(void)
 
 int conf_changed(char *file)
 {
+	int rc = 0;
+	char *rp;
+
 	if (!file)
 		return 0;
 
-	if (conf_find(file))
-		return 1;
+	rp = realpath(file, NULL);
+	if (!rp)
+		return 0;
 
-	return 0;
+	if (conf_find(rp))
+		rc = 1;
+	free(rp);
+
+	return rc;
 }
 
 static void conf_cb(uev_t *w, void *arg, int events)
