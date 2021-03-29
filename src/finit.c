@@ -431,13 +431,13 @@ static int telinit(int argc, char *argv[])
 		int req = (int)argv[optind][0];
 
 		if (isdigit(req))
-			return systemf("initctl runlevel %c", req);
+			return systemf("initctl -b runlevel %c", req);
 
 		if (req == 'q' || req == 'Q')
-			return systemf("initctl reload");
+			return systemf("initctl -b reload");
 
 		if (req == 's' || req == 'S')
-			return systemf("initctl runlevel %c", req);
+			return systemf("initctl -b runlevel %c", req);
 	}
 
 	/* XXX: add non-pid1 process monitor here
