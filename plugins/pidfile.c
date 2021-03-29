@@ -250,6 +250,8 @@ static void pidfile_init(void *arg)
 
 	if (pidfile_add_path(&iw_pidfile, path))
 		iwatch_exit(&iw_pidfile);
+
+	free(path);
 }
 
 /*
