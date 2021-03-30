@@ -28,6 +28,7 @@
 #include <sys/mount.h>
 #include <sys/sysinfo.h>		/* get_nprocs_conf() */
 
+#include "cgroup.h"
 #include "finit.h"
 #include "iwatch.h"
 #include "log.h"
@@ -39,8 +40,52 @@ static struct iwatch iw_cgroup;
 static uev_t cgw;
 
 
-static void group_init(char *path, int leaf, int weight)
+static void cgset(const char *path, char *ctrl, char *prop)
 {
+	char *val;
+
+	if (!path || !ctrl) {
+		_e("Missing path or controller, skipping!");
+		return;
+	}
+
+	if (!prop) {
+		prop = strchr(ctrl, '.');
+		if (!prop) {
+			_e("Invalid cgroup ctrl syntax: %s", ctrl);
+			return;
+		}
+
+		*prop++ = 0;
+	}
+
+	val = strchr(prop, ':');
+	if (!val) {
+		_e("Missing cgroup ctrl value, prop %s", prop);
+		return;
+	}
+	*val++ = 0;
+
+	/* disallow sneaky relative paths */
+	if (strstr(ctrl, "..") || strstr(prop, "..")) {
+		_e("Possible security violation; '..' not allowed in cgroup config!");
+		return;
+	}
+
+	_d("%s/%s.%s <= %s", path, ctrl, prop, val);
+	if (fnwrite(val, "%s/%s.%s", path, ctrl, prop))
+		_pe("Failed setting %s/%s.%s = %s", path, ctrl, prop, val);
+}
+
+/*
+ * Settings for a cgroup are on the form: cpu.weight:1234,mem.max:4321,...
+ * Finit supports the short-form 'mem.', replacing it with 'memory.' when
+ * writing the setting to the file system.
+ */
+static void group_init(char *path, int leaf, const char *cfg)
+{
+	char *ptr, *s;
+
 	if (mkdir(path, 0755) && EEXIST != errno) {
 		_pe("Failed creating cgroup %s", path);
 		return;
@@ -48,14 +93,33 @@ static void group_init(char *path, int leaf, int weight)
 
 	/* enable detected controllers on domain groups */
 	if (!leaf && fnwrite(controllers, "%s/cgroup.subtree_control", path))
-		_pe("Failed %s for %s", controllers, path);
+		_pe("Failed enabling %s for %s", controllers, path);
 
-	/* set initial group weight */
-	if (weight && fnwrite(str("%d", weight), "%s/cpu.weight", path))
-		_pe("Failed setting cpu.weight %d for %s", weight, path);
+	if (!cfg)
+		return;
+
+	s = strdup(cfg);
+	if (!s) {
+		_pe("Failed activating cgroup cfg for %s", path);
+		return;
+	}
+
+	_d("%s <=> %s", path, s);
+	ptr = strtok(s, ",");
+	while (ptr) {
+		_d("ptr: %s", ptr);
+		if (!strncmp("mem.", ptr, 4))
+			cgset(path, "memory", &ptr[4]);
+		else
+			cgset(path, ptr, NULL);
+
+		ptr = strtok(NULL, ",");
+	}
+
+	free(s);
 }
 
-static int cgroup_leaf_init(char *group, char *name, int pid)
+static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
 {
 	char path[256];
 
@@ -66,11 +130,11 @@ static int cgroup_leaf_init(char *group, char *name, int pid)
 
 	/* create and initialize new group */
 	snprintf(path, sizeof(path), "/sys/fs/cgroup/%s/%s", group, name);
-	group_init(path, 1, 0);
+	group_init(path, 1, cfg);
 
 	/* move process to new group */
 	if (fnwrite(str("%d", pid), "%s/cgroup.procs", path))
-		_pe("Failed moving pid %d to %s", pid, path);
+		_pe("Failed moving pid %d to group %s", pid, path);
 
 	strlcat(path, "/cgroup.events", sizeof(path));
 
@@ -79,12 +143,22 @@ static int cgroup_leaf_init(char *group, char *name, int pid)
 
 int cgroup_user(char *name, int pid)
 {
-	return cgroup_leaf_init("user", name, pid);
+	return cgroup_leaf_init("user", name, pid, NULL);
 }
 
-int cgroup_service(char *name, int pid)
+int cgroup_service(char *name, int pid, struct cgroup *cg)
 {
-	return cgroup_leaf_init("system", name, pid);
+	char *group = "system";
+
+	if (cg && cg->name[0]) {
+		char path[256];
+
+		snprintf(path, sizeof(path), "/sys/fs/cgroup/%s", cg->name);
+		if (fisdir(path))
+			group = cg->name;
+	}
+
+	return cgroup_leaf_init(group, name, pid, cg->cfg);
 }
 
 static void append_ctrl(char *ctrl)
@@ -214,14 +288,14 @@ void cgroup_init(uev_ctx_t *ctx)
 
 	/* Enable all controllers */
 	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control"))
-		_pe("Failed %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
+		_pe("Failed enabling %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
 
 	/* Default groups, PID 1, services, and user/login processes */
-	group_init(FINIT_CGPATH "/init",   1,  100);
-	group_init(FINIT_CGPATH "/user",   0,  100);
-	group_init(FINIT_CGPATH "/system", 0, 9800);
+	group_init(FINIT_CGPATH "/init",   1, "cpu.weight:100");
+	group_init(FINIT_CGPATH "/user",   0, "cpu.weight:100");
+	group_init(FINIT_CGPATH "/system", 0, "cpu.weight:9800");
 
-	/* Move ourselves to init */
+	/* Move ourselves to init (best effort, otherwise run in 'root' group */
 	fnwrite("1", FINIT_CGPATH "/init/cgroup.procs");
 
 	/* prepare cgroup.events watcher */
@@ -229,6 +303,19 @@ void cgroup_init(uev_ctx_t *ctx)
 	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
 		_pe("Failed setting up cgroup.events watcher");
 		close(fd);
+	}
+}
+
+/* the top-level init cgroup is a leaf, that's ensured in cgroup_init() */
+void cgroup_config(size_t num, struct cgroup cg[])
+{
+	size_t i;
+
+	for (i = 0; i < num; i++) {
+		char path[256];
+
+		snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, cg[i].name);
+		group_init(path, 0, cg[i].cfg);
 	}
 }
 

@@ -32,6 +32,7 @@
 #include <lite/queue.h>		/* BSD sys/queue.h API */
 #include <uev/uev.h>
 
+#include "cgroup.h"
 #include "helpers.h"
 
 typedef int svc_cmd_t;
@@ -94,6 +95,7 @@ typedef struct svc {
 
 	/* Limits and scoping */
 	struct rlimit  rlimit[RLIMIT_NLIMITS];
+	struct cgroup  cgroup;
 
 	/* Service details */
 	int            sighalt;        /* Signal to stop prorcess, default: SIGTERM */

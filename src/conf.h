@@ -24,15 +24,21 @@
 #ifndef FINIT_CONF_H_
 #define FINIT_CONF_H_
 
+#include "cgroup.h"
 #include "svc.h"
 
 extern int logfile_size_max;
 extern int logfile_count_max;
 
 extern struct rlimit global_rlimit[];
+extern struct cgroup cgroups[];
+extern size_t cgroup_num;
+extern char cgroup_current[];
 
 int   str2rlim(char *str);
 char *rlim2str(int rlim);
+
+struct cgroup *conf_cgfind(char *name);
 
 int  conf_init            (uev_ctx_t *ctx);
 void conf_reload          (void);

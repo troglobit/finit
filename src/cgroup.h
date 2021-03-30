@@ -26,9 +26,15 @@
 
 #include <uev/uev.h>
 
+struct cgroup {
+	char name[16];
+	char cfg[128];
+};
+
 void cgroup_init    (uev_ctx_t *ctx);
+void cgroup_config  (size_t num, struct cgroup cg[]);
 
 int  cgroup_user    (char *name, int pid);
-int  cgroup_service (char *name, int pid);
+int  cgroup_service (char *name, int pid, struct cgroup *cg);
 
 #endif /* FINIT_CGROUP_H_ */

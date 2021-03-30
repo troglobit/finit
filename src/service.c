@@ -570,7 +570,7 @@ static int service_start(svc_t *svc)
 		_d("Starting %s %s", svc->cmd, buf);
 	}
 
-	cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid);
+	cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
 
 	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
 
@@ -857,6 +857,30 @@ static void parse_env(svc_t *svc, char *env)
 	strlcpy(svc->env, env, sizeof(svc->env));
 }
 
+static void parse_cgroup(svc_t *svc, char *cgroup)
+{
+	char *ptr = cgroup;
+
+	if (!cgroup)
+		return;
+
+	if (cgroup[0] == '.') {
+		ptr = strchr(cgroup, ':');
+		if (ptr)
+			*ptr++ = 0;
+		strlcpy(svc->cgroup.name, &cgroup[1], sizeof(svc->cgroup.name));
+		if (!ptr)
+			return;
+	}
+
+	if (strlen(ptr) >= sizeof(svc->cgroup)) {
+		_e("%s: cgroup settings too long (>%d chars)", svc->cmd, sizeof(svc->cgroup));
+		return;
+	}
+
+	strlcpy(svc->cgroup.cfg, ptr, sizeof(svc->cgroup.cfg));
+}
+
 static void parse_sighalt(svc_t *svc, char *arg)
 {
 	int signo;
@@ -1026,7 +1050,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *cmd, *desc, *runlevels = NULL, *cond = NULL;
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *name = NULL, *halt = NULL, *delay = NULL;
-	char *id = NULL, *env = NULL;
+	char *id = NULL, *env = NULL, *cgroup = NULL;
 	int levels = 0;
 	int manual = 0;
 	char *line;
@@ -1090,6 +1114,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			delay = &cmd[5];
 		else if (!strncasecmp(cmd, "env:", 4))
 			env = &cmd[4];
+		else if (!strncasecmp(cmd, "cgroup:", 7))
+			cgroup = &cmd[7]; /* only settings */
+		else if (!strncasecmp(cmd, "cgroup.", 7))
+			cgroup = &cmd[6]; /* with group */
 		else
 			break;
 
@@ -1148,7 +1176,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	parse_cmdline_args(svc, cmd);
 
 	svc->runlevels = levels;
-	_d("Service %s runlevel 0x%2x", svc->cmd, svc->runlevels);
+	_d("Service %s runlevel 0x%02x", svc->cmd, svc->runlevels);
 
 	conf_parse_cond(svc, cond);
 
@@ -1168,6 +1196,11 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
+
+	/* Seed with currently active group, may be empty */
+	strlcpy(svc->cgroup.name, cgroup_current, sizeof(svc->cgroup.name));
+	if (cgroup)
+		parse_cgroup(svc, cgroup);
 
 	/* New, recently modified or unchanged ... used on reload. */
 	if ((file && conf_changed(file)) || conf_changed(svc_getenv(svc)))

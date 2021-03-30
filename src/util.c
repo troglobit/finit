@@ -88,9 +88,10 @@ int fnwrite(char *value, char *fmt, ...)
 		return -1;
 
 	/* echo(1) always adds a newline */
-	fputs(value, fp);
-	fputs("\n", fp);
-	fclose(fp);
+	if (fputs(value, fp) == EOF ||
+	    fputs("\n", fp) == EOF  ||
+	    fclose(fp))
+		return -1;
 
 	return 0;
 }
