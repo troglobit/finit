@@ -54,6 +54,7 @@ int ionce    = 0;
 int heading  = 1;
 int verbose  = 0;
 int plain    = 0;
+int quiet    = 0;
 int runlevel = 0;
 int iw, pw;
 
@@ -630,7 +631,10 @@ static int show_status(char *arg)
 
 		svc = client_svc_find(arg);
 		if (!svc)
-			return 1;
+			return 255;
+
+		if (quiet)
+			return svc->state != SVC_RUNNING_STATE;
 
 		printf("Status      : %s\n", status(svc));
 		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
@@ -737,6 +741,7 @@ static int usage(int rc)
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
 		"  -1, --once                Only one lap in commands like 'top'\n"
 		"  -p, --plain               Use plain table headings, no ctrl chars\n"
+		"  -q, --quiet               Silent, only return status of command\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
 		"  -h, --help                This help text\n"
@@ -866,6 +871,7 @@ int main(int argc, char *argv[])
 		{ "help",       0, NULL, 'h' },
 		{ "once",       0, NULL, '1' },
 		{ "plain",      0, NULL, 'p' },
+		{ "quiet",      0, NULL, 'q' },
 		{ "no-heading", 0, NULL, 't' },
 		{ "verbose",    0, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
@@ -921,7 +927,7 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "1bcfh?ptv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "1bcfh?pqtv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case '1':
 			ionce = 1;
@@ -945,6 +951,10 @@ int main(int argc, char *argv[])
 
 		case 'p':
 			plain = 1;
+			break;
+
+		case 'q':
+			quiet = 1;
 			break;
 
 		case 't':
