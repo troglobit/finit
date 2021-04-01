@@ -462,7 +462,7 @@ int mksubsys(const char *dir, mode_t mode, char *user, char *group)
 			gid = 0;
 
 		rc = makedir(dir, mode);
-		chown(dir, uid, gid);
+		(void)chown(dir, uid, gid);
 	}
 
 	umask(omask);
