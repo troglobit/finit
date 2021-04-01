@@ -96,35 +96,37 @@ char *pid_cmdline(int pid, char *buf, size_t len)
 
 char *pid_comm(int pid, char *buf, size_t len)
 {
+	char *ptr = NULL;
 	FILE *fp;
 
 	fp = fopenf("r", "/proc/%d/comm", pid);
 	if (!fp)
 		return NULL;
 
-	fgets(buf, len, fp);
+	if (fgets(buf, len, fp))
+		ptr = chomp(buf);
 	fclose(fp);
 
-	return chomp(buf);
+	return ptr;
 }
 
 char *pid_cgroup(int pid, char *buf, size_t len)
 {
-	char *ptr;
+	char *ptr = NULL;
 	FILE *fp;
 
 	fp = fopenf("r", "/proc/%d/cgroup", pid);
 	if (!fp)
 		return NULL;
 
-	fgets(buf, len, fp);
+	if (fgets(buf, len, fp))
+		ptr = chomp(buf);
 	fclose(fp);
 
-	ptr = strchr(buf, '/');
-	if (!ptr)
-		return NULL;
+	if (ptr)
+		ptr = strchr(buf, '/');
 
-	return chomp(ptr);
+	return ptr;
 }
 
 static uint64_t cgroup_uint64(char *path, char *file)
