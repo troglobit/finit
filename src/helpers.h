@@ -70,7 +70,7 @@ void    show_progress   (pstyle_t style);
 int     getty           (char *tty, speed_t speed, char *term, char *user);
 int     sh              (char *tty);
 
-int     stty            (int fd, speed_t speed);
+void    stty            (int fd, speed_t speed);
 speed_t stty_parse_speed(char *baud);
 
 void    print_banner    (const char *heading);
@@ -107,6 +107,24 @@ static inline int create(char *path, mode_t mode, uid_t uid, gid_t gid)
 	}
 
 	return 0;
+}
+
+static inline int dprint(int fd, const char *s, size_t len)
+{
+	size_t loop = 3;
+	int rc = -1;
+
+	if (!len)
+		len = strlen(s);
+
+	while (loop--) {
+		rc = write(fd, s, len);
+		if (rc == -1 && errno == EINTR)
+			continue;
+		break;
+	}
+
+	return rc;
 }
 
 int	ismnt		(char *file, char *dir, char *mode);

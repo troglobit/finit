@@ -41,9 +41,6 @@
 #define _PATH_LOGIN  "/bin/login"
 #endif
 
-#define print(s) (void)write(STDOUT_FILENO, s, strlen(s))
-
-
 /*
  * Read one character from stdin.
  */
@@ -54,7 +51,7 @@ static int readch(char *tty)
 
 	st = read(STDIN_FILENO, &ch1, 1);
 	if (st == 0) {
-		print("\n");
+		dprint(STDOUT_FILENO, "\n", 0);
 		_exit(0);
 	}
 
@@ -74,31 +71,31 @@ static void do_parse(char *line, struct utsname *uts, char *tty)
 	s0 = line;
 	for (s = line; *s != 0; s++) {
 		if (*s == '\\') {
-			(void)write(1, s0, s - s0);
+			dprint(STDOUT_FILENO, s0, s - s0);
 			s0 = s + 2;
 			switch (*++s) {
 			case 'l':
-				print(tty);
+				dprint(STDOUT_FILENO, tty, 0);
 				break;
 			case 'm':
-				print(uts->machine);
+				dprint(STDOUT_FILENO, uts->machine, 0);
 				break;
 			case 'n':
-				print(uts->nodename);
+				dprint(STDOUT_FILENO, uts->nodename, 0);
 				break;
 #ifdef _GNU_SOURCE
 			case 'o':
-				print(uts->domainname);
+				dprint(STDOUT_FILENO, uts->domainname, 0);
 				break;
 #endif
 			case 'r':
-				print(uts->release);
+				dprint(STDOUT_FILENO, uts->release, 0);
 				break;
 			case 's':
-				print(uts->sysname);
+				dprint(STDOUT_FILENO, uts->sysname, 0);
 				break;
 			case 'v':
-				print(uts->version);
+				dprint(STDOUT_FILENO, uts->version, 0);
 				break;
 			case 0:
 				goto leave;
@@ -109,7 +106,7 @@ static void do_parse(char *line, struct utsname *uts, char *tty)
 	}
 
 leave:
-	(void)write(1, s0, s - s0);
+	dprint(STDOUT_FILENO, s0, s - s0);
 }
 
 /*
@@ -159,7 +156,7 @@ static void do_getty(char *tty, char *name, size_t len)
 		while ((ch = readch(tty)) != '\n') {
 			if (ch == CTRL('U')) {
 				while (np > name) {
-					(void)write(1, "\b \b", 3);
+					dprint(STDOUT_FILENO, "\b \b", 3);
 					np--;
 				}
 				continue;
@@ -215,7 +212,7 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 
 	/* Set up TTY, re-enabling ISIG et al. */
 	stty(STDIN_FILENO, speed);
-	(void)write(STDERR_FILENO, cln, strlen(cln));
+	dprint(STDERR_FILENO, cln, strlen(cln));
 
 	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);

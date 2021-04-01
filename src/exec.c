@@ -316,7 +316,7 @@ static int activate_console(int noclear, int nowait)
 		return 1;
 
 	if (!noclear)
-		(void)write(STDERR_FILENO, "\e[r\e[H\e[J", 9);
+		dprint(STDERR_FILENO, "\e[r\e[H\e[J", 9);
 
 	/* Disable ECHO, XON/OFF while waiting for <CR> */
 	if (!tcgetattr(STDIN_FILENO, &orig)) {
@@ -340,16 +340,16 @@ static int activate_console(int noclear, int nowait)
 			continue;
 		}
 
-		(void)write(STDERR_FILENO, clr, strlen(clr));
-		(void)write(STDERR_FILENO, msg, strlen(msg));
+		dprint(STDERR_FILENO, clr, strlen(clr));
+		dprint(STDERR_FILENO, msg, strlen(msg));
 		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\r')
 			continue;
 
 		if (fexist(SYNC_STOPPED))
 			continue;
 
-		(void)write(STDERR_FILENO, clr, strlen(clr));
-		(void)write(STDERR_FILENO, cup, strlen(cup));
+		dprint(STDERR_FILENO, clr, strlen(clr));
+		dprint(STDERR_FILENO, cup, strlen(cup));
 		ret = 1;
 		break;
 	}

@@ -27,6 +27,8 @@
 #include <sys/ttydefaults.h>  /* Not included by default in musl libc */
 #include <termios.h>
 
+#include <helpers.h>
+
 /* B0 means; keep kernel default */
 speed_t stty_parse_speed(char *baud)
 {
@@ -123,10 +125,10 @@ void stty(int fd, speed_t speed)
 	tcsetattr(fd, TCSAFLUSH, &term);
 
 	/* Show cursor again, if it was hidden previously */
-	write(fd, "\033[?25h", 6);
+	dprint(fd, "\033[?25h", 6);
 
 	/* Enable line wrap, if disabled previously */
-	write(fd, "\033[7h", 4);
+	dprint(fd, "\033[7h", 4);
 }
 
 /**

@@ -170,7 +170,7 @@ ssize_t cprintf(const char *fmt, ...)
 	va_end(ap);
 
 	for (i = 0; i < num_cons; i++)
-		(void)write(fds[i], buf, size);
+		dprint(fds[i], buf, size);
 
 	return size;
 }
