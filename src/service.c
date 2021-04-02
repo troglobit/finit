@@ -937,22 +937,28 @@ static void parse_name(svc_t *svc, char *arg)
  */
 static void parse_cmdline_args(svc_t *svc, char *cmd)
 {
+	int diff = 0;
 	char sep = 0;
 	char *arg;
 	int i = 0;
 
+	if (strcmp(svc->args[i], cmd))
+		diff++;
 	strlcpy(svc->args[i++], cmd, sizeof(svc->args[0]));
-
-	while (i < MAX_NUM_SVC_ARGS)
-		svc->args[i++][0] = 0;
 
 	/*
 	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
 	 * array to be zero-terminated.
 	 */
 	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1);) {
+		char prev[sizeof(svc->args[0])];
 		char ch = arg[0];
 		size_t len;
+
+		if (!sep) {
+			strlcpy(prev, svc->args[i], sizeof(prev));
+			svc->args[i][0] = 0;
+		}
 
 		/* XXX: ugly string arg re-concatenation, fixme */
 		if (ch == '"' || ch == '\'')
@@ -970,6 +976,9 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 				continue;
 		}
 
+		if (strcmp(svc->args[i], prev))
+			diff++;
+
 		sep = 0;
 		i++;
 	}
@@ -978,8 +987,12 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	 * Clear remaining args in case they were set earlier.
 	 * This also zero-terminates the args array.
 	 */
-	while (i < MAX_NUM_SVC_ARGS)
-		svc->args[i++][0] = 0;
+	while (i < MAX_NUM_SVC_ARGS) {
+		if (svc->args[i++][0]) {
+			svc->args[i-1][0] = 0;
+			diff++;
+		}
+	}
 #if 0
 	for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
 		if (!svc->args[i][0])
@@ -987,6 +1000,10 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 		_d("%s ", svc->args[i]);
 	}
 #endif
+
+	if (diff)
+		_d("Modified args for %s detected", cmd);
+	svc->args_dirty = (diff > 0);
 }
 
 
@@ -1500,7 +1517,9 @@ restart:
 
 		case COND_ON:
 			if (svc_is_changed(svc)) {
-				if (svc->sighup) {
+				if (svc_nohup(svc))
+					service_stop(svc);
+				else {
 					/*
 					 * wait until all processes have been
 					 * stopped before continuing...
@@ -1508,8 +1527,7 @@ restart:
 					if (sm_is_in_teardown(&sm))
 						break;
 					service_restart(svc);
-				} else
-					service_stop(svc);
+				}
 
 				svc_mark_clean(svc);
 			}

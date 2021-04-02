@@ -142,6 +142,7 @@ typedef struct svc {
 	/* Command, arguments and service description */
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
+	int            args_dirty;
 	char	       desc[MAX_STR_LEN];
 	char	       env[MAX_ARG_LEN];
 
@@ -194,7 +195,7 @@ static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTAS
 static inline int svc_is_forking   (svc_t *svc) { return (svc_is_daemon(svc) || svc_is_sysv(svc)) && svc->pidfile[0] == '!'; }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
-static inline int svc_has_sighup   (svc_t *svc) { return svc &&  0 != svc->sighup; }
+static inline int svc_nohup        (svc_t *svc) { return svc &&  (0 == svc->sighup || 0 != svc->args_dirty); }
 static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && svc->pidfile[0] != 0 && svc->pidfile[0] != '!'; }
 
 static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;       }

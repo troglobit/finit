@@ -232,8 +232,11 @@ For more information, see [doc/plugins.md](doc/plugins.md).
 By default, Finit monitors `/etc/finit.d/` and `/etc/finit.d/enabled/`
 registering any changes to `.conf` files.  To activate a change the user
 must call `initctl reload`, which reloads all modified files, stops any
-removed services, starts new ones, and restarts any modified ones, with
-SIGHUP if the process supports it.
+removed services, starts new ones, and restarts any modified ones.  If the
+command line arguments of a service have changed, the process will be
+terminated and then started again with the updated arguments. If the arguments
+have not been modified and the process supports SIGHUP, the process will
+receive a SIGHUP rather than being terminated and started.
 
 For some use-cases the extra step of calling `initctl reload` creates an
 unnecessary overhead, which can be removed at build-time using:

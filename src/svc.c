@@ -498,6 +498,7 @@ void svc_mark_dirty(svc_t *svc)
 void svc_mark_clean(svc_t *svc)
 {
 	*((int *)&svc->dirty) = 0;
+	*((int *)&svc->args_dirty) = 0;
 }
 
 void svc_enable(svc_t *svc)
