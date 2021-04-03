@@ -201,6 +201,7 @@ static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && s
 static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;       }
 static inline void svc_started     (svc_t *svc) { if (svc) svc->starting = 0;       }
 static inline int  svc_is_starting (svc_t *svc) { return svc && 0 != svc->starting; }
+static inline int  svc_is_running  (svc_t *svc) { return svc && svc->state == SVC_RUNNING_STATE; }
 
 static inline int  svc_is_removed  (svc_t *svc) { return svc && svc->removed; }
 static inline int  svc_is_changed  (svc_t *svc) { return svc &&  0 != svc->dirty; }

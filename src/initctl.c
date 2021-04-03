@@ -193,7 +193,8 @@ static int do_svc(int cmd, char *arg)
 {
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
-		.cmd = cmd,
+		.cmd   = cmd,
+		.data  = "",
 	};
 
 	if (arg)
@@ -201,8 +202,6 @@ static int do_svc(int cmd, char *arg)
 
 	return client_send(&rq, sizeof(rq));
 }
-
-static int do_reload (char *arg) { return do_svc(INIT_CMD_RELOAD,      arg); }
 
 /*
  * This is a wrapper for do_svc() that adds a simple sanity check of
@@ -237,7 +236,35 @@ static int do_startstop(int cmd, char *arg)
 
 static int do_start  (char *arg) { return do_startstop(INIT_CMD_START_SVC,   arg); }
 static int do_stop   (char *arg) { return do_startstop(INIT_CMD_STOP_SVC,    arg); }
-static int do_restart(char *arg) { return do_startstop(INIT_CMD_RESTART_SVC, arg); }
+
+static int do_reload (char *arg)
+{
+	if (!arg || !arg[0])
+		return do_svc(INIT_CMD_RELOAD, NULL);
+
+	return do_startstop(INIT_CMD_RELOAD_SVC, arg);
+}
+
+static int do_restart(char *arg)
+{
+	size_t retries = 3;
+	svc_t *svc;
+
+	if (do_startstop(INIT_CMD_STOP_SVC, arg))
+		return 1;
+
+	while (retries-- > 0 && (svc = client_svc_find(arg))) {
+		if (!svc_is_running(svc))
+			break;
+
+		sleep(1);
+	}
+
+	if (retries == 0)
+		errx(1, "Failed stopping %s (restart)", arg);
+
+	return do_startstop(INIT_CMD_START_SVC, arg);
+}
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
@@ -789,6 +816,7 @@ static int usage(int rc)
 		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
 		"  start    <NAME>[:ID]      Start service by name, with optional ID\n"
 		"  stop     <NAME>[:ID]      Stop/Pause a running service by name\n"
+		"  reload   <NAME>[:ID]      Reload service by name (SIGHUP or restart)\n"
 		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
 		"  status   <NAME>[:ID]      Show service status, by name\n"
 		"  status                    Show status of services, default command\n"

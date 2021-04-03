@@ -74,7 +74,7 @@ static int start(svc_t *svc)
 	return 0;
 }
 
-static int restart(svc_t *svc)
+static int reload(svc_t *svc)
 {
 	if (!svc)
 		return 1;
@@ -88,9 +88,9 @@ static int restart(svc_t *svc)
 	return 0;
 }
 
-static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
-static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
-static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
+static int do_start (char *buf, size_t len) { return call(start,  buf, len); }
+static int do_stop  (char *buf, size_t len) { return call(stop,   buf, len); }
+static int do_reload(char *buf, size_t len) { return call(reload, buf, len); }
 
 static char query_buf[368];
 static int missing(char *job, char *id)
@@ -333,10 +333,10 @@ static void api_cb(uev_t *w, void *arg, int events)
 			result = do_stop(rq.data, sizeof(rq.data));
 			break;
 
-		case INIT_CMD_RESTART_SVC:
-			_d("restart %s", rq.data);
+		case INIT_CMD_RELOAD_SVC:
+			_d("reload %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
-			result = do_restart(rq.data, sizeof(rq.data));
+			result = do_reload(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_GET_RUNLEVEL:
