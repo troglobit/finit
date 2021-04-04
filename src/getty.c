@@ -71,7 +71,8 @@ static void do_parse(char *line, struct utsname *uts, char *tty)
 	s0 = line;
 	for (s = line; *s != 0; s++) {
 		if (*s == '\\') {
-			dprint(STDOUT_FILENO, s0, s - s0);
+			if ((s - s0) > 0)
+				dprint(STDOUT_FILENO, s0, s - s0);
 			s0 = s + 2;
 			switch (*++s) {
 			case 'l':
@@ -106,7 +107,8 @@ static void do_parse(char *line, struct utsname *uts, char *tty)
 	}
 
 leave:
-	dprint(STDOUT_FILENO, s0, s - s0);
+	if ((s - s0) > 0)
+		dprint(STDOUT_FILENO, s0, s - s0);
 }
 
 /*
