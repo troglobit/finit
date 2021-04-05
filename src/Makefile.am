@@ -62,8 +62,8 @@ initctl_SOURCES    = initctl.c initctl.h cgutil.c cgutil.h		\
 		     client.c client.h cond.c cond.h reboot.c		\
 		     serv.c serv.h svc.h util.c util.h
 initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
-initctl_CFLAGS    += $(lite_CFLAGS)
-initctl_LDADD      = $(lite_LIBS)
+initctl_CFLAGS    += $(lite_CFLAGS) $(uev_CFLAGS)
+initctl_LDADD      = $(lite_LIBS) $(uev_LIBS)
 
 INIT_LNKS          = init telinit
 REBOOT_LNKS        = reboot shutdown halt poweroff suspend

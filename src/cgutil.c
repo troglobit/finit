@@ -459,13 +459,20 @@ int show_cgroup(char *arg)
 	}
 
 	return cgroup_tree(arg, NULL, 0);
+static void cgtop(uev_t *w, void *arg, int events)
+{
+	fputs("\e[2J\e[1;1H", stdout);
+	if (heading)
+		print_header(" VmSIZE     RSS   VmLIB  %%MEM  %%CPU  GROUP");
+	cgroup_tree(arg, NULL, 1);
 }
 
 int show_cgtop(char *arg)
 {
 	struct sysinfo si = { 0 };
 	char path[512];
-	int laps = 0;
+        uev_ctx_t ctx;
+        uev_t timer;
 
 	if (!arg)
 		arg = FINIT_CGPATH;
@@ -480,18 +487,10 @@ int show_cgtop(char *arg)
 	sysinfo(&si);
 	total_ram = si.totalram * si.mem_unit;
 
-	while (1) {
-		fputs("\e[2J\e[1;1H", stdout);
-		if (heading)
-			print_header(" VmSIZE     RSS   VmLIB  %%MEM  %%CPU  GROUP");
-		cgroup_tree(arg, NULL, 1);
+        uev_init(&ctx);
+        uev_timer_init(&ctx, &timer, cgtop, arg, 1, ionce ? 0 : 1000);
 
-		if (ionce && laps++)
-			break;
-		sleep(1);
-	}
-
-	return 0;
+	return uev_run(&ctx, 0);
 }
 
 /**
