@@ -612,18 +612,32 @@ static char *svc_environ(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
-static char *status(svc_t *svc)
+static char *status(svc_t *svc, int pretty)
 {
 	static char buf[25];
-	int bold = !plain;
+	const char *color;
 	char *s;
 
 	s = svc_status(svc);
-	if (svc->state != SVC_HALTED_STATE)
-		bold = 0;
+	switch (svc->state) {
+	case SVC_HALTED_STATE:
+		color = "\e[1m";
+		break;
+
+	case SVC_RUNNING_STATE:
+		color = "\e[1;32m";
+		break;
+
+	default:
+		color = "\e[1;33m";
+		break;
+	}
+
+	if (!pretty || plain)
+		color = NULL;
 
 	snprintf(buf, sizeof(buf), "%s%-8.8s%s",
-		 bold ? "\e[1m" : "", s, bold ? "\e[0m" : "");
+		 color ? color : "", s, color ? "\e[0m" : "");
 
 	return buf;
 }
@@ -640,7 +654,7 @@ static void show_cgroup_tree(char *group, char *pfx)
 	strlcpy(path, FINIT_CGPATH, sizeof(path));
 	strlcat(path, group, sizeof(path));
 
-	cgroup_tree(path, pfx, 0);
+	cgroup_tree(path, pfx, 0, 0);
 }
 
 static int show_status(char *arg)
@@ -654,6 +668,9 @@ static int show_status(char *arg)
 	if (arg && arg[0]) {
 		long now = jiffies();
 		char uptm[42] = "N/A";
+		char grbuf[128];
+		char path[256];
+		struct cg *cg;
 		char *group;
 
 		svc = client_svc_find(arg);
@@ -663,23 +680,30 @@ static int show_status(char *arg)
 		if (quiet)
 			return svc->state != SVC_RUNNING_STATE;
 
-		printf("Status      : %s\n", status(svc));
-		printf("Identity    : %s\n", svc_ident(svc, ident, sizeof(ident)));
+		group = pid_cgroup(svc->pid, grbuf, sizeof(grbuf));
+		snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, group);
+		cg = cg_conf(path);
+
+		printf("     Status : %s\n", status(svc, 1));
+		printf("   Identity : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
-		printf("Origin      : %s\n", svc->file[0] ? svc->file : "built-in");
+		printf("     Origin : %s\n", svc->file[0] ? svc->file : "built-in");
 		printf("Environment : %s\n", svc_environ(svc, buf, sizeof(buf)));
 		printf("Condition(s): %s\n", svc_cond(svc, buf, sizeof(buf)));
-		printf("Command     : %s\n", svc_command(svc, buf, sizeof(buf)));
-		printf("PID file    : %s\n", svc->pidfile);
-		printf("PID         : %d\n", svc->pid);
-		printf("User        : %s\n", svc->username);
-		printf("Group       : %s\n", svc->group);
-		printf("Uptime      : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
-		printf("Runlevels   : %s\n", runlevel_string(runlevel, svc->runlevels));
-		group = pid_cgroup(svc->pid, buf, sizeof(buf));
-		printf("Memory;     : %s\n", memsz(cgroup_memory(group), uptm, sizeof(uptm)));
-		printf("CGroup      : %s\n", group);
-		show_cgroup_tree(group, "              ");
+		printf("    Command : %s\n", svc_command(svc, buf, sizeof(buf)));
+		printf("   PID file : %s\n", svc->pidfile);
+		printf("        PID : %d\n", svc->pid);
+		printf("       User : %s\n", svc->username);
+		printf("      Group : %s\n", svc->group);
+		printf("     Uptime : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
+		printf("  Runlevels : %s\n", runlevel_string(runlevel, svc->runlevels));
+		if (svc->pid > 1) {
+			printf("     Memory : %s\n", memsz(cgroup_memory(group), uptm, sizeof(uptm)));
+			printf("     CGroup : %s cpu %s [%s, %s] mem [%s, %s]\n",
+			       group, cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max,
+			       cg->cg_mem.min, cg->cg_mem.max);
+			show_cgroup_tree(group, "              ");
+		}
 		printf("\n");
 
 		return do_log(svc->cmd);
@@ -705,7 +729,7 @@ static int show_status(char *arg)
 		printf("%-*d  ", pw, svc->pid);
 
 		svc_ident(svc, ident, sizeof(ident));
-		printf("%-*s  %s ", iw, ident, status(svc));
+		printf("%-*s  %s ", iw, ident, status(svc, 0));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
@@ -821,6 +845,7 @@ static int usage(int rc)
 		"  status   <NAME>[:ID]      Show service status, by name\n"
 		"  status                    Show status of services, default command\n"
 		"\n"
+		"  cgroup                    List cgroup config overview\n"
 		"  ps                        List processes based on cgroups\n"
 		"  top                       Show top-like listing based on cgroups\n"
 		"\n"
@@ -938,7 +963,8 @@ int main(int argc, char *argv[])
 		{ "stop",     NULL, do_stop      },
 		{ "restart",  NULL, do_restart   },
 
-		{ "ps",       NULL, show_cgroup  },
+		{ "cgroup",   NULL, show_cgroup  },
+		{ "ps",       NULL, show_cgps    },
 		{ "top",      NULL, show_cgtop   },
 
 		{ "runlevel", NULL, do_runlevel  },

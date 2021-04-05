@@ -27,16 +27,45 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+struct cg {
+	struct cg *cg_next;
+
+	/* stats */
+	char      *cg_path;		/* path in /sys/fs/cgroup   */
+	uint64_t   cg_prev;		/* cpuacct.usage            */
+	uint64_t   cg_rss;		/* memory.stat              */
+	uint64_t   cg_vmlib;		/* memory.stat              */
+	uint64_t   cg_vmsize;		/* memory.current           */
+	float      cg_memshare;		/* cg_rss / total_ram * 100 */
+	float      cg_load;		/* curr - prev / 10000000.0 */
+
+	/* config */
+	struct {
+		char min[32];
+		char max[32];
+	} cg_mem;
+
+	struct {
+		char set[16];
+		char weight[32];
+		char max[32];
+	} cg_cpu;
+};
+
 char *pid_cmdline (int pid, char *buf, size_t len);
 char *pid_comm    (int pid, char *buf, size_t len);
 char *pid_cgroup  (int pid, char *buf, size_t len);
 
 uint64_t cgroup_memory(char *group);
 
-int   cgroup_tree  (char *path, char *pfx, int top);
+struct cg *cg_stats(char *path);
+struct cg *cg_conf(char *path);
+
+int   cgroup_tree  (char *path, char *pfx, int mode, int pos);
 
 int   show_cgroup (char *arg);
 int   show_cgtop  (char *arg);
+int   show_cgps   (char *arg);
 
 #endif /* FINIT_CGUTIL_H_ */
 

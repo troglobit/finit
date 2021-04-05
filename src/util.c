@@ -201,7 +201,7 @@ char *memsz(uint64_t sz, char *buf, size_t len)
         int gb, mb, kb, b;
 
 	if (!sz) {
-		strlcpy(buf, "-.-", len);
+		strlcpy(buf, "--.--", len);
 		return buf;
 	}
 

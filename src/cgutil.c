@@ -32,6 +32,7 @@
 #include <lite/lite.h>
 #include <sys/sysinfo.h>		/* sysinfo() */
 
+#include "cgutil.h"
 #include "initctl.h"
 
 #define CDIM plain ? "" : "\e[2m"
@@ -43,18 +44,6 @@
 #define END  plain ? "`-" : "└─"
 
 uint64_t total_ram;			/* From sysinfo() */
-
-struct cg {
-	struct cg *cg_next;
-
-	char      *cg_path;		/* path in /sys/fs/cgroup   */
-	uint64_t   cg_prev;		/* cpuacct.usage            */
-	uint64_t   cg_rss;		/* memory.stat              */
-	uint64_t   cg_vmlib;		/* memory.stat              */
-	uint64_t   cg_vmsize;		/* memory.usage_in_bytes    */
-	float      cg_mem;		/* cg_rss / total_ram * 100 */
-	float      cg_load;		/* curr - prev / 10000000.0 */
-};
 
 struct cg  dummy;			/* empty result "NULL"      */
 struct cg *list;
@@ -129,28 +118,49 @@ char *pid_cgroup(int pid, char *buf, size_t len)
 	return ptr;
 }
 
-static uint64_t cgroup_uint64(char *path, char *file)
+static char *cgroup_val(char *path, char *file, char *buf, size_t len)
 {
-	uint64_t val = 0;
-	char buf[42];
+	char *val = NULL;
 	FILE *fp;
 
 	fp = fopenf("r", "%s/%s", path, file);
-	if (!fp)
-		return val;
+	if (fp) {
+		if (fgets(buf, len, fp)) {
+			val = chomp(buf);
+			len = strcspn(val, " \t");
+			val[len] = 0;
+		}
 
-	if (fgets(buf, sizeof(buf), fp)) {
-		chomp(buf);
-		val = strtoull(buf, NULL, 10);
+		fclose(fp);
 	}
-	fclose(fp);
 
 	return val;
 }
 
-static int cgroup_weight(char *path)
+static uint64_t cgroup_uint64(char *path, char *file)
 {
-	return (int)cgroup_uint64(path, "cpu.weight");
+	uint64_t val = 0;
+	char buf[42];
+
+	if (cgroup_val(path, file, buf, sizeof(buf)))
+		val = strtoull(buf, NULL, 10);
+
+	return val;
+}
+
+static char *cgroup_memval(char *path, char *file, char *buf, size_t len)
+{
+	char data[42];
+
+	if (cgroup_val(path, file, data, sizeof(data))) {
+		if (!strcmp(data, "max"))
+			strlcpy(buf, data, len);
+		else
+			memsz(strtoull(data, NULL, 10), buf, len);
+	} else
+		buf[0] = 0;
+
+	return buf;
 }
 
 static uint64_t cgroup_memuse(struct cg *cg)
@@ -160,22 +170,49 @@ static uint64_t cgroup_memuse(struct cg *cg)
 
 	fp = fopenf("r", "%s/memory.stat", cg->cg_path);
 	if (fp) {
+		cg->cg_rss = 0;
+		cg->cg_vmlib = 0;
+
 		while (fgets(buf, sizeof(buf), fp)) {
 			chomp(buf);
 
 			if (!strncmp(buf, "anon", 4)) {
-				cg->cg_rss = strtoull(&buf[5], NULL, 10);
+				cg->cg_rss += strtoull(&buf[5], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "slab", 4)) {
+				cg->cg_rss += strtoull(&buf[5], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "kernel_stack", 12)) {
+				cg->cg_rss += strtoull(&buf[5], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "pagetables", 10)) {
+				cg->cg_rss += strtoull(&buf[5], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "percpu", 6)) {
+				cg->cg_rss += strtoull(&buf[5], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "sock", 4)) {
+				cg->cg_rss += strtoull(&buf[5], NULL, 10);
 				continue;
 			}
 			if (!strncmp(buf, "file", 4)) {
-				cg->cg_vmlib = strtoull(&buf[5], NULL, 10);
-				break;	/* done */
+				cg->cg_vmlib += strtoull(&buf[5], NULL, 10);
+				continue;
+			}
+			if (!strncmp(buf, "file_mapped", 11)) {
+				cg->cg_vmlib += strtoull(&buf[5], NULL, 10);
+				continue;
 			}
 		}
 		fclose(fp);
 	}
 
-	cg->cg_mem = (float)(cg->cg_rss * 100 / total_ram);
+	cg->cg_memshare = (float)(cg->cg_rss * 100 / total_ram);
 
 	return cg->cg_vmsize = cgroup_uint64(cg->cg_path, "memory.current");
 }
@@ -185,7 +222,6 @@ uint64_t cgroup_memory(char *group)
 	char path[256];
 
 	paste(path, sizeof(path), FINIT_CGPATH, group);
-	printf("DBG: %s (%s)\n", path, group);
 
 	return cgroup_uint64(path, "memory.current");
 }
@@ -267,7 +303,8 @@ static struct cg *find(char *path)
 	return append(path);
 }
 
-static struct cg *cg_update(char *path)
+/* update stats */
+struct cg *cg_stats(char *path)
 {
 	struct cg *cg;
 
@@ -279,6 +316,21 @@ static struct cg *cg_update(char *path)
 	cgroup_memuse(cg);
 
 	return cg;
+}
+
+/* query config */
+struct cg *cg_conf(char *path)
+{
+	static struct cg cg;
+
+	cgroup_memval(path, "memory.min", cg.cg_mem.min, sizeof(cg.cg_mem.min));
+	cgroup_memval(path, "memory.max", cg.cg_mem.max, sizeof(cg.cg_mem.max));
+	cgroup_val(path, "cpu.weight", cg.cg_cpu.weight, sizeof(cg.cg_cpu.weight));
+	cgroup_val(path, "cpu.max",    cg.cg_cpu.max, sizeof(cg.cg_cpu.max));
+	cgroup_val(path, "cpuset.cpus.effective", cg.cg_cpu.set, sizeof(cg.cg_cpu.set));
+	cg.cg_vmsize = cgroup_uint64(path, "memory.current");
+
+	return &cg;
 }
 
 static int cgroup_filter(const struct dirent *entry)
@@ -297,7 +349,7 @@ static int cgroup_filter(const struct dirent *entry)
 	return 1;
 }
 
-int cgroup_tree(char *path, char *pfx, int top)
+int cgroup_tree(char *path, char *pfx, int mode, int pos)
 {
 	struct dirent **namelist = NULL;
 	char s[32], r[32], l[32];
@@ -312,7 +364,7 @@ int cgroup_tree(char *path, char *pfx, int top)
 	int i, n;
 	int num;
 
-	if (top >= screen_rows)
+	if (pos >= screen_rows)
 		return 0;
 
 	if (-1 == lstat(path, &st))
@@ -332,15 +384,26 @@ int cgroup_tree(char *path, char *pfx, int top)
 
 	if (!pfx) {
 		pfx = "";
-		if (top) {
-			cg = cg_update(path);
-			snprintf(row, rplen, " %6.6s  %6.6s  %6.6s %5.1f %5.1f  [%s]",
+		switch (mode) {
+		case 1:
+			cg = cg_stats(path);
+			snprintf(row, rplen, " %6.6s  %6.6s  %6.6s %5.1f %5.1f  %s",
 				 memsz(cg->cg_vmsize, s, sizeof(s)),
 				 memsz(cg->cg_rss,    r, sizeof(r)),
 				 memsz(cg->cg_vmlib,  l, sizeof(l)),
-				 cg->cg_mem, cg->cg_load, path);
-		} else
+				 cg->cg_memshare, cg->cg_load, path);
+			break;
+		case 2:
+			cg = cg_conf(path);
+			snprintf(row, rplen, "%6.6s [%-6.6s%6.6s] %6s [%-6.6s%6.6s] %s",
+				 memsz(cg->cg_vmsize, s, sizeof(s)),
+				 cg->cg_mem.min, cg->cg_mem.max, cg->cg_cpu.set,
+				 cg->cg_cpu.weight, cg->cg_cpu.max, path);
+			break;
+		default:
 			strlcpy(row, path, rplen);
+			break;
+		}
 
 		puts(row);
 	}
@@ -349,38 +412,47 @@ int cgroup_tree(char *path, char *pfx, int top)
 	if (n > 0) {
 		for (i = 0; i < n; i++) {
 			char *nm = namelist[i]->d_name;
-			char prefix[80], tmp[42];
+			char prefix[80];
 
 			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
-			if (top) {
-				cg = cg_update(buf);
+			switch (mode) {
+			case 1:
+				cg = cg_stats(buf);
 				snprintf(row, rplen,
 					 " %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
 					 memsz(cg->cg_vmsize, s, sizeof(s)),
 					 memsz(cg->cg_rss,    r, sizeof(r)),
 					 memsz(cg->cg_vmlib,  l, sizeof(l)),
-					 cg->cg_mem, cg->cg_load);
-			} else
+					 cg->cg_memshare, cg->cg_load);
+				break;
+			case 2:
+				cg = cg_conf(buf);
+				snprintf(row, rplen, "%6.6s [%-6.6s%6.6s] %6.6s [%-6.6s%6.6s] ",
+					 memsz(cg->cg_vmsize, s, sizeof(s)),
+					 cg->cg_mem.min, cg->cg_mem.max,
+					 cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max);
+				break;
+			default:
 				row[0] = 0;
+				break;
+			}
 
 			strlcat(row, pfx, rplen);
 			if (i + 1 == n) {
 				strlcat(row, END, rplen);
-				snprintf(prefix, sizeof(prefix), "%s     ", pfx);
+				snprintf(prefix, sizeof(prefix), "%s   ", pfx);
 			} else {
 				strlcat(row, FORK, rplen);
-				snprintf(prefix, sizeof(prefix), "%s%s    ", pfx, PIPE);
+				snprintf(prefix, sizeof(prefix), "%s%s  ", pfx, PIPE);
 			}
 			strlcat(row, " ", rplen);
 
 			strlcat(row, nm,   rplen);
 			strlcat(row, "/ ", rplen);
 
-			snprintf(tmp, sizeof(tmp), "[cpu.weight: %d]", cgroup_weight(buf));
-			strlcat(row, tmp, rplen);
 			puts(row);
 
-			rc += cgroup_tree(buf, prefix, top ? top + i : 0);
+			rc += cgroup_tree(buf, prefix, mode, pos + i);
 
 			free(namelist[i]);
 		}
@@ -406,10 +478,17 @@ int cgroup_tree(char *path, char *pfx, int top)
 				char proc[screen_cols];
 				int len;
 
-				if (top)
+				switch (mode) {
+				case 1:
 					snprintf(row, rplen, "%37s", " ");
-				else
+					break;
+				case 2:
+					snprintf(row, rplen, " --.-- [            ]        [            ] ");
+					break;
+				default:
 					row[0] = 0;
+					break;
+				}
 
 				strlcat(row, pfx, rplen);
 				strlcat(row, ++i == num ? END : FORK, rlen);
@@ -432,9 +511,9 @@ int cgroup_tree(char *path, char *pfx, int top)
 				puts(row);
 			}
 
-			if (top) {
-				top += i;
-				if (top >= screen_rows)
+			if (mode == 1) {
+				pos += i;
+				if (pos >= screen_rows)
 					break;
 			}
 		}
@@ -458,13 +537,19 @@ int show_cgroup(char *arg)
 		arg = path;
 	}
 
-	return cgroup_tree(arg, NULL, 0);
+	/* memory.current memory.min memory.max cpuset.cpus cpu.weight cpu.max */
+	if (heading)
+		print_header("   MEM [MIN      MAX]    CPU [WEIGHT   MAX] GROUP");
+
+	return cgroup_tree(arg, NULL, 2, 0);
+}
+
 static void cgtop(uev_t *w, void *arg, int events)
 {
 	fputs("\e[2J\e[1;1H", stdout);
 	if (heading)
 		print_header(" VmSIZE     RSS   VmLIB  %%MEM  %%CPU  GROUP");
-	cgroup_tree(arg, NULL, 1);
+	cgroup_tree(arg, NULL, 1, 0);
 }
 
 int show_cgtop(char *arg)
@@ -491,6 +576,20 @@ int show_cgtop(char *arg)
         uev_timer_init(&ctx, &timer, cgtop, arg, 1, ionce ? 0 : 1000);
 
 	return uev_run(&ctx, 0);
+}
+
+int show_cgps(char *arg)
+{
+	char path[512];
+
+	if (!arg)
+		arg = FINIT_CGPATH;
+	else if (arg[0] != '/') {
+		paste(path, sizeof(path), FINIT_CGPATH, arg);
+		arg = path;
+	}
+
+	return cgroup_tree(arg, NULL, 0, 0);
 }
 
 /**
