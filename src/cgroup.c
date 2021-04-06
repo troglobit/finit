@@ -313,9 +313,13 @@ void cgroup_config(size_t num, struct cgroup cg[])
 
 	for (i = 0; i < num; i++) {
 		char path[256];
+		int leaf = 0;
+
+		if (!strcmp(cg[i].name, "init"))
+		    leaf = 1;		/* reserved */
 
 		snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, cg[i].name);
-		group_init(path, 0, cg[i].cfg);
+		group_init(path, leaf, cg[i].cfg);
 	}
 }
 
