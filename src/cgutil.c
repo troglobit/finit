@@ -526,7 +526,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 	return rc;
 }
 
-int show_cgroup(char *arg)
+int show_cgps(char *arg)
 {
 	char path[512];
 
@@ -537,11 +537,7 @@ int show_cgroup(char *arg)
 		arg = path;
 	}
 
-	/* memory.current memory.min memory.max cpuset.cpus cpu.weight cpu.max */
-	if (heading)
-		print_header("   MEM [MIN      MAX]    CPU [WEIGHT   MAX] GROUP");
-
-	return cgroup_tree(arg, NULL, 2, 0);
+	return cgroup_tree(arg, NULL, 0, 0);
 }
 
 static void cgtop(uev_t *w, void *arg, int events)
@@ -578,7 +574,7 @@ int show_cgtop(char *arg)
 	return uev_run(&ctx, 0);
 }
 
-int show_cgps(char *arg)
+int show_cgroup(char *arg)
 {
 	char path[512];
 
@@ -589,7 +585,11 @@ int show_cgps(char *arg)
 		arg = path;
 	}
 
-	return cgroup_tree(arg, NULL, 0, 0);
+	/* memory.current memory.min memory.max cpuset.cpus cpu.weight cpu.max */
+	if (heading)
+		print_header("   MEM [MIN      MAX]    CPU [WEIGHT   MAX] GROUP");
+
+	return cgroup_tree(arg, NULL, 2, 0);
 }
 
 /**
