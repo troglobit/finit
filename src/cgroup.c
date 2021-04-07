@@ -86,16 +86,18 @@ static void group_init(char *path, int leaf, const char *cfg)
 {
 	char *ptr, *s;
 
-	if (mkdir(path, 0755) && EEXIST != errno) {
-		_pe("Failed creating cgroup %s", path);
-		return;
+	if (!fisdir(path)) {
+		if (mkdir(path, 0755)) {
+			_pe("Failed creating cgroup %s", path);
+			return;
+		}
+
+		/* enable detected controllers on domain groups */
+		if (!leaf && fnwrite(controllers, "%s/cgroup.subtree_control", path))
+			_pe("Failed enabling %s for %s", controllers, path);
 	}
 
-	/* enable detected controllers on domain groups */
-	if (!leaf && fnwrite(controllers, "%s/cgroup.subtree_control", path))
-		_pe("Failed enabling %s for %s", controllers, path);
-
-	if (!cfg)
+	if (!cfg || !cfg[0])
 		return;
 
 	s = strdupa(cfg);
