@@ -617,11 +617,11 @@ int show_cgtop(char *arg)
 		flags = fcntl(STDIN_FILENO, F_GETFL);
 		if (flags != -1)
 			(void)fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
-		uev_io_init(&ctx, &input, key, NULL, STDIN_FILENO, UEV_READ);
+		(void)uev_io_init(&ctx, &input, key, NULL, STDIN_FILENO, UEV_READ);
 
-		uev_signal_init(&ctx, &sigint, leave, NULL, SIGINT);
-		uev_signal_init(&ctx, &sigterm, leave, NULL, SIGTERM);
-		uev_signal_init(&ctx, &sigquit, leave, NULL, SIGQUIT);
+		(void)uev_signal_init(&ctx, &sigint, leave, NULL, SIGINT);
+		(void)uev_signal_init(&ctx, &sigterm, leave, NULL, SIGTERM);
+		(void)uev_signal_init(&ctx, &sigquit, leave, NULL, SIGQUIT);
 	}
 
 	return uev_run(&ctx, 0);
