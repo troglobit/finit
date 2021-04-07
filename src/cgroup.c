@@ -44,6 +44,7 @@ static void cgset(const char *path, char *ctrl, char *prop)
 {
 	char *val;
 
+	_d("path %s, ctrl %s, prop %s", path ?: "NIL", ctrl ?: "NIL", prop ?: "NIL");
 	if (!path || !ctrl) {
 		_e("Missing path or controller, skipping!");
 		return;
@@ -86,6 +87,7 @@ static void group_init(char *path, int leaf, const char *cfg)
 {
 	char *ptr, *s;
 
+	_d("path %s, leaf %d, cfg %s", path, leaf, cfg ?: "NIL");
 	if (!fisdir(path)) {
 		if (mkdir(path, 0755)) {
 			_pe("Failed creating cgroup %s", path);
@@ -123,6 +125,7 @@ static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
 {
 	char path[256];
 
+	_d("group %s, name %s, pid %d, cfg %s", group, name, pid, cfg ?: "NIL");
 	if (pid <= 1) {
 		errno = EINVAL;
 		return 1;
