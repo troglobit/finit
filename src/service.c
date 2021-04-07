@@ -951,7 +951,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	 * array to be zero-terminated.
 	 */
 	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1);) {
-		char prev[sizeof(svc->args[0])];
+		char prev[sizeof(svc->args[0])] = { 0 };
 		char ch = arg[0];
 		size_t len;
 
