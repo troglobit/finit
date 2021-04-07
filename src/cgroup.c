@@ -212,6 +212,8 @@ static void cgroup_handle_event(char *event, uint32_t mask)
 
 		break;
 	}
+
+	fclose(fp);
 }
 
 static void cgroup_events_cb(uev_t *w, void *arg, int events)
