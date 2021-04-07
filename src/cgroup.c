@@ -175,7 +175,7 @@ static void append_ctrl(char *ctrl)
 
 static void cgroup_handle_event(char *event, uint32_t mask)
 {
-	char path[strlen(event)];
+	char path[strlen(event) + 1];
 	char buf[80];
 	char *ptr;
 	FILE *fp;
