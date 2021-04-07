@@ -154,7 +154,7 @@ static void find_active_consoles(void)
 void console_init(void)
 {
 	find_active_consoles();
-	screen_init();
+	ttinit();
 }
 
 ssize_t cprintf(const char *fmt, ...)
@@ -255,7 +255,7 @@ static char *pad(char *buf, size_t len, char *ch, size_t width)
 
 void print_banner(const char *heading)
 {
-	char buf[4 * SCREEN_WIDTH];
+	char buf[4 * ttcols];
 
 	if (progress_style == PROGRESS_SILENT)
 		return;
@@ -266,9 +266,9 @@ void print_banner(const char *heading)
 	if (progress_style == PROGRESS_CLASSIC) {
 		strlcat(buf, "\e[1m", sizeof(buf));
 		strlcat(buf, heading, sizeof(buf));
-		pad(buf, sizeof(buf), "=", SCREEN_WIDTH + 10);
+		pad(buf, sizeof(buf), "=", ttcols + 10);
 	} else {
-		size_t wmax = 80 <= SCREEN_WIDTH ? 80 : SCREEN_WIDTH;
+		size_t wmax = 80 <= ttcols ? 80 : ttcols;
 
 		/* • • • Foo System ═══════════════════════════════════════════════ */
 		/* ⬤ ⬤ ⬤ Foo System ═══════════════════════════════════════════════ */
@@ -331,7 +331,7 @@ static char *status(int rc)
 
 void printv(const char *fmt, va_list ap)
 {
-	char buf[SCREEN_WIDTH];
+	char buf[ttcols];
 	size_t len;
 
 	if (!fmt || progress_style == PROGRESS_SILENT)

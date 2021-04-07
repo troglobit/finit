@@ -25,7 +25,7 @@
 #define FINIT_UTIL_H_
 
 #include "config.h"
-#ifdef HAVE_TERMIOS_H		/* for screen_width() */
+#ifdef HAVE_TERMIOS_H
 #include <poll.h>
 #include <stdio.h>
 #include <sys/reboot.h>
@@ -37,11 +37,12 @@
 #define RB_SW_SUSPEND	0xd000fce2
 #endif
 
-extern int   screen_rows;
-extern int   screen_cols;
+extern int   ttrows;
+extern int   ttcols;
 extern char *prognm;
 
-#define SCREEN_WIDTH screen_cols
+/* Define for printheader() from conio.h, used in initctl */
+#define SCREEN_WIDTH ttcols
 #include <lite/conio.h>
 
 char *progname     (char *arg0);
@@ -59,7 +60,11 @@ char *memsz        (uint64_t sz, char *buf, size_t len);
 
 char *sanitize     (char *arg, size_t len);
 
-int   screen_init  (void);
+#ifdef HAVE_TERMIOS_H
+int     ttinit     (void);
+#else
+#define ttinit()   ttcols
+#endif
 
 static inline char *strterm(char *str, size_t len)
 {

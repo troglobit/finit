@@ -102,11 +102,11 @@ void print_header(const char *fmt, ...)
 
 		vfprintf(stdout, fmt, ap);
 		fputs("\n", stdout);
-		for (len = 0; len < screen_cols; len++)
+		for (len = 0; len < ttcols; len++)
 			fputc('=', stdout);
 		fputs("\n", stdout);
 	} else {
-		char buf[screen_cols];
+		char buf[ttcols];
 
 		vsnprintf(buf, sizeof(buf), fmt, ap);
 		printheader(stdout, buf, 0);
@@ -875,7 +875,7 @@ static int do_devel(char *arg)
 {
 	(void)arg;
 
-	printf("Screen %dx%d\n", screen_cols, screen_rows);
+	printf("Screen %dx%d\n", ttcols, ttrows);
 
 	return 0;
 }
@@ -1022,7 +1022,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (interactive)
-		screen_init();
+		ttinit();
 
 	if (!has_utmp()) {
 		/* system w/o utmp support, disable 'utmp' command */

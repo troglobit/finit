@@ -89,8 +89,8 @@ static void do_list(const char *path)
 	if (width <= 0)
 		goto done;
 
-	num = (screen_cols - 2) / width;
-	if ((num - 1) * 2 + num * width > screen_cols)
+	num = (ttcols - 2) / width;
+	if ((num - 1) * 2 + num * width > ttcols)
 		num--;
 
 	prev = 0;

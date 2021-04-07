@@ -353,7 +353,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 {
 	struct dirent **namelist = NULL;
 	char s[32], r[32], l[32];
-	char row[screen_cols + 9];	/* + control codes */
+	char row[ttcols + 9];		/* + control codes */
 	size_t rlen = sizeof(row) - 1;
 	size_t rplen = rlen - 9;
 	struct stat st;
@@ -364,7 +364,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 	int i, n;
 	int num;
 
-	if (pos >= screen_rows)
+	if (pos >= ttrows)
 		return 0;
 
 	if (-1 == lstat(path, &st))
@@ -475,7 +475,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 			/* skip kernel threads for now (no cmdline) */
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf))) {
-				char proc[screen_cols];
+				char proc[ttcols];
 				int len;
 
 				switch (mode) {
@@ -513,7 +513,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 
 			if (mode == 1) {
 				pos += i;
-				if (pos >= screen_rows)
+				if (pos >= ttrows)
 					break;
 			}
 		}
@@ -562,7 +562,7 @@ int show_cgtop(char *arg)
 		arg = path;
 	}
 
-	if (!hcreate(screen_rows + 25))
+	if (!hcreate(ttrows + 25))
 		err(1, "failed creating hash table");
 
 	sysinfo(&si);

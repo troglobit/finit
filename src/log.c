@@ -50,7 +50,7 @@ void log_exit(void)
 	 * terminal may have been resized at runtime
 	 */
 	if (!debug)
-		screen_init();
+		ttinit();
 
 	enable_progress(1);
 }
@@ -78,7 +78,7 @@ void log_debug(void)
 		loglevel = LOG_DEBUG;
 	} else {
 		loglevel = LOG_NOTICE;
-		screen_init();
+		ttinit();
 	}
 	log_open();
 

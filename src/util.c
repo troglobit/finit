@@ -41,9 +41,9 @@
 #include <lite/lite.h>		/* strlcat() */
 #include "util.h"
 
-int   screen_rows  = 24;
-int   screen_cols  = 80;
-char *prognm       = NULL;
+int   ttrows  = 24;
+int   ttcols  = 80;
+char *prognm  = NULL;
 
 char *progname(char *arg0)
 {
@@ -247,13 +247,13 @@ char *sanitize(char *arg, size_t len)
 	return arg;
 }
 
+#ifdef HAVE_TERMIOS_H
 /*
  * Called by initctl, and by finit at boot and shutdown, to
  * (re)initialize the screen size for print() et al.
  */
-int screen_init(void)
+int ttinit(void)
 {
-#ifdef HAVE_TERMIOS_H
 	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
 	struct winsize ws = { 0 };
 	struct termios tc, saved;
@@ -270,16 +270,16 @@ int screen_init(void)
 
 	/* 1. Try TIOCWINSZ to query window size from kernel */
 	if (!ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws)) {
-		screen_rows = ws.ws_row;
-		screen_cols = ws.ws_col;
+		ttrows = ws.ws_row;
+		ttcols = ws.ws_col;
 
 		/* Likely doesn't work in PID 1 after kernel starts us ... */
 		if (!ws.ws_row && !ws.ws_col)
 			goto fallback;
 	} else if (!isatty(STDOUT_FILENO)) {
 		/* 2. We may be running under watch(1) */
-		screen_cols = atonum(getenv("COLUMNS"));
-		screen_rows = atonum(getenv("LINES"));
+		ttcols = atonum(getenv("COLUMNS"));
+		ttrows = atonum(getenv("LINES"));
 	} else {
 	fallback:
 		/* 3. ANSI goto + query cursor position trick as fallback */
@@ -289,8 +289,8 @@ int screen_init(void)
 			int row, col;
 
 			if (scanf("\e[%d;%dR", &row, &col) == 2) {
-				screen_cols = col;
-				screen_rows = row;
+				ttcols = col;
+				ttrows = row;
 			}
 		}
 
@@ -301,14 +301,14 @@ int screen_init(void)
 	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
 
 	/* Sanity check */
-	if (screen_cols <= 0)
-		screen_cols = 80;
-	if (screen_rows <= 0)
-		screen_rows = 24;
-#endif
+	if (ttcols <= 0)
+		ttcols = 80;
+	if (ttrows <= 0)
+		ttrows = 24;
 
-	return screen_cols;
+	return ttcols;
 }
+#endif /* HAVE_TERMIOS_H */
 
 /**
  * Local Variables:
