@@ -542,18 +542,56 @@ int show_cgps(char *arg)
 
 static void cgtop(uev_t *w, void *arg, int events)
 {
+	(void)w;
+	(void)events;
+
 	fputs("\e[2J\e[1;1H", stdout);
 	if (heading)
 		print_header(" VmSIZE     RSS   VmLIB  %%MEM  %%CPU  GROUP");
 	cgroup_tree(arg, NULL, 1, 0);
 }
 
+static void cleanup(void)
+{
+	ttcooked();
+	showcursor();
+}
+
+static void leave(uev_t *w, void *arg, int events)
+{
+	(void)arg;
+	(void)events;
+
+	uev_exit(w->ctx);
+}
+
+static void key(uev_t *w, void *arg, int events)
+{
+	char ch;
+
+	(void)arg;
+	(void)events;
+
+	if (read(w->fd, &ch, sizeof(ch)) != -1) {
+		switch (ch) {
+		case 'q':
+			uev_exit(w->ctx);
+			break;
+
+		default:
+			warnx("Got char 0x%02x", ch);
+			break;
+		}
+	}
+}
+
 int show_cgtop(char *arg)
 {
 	struct sysinfo si = { 0 };
+        uev_t timer, input, sigint, sigterm, sigquit;
 	char path[512];
         uev_ctx_t ctx;
-        uev_t timer;
+	int flags;
 
 	if (!arg)
 		arg = FINIT_CGPATH;
@@ -570,6 +608,21 @@ int show_cgtop(char *arg)
 
         uev_init(&ctx);
         uev_timer_init(&ctx, &timer, cgtop, arg, 1, ionce ? 0 : 1000);
+
+	if (!ionce || plain) {
+		atexit(cleanup);
+		ttraw();
+		hidecursor();
+
+		flags = fcntl(STDIN_FILENO, F_GETFL);
+		if (flags != -1)
+			(void)fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+		uev_io_init(&ctx, &input, key, NULL, STDIN_FILENO, UEV_READ);
+
+		uev_signal_init(&ctx, &sigint, leave, NULL, SIGINT);
+		uev_signal_init(&ctx, &sigterm, leave, NULL, SIGTERM);
+		uev_signal_init(&ctx, &sigquit, leave, NULL, SIGQUIT);
+	}
 
 	return uev_run(&ctx, 0);
 }
