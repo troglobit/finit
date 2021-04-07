@@ -296,7 +296,8 @@ void cgroup_init(uev_ctx_t *ctx)
 	group_init(FINIT_CGPATH "/system", 0, "cpu.weight:9800");
 
 	/* Move ourselves to init (best effort, otherwise run in 'root' group */
-	fnwrite("1", FINIT_CGPATH "/init/cgroup.procs");
+	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs"))
+		_pe("Failed moving PID 1 to cgroup ", FINIT_CGPATH "/init");
 
 	/* prepare cgroup.events watcher */
 	fd = iwatch_init(&iw_cgroup);
