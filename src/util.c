@@ -105,9 +105,9 @@ int fnwrite(char *value, char *fmt, ...)
 		return -1;
 
 	/* echo(1) always adds a newline */
-	if (fputs(value, fp) == EOF ||
-	    fputs("\n", fp)  == EOF ||
-	    fclose(fp)       == EOF)
+	if (fputs(value, fp) == EOF || fputs("\n", fp) == EOF)
+		rc = -1;
+	if (fclose(fp) == EOF)
 		rc = -1;
 	else
 		rc = 0;
