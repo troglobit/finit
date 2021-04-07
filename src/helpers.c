@@ -260,7 +260,7 @@ void print_banner(const char *heading)
 	if (progress_style == PROGRESS_SILENT)
 		return;
 
-	memset(buf, 0, sizeof(buf));
+	buf[0] = 0;
 	strlcat(buf, "\r\e[2K", sizeof(buf));
 
 	if (progress_style == PROGRESS_CLASSIC) {
@@ -339,7 +339,7 @@ void printv(const char *fmt, va_list ap)
 
 	delline();
 
-	memset(buf, 0, sizeof(buf));
+	buf[0] = 0;
 	len = print_timestamp(buf, sizeof(buf));
 	vsnprintf(&buf[len], sizeof(buf) - len, fmt, ap);
 

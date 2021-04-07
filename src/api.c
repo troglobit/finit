@@ -110,7 +110,7 @@ static int missing(char *job, char *id)
 
 static int do_query(char *buf, size_t len)
 {
-	memset(query_buf, 0, sizeof(query_buf));
+	query_buf[0] = 0;
 	if (svc_parse_jobstr(buf, len, NULL, missing)) {
 		memcpy(buf, query_buf, len);
 		return 1;

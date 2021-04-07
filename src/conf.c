@@ -357,7 +357,7 @@ char *lim2str(struct rlimit *rlim)
 	char tmp[25];
 	static char buf[42];
 
-	memset(buf, 0, sizeof(buf));
+	buf[0] = 0;
 	if (RLIM_INFINITY == rlim->rlim_cur)
 		snprintf(tmp, sizeof(tmp), "unlimited, ");
 	else
@@ -661,7 +661,7 @@ static int parse_conf(char *file, int is_rcsd)
 	/* Prepare default limits and group for each service in /etc/finit.d/ */
 	if (is_rcsd) {
 		memcpy(rlimit, global_rlimit, sizeof(rlimit));
-		memset(cgroup_current, 0, sizeof(cgroup_current));
+		cgroup_current[0] = 0;
 	}
 
 	_d("*** Parsing %s", file);

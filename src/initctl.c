@@ -120,7 +120,6 @@ static int runlevel_get(int *prevlevel)
 	int result;
 	struct init_request rq;
 
-	memset(&rq, 0, sizeof(rq));
 	rq.cmd = INIT_CMD_GET_RUNLEVEL;
 	rq.magic = INIT_MAGIC;
 
@@ -359,7 +358,7 @@ static char *svc_cond(svc_t *svc, char *buf, size_t len)
 {
 	char *cond, *conds;
 
-	memset(buf, 0, len);
+	buf[0] = 0;
 
 	if (!svc->cond[0])
 		return buf;
@@ -485,10 +484,7 @@ int utmp_show(char *file)
 	while ((ut = getutent())) {
 		char addr[64];
 
-		memset(id, 0, sizeof(id));
 		strlcpy(id, ut->ut_id, sizeof(id));
-
-		memset(user, 0, sizeof(user));
 		strlcpy(user, ut->ut_user, sizeof(user));
 
 		sec = ut->ut_tv.tv_sec;
