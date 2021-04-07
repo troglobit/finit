@@ -62,8 +62,12 @@ char *sanitize     (char *arg, size_t len);
 
 #ifdef HAVE_TERMIOS_H
 int     ttinit     (void);
+int     ttraw      (void);
+int     ttcooked   (void);
 #else
 #define ttinit()   ttcols
+#define ttraw()    0
+#define ttcooked() 0
 #endif
 
 static inline char *strterm(char *str, size_t len)

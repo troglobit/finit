@@ -41,6 +41,22 @@
 #include <lite/lite.h>		/* strlcat() */
 #include "util.h"
 
+#ifdef HAVE_TERMIOS_H
+/*
+ * This flag is used on *BSD when calling tcsetattr() to prevent it
+ * from changing speed, duplex, parity.  GNU says we should use the
+ * CIGNORE flag to c_cflag, but that doesn't exist so ... we rely on
+ * our initial tcgetattr() and prey that nothing changes on the TTY
+ * before we exit and restore with tcsetattr()
+ */
+#ifndef TCSASOFT
+#define TCSASOFT 0
+#endif
+
+static struct termios ttold;
+static struct termios ttnew;
+#endif
+
 int   ttrows  = 24;
 int   ttcols  = 80;
 char *prognm  = NULL;
@@ -307,6 +323,54 @@ int ttinit(void)
 		ttrows = 24;
 
 	return ttcols;
+}
+
+/*
+ * This function sets the terminal to RAW mode, as defined for the current
+ * shell.  This is called both by ttopen() above and by spawncli() to
+ * get the current terminal settings and then change them to what
+ * mg expects.	Thus, tty changes done while spawncli() is in effect
+ * will be reflected in mg.
+ */
+int ttraw(void)
+{
+	if (tcgetattr(0, &ttold) == -1) {
+		fprintf(stderr, "%s: failed querying tty attrs: %s\n",
+			prognm, strerror(errno));
+		return 1;
+	}
+
+	(void)memcpy(&ttnew, &ttold, sizeof(ttnew));
+	/* Set terminal to 'raw' mode and ignore a 'break' */
+	ttnew.c_cc[VMIN] = 1;
+	ttnew.c_cc[VTIME] = 0;
+	ttnew.c_iflag |= IGNBRK;
+	ttnew.c_iflag &= ~(BRKINT | PARMRK | INLCR | IGNCR | ICRNL | IXON);
+	ttnew.c_oflag &= ~OPOST;
+	ttnew.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
+
+	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &ttnew) == -1) {
+		fprintf(stderr, "%s: failed setting tty in raw mode: %s\n",
+			prognm, strerror(errno));
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * This function restores all terminal settings to their default values,
+ * in anticipation of exiting or suspending the editor.
+ */
+int ttcooked(void)
+{
+	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &ttold) == -1) {
+		fprintf(stderr, "%s: failed restoring tty to cooked mode: %s\n",
+			prognm, strerror(errno));
+		return 1;
+	}
+
+	return 0;
 }
 #endif /* HAVE_TERMIOS_H */
 
