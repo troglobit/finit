@@ -117,20 +117,20 @@ void print_header(const char *fmt, ...)
 
 static int runlevel_get(int *prevlevel)
 {
-	int result;
 	struct init_request rq;
+	int rc;
 
 	rq.cmd = INIT_CMD_GET_RUNLEVEL;
 	rq.magic = INIT_MAGIC;
 
-	result = client_send(&rq, sizeof(rq));
-	if (!result) {
-		result = rq.runlevel;
+	rc = client_send(&rq, sizeof(rq));
+	if (!rc) {
+		rc = rq.runlevel;
 		if (prevlevel)
 			*prevlevel = rq.sleeptime;
 	}
 
-	return result;
+	return rc;
 }
 
 static int toggle_debug(char *arg)
