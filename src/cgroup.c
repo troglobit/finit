@@ -180,11 +180,6 @@ static void cgroup_handle_event(char *event, uint32_t mask)
 	char *ptr;
 	FILE *fp;
 
-	if (!event) {
-		_d("Missing event with mask: %08x", mask);
-		return;
-	}
-
 	_d("event: '%s', mask: %08x", event, mask);
 	if (!(mask & IN_MODIFY))
 		return;
@@ -245,7 +240,7 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 
 		/* Find base path for this event */
 		iwp = iwatch_find_by_wd(&iw_cgroup, ev->wd);
-		if (!iwp)
+		if (!iwp || !iwp->path)
 			continue;
 
 		cgroup_handle_event(iwp->path, ev->mask);
