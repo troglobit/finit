@@ -89,6 +89,7 @@ int fnwrite(char *value, char *fmt, ...)
 	char path[256];
 	va_list ap;
 	FILE *fp;
+	int rc;
 
 	if (!value) {
 		errno = EINVAL;
@@ -105,11 +106,13 @@ int fnwrite(char *value, char *fmt, ...)
 
 	/* echo(1) always adds a newline */
 	if (fputs(value, fp) == EOF ||
-	    fputs("\n", fp) == EOF  ||
-	    fclose(fp))
-		return -1;
+	    fputs("\n", fp)  == EOF ||
+	    fclose(fp)       == EOF)
+		rc = -1;
+	else
+		rc = 0;
 
-	return 0;
+	return rc;
 }
 
 /*
