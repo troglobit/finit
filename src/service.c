@@ -1078,7 +1078,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		return errno = EINVAL;
 	}
 
-	line = strdup(cfg);
+	line = strdupa(cfg);
 	if (!line)
 		return 1;
 
@@ -1104,7 +1104,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (!cmd) {
 	incomplete:
 		_e("Incomplete service '%s', cannot register", cfg);
-		free(line);
 		return errno = ENOENT;
 	}
 
@@ -1147,7 +1146,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel > 0 && !ISOTHER(levels, 0)) {
 		_d("Skipping %s, bootstrap is completed.", cmd);
-		free(line);
 		return 0;
 	}
 
@@ -1160,7 +1158,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc = svc_new(cmd, id, type);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
-			free(line);
 			return errno = ENOMEM;
 		}
 
@@ -1231,8 +1228,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (!file)
 		svc->protect = 1;
 
-	/* Free duped line, from above */
-	free(line);
 	return 0;
 }
 

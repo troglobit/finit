@@ -364,7 +364,7 @@ static char *svc_cond(svc_t *svc, char *buf, size_t len)
 	if (!svc->cond[0])
 		return buf;
 
-	conds = strdup(svc->cond);
+	conds = strdupa(svc->cond);
 	if (!conds)
 		return buf;
 
@@ -401,7 +401,6 @@ static char *svc_cond(svc_t *svc, char *buf, size_t len)
 	}
 
 	strlcat(buf, ">", len);
-	free(conds);
 
 	return buf;
 }

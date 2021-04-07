@@ -98,7 +98,7 @@ static void group_init(char *path, int leaf, const char *cfg)
 	if (!cfg)
 		return;
 
-	s = strdup(cfg);
+	s = strdupa(cfg);
 	if (!s) {
 		_pe("Failed activating cgroup cfg for %s", path);
 		return;
@@ -115,8 +115,6 @@ static void group_init(char *path, int leaf, const char *cfg)
 
 		ptr = strtok(NULL, ",");
 	}
-
-	free(s);
 }
 
 static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
