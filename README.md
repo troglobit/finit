@@ -399,7 +399,9 @@ Options:
   -b, --batch               Batch mode, no screen size probing
   -c, --create              Create missing paths (and files) as needed
   -f, --force               Ignore missing files and arguments, never prompt
+  -1, --once                Only one lap in commands like 'top'
   -p, --plain               Use plain table headings, no ctrl chars
+  -q, --quiet               Silent, only return status of command
   -t, --no-heading          Skip table headings
   -v, --verbose             Verbose output
   -h, --help                This help text
@@ -421,23 +423,29 @@ Commands:
 
   cond     set   <COND>     Set (assert) user-defined condition     +usr/COND
   cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND
-  cond     show             Show condition status
+  cond     status           Show condition status, default cond command
   cond     dump             Dump all conditions and their status
 
   log      [NAME]           Show ten last Finit, or NAME, messages from syslog
   start    <NAME>[:ID]      Start service by name, with optional ID
   stop     <NAME>[:ID]      Stop/Pause a running service by name
+  reload   <NAME>[:ID]      Reload service by name (SIGHUP or restart)
   restart  <NAME>[:ID]      Restart (stop/start) service by name
   status   <NAME>[:ID]      Show service status, by name
   status                    Show status of services, default command
 
+  cgroup                    List cgroup config overview
   ps                        List processes based on cgroups
+  top                       Show top-like listing based on cgroups
 
   runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
   reboot                    Reboot system
   halt                      Halt system
   poweroff                  Halt and power off system
   suspend                   Suspend system
+
+Bug report address: https://github.com/troglobit/finit/issues
+Project homepage: https://troglobit.com/finit.html
 ```
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
