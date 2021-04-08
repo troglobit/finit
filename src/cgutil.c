@@ -388,7 +388,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 		switch (mode) {
 		case 1:
 			cg = cg_stats(path);
-			snprintf(row, rplen, " %6.6s  %6.6s  %6.6s %5.1f %5.1f  %s",
+			snprintf(row, rplen, "\r %6.6s  %6.6s  %6.6s %5.1f %5.1f  %s",
 				 memsz(cg->cg_vmsize, s, sizeof(s)),
 				 memsz(cg->cg_rss,    r, sizeof(r)),
 				 memsz(cg->cg_vmlib,  l, sizeof(l)),
@@ -396,13 +396,14 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 			break;
 		case 2:
 			cg = cg_conf(path);
-			snprintf(row, rplen, "%6.6s [%-6.6s%6.6s] %6s [%-6.6s%6.6s] %s",
+			snprintf(row, rplen, "\r%6.6s [%-6.6s%6.6s] %6s [%-6.6s%6.6s] %s",
 				 memsz(cg->cg_vmsize, s, sizeof(s)),
 				 cg->cg_mem.min, cg->cg_mem.max, cg->cg_cpu.set,
 				 cg->cg_cpu.weight, cg->cg_cpu.max, path);
 			break;
 		default:
-			strlcpy(row, path, rplen);
+			strlcpy(row, "\r", rplen);
+			strlcat(row, path, rplen);
 			break;
 		}
 
@@ -429,13 +430,13 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 
 				switch (mode) {
 				case 1:
-					snprintf(row, rplen, "%37s", " ");
+					snprintf(row, rplen, "\r%37s", " ");
 					break;
 				case 2:
-					snprintf(row, rplen, " --.-- [            ]        [            ] ");
+					snprintf(row, rplen, "\r --.-- [            ]        [            ] ");
 					break;
 				default:
-					row[0] = 0;
+					strlcpy(row, "\r", rplen);
 					break;
 				}
 
@@ -481,7 +482,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 			case 1:
 				cg = cg_stats(buf);
 				snprintf(row, rplen,
-					 " %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
+					 "\r %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
 					 memsz(cg->cg_vmsize, s, sizeof(s)),
 					 memsz(cg->cg_rss,    r, sizeof(r)),
 					 memsz(cg->cg_vmlib,  l, sizeof(l)),
@@ -489,13 +490,13 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 				break;
 			case 2:
 				cg = cg_conf(buf);
-				snprintf(row, rplen, "%6.6s [%-6.6s%6.6s] %6.6s [%-6.6s%6.6s] ",
+				snprintf(row, rplen, "\r%6.6s [%-6.6s%6.6s] %6.6s [%-6.6s%6.6s] ",
 					 memsz(cg->cg_vmsize, s, sizeof(s)),
 					 cg->cg_mem.min, cg->cg_mem.max,
 					 cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max);
 				break;
 			default:
-				row[0] = 0;
+				strlcpy(row, "\r", rplen);
 				break;
 			}
 
