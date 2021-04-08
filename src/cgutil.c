@@ -408,58 +408,6 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 		puts(row);
 	}
 
-	n = scandir(path, &namelist, cgroup_filter, alphasort);
-	if (n > 0) {
-		for (i = 0; i < n; i++) {
-			char *nm = namelist[i]->d_name;
-			char prefix[80];
-
-			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
-			switch (mode) {
-			case 1:
-				cg = cg_stats(buf);
-				snprintf(row, rplen,
-					 " %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
-					 memsz(cg->cg_vmsize, s, sizeof(s)),
-					 memsz(cg->cg_rss,    r, sizeof(r)),
-					 memsz(cg->cg_vmlib,  l, sizeof(l)),
-					 cg->cg_memshare, cg->cg_load);
-				break;
-			case 2:
-				cg = cg_conf(buf);
-				snprintf(row, rplen, "%6.6s [%-6.6s%6.6s] %6.6s [%-6.6s%6.6s] ",
-					 memsz(cg->cg_vmsize, s, sizeof(s)),
-					 cg->cg_mem.min, cg->cg_mem.max,
-					 cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max);
-				break;
-			default:
-				row[0] = 0;
-				break;
-			}
-
-			strlcat(row, pfx, rplen);
-			if (i + 1 == n) {
-				strlcat(row, END, rplen);
-				snprintf(prefix, sizeof(prefix), "%s   ", pfx);
-			} else {
-				strlcat(row, FORK, rplen);
-				snprintf(prefix, sizeof(prefix), "%s%s  ", pfx, PIPE);
-			}
-			strlcat(row, " ", rplen);
-
-			strlcat(row, nm,   rplen);
-			strlcat(row, "/ ", rplen);
-
-			puts(row);
-
-			rc += cgroup_tree(buf, prefix, mode, pos + i);
-
-			free(namelist[i]);
-		}
-
-		free(namelist);
-	}
-
 	if (num > 0) {
 		rewind(fp);
 
@@ -517,11 +465,61 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 					break;
 			}
 		}
-
-		return fclose(fp);
 	}
 
 	fclose(fp);
+
+	n = scandir(path, &namelist, cgroup_filter, alphasort);
+	if (n > 0) {
+		for (i = 0; i < n; i++) {
+			char *nm = namelist[i]->d_name;
+			char prefix[80];
+
+			snprintf(buf, sizeof(buf), "%s/%s", path, nm);
+			switch (mode) {
+			case 1:
+				cg = cg_stats(buf);
+				snprintf(row, rplen,
+					 " %6.6s  %6.6s  %6.6s %5.1f %5.1f  ",
+					 memsz(cg->cg_vmsize, s, sizeof(s)),
+					 memsz(cg->cg_rss,    r, sizeof(r)),
+					 memsz(cg->cg_vmlib,  l, sizeof(l)),
+					 cg->cg_memshare, cg->cg_load);
+				break;
+			case 2:
+				cg = cg_conf(buf);
+				snprintf(row, rplen, "%6.6s [%-6.6s%6.6s] %6.6s [%-6.6s%6.6s] ",
+					 memsz(cg->cg_vmsize, s, sizeof(s)),
+					 cg->cg_mem.min, cg->cg_mem.max,
+					 cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max);
+				break;
+			default:
+				row[0] = 0;
+				break;
+			}
+
+			strlcat(row, pfx, rplen);
+			if (i + 1 == n) {
+				strlcat(row, END, rplen);
+				snprintf(prefix, sizeof(prefix), "%s   ", pfx);
+			} else {
+				strlcat(row, FORK, rplen);
+				snprintf(prefix, sizeof(prefix), "%s%s  ", pfx, PIPE);
+			}
+			strlcat(row, " ", rplen);
+
+			strlcat(row, nm,   rplen);
+			strlcat(row, "/ ", rplen);
+
+			puts(row);
+
+			rc += cgroup_tree(buf, prefix, mode, pos + i);
+
+			free(namelist[i]);
+		}
+
+		free(namelist);
+	}
 
 	return rc;
 }
