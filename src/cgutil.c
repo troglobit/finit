@@ -608,7 +608,7 @@ int show_cgtop(char *arg)
         uev_init(&ctx);
         uev_timer_init(&ctx, &timer, cgtop, arg, 1, ionce ? 0 : 1000);
 
-	if (!ionce || plain) {
+	if (!ionce && !plain) {
 		atexit(cleanup);
 		ttraw();
 		hidecursor();
