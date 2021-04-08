@@ -453,13 +453,17 @@ file must be used to tell Finit to stop and start it on `reload` and
 `runlevel` changes.  If `<>` holds more [conditions](doc/conditions.md),
 these will also affect how a service is maintained.
 
-**Note:** even though it is possible to start services not belonging in
-the current runlevel these services will not be respawned automatically
-by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
-Dropbear SSH service will not be restarted if it is killed or exits.
+> **Note:** even though it is possible to start services not belonging in
+> the current runlevel these services will not be respawned automatically
+> by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
+> Dropbear SSH service will not be restarted if it is killed or exits.
+
+The `status` command is the default, it displays a quick overview of all
+monitored run/task/services.  Here we call `initctl -p`, suitable for
+scripting and documentation:
 
 ```
-alpine:~# initctl 
+alpine:~# initctl -p
 PID   IDENT     STATUS   RUNLEVELS    DESCRIPTION
 ======================================================================
 1506  acpid     running  [--2345----] ACPI daemon
@@ -469,7 +473,7 @@ PID   IDENT     STATUS   RUNLEVELS    DESCRIPTION
 1512  ntpd      running  [--2345----] NTP daemon
 1473  syslogd   running  [S12345----] Syslog daemon
 
-alpine:~# initctl -v
+alpine:~# initctl -pv
 PID   IDENT     STATUS   RUNLEVELS    COMMAND
 ======================================================================
 1506  acpid     running  [--2345----] acpid -f
@@ -483,6 +487,40 @@ PID   IDENT     STATUS   RUNLEVELS    COMMAND
 The environment variables to each of the services above are read from,
 in the case of Alpine Linux, `/etc/conf.d/`.  Other distributions may
 have other directories, e.g., Debian use `/etc/default/`.
+
+The `status` command takes an optional `NAME:ID` argument.  Here we
+check the status of `dropbear`, which only has one instance in this
+system:
+
+```
+alpine:~# initctl -p status dropbear
+     Status : running
+   Identity : dropbear
+Description : Dropbear SSH daemon
+     Origin : /etc/finit.d/enabled/dropbear.conf
+Environment : -/etc/conf.d/dropbear
+Condition(s):
+    Command : dropbear -R -F $DROPBEAR_OPTS
+   PID file : !/run/dropbear.pid
+        PID : 1485
+       User : root
+      Group : root
+     Uptime : 2 hour 46 min 56 sec
+  Runlevels : [--2345----]
+     Memory : 1.2M
+     CGroup : /system/dropbear cpu 0 [100, max] mem [--.--, max]
+              |- 1485 dropbear -R -F
+              |- 2634 dropbear -R -F
+              |- 2635 ash
+              `- 2652 initctl -p status dropbear
+
+Apr  8 12:19:49 alpine authpriv.info dropbear[1485]: Not backgrounding
+Apr  8 12:37:45 alpine authpriv.info dropbear[2300]: Child connection from 192.168.121.1:47834
+Apr  8 12:37:46 alpine authpriv.notice dropbear[2300]: Password auth succeeded for 'root' from 192.168.121.1:47834
+Apr  8 12:37:46 alpine authpriv.info dropbear[2300]: Exit (root) from <192.168.121.1:47834>: Disconnect received
+Apr  8 15:02:11 alpine authpriv.info dropbear[2634]: Child connection from 192.168.121.1:48576
+Apr  8 15:02:12 alpine authpriv.notice dropbear[2634]: Password auth succeeded for 'root' from 192.168.121.1:48576
+```
 
 
 Requirements
