@@ -244,6 +244,46 @@ unnecessary overhead, which can be removed at build-time using:
     configure --enable-auto-reload
 
 
+**Cgroups**
+
+Finit supports cgroups v2 and comes with the following default groups
+in which services and user sessions are placed in:
+
+     /sys/fs/cgroup
+       |-- init/               # cpu.weight:100
+       |-- system/             # cpu.weight:9800
+       `-- user/               # cpu.weight:100
+
+Finit itself, helper services like `ifup -a`, and the like are placed
+in the leaf-node group `init/`, which also is _reserved_.
+
+All run/task/service/sysv processes are placed in their own sub-group
+in `system/`.  The name of each sub-group is taken from the respective
+`.conf` file from `/etc/finit.d`.
+
+All getty/tty processes are placed in their own sub-group in `user/`.
+The name of each sub-group is taken from the username.
+
+A fourth group also exists, the `root` group.  It is also _reserved_ and
+primarily intended for RT tasks.  If you have RT tasks they need to be
+declared as such in their service stanza like this:
+
+    service [...] <...> cgroup.root /path/to/foo args -- description
+
+or
+
+    cgroup.root
+    service [...] <...> /path/to/foo args -- description
+    service [...] <...> /path/to/bar args -- description
+
+See [doc/config.md](doc/config.md#cgroups) for more information, e.g.,
+how to configure per-group limits.
+
+The `initctl` tool has three commands to help debug and optimize the
+setup and monitoring of cgroups.  See the `ps`, `top`, and `cgroup`
+commands for details.
+
+
 Runparts & /etc/rc.local
 ------------------------
 
