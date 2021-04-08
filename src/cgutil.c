@@ -26,6 +26,7 @@
 #include <err.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <search.h>
 #include <inttypes.h>
