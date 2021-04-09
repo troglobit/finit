@@ -177,7 +177,7 @@ int cgroup_service(char *name, int pid, struct cgroup *cg)
 			group = cg->name;
 	}
 
-	return cgroup_leaf_init(group, name, pid, cg->cfg);
+	return cgroup_leaf_init(group, name, pid, cg ? cg->cfg : NULL);
 }
 
 static void append_ctrl(char *ctrl)
