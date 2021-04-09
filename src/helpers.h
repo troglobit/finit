@@ -26,6 +26,7 @@
 #define FINIT_HELPERS_H_
 
 #include <mntent.h>
+#include <sched.h>		/* sched_yield() */
 #include <stdarg.h>
 #include <sys/resource.h>
 #include <sys/types.h>

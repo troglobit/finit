@@ -389,6 +389,8 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 		speed_t speed;
 		int rc = 1;
 
+		sched_yield();
+
 		speed = stty_parse_speed(baud);
 		prepare_tty(tty, speed, "tty", rlimit);
 		if (activate_console(noclear, nowait)) {
@@ -411,6 +413,8 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 	pid = fork();
 	if (!pid) {
 		int rc = 1;
+
+		sched_yield();
 
 		/* Dunno speed, tell stty() to not mess with it */
 		prepare_tty(tty, B0, "getty", rlimit);
