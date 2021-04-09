@@ -139,7 +139,7 @@ static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
 	char path[256];
 
 	_d("group %s, name %s, pid %d, cfg %s", group, name, pid, cfg ?: "NIL");
-	if (pid <= 1) {
+	if (pid < 0 || pid == 1) {
 		errno = EINVAL;
 		return 1;
 	}

@@ -185,7 +185,7 @@ static int do_login(char *name)
 {
 	struct stat st;
 
-	cgroup_user(name, getpid());
+	cgroup_user(name, 0);
 	execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
 
 	/*
