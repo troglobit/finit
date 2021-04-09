@@ -537,6 +537,7 @@ void networking(int updown)
 				run("ifdown -a");
 			_exit(0);
 		}
+		cgroup_service("network", pid, NULL);
 
 		print(pid > 0 ? 0 : 1, "%s networking", updown ? "Starting" : "Stopping");
 	}

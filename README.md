@@ -254,8 +254,8 @@ in which services and user sessions are placed in:
        |-- system/             # cpu.weight:9800
        `-- user/               # cpu.weight:100
 
-Finit itself, helper services like `ifup -a`, and the like are placed
-in the leaf-node group `init/`, which also is _reserved_.
+Finit itself and its helper scripts and services are placed in the
+top-level leaf-node group `init/`, which also is _reserved_.
 
 All run/task/service/sysv processes are placed in their own sub-group
 in `system/`.  The name of each sub-group is taken from the respective

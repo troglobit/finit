@@ -160,9 +160,8 @@ the above three.  We leave `init/` and `user /` as-is reducing weight of
     cgroup maint  cpu.weight:100
 
 By default, the `system/` cgroup is selected for almost everything.  The
-`init/` cgroup is reserved for PID 1 itself and its closest relatives,
-e.g., children of `ifup -a`.  The `user/` cgroup is for local TTY logins
-spawned by getty.
+`init/` cgroup is reserved for PID 1 itself and its closest relatives.
+The `user/` cgroup is for local TTY logins spawned by getty.
 
 To select a different top-level cgroup, e.g. `maint/`, one can either
 define it for a group of run/task/service directives in a `.conf` or per
