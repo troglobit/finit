@@ -3,7 +3,6 @@ EXTRA_DIST		+= tenv/root.mk tenv/busybox-x86_64.md5
 EXTRA_DIST		+= tenv/chrootsetup.sh
 EXTRA_DIST		+= setup-root.sh
 EXTRA_DIST		+= common/service.conf common/service.sh
-EXTRA_DIST		+= checkself.sh
 EXTRA_DIST		+= add-remove-dynamic-service.sh
 EXTRA_DIST		+= add-remove-dynamic-service-sub-config.sh
 EXTRA_DIST		+= start-stop-service.sh
@@ -16,9 +15,9 @@ AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
 AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
 checkself.sh:
-	echo '#!/bin/sh' > $@
-	echo shellcheck $(addprefix '"$$srcdir"'/,$(filter %.sh,$(filter-out $@, $(EXTRA_DIST)))) >> $@
-	chmod +x $@
+	@echo '#!/bin/sh' > $@
+	@echo shellcheck $(addprefix '"$$srcdir"'/,$(filter %.sh,$(filter-out $@, $(EXTRA_DIST)))) >> $@
+	@chmod +x $@
 
 TEST_EXTENSIONS		 = .sh
 TESTS			 = checkself.sh
