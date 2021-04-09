@@ -262,7 +262,7 @@ static int do_restart(char *arg)
 	if (retries == 0)
 		errx(1, "Failed stopping %s (restart)", arg);
 
-	return do_startstop(INIT_CMD_START_SVC, arg);
+	return do_startstop(INIT_CMD_RESTART_SVC, arg);
 }
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)

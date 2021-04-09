@@ -74,6 +74,23 @@ static int start(svc_t *svc)
 	return 0;
 }
 
+/*
+ * NOTE: this does not wait for svc to be stopped first, that is the
+ *       responsibility of initctl to do.  Otherwise we'd block PID 1,
+ *       or introduce some nasty race conditions.
+ */
+static int restart(svc_t *svc)
+{
+	if (!svc)
+		return 1;
+
+	svc_mark_dirty(svc);
+	svc_start(svc);
+	service_step(svc);
+
+	return 0;
+}
+
 static int reload(svc_t *svc)
 {
 	if (!svc)
@@ -88,9 +105,10 @@ static int reload(svc_t *svc)
 	return 0;
 }
 
-static int do_start (char *buf, size_t len) { return call(start,  buf, len); }
-static int do_stop  (char *buf, size_t len) { return call(stop,   buf, len); }
-static int do_reload(char *buf, size_t len) { return call(reload, buf, len); }
+static int do_stop   (char *buf, size_t len) { return call(stop,    buf, len); }
+static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
+static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
+static int do_reload (char *buf, size_t len) { return call(reload,  buf, len); }
 
 static char query_buf[368];
 static int missing(char *job, char *id)
@@ -325,6 +343,12 @@ static void api_cb(uev_t *w, void *arg, int events)
 			_d("start %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_start(rq.data, sizeof(rq.data));
+			break;
+
+		case INIT_CMD_RESTART_SVC:
+			_d("restart %s", rq.data);
+			strterm(rq.data, sizeof(rq.data));
+			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_STOP_SVC:

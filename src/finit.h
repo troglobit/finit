@@ -71,10 +71,10 @@
 /* Finit extensions over std SysV */
 #define INIT_CMD_DEBUG          8    /* Toggle Finit debug */
 #define INIT_CMD_RELOAD         9    /* Reload *.conf in /etc/finit.d/ */
-#define INIT_CMD_START_SVC      10
+#define INIT_CMD_START_SVC      10   /* START service */
 #define INIT_CMD_STOP_SVC       11
 #define INIT_CMD_RELOAD_SVC     12   /* SIGHUP service */
-#define INIT_CMD_RESTART_SVC    13   /* STOP + START service */
+#define INIT_CMD_RESTART_SVC    13   /* START service, clearing blocks */
 #define INIT_CMD_UNUSED2        14   /* Unused, was INIT_CMD_QUERY_INETD */
 #define INIT_CMD_UNUSED1        15   /* Unused, was INIT_CMD_EMIT */
 #define INIT_CMD_GET_RUNLEVEL   16
