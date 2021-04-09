@@ -390,10 +390,11 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 		int rc = 1;
 
 		speed = stty_parse_speed(baud);
-		logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
 		prepare_tty(tty, speed, "tty", rlimit);
-		if (activate_console(noclear, nowait))
+		if (activate_console(noclear, nowait)) {
+			logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
 			rc = getty(tty, speed, term, NULL);
+		}
 
 		_exit(rc);
 	}
@@ -412,10 +413,11 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 		int rc = 1;
 
 		/* Dunno speed, tell stty() to not mess with it */
-		logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
 		prepare_tty(tty, B0, "getty", rlimit);
-		if (activate_console(noclear, nowait))
+		if (activate_console(noclear, nowait)) {
+			logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
 			rc = execv(cmd, args);
+		}
 
 		vhangup();
 		_exit(rc);
