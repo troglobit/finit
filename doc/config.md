@@ -177,7 +177,7 @@ or
 
 The latter form also allows per-stanza limits on the form:
 
-    service [...] <...> cgroup.maint,cpu.max:10000,mem.max:655360 /path/to/foo args -- description
+    service [...] <...> cgroup.maint:cpu.max:10000,mem.max:655360 /path/to/foo args -- description
 
 Notice the comma separation and the `mem.` exception to the rule: every
 cgroup setting maps directly to cgroup v2 syntax.  I.e., `cpu.max` maps
