@@ -31,8 +31,14 @@ struct cgroup {
 	char cfg[128];
 };
 
+void cgroup_mark_all(void);
+void cgroup_cleanup (void);
+
+int  cgroup_add     (char *name, char *cfg, int protected);
+int  cgroup_del     (char *dir);
+void cgroup_config  (void);
+
 void cgroup_init    (uev_ctx_t *ctx);
-void cgroup_config  (size_t num, struct cgroup cg[]);
 
 int  cgroup_user    (char *name, int pid);
 int  cgroup_service (char *name, int pid, struct cgroup *cg);

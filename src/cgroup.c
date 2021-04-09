@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <lite/lite.h>
+#include <lite/queue.h>
 #include <sys/mount.h>
 #include <sys/sysinfo.h>		/* get_nprocs_conf() */
 
@@ -33,6 +34,18 @@
 #include "iwatch.h"
 #include "log.h"
 #include "util.h"
+
+struct cg {
+	TAILQ_ENTRY(cg) link;
+
+	char *name;		/* top-level group name */
+	char *cfg;		/* kernel settings */
+
+	int  active;		/* for mark & sweep */
+	int  protected;		/* for init/, user/, & system/ */
+};
+
+static TAILQ_HEAD(, cg) cgroups = TAILQ_HEAD_INITIALIZER(cgroups);
 
 static char controllers[256];
 
@@ -205,7 +218,17 @@ static void cgroup_handle_event(char *event, uint32_t mask)
 		ptr = strrchr(path, '/');
 		if (ptr) {
 			*ptr = 0;
-			rmdir(path);
+			if (!cgroup_del(path)) {
+				/*
+				 * try with parent, top-level group, we
+				 * may get events out-of-order *sigh*
+				 */
+				ptr = strrchr(path, '/');
+				if (!ptr)
+					break;
+				*ptr = 0;
+				cgroup_del(path);
+			}
 		}
 
 		break;
@@ -255,6 +278,151 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 #endif
 }
 
+static struct cg *cgroup_find(char *name)
+{
+	struct cg *cg;
+
+	TAILQ_FOREACH(cg, &cgroups, link) {
+		if (strcmp(cg->name, name))
+			continue;
+
+		return cg;
+	}
+
+	return NULL;
+}
+
+/*
+ * Marks all unprotected cgroups for deletion (during reload)
+ */
+void cgroup_mark_all(void)
+{
+	struct cg *cg;
+
+	TAILQ_FOREACH(cg, &cgroups, link) {
+		if (cg->protected)
+			continue;
+
+		cg->active = 0;
+	}
+}
+
+/*
+ * Remove (try to) all unused cgroups
+ */
+void cgroup_cleanup(void)
+{
+	struct cg *cg, *tmp;
+	char path[256];
+
+	TAILQ_FOREACH_SAFE(cg, &cgroups, link, tmp) {
+		if (cg->active)
+			continue;
+
+		snprintf(path, sizeof(path), FINIT_CGPATH "/%s", cg->name);
+		cgroup_del(path);
+	}
+}
+
+/*
+ * Add, or update, settings for top-level cgroup
+ */
+int cgroup_add(char *name, char *cfg, int protected)
+{
+	struct cg *cg;
+
+	if (!name)
+		return -1;
+	if (!cfg)
+		cfg = "";
+
+	cg = cgroup_find(name);
+	if (!cg) {
+		cg = malloc(sizeof(struct cg));
+		if (!cg) {
+			_pe("Failed allocating 'struct cg' for %s", name);
+			return -1;
+		}
+		cg->name = strdup(name);
+		if (!cg->name) {
+			_pe("Failed setting cgroup name %s", name);
+			free(cg);
+			return -1;
+		}
+		TAILQ_INSERT_TAIL(&cgroups, cg, link);
+	} else
+		free(cg->cfg);
+
+	cg->cfg = strdup(cfg);
+	if (!cg->cfg) {
+		_pe("Failed add/update of cgroup %s", name);
+		TAILQ_REMOVE(&cgroups, cg, link);
+		free(cg->name);
+		free(cg);
+		return -1;
+	}
+	cg->protected = protected;
+	cg->active = 1;
+
+	return 0;
+}
+
+/*
+ * Remove inactive top-level cgroup
+ */
+int cgroup_del(char *dir)
+{
+	struct cg *cg;
+	char path[256];
+
+	TAILQ_FOREACH(cg, &cgroups, link) {
+		snprintf(path, sizeof(path), FINIT_CGPATH "/%s", cg->name);
+		if (strcmp(path, dir))
+			continue;
+
+		if (cg->active)
+			return -1;
+
+		break;
+	}
+
+	if (rmdir(dir) && errno != ENOENT) {
+		_d("Failed removing %s: %s", dir, strerror(errno));
+		return -1;
+	}
+
+	if (cg) {
+		TAILQ_REMOVE(&cgroups, cg, link);
+		free(cg->name);
+		free(cg->cfg);
+		free(cg);
+	}
+
+	return 0;
+}
+
+/* the top-level init cgroup is a leaf, that's ensured in cgroup_init() */
+void cgroup_config(void)
+{
+	struct cg *cg;
+
+	TAILQ_FOREACH(cg, &cgroups, link) {
+		char path[256];
+		int leaf = 0;
+
+		if (!cg->active)
+			continue;
+		if (!strcmp(cg->name, "init"))
+			leaf = 1;	/* reserved */
+
+		snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, cg->name);
+		group_init(path, leaf, cg->cfg);
+
+		strlcat(path, "/cgroup.events", sizeof(path));
+		iwatch_add(&iw_cgroup, path, 0);
+	}
+}
+
 /*
  * Called by Finit at early boot to mount initial cgroups
  */
@@ -293,10 +461,11 @@ void cgroup_init(uev_ctx_t *ctx)
 	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control"))
 		_pe("Failed enabling %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
 
-	/* Default groups, PID 1, services, and user/login processes */
-	group_init(FINIT_CGPATH "/init",   1, "cpu.weight:100");
-	group_init(FINIT_CGPATH "/user",   0, "cpu.weight:100");
-	group_init(FINIT_CGPATH "/system", 0, "cpu.weight:9800");
+	/* Default (protected) groups, PID 1, services, and user/login processes */
+	cgroup_add("init",   "cpu.weight:100",  1);
+	cgroup_add("system", "cpu.weight:9800", 1);
+	cgroup_add("user",   "cpu.weight:100",  1);
+	cgroup_config();
 
 	/* Move ourselves to init (best effort, otherwise run in 'root' group */
 	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs"))
@@ -307,23 +476,6 @@ void cgroup_init(uev_ctx_t *ctx)
 	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
 		_pe("Failed setting up cgroup.events watcher");
 		close(fd);
-	}
-}
-
-/* the top-level init cgroup is a leaf, that's ensured in cgroup_init() */
-void cgroup_config(size_t num, struct cgroup cg[])
-{
-	size_t i;
-
-	for (i = 0; i < num; i++) {
-		char path[256];
-		int leaf = 0;
-
-		if (!strcmp(cg[i].name, "init"))
-		    leaf = 1;		/* reserved */
-
-		snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, cg[i].name);
-		group_init(path, leaf, cg[i].cfg);
 	}
 }
 

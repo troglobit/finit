@@ -51,8 +51,6 @@ int logfile_count_max = 5;
 struct rlimit initial_rlimit[RLIMIT_NLIMITS];
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
 
-struct cgroup cgroups[8];
-size_t cgroups_num;
 char cgroup_current[16]; /* cgroup.NAME sets current cgroup for a set of services */
 
 struct conf_change {
@@ -428,65 +426,27 @@ error:
 	logit(LOG_WARNING, "rlimit: parse error");
 }
 
-/* reset defaults */
-static void init_cgroups(void)
-{
-	struct cgroup init[3] = {
-		{ .name = "init",   .cfg = "cpu.weight:100"  },
-		{ .name = "user",   .cfg = "cpu.weight:100"  },
-		{ .name = "system", .cfg = "cpu.weight:9800" },
-	};
-	size_t i;
-
-	for (i = 0; i < NELEMS(init); i++)
-		memcpy(&cgroups[i], &init[i], sizeof(struct cgroup));
-
-	cgroups_num = i;
-}
-
-struct cgroup *conf_cgfind(char *name)
-{
-	size_t i;
-
-	for (i = 0; i < cgroups_num; i++) {
-		if (strcmp(cgroups[i].name, name))
-			continue;
-
-		return &cgroups[i];
-	}
-
-	return NULL;
-}
-
 /* cgroup NAME ctrl.prop:value,ctrl.prop:value ... */
 static void conf_parse_cgroup(char *line)
 {
-	struct cgroup *cg;
+	char config[strlen(line)];
 	char *ptr, *name;
 
 	name = strtok(line, " \t");
 	if (!name)
 		return;
 
-	cg = conf_cgfind(name);
-	if (!cg) {
-		if (strstr(name, "..") || strchr(name, '/'))
-			return;		/* illegal */
-		if (cgroups_num + 1 == NELEMS(cgroups))
-			return;		/* exhausted */
+	if (strstr(name, "..") || strchr(name, '/'))
+		return;		/* illegal */
 
-		cg = &cgroups[cgroups_num++];
-		strlcpy(cg->name, name, sizeof(cg->name));
-	}
-
-	cg->cfg[0] = 0;
+	config[0] = 0;
 	while ((ptr = strtok(NULL, " \t"))) {
-		if (cg->cfg[0])
-			strlcat(cg->cfg, ",", sizeof(cg->cfg));
-		strlcat(cg->cfg, ptr, sizeof(cg->cfg));
+		if (config[0])
+			strlcat(config, ",", sizeof(config));
+		strlcat(config, ptr, sizeof(config));
 	}
 
-	_d("cg->cfg: %s", cg->cfg);
+	cgroup_add(name, config, 0);
 }
 
 static void parse_static(char *line, int is_rcsd)
@@ -702,6 +662,7 @@ int conf_reload(void)
 	   daylight, timezone, tzname[0], tzname[1]);
 
 	/* Mark and sweep */
+	cgroup_mark_all();
 	svc_mark_dynamic();
 	tty_mark();
 
@@ -709,9 +670,6 @@ int conf_reload(void)
 	 * Reset global rlimit to bootstrap values from conf_init().
 	 */
 	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
-
-	/* Initialize default cgroups */
-	init_cgroups();
 
 	if (rescue) {
 		int rc;
@@ -784,8 +742,11 @@ int conf_reload(void)
 	service_update_rdeps();
 
 	/* Set up top-level cgroups */
-	cgroup_config(cgroups_num, cgroups);
+	cgroup_config();
 done:
+	/* Remove all unused top-level cgroups */
+	cgroup_cleanup();
+
 	/* Drop record of all .conf changes */
 	drop_changes();
 
@@ -996,9 +957,6 @@ int conf_init(uev_ctx_t *ctx)
 
 	/* Initialize global rlimits, e.g. for built-in services */
 	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
-
-	/* Initialize default cgroups */
-	init_cgroups();
 
 	/* Read global rlimits and global cgroup setup from /etc/finit.conf */
 	parse_conf(FINIT_CONF, 0);
