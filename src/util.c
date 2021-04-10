@@ -62,7 +62,7 @@ int   ttcols  = 80;
 char *prognm  = NULL;
 
 static char *signames[] = {
-	""
+	"",
 	"HUP",				/* 1 */
 	"INT",
 	"QUIT",
