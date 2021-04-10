@@ -19,9 +19,6 @@ Some of these are also registered in the issue tracker on GitHub.
 * Add new (complimentary) .svc file format to slowly migrate away
   from the very terse one-liner format currently used
 * Allow running as non-pid1 => read .conf and RCSD form cmdline
-* When a process dies, and Finit does not restart it, we should collect
-  a `siginfo_t` from the SIGCHLD signal and supply to the user in case
-  `initctl status <process>` is called to debug the issue.
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
