@@ -61,6 +61,77 @@ int   ttrows  = 24;
 int   ttcols  = 80;
 char *prognm  = NULL;
 
+static char *signames[] = {
+	""
+	"HUP",				/* 1 */
+	"INT",
+	"QUIT",
+	"ILL",
+	"TRAP",
+	"ABRT",
+	"BUS",
+	"FPE",				/* 8 */
+	"KILL",
+	"USR1",
+	"SEGV",
+	"USR2",
+	"PIPE",
+	"ALRM",
+	"TERM",
+	"STKFLT",			/* 16 */
+	"CHLD",
+	"CONT",
+	"STOP",
+	"TSTP",
+	"TTIN",
+	"TTOU",
+	"URG",
+	"XCPU",				/* 24 */
+	"XFSZ",
+	"VTALRM",
+	"PROF",
+	"WINCH",
+	"IO",
+	"PWR",
+	"SYS",
+};
+
+/* https://freedesktop.org/software/systemd/man/systemd.exec.html#id-1.20.8 */
+static char *exitcodes[] = {
+	"SUCCESS",			/* 0: Std C exit OK   */
+	"FAILURE",			/* 1: Std C exit FAIL */
+	/* 2-7: LSB init scripts (usually) */
+	"INVALIDARGUMENT",		/* 2: Invalid or excess args */
+	"NOTIMPLEMENTED",		/* 3: Unimplemented feature, e.g. 'reload' */
+	"NOPERMISSION",			/* 4: Insufficient privilege */
+	"NOTINSTALLED",			/* 5: Program is not installed */
+	"NOTCONFIGURED",		/* 6: Program is not configured */
+	"NOTRUNNING",			/* 7: Program is not running */
+	"", "", "", "", "", "", "", "",	/* 8-63: Not standardized */
+	"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", /* 16-31 */
+	"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", /* 32-47 */
+	"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", /* 48-63 */
+	/* 64-78: BSD, from sysexit.h */
+	"USAGE",			/* 64: Command line usage error */
+	"DATAERR",			/* 65: data format error */
+	"NOINPUT",			/* 66: cannot open input */
+	"NOUSER",			/* 67: addressee unknown */
+	"NOHOST",			/* 68: host name unknown */
+	"UNAVAILABLE",			/* 69: service unavailable */
+	"SOFTWARE",			/* 70: internal software error */
+	"OSERR",			/* 71: system error (e.g., can't fork) */
+	"OSFILE",			/* 72: critical OS file missing */
+	"CANTCREAT",			/* 73: can't create (user) output file */
+	"IOERR",			/* 74: input/output error */
+	"TEMPFAIL",			/* 75: temp failure; user is invited to retry */
+	"PROTOCOL",			/* 76: remote error in protocol */
+	"NOPERM",			/* 77: permission denied */
+	"CONFIG",			/* 78: configuration error */
+	/* 79-199: Not standardized, typically 127 == -1 */
+	/* >= 200: reserved (LSB), used by systemd */
+};
+
+
 char *progname(char *arg0)
 {
        prognm = strrchr(arg0, '/');
@@ -153,6 +224,29 @@ int strtobytes(char *arg)
 
 	return bytes;
 }
+
+char *sig2str(int sig)
+{
+	static char signame[8];
+
+	if (sig < 1 || sig >= (int)NELEMS(signames))
+		return "";
+
+	snprintf(signame, sizeof(signame), "/%s", signames[sig]);
+	return signame;
+}
+
+char *code2str(int code)
+{
+	static char codename[20];
+
+	if (code < 0 || code >= (int)NELEMS(exitcodes))
+		return "";
+
+	snprintf(codename, sizeof(codename), "/%s", exitcodes[code]);
+	return codename;
+}
+
 
 void do_sleep(unsigned int sec)
 {

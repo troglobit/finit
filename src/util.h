@@ -52,8 +52,10 @@ int   fnwrite      (char *value, char *fmt, ...);
 
 int   has_utmp     (void);
 int   strtobytes   (char *arg);
-void  do_sleep     (unsigned int sec);
+char *sig2str      (int sig);
+char *code2str     (int code);
 
+void  do_sleep     (unsigned int sec);
 long  jiffies      (void);
 char *uptime       (long secs, char *buf, size_t len);
 char *memsz        (uint64_t sz, char *buf, size_t len);

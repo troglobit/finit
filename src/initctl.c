@@ -607,15 +607,32 @@ static char *svc_environ(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
-static char *status(svc_t *svc, int pretty)
+static char *exit_status(int status, char *buf, size_t len)
 {
-	static char buf[25];
+	int rc, sig;
+
+	rc = WEXITSTATUS(status);
+	sig = WTERMSIG(status);
+
+	if (WIFEXITED(status))
+		snprintf(buf, len, " (code=exited, status=%d%s)", rc, code2str(rc));
+	else if (WIFSIGNALED(status))
+		snprintf(buf, len, " (code=signaled, signal=%d%s)", sig, sig2str(sig));
+
+	return buf;
+}
+
+static char *status(svc_t *svc, int full)
+{
+	static char buf[64];
 	const char *color;
+	char ok[64] = {0};
 	char *s;
 
 	s = svc_status(svc);
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
+		exit_status(svc->status, ok, sizeof(ok));
 		color = "\e[1m";
 		break;
 
@@ -623,16 +640,36 @@ static char *status(svc_t *svc, int pretty)
 		color = "\e[1;32m";
 		break;
 
+	case SVC_DONE_STATE:
+		exit_status(svc->status, ok, sizeof(ok));
+		if (WIFEXITED(svc->status)) {
+			if (WEXITSTATUS(svc->status))
+				color = "\e[1;31m";
+			else
+				color = "\e[1;32m";
+		} else {
+			if (full && WIFSIGNALED(svc->status))
+				color = "\e[1;31m";
+			else
+				color = "\e[1;33m";
+		}
+		break;
+
 	default:
+		exit_status(svc->status, ok, sizeof(ok));
 		color = "\e[1;33m";
 		break;
 	}
 
-	if (!pretty || plain)
+	if (!full || plain)
 		color = NULL;
 
-	snprintf(buf, sizeof(buf), "%s%-8.8s%s",
-		 color ? color : "", s, color ? "\e[0m" : "");
+	if (!full)
+		snprintf(buf, sizeof(buf), "%s%-8.8s%s",
+			 color ? color : "", s, color ? "\e[0m" : "");
+	else
+		snprintf(buf, sizeof(buf), "%s%s%s%s",
+			 color ? color : "", s, ok, color ? "\e[0m" : "");
 
 	return buf;
 }
