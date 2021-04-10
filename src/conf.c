@@ -429,7 +429,7 @@ error:
 /* cgroup NAME ctrl.prop:value,ctrl.prop:value ... */
 static void conf_parse_cgroup(char *line)
 {
-	char config[strlen(line)];
+	char config[strlen(line) + 1];
 	char *ptr, *name;
 
 	name = strtok(line, " \t");
