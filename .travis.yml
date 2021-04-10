@@ -26,7 +26,7 @@ addons:
       name: "troglobit/finit"
       description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./autogen.sh && ./configure --prefix=/tmp --disable-doc --disable-contrib --enable-watchdog --enable-fallback-shell"
+    build_command_prepend: "./autogen.sh && ./configure --prefix= --disable-doc --disable-contrib --enable-watchdog --enable-fallback-shell"
     build_command: "make"
     branch_pattern: dev
 
@@ -41,20 +41,20 @@ install:
 # Custom build script for the time being, no "make test" yet
 script:
   - ./autogen.sh
-  - ./configure --prefix=/tmp --enable-static
+  - ./configure --prefix= --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix=/tmp --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog
+  - ./configure --prefix= --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog
   - cat config.log
   - make clean
   - make V=1 -j5
-  - make install-strip
-  - tree /tmp
-  - ldd /tmp/sbin/finit
-  - size /tmp/sbin/finit
-  - size /tmp/sbin/initctl
-  - size /tmp/sbin/reboot
-  - LD_LIBRARY_PATH=/tmp/lib /tmp/sbin/initctl -h
+  - make install-strip DESTDIR=/tmp/finit
+  - tree /tmp/finit
+  - ldd /tmp/finit/sbin/finit
+  - size /tmp/finit/sbin/finit
+  - size /tmp/finit/sbin/initctl
+  - size /tmp/finit/sbin/reboot
+  - LD_LIBRARY_PATH=/tmp/lib /tmp/finit/sbin/initctl -h
   - unshare -V
   - nsenter -V
   - chroot --version
