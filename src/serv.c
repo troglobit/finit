@@ -55,8 +55,27 @@ static void do_list(const char *path)
 	glob_t gl;
 	size_t i;
 
-	if (chdir(path))
+	if (chdir(path)) {
+		char *dir, *ptr;
+
+		if (!fexist(path))
+			return;
+		dir = strdupa(path);
+		if (!dir)
+			return;
+
+		ptr = strrchr(dir, '/');
+		if (ptr)
+			*ptr++ = 0;
+		else
+			ptr = dir;
+
+		if (heading)
+			print_header("%s%s ", once ? "\n" : "", dir);
+		puts(ptr);
+		puts("");
 		return;
+	}
 
 	if (glob("*.conf", 0, NULL, &gl))
 		return;
@@ -135,15 +154,19 @@ int serv_list(char *arg)
 	if (fisdir(FINIT_RCSD))
 		do_list(FINIT_RCSD);
 
+	if (fexist(FINIT_CONF))
+		do_list(FINIT_CONF);
+
 	return 0;
 }
 
 /*
- * Return path to configuration file for 'name', relative to FINIT_RCSD.
- * This may be any of the following, provided sysconfdir is /etc:
+ * Return path to configuration file for 'name'.  This may be any of the
+ * following, provided sysconfdir is /etc:
  *
- *   - /etc/finit.d/$name.conf
  *   - /etc/finit.d/available/$name.conf
+ *   - /etc/finit.d/$name.conf
+ *   - /etc/finit.conf
  *
  * The system *may* have a /etc/finit.d/available/ directory, or it may
  * just use a plain /etc/finit.d/ -- we do not set policy.
@@ -155,7 +178,7 @@ static char *conf(char *path, size_t len, char *name, int creat)
 {
 	char corr[40];
 
-	if (!name || !name[0]) {
+	if (!name || !name[0] || !strcmp(name, "finit") || !strcmp(name, "finit.conf")) {
 		strlcpy(path, FINIT_CONF, len);
 		return path;
 	}
@@ -319,7 +342,7 @@ static int do_edit(char *arg, int creat)
 	if (!fexist(fn)) {
 		if (!creat) {
 			warnx("Cannot find %s, use -c flag, create command, or select one of:", arg);
-			return serv_list("available");
+			return serv_list(NULL);
 		}
 
 #ifdef SAMPLE_CONF
@@ -341,8 +364,8 @@ static int do_edit(char *arg, int creat)
 int serv_edit(char *arg)
 {
 	if (!arg || !arg[0]) {
-		warnx("missing argument to edit, may be one of:");
-		return serv_list("available");
+		if (!yorn("Do you want to edit %s (y/N)? ", FINIT_CONF))
+			return 0;
 	}
 
 	return do_edit(arg, icreate);
@@ -386,8 +409,10 @@ int serv_delete(char *arg)
 	char buf[256];
 	char *fn;
 
-	if (!arg || !arg[0])
-		errx(1, "missing argument to delete");
+	if (!arg || !arg[0]) {
+		warnx("missing argument to delete, may be one of:");
+		return serv_list("available");
+	}
 
 	fn = conf(buf, sizeof(buf), arg, 0);
 	if (!fn)
