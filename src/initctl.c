@@ -665,8 +665,7 @@ static char *status(svc_t *svc, int full)
 		color = NULL;
 
 	if (!full)
-		snprintf(buf, sizeof(buf), "%s%-8.8s%s",
-			 color ? color : "", s, color ? "\e[0m" : "");
+		snprintf(buf, sizeof(buf), "%-8.8s", s);
 	else
 		snprintf(buf, sizeof(buf), "%s%s%s%s",
 			 color ? color : "", s, ok, color ? "\e[0m" : "");
