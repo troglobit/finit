@@ -626,7 +626,7 @@ static char *status(svc_t *svc, int full)
 {
 	static char buf[64];
 	const char *color;
-	char ok[64] = {0};
+	char ok[32] = {0};
 	char *s;
 
 	s = svc_status(svc);

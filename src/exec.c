@@ -382,74 +382,47 @@ static int activate_console(int noclear, int nowait)
  */
 pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, struct rlimit rlimit[])
 {
-	pid_t pid;
+	speed_t speed;
+	int rc = 1;
 
-	pid = fork();
-	if (!pid) {
-		speed_t speed;
-		int rc = 1;
-
-		sched_yield();
-
-		speed = stty_parse_speed(baud);
-		prepare_tty(tty, speed, "tty", rlimit);
-		if (activate_console(noclear, nowait)) {
-			logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
-			rc = getty(tty, speed, term, NULL);
-		}
-
-		_exit(rc);
+	speed = stty_parse_speed(baud);
+	prepare_tty(tty, speed, "tty", rlimit);
+	if (activate_console(noclear, nowait)) {
+		logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
+		rc = getty(tty, speed, term, NULL);
 	}
 
-	cgroup_user("getty", pid);
-
-	return pid;
+	return rc;
 }
 
+/*
+ * Start external getty as defined by user in .conf file
+ */
 pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[])
 {
-	pid_t pid;
+	int rc = 1;
 
-	pid = fork();
-	if (!pid) {
-		int rc = 1;
-
-		sched_yield();
-
-		/* Dunno speed, tell stty() to not mess with it */
-		prepare_tty(tty, B0, "getty", rlimit);
-		if (activate_console(noclear, nowait)) {
-			logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
-			rc = execv(cmd, args);
-		}
-
-		vhangup();
-		_exit(rc);
+	/* Dunno speed, tell stty() to not mess with it */
+	prepare_tty(tty, B0, "getty", rlimit);
+	if (activate_console(noclear, nowait)) {
+		logit(LOG_INFO, "Starting external getty on %s, speed %u", tty, B0);
+		rc = execv(cmd, args);
 	}
 
-	cgroup_user("getty", pid);
+	vhangup();
 
-	return pid;
+	return rc;
 }
 
 pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])
 {
-	pid_t pid;
+	int rc = 1;
 
-	pid = fork();
-	if (!pid) {
-		int rc = 1;
+	prepare_tty(tty, B0, "finit-sh", rlimit);
+	if (activate_console(noclear, nowait))
+		rc = sh(tty);
 
-		prepare_tty(tty, B0, "finit-sh", rlimit);
-		if (activate_console(noclear, nowait))
-			rc = sh(tty);
-
-		_exit(rc);
-	}
-
-	cgroup_user("root", pid);
-
-	return pid;
+	return rc;
 }
 
 int run_parts(char *dir, char *cmd)

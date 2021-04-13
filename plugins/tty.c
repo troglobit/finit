@@ -55,17 +55,19 @@ static void setup(void)
 
 static void do_tty(char *tty, size_t len, int creat)
 {
+#if 0
 	char name[len + 6];
-	struct tty *entry;
+	svc_t *entry;
 
 	snprintf(name, sizeof(name), "/dev/%s", tty);
-	entry = tty_find(name);
+	entry = svc_find_by_tty(name);
 	if (entry && tty_enabled(entry)) {
 		if (creat)
 			tty_start(entry);
 		else if (entry->pid)
 			tty_stop(entry);
 	}
+#endif
 }
 
 static void watcher(void *arg, int fd, int events)

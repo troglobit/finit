@@ -25,51 +25,30 @@
 #ifndef FINIT_TTY_H_
 #define FINIT_TTY_H_
 
-#include <limits.h>
-#include <sys/resource.h>
-#include <lite/queue.h>		/* BSD sys/queue.h API */
-
-#define TTY_MAX_ARGS 16
+#include <stdio.h>
+#include "svc.h"
 
 struct tty {
-	LIST_ENTRY(tty) link;
+	char	*cmd;
+	char	*args[MAX_NUM_SVC_ARGS];
+	size_t	 num;
 
-	char   name[42];
-	char   baud[10];
-	char   term[10];
-	int    noclear;
-	int    nowait;
-	int    nologin;
-	int    runlevels;
-
-	char  *cmd;		/* NULL when running built-in getty */
-	char  *args[TTY_MAX_ARGS];
-
-	int    pid;
-
-	/* Limits and scoping */
-	struct rlimit rlimit[RLIMIT_NLIMITS];
-
-	/* Set if modified => reloaded, or -1 when marked for removal */
-	int    dirty;
+	char	*dev;
+	char	*baud;
+	char	*term;
+	int	 noclear;
+	int	 nowait;
+	int	 nologin;
 };
 
-void	    tty_mark	    (void);
-void	    tty_sweep	    (void);
+char	*tty_canonicalize (char *dev);
 
-int	    tty_register    (char *line, struct rlimit rlimit[], char *file);
-int	    tty_unregister  (struct tty *tty);
+int	 tty_isatcon      (char *dev);
+int	 tty_atcon        (char *buf, size_t len);
 
-struct tty *tty_find	    (char *dev);
-size_t	    tty_num	    (void);
-size_t      tty_num_active  (void);
-struct tty *tty_find_by_pid (pid_t pid);
-void	    tty_start	    (struct tty *tty);
-void	    tty_stop	    (struct tty *tty);
-int	    tty_enabled	    (struct tty *tty);
-int	    tty_respawn	    (pid_t pid);
-void	    tty_reload      (char *dev);
-void	    tty_runlevel    (void);
+int	 tty_parse_args   (char *cmdline, struct tty *tty);
+
+int	 tty_exec	  (svc_t *tty);
 
 #endif /* FINIT_TTY_H_ */
 

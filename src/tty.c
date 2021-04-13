@@ -42,17 +42,16 @@
 #ifdef FALLBACK_SHELL
 static pid_t fallback = 0;
 #endif
-static LIST_HEAD(, tty) tty_list = LIST_HEAD_INITIALIZER();
 
-static char *canonicalize(char *tty)
+char *tty_canonicalize(char *dev)
 {
-	struct stat st;
 	static char path[80];
+	struct stat st;
 
-	if (!tty)
+	if (!dev)
 		return NULL;
 
-	strlcpy(path, tty, sizeof(path));
+	strlcpy(path, dev, sizeof(path));
 	if (stat(path, &st)) {
 		if (!strncmp(path, _PATH_DEV, strlen(_PATH_DEV))) {
 		unavailable:
@@ -60,7 +59,7 @@ static char *canonicalize(char *tty)
 			return path;
 		}
 
-		snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
+		snprintf(path, sizeof(path), "%s%s", _PATH_DEV, dev);
 		if (stat(path, &st))
 			goto unavailable;
 	}
@@ -71,37 +70,40 @@ static char *canonicalize(char *tty)
 	return path;
 }
 
-void tty_mark(void)
+/*
+ * The @console syntax is a wildcard to match the system console(s) given
+ * on the kernel cmdline.  As such it can match multiple, or even none.
+ */
+int tty_isatcon(char *dev)
 {
-	struct tty *tty;
-
-	LIST_FOREACH(tty, &tty_list, link)
-		tty->dirty = -1;
+	return dev && !strcmp(dev, "@console");
 }
 
-void tty_sweep(void)
+int tty_atcon(char *buf, size_t len)
 {
-	struct tty *tty, *tmp;
+	FILE *fp;
 
-	LIST_FOREACH_SAFE(tty, &tty_list, link, tmp) {
-		if (!tty->dirty)
-			continue;
-
-		_d("TTY %s dirty, stopping ...", tty->name);
-		tty_stop(tty);
-
-		if (tty->dirty == -1) {
-			_d("TTY %s removed, cleaning up.", tty->name);
-			tty_unregister(tty);
-		}
+	fp = fopen("/sys/class/tty/console/active", "r");
+	if (!fp) {
+		_e("Cannot find system console, is sysfs not mounted?");
+		errno = ENOENT;
+		return -1;
 	}
+
+	if (!fgets(buf, len, fp)) {
+		fclose(fp);
+		return -1;
+	}
+
+	chomp(buf);
+	fclose(fp);
+
+	return 0;
 }
 
 /**
- * tty_register - Register a getty on a device
- * @line:   Configuration, text after initial "tty"
- * @rlimit: Limits for this service/run/task, may be global limits
- * @file:   The file name TTY was loaded from
+ * tty_parse_args - Parse cmdline args for a tty
+ * @cmd: command or tty
  *
  * A Finit tty line can use the internal getty implementation or an
  * external one, like the BusyBox getty for instance.  This function
@@ -119,66 +121,52 @@ void tty_sweep(void)
  * Different getty implementations prefer the TTY device argument in
  * different order, so take care to investigate this first.
  */
-int tty_register(char *line, struct rlimit rlimit[], char *file)
+int tty_parse_args(char *cmd, struct tty *tty)
 {
-	struct tty *entry;
-	size_t      i, num = 0;
-	char       *tok, *cmd = NULL, *args[TTY_MAX_ARGS], buf[256];
-	char             *dev = NULL, *baud = NULL;
-	char       *runlevels = NULL, *term = NULL;
-	int         insert = 0, noclear = 0, nowait = 0, nologin = 0, atcon = 0;
+	char  *dev = NULL;
+	size_t i;
 
-	if (!line) {
-		_e("Missing argument");
-		return errno = EINVAL;
-	}
-
-	/*
-	 * Split line in separate arguments.  For an external getty
-	 * this is used with execv(), for the built-in it simplifies
-	 * further translation.
-	 */
-	tok = strtok(line, " \t");
-	while (tok && num < NELEMS(args)) {
-		if (!strcmp(tok, "noclear"))
-			noclear = 1;
-		else if (!strcmp(tok, "nowait"))
-			nowait = 1;
-		else if (!strcmp(tok, "nologin"))
-			nologin = 1;
+	do {
+		_d("token %s", cmd);
+		if (!strcmp(cmd, "noclear"))
+			tty->noclear = 1;
+		else if (!strcmp(cmd, "nowait"))
+			tty->nowait  = 1;
+		else if (!strcmp(cmd, "nologin"))
+			tty->nologin = 1;
 		else
-			args[num++] = tok;
+			tty->args[tty->num++] = cmd;
 
-		tok = strtok(NULL, " \t");
-	}
+		cmd = strtok(NULL, " \t");
+	} while (cmd && tty->num < NELEMS(tty->args));
 
 	/* Iterate over all args */
-	for (i = 0; i < num; i++) {
+	for (i = 0; i < tty->num; i++) {
+		_d("Checking arg %s for dev and cmd ...", tty->args[i]);
 		/* 
 		 * First, figure out if built-in or external getty
 		 * tty [12345] /dev/ttyAMA0 115200 noclear vt220		# built-in
 		 * tty [12345] /sbin/getty -L 115200 @console vt100 noclear	# external
 		 */
-		if ((!cmd && !dev) || (cmd && !dev)) {
-			if (args[i][0] == '[')
-				runlevels = line;
-			if (!strcmp(args[i], "@console"))
-				dev = args[i];
-			if (!strncmp(args[i], "/dev", 4))
-				dev = args[i];
-			if (!strncmp(args[i], "tty", 3) || !strcmp(args[i], "console"))
-				dev = args[i];
-			if (!access(args[i], X_OK))
-				cmd = args[i];
+		if ((!tty->cmd && !dev) || (tty->cmd && !dev)) {
+			if (!strcmp(tty->args[i], "@console"))
+				dev = tty->args[i];
+			if (!strncmp(tty->args[i], "/dev", 4))
+				dev = tty->args[i];
+			if (!strncmp(tty->args[i], "tty", 3) || !strcmp(tty->args[i], "console"))
+				dev = tty->args[i];
+			if (!access(tty->args[i], X_OK))
+				tty->cmd = tty->args[i];
 
 			/* The first arg must be one of the above */
 			continue;
 		}
 
 		/* Built-in getty args */
-		if (!cmd && dev) {
-			if (isdigit(args[i][0])) {
-				baud = args[i];
+		if (!tty->cmd && dev) {
+			_d("Found dev %s for built-in getty", dev);
+			if (isdigit(tty->args[i][0])) {
+				tty->baud = tty->args[i];
 				continue;
 			}
 
@@ -186,187 +174,23 @@ int tty_register(char *line, struct rlimit rlimit[], char *file)
 			 * Last arg, if not anything else, is the value
 			 * to be used for the TERM environment variable.
 			 */
-			if (i + 1 == num)
-				term = args[i];
+			if (i + 1 == tty->num)
+				tty->term = tty->args[i];
 		}
 	}
 
-	if (!dev) {
-	error:
+	if (!tty_isatcon(dev))
+		tty->dev = tty_canonicalize(dev);
+
+	if (!tty->dev) {
 		_e("Incomplete or non-existing TTY device given, cannot register.");
 		return errno = EINVAL;
 	}
 
-	/* Auto-detect serial console, for embedded devices mostly */
-	if (!strcmp(dev, "@console")) {
-		FILE *fp;
-
-		fp = fopen("/sys/class/tty/console/active", "r");
-		if (!fp) {
-			_e("Cannot find system console, is sysfs not mounted?");
-			return errno = ENOENT;
-		}
-
-		atcon = 1;
-		if (fgets(buf, sizeof(buf), fp))
-			dev = strtok(chomp(buf), " \t");
-
-		fclose(fp);
-	}
-
-again:
-	/* Ensure all getty (built-in + external) are registered with absolute path */
-	dev = canonicalize(dev);
-	if (!dev)
-		goto error;
-
-	entry = tty_find(dev);
-	if (!entry) {
-		entry = calloc(1, sizeof(*entry));
-		if (!entry)
-			return errno = ENOMEM;
-		insert = 1;
-	} else {
-		if (entry->cmd) {
-			free(entry->cmd);
-			entry->cmd = NULL;
-			for (i = 0; i < TTY_MAX_ARGS; i++) {
-				if (entry->args[i])
-					free(entry->args[i]);
-				entry->args[i] = NULL;
-			}
-		}
-		insert = 0;
-	}
-
-	strlcpy(entry->name, dev, sizeof(entry->name));
-	strlcpy(entry->baud, baud ? baud : "", sizeof(entry->baud));
-	strlcpy(entry->term, term ? term : "", sizeof(entry->term));
-	entry->noclear   = noclear;
-	entry->nowait    = nowait;
-	entry->nologin   = nologin;
-	entry->runlevels = conf_parse_runlevels(runlevels);
-
-	/* External getty */
-	if (cmd) {
-		int j = 0;
-
-		tok = strrchr(cmd, '/');
-		if (!tok)
-			tok = cmd;
-		else
-			tok++;
-		entry->cmd = strdup(cmd);
-		args[1] = strdup(tok);
-
-		for (i = 1; i < num; i++) {
-			char *arg = args[i];
-
-			/* Replace @console with actual device */
-			if (arg && !strcmp(arg, "@console"))
-				arg = dev;
-			if (arg)
-				entry->args[j++] = strdup(arg);
-		}
-		entry->args[++j] = NULL;
-	}
-
-	_d("Registering %s getty on TTY %s at %s baud with term %s on runlevels %s",
-	   cmd ? "external" : "built-in", dev, baud ?: "NULL", term ?: "N/A", runlevels ?: "[2-5]");
-
-	if (insert)
-		LIST_INSERT_HEAD(&tty_list, entry, link);
-
-	/* Register configured limits */
-	memcpy(entry->rlimit, rlimit, sizeof(entry->rlimit));
-
-	if (file && conf_changed(file))
-		entry->dirty = 1; /* Modified, restart */
-	else
-		entry->dirty = 0; /* Not modified */
-	_d("TTY %s is %sdirty", dev, entry->dirty ? "" : "NOT ");
-
-	if (atcon) {
-		dev = strtok(NULL, " \t");
-		if (dev) {
-			_d("Found another @console: %s", dev);
-			goto again;
-		}
-	}
+	_d("Registering %s getty on TTY %s at %s baud with term %s", tty->cmd ? "external" : "built-in",
+	   tty->dev, tty->baud ?: "NULL", tty->term ?: "N/A");
 
 	return 0;
-}
-
-int tty_unregister(struct tty *tty)
-{
-	if (!tty) {
-		_e("Missing argument");
-		return errno = EINVAL;
-	}
-
-	LIST_REMOVE(tty, link);
-
-	if (tty->cmd) {
-		int i;
-
-		free(tty->cmd);
-		for (i = 0; i < TTY_MAX_ARGS; i++) {
-			if (tty->args[i])
-				free(tty->args[i]);
-			tty->args[i] = NULL;
-		}
-	}
-	free(tty);
-
-	return 0;
-}
-
-struct tty *tty_find(char *dev)
-{
-	struct tty *entry;
-
-	LIST_FOREACH(entry, &tty_list, link) {
-		if (!strcmp(dev, entry->name))
-			return entry;
-	}
-
-	return NULL;
-}
-
-size_t tty_num(void)
-{
-	size_t num = 0;
-	struct tty *entry;
-
-	LIST_FOREACH(entry, &tty_list, link)
-		num++;
-
-	return num;
-}
-
-size_t tty_num_active(void)
-{
-	size_t num = 0;
-	struct tty *entry;
-
-	LIST_FOREACH(entry, &tty_list, link) {
-		if (entry->pid)
-			num++;
-	}
-
-	return num;
-}
-
-struct tty *tty_find_by_pid(pid_t pid)
-{
-	struct tty *entry;
-
-	LIST_FOREACH(entry, &tty_list, link) {
-		if (entry->pid == pid)
-			return entry;
-	}
-
-	return NULL;
 }
 
 static int tty_exist(char *dev)
@@ -385,65 +209,35 @@ static int tty_exist(char *dev)
 	return result;
 }
 
-void tty_start(struct tty *tty)
+int tty_exec(svc_t *tty)
 {
 	char *dev;
+	int rc;
 
-	if (tty->pid) {
-		_d("%s: TTY already active", tty->name);
-		return;
-	}
-
-	dev = canonicalize(tty->name);
+	dev = tty_canonicalize(tty->dev);
 	if (!dev) {
-		_d("%s: Cannot find TTY device: %s", tty->name, strerror(errno));
-		return;
+		_d("%s: Cannot find TTY device: %s", tty->dev, strerror(errno));
+		return EX_CONFIG;
 	}
 
 	if (tty_exist(dev)) {
 		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
-		return;
+		return EX_OSFILE;
 	}
 
 	if (tty->nologin) {
 		_d("%s: Starting /bin/sh ...", dev);
-		tty->pid = run_sh(dev, tty->noclear, tty->nowait, tty->rlimit);
-		return;
+		return run_sh(dev, tty->noclear, tty->nowait, tty->rlimit);
 	}
 
 	_d("%s: Starting %sgetty ...", dev, !tty->cmd ? "built-in " : "");
-	if (!tty->cmd)
-		tty->pid = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
+	if (!strcmp(tty->cmd, "tty"))
+		rc = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
 	else
-		tty->pid = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, tty->rlimit);
-}
+//		rc = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, tty->rlimit);
+		rc = -1;
 
-void tty_stop(struct tty *tty)
-{
-	if (!tty->pid)
-		return;
-
-	/*
-	 * XXX: TTY handling should be refactored to regular services,
-	 * XXX: that way we could rely on the state machine to properly
-	 * XXX: send SIGTERM, wait for max 2 sec to collect PID before
-	 * XXX: sending SIGKILL.
-	 */
-	_d("Stopping TTY %s", tty->name);
-	kill(tty->pid, SIGKILL);
-	waitpid(tty->pid, NULL, 0);
-	tty->pid = 0;
-}
-
-int tty_enabled(struct tty *tty)
-{
-	if (!tty)
-		return 0;
-
-	if (ISSET(tty->runlevels, runlevel))
-		return 1;
-
-	return 0;
+	return rc;
 }
 
 /*
@@ -482,73 +276,6 @@ int tty_fallback(pid_t lost)
 #endif /* FALLBACK_SHELL */
 
 	return 0;
-}
-
-static void tty_action(struct tty *tty)
-{
-	if (!tty_enabled(tty))
-		tty_stop(tty);
-	else
-		tty_start(tty);
-}
-
-/*
- * TTY monitor, called by service_monitor()
- */
-int tty_respawn(pid_t pid)
-{
-	struct tty *tty = tty_find_by_pid(pid);
-
-	if (!tty)
-		return tty_fallback(pid);
-
-	/* Set DEAD_PROCESS UTMP entry */
-	utmp_set_dead(pid);
-
-	/* Clear PID to be able to respawn it. */
-	tty->pid = 0;
-	tty_action(tty);
-
-	return 1;
-}
-
-/*
- * Called after reload of /etc/finit.d/, stop/start TTYs
- */
-void tty_reload(char *dev)
-{
-	struct tty *tty;
-
-	if (dev) {
-		tty = tty_find(dev);
-		if (!tty) {
-			logit(LOG_WARNING, "No TTY registered for %s", dev);
-			return;
-		}
-
-		tty_action(tty);
-		tty->dirty = 0;
-		return;
-	}
-
-	tty_sweep();
-
-	LIST_FOREACH(tty, &tty_list, link) {
-		tty_action(tty);
-		tty->dirty = 0;
-	}
-}
-
-/* Start all TTYs that exist in the system and are allowed at this runlevel */
-void tty_runlevel(void)
-{
-	struct tty *tty;
-
-	LIST_FOREACH(tty, &tty_list, link)
-		tty_action(tty);
-
-	/* Start fallback shell if enabled && no TTYs */
-	tty_fallback(tty_num_active() > 0 ? 1 : 0);
 }
 
 /**

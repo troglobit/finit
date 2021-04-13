@@ -59,6 +59,7 @@ int   prevlevel = -1;
 int   debug     = 0;		/* debug mode from kernel cmdline */
 int   rescue    = 0;		/* rescue mode from kernel cmdline */
 int   single    = 0;		/* single user mode from kernel cmdline */
+int   bootstrap = 1;		/* set while bootrapping (for TTYs) */
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
@@ -310,9 +311,9 @@ static void finalize(void *unused)
 	/* Disable progress output at normal runtime */
 	enable_progress(0);
 
-	/* Delayed start of TTYs at bootstrap */
-	_d("Launching all getty services ...");
-	tty_runlevel();
+	/* System bootrapped, launch TTYs et al */
+	bootstrap = 0;
+	service_step_all(SVC_TYPE_RESPAWN);
 }
 
 /*

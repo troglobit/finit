@@ -30,6 +30,7 @@
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sysexits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -105,6 +106,7 @@ extern int    prevlevel;
 extern int    debug;
 extern int    rescue;
 extern int    single;
+extern int    bootstrap;
 extern char  *rcsd;
 extern char  *sdown;
 extern char  *network;
