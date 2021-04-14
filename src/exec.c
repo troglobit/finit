@@ -418,7 +418,7 @@ pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])
 {
 	int rc = 1;
 
-	prepare_tty(tty, B0, "finit-sh", rlimit);
+	prepare_tty(tty, B0, "finitsh", rlimit);
 	if (activate_console(noclear, nowait))
 		rc = sh(tty);
 
