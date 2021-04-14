@@ -143,9 +143,10 @@ typedef struct svc {
 			char  dev[32];
 			char  baud[10];
 			char  term[10];
-			int   noclear;
-			int   nowait;
-			int   nologin;
+			char  noclear;
+			char  nowait;
+			char  nologin;
+			char  notty;
 		};
 	};
 

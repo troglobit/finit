@@ -431,6 +431,10 @@ svc_t *svc_find_by_tty(char *dev)
 {
 	svc_t *svc, *iter = NULL;
 
+	/* this is valid for fallback shells */
+	if (!dev)
+		return NULL;
+
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc_is_tty(svc))
 			continue;

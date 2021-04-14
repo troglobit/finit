@@ -35,13 +35,10 @@
 #include "finit.h"
 #include "conf.h"
 #include "helpers.h"
+#include "service.h"
 #include "tty.h"
 #include "util.h"
 #include "utmp-api.h"
-
-#ifdef FALLBACK_SHELL
-static pid_t fallback = 0;
-#endif
 
 char *tty_canonicalize(char *dev)
 {
@@ -134,11 +131,17 @@ int tty_parse_args(char *cmd, struct tty *tty)
 			tty->nowait  = 1;
 		else if (!strcmp(cmd, "nologin"))
 			tty->nologin = 1;
+		else if (!strcmp(cmd, "notty"))
+			tty->notty = 1;	/* for fallback shell */
 		else
 			tty->args[tty->num++] = cmd;
 
 		cmd = strtok(NULL, " \t");
 	} while (cmd && tty->num < NELEMS(tty->args));
+
+	/* skip /dev probe, we just want a bríngup shell */
+	if (tty->notty)
+		return 0;
 
 	/* Iterate over all args */
 	for (i = 0; i < tty->num; i++) {
@@ -214,6 +217,18 @@ int tty_exec(svc_t *tty)
 	char *dev;
 	int rc;
 
+	if (tty->notty) {
+		/*
+		 * Become session leader and set controlling TTY
+		 * to enable Ctrl-C and job control in shell.
+		 */
+		setsid();
+		ioctl(STDIN_FILENO, TIOCSCTTY, 1);
+
+		prctl(PR_SET_NAME, "finitsh", 0, 0, 0);
+		return execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
+	}
+
 	dev = tty_canonicalize(tty->dev);
 	if (!dev) {
 		_d("%s: Cannot find TTY device: %s", tty->dev, strerror(errno));
@@ -243,39 +258,27 @@ int tty_exec(svc_t *tty)
 /*
  * Fallback shell if no TTYs are active
  */
-int tty_fallback(pid_t lost)
+int tty_fallback(char *file)
 {
-#ifdef FALLBACK_SHELL
-	if (lost == 1) {
-		if (fallback) {
-			kill(fallback, SIGKILL);
-			fallback = 0;
-		}
+	svc_t *svc, *iter = NULL;
+	size_t num = 0;
 
-		return 0;
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (!svc_is_tty(svc) || svc_is_removed(svc))
+			continue;
+		num++;
 	}
 
-	if (fallback != lost || tty_num_active())
-		return 0;
+#ifdef FALLBACK_SHELL
+	char line[32] = "tty [12345789] notty noclear";
 
-	fallback = fork();
-	if (fallback)
-		return 1;
+	if (!num) {
+		_d("No TTY active in configuration, enabling fallback shell.");
+		return service_register(SVC_TYPE_TTY, line, global_rlimit, file);
+	}
+#endif
 
-	/*
-	 * Become session leader and set controlling TTY
-	 * to enable Ctrl-C and job control in shell.
-	 */
-	setsid();
-	ioctl(STDIN_FILENO, TIOCSCTTY, 1);
-
-	prctl(PR_SET_NAME, "finitsh", 0, 0, 0);
-	_exit(execl(_PATH_BSHELL, _PATH_BSHELL, NULL));
-#else
-	(void)lost;
-#endif /* FALLBACK_SHELL */
-
-	return 0;
+	return num == 0;
 }
 
 /**

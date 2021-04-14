@@ -36,9 +36,10 @@ struct tty {
 	char	*dev;
 	char	*baud;
 	char	*term;
-	int	 noclear;
-	int	 nowait;
-	int	 nologin;
+	char	 noclear;
+	char	 nowait;
+	char	 nologin;
+	char	 notty;
 };
 
 char	*tty_canonicalize (char *dev);
@@ -49,6 +50,7 @@ int	 tty_atcon        (char *buf, size_t len);
 int	 tty_parse_args   (char *cmdline, struct tty *tty);
 
 int	 tty_exec	  (svc_t *tty);
+int	 tty_fallback	  (char *file);
 
 #endif /* FINIT_TTY_H_ */
 
