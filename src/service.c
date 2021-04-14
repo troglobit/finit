@@ -962,7 +962,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
 	 * array to be zero-terminated.
 	 */
-	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1);) {
+	while ((arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1)) {
 		char prev[sizeof(svc->args[0])] = { 0 };
 		char ch = arg[0];
 		size_t len;
@@ -1005,13 +1005,6 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 			diff++;
 		}
 	}
-#if 0
-	for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
-		if (!svc->args[i][0])
-			break;
-		_d("%s ", svc->args[i]);
-	}
-#endif
 
 	if (diff)
 		_d("Modified args for %s detected", cmd);
@@ -1417,7 +1410,8 @@ static void service_retry(svc_t *svc)
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
-		_d("%s not crashing anymore", svc->cmd);
+		if (!svc_is_tty(svc))
+			_d("%s not crashing anymore", svc->cmd);
 		*restart_cnt = 0;
 		return;
 	}

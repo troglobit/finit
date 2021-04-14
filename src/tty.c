@@ -191,7 +191,7 @@ int tty_parse_args(char *cmd, struct tty *tty)
 	}
 
 	_d("Registering %s getty on TTY %s at %s baud with term %s", tty->cmd ? "external" : "built-in",
-	   tty->dev, tty->baud ?: "NULL", tty->term ?: "N/A");
+	   tty->dev, tty->baud ?: "0", tty->term ?: "N/A");
 
 	return 0;
 }
