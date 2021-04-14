@@ -702,7 +702,7 @@ static int service_stop(svc_t *svc)
 		if (svc->pid > 1) {
 			/* Kill all children in the same proess group, e.g. logit */
 			rc = kill(-svc->pid, svc->sighalt);
-
+			_d("kill(-%d, %d) => rc %d", svc->pid, svc->sighalt, rc);
 			/* PID lost or forking process never really started */
 			if (rc == -1 && ESRCH == errno)
 				service_cleanup(svc);
