@@ -988,6 +988,10 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 				continue;
 		}
 
+		/* replace any @console arg with the expanded device name */
+		if (svc_is_tty(svc) && tty_isatcon(svc->args[i]))
+			strlcpy(svc->args[i], svc->dev, sizeof(svc->args[i]));
+
 		if (strcmp(svc->args[i], prev))
 			diff++;
 
@@ -1074,6 +1078,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *name = NULL, *halt = NULL, *delay = NULL;
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	struct tty tty = { 0 };
+	char *dev = NULL;
 	int levels = 0;
 	int manual = 0;
 	char *line;
@@ -1167,7 +1172,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		if (tty_parse_args(cmd, &tty))
 			return errno;
 
-		len += tty.num + 5;
+		if (tty.cmd)
+			len += strlen(tty.cmd);
+		len += tty.num + 2;
 		for (i = 0; i < tty.num; i++)
 			len += strlen(tty.args[i]);
 
@@ -1184,7 +1191,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		if (!cmd)
 			return errno;
 
-		svc = svc_find_by_tty(tty.dev);
+		if (tty_isatcon(tty.dev))
+			dev = tty_atcon();
+		else
+			dev = tty.dev;
+	next:
+		svc = svc_find_by_tty(dev);
 	} else
 		svc = svc_find(cmd, id);
 
@@ -1222,8 +1234,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		getcgroup(svc->group, sizeof(svc->group));
 	}
 
-	parse_cmdline_args(svc, cmd);
-
 	svc->runlevels = levels;
 	_d("Service %s runlevel 0x%02x", svc->cmd, svc->runlevels);
 
@@ -1232,8 +1242,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (type == SVC_TYPE_TTY) {
 		char *ptr;
 
-		if (tty.dev)
-			strlcpy(svc->dev, tty.dev, sizeof(svc->dev));
+		if (dev)
+			strlcpy(svc->dev, dev, sizeof(svc->dev));
 		if (tty.baud)
 			strlcpy(svc->baud, tty.baud, sizeof(svc->baud));
 		if (tty.term)
@@ -1260,6 +1270,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->id, id, sizeof(svc->id));
 	} else
 		parse_name(svc, name);
+
+	parse_cmdline_args(svc, cmd);
 
 	/*
 	 * Warn if svc generates same condition (based on name:id)
@@ -1301,6 +1313,13 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	/* for finit native services only, e.g. plugins/hotplug.c */
 	if (!file)
 		svc->protect = 1;
+
+	/* continue expanding any 'tty @console ...' */
+	if (tty_isatcon(tty.dev)) {
+		dev = tty_atcon();
+		if (dev)
+			goto next;
+	}
 
 	return 0;
 }

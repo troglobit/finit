@@ -245,10 +245,6 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	char name[80];
 	int fd;
 
-	/* Detach from initial controlling TTY and become session leader */
-	vhangup();
-	setsid();
-
 	fd = open(tty, O_RDWR);
 	if (fd < 0) {
 		logit(LOG_ERR, "Failed opening %s: %s", tty, strerror(errno));
@@ -260,6 +256,11 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	dup2(fd, STDERR_FILENO);
 	close(fd);
 
+	/*
+	 * Become session leader and set controlling TTY
+	 * to enable Ctrl-C and job control in shell.
+	 */
+	setsid();
 	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
 		logit(LOG_WARNING, "Failed TIOCSCTTY on %s: %s", tty, strerror(errno));
 

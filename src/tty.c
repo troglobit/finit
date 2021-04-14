@@ -47,6 +47,8 @@ char *tty_canonicalize(char *dev)
 
 	if (!dev)
 		return NULL;
+	if (tty_isatcon(dev))
+		return dev;
 
 	strlcpy(path, dev, sizeof(path));
 	if (stat(path, &st)) {
@@ -76,26 +78,51 @@ int tty_isatcon(char *dev)
 	return dev && !strcmp(dev, "@console");
 }
 
-int tty_atcon(char *buf, size_t len)
+/*
+ * Returns console TTYs known by the kernel, from cmdline
+ */
+char *tty_atcon(void)
 {
-	FILE *fp;
+	static char *buf = NULL;
+	static char *save;
+	char *ptr = NULL;
+	char *dev;
 
-	fp = fopen("/sys/class/tty/console/active", "r");
-	if (!fp) {
-		_e("Cannot find system console, is sysfs not mounted?");
-		errno = ENOENT;
-		return -1;
-	}
+	if (!buf) {
+		FILE *fp;
 
-	if (!fgets(buf, len, fp)) {
+		fp = fopen("/sys/class/tty/console/active", "r");
+		if (!fp) {
+			_e("Cannot find system console, is sysfs not mounted?");
+			errno = ENOENT;
+			return NULL;
+		}
+
+		buf = malloc(512);
+		if (!buf) {
+			_pe("Failed allocating memory for @console");
+			fclose(fp);
+			return NULL;
+		}
+
+		if (!fgets(buf, 512, fp)) {
+			fclose(fp);
+			goto done;
+		}
 		fclose(fp);
-		return -1;
+
+		ptr = chomp(buf);
+		_d("consoles: %s", ptr);
 	}
 
-	chomp(buf);
-	fclose(fp);
+	dev = strtok_r(ptr, " \t", &save);
+	if (!dev) {
+	done:
+		free(buf);
+		return buf = NULL;
+	}
 
-	return 0;
+	return dev;
 }
 
 /**
@@ -133,6 +160,8 @@ int tty_parse_args(char *cmd, struct tty *tty)
 			tty->nologin = 1;
 		else if (!strcmp(cmd, "notty"))
 			tty->notty = 1;	/* for fallback shell */
+		else if (!access(cmd, X_OK))
+			tty->cmd = cmd;
 		else
 			tty->args[tty->num++] = cmd;
 
@@ -151,15 +180,13 @@ int tty_parse_args(char *cmd, struct tty *tty)
 		 * tty [12345] /dev/ttyAMA0 115200 noclear vt220		# built-in
 		 * tty [12345] /sbin/getty -L 115200 @console vt100 noclear	# external
 		 */
-		if ((!tty->cmd && !dev) || (tty->cmd && !dev)) {
+		if (!dev) {
 			if (!strcmp(tty->args[i], "@console"))
 				dev = tty->args[i];
 			if (!strncmp(tty->args[i], "/dev", 4))
 				dev = tty->args[i];
 			if (!strncmp(tty->args[i], "tty", 3) || !strcmp(tty->args[i], "console"))
 				dev = tty->args[i];
-			if (!access(tty->args[i], X_OK))
-				tty->cmd = tty->args[i];
 
 			/* The first arg must be one of the above */
 			continue;
@@ -182,9 +209,7 @@ int tty_parse_args(char *cmd, struct tty *tty)
 		}
 	}
 
-	if (!tty_isatcon(dev))
-		tty->dev = tty_canonicalize(dev);
-
+	tty->dev = tty_canonicalize(dev);
 	if (!tty->dev) {
 		_e("Incomplete or non-existing TTY device given, cannot register.");
 		return errno = EINVAL;
@@ -214,8 +239,9 @@ static int tty_exist(char *dev)
 
 int tty_exec(svc_t *tty)
 {
+	char *args[MAX_NUM_SVC_ARGS];
 	char *dev;
-	int rc;
+	int i, j;
 
 	if (tty->notty) {
 		/*
@@ -247,12 +273,17 @@ int tty_exec(svc_t *tty)
 
 	_d("%s: Starting %sgetty ...", dev, !tty->cmd ? "built-in " : "");
 	if (!strcmp(tty->cmd, "tty"))
-		rc = run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
-	else
-//		rc = run_getty2(dev, tty->cmd, tty->args, tty->noclear, tty->nowait, tty->rlimit);
-		rc = -1;
+		return run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
 
-	return rc;
+	for (i = 1, j = 0; i < MAX_NUM_SVC_ARGS; i++) {
+		if (!tty->args[i][0])
+			break;
+
+		args[j++] = tty->args[i];
+	}
+	args[j++] = NULL;
+
+	return run_getty2(dev, tty->cmd, args, tty->noclear, tty->nowait, tty->rlimit);
 }
 
 /*

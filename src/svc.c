@@ -192,6 +192,8 @@ void svc_validate(svc_t *svc)
 	for (s = svc_iterator(&iter, 1); s; s = svc_iterator(&iter, 0)) {
 		char c[MAX_COND_LEN];
 
+		if (s->removed)
+			continue;
 		if (s == svc)
 			continue;
 

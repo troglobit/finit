@@ -45,7 +45,7 @@ struct tty {
 char	*tty_canonicalize (char *dev);
 
 int	 tty_isatcon      (char *dev);
-int	 tty_atcon        (char *buf, size_t len);
+char	*tty_atcon	  (void);
 
 int	 tty_parse_args   (char *cmdline, struct tty *tty);
 
