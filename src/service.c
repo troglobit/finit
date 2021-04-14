@@ -654,6 +654,9 @@ static void service_cleanup(svc_t *svc)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      basename(svc->cmd), fn);
 
+	/* PID collected, cancel any pending SIGKILL */
+	service_timeout_cancel(svc);
+
 	/* No longer running, update books. */
 	if (svc_is_tty(svc) && svc->pid > 1)
 		utmp_set_dead(svc->pid); /* Set DEAD_PROCESS UTMP entry */
