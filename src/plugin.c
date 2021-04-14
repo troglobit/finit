@@ -196,7 +196,7 @@ void plugin_run_hook(hook_point_t no, void *arg)
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
-			_d("Calling %s hook n:o %d (arg: %p) ...", basename(p->name), no, arg);
+			_d("Calling %s hook n:o %d (arg: %p) ...", basename(p->name), no, arg ?: "NIL");
 			p->hook[no].cb(arg ? arg : p->hook[no].arg);
 		}
 	}
