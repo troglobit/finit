@@ -441,7 +441,7 @@ svc_t *svc_find_by_tty(char *dev)
 		if (!svc_is_tty(svc))
 			continue;
 
-		if (!strcmp(dev, svc->name))
+		if (!strcmp(dev, svc->dev))
 			return svc;
 	}
 
