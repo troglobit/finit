@@ -206,10 +206,6 @@ restart:
 			break;
 		}
 
-		/* No TTYs run at bootstrap, they have a delayed start. */
-		if (prevlevel > 0)
-			tty_runlevel();
-
 		sm->state = SM_RUNNING_STATE;
 		break;
 
@@ -224,8 +220,7 @@ restart:
 		_d("Stopping services not allowed after reconf ...");
 		sm->in_teardown = 1;
 		cond_reload();
-		service_step_all(SVC_TYPE_SERVICE);
-		tty_reload(NULL);
+		service_step_all(SVC_TYPE_ANY);
 
 		sm->state = SM_RELOAD_WAIT_STATE;
 		break;
@@ -242,16 +237,17 @@ restart:
 		}
 
 		sm->in_teardown = 0;
-		/* Cleanup stale services */
-		svc_clean_dynamic(service_unregister);
 
 		_d("Starting services after reconf ...");
-		service_step_all(SVC_TYPE_SERVICE);
+		service_step_all(SVC_TYPE_ANY);
+
+		/* Cleanup stale services */
+		svc_clean_dynamic(service_unregister);
 
 		_d("Calling reconf hooks ...");
 		plugin_run_hooks(HOOK_SVC_RECONF);
 
-		service_step_all(SVC_TYPE_SERVICE);
+		service_step_all(SVC_TYPE_ANY);
 		_d("Reconfiguration done");
 
 		sm->state = SM_RUNNING_STATE;

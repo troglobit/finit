@@ -42,10 +42,12 @@ typedef enum {
 	SVC_TYPE_SERVICE    = 1,	/* Monitored, will be respawned */
 	SVC_TYPE_TASK       = 2,	/* One-shot, runs in parallell */
 	SVC_TYPE_RUN        = 4,	/* Like task, but wait for completion */
+	SVC_TYPE_TTY        = 8,	/* Like service, but dedicated to TTYs */
 	SVC_TYPE_SYSV       = 32,	/* SysV style init.d script w/ start/stop */
 } svc_type_t;
 
 #define SVC_TYPE_ANY          (-1)
+#define SVC_TYPE_RESPAWN      (SVC_TYPE_SERVICE | SVC_TYPE_TTY)
 #define SVC_TYPE_RUNTASK      (SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SYSV)
 
 typedef enum {
@@ -125,15 +127,28 @@ typedef struct svc {
 	char           once;	       /* run/task, (at least) once per runlevel */
 	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
 
-	/* Set for services we need to redirect stdout/stderr to syslog */
-	struct {
-		char   enabled;
-		char   null;
-		char   console;
-		char   file[64];
-		char   prio[20];
-		char   ident[20];
-	} log;
+	union {
+		/* services we redirect stdout/stderr to syslog (not TTYs!) */
+		struct {
+			char  enabled;
+			char  null;
+			char  console;
+			char  file[64];
+			char  prio[20];
+			char  ident[20];
+		} log;
+
+		/* Only for TTY type services */
+		struct {
+			char  dev[32];
+			char  baud[10];
+			char  term[10];
+			char  noclear;
+			char  nowait;
+			char  nologin;
+			char  notty;
+		};
+	};
 
 	/* Identity */
 	char	       username[MAX_USER_LEN];
@@ -165,6 +180,7 @@ svc_t	   *svc_find	           (char *cmd, char *id);
 svc_t	   *svc_find_by_pid        (pid_t pid);
 svc_t	   *svc_find_by_jobid      (int job, char *id);
 svc_t	   *svc_find_by_nameid     (char *name, char *id);
+svc_t	   *svc_find_by_tty        (char *dev);
 svc_t      *svc_find_by_pidfile    (char *fn);
 
 svc_t      *svc_iterator           (svc_t **iter, int first);
@@ -189,9 +205,10 @@ int         svc_is_unique          (svc_t *svc);
 
 int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *));
 
-static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE    == svc->type; }
-static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV       == svc->type; }
-static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);   }
+static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
+static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV    == svc->type; }
+static inline int svc_is_tty       (svc_t *svc) { return svc && SVC_TYPE_TTY     == svc->type; }
+static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);}
 static inline int svc_is_forking   (svc_t *svc) { return (svc_is_daemon(svc) || svc_is_sysv(svc)) && svc->pidfile[0] == '!'; }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
@@ -229,6 +246,7 @@ static inline int svc_has_cond(svc_t *svc)
 	case SVC_TYPE_SERVICE:
 	case SVC_TYPE_TASK:
 	case SVC_TYPE_RUN:
+	case SVC_TYPE_TTY:
 	case SVC_TYPE_SYSV:
 		return 1;
 

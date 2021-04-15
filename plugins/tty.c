@@ -32,13 +32,14 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "service.h"
 #include "tty.h"
 
-static void watcher(void *arg, int fd, int events);
+static void tty_watcher(void *arg, int fd, int events);
 
 static plugin_t plugin = {
 	.io = {
-		.cb    = watcher,
+		.cb    = tty_watcher,
 		.flags = PLUGIN_IO_READ,
 	},
 };
@@ -56,19 +57,24 @@ static void setup(void)
 static void do_tty(char *tty, size_t len, int creat)
 {
 	char name[len + 6];
-	struct tty *entry;
+	svc_t *svc;
 
 	snprintf(name, sizeof(name), "/dev/%s", tty);
-	entry = tty_find(name);
-	if (entry && tty_enabled(entry)) {
-		if (creat)
-			tty_start(entry);
-		else if (entry->pid)
-			tty_stop(entry);
+	svc = svc_find_by_tty(name);
+	if (svc) {
+		if (svc_is_blocked(svc) && creat) {
+			_d("%s: blocked, re-enabling", svc_ident(svc, NULL, 0));
+			svc_start(svc);
+		} else if (svc->pid) {
+			_d("%s: missing ...", svc_ident(svc, NULL, 0));
+			svc_missing(svc);
+		}
+
+		service_step_all(SVC_TYPE_TTY);
 	}
 }
 
-static void watcher(void *arg, int fd, int events)
+static void tty_watcher(void *arg, int fd, int events)
 {
 	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
 	struct inotify_event *ev;

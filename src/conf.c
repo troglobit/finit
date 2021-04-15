@@ -592,7 +592,7 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 
 	/* Regular or serial TTYs to run getty */
 	if (MATCH_CMD(line, "tty ", x)) {
-		tty_register(strip_line(x), rlimit, file);
+		service_register(SVC_TYPE_TTY, strip_line(x), rlimit, file);
 		return;
 	}
 }
@@ -664,7 +664,6 @@ int conf_reload(void)
 	/* Mark and sweep */
 	cgroup_mark_all();
 	svc_mark_dynamic();
-	tty_mark();
 
 	/*
 	 * Reset global rlimit to bootstrap values from conf_init().
@@ -678,7 +677,7 @@ int conf_reload(void)
 		/* If rescue.conf is missing, fall back to a root shell */
 		rc = parse_conf(RESCUE_CONF, 0);
 		if (rc)
-			tty_register(line, global_rlimit, NULL);
+			service_register(SVC_TYPE_TTY, line, global_rlimit, NULL);
 
 		print(rc, "Entering rescue mode");
 		goto done;
@@ -737,6 +736,10 @@ int conf_reload(void)
 	}
 
 	globfree(&gl);
+
+	/* Verify config, do we have at least one TTY available? */
+	if (tty_fallback(FINIT_CONF))
+		logit(LOG_WARNING, "warning, no getty enabled on local TTYs.");
 
 	/* Mark any reverse deps as chenaged. */
 	service_update_rdeps();

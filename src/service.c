@@ -412,6 +412,16 @@ static int service_start(svc_t *svc)
 		return 1;
 	}
 
+	if (svc_is_tty(svc)) {
+		char *dev = tty_canonicalize(svc->dev);
+
+		if (!dev || !tty_exists(dev)) {
+			_d("TTY %s missing or invalid, halting service.", svc->dev);
+			svc_missing(svc);
+			return 1;
+		}
+	}
+
 	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", svc->cmd);
 
@@ -538,7 +548,8 @@ static int service_start(svc_t *svc)
 		}
 		args[i] = NULL;
 
-		redirect(svc);
+		if (!svc_is_tty(svc))
+			redirect(svc);
 		sig_unblock();
 
 		/*
@@ -556,6 +567,8 @@ static int service_start(svc_t *svc)
 
 		if (svc_is_runtask(svc))
 			status = exec_runtask(args[0], &args[1]);
+		else if (svc_is_tty(svc))
+			status = tty_exec(svc);
 		else
 			status = execvp(args[0], &args[1]);
 
@@ -573,7 +586,10 @@ static int service_start(svc_t *svc)
 		_d("Starting %s %s", svc->cmd, buf);
 	}
 
-	cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
+	if (svc_is_tty(svc))
+		cgroup_user("getty", pid);
+	else
+		cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
 
 	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
 
@@ -648,7 +664,13 @@ static void service_cleanup(svc_t *svc)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      basename(svc->cmd), fn);
 
+	/* PID collected, cancel any pending SIGKILL */
+	service_timeout_cancel(svc);
+
 	/* No longer running, update books. */
+	if (svc_is_tty(svc) && svc->pid > 1)
+		utmp_set_dead(svc->pid); /* Set DEAD_PROCESS UTMP entry */
+
 	svc->oldpid = svc->pid;
 	svc->start_time = svc->pid = 0;
 }
@@ -693,7 +715,7 @@ static int service_stop(svc_t *svc)
 		if (svc->pid > 1) {
 			/* Kill all children in the same proess group, e.g. logit */
 			rc = kill(-svc->pid, svc->sighalt);
-
+			_d("kill(-%d, %d) => rc %d", svc->pid, svc->sighalt, rc);
 			/* PID lost or forking process never really started */
 			if (rc == -1 && ESRCH == errno)
 				service_cleanup(svc);
@@ -925,13 +947,10 @@ static void parse_name(svc_t *svc, char *arg)
 	}
 
 	strlcpy(svc->name, name, sizeof(svc->name));
-
-	/* Warn if svc generates same condition as an existing service */
-	svc_validate(svc);
 }
 
-/**
- * parse_cmdline_args - Update the command line args in the svc struct
+/*
+ * Update the command line args in the svc struct
  *
  * strtok internal pointer must be positioned at first command line arg
  * when this function is called.
@@ -953,7 +972,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
 	 * array to be zero-terminated.
 	 */
-	for (i = 1; (arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1);) {
+	while ((arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1)) {
 		char prev[sizeof(svc->args[0])] = { 0 };
 		char ch = arg[0];
 		size_t len;
@@ -979,6 +998,10 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 				continue;
 		}
 
+		/* replace any @console arg with the expanded device name */
+		if (svc_is_tty(svc) && tty_isatcon(svc->args[i]))
+			strlcpy(svc->args[i], svc->dev, sizeof(svc->args[i]));
+
 		if (strcmp(svc->args[i], prev))
 			diff++;
 
@@ -996,13 +1019,6 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 			diff++;
 		}
 	}
-#if 0
-	for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
-		if (!svc->args[i][0])
-			break;
-		_d("%s ", svc->args[i]);
-	}
-#endif
 
 	if (diff)
 		_d("Modified args for %s detected", cmd);
@@ -1071,6 +1087,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *name = NULL, *halt = NULL, *delay = NULL;
 	char *id = NULL, *env = NULL, *cgroup = NULL;
+	struct tty tty = { 0 };
+	char *dev = NULL;
 	int levels = 0;
 	int manual = 0;
 	char *line;
@@ -1103,7 +1121,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		}
 	}
 
-	cmd = strtok(line, " ");
+	cmd = strtok(line, " \t");
 	if (!cmd) {
 	incomplete:
 		_e("Incomplete service '%s', cannot register", cfg);
@@ -1111,6 +1129,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	while (cmd) {
+		if (type == SVC_TYPE_TTY && cmd[0] == '@')
+			break;		/* @console */
+
 		if (cmd[0] == '@')	/* @username[:group] */
 			username = &cmd[1];
 		else if (cmd[0] == '[')	/* [runlevels] */
@@ -1155,7 +1176,40 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (!id)
 		id = "";
 
-	svc = svc_find(cmd, id);
+	if (type == SVC_TYPE_TTY) {
+		size_t i, len = 0;
+
+		if (tty_parse_args(cmd, &tty))
+			return errno;
+
+		if (tty.cmd)
+			len += strlen(tty.cmd);
+		len += tty.num + 2;
+		for (i = 0; i < tty.num; i++)
+			len += strlen(tty.args[i]);
+
+		line = alloca(len);
+		if (!line)
+			return errno;
+
+		snprintf(line, len, "%s ", tty.cmd ?: "tty");
+		for (i = 0; i < tty.num; i++) {
+			strlcat(line, tty.args[i], len);
+			strlcat(line, " ", len);
+		}
+		cmd = strtok(line, " \t");
+		if (!cmd)
+			return errno;
+
+		if (tty_isatcon(tty.dev))
+			dev = tty_atcon();
+		else
+			dev = tty.dev;
+	next:
+		svc = svc_find_by_tty(dev);
+	} else
+		svc = svc_find(cmd, id);
+
 	if (!svc) {
 		_d("Creating new svc for %s id #%s type %d", cmd, id, type);
 		svc = svc_new(cmd, id, type);
@@ -1190,14 +1244,51 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		getcgroup(svc->group, sizeof(svc->group));
 	}
 
-	parse_cmdline_args(svc, cmd);
-
 	svc->runlevels = levels;
 	_d("Service %s runlevel 0x%02x", svc->cmd, svc->runlevels);
 
 	conf_parse_cond(svc, cond);
 
-	parse_name(svc, name);
+	if (type == SVC_TYPE_TTY) {
+		char *ptr;
+
+		if (dev)
+			strlcpy(svc->dev, dev, sizeof(svc->dev));
+		if (tty.baud)
+			strlcpy(svc->baud, tty.baud, sizeof(svc->baud));
+		if (tty.term)
+			strlcpy(svc->term, tty.term, sizeof(svc->term));
+		svc->noclear = tty.noclear;
+		svc->nowait  = tty.nowait;
+		svc->nologin = tty.nologin;
+		svc->notty   = tty.notty;
+
+		/* TTYs cannot be redirected */
+		log = NULL;
+
+		/* Create name:id tuple for identiy, e.g., tty:S0 */
+		ptr = strrchr(svc->dev, '/');
+		if (ptr) {
+			ptr++;
+			if (!strncmp(ptr, "tty", 3))
+				ptr += 3;
+		} else
+			ptr = svc->dev;
+		if (!id || id[0] == 0)
+			id = ptr;
+		strlcpy(svc->name, "tty", sizeof(svc->name));
+		strlcpy(svc->id, id, sizeof(svc->id));
+	} else
+		parse_name(svc, name);
+
+	parse_cmdline_args(svc, cmd);
+
+	/*
+	 * Warn if svc generates same condition (based on name:id)
+	 * as an existing service.
+	 */
+	svc_validate(svc);
+
 	if (halt)
 		parse_sighalt(svc, halt);
 	if (delay)
@@ -1206,6 +1297,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_log(svc, log);
 	if (desc)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
+	else if (type == SVC_TYPE_TTY)
+		snprintf(svc->desc, sizeof(svc->desc), "Getty on %s", svc->dev);
 	if (env)
 		parse_env(svc, env);
 	if (file)
@@ -1230,6 +1323,13 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	/* for finit native services only, e.g. plugins/hotplug.c */
 	if (!file)
 		svc->protect = 1;
+
+	/* continue expanding any 'tty @console ...' */
+	if (tty_isatcon(tty.dev)) {
+		dev = tty_atcon();
+		if (dev)
+			goto next;
+	}
 
 	return 0;
 }
@@ -1258,9 +1358,6 @@ void service_monitor(pid_t lost, int status)
 	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
 		return;
 
-	if (tty_respawn(lost))
-		return;
-
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
 		_d("collected unknown PID %d", lost);
@@ -1276,7 +1373,7 @@ void service_monitor(pid_t lost, int status)
 		return;
 
 	/* Try removing PID file (in case service does not clean up after itself) */
-	if (svc_is_daemon(svc)) {
+	if (svc_is_daemon(svc) || svc_is_tty(svc)) {
 		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
 		/* run/task should run at least once per runlevel */
@@ -1342,7 +1439,8 @@ static void service_retry(svc_t *svc)
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
-		_d("%s not crashing anymore", svc->cmd);
+		if (!svc_is_tty(svc))
+			_d("%s not crashing anymore", svc->cmd);
 		*restart_cnt = 0;
 		return;
 	}
@@ -1376,7 +1474,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	*state = new;
 
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
-	if ((*state == SVC_STOPPING_STATE)) {
+	if (*state == SVC_STOPPING_STATE) {
 		_d("%s is stopping, wait %d sec before sending SIGKILL ...",
 		   svc->cmd, svc->killdelay / 1000);
 		service_timeout_cancel(svc);
@@ -1421,15 +1519,13 @@ restart:
 		if (!svc->pid) {
 			char cond[MAX_COND_LEN];
 
-			/* PID was collected normally, no need to kill it */
-			_d("%s: stopped normally, no need to send SIGKILL :)", svc->cmd);
+			_d("%s: stopped, cleaning up timers and conditions ...", svc->cmd);
 			service_timeout_cancel(svc);
-
-			_d("%s: clearing pid condition ...", svc->name);
 			cond_clear(mkcond(svc, cond, sizeof(cond)));
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
+			case SVC_TYPE_TTY:
 				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 
@@ -1477,7 +1573,7 @@ restart:
 		}
 
 		if (!svc->pid) {
-			if (svc_is_daemon(svc)) {
+			if (svc_is_daemon(svc) || svc_is_tty(svc)) {
 				svc_restarting(svc);
 				svc_set_state(svc, SVC_HALTED_STATE);
 
@@ -1596,7 +1692,7 @@ void service_step_all(int types)
 
 void service_worker(void *unused)
 {
-	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK);
+	service_step_all(SVC_TYPE_RESPAWN | SVC_TYPE_RUNTASK);
 }
 
 /**

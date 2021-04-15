@@ -114,7 +114,7 @@ svc_t *svc_new(char *cmd, char *id, int type)
 
 	/* Find first job n:o if registering multiple instances */
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!strcmp(svc->cmd, cmd)) {
+		if (cmd && !strcmp(svc->cmd, cmd)) {
 			job = svc->job;
 			break;
 		}
@@ -130,13 +130,17 @@ svc_t *svc_new(char *cmd, char *id, int type)
 	svc->job  = job;
 	if (id && id[0])
 		strlcpy(svc->id, id, sizeof(svc->id));
-	strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
+	if (cmd)
+		strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
 
 	/* Default description, if missing */
 	strlcpy(svc->desc, svc->name, sizeof(svc->desc));
 
 	/* Default HALT signal to send */
-	svc->sighalt = SIGTERM;
+	if (svc_is_tty(svc))
+		svc->sighalt = SIGHUP;
+	else
+		svc->sighalt = SIGTERM;
 
 	/* Default delay between SIGTERM and SIGKILL */
 	svc->killdelay = SVC_TERM_TIMEOUT;
@@ -188,6 +192,8 @@ void svc_validate(svc_t *svc)
 	for (s = svc_iterator(&iter, 1); s; s = svc_iterator(&iter, 0)) {
 		char c[MAX_COND_LEN];
 
+		if (s->removed)
+			continue;
 		if (s == svc)
 			continue;
 
@@ -327,7 +333,7 @@ svc_t *svc_stop_completed(void)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->state == SVC_STOPPING_STATE)
+		if (svc->state == SVC_STOPPING_STATE && svc->pid > 1)
 			return svc;
 	}
 
@@ -416,6 +422,26 @@ svc_t *svc_find_by_nameid(char *name, char *id)
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!strcmp(svc->id, id) && !strcmp(name, svc->name))
+			return svc;
+	}
+
+	return NULL;
+}
+
+
+svc_t *svc_find_by_tty(char *dev)
+{
+	svc_t *svc, *iter = NULL;
+
+	/* this is valid for fallback shells */
+	if (!dev)
+		return NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (!svc_is_tty(svc))
+			continue;
+
+		if (!strcmp(dev, svc->dev))
 			return svc;
 	}
 
@@ -579,6 +605,9 @@ int svc_enabled(svc_t *svc)
 		return 0;
 
 	if (svc_is_missing(svc))
+		return 0;
+
+	if (svc_is_tty(svc) && bootstrap)
 		return 0;
 
 	return 1;
