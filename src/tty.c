@@ -221,20 +221,20 @@ int tty_parse_args(char *cmd, struct tty *tty)
 	return 0;
 }
 
-static int tty_exist(char *dev)
+int tty_exists(char *dev)
 {
 	int fd, result;
 	struct termios c;
 
 	fd = open(dev, O_RDWR);
 	if (-1 == fd)
-		return 1;
+		return 0;
 
 	/* XXX: Add check for errno == EIO? */
 	result = tcgetattr(fd, &c);
 	close(fd);
 
-	return result;
+	return result == 0;
 }
 
 int tty_exec(svc_t *tty)
@@ -261,7 +261,7 @@ int tty_exec(svc_t *tty)
 		return EX_CONFIG;
 	}
 
-	if (tty_exist(dev)) {
+	if (!tty_exists(dev)) {
 		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
 		return EX_OSFILE;
 	}

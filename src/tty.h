@@ -49,6 +49,7 @@ char	*tty_atcon	  (void);
 
 int	 tty_parse_args   (char *cmdline, struct tty *tty);
 
+int	 tty_exists	  (char *dev);
 int	 tty_exec	  (svc_t *tty);
 int	 tty_fallback	  (char *file);
 
