@@ -127,12 +127,12 @@ static int cond_checkpath(const char *path)
 	return 0;
 }
 
-int cond_set_path(const char *path, enum cond_state new)
+int cond_set_path(const char *path, enum cond_state next)
 {
-	enum cond_state old;
+	enum cond_state prev;
 	unsigned int rgen;
 
-	_d("%s", path);
+	_d("%s <= %d", path, next);
 
 	rgen = cond_get_gen(_PATH_RECONF);
 	if (!rgen) {
@@ -140,9 +140,9 @@ int cond_set_path(const char *path, enum cond_state new)
 		return -1;
 	}
 
-	old = cond_get_path(path);
+	prev = cond_get_path(path);
 
-	switch (new) {
+	switch (next) {
 	case COND_ON:
 		if (cond_checkpath(path))
 		    return 0;
@@ -159,7 +159,7 @@ int cond_set_path(const char *path, enum cond_state new)
 		return 0;
 	}
 
-	return new != old;
+	return next != prev;
 }
 
 /* Should only be used by cond_set*(), cond_clear(), and usr plugin! */
