@@ -370,16 +370,20 @@ int ttinit(void)
 	struct pollfd fd = { STDIN_FILENO, POLLIN, 0 };
 	struct winsize ws = { 0 };
 	struct termios tc, saved;
+	int cached = 0;
 
 	/*
 	 * Basic TTY init, CLOCaL is important or TIOCWINSZ will block
 	 * until DCD is asserted, and we won't ever get it.
 	 */
-	tcgetattr(STDERR_FILENO, &tc);
-	saved = tc;
-	tc.c_cflag |= (CLOCAL | CREAD);
-	tc.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-	tcsetattr(STDERR_FILENO, TCSANOW, &tc);
+	if (!tcgetattr(STDERR_FILENO, &tc)) {
+		saved = tc;
+		cached = 1;
+
+		tc.c_cflag |= (CLOCAL | CREAD);
+		tc.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+		tcsetattr(STDERR_FILENO, TCSANOW, &tc);
+	}
 
 	/* 1. Try TIOCWINSZ to query window size from kernel */
 	if (!ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws)) {
@@ -411,7 +415,8 @@ int ttinit(void)
 		fprintf(stderr, "\e8");
 	}
 
-	tcsetattr(STDERR_FILENO, TCSANOW, &saved);
+	if (cached)
+		tcsetattr(STDERR_FILENO, TCSANOW, &saved);
 
 	/* Sanity check */
 	if (ttcols <= 0)
