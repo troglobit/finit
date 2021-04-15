@@ -412,6 +412,16 @@ static int service_start(svc_t *svc)
 		return 1;
 	}
 
+	if (svc_is_tty(svc)) {
+		char *dev = tty_canonicalize(svc->dev);
+
+		if (!dev || !tty_exists(dev)) {
+			_d("TTY %s missing or invalid, halting service.", svc->dev);
+			svc_missing(svc);
+			return 1;
+		}
+	}
+
 	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", svc->cmd);
 
