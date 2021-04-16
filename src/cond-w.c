@@ -105,7 +105,8 @@ static void cond_bump_reconf(void)
 	rgen = cond_get_gen(_PATH_RECONF);
 	rgen++;
 
-	cond_set_gen(_PATH_RECONF, rgen);
+	if (cond_set_gen(_PATH_RECONF, rgen))
+		_pe("Failed setting %s to gen %d", _PATH_RECONF, rgen);
 }
 
 static int cond_checkpath(const char *path)
