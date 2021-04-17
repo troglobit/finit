@@ -6,9 +6,11 @@
 
 #define COND_BASE      "finit/cond"
 #define COND_USR       "usr/"
+#define COND_PID       "pid/"
 
 #define _PATH_COND     _PATH_VARRUN COND_BASE "/"
 #define _PATH_CONDUSR  _PATH_COND   COND_USR
+#define _PATH_CONDPID  _PATH_COND   COND_PID
 #define _PATH_RECONF   _PATH_COND   "reconf"
 
 typedef enum cond_state {

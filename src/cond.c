@@ -52,8 +52,8 @@ const char *cond_path(const char *name)
 
 unsigned int cond_get_gen(const char *file)
 {
-	unsigned int gen;
 	char *ptr, path[256];
+	unsigned int gen;
 	FILE *fp;
 	int ret;
 

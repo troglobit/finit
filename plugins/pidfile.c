@@ -231,7 +231,13 @@ static void pidfile_reconf(void *arg)
 
 static void pidfile_init(void *arg)
 {
+	char piddir[MAX_ARG_LEN];
 	char *path;
+
+	if (mkpath(pid_runpath(_PATH_CONDPID, piddir, sizeof(piddir)), 0755) && errno != EEXIST) {
+		_pe("Failed creating %s condition directory, %s", COND_PID, _PATH_CONDPID);
+		return;
+	}
 
 	/*
 	 * The bootmisc plugin is responsible for setting up /var/run.
