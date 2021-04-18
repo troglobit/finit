@@ -519,7 +519,12 @@ static int do_utmp(char *file)
 
 static int show_version(char *arg)
 {
-	puts("v" PACKAGE_VERSION);
+	puts(PACKAGE_STRING);
+	printf("Bug report address: %-40s\n", PACKAGE_BUGREPORT);
+#ifdef PACKAGE_URL
+	printf("Project homepage: %s\n", PACKAGE_URL);
+#endif
+
 	return 0;
 }
 
@@ -893,11 +898,6 @@ static int usage(int rc)
 			"\n");
 	else
 		fprintf(stderr, "\n");
-
-	printf("Bug report address: %-40s\n", PACKAGE_BUGREPORT);
-#ifdef PACKAGE_URL
-	printf("Project homepage: %s\n", PACKAGE_URL);
-#endif
 
 	return rc;
 }
