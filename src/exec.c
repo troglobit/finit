@@ -290,7 +290,6 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags   = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
-	sigaction(SIGHUP,  &sa, NULL);
 	sigaction(SIGINT,  &sa, NULL);
 	sigaction(SIGQUIT, &sa, NULL);
 
