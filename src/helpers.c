@@ -462,7 +462,8 @@ int mksubsys(const char *dir, mode_t mode, char *user, char *group)
 			gid = 0;
 
 		rc = makedir(dir, mode);
-		(void)chown(dir, uid, gid);
+		if (chown(dir, uid, gid))
+			_pe("Failed chown(%s, %d, %d)", dir, uid, gid);
 	}
 
 	umask(omask);
@@ -498,8 +499,10 @@ void set_hostname(char **hostname)
 	}
 
 done:
-	if (*hostname)
-		(void)sethostname(*hostname, strlen(*hostname));
+	if (*hostname) {
+		if (sethostname(*hostname, strlen(*hostname)))
+			_pe("Failed sethostnaem(%s)", *hostname);
+	}
 }
 
 /*

@@ -402,19 +402,24 @@ static pid_t service_fork(svc_t *svc)
 		}
 
 		/* Set desired user+group */
-		if (gid >= 0)
-			(void)setgid(gid);
+		if (gid >= 0) {
+			if (setgid(gid))
+				_pe("%s: failed setgid(%d)", svc->cmd, gid);
+		}
 
 		if (uid >= 0) {
-			(void)setuid(uid);
+			if (setuid(uid))
+				_pe("%s: failed setuid(%d)", svc->cmd, uid);
 
 			/* Set default path for regular users */
 			if (uid > 0)
 				setenv("PATH", _PATH_DEFPATH, 1);
 			if (home) {
 				setenv("HOME", home, 1);
-				if (chdir(home))
-					(void)chdir("/");
+				if (chdir(home)) {
+					if (chdir("/"))
+						_pe("%s: failed chdir(%s) and chdir(/)", svc->cmd, home);
+				}
 			}
 		}
 
