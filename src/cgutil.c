@@ -324,7 +324,7 @@ struct cg *cg_conf(char *path)
 {
 	static struct cg cg;
 
-	cgroup_memval(path, "memory.min", cg.cg_mem.min, sizeof(cg.cg_mem.min));
+	cgroup_val(path, "memory.min", cg.cg_mem.min, sizeof(cg.cg_mem.min));
 	cgroup_memval(path, "memory.max", cg.cg_mem.max, sizeof(cg.cg_mem.max));
 	cgroup_val(path, "cpu.weight", cg.cg_cpu.weight, sizeof(cg.cg_cpu.weight));
 	cgroup_val(path, "cpu.max",    cg.cg_cpu.max, sizeof(cg.cg_cpu.max));

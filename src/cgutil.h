@@ -59,7 +59,7 @@ char *pid_cgroup  (int pid, char *buf, size_t len);
 uint64_t cgroup_memory(char *group);
 
 struct cg *cg_stats(char *path);
-struct cg *cg_conf(char *path);
+struct cg *cg_conf (char *path);
 
 int   cgroup_tree  (char *path, char *pfx, int mode, int pos);
 
