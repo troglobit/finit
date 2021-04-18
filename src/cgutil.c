@@ -555,6 +555,7 @@ static void cleanup(void)
 {
 	ttcooked();
 	showcursor();
+	puts("");
 }
 
 static void leave(uev_t *w, void *arg, int events)
