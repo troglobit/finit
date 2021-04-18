@@ -1184,19 +1184,20 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (tty.cmd)
 			len += strlen(tty.cmd);
-		len += tty.num + 2;
+		len += tty.num + 1;
 		for (i = 0; i < tty.num; i++)
-			len += strlen(tty.args[i]);
+			len += strlen(tty.args[i]) + 1;
 
 		line = alloca(len);
 		if (!line)
 			return errno;
 
-		snprintf(line, len, "%s ", tty.cmd ?: "tty");
+		snprintf(line, len, "%s", tty.cmd ?: "tty");
 		for (i = 0; i < tty.num; i++) {
-			strlcat(line, tty.args[i], len);
 			strlcat(line, " ", len);
+			strlcat(line, tty.args[i], len);
 		}
+
 		cmd = strtok(line, " \t");
 		if (!cmd)
 			return errno;
