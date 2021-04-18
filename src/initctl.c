@@ -630,7 +630,7 @@ static char *exit_status(int status, char *buf, size_t len)
 
 static char *status(svc_t *svc, int full)
 {
-	static char buf[64];
+	static char buf[96];
 	const char *color;
 	char ok[48] = {0};
 	char *s;
