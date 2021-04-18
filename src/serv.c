@@ -257,7 +257,8 @@ int do_disable(char *arg, int check)
 
 	if (chdir(FINIT_RCSD))
 		err(1, "failed cd %s", FINIT_RCSD);
-	(void)chdir("enabled");	   /* System *may* have enabled/ dir. */
+	if (chdir("enabled"))	   /* System *may* have enabled/ dir. */
+		dbg("Failed changing to %s/enabled/: %s", FINIT_RCSD, strerror(errno));
 
 	if (check && stat(arg, &st))
 		errx(1, "%s not (an) enabled (service).", arg);

@@ -28,6 +28,7 @@
 #ifdef HAVE_TERMIOS_H
 #include <poll.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <sys/reboot.h>
 #include <termios.h>
 #endif
@@ -37,6 +38,7 @@
 #define RB_SW_SUSPEND	0xd000fce2
 #endif
 
+extern int   debug;			/* defined in finit or initctl */
 extern int   ttrows;
 extern int   ttcols;
 extern char *prognm;
@@ -71,6 +73,18 @@ int     ttcooked   (void);
 #define ttraw()    0
 #define ttcooked() 0
 #endif
+
+static inline void dbg(char *fmt, ...)
+{
+	va_list ap;
+
+	if (!debug)
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
 
 static inline char *strterm(char *str, size_t len)
 {

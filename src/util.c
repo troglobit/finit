@@ -26,7 +26,6 @@
 #include <errno.h>
 #include <regex.h>
 #include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>

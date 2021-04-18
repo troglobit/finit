@@ -51,6 +51,7 @@ struct cmd {
 int icreate  = 0;
 int iforce   = 0;
 int ionce    = 0;
+int debug    = 0;
 int heading  = 1;
 int verbose  = 0;
 int plain    = 0;
@@ -951,6 +952,7 @@ int main(int argc, char *argv[])
 	struct option long_options[] = {
 		{ "batch",      0, NULL, 'b' },
 		{ "create",     0, NULL, 'c' },
+		{ "debug",      0, NULL, 'd' },
 		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
 		{ "once",       0, NULL, '1' },
@@ -1012,7 +1014,7 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	while ((c = getopt_long(argc, argv, "1bcfh?pqtv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "1bcdfh?pqtv", long_options, NULL)) != EOF) {
 		switch(c) {
 		case '1':
 			ionce = 1;
@@ -1024,6 +1026,10 @@ int main(int argc, char *argv[])
 
 		case 'c':
 			icreate = 1;
+			break;
+
+		case 'd':
+			debug = 1;
 			break;
 
 		case 'f':
