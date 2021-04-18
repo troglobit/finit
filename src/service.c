@@ -1184,6 +1184,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (tty.cmd)
 			len += strlen(tty.cmd);
+		else
+			len += 3;
+
 		len += tty.num + 1;
 		for (i = 0; i < tty.num; i++)
 			len += strlen(tty.args[i]) + 1;
