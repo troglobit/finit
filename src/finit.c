@@ -373,9 +373,20 @@ static void bootstrap_worker(void *work)
 	service_runlevel(cfglevel);
 }
 
+static int version(int rc)
+{
+	puts(PACKAGE_STRING);
+	printf("Bug report address: %-40s\n", PACKAGE_BUGREPORT);
+#ifdef PACKAGE_URL
+	printf("Project homepage: %s\n", PACKAGE_URL);
+#endif
+
+	return rc;
+}
+
 static int usage(int rc)
 {
-	printf("Usage: telinit [OPTIONS] [q | Q | 0-9]\n\n"
+	printf("Usage: %s [OPTIONS] [q | Q | 0-9]\n\n"
 	       "Options:\n"
 //	       "  -a       Ignored, compat SysV init\n"
 //	       "  -b       Ignored, compat SysV init\n"
@@ -393,12 +404,7 @@ static int usage(int rc)
 	       "  q, Q     Reload /etc/finit.conf and/or any *.conf in /etc/finit.d/\n"
 	       "           if modified, same as initctl reload or SIGHUP to PID 1\n"
 	       "  1, s, S  Enter system rescue mode, runlevel 1\n"
-	       "\n");
-
-	printf("Bug report address: %-40s\n", PACKAGE_BUGREPORT);
-#ifdef PACKAGE_URL
-	printf("Project homepage: %s\n", PACKAGE_URL);
-#endif
+	       "\n", prognm);
 
 	return rc;
 }
@@ -411,6 +417,7 @@ static int telinit(int argc, char *argv[])
 {
 	int c;
 
+	progname(argv[0]);
 	while ((c = getopt(argc, argv, "abe:h?st:vVz:")) != EOF) {
 		switch(c) {
 		case 'a': case 'b': case 'e': case 's': case 'z':
@@ -420,7 +427,7 @@ static int telinit(int argc, char *argv[])
 			break;
 
 		case 'v': case 'V':
-			return puts("v" VERSION) == EOF;
+			return version(0);
 
 		case 'h':
 		case '?':
