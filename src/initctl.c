@@ -622,7 +622,7 @@ static char *exit_status(int status, char *buf, size_t len)
 	if (WIFEXITED(status))
 		snprintf(buf, len, " (code=exited, status=%d%s)", rc, code2str(rc));
 	else if (WIFSIGNALED(status))
-		snprintf(buf, len, " (code=signaled, signal=%d%s)", sig, sig2str(sig));
+		snprintf(buf, len, " (code=signal, status=%d%s)", sig, sig2str(sig));
 
 	return buf;
 }
