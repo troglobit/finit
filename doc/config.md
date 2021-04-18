@@ -396,6 +396,28 @@ process using a different signal, use the option `halt:SIGNAL`, e.g.,
 use the option `kill:SEC`, e.g., `kill:10` to wait 10 seconds before
 sending `SIGKILL`.
 
+Services support `pre:script` and `post:script` actions as well.  These
+run as the same `@USER:GROUP` as the service itself, with any `env:file`
+sourced.  The scripts must use an absolute path, but are executed from
+the `$HOME` of the given user.  The scripts are not called with any
+argument (currently), but both get the `SERVICE_IDENT=foo` environment
+variable set.  Here `foo` denotes the identity of the service, which if
+there are multiple services named `foo`, may be `foo:1`, or any unique
+identifier specified in the .conf file.  The `post:script` is called
+with an additional set of environment variables:
+
+ - `EXIT_CODE=[exited,signal]`: set to one of `exited` or `signal`
+ - `EXIT_STATUS=[num,SIGNAME]`: set to one of exit status code from
+   the program, if it exited normally, or the signal name (`HUP`,
+   `TERM`, etc.) if it exited due to signal
+
+The scripts have a default execution time of 3 seconds before they are
+SIGKILLed, this can be adjusted using the above `kill:SEC` syntax.
+
+> **Note:** the `pre:script` _must_ be idempotent, because a service
+>           can transition between READY and HALTED states any number
+>           of times before going to RUNNING.
+
 
 ### Run-parts Scripts
 
@@ -415,6 +437,7 @@ services and programs either terminate or start in the background or
 you will block Finit.
 
 > **Note:** only read and executed in runlevel S (bootstrap).
+
 
 ### Including Finit Configs
 
