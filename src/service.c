@@ -376,6 +376,55 @@ static char *group_name(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
+static pid_t service_fork(svc_t *svc)
+{
+	pid_t pid;
+
+	pid = fork();
+	if (pid == 0) {
+		char *home = NULL;
+#ifdef ENABLE_STATIC
+		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
+		int gid = 0;
+#else
+		int uid = getuser(svc->username, &home);
+		int gid = getgroup(svc->group);
+#endif
+
+		sched_yield();
+
+		/* Set configured limits */
+		for (int i = 0; i < RLIMIT_NLIMITS; i++) {
+			if (setrlimit(i, &svc->rlimit[i]) == -1)
+				logit(LOG_WARNING,
+				      "%s: rlimit: Failed setting %s",
+				      svc->cmd, rlim2str(i));
+		}
+
+		/* Set desired user+group */
+		if (gid >= 0)
+			(void)setgid(gid);
+
+		if (uid >= 0) {
+			(void)setuid(uid);
+
+			/* Set default path for regular users */
+			if (uid > 0)
+				setenv("PATH", _PATH_DEFPATH, 1);
+			if (home) {
+				setenv("HOME", home, 1);
+				if (chdir(home))
+					(void)chdir("/");
+			}
+		}
+
+		/* Source any environment from env:/path/to/file */
+		source_env(svc);
+	}
+
+	return pid;
+}
+
 /**
  * service_start - Start service
  * @svc: Service to start
@@ -443,48 +492,10 @@ static int service_start(svc_t *svc)
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
-	pid = fork();
+	pid = service_fork(svc);
 	if (pid == 0) {
-		int status;
-		char *home = NULL;
-#ifdef ENABLE_STATIC
-		int uid = 0; /* XXX: Fix better warning that dropprivs is disabled. */
-		int gid = 0;
-#else
-		int uid = getuser(svc->username, &home);
-		int gid = getgroup(svc->group);
-#endif
 		char *args[MAX_NUM_SVC_ARGS + 1];
-
-		sched_yield();
-
-		/* Set configured limits */
-		for (int i = 0; i < RLIMIT_NLIMITS; i++) {
-			if (setrlimit(i, &svc->rlimit[i]) == -1)
-				logit(LOG_WARNING,
-				      "%s: rlimit: Failed setting %s",
-				      svc->cmd, rlim2str(i));
-		}
-
-		/* Set desired user+group */
-		if (gid >= 0)
-			(void)setgid(gid);
-
-		if (uid >= 0) {
-			(void)setuid(uid);
-
-			/* Set default path for regular users */
-			if (uid > 0)
-				setenv("PATH", _PATH_DEFPATH, 1);
-			if (home) {
-				setenv("HOME", home, 1);
-				if (chdir(home))
-					(void)chdir("/");
-			}
-		}
-
-		/* Source any environment from env:/path/to/file */
-		source_env(svc);
+		int status;
 
 		if (!svc_is_sysv(svc)) {
 			wordexp_t we = { 0 };
@@ -932,6 +943,14 @@ static void parse_killdelay(svc_t *svc, char *delay)
 	svc->killdelay = (int)(sec * 1000);
 }
 
+static void parse_script(char *type, char *script, char *buf, size_t len)
+{
+	if (access(script, X_OK))
+		logit(LOG_WARNING, "%s: %s:%s is missing or not executable, skipping.", type, script);
+	else
+		strlcpy(buf, script, len);
+}
+
 /*
  * name:<name>
  */
@@ -1087,6 +1106,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *username = NULL, *log = NULL, *pid = NULL;
 	char *name = NULL, *halt = NULL, *delay = NULL;
 	char *id = NULL, *env = NULL, *cgroup = NULL;
+	char *pre_script = NULL, *post_script = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
 	int levels = 0;
@@ -1152,6 +1172,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			halt = &cmd[5];
 		else if (!strncasecmp(cmd, "kill:", 5))
 			delay = &cmd[5];
+		else if (!strncasecmp(cmd, "pre:", 4))
+			pre_script = &cmd[4];
+		else if (!strncasecmp(cmd, "post:", 5))
+			post_script = &cmd[5];
 		else if (!strncasecmp(cmd, "env:", 4))
 			env = &cmd[4];
 		else if (!strncasecmp(cmd, "cgroup:", 7))
@@ -1297,6 +1321,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_sighalt(svc, halt);
 	if (delay)
 		parse_killdelay(svc, delay);
+	if (pre_script)
+		parse_script("pre", pre_script, svc->pre_script, sizeof(svc->pre_script));
+	if (post_script)
+		parse_script("post", post_script, svc->post_script, sizeof(svc->post_script));
 	if (log)
 		parse_log(svc, log);
 	if (desc)
@@ -1368,9 +1396,21 @@ void service_monitor(pid_t lost, int status)
 		return;
 	}
 
-	_d("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
-	   svc->cmd, lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
-	svc->status = status;
+	switch (svc->state) {
+	case SVC_CLEANUP_STATE:
+	case SVC_SETUP_STATE:
+		_d("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
+		   svc->state == SVC_CLEANUP_STATE ? svc->post_script : svc->pre_script,
+		   lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+		kill(-svc->pid, SIGKILL);
+		goto done;
+
+	default:
+		_d("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
+		   svc->cmd, lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+		svc->status = status;
+		break;
+	}
 
 	/* Forking sysv/services declare themselves with pid:!/path/to/pid.file  */
 	if (svc_is_starting(svc) && svc_is_forking(svc))
@@ -1390,6 +1430,7 @@ void service_monitor(pid_t lost, int status)
 			svc->started = 0;
 	}
 
+done:
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;
 
@@ -1432,6 +1473,80 @@ void service_update_rdeps(void)
 
 		svc_mark_affected(mkcond(svc, cond, sizeof(cond)));
 	}
+}
+
+static void service_kill_script(svc_t *svc)
+{
+	if (svc->pid <= 1)
+		return;
+
+	kill(-svc->pid, SIGKILL);
+}
+
+static void service_pre_script(svc_t *svc)
+{
+	svc->pid = service_fork(svc);
+	if (svc->pid < 0) {
+		_pe("Failed forking off %s pre-script %s", svc_ident(svc, NULL, 0), svc->pre_script);
+		return;
+	}
+
+	if (svc->pid == 0) {
+		char *argv[4] = {
+			"sh",
+			"-c",
+			svc->pre_script,
+			NULL
+		};
+
+		setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
+		execvp(_PATH_BSHELL, argv);
+		_exit(EX_OSERR);
+	}
+
+	/* Short hard-coded timeout to prevent locking up Finit */
+	service_timeout_after(svc, svc->killdelay, service_kill_script);
+}
+
+static void service_post_script(svc_t *svc)
+{
+	svc->pid = service_fork(svc);
+	if (svc->pid < 0) {
+		_pe("Failed forking off %s post-script %s", svc_ident(svc, NULL, 0), svc->post_script);
+		return;
+	}
+
+	if (svc->pid == 0) {
+		char *argv[4] = {
+			"sh",
+			"-c",
+			svc->post_script,
+			NULL
+		};
+		int rc, sig;
+
+		rc = WEXITSTATUS(svc->status);
+		sig = WTERMSIG(svc->status);
+
+		setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
+
+		if (WIFEXITED(svc->status)) {
+			char val[4];
+
+			setenv("EXIT_CODE", "exited", 1);
+			snprintf(val, sizeof(val), "%d", rc & 0xff);
+			setenv("EXIT_STATUS", val, 1);
+		} else if (WIFSIGNALED(svc->status)) {
+			setenv("EXIT_CODE", "signal", 1);
+			setenv("EXIT_STATUS", sig2str(sig), 1);
+		}
+
+		execvp(_PATH_BSHELL, argv);
+		_exit(EX_OSERR);
+	}
+
+	/* Short hard-coded timeout to prevent locking up Finit */
+	service_timeout_after(svc, svc->killdelay, service_kill_script);
 }
 
 static void service_retry(svc_t *svc)
@@ -1510,8 +1625,13 @@ restart:
 
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
-		if (enabled)
-			svc_set_state(svc, SVC_READY_STATE);
+		if (enabled) {
+			if (svc_has_pre(svc)) {
+				svc_set_state(svc, SVC_SETUP_STATE);
+				service_pre_script(svc);
+			} else
+				svc_set_state(svc, SVC_READY_STATE);
+		}
 		break;
 
 	case SVC_DONE_STATE:
@@ -1530,7 +1650,11 @@ restart:
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
 			case SVC_TYPE_TTY:
-				svc_set_state(svc, SVC_HALTED_STATE);
+				if (svc_has_post(svc)) {
+					svc_set_state(svc, SVC_CLEANUP_STATE);
+					service_post_script(svc);
+				} else
+					svc_set_state(svc, SVC_HALTED_STATE);
 				break;
 
 			case SVC_TYPE_TASK:
@@ -1544,6 +1668,16 @@ restart:
 				break;
 			}
 		}
+		break;
+
+	case SVC_CLEANUP_STATE:
+		if (!svc->pid)
+			svc_set_state(svc, SVC_HALTED_STATE);
+		break;
+
+	case SVC_SETUP_STATE:
+		if (!svc->pid)
+			svc_set_state(svc, SVC_READY_STATE);
 		break;
 
 	case SVC_READY_STATE:
