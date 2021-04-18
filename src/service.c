@@ -659,13 +659,13 @@ static void service_cleanup(svc_t *svc)
 {
 	char *fn;
 
+	/* PID collected, cancel any pending SIGKILL */
+	service_timeout_cancel(svc);
+
 	fn = pid_file(svc);
 	if (fn && remove(fn) && errno != ENOENT)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      basename(svc->cmd), fn);
-
-	/* PID collected, cancel any pending SIGKILL */
-	service_timeout_cancel(svc);
 
 	/* No longer running, update books. */
 	if (svc_is_tty(svc) && svc->pid > 1)
@@ -1376,6 +1376,9 @@ void service_monitor(pid_t lost, int status)
 	if (svc_is_starting(svc) && svc_is_forking(svc))
 		return;
 
+	/* Terminate any children in the same proess group, e.g. logit */
+	kill(-svc->pid, SIGKILL);
+
 	/* Try removing PID file (in case service does not clean up after itself) */
 	if (svc_is_daemon(svc) || svc_is_tty(svc)) {
 		service_cleanup(svc);
@@ -1386,9 +1389,6 @@ void service_monitor(pid_t lost, int status)
 		else
 			svc->started = 0;
 	}
-
-	/* Terminate any children in the same proess group, e.g. logit */
-	kill(-svc->pid, SIGKILL);
 
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;
