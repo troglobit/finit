@@ -286,32 +286,6 @@ int tty_exec(svc_t *tty)
 	return run_getty2(dev, tty->cmd, args, tty->noclear, tty->nowait, tty->rlimit);
 }
 
-/*
- * Fallback shell if no TTYs are active
- */
-int tty_fallback(char *file)
-{
-	svc_t *svc, *iter = NULL;
-	size_t num = 0;
-
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!svc_is_tty(svc) || svc_is_removed(svc))
-			continue;
-		num++;
-	}
-
-#ifdef FALLBACK_SHELL
-	char line[32] = "tty [12345789] notty noclear";
-
-	if (!num) {
-		_d("No TTY active in configuration, enabling fallback shell.");
-		return service_register(SVC_TYPE_TTY, line, global_rlimit, file);
-	}
-#endif
-
-	return num == 0;
-}
-
 /**
  * Local Variables:
  *  indent-tabs-mode: t

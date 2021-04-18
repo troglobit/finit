@@ -433,7 +433,7 @@ svc_t *svc_find_by_tty(char *dev)
 {
 	svc_t *svc, *iter = NULL;
 
-	/* this is valid for fallback shells */
+	/* this is valid for fallback (notty) shells */
 	if (!dev)
 		return NULL;
 

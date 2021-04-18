@@ -53,10 +53,6 @@ AC_ARG_ENABLE(emergency_shell,
 	                Use only for debugging very early boot problems with Finit]),,[
 	enable_emergency_shell=no])
 
-AC_ARG_ENABLE(fallback_shell,
-        AS_HELP_STRING([--enable-fallback-shell], [Start a shell if no TTYs can start]),,[
-	enable_fallback_shell=no])
-
 AC_ARG_ENABLE(auto_reload,
         AS_HELP_STRING([--enable-auto-reload], [Automatic reload on any .conf change]),,[
 	enable_auto_reload=no])
@@ -130,12 +126,9 @@ AC_ARG_WITH(random-seed,
 
 ### Enable features ###########################################################################
 
-# Create config.h from selected features and fallback defautls
+# Create config.h from selected features and fallback defaults
 AS_IF([test "x$enable_emergency_shell" = "xyes"], [
         AC_DEFINE(EMERGENCY_SHELL,  1, [Fork off init and let PID 1 wait and start /bin/sh if init crashes.])])
-
-AS_IF([test "x$enable_fallback_shell" = "xyes"], [
-        AC_DEFINE(FALLBACK_SHELL,  1, [Start /bin/sh on console if no TTYs.])])
 
 AS_IF([test "x$enable_auto_reload" = "xyes"], [
         AC_DEFINE(AUTO_RELOAD, 1, [Finit automatically does `initctl reload` on any .conf change])])

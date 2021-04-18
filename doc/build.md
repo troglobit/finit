@@ -153,19 +153,22 @@ kernel messages and add `debug` to enable Finit debug messages.
 append="init=/sbin/finit debug"
 ```
 
-To debug startup issues, in particular issues with getty/login, try
-`configure --enable-fallback-shell`.  When no TTYs are detected, and
-Finit is configured with this option, Finit will try to start a bare
-`/bin/sh` on the boot console.  Remember, this is only for debugging
-and would leave your production system potentially wide open.
+To debug startup issues, in particular issues with getty/login, add
+the following to your Finit .conf file:
+
+    tty [12345789] notty noclear
+
+The `notty` option ensures reusing the stdin/stdout set up by the
+kernel.  Remember, this is only for debugging and would leave your
+production system potentially wide open.
 
 There is also a rescue shell available, in case Finit crashes and the
 kernel usually reboots: `configure --enable-emergency-shell`.  However,
 the behavior of Finit is severely limited when this is enabled, so use
 it only for debugging start up issues when Finit crashes.
 
-**NOTE:** Neither of these two configure options should be enabled on
-  production systems since they can potentially give a user root access.
+**NOTE:** Neither of these options should be enabled on production
+         systems since they can potentially give a user root access.
 
 
 [1]:       ftp://troglobit.com/finit/finit-3.0.tar.xz

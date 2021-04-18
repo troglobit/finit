@@ -737,10 +737,6 @@ int conf_reload(void)
 
 	globfree(&gl);
 
-	/* Verify config, do we have at least one TTY available? */
-	if (tty_fallback(FINIT_CONF))
-		logit(LOG_WARNING, "warning, no getty enabled on local TTYs.");
-
 	/* Mark any reverse deps as chenaged. */
 	service_update_rdeps();
 

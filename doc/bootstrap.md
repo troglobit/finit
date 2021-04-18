@@ -34,7 +34,7 @@ Bootstrap
 24. Call 4th level hooks, `HOOK_SVC_UP`
 25. Call `/etc/rc.local`, if it exists and is an executable shell script
 26. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
-27. Start all configured TTYs, or a fallback shell on `/dev/console`
+27. Start all configured TTYs
 
 In (19) and (22) tasks and services defined in `/etc/finit.conf` and
 `/etc/sysctl.d/*.conf` are started.  Remember, all `service` and `task`

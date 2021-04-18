@@ -522,12 +522,14 @@ can be omitted to keep the kernel default.
 
     tty [12345] @console noclear vt220
 
-On really bare bones systems Finit offers a fallback shell, which
-should not be enabled on production systems since.  This because it
-may give a user root access without having to log in.  However, for
-bringup and system debugging it can come in handy:
+On really bare bones systems Finit can give you a shell prompt as
+soon as bootstrap is done, without opening any device node:
 
-    configure --enable-fallback-shell
+    tty [12345789] notty noclear
+
+This should of course not be enabled on production systems.  Because it
+may give a user root access without having to log in.  However, for
+board bringup and system debugging it can come in handy.
 
 One can also use the `service` stanza to start a stand-alone shell:
 
