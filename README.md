@@ -74,10 +74,10 @@ runlevel 2
 log size=100k count=4
 
 # Services to be monitored and respawned as needed
-service [S12345] watchdogd -L -f                 -- System watchdog daemon
-service [S12345] syslogd -n -b 3 -D              -- System log daemon
-service [S12345] <pid/syslogd> klogd -n          -- Kernel log daemon
-service   [2345] lldpd -d -c -M1 -H0 -i          -- LLDP daemon (IEEE 802.1ab)
+service [S12345] env:-/etc/conf.d/watchdog watchdog $WATCHDOG_OPTS $WATCHDOG_DEV -- System watchdog daemon
+service [S12345] env:-/etc/conf.d/syslog syslogd -n $SYSLOGD_OPTS          -- System log daemon
+service [S12345] <pid/syslogd> env:-/etc/conf.d/klogd klogd -n $KLOGD_OPTS -- Kernel log daemon
+service   [2345] env:-/etc/conf.d/lldpd lldpd -d $LLDPD_OPTS               -- LLDP daemon (IEEE 802.1ab)
 
 # The BusyBox ntpd does not use syslog when running in the foreground
 # So we use this trick to redirect stdout/stderr to a log file.  The
@@ -92,24 +92,24 @@ service :80   [2345] merecat -n -p 80   /var/www -- Web server
 service :8080 [2345] merecat -n -p 8080 /var/www -- Old web server
 
 # Alternative method instead of below runparts, can also use /etc/rc.local
-#task [S] /etc/init.d/keyboard-setup start       -- Setting up preliminary keymap
-#task [S] /etc/init.d/acpid start                -- Starting ACPI Daemon
-#task [S] /etc/init.d/kbd start                  -- Preparing console
+#sysv [S] /etc/init.d/keyboard-setup       -- Setting up preliminary keymap
+#sysv [S] /etc/init.d/acpid                -- Starting ACPI Daemon
+#task [S] /etc/init.d/kbd                  -- Preparing console
 
 # Run start scripts from this directory
 # runparts /etc/start.d
 
 # Virtual consoles run BusyBox getty, keep kernel default speed
-tty [12345] /sbin/getty -L 0 /dev/tty1 linux
-tty [12345] /sbin/getty -L 0 /dev/tty2 linux
-tty [12345] /sbin/getty -L 0 /dev/tty3 linux
+tty [12345] /sbin/getty -L 0 /dev/tty1  linux nowait noclear
+tty [2345]  /sbin/getty -L 0 /dev/tty2  linux nowait noclear
+tty [2345]  /sbin/getty -L 0 /dev/tty3  linux nowait noclear
 
 # Use built-in getty for serial port and USB serial
-tty [12345] /dev/ttyAMA0 noclear nowait
-tty [12345] /dev/ttyUSB0 noclear
+#tty [12345] /dev/ttyAMA0 noclear nowait
+#tty [12345] /dev/ttyUSB0 noclear
 
 # Just give me a shell, I need to debug this embedded system!
-tty [12345] @console noclear nologin
+#tty [12345] console noclear nologin
 ```
 
 The `service` stanza, as well as `task`, `run` and others are described
