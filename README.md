@@ -29,6 +29,22 @@ by [Claudio Matsuoka][] — "gaps filled with frog DNA …"
 ![Alpine screenshot](img/finit4-screenshot.png)  
 *Figure 1: Screenshot showing Finit booting [Alpine Linux](https://www.alpinelinux.org/).*
 
+Features include:
+
+  * Runlevels
+  * One-shot tasks, daemons, or SysV init scripts
+  * Runparts and rc.local
+  * Process supervision
+  * Sourcing environment files
+  * Conditions for network/process/custom dependencies
+  * Pre/Post script actions
+  * Tooling to enable/disable services
+  * Built-in getty
+  * Built-in watchdog, with support for hand-over to [watchdogd](https://troglobit.com/watchdogd.html)
+  * Built-in support for Debian/BusyBox `/etc/network/interfaces`
+  * Cgroups v2, both configuration and monitoring in `initctl top`
+  * Plugin support for customization
+
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
 [contrib/](contrib/) section with tutorials for:
