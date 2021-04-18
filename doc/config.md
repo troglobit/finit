@@ -440,14 +440,19 @@ size limit is reached.
 
 ### TTYs and Consoles
 
-**Syntax:** `tty [LVLS] <DEV> [BAUD] [noclear] [nowait] [nologin] [TERM]`  
-  `tty [LVLS] <CMD> <ARGS> [noclear] [nowait]`
+**Syntax:** `tty [LVLS] <COND> DEV [BAUD] [noclear] [nowait] [nologin] [TERM]`  
+  `tty [LVLS] <COND> CMD <ARGS> [noclear] [nowait]`
 
 The first variant of this option uses the built-in getty on the given
 TTY device DEV, in the given runlevels.  The DEV may be the special
 keyword `@console`, or `console`, useful on embedded systems.
 
 The default baud rate is 0, i.e., keep kernel default.
+
+> The `tty` stanza inherits runlevel, condition (and other feature)
+> parsing from the `service` stanza.  So TTYs can run in one or many
+> runlevels and depend on any condition supported by Finit.  This is
+> useful e.g. to depend on `<pid/elogind>` before starting a TTY.
 
 **Example:**
 
@@ -485,6 +490,10 @@ special `@console` device.  This works regardless weather the system
 uses `ttyS0`, `ttyAMA0`, `ttyMXC0`, or anything else.  Finit figures
 it out by querying sysfs: `/sys/class/tty/console/active`.  The speed
 can be omitted to keep the kernel default.
+
+> Most systems get by fine by just using `console`, which will evaluate
+> to `/dev/console`.  If you have to use `@console` to get any output,
+> you may have some issue with your kernel config.
 
 **Example:**
 
