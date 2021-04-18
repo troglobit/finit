@@ -65,7 +65,7 @@ static int is_tmpfs(char *path)
 	return tmpfs;
 }
 
-static int do_clean(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftw)
+static int bootclean(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftw)
 {
 	if (ftw->level == 0)
 		return 1;
@@ -76,8 +76,14 @@ static int do_clean(const char *fpath, const struct stat *sb, int tflag, struct 
 	return 0;
 }
 
-/* We can safely skip tmpfs, nothing to clean from previous boot there */
-static void bootclean(void)
+/*
+ * Cleanup stale files from previous boot, if any still linger on.
+ * Some systems, e.g. Alpine Linux, still have a persistent /run and
+ * /tmp, i.e. not tmpfs.
+ *
+ * We can safely skip tmpfs, nothing to clean there.
+ */
+static void clean(void *arg)
 {
 	char *dir[] = {
 		"/tmp/",
@@ -90,7 +96,7 @@ static void bootclean(void)
 		if (is_tmpfs(dir[i]))
 			continue;
 
-		nftw(dir[i], do_clean, 20, FTW_DEPTH);
+		nftw(dir[i], bootclean, 20, FTW_DEPTH);
 	}
 }
 
@@ -100,9 +106,6 @@ static void bootclean(void)
 static void setup(void *arg)
 {
 	mode_t prev;
-
-	/* Cleanup stale files, if any still linger on. */
-	bootclean();
 
 	prev = umask(0);
 
@@ -185,9 +188,8 @@ static void setup(void *arg)
 
 static plugin_t plugin = {
 	.name = __FILE__,
-	.hook[HOOK_BASEFS_UP] = {
-		.cb  = setup
-	},
+	.hook[HOOK_MOUNT_POST] = { .cb = clean },
+	.hook[HOOK_BASEFS_UP]  = { .cb = setup },
 	.depends = { "pidfile" },
 };
 
