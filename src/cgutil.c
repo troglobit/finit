@@ -580,7 +580,7 @@ static void key(uev_t *w, void *arg, int events)
 			break;
 
 		default:
-			warnx("Got char 0x%02x", ch);
+			dbg("Got char 0x%02x", ch);
 			break;
 		}
 	}
