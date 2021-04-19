@@ -549,6 +549,14 @@ int main(int argc, char *argv[])
 	 */
 	conf_init(&loop);
 
+	/*
+	 * Start built-in watchdogd as soon as possible, if enabled
+	 */
+	if (which(FINIT_LIBPATH_ "/watchdogd")) {
+		service_register(SVC_TYPE_SERVICE, "[123456789] name:watchdog :finit " FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
+		wdog = svc_find_by_nameid("watchdog", "finit");
+	}
+
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
 

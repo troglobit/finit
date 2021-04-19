@@ -7,21 +7,21 @@ else
 AM_LDFLAGS         = -export-dynamic
 endif
 
-sbin_PROGRAMS      = finit initctl
-
+sbin_PROGRAMS        = finit initctl
+pkglibexec_PROGRAMS  =
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
 
 if WATCHDOGD
-pkglibexec_PROGRAMS = watchdogd
+pkglibexec_PROGRAMS += watchdogd
 endif
 
 if LOGIT
-pkglibexec_PROGRAMS = logit
-logit_SOURCES       = logit.c logrotate.c
-logit_CFLAGS        = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
-logit_CFLAGS       += $(lite_CFLAGS)
-logit_LDADD         = $(lite_LIBS)
+pkglibexec_PROGRAMS += logit
+logit_SOURCES        = logit.c logrotate.c
+logit_CFLAGS         = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
+logit_CFLAGS        += $(lite_CFLAGS)
+logit_LDADD          = $(lite_LIBS)
 endif
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
@@ -71,7 +71,6 @@ REBOOT_LNKS        = reboot shutdown halt poweroff suspend
 if WATCHDOGD
 watchdogd_SOURCES  = watchdog.c watchdog.h
 watchdogd_CFLAGS   = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
-#log.c log.h
 endif
 
 # Hook in install to add finit and reboot symlink(s)

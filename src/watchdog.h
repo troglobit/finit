@@ -26,12 +26,6 @@
 #define WDT_DEVNODE "/dev/watchdog"
 #define WDT_TIMEOUT 30
 
-#ifdef BUILTIN_WATCHDOG
-int     watchdog(char *progname);
-#else
-#define watchdog(progname) 0
-#endif /* BUILTIN_WATCHDOG */
-
 /**
  * Local Variables:
  *  indent-tabs-mode: t

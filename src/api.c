@@ -270,10 +270,10 @@ static void send_svc(int sd, svc_t *svc)
 
 static void api_cb(uev_t *w, void *arg, int events)
 {
-	int sd, lvl;
-	svc_t *svc;
 	static svc_t *iter = NULL;
 	struct init_request rq;
+	int sd, lvl;
+	svc_t *svc;
 
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
@@ -394,13 +394,17 @@ static void api_cb(uev_t *w, void *arg, int events)
 				break;
 			}
 
-			/* Disable and allow Finit to collect bundled watchdog */
-			if (wdog) {
-				logit(LOG_NOTICE, "Stopping and removing %s (PID:%d)", wdog->cmd, wdog->pid);
-				stop(wdog);
+			if (wdog && wdog != svc) {
+				char name[32];
+
+				svc_ident(svc, name, sizeof(name));
+				logit(LOG_NOTICE, "Handing over wdog ctrl from %s[%d] to %s[%d]",
+				      svc_ident(wdog, NULL, 0), wdog->pid, name, svc->pid);
+
 				if (wdog->protect) {
-					wdog->protect = 0;
-					wdog->runlevels = 0;
+					logit(LOG_NOTICE, "Stopping and deleting built-in watchdog.");
+					stop(wdog);
+					svc_del(wdog);
 				}
 			}
 			wdog = svc;
