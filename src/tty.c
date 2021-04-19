@@ -151,7 +151,6 @@ int tty_parse_args(char *cmd, struct tty *tty)
 	size_t i;
 
 	do {
-		_d("token %s", cmd);
 		if (!strcmp(cmd, "noclear"))
 			tty->noclear = 1;
 		else if (!strcmp(cmd, "nowait"))
@@ -174,7 +173,6 @@ int tty_parse_args(char *cmd, struct tty *tty)
 
 	/* Iterate over all args */
 	for (i = 0; i < tty->num; i++) {
-		_d("Checking arg %s for dev and cmd ...", tty->args[i]);
 		/* 
 		 * First, figure out if built-in or external getty
 		 * tty [12345] /dev/ttyAMA0 115200 noclear vt220		# built-in
@@ -194,7 +192,6 @@ int tty_parse_args(char *cmd, struct tty *tty)
 
 		/* Built-in getty args */
 		if (!tty->cmd && dev) {
-			_d("Found dev %s for built-in getty", dev);
 			if (isdigit(tty->args[i][0])) {
 				tty->baud = tty->args[i];
 				continue;
