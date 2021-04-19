@@ -58,8 +58,8 @@ AC_ARG_ENABLE(auto_reload,
 	enable_auto_reload=no])
 
 AC_ARG_ENABLE(redirect,
-        AS_HELP_STRING([--enable-redirect], [Redirect service output to /dev/null, default: no]),,[
-	enable_redirect_output=no])
+        AS_HELP_STRING([--disable-redirect], [Disable redirection of service output to /dev/null]),,[
+	enable_redirect=yes])
 
 AC_ARG_ENABLE(logit,
      AS_HELP_STRING([--disable-logit], [Disable logit, used for log redirection, default: enable]),,[
@@ -253,6 +253,7 @@ Optional features:
   Built-in logrotate....: $enable_logrotate
   Scripting tool logit..: $enable_logit
   Emergency shell.......: $enable_emergency_shell
+  Redirect output.......: $enable_redirect
   Default hostname......: $hostname
   Default runlevel......: $runlevel
 
