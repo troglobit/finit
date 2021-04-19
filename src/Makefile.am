@@ -47,7 +47,7 @@ if LOGROTATE
 finit_SOURCES     += logrotate.c
 endif
 
-pkginclude_HEADERS = cond.h finit.h helpers.h log.h plugin.h svc.h
+pkginclude_HEADERS = cgroup.h cond.h finit.h helpers.h log.h plugin.h svc.h
 
 finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
