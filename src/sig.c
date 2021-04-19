@@ -267,7 +267,7 @@ void do_shutdown(shutop_t op)
 
 	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
-		if (wdog) {
+		if (wdog && wdog->pid > 1) {
 			int timeout = 10;
 
 			/* Wait here until the WDT reboots, or timeout with fallback */

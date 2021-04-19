@@ -93,7 +93,8 @@ static int loop(int fd, int timeout)
 		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
 		if (write(fd, "V", 1) == -1)
 			return EX_IOERR;
-	}
+	} else
+		syslog(LOG_ALERT, "System going down ...");
 
 	return EX_OK;
 }
@@ -111,12 +112,10 @@ int main(int argc, char *argv[])
 
 	rc = loop(fd, WDT_TIMEOUT);
 	while (!handover) {
-		syslog(LOG_ALERT, "System going down ...");
-
-		/* Waiting for SIGTERM ... */
+		/* Waiting for SIGTERM or WDT reset ... */
 		sleep(1);
 
-		/* Set lowest possible timeout on SIGTERM */
+		/* Set lowest possible timeout on SIGPWR */
 		ioctl(fd, WDIOC_SETTIMEOUT, &shutdown);
 	}
 	close(fd);
