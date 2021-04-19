@@ -250,7 +250,6 @@ Optional features:
   Built-in logrotate....: $enable_logrotate
   Scripting tool logit..: $enable_logit
   Emergency shell.......: $enable_emergency_shell
-  Fallback shell........: $enable_fallback_shell
   Default hostname......: $hostname
   Default runlevel......: $runlevel
 
