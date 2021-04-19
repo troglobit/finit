@@ -57,10 +57,6 @@ AC_ARG_ENABLE(auto_reload,
         AS_HELP_STRING([--enable-auto-reload], [Automatic reload on any .conf change]),,[
 	enable_auto_reload=no])
 
-AC_ARG_ENABLE(watchdog,
-        AS_HELP_STRING([--enable-watchdog], [Enable built-in watchdog, uses /dev/watchdog]),,[
-	enable_watchdog=no])
-
 AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--enable-redirect], [Redirect service output to /dev/null, default: no]),,[
 	enable_redirect_output=no])
@@ -124,6 +120,10 @@ AC_ARG_WITH(random-seed,
         AS_HELP_STRING([--with-random-seed=FILE], [Save a random seed for /dev/urandom across reboots, default /var/lib/misc/random-seed]),
 	[random_seed=$withval], [random_seed=yes])
 
+AC_ARG_WITH(watchdog,
+        AS_HELP_STRING([--with-watchdog=[DEV]], [Enable built-in watchdog, default: /dev/watchdog]),
+	[watchdog=$withval],[watchdog=])
+
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defaults
@@ -132,9 +132,6 @@ AS_IF([test "x$enable_emergency_shell" = "xyes"], [
 
 AS_IF([test "x$enable_auto_reload" = "xyes"], [
         AC_DEFINE(AUTO_RELOAD, 1, [Finit automatically does `initctl reload` on any .conf change])])
-
-AS_IF([test "x$enable_watchdog" = "xyes"], [
-        AC_DEFINE(BUILTIN_WATCHDOG,  1, [Enable built-in watchdog, kicks on /dev/watchdog])])
 
 AS_IF([test "x$enable_redirect" = "xyes"], [
 	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])
@@ -197,9 +194,15 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 	AC_EXPAND_DIR(random_path, "$random_seed")
 	AC_DEFINE_UNQUOTED(RANDOMSEED, "$random_path", [Improve random at boot by seeding it with sth from before.])])
 
+AS_IF([test "x$with_watchdog" != "xno"], [
+	AS_IF([test "x$watchdog" = "xyes"], [
+		watchdog=/dev/watchdog])
+	with_watchdog=yes
+        AC_DEFINE_UNQUOTED(WDT_DEVNODE, "$watchdog", [Built-in watchdog device node])])
+
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
-AM_CONDITIONAL(WATCHDOGD, [test "x$enable_watchdog" = "xyes"])
+AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
 AM_CONDITIONAL(LOGIT,     [test "x$enable_logit" = "xyes"])
 AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
@@ -246,7 +249,7 @@ Behavior:
 Optional features:
   Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
-  Built-in watchdogd....: $enable_watchdog
+  Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
   Scripting tool logit..: $enable_logit
   Emergency shell.......: $enable_emergency_shell

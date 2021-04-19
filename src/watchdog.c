@@ -23,6 +23,8 @@
 
 #include <config.h>
 #include <stdio.h>
+#include <string.h>
+#include <sysexits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -58,7 +60,7 @@ static int init(char *progname, char *devnode)
 	signal(SIGPWR,  sighandler);
 
 	openlog(&progname[1], LOG_CONS | LOG_PID, LOG_DAEMON);
-	syslog(LOG_INFO, "Finit v%s basic watchdogd starting ...", VERSION);
+	syslog(LOG_INFO, "Finit v%s watchdog %s starting ...", VERSION, devnode);
 
 	fd = open(devnode, O_WRONLY);
 	if (fd == -1)
@@ -89,24 +91,25 @@ static int loop(int fd, int timeout)
 	if (handover) {
 		syslog(LOG_INFO, "Handing over %s and exiting ...", WDT_DEVNODE);
 		ioctl(fd, WDIOC_KEEPALIVE, &dummy);
-		return !write(fd, "V", 1);
+		if (write(fd, "V", 1) == -1)
+			return EX_IOERR;
 	}
 
-	return 0;
+	return EX_OK;
 }
 
 int main(int argc, char *argv[])
 {
-	int fd, ret;
+	int fd, rc = EX_OK;
 
 	fd = init(argv[0], WDT_DEVNODE);
 	if (fd == -1) {
-		if (ENOENT != errno)
-			syslog(LOG_CRIT, "Failed connecting to watchdog %s", WDT_DEVNODE);
-		return 1;
+		syslog(LOG_CRIT, "Failed connecting to %s: %s", WDT_DEVNODE, strerror(errno));
+		rc = EX_OSFILE;
+		goto done;
 	}
 
-	ret = loop(fd, WDT_TIMEOUT);
+	rc = loop(fd, WDT_TIMEOUT);
 	while (!handover) {
 		syslog(LOG_ALERT, "System going down ...");
 
@@ -117,8 +120,10 @@ int main(int argc, char *argv[])
 		ioctl(fd, WDIOC_SETTIMEOUT, &shutdown);
 	}
 	close(fd);
+done:
+	closelog();
 
-	return ret;
+	return rc;
 }
 
 /**
