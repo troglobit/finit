@@ -27,7 +27,7 @@ addons:
       name: "troglobit/finit"
       description: "finit | Fast & Extensible init for Linux"
     notification_email: troglobit@gmail.com
-    build_command_prepend: "./autogen.sh && ./configure --prefix= --disable-doc --disable-contrib --enable-watchdog --enable-fallback-shell"
+    build_command_prepend: "./autogen.sh && ./configure --prefix= --disable-doc --disable-contrib --with-watchdog"
     build_command: "make"
     branch_pattern: dev
 
@@ -45,7 +45,7 @@ script:
   - ./configure --prefix= --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix= --enable-x11-common-plugin --enable-fallback-shell --enable-watchdog
+  - ./configure --prefix= --enable-x11-common-plugin --with-watchdog
   - cat config.log
   - make clean
   - make V=1 -j5
