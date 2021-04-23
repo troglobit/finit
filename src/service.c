@@ -1044,6 +1044,12 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 		}
 	}
 
+	/*
+	 * Check also for changes to /etc/default/foo, because this
+	 * also constitutes changes to command line args.
+	 */
+	diff += conf_changed(svc_getenv(svc));
+
 	if (diff)
 		_d("Modified args for %s detected", cmd);
 	svc->args_dirty = (diff > 0);
