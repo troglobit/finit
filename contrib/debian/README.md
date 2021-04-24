@@ -20,6 +20,9 @@ tools pre-systemd work as intended.
 
     root@debian:~# apt install initscripts console-setup
 
+> **Note:** as of Debian 11 (Bullseye), libuev and libite are part of
+> the main section of Debian.  So just install the -dev packages :)
+
 The following script can then be used to configure, build, install and
 set up your system to run Finit:
 
@@ -32,16 +35,24 @@ also possible to change the default init to Finit, if you do you can
 remove the custom Grub entry:
 
     user@debian:~/finit# cd /sbin
-    user@debian:/sbin# sudo rm init
+    user@debian:/sbin# sudo mv init oldinit
     user@debian:/sbin# sudo ln -s finit init
 
 Before rebooting, check the default [/etc/finit.conf](finit.conf) and
 `/etc/finit.d/*.conf` files.  The build + install script above provides
-a few sample `.conf` files. See `initctl list` after boot for a list of
-enabled and available services.
+a few sample `.conf` files.  See `initctl ls` after boot for a list of
+enabled and available services, you can then use `enable` and `disable`
+comands to `initctl`, followed by `reload` to activate your changes.
 
 You can also use a standard [/etc/rc.local](rc.local) for one-shot tasks
 and initialization like keyboard language etc.
+
+If you want to use the X Window system, `sudo apt install elogind`
+(Bullseye and later).  Followed by `initctl reload` (enabled by default)
+and logout/login again.  The elogind daemon ensures a regular non-root
+user can start and interact with an X session, otherwise keyboard and
+mouse won't work.
+
 
 Have fun!  
  /Joachim ツ
