@@ -84,6 +84,11 @@ static void rtc_save(void *arg)
 	int fd, rc = 0;
 	char tz[128];
 
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	fd = rtc_open();
 	if (fd < 0)
 		return;
@@ -120,6 +125,11 @@ static void rtc_restore(void *arg)
 	struct tm tm = { 0 };
 	int fd, rc = 0;
 	char tz[128];
+
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
 
 	fd = rtc_open();
 	if (fd < 0)

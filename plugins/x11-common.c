@@ -39,6 +39,11 @@ static void setup(void *arg)
 	int fd;
 #endif
 
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	prev = umask(0);
 
 	makedir("/var/run/console", 01777);

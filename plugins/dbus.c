@@ -43,6 +43,11 @@ static void setup(void *arg)
 	mode_t prev;
 	char *cmd;
 
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	cmd = which(DAEMON);
 	if (!cmd) {
 		_d("Skipping plugin, %s is not installed.", DAEMON);

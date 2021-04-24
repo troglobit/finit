@@ -35,6 +35,11 @@
 static void setup(void *arg)
 {
 #ifdef RANDOMSEED
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	if (!fexist(RANDOMSEED)) {
 		int ret = 1;
 		mode_t prev;
@@ -70,6 +75,11 @@ static void save(void *arg)
 {
 #ifdef RANDOMSEED
 	mode_t prev;
+
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
 
 	prev = umask(077);
 

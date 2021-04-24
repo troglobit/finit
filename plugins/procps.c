@@ -23,6 +23,9 @@
 
 #include <glob.h>
 #include <lite/lite.h>
+
+#include "finit.h"
+#include "helpers.h"
 #include "plugin.h"
 
 static void setup(void *arg)
@@ -30,6 +33,11 @@ static void setup(void *arg)
 	size_t i;
 	glob_t gl;
 	char buf[160];
+
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
 
 	glob("/run/sysctl.d/*.conf",           0, NULL, &gl);
 	glob("/etc/sysctl.d/*.conf",           GLOB_APPEND, NULL, &gl);

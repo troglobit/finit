@@ -34,6 +34,11 @@ static void setup(void *arg)
 	char cmd[256];
 	char *path;
 
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 * Prefer udev if mdev is also available on the system.

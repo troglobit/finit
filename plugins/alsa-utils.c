@@ -30,6 +30,11 @@
 
 static void save(void *arg)
 {
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	if (whichp(ALSACTL)) {
 		_d("Saving sound settings ...");
 		run_interactive(ALSACTL " -g store", "Saving sound settings");
@@ -38,6 +43,11 @@ static void save(void *arg)
 
 static void restore(void *arg)
 {
+	if (rescue) {
+		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		return;
+	}
+
 	if (whichp(ALSACTL)) {
 		_d("Restoring sound settings ...");
 		run_interactive(ALSACTL " -g restore", "Restoring sound settings");
