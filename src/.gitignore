@@ -3,6 +3,7 @@ finit
 initctl
 logit
 reboot
+sulogin
 watchdogd
 Makefile
 Makefile.in

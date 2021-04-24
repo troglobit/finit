@@ -8,9 +8,13 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  =
+pkglibexec_PROGRAMS  = sulogin
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
+
+sulogin_SOURCES      = sulogin.c
+sulogin_CFLAGS       = -W -Wall -Wextra -std=gnu99
+sulogin_LDADD        = -lcrypt
 
 if WATCHDOGD
 pkglibexec_PROGRAMS += watchdogd
