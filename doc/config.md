@@ -38,8 +38,8 @@ Linux distributions -- each package can provide its own "script" file.
 - `/etc/finit.d/*.conf`: snippets, usually one service per file
 
 Not all configuration directives are available in `/etc/finit.d/*.conf`
-and some directives are only available at bootstrap, runlevel `S`, see
-the section [Limitations](#limitations) below for details.
+and some directives are only available at [bootstrap][], runlevel `S`,
+see the section [Limitations](#limitations) below for details.
 
 To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
 run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
@@ -204,7 +204,7 @@ the contents of that file is used.
 
 Deprecated.  We recommend using `/etc/hostname` instead.
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> **Note:** only read and executed in runlevel S ([bootstrap][]).
 
 
 ### Kernel Modules
@@ -222,7 +222,7 @@ BusyBox mdev tool, add to `/etc/mdev.conf`:
 
     $MODALIAS=.*  root:root       0660    @modprobe -b "$MODALIAS"
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> **Note:** only read and executed in runlevel S ([bootstrap][]).
 
 
 ### Networking
@@ -235,7 +235,7 @@ Deprecated.  We recommend using dedicated task/run stanzas per runlevel,
 or `/etc/network/interfaces` if you have a system with `ifupdown`, like
 Debian, Ubuntu, Linux Mint, or an embedded BusyBox system.
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> **Note:** only read and executed in runlevel S ([bootstrap][]).
 
 
 ### Resource Limits
@@ -269,13 +269,13 @@ stanzas can share the same rlimits if they are in the same .conf.
 
 **Syntax:** `runlevel <N>`
 
-Defines the system runlevel to go to after bootstrap (S) has completed.
-N is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
+The system runlevel to go to after [bootstrap][] (S) has completed.  `N`
+is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
 halt.
 
 Default: 2
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> **Note:** only read and executed in runlevel S ([bootstrap][]).
 
 
 ### One-shot Commands (sequence)
@@ -427,7 +427,7 @@ SIGKILLed, this can be adjusted using the above `kill:SEC` syntax.
 Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
 files, or scripts, in the directory are called, in alphabetic order.
 The scripts in this directory are executed at the very end of runlevel
-`S`, bootstrap.
+`S`, [bootstrap][].
 
 It can be beneficial to use `S01name`, `S02othername`, etc. if there
 is a dependency order between the scripts.  Symlinks to existing
@@ -437,7 +437,7 @@ Similar to the `/etc/rc.local` shell script, make sure that all your
 services and programs either terminate or start in the background or
 you will block Finit.
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> **Note:** only read and executed in runlevel S ([bootstrap][]).
 
 [run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 
@@ -526,7 +526,7 @@ can be omitted to keep the kernel default.
     tty [12345] @console noclear vt220
 
 On really bare bones systems Finit can give you a shell prompt as
-soon as bootstrap is done, without opening any device node:
+soon as [bootstrap][] is done, without opening any device node:
 
     tty [12345789] notty noclear
 
@@ -593,8 +593,8 @@ from `/etc/finit.conf`, since it is the first `.conf` file Finit reads.
 
 Originally, `/etc/finit.conf` was the only way to set up a Finit system.
 Today it is mainly used for bootstrap settings like system hostname,
-network bringup and system shutdown.  These can now also be set in any
-`.conf` file in `/etc/finit.d`.
+early module loading for watchdogd, network bringup and system shutdown.
+These can now also be set in any `.conf` file in `/etc/finit.d`.
 
 There is, however, nothing preventing you from having all configuration
 settings in `/etc/finit.conf`.
@@ -609,10 +609,11 @@ Watchdog
 --------
 
 When built `--with-watchdog` a separate service is built and installed
-in `/libexec/finit/watchdogd`.  If this exists at runtime, Finit will
-start it and treat it as the elected watchdog service to delegate its
-reboot to.  This delegation is to ensure that the system is rebooted by
-a hardware watchdog timer -- on many embedded systems this is crucial to
+in `/libexec/finit/watchdogd`.  If this exists at runtime, and the WDT
+device node exists, Finit will start it and treat it as the elected
+watchdog service to delegate its reboot to.  See [bootstrap][] for
+details.  This delegation is to ensure that the system is rebooted by a
+hardware watchdog timer -- on many embedded systems this is crucial to
 ensure all circuits on the board are properly reset for the next boot,
 in effect ensuring the system works the same after both a power-on and
 reboot event.
@@ -637,3 +638,4 @@ device descriptor.  If the kernel driver has been built without this,
 the only option is to remove `/libexec/finit/watchdogd` or build without
 it at configure time.
 
+[bootstrap]: bootstrap.md

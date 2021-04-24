@@ -9,9 +9,11 @@ Bootstrap
 6. Load all `.so` plugins
 7. Call `fsck` on file systems listed in `/etc/fstab`
 8. Populate `/dev` using either udev or mdev, depending on system type
-9. Parse `/etc/finit.conf` and all `/etc/finit.d/*.conf` files
-10. Start built-in watchdog, if enabled
-11. Set hostname
+9. Parse `/etc/finit.conf`
+10. Start built-in watchdog, if enabled and `WDT_DEVNODE` exists.  This
+    means any WDT that requires a kernel module need to be either
+    compiled into the kernel, or insmod'ed in `/etc/finit.conf`
+11. Load all `/etc/finit.d/*.conf` files and set hostname
 12. Remount `/` read-write if `/` is listed in `/etc/fstab` without `ro`
 13. Call 1st level hooks, `HOOK_ROOTFS_UP`
 14. Mount all file systems listed in `/etc/fstab` and swap, if available

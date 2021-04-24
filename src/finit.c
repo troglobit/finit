@@ -52,6 +52,7 @@
 #include "util.h"
 #include "utmp-api.h"
 #include "schedule.h"
+#include "watchdog.h"
 
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
@@ -552,7 +553,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Start built-in watchdogd as soon as possible, if enabled
 	 */
-	if (which(FINIT_LIBPATH_ "/watchdogd")) {
+	if (which(FINIT_LIBPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
 		service_register(SVC_TYPE_SERVICE, "[123456789] name:watchdog :finit " FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
 		wdog = svc_find_by_nameid("watchdog", "finit");
 	}
