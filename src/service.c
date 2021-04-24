@@ -206,8 +206,8 @@ static int lredirect(svc_t *svc)
 		/* Reset signals */
 		sig_unblock();
 
-		if (!whichp(LOGIT_PATH)) {
-			logit(LOG_INFO, LOGIT_PATH " missing, using syslog for %s instead", svc->name);
+		if (!whichp(_PATH_LOGIT)) {
+			logit(LOG_INFO, _PATH_LOGIT " missing, using syslog for %s instead", svc->name);
 			fallback_logger(tag, prio);
 			_exit(0);
 		}
@@ -218,7 +218,7 @@ static int lredirect(svc_t *svc)
 			snprintf(sz, sizeof(sz), "%d", logfile_size_max);
 			snprintf(num, sizeof(num), "%d", logfile_count_max);
 
-			execlp(LOGIT_PATH, "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+			execlp(_PATH_LOGIT, "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
 			_exit(1);
 		}
 
@@ -227,7 +227,7 @@ static int lredirect(svc_t *svc)
 		if (svc->log.prio[0])
 			prio = svc->log.prio;
 
-		execlp(LOGIT_PATH, "logit", "-t", tag, "-p", prio, NULL);
+		execlp(_PATH_LOGIT, "logit", "-t", tag, "-p", prio, NULL);
 		_exit(1);
 	}
 

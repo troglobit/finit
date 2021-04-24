@@ -50,7 +50,7 @@
 #define FINIT_CGPATH            "/sys/fs/cgroup"
 #endif
 
-#define LOGIT_PATH              FINIT_LIBPATH_ "/logit"
+#define _PATH_LOGIT             FINIT_LIBPATH_ "/logit"
 
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
