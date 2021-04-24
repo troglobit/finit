@@ -122,7 +122,7 @@ AC_ARG_WITH(random-seed,
 
 AC_ARG_WITH(watchdog,
         AS_HELP_STRING([--with-watchdog=[DEV]], [Enable built-in watchdog, default: /dev/watchdog]),
-	[watchdog=$withval],[watchdog=])
+	[watchdog=$withval], [with_watchdog=no watchdog=])
 
 ### Enable features ###########################################################################
 
@@ -198,7 +198,8 @@ AS_IF([test "x$with_watchdog" != "xno"], [
 	AS_IF([test "x$watchdog" = "xyes"], [
 		watchdog=/dev/watchdog])
 	with_watchdog=yes
-        AC_DEFINE_UNQUOTED(WDT_DEVNODE, "$watchdog", [Built-in watchdog device node])])
+        AC_DEFINE_UNQUOTED(WDT_DEVNODE, "$watchdog", [Built-in watchdog device node])], [
+	watchdog=])
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
