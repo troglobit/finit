@@ -240,7 +240,15 @@ int tty_exec(svc_t *svc)
 	char *dev;
 	int i, j;
 
+	/* try to protect system with sulogin, fall back to root shell */
 	if (svc->notty) {
+		/* util-linux or busybox, no args for compat */
+		if (whichp("sulogin"))
+			return execlp("sulogin", "sulogin", NULL);
+		/* check if bundled one is available */
+		if (whichp(_PATH_SULOGIN) && !systemf(_PATH_SULOGIN))
+			_exit(0);
+
 		/*
 		 * Become session leader and set controlling TTY
 		 * to enable Ctrl-C and job control in shell.

@@ -51,6 +51,7 @@
 #endif
 
 #define _PATH_LOGIT             FINIT_LIBPATH_ "/logit"
+#define _PATH_SULOGIN           FINIT_LIBPATH_ "/sulogin"
 
 #define CMD_SIZE                256
 #define LINE_SIZE               1024
