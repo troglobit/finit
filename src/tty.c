@@ -220,27 +220,27 @@ int tty_parse_args(char *cmd, struct tty *tty)
 
 int tty_exists(char *dev)
 {
-	int fd, result;
 	struct termios c;
+	int fd, rc;
 
 	fd = open(dev, O_RDWR);
 	if (-1 == fd)
 		return 0;
 
 	/* XXX: Add check for errno == EIO? */
-	result = tcgetattr(fd, &c);
+	rc = tcgetattr(fd, &c);
 	close(fd);
 
-	return result == 0;
+	return rc == 0;
 }
 
-int tty_exec(svc_t *tty)
+int tty_exec(svc_t *svc)
 {
 	char *args[MAX_NUM_SVC_ARGS];
 	char *dev;
 	int i, j;
 
-	if (tty->notty) {
+	if (svc->notty) {
 		/*
 		 * Become session leader and set controlling TTY
 		 * to enable Ctrl-C and job control in shell.
@@ -252,9 +252,9 @@ int tty_exec(svc_t *tty)
 		return execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
 	}
 
-	dev = tty_canonicalize(tty->dev);
+	dev = tty_canonicalize(svc->dev);
 	if (!dev) {
-		_d("%s: Cannot find TTY device: %s", tty->dev, strerror(errno));
+		_d("%s: Cannot find TTY device: %s", svc->dev, strerror(errno));
 		return EX_CONFIG;
 	}
 
@@ -263,24 +263,24 @@ int tty_exec(svc_t *tty)
 		return EX_OSFILE;
 	}
 
-	if (tty->nologin) {
+	if (svc->nologin) {
 		_d("%s: Starting /bin/sh ...", dev);
-		return run_sh(dev, tty->noclear, tty->nowait, tty->rlimit);
+		return run_sh(dev, svc->noclear, svc->nowait, svc->rlimit);
 	}
 
-	_d("%s: Starting %sgetty ...", dev, !tty->cmd ? "built-in " : "");
-	if (!strcmp(tty->cmd, "tty"))
-		return run_getty(dev, tty->baud, tty->term, tty->noclear, tty->nowait, tty->rlimit);
+	_d("%s: Starting %sgetty ...", dev, !svc->cmd ? "built-in " : "");
+	if (!strcmp(svc->cmd, "tty"))
+		return run_getty(dev, svc->baud, svc->term, svc->noclear, svc->nowait, svc->rlimit);
 
 	for (i = 1, j = 0; i < MAX_NUM_SVC_ARGS; i++) {
-		if (!tty->args[i][0])
+		if (!svc->args[i][0])
 			break;
 
-		args[j++] = tty->args[i];
+		args[j++] = svc->args[i];
 	}
 	args[j++] = NULL;
 
-	return run_getty2(dev, tty->cmd, args, tty->noclear, tty->nowait, tty->rlimit);
+	return run_getty2(dev, svc->cmd, args, svc->noclear, svc->nowait, svc->rlimit);
 }
 
 /**
