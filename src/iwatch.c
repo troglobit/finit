@@ -94,8 +94,24 @@ int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
 
 	wd = inotify_add_watch(iw->fd, path, IWATCH_MASK | mask);
 	if (wd < 0) {
-		if (errno != EEXIST)
+		switch (errno) {
+		case EEXIST:
+			break;
+
+		case EINVAL:
+			/*
+			 * some older kernels, notably 4.19, don't like
+			 * inotify on top-level cgroups in cgroup v2
+			 */
+			if (!strncmp(path, "/sys/fs/cgroup", 14))
+				break;	/* ignore error */
+			/* fallthrough */
+
+		default:
 			_pe("Failed adding watcher for %s", path);
+			break;
+		}
+
 		free(path);
 		return -1;
 	}
