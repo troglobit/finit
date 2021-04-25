@@ -143,7 +143,7 @@ int main(void)
 		ch = getchar();
 		if (ch == 4 || ch == EOF) { /* Ctrl-D */
 			rc = 0;
-			goto SWdone;
+			goto done;
 		}
 		goto nopass;
 
