@@ -4,12 +4,12 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.0][UNRELEASED] - 2021-03-xx
-------------------------------
+[4.0][] - 2021-04-26
+--------------------
 
 This release became v4.0, and not v3.2, because of incompatible changes
 to service conditions.  There are other significant changes as well, so
-make sure to read the whole changelog when upgrading.
+make sure to read the whole change log when upgrading.
 
 ### Changes
 * The stand-alone `reboot` tool has been replaced with a symlink to
@@ -24,28 +24,47 @@ make sure to read the whole changelog when upgrading.
 * Removed built-in inetd super server.  If you need this functionality,
   use an external inetd, like xinetd, instead.  A pull request for a
   stand-alone inetd, like watchdogd and getty, is most welcome!
-* Incompatible `configure` script changes, i.e., you must give proper
-  path arguments to the script, no more guessing just GNU defaults.
-  There are examples in the documentation and the `contrib/` section
-* Change service conditions from the non-obvious `<svc/path/to/foo>` to
-  `<pid/foo:id>`.  This to hopefully make it clear that one service's
-  'pid:!foo' pidfile is another service's `<pid/foo>` condition
-* Initial support for cgroups, every service now runs in its own cgroup
-  https://twitter.com/b0rk/status/1214341831049252870?s=20
+* Incompatible `configure` script changes, i.e., no guessing `--prefix`
+  and other paths.  Also, many options have been changed, renamed, or
+  flipped defaults, or even dropped altogether.  There are examples in
+  the documentation and the `contrib/` section
+* Service conditions change from the non-obvious `<svc/path/to/foo>` to
+  `<pid/foo:id>`.  Not only does this give simpler internal semantics,
+  it hopefully also makes it clear that one service's `pid:!foo` pidfile
+  is another service's `<pid/foo>` condition, issue #143
+* Initial support for cgroups v2:
+  - services runs in a cgroup named after their respective *.conf file
+  - top-level groups are; init, user, and system
+  - all top-level groups can be configured from finit *.conf files
+  - each service can tweak the cgroup settings
+  - Use `initctl [top|ps|cgroup]` commands to inspect runtime state
+  - https://twitter.com/b0rk/status/1214341831049252870?s=20
 * Major refactor of Finit's `main()` function to be able to start the
   event loop earlier.  This also facilitated factoring out functionality
   previously hard-coded in Finit, e.g., starting the bundled watchdogd,
   various distro packed udevd and other hotplugging tools
+* A proper rescue mode has been added.  It is started extremely early
+  and is protected with a bundled `suslogin`.  Exiting rescue mode now
+  brings up the system as a normal boot, as one expects
 * Support for `sysv` start/stop scripts as well as monitoring forking
   services, stared using `sysv` or `service` stanza
 * Support for custom `kill:DELAY`, default 3 sec.
 * Support for custom `halt:SIGNAL`, default SIGTERM
+* Support for `pre:script` and `post:script`, allows for setup and
+  teardown/cleanup before and after a service runs, issue #129
+* Support for `env:file` in `/etc/default/foo` or `/etc/conf.d/foo`, see
+  the contrib section for examples that utilize this feature.  Variables
+  expanded from env files, and the env files themselves, are tracked for
+  changes to see if a service .conf file is "dirty" and needs restart on
+  `initctl reload`
 * Support for tracking custom PID files, using `pid:!/path/to/foo.pid`,
   useful with new `sysv` or `service` which fork to background
 * Support starting run/task/services without absolute path, trust `$PATH`
 * Add support for `--disable-doc` and `--disable-contrib` to speed up
   builds and work around issue with massively parallel builds
-* Add support for `@console` also for external getty
+* Support for `@console` also for external getty
+* Support for `notty` option to built-in getty, for board bring-up
+* Support for `rescue` option to built-in getty, for rescue shells
 * Add `-b`, batch mode, for non-interactive use to `initctl`
 * Prefer udev to handle `/dev/` if mdev is also available
 * Redirect dbus daemon output to syslog
@@ -95,6 +114,8 @@ make sure to read the whole changelog when upgrading.
 * Always append `:ID` qualifier to conditions if set for a service
 * The IPC socket has moved from `/run/finit.sock` to `/run/finit/socket`
   officially only supported for use by the `initctl` tool
+* The IPC socket now uses `SOCK_SEQPACKET` instead of `SOCK_STREAM`.
+  Recommend using watchdogd v3.4, or later, which support this
 * Improved support for modern `/etc/network/interfaces`, which has
   include statements.  No more native `ifup` of individual interfaces,
   Finit now calls `ifup -a`, or `ifdown -a`, delegating all details to
@@ -112,16 +133,21 @@ make sure to read the whole changelog when upgrading.
   that do not have a watchdog
 * Fix #100: Early condition handling may not work if `/var/run` does
   not yet exist (symlink to `/run`).  Added compat layer for access
+* Fix #101: Built-in inetd removed
+* Fix #102: Start built-in watchdogd as a regular service
 * Fix #103: Register multiple getty if `@console` resolves to >1 TTY,
 * Fix #105: Only remove /etc/nologin when moving from runlevel 0, 1, 6
   Fixed by Jonas Johansson, Westermo
 * Fix #109: Support for PID files in sub-directories to `/var/run`
 * Handle rename of PID files, by Robert Andersson, Atlas Copco
+* Fix #110: automatic modprobe of RTC devices, built-in hwclock
 * Fix #120: Redirect `stdin` to `/dev/null` for services by default
 * Fix #122: Switch to `nanosleep()` to achieve "signal safe" sleep,
   fixed by Jacques de Laval, Westermo
 * Fix #124: Lingering processes in process group when session leader
   exits.  E.g., lingering `logit` processes when parent dies
+* Fix #127: Show all runparts scripts as they start, like rc.local, fixed
+  by Jacques de Laval, Westermo
 * Fix service name matching, e.g. for condition handling, may match with
   wrong service, by Jonas Holmberg, Westermo
 * Run all run-parts scripts using `/bin/sh -c foo` just like the standard
@@ -140,6 +166,8 @@ make sure to read the whole changelog when upgrading.
 * Provide service description for built-in watchdog daemon
 * Fix #138: Handle `SIGPWR` like `SIGSUR2`, i.e., power off the system
 * Drop the '%m' GNUism, for compat with older musl libc
+* Fix #139: call `tzset()` on `initctl reload` to activate system
+  timezone changes (for logging)
 
 
 [3.1][] - 2018-01-23
@@ -748,14 +776,14 @@ Major bug fix release.
 * Makefile fixes for installation, paths encoded wrong
 * Strip binaries + .so files, support for `$(CROSS)` toolchain strip
 * Default install is now to `/sbin/finit` and `/usr/`
-* Note change in `$PLUGIN_DIR` environemnt variable to `$plugindir`
+* Note change in `$PLUGIN_DIR` environment variable to `$plugindir`
 
 
 [1.2][] - 2012-09-27
 --------------------
 
 ### Changes
-* Update README with section on building and enviroment variables
+* Update README with section on building and environment variables
 
 ### Fixes
 * Fix installation paths encoded in finit binary
