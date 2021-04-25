@@ -21,6 +21,7 @@ Configuration
   * [TTYs and Consoles](#ttys-and-consoles)
   * [Non-privileged Services](#non-privileged-services)
   * [Redirecting Output](#redirecting-output)
+* [Rescue Mode](#rescue-mode)
 * [Limitations](#limitations)
   * [/etc/finit.conf](#etcfinitconf)
   * [/etc/finit.d](#etcfinitd)
@@ -467,7 +468,8 @@ size limit is reached.
 ### TTYs and Consoles
 
 **Syntax:** `tty [LVLS] <COND> DEV [BAUD] [noclear] [nowait] [nologin] [TERM]`  
-  `tty [LVLS] <COND> CMD <ARGS> [noclear] [nowait]`
+  `tty [LVLS] <COND> CMD <ARGS> [noclear] [nowait]`  
+  `tty [LVLS] <COND> [notty] [rescue]`
 
 The first variant of this option uses the built-in getty on the given
 TTY device DEV, in the given runlevels.  The DEV may be the special
@@ -486,9 +488,18 @@ The default baud rate is 0, i.e., keep kernel default.
 
 The second `tty` syntax variant is for using an external getty, like
 agetty or the BusyBox getty.
-    
-By default both variants *clear* the TTY and *wait* for the user to
-press enter before starting getty.
+
+The third variant is for board bringup and the `rescue` boot mode.  No
+device node is required in this variant, the same output that the kernel
+uses is reused for stdio.  If the `rescue` option is omitted, a shell is
+started (`nologin`, `noclear`, and `nowait` are implied), if the rescue
+option is set the bundled `/libexec/finit/sulogin` is started to present
+a bare-bones root login prompt.  If the root (uid:0, gid:0) user does
+not have a password set, no rescue is possible.  For more information,
+see the [Rescue Mode](#rescue-mode) section.
+
+By default, the first two syntax variants *clear* the TTY and *wait* for
+the user to press enter before starting getty.
 
 **Example:**
 
@@ -525,10 +536,11 @@ can be omitted to keep the kernel default.
 
     tty [12345] @console noclear vt220
 
-On really bare bones systems Finit can give you a shell prompt as
-soon as [bootstrap][] is done, without opening any device node:
+On really bare bones systems, or for board bringup, Finit can give you a
+shell prompt as soon as [bootstrap][] is done, without opening any
+device node:
 
-    tty [12345789] notty noclear
+    tty [12345789] notty
 
 This should of course not be enabled on production systems.  Because it
 may give a user root access without having to log in.  However, for
@@ -582,6 +594,59 @@ Log rotation is controlled using the global `log` setting.
 **Example:**
 
     service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
+
+
+Rescue Mode
+-----------
+
+Finit supports a rescue mode which is activated by the `rescue` option
+on the kernel command line.  See [cmdline docs](cmdline.md) for how to
+activate it.
+
+The rescue mode comes in two flavors; *traditional* and *fallback*.
+
+
+### Traditional
+
+This is what most users expect.  A very early maintenance login prompt,
+served by the bundled `/libexec/finit/sulogin` program, or the standard
+`sulogin` from util-linux or BusyBox is searched for in the UNIX default
+`$PATH`.  If a successful login is made, or the user exits (Ctrl-D), the
+rescue mode is ended and the system boots up normally.
+
+> **Note:** if the user (UID 0 and GID 0) does not have a password, or
+> __the account is locked__, the user is presented with a password-less
+> `"Press enter to enter maintenance mode."`, prompt which opens up a
+> root shell.
+
+
+### Fallback
+
+If no `sulogin` program is found, Finit tries to bring up as much of its
+own functionality as possible, yet limiting many aspects, meaning; no
+network, no `fsck` of file systems in `/etc/fstab`, no `/etc/rc.local`,
+no `runparts`, and most plugins are skipped (except those that provide
+functionality for the condition subsystem).
+
+Instead of reading `/etc/finit.conf` et al, system configuration is read
+from `/lib/finit/rescue.conf`, which can be freely modified by the
+system administrator.
+
+The bundled default `rescue.conf` contains nothing more than:
+
+    runlevel 1
+    tty [12345] rescue
+
+The `tty` has the `rescue` option set, which works similar to the board
+bring-up tty option `notty`.  The major difference being that `sulogin`
+is started to query for root/admin password.  If `sulogin` is not found,
+`rescue` behaves like `notty` and gives a plain root shell prompt.
+
+If Finit cannot find `/lib/finit/rescue.conf` it defaults to:
+
+    tty [12345] rescue
+
+There is no way to exit the *fallback* rescue mode.
 
 
 Limitations

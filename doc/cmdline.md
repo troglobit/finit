@@ -30,10 +30,12 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `quiet`: Suppress kernel logging to console, except for warnings and
   errors.
 
-* `rescue`: Start Finit rescue mode; no network, no `fsck` of file
-    systems in `/etc/fstab`, no `/etc/rc.local`, no `runparts`.  The
-    configuration is read from `/lib/finit/rescue.conf`, and can be
-    modified by the operator.
+* `rescue`: Start rescue/maintenance mode.  If your system comes with
+    the bundled `sulogin` program (Finit, or from util-linux/Busybox),
+    you will be given a root login to a maintenance shell.  However, if
+    `sulogin` is missing, the file `/lib/finit/rescue.conf` is read and
+    the system booted in a limited fallback mode.  See [config.md][]
+	for more information.
 
 * `single`, or `S`: Single user mode, runlevel 1, in Finit.  Useful to
     debug problems with the regular runlevel.  All services and TTYs in
@@ -42,5 +44,5 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 
 For more on kernel boot paramaters, see the man page [bootparam(7)][].
 
-
+[config.md][]:  config.md#rescue-mode
 [bootparam(7)]: https://www.man7.org/linux/man-pages/man7/bootparam.7.html
