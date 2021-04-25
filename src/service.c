@@ -466,7 +466,7 @@ static int service_start(svc_t *svc)
 		return 1;
 	}
 
-	if (svc_is_tty(svc)) {
+	if (svc_is_tty(svc) && !svc->notty) {
 		char *dev = tty_canonicalize(svc->dev);
 
 		if (!dev || !tty_exists(dev)) {
