@@ -44,6 +44,7 @@ Features include:
   * Built-in support for Debian/BusyBox `/etc/network/interfaces`
   * Cgroups v2, both configuration and monitoring in `initctl top`
   * Plugin support for customization
+  * Proper rescue mode with bundled `sulogin` for protected maintenance shell
 
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
