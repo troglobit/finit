@@ -166,6 +166,7 @@ int main(void)
 		char *passwd;
 
 		printf("Give %s password for maintenance (Ctrl-D to continue): ", pw.pw_name);
+		fflush(stdout);
 		do {
 			int ch;
 
