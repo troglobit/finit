@@ -30,6 +30,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 /* getpwnam() cannot be used when statically linked */
 static int get_passwd(struct passwd *pw)
@@ -109,6 +110,19 @@ static void freepw(struct passwd *pw)
 	free(pw->pw_name);
 }
 
+static int sh(void)
+{
+	/*
+	 * Become session leader and set controlling TTY
+	 * to enable Ctrl-C and job control in shell.
+	 */
+	setsid();
+	ioctl(STDIN_FILENO, TIOCSCTTY, 1);
+	setenv("PS1", "# ", 1);
+
+	return execl(_PATH_BSHELL, "-sh", NULL);
+}
+
 int main(void)
 {
 	struct termios old, raw;
@@ -156,18 +170,10 @@ int main(void)
 
 		passwd = crypt(pwd, pw.pw_passwd);
 		if (passwd && !strcmp(passwd, pw.pw_passwd)) {
-			char arg0[strlen(_PATH_BSHELL) + 2];
-			char *args[2] = {
-				arg0,
-				NULL
-			};
-
 			tcsetattr(1, TCSANOW, &old);	/* restore tty */
 			freepw(&pw);
-			snprintf(arg0, sizeof(arg0), "-%s", _PATH_BSHELL);
-			setenv("PS1", "# ", 1);
 
-			return execv(_PATH_BSHELL, args);
+			return sh();
 		}
 	}
 
