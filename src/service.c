@@ -1301,6 +1301,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc->nowait  = tty.nowait;
 		svc->nologin = tty.nologin;
 		svc->notty   = tty.notty;
+		svc->rescue  = tty.rescue;
 
 		/* TTYs cannot be redirected */
 		log = NULL;

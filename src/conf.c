@@ -672,7 +672,7 @@ int conf_reload(void)
 
 	if (rescue) {
 		int rc;
-		char line[80] = "tty [12345] @console noclear nologin";
+		char line[80] = "tty [12345] rescue";
 
 		/* If rescue.conf is missing, fall back to a root shell */
 		rc = parse_conf(RESCUE_CONF, 0);

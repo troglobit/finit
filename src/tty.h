@@ -40,6 +40,7 @@ struct tty {
 	char	 nowait;
 	char	 nologin;
 	char	 notty;
+	char	 rescue;
 };
 
 char	*tty_canonicalize (char *dev);

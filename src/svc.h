@@ -149,6 +149,7 @@ typedef struct svc {
 			char  nowait;
 			char  nologin;
 			char  notty;
+			char  rescue;
 		};
 	};
 

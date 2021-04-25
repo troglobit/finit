@@ -158,7 +158,9 @@ int tty_parse_args(char *cmd, struct tty *tty)
 		else if (!strcmp(cmd, "nologin"))
 			tty->nologin = 1;
 		else if (!strcmp(cmd, "notty"))
-			tty->notty = 1;	/* for rescue shells */
+			tty->notty = 1;		/* for board bringup */
+		else if (!strcmp(cmd, "rescue"))
+			tty->rescue = 1;	/* for rescue shells */
 		else if (!access(cmd, X_OK))
 			tty->cmd = cmd;
 		else
@@ -166,6 +168,10 @@ int tty_parse_args(char *cmd, struct tty *tty)
 
 		cmd = strtok(NULL, " \t");
 	} while (cmd && tty->num < NELEMS(tty->args));
+
+	/* rescue shells are always notty */
+	if (tty->rescue)
+		tty->notty = 1;
 
 	/* skip /dev probe, we just want a bríngup shell */
 	if (tty->notty)
@@ -242,12 +248,15 @@ int tty_exec(svc_t *svc)
 
 	/* try to protect system with sulogin, fall back to root shell */
 	if (svc->notty) {
-		/* util-linux or busybox, no args for compat */
-		if (whichp("sulogin"))
-			return execlp("sulogin", "sulogin", NULL);
-		/* check if bundled one is available */
-		if (whichp(_PATH_SULOGIN) && !systemf(_PATH_SULOGIN))
-			_exit(0);
+		if (svc->rescue) {
+			/* check if bundled one is available */
+			if (whichp(_PATH_SULOGIN))
+				return execl(_PATH_SULOGIN, _PATH_SULOGIN, NULL);
+
+			/* util-linux or busybox, no args for compat */
+			if (whichp("sulogin"))
+				return execlp("sulogin", "sulogin", NULL);
+		}
 
 		/*
 		 * Become session leader and set controlling TTY
@@ -257,7 +266,7 @@ int tty_exec(svc_t *svc)
 		ioctl(STDIN_FILENO, TIOCSCTTY, 1);
 
 		prctl(PR_SET_NAME, "finitsh", 0, 0, 0);
-		return execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
+		return execl(_PATH_BSHELL, "-sh", NULL);
 	}
 
 	dev = tty_canonicalize(svc->dev);
