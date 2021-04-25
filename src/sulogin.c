@@ -128,6 +128,7 @@ int main(void)
 {
 	struct termios old, raw;
 	struct passwd pw = { 0 };
+	int rc = 1, ch;
 
 	if (get_passwd(&pw))
 		err(1, "reading credentials for UID 0");
@@ -137,8 +138,13 @@ int main(void)
 		printf("The %s account is locked, allowing entry.\n", pw.pw_name);
 		/* fallthrough */
 	case 0:			/* no password at all? */
-		printf("Press enter for maintenance.");
-		getchar();
+		printf("Press enter for maintenance (Ctrl-D to continue) ");
+		fflush(stdout);
+		ch = getchar();
+		if (ch == 4 || ch == EOF) { /* Ctrl-D */
+			rc = 0;
+			goto SWdone;
+		}
 		goto nopass;
 
 	case '$': /* md5/shaN or similar, original DES not supported */
@@ -168,12 +174,10 @@ int main(void)
 		printf("Give %s password for maintenance (Ctrl-D to continue): ", pw.pw_name);
 		fflush(stdout);
 		do {
-			int ch;
-
 			ch = getchar();
-			if (ch == EOF || ch == '\n' || ch == '\r')
+			if (ch == '\n' || ch == '\r')
 				break;
-			if (ch == 4)	/* Ctrl-D */
+			if (ch == 4 || ch == EOF) /* Ctrl-D */
 				goto exit;
 
 			pwd[i++] = ch;
@@ -196,7 +200,7 @@ exit:
 	puts("");
 done:
 	freepw(&pw);
-	return 1;
+	return rc;
 }
 
 /**
