@@ -8,7 +8,7 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  = sulogin
+pkglibexec_PROGRAMS  = logit sulogin
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
 
@@ -20,13 +20,10 @@ if WATCHDOGD
 pkglibexec_PROGRAMS += watchdogd
 endif
 
-if LOGIT
-pkglibexec_PROGRAMS += logit
 logit_SOURCES        = logit.c logrotate.c
 logit_CFLAGS         = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 logit_CFLAGS        += $(lite_CFLAGS)
 logit_LDADD          = $(lite_LIBS)
-endif
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     cond.c	cond-w.c	cond.h		\

@@ -56,10 +56,6 @@ AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--disable-redirect], [Disable redirection of service output to /dev/null]),,[
 	enable_redirect=yes])
 
-AC_ARG_ENABLE(logit,
-     AS_HELP_STRING([--disable-logit], [Disable logit, used for log redirection, default: enable]),,[
-     enable_logit=yes])
-
 AC_ARG_ENABLE(logrotate,
         AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
 	enable_logrotate=yes])
@@ -129,9 +125,6 @@ AS_IF([test "x$enable_redirect" = "xyes"], [
 	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])
 
 ### Disable features ###########################################################################
-AS_IF([test "x$enable_logit" != "xno"], [
-	AC_DEFINE(LOGIT_ENABLED,  1, [Enable logit tool, used for log redirection by Finit])])
-
 AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
 
@@ -196,7 +189,6 @@ AS_IF([test "x$with_watchdog" != "xno"], [
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
-AM_CONDITIONAL(LOGIT,     [test "x$enable_logit" = "xyes"])
 AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 
@@ -244,7 +236,6 @@ Optional features:
   Install contrib/......: $enable_contrib
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
-  Scripting tool logit..: $enable_logit
   Redirect output.......: $enable_redirect
   Default hostname......: $hostname
   Default runlevel......: $runlevel
