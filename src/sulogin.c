@@ -138,10 +138,11 @@ int main(void)
 		char pwd[256];		/* reasonable max? */
 		size_t i = 0;
 		char *passwd;
-		char ch;
 
 		printf("Give %s password for maintenance: ", pw.pw_name);
 		do {
+			int ch;
+
 			ch = getchar();
 			if (ch == EOF || ch == '\n' || ch == '\r')
 				break;
