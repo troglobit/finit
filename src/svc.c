@@ -433,7 +433,7 @@ svc_t *svc_find_by_tty(char *dev)
 {
 	svc_t *svc, *iter = NULL;
 
-	/* this is valid for fallback (notty) shells */
+	/* rescue (notty) shells have no device node */
 	if (!dev)
 		return NULL;
 

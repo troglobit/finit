@@ -158,7 +158,7 @@ int tty_parse_args(char *cmd, struct tty *tty)
 		else if (!strcmp(cmd, "nologin"))
 			tty->nologin = 1;
 		else if (!strcmp(cmd, "notty"))
-			tty->notty = 1;	/* for fallback shell */
+			tty->notty = 1;	/* for rescue shells */
 		else if (!access(cmd, X_OK))
 			tty->cmd = cmd;
 		else

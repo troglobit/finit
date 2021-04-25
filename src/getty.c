@@ -189,8 +189,8 @@ static int do_login(char *name)
 	execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
 
 	/*
-	 * Failed to exec login, should be impossible.  Try a starting a
-	 * fallback shell instead.
+	 * Failed to exec login, should not happen on normal systems.
+	 * Try a starting a rescue shell instead.
 	 *
 	 * Note: Add /etc/securetty handling.
 	 */
