@@ -177,8 +177,10 @@ int main(void)
 			ch = getchar();
 			if (ch == '\n' || ch == '\r')
 				break;
-			if (ch == 4 || ch == EOF) /* Ctrl-D */
+			if (ch == 4 || ch == EOF) { /* Ctrl-D */
+				rc = 0;
 				goto exit;
+			}
 
 			pwd[i++] = ch;
 		} while (i + 1 < sizeof(pwd));
