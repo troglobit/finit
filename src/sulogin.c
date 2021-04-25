@@ -56,7 +56,8 @@ static int get_passwd(struct passwd *pw)
 		if (!ptr)
 			break;
 
-		if (strlen(ptr) > 1)
+		/* x : password in /etc/shadow, see passwd(5) */
+		if (ptr[0] != 'x')
 			pw->pw_passwd = strdup(ptr);
 
 		break;			/* done, check it */
@@ -131,9 +132,20 @@ int main(void)
 	if (get_passwd(&pw))
 		err(1, "reading credentials for UID 0");
 
-	/* is login disabled, not much we can do */
-	if (strlen(pw.pw_passwd) == 1)
-		goto done;		/* likely one of: "x!*" */
+	switch (pw.pw_passwd[0]) {
+	case '*': case '!':	/* login disabled, allow */
+		printf("The %s account is locked, allowing entry.\n", pw.pw_name);
+		/* fallthrough */
+	case 0:			/* no password at all? */
+		printf("Press enter for maintenance.");
+		getchar();
+		goto nopass;
+
+	case '$': /* md5/shaN or similar, original DES not supported */
+		break;
+	default:
+		break;
+	}
 
 	if (tcgetattr(1, &old) < 0)
 		goto done;		/* failed reading tty */
@@ -153,7 +165,7 @@ int main(void)
 		size_t i = 0;
 		char *passwd;
 
-		printf("Give %s password for maintenance: ", pw.pw_name);
+		printf("Give %s password for maintenance (Ctrl-D to continue): ", pw.pw_name);
 		do {
 			int ch;
 
@@ -171,6 +183,7 @@ int main(void)
 		passwd = crypt(pwd, pw.pw_passwd);
 		if (passwd && !strcmp(passwd, pw.pw_passwd)) {
 			tcsetattr(1, TCSANOW, &old);	/* restore tty */
+		nopass:
 			freepw(&pw);
 
 			return sh();
