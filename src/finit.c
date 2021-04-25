@@ -235,48 +235,6 @@ static void fs_init(void)
 	}
 }
 
-/*
- * If everything goes south we can use this to give the operator an
- * emergency shell to debug the problem -- Finit should not crash!
- *
- * Note: Only use this for debugging a new Finit setup, don't use
- *       this in production since it gives a root shell to anyone
- *       if Finit crashes.
- *
- * This emergency shell steps in to prevent "Aieee, PID 1 crashed"
- * messages from the kernel, which usually results in a reboot, so
- * that the operator instead can debug the problem.
- */
-static void emergency_shell(void)
-{
-#ifdef EMERGENCY_SHELL
-	pid_t pid;
-
-	pid = fork();
-	if (pid) {
-		while (1) {
-			pid_t id;
-
-			/* Reap 'em (prevents Zombies) */
-			id = waitpid(-1, NULL, WNOHANG);
-			if (id == pid)
-				break;
-		}
-
-		fprintf(stderr, "\n=> Embarrassingly, Finit has crashed.  Check /dev/kmsg for details.\n");
-		fprintf(stderr,   "=> To debug, add 'debug' to the kernel command line.\n\n");
-
-		/*
-		 * Become session leader and set controlling TTY
-		 * to enable Ctrl-C and job control in shell.
-		 */
-		setsid();
-		ioctl(STDIN_FILENO, TIOCSCTTY, 1);
-
-		execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
-	}
-#endif /* EMERGENCY_SHELL */
-}
 
 /*
  * Handle bootstrap transition to configured runlevel, start TTYs
@@ -505,13 +463,24 @@ int main(int argc, char *argv[])
 	if (chdir("/"))
 		_pe("Failed cd /");
 
-	/* Allow progress, if enabled */
-	enable_progress(1);
-
 	/*
 	 * In case of emergency.
 	 */
-	emergency_shell();
+	if (rescue) {
+		char *sulogin[] = {
+			_PATH_SULOGIN,
+			"sulogin",
+		};
+		size_t i;
+
+		for (i = 0; i < NELEMS(sulogin); i++) {
+			if (systemf(sulogin[i]))
+				continue;
+
+			rescue = 0;
+			break;
+		}
+	}
 
 	/*
 	 * Load plugins early, the first hook is in banner(), so we
@@ -522,6 +491,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Hello world.
 	 */
+	enable_progress(1);	/* Allow progress, if enabled */
 	banner();
 
 	/*

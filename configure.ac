@@ -48,11 +48,6 @@ PKG_CHECK_MODULES([uev],  [libuev >= 2.2.0])
 PKG_CHECK_MODULES([lite], [libite >= 2.2.0])
 
 # Check for configured Finit features
-AC_ARG_ENABLE(emergency_shell,
-	AS_HELP_STRING([--enable-emergency-shell], [Experimental emergency fallback at boot.
-	                Use only for debugging very early boot problems with Finit]),,[
-	enable_emergency_shell=no])
-
 AC_ARG_ENABLE(auto_reload,
         AS_HELP_STRING([--enable-auto-reload], [Automatic reload on any .conf change]),,[
 	enable_auto_reload=no])
@@ -127,9 +122,6 @@ AC_ARG_WITH(watchdog,
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defaults
-AS_IF([test "x$enable_emergency_shell" = "xyes"], [
-        AC_DEFINE(EMERGENCY_SHELL,  1, [Fork off init and let PID 1 wait and start /bin/sh if init crashes.])])
-
 AS_IF([test "x$enable_auto_reload" = "xyes"], [
         AC_DEFINE(AUTO_RELOAD, 1, [Finit automatically does `initctl reload` on any .conf change])])
 
@@ -253,7 +245,6 @@ Optional features:
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
   Scripting tool logit..: $enable_logit
-  Emergency shell.......: $enable_emergency_shell
   Redirect output.......: $enable_redirect
   Default hostname......: $hostname
   Default runlevel......: $runlevel
