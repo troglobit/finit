@@ -117,14 +117,14 @@ static int validate_ifname(const char *ifname)
 	if (!ifname || !ifname[0])
 		return 1;
 
-	if (strlen(ifname) >= IFNAMSIZ)
+	if (strnlen(ifname, IFNAMSIZ) == IFNAMSIZ)
 		return 1;
 
-	if (strstr(ifname, ".."))
+	if (!strcmp(ifname, ".") || !strcmp(ifname, ".."))
 		return 1;
 
 	while (*ifname) {
-		if (*ifname == '/' || isspace(*ifname))
+		if (*ifname == '/' || *ifname == ':' || isspace(*ifname))
 			return 1;
 		ifname++;
 	}
