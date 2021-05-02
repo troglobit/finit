@@ -31,21 +31,24 @@
  *      does on USR1 with their FIFO/D-Bus.
  *
  * SIGUSR1
- *      Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
- *      processes, and unmounts all file systems.  Then tells kernel to
- *      halt.  Most people these days want SIGUSR2 though.
+ *      Restarts API (initctl) socket, like SysV init and systemd does
+ *      on USR1 with their FIFO/D-Bus.
  *
- *      (SysV init and systemd use this to re-open their FIFO/D-Bus.)
+ *      Finit <= 4.0 used to perform a system halt on USR1.  This caused
+ *      some quite nasty problems on systems with both systemd/sysvinit
+ *      installed alongside finit.  For compatibility reasons Finit 4.1
+ *      changed to partial SIGHUP (api_exit/init).
  *
  * SIGUSR2
- *      Like SIGUSR1, but tell kernel to power-off the system, if ACPI
- *      or similar exists to actually do this.  If the kernel fails
- *      power-off, Finit falls back to halt.
+ *      Calls shutdown hooks, including HOOK_SHUTDOWN, stops all running
+ *      processes, and unmounts all file systems.  Then tells kernel to
+ *      power-off the system, if ACPI or similar exists to actually do
+ *      this.  If the kernel fails power-off, Finit falls back to halt.
  *
  *      (SysV init N/A, systemd dumps its internal state to log.)
  *
  * SIGTERM
- *      Like SIGUSR1, but tell kernel to reboot the system when done.
+ *      Like SIGUSR2, but tell kernel to reboot the system when done.
  *
  *      (SysV init N/A, systemd rexecutes itself.)
  *
@@ -323,7 +326,7 @@ static void sigint_cb(uev_t *w, void *arg, int events)
 }
 
 /*
- * SIGUSR1: BusyBox style halt
+ * SIGUSR1: SysV init/systemd API socket restart
  */
 static void sigusr1_cb(uev_t *w, void *arg, int events)
 {
@@ -333,8 +336,9 @@ static void sigusr1_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	halt = SHUT_HALT;
-	service_runlevel(0);
+	/* Restart initctl API domain socket, similar to systemd/SysV init */
+	api_exit();
+	api_init(w->ctx);
 }
 
 /*
@@ -520,7 +524,7 @@ void sig_setup(uev_ctx_t *ctx)
 	/* Standard SysV init calls ctrl-alt-delete handler */
 	uev_signal_init(ctx, &sigint_watcher, sigint_cb, NULL, SIGINT);
 
-	/* BusyBox init style signals for halt, power-off and reboot. */
+	/* BusyBox/SysV init style signals for halt, power-off and reboot. */
 	uev_signal_init(ctx, &sigusr1_watcher, sigusr1_cb, NULL, SIGUSR1);
 	uev_signal_init(ctx, &sigusr2_watcher, sigusr2_cb, NULL, SIGUSR2);
 	uev_signal_init(ctx, &sigpwr_watcher, sigusr2_cb, NULL, SIGPWR);

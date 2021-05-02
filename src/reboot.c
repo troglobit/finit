@@ -206,7 +206,7 @@ int reboot_main(int argc, char *argv[])
 
 	case CMD_HALT:
 		if (do_halt(NULL))
-			do_kill(SIGUSR1, msg);
+			do_kill(SIGUSR2, msg);
 		break;
 
 	case CMD_POWEROFF:

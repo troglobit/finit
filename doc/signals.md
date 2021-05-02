@@ -12,28 +12,36 @@ have been adopted:
 Same effect as `finit q`, `init q`, or `initctl reload`, reloads all
 *.conf files in `/etc/finit.d/`
 
+This also restarts the API (initctl) socket, like SysV init and systemd
+does on USR1 with their FIFO/D-Bus.
+
+
 `SIGUSR1`
 ---------
 
-Calls shutdown hooks, including `HOOK_SHUTDOWN`, stopping all running
-processes, and unmounts all file systems.  Then tells kernel to halt.
-Most people these days want `SIGUSR2` though.
+Since Finit 4.1 this signal causes Finit to restart its API (initctl)
+socket, like SysV init and systemd does on USR1 with their FIFO/D-Bus.
 
-SysV init and systemd use this to re-open their FIFO/D-Bus.
+Finit <= 4.0 performed a system halt (like USR2 without power-off), but
+this caused compatibility problems with systemd and sysvinit on desktop
+systems.  Hence, since Finit 4.1 it is no longer possible to halt a
+system with a signal.
+
 
 `SIGUSR2`
 ---------
 
-Like SIGUSR1, but tell kernel to power-off the system, if ACPI or
-similar exists to actually do this.  If the kernel fails power-off,
-Finit falls back to halt.
- 
+Calls shutdown hooks, including `HOOK_SHUTDOWN`, stopping all running
+processes, and unmounts all file systems.  Then tells kernel to power
+off the system, if ACPI or similar exists to actually do this.  If the
+kernel fails power-off, Finit falls back to halt.
+
 SysV init N/A, systemd dumps its internal state to log.
 
 `SIGTERM`
 ---------
 
-Like `SIGUSR1`, but tell kernel to reboot the system when done.
+Like `SIGUSR2`, but tell kernel to reboot the system when done.
  
 SysV init N/A, systemd rexecutes itself.
 
