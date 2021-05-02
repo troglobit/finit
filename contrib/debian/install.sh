@@ -11,7 +11,7 @@ fi
 grep -q Debian os-release 2>/dev/null
 if [ $? -eq 0 ]; then
     cd ../..
-elif [ ! -e autogen.sh ]; then
+elif [ ! -e configure.ac ]; then
     echo "*** Please run this script from the Finit base directory."
     exit 1
 fi

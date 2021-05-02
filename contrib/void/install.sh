@@ -10,7 +10,7 @@ fi
 # Adjust base directory
 if [ -e xbps ]; then
     cd ../..
-elif [ ! -e autogen.sh ]; then
+elif [ ! -e configure.ac ]; then
     echo "*** Please run this script from the Finit base directory."
     exit 1
 fi
