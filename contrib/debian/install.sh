@@ -38,12 +38,18 @@ if [ "x$yorn" = "xy" -o "x$yorn" = "xY" ]; then
     cp -va finit.d /etc/
 
     echo "*** Setting up a GRUB boot entry ..."
-    MENU=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/menuentry '\([^']*\).*/\1/"`
-    TYPE=`grep gnu-linux /boot/grub/grub.cfg |head -1 |sed "s/.*' --class \([a-z]*\).*/\1/"`
-    BOOT=`grep set=root /boot/grub/grub.cfg |head -1 |sed 's/.* \([a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*\).*/\1/'`
-    ROOT=`grep root=UUID /boot/grub/grub.cfg |head -1 |sed 's/.*UUID=\([a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*\).*/\1/'`
-    cat grub.d/40_custom | sed "s,\$BOOT,$BOOT,;s,\$ROOT,$ROOT,;s,\$TYPE,$TYPE,;s,\$MENU,$MENU," >/etc/grub.d/40_custom
-    update-grub
+    fn=/etc/grub.d/10_linux
+    if [ -e $fn ]; then
+	if `grep SUPPORTED_INITS $fn |head -1 |grep -q finit`; then
+	    echo "Already installed, done."
+	else
+	    echo "Adding Finit to list of SUPPORTED_INITS ..."
+	    sed -i 's/SUPPORTED_INITS="[^"]*/& finit:\/sbin\/finit/' $fn
+	    update-grub
+	fi
+    else
+	echo "Cannot find $fn, you'll have to set up your bootloader on your own."
+    fi
 
     echo
     echo "*** Done"
