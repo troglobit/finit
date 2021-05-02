@@ -9,6 +9,6 @@ menuentry '$MENU with Finit' --class $TYPE --class gnu-linux --class gnu --class
 	insmod part_msdos
 	insmod ext2
 	search --no-floppy --fs-uuid --set=root $BOOT
-	linux	/vmlinuz root=UUID=$ROOT ro quiet init=/sbin/finit
+	linux	/vmlinuz root=UUID=$ROOT ro ${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT} init=/sbin/finit
 	initrd	/initrd.img
 }
