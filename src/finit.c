@@ -186,6 +186,44 @@ static void fs_remount_root(int fsckerr)
 }
 #endif	/* SYSROOT */
 
+/*
+ * Opinionated file system setup.  Checks for critical mount points and
+ * mounts them as most users expect.  All file systems are checked with
+ * /proc/mounts before mounting.
+ *
+ * Embedded systems, and other people who want full control, can set up
+ * their system with /etc/fstab, which is handled before this function
+ * is called.  For systems like Debian/Ubuntu, who only have / and swap
+ * in their /etc/fstab, this function does all the magic necessary.
+ */
+static void fs_finalize(void)
+{
+	/*
+	 * Some systems rely on us to both create /dev/shm and, to mount
+	 * a tmpfs there.  Any system with dbus needs shared memory, so
+	 * mount it, unless its already mounted, but not if listed in
+	 * the /etc/fstab file already.
+	 */
+	if (!fismnt("/dev/shm")) {
+		makedir("/dev/shm", 0777);
+		mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
+	}
+
+	/* Modern systems use /dev/pts */
+	if (!fismnt("/dev/pts")) {
+		makedir("/dev/pts", 0755);
+		mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620,ptmxmode=0666");
+	}
+
+	/* Modern systems use tmpfs for /run */
+	if (!fismnt("/run"))
+		mount("tmpfs", "/run", "tmpfs", 0, "mode=0755,nosuid,nodev,noexec,relatime");
+
+	/* Modern systems use tmpfs for /tmp */
+	if (!fismnt("/tmp"))
+		mount("tmpfs", "/tmp", "tmpfs", 0, "mode=0755,nosuid,nodev");
+}
+
 static void fs_mount(void)
 {
 	if (!rescue)
@@ -201,6 +239,9 @@ static void fs_mount(void)
 	plugin_run_hooks(HOOK_MOUNT_POST);
 
 	run("swapon -ea");
+
+	_d("Finalize, ensure common file systems are available ...");
+	fs_finalize();
 }
 
 /*
