@@ -14,9 +14,6 @@ Bug fix release.
   Previously SIGUSR1 caused Finit to halt, like BusyBox init.  This had
   "interesting" side effects on Debian systems when coexisting with
   sysvinit (upgrading/reinstalling causes scripts to `kill -USR1 1`)
-* Restore automatic mount of `/dev/shm`, `/dev/pts`, `/run` and `/tmp`
-  if not mounted in `/etc/fstab`.  This is what most desktop systems
-  expect PID 1 to do
 * Change how `contrib/debian/install.sh` sets up a Grub boot entry for
   finit.  We now modify the $SUPPORTED_INITS variable in `10_linux`
 
@@ -24,6 +21,12 @@ Bug fix release.
 * Stricter interface name validation in netlink plugin, modeled after
   the kernel.  Suggested by Coverity Scan
 * The `contrib/*/install.sh` scripts failed to run from tarball
+* Fix #170: detect loss of default route when interfaces go down.  This
+  emulates the missing kernel netlink message to remove the condition
+  net/default/route to allow stopping dependent services
+* Fix #171: restore automatic mount of `/dev/shm`, `/dev/pts`, `/run`
+  and `/tmp`, unless mounted already by `/etc/fstab`.  This is what most
+  desktop systems expect PID 1 to do
 
 
 [4.0][] - 2021-04-26
