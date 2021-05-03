@@ -8,7 +8,7 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
 	contrib/Makefile
 	contrib/alpine/Makefile contrib/alpine/finit.d/Makefile contrib/alpine/finit.d/available/Makefile
-	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile contrib/debian/grub.d/Makefile
+	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
 	doc/Makefile
 	plugins/Makefile
