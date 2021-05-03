@@ -29,10 +29,10 @@ set up your system to run Finit:
     user@debian:~/finit$ contrib/debian/build.sh
 
 However, since `/sbin/init` already exists on your system, the script
-creates another entry in your GRUB config, in `/etc/grub.d/40_custom`,
-where `init=/sbin/finit` is added to your kernel line.  It is of course
-also possible to change the default init to Finit, if you do you can
-remove the custom Grub entry:
+creates another entry in your GRUB config by updating `$SUPPORTED_INITS`
+in `/etc/grub.d/10_inux` and run `update-grub`.  On reboot you will find
+a (finit) entry in the "Advanced options for Debian GNU/Linux" section.
+It is of course also possible to change the default init to Finit:
 
     user@debian:~/finit# cd /sbin
     user@debian:/sbin# sudo mv init oldinit
@@ -51,7 +51,8 @@ If you want to use the X Window system, `sudo apt install elogind`
 (Bullseye and later).  Followed by `initctl reload` (enabled by default)
 and logout/login again.  The elogind daemon ensures a regular non-root
 user can start and interact with an X session, otherwise keyboard and
-mouse won't work.
+mouse won't work.  When you're happy, you can enable the lightdm.conf,
+change the default runlevel to 3, and presto! you have a desktop again.
 
 
 Have fun!  
