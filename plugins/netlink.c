@@ -31,6 +31,9 @@
 #include "helpers.h"
 #include "plugin.h"
 
+static int ifdown = 0;
+
+
 static int nlmsg_validate(struct nlmsghdr *nh, size_t len)
 {
 	if (!NLMSG_OK(nh, len))
@@ -51,10 +54,16 @@ static int nlmsg_validate(struct nlmsghdr *nh, size_t len)
 
 static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 {
+	char daddr[INET_ADDRSTRLEN];
+	char gaddr[INET_ADDRSTRLEN];
+	struct in_addr ind, ing;
 	struct rtmsg *r;
 	struct rtattr *a;
+	int plen = 0;
+	int dst = 0;
+	int idx = 0;
+	int gw = 0;
 	int la;
-	int gw = 0, dst = 0, mask = 0, idx = 0;
 
 	if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof(struct rtmsg))) {
 		_e("Packet too small or truncated!");
@@ -80,8 +89,8 @@ static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 
 		case RTA_DST:
 			dst = *((int *)data);
-			mask = r->rtm_dst_len;
-			//_d("MASK: 0x%04x", mask);
+			plen = r->rtm_dst_len;
+			//_d("Prefix LEN: 0x%04x", plen);
 			break;
 
 		case RTA_OIF:
@@ -93,12 +102,48 @@ static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 		a = RTA_NEXT(a, la);
 	}
 
-	if ((!dst && !mask) && (gw || idx)) {
+	ind.s_addr = dst;
+	ing.s_addr = gw;
+	inet_ntop(AF_INET, &ind, daddr, sizeof(daddr));
+	inet_ntop(AF_INET, &ing, gaddr, sizeof(gaddr));
+	_d("Got gw %s dst/len %s/%d ifindex %d", gaddr, daddr, plen, idx);
+
+	if ((!dst && !plen) && (gw || idx)) {
 		if (nlmsg->nlmsg_type == RTM_DELROUTE)
 			cond_clear("net/route/default");
 		else
 			cond_set("net/route/default");
 	}
+}
+
+static int nl_default(struct nlmsghdr *nlh, struct in_addr *dst, struct in_addr *gw)
+{
+	struct in_addr nil = { 0 };
+	struct rtattr *a;
+	struct rtmsg *r;
+	int len;
+
+	r = (struct rtmsg *)NLMSG_DATA(nlh);
+	if ((r->rtm_family != AF_INET) || (r->rtm_table != RT_TABLE_MAIN))
+		return -1;
+
+	len = RTM_PAYLOAD(nlh);
+	for (a = RTM_RTA(r); RTA_OK(a, len); a = RTA_NEXT(a, len)) {
+		switch (a->rta_type) {
+		case RTA_GATEWAY:
+			memcpy(gw, RTA_DATA(a), sizeof(*gw));
+			break;
+
+		case RTA_DST:
+			memcpy(dst, RTA_DATA(a), sizeof(*dst));
+			break;
+		}
+	}
+
+	if (!memcmp(dst, &nil, sizeof(nil)) && memcmp(gw, &nil, sizeof(nil)))
+		return 0;
+
+	return 1;
 }
 
 static void net_cond_set(char *ifname, char *cond, int set)
@@ -134,10 +179,10 @@ static int validate_ifname(const char *ifname)
 
 static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 {
-	int la;
 	char ifname[IFNAMSIZ + 1];
-	struct rtattr *a;
 	struct ifinfomsg *i;
+	struct rtattr *a;
+	int la;
 
 	if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof(struct ifinfomsg))) {
 		_e("Packet too small or truncated!");
@@ -172,6 +217,8 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 			net_cond_set(ifname, "exist",   1);
 			net_cond_set(ifname, "up",      i->ifi_flags & IFF_UP);
 			net_cond_set(ifname, "running", i->ifi_flags & IFF_RUNNING);
+			if (!(i->ifi_flags & IFF_UP) || !(i->ifi_flags & IFF_RUNNING))
+				ifdown = 1;
 			break;
 
 		case RTM_DELLINK:
@@ -180,6 +227,7 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 			net_cond_set(ifname, "exist",   0);
 			net_cond_set(ifname, "up",      0);
 			net_cond_set(ifname, "running", 0);
+			ifdown = 1;
 			break;
 
 		case RTM_NEWADDR:
@@ -211,12 +259,62 @@ static void nl_callback(void *arg, int sd, int events)
 		return;
 	}
 
+	/* check for interface changes -> loss of default route */
+	ifdown = 0;
+
 	for (nh = (struct nlmsghdr *)buf; !nlmsg_validate(nh, len); nh = NLMSG_NEXT(nh, len)) {
 		//_d("Well formed netlink message received. type %d ...", nh->nlmsg_type);
 		if (nh->nlmsg_type == RTM_NEWROUTE || nh->nlmsg_type == RTM_DELROUTE)
 			nl_route(nh, len);
 		else
 			nl_link(nh, len);
+	}
+
+	/*
+	 * Linux doesn't send route changes, when interfaces go down, so
+	 * we need to check ourselves, e.g. for loss of default route.
+	 */
+	if (ifdown) {
+		unsigned int seq = 0;
+		int found = 0;
+
+		sd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+		if (sd < 0) {
+			_pe("netlink socket");
+			return;
+		}
+
+		memset(buf, 0, sizeof(buf));
+		nh = (struct nlmsghdr *)buf;
+		nh->nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg));
+		nh->nlmsg_type  = RTM_GETROUTE;
+		nh->nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
+		nh->nlmsg_seq   = seq++;
+		nh->nlmsg_pid   = 1;
+
+		if (send(sd, nh, nh->nlmsg_len, 0) < 0) {
+			_pe("Failed netlink route request");
+			close(sd);
+			return;
+		}
+
+		len = recv(sd, buf, sizeof(buf), 0);
+		close(sd);
+
+		for (; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
+			struct in_addr dst = { 0 };
+			struct in_addr gw = { 0 };
+
+			if (nl_default(nh, &dst, &gw))
+				continue;
+
+			_d("default via %s\n", inet_ntoa(gw));
+			found = 1;
+		}
+
+		/* We already get notification when adding default rt */
+		if (!found)
+			cond_clear("net/route/default");
 	}
 }
 
@@ -236,8 +334,8 @@ static plugin_t plugin = {
 
 PLUGIN_INIT(plugin_init)
 {
-	int sd;
 	struct sockaddr_nl sa;
+	int sd;
 
 	sd = socket(AF_NETLINK, SOCK_RAW | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_ROUTE);
 	if (sd < 0) {
