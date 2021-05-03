@@ -4,6 +4,28 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.1][UNRELEASED]
+-----------------
+
+Bug fix release.
+
+### Changes
+* Change behavior on SIGUSR1 to be compatible with sysvinit and systemd.
+  Previously SIGUSR1 caused Finit to halt, like BusyBox init.  This had
+  "interesting" side effects on Debian systems when coexisting with
+  sysvinit (upgrading/reinstalling causes scripts to `kill -USR1 1`)
+* Restore automatic mount of `/dev/shm`, `/dev/pts`, `/run` and `/tmp`
+  if not mounted in `/etc/fstab`.  This is what most desktop systems
+  expect PID 1 to do
+* Change how `contrib/debian/install.sh` sets up a Grub boot entry for
+  finit.  We now modify the $SUPPORTED_INITS variable in `10_linux`
+
+### Fixes
+* Stricter interface name validation in netlink plugin, modeled after
+  the kernel.  Suggested by Coverity Scan
+* The `contrib/*/install.sh` scripts failed to run from tarball
+
+
 [4.0][] - 2021-04-26
 --------------------
 
@@ -907,9 +929,3 @@ Major bug fix release.
 [0.2]: https://github.com/troglobit/finit/compare/0.1...0.2
 [libuEv]: https://github.com/troglobit/libuev
 [dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
