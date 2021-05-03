@@ -900,7 +900,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/3.1...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.0...HEAD
 [4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
 [3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
 [3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
