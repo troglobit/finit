@@ -23,7 +23,7 @@ echo "/sbin/finit           - PID 1"
 echo "/lib/finit/plugins/*  - All enabled Finit plugins"
 echo "/etc/finit.conf       - Finit configuration file"
 echo "/etc/finit.d/         - Finit services"
-echo "/etc/grub.d/40_custom - Add menu entry to the Grub boot loader"
+echo "/etc/grub.d/10_linux  - Add Finit to Grub's SUPPORTED_INITS"
 echo
 read -p "Do you want to continue (y/N)? " yorn
 echo
