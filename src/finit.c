@@ -217,11 +217,11 @@ static void fs_finalize(void)
 
 	/* Modern systems use tmpfs for /run */
 	if (!fismnt("/run"))
-		mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NOEXEC | MS_RELATIME, "mode=0755,nodev");
+		mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0755");
 
 	/* Modern systems use tmpfs for /tmp */
 	if (!fismnt("/tmp"))
-		mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID, "mode=0755,nodev");
+		mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=0755");
 }
 
 static void fs_mount(void)
