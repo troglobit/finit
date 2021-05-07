@@ -234,6 +234,9 @@ static int nl_parse(int sd)
 
 		while ((len = recv(sd, nl_buf, NL_BUFSZ, 0)) < 0) {
 			switch (errno) {
+			case EAGAIN:	/* Nothing more right now. */
+				return 0;
+
 			case EINTR:	/* Signal */
 				continue;
 
@@ -372,9 +375,8 @@ static void nl_callback(void *arg, int sd, int events)
 		if (errno == ENOBUFS) {	/* netlink(7) */
 			_w("busy system, resynchronizing with kernel.");
 			nl_resync(1);
+			return;
 		}
-
-		return;
 	}
 
 	/*
