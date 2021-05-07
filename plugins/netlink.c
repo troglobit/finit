@@ -413,8 +413,6 @@ static plugin_t plugin = {
 PLUGIN_INIT(plugin_init)
 {
 	struct sockaddr_nl sa;
-	socklen_t sz;
-	int rcvbuf;
 	int sd;
 
 	sd = socket(AF_NETLINK, SOCK_RAW | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_ROUTE);
@@ -422,14 +420,6 @@ PLUGIN_INIT(plugin_init)
 		_pe("socket()");
 		return;
 	}
-
-	rcvbuf = 320 << 10;	/* default: 212992 bytes, now 425984 bytes */
-	if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf)))
-		_pe("failed adjusting netlink socket recive buffer size");
-
-	sz = sizeof(rcvbuf);
-	if (!getsockopt(sd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, &sz))
-		_d("New size of netlink receive buffer: %d bytes", rcvbuf);
 
 	memset(&sa, 0, sizeof(sa));
 	sa.nl_family = AF_NETLINK;
