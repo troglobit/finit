@@ -460,9 +460,6 @@ Commands:
   halt                      Halt system
   poweroff                  Halt and power off system
   suspend                   Suspend system
-
-Bug report address: https://github.com/troglobit/finit/issues
-Project homepage: https://troglobit.com/finit.html
 ```
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
