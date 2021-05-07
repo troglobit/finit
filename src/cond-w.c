@@ -178,13 +178,22 @@ void cond_update(const char *name)
 	}
 }
 
-void cond_set(const char *name)
+int cond_set_noupdate(const char *name)
 {
 	_d("%s", name);
 	if (string_compare(name, "nop"))
-		return;
+		return 1;
 
 	if (!cond_set_path(cond_path(name), COND_ON))
+		return 1;
+
+	return 0;
+}
+
+void cond_set(const char *name)
+{
+	_d("%s", name);
+	if (cond_set_noupdate(name))
 		return;
 
 	cond_update(name);
@@ -208,13 +217,22 @@ void cond_set_oneshot(const char *name)
 	cond_update(name);
 }
 
-void cond_clear(const char *name)
+int cond_clear_noupdate(const char *name)
 {
 	_d("%s", name);
 	if (string_compare(name, "nop"))
-		return;
+		return 1;
 
 	if (!cond_set_path(cond_path(name), COND_OFF))
+		return 1;
+
+	return 0;
+}
+
+void cond_clear(const char *name)
+{
+	_d("%s", name);
+	if (cond_clear_noupdate(name))
 		return;
 
 	cond_update(name);
@@ -227,7 +245,7 @@ void cond_reload(void)
 	cond_bump_reconf();
 }
 
-static int reassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)
+static int do_assert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw, int set)
 {
 	char *nm;
 
@@ -239,25 +257,47 @@ static int reassert(const char *fpath, const struct stat *sb, int tflg, struct F
 
 	nm = strstr((char *)fpath, COND_BASE);
 	if (!nm) {
-		_e("Incorrect condtion path %s, cannot reassert", fpath);
+		_e("Incorrect condtion path %s, cannot %sassert", fpath, set ? "re" : "de");
 		return 1;
 	}
 
 	nm += strlen(COND_BASE);
-	_d("Reasserting %s => %s", fpath, nm);
-	cond_set(nm);
+	_d("%sasserting %s => %s", set ? "Re" : "De", fpath, nm);
+	if (set)
+		cond_set(nm);
+	else
+		cond_clear_noupdate(nm); /* important, see netlink plugin! */
 
 	return 0;
+}
+
+static int reassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)
+{
+	return do_assert(fpath, sb, tflg, ftw, 1);
+}
+
+static int deassert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw)
+{
+	return do_assert(fpath, sb, tflg, ftw, 0);
 }
 
 /*
  * Used only by netlink plugin atm.
  * type: is a one of pid/, net/, etc.
  */
-void cond_reassert(const char *type)
+void cond_reassert(const char *pat)
 {
-	_d("%s", type);
-	nftw(cond_path(type), reassert, 20, FTW_DEPTH);
+	_d("%s", pat);
+	nftw(cond_path(pat), reassert, 20, FTW_DEPTH);
+}
+
+/*
+ * Used only by netlink plugin atm.
+ */
+void cond_deassert(const char *pat)
+{
+	_d("%s", pat);
+	nftw(cond_path(pat), deassert, 20, FTW_DEPTH);
 }
 
 void cond_init(void)

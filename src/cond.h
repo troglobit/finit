@@ -34,7 +34,13 @@ void cond_set         (const char *name);
 void cond_set_oneshot (const char *name);
 void cond_clear       (const char *name);
 void cond_reload      (void);
+
+int cond_set_noupdate (const char *name);
+int cond_clear_noupdate(const char *name);
+
 void cond_reassert    (const char *pat);
+void cond_deassert    (const char *pat);
+
 void cond_init        (void);
 
 #endif	/* FINIT_COND_H_ */
