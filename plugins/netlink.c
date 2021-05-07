@@ -32,8 +32,7 @@
 #include "plugin.h"
 #include "service.h"
 
-/* Used on resync, when we potentially read ALL interfaces in the system */
-#define  NL_BUFSZ	65536
+#define  NL_BUFSZ	4096
 
 struct nl_request {
 	struct nlmsghdr nh;
@@ -47,24 +46,6 @@ static int   nl_defidx;
 static int   nl_ifdown;
 static char *nl_buf;
 
-
-static int nlmsg_validate(struct nlmsghdr *nh, size_t len)
-{
-	if (!NLMSG_OK(nh, len))
-		return 1;
-
-	if (nh->nlmsg_type == NLMSG_DONE) {
-		_d("Done with netlink messages.");
-		return 1;
-	}
-
-	if (nh->nlmsg_type == NLMSG_ERROR) {
-		_d("Netlink reports error.");
-		return 1;
-	}
-
-	return 0;
-}
 
 static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 {
@@ -245,34 +226,70 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 	}
 }
 
-static int nl_parse(struct nlmsghdr *nh, ssize_t len)
+static int nl_parse(int sd)
 {
-	for (; !nlmsg_validate(nh, len); nh = NLMSG_NEXT(nh, len)) {
-//		_d("netlink message, type %d ...", nh->nlmsg_type);
-		switch (nh->nlmsg_type) {
-		case RTM_NEWROUTE:
-		case RTM_DELROUTE:
-			nl_route(nh, len);
-			break;
+	while (1) {
+		struct nlmsghdr *nh;
+		ssize_t len;
 
-		case RTM_NEWLINK:
-		case RTM_DELLINK:
-			nl_link(nh, len);
-			break;
+		while ((len = recv(sd, nl_buf, NL_BUFSZ, 0)) < 0) {
+			switch (errno) {
+			case EINTR:	/* Signal */
+				continue;
 
-		default:
-			_w("unhandled netlink message, type %d", nh->nlmsg_type);
-			break;
+			case ENOBUFS:	/* netlink(7) */
+				break;
+
+			default:
+				_pe("recv()");
+				break;
+			}
+
+			return -1;
+		}
+
+		_d("recv %lld bytes", len);
+
+		for (nh = (struct nlmsghdr *)nl_buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
+			struct nlmsgerr *nle;
+
+			switch (nh->nlmsg_type) {
+			case NLMSG_DONE:
+				_d("Done with netlink messages.");
+				return 0;
+
+			case NLMSG_ERROR:
+				_d("Kernel netlink comm. error.");
+				nle = NLMSG_DATA(nh);
+				if (nle) {
+					errno = -nle->error;
+					_pe("Kernel netlink error %d", errno);
+				}
+				return -1;
+
+			case RTM_NEWROUTE:
+			case RTM_DELROUTE:
+				_d("Netlink route ...");
+				nl_route(nh, len);
+				break;
+
+			case RTM_NEWLINK:
+			case RTM_DELLINK:
+				_d("Netlink link ...");
+				nl_link(nh, len);
+				break;
+
+			default:
+				_w("unhandled netlink message, type %d", nh->nlmsg_type);
+				break;
+			}
 		}
 	}
-
-	return 0;
 }
 
-static int nl_resync_act(int sd, unsigned int seq, int type)
+static int nl_request(int sd, unsigned int seq, int type)
 {
 	struct nl_request *nlr = (struct nl_request *)nl_buf;
-	ssize_t len;
 
 	memset(nlr, 0, sizeof(struct nl_request));
 	nlr->nh.nlmsg_type  = type;
@@ -282,12 +299,14 @@ static int nl_resync_act(int sd, unsigned int seq, int type)
 
 	switch (type) {
 	case RTM_GETROUTE:
+		_d("RTM_GETROUTE");
 		nlr->rtm.rtm_family = AF_INET;
 		nlr->rtm.rtm_table  = RT_TABLE_MAIN;
 		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg));
 		break;
 
 	case RTM_GETLINK:
+		_d("RTM_GETLINK");
 		nlr->ifi.ifi_family = AF_UNSPEC;
 		nlr->ifi.ifi_change = 0xFFFFFFFF;
 		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifinfomsg));
@@ -301,23 +320,18 @@ static int nl_resync_act(int sd, unsigned int seq, int type)
 	if (send(sd, nlr, nlr->nh.nlmsg_len, 0) < 0)
 		return 1;
 
-	len = recv(sd, nl_buf, NL_BUFSZ, 0);
-	if (len < 0)
-		return -1;
-
-	_d("recv %lld bytes in resync path", len);
-	return nl_parse((struct nlmsghdr *)nl_buf, len);
+	return nl_parse(sd);
 }
 
 static void nl_resync_routes(int sd, unsigned int seq)
 {
-	if (nl_resync_act(sd, seq, RTM_GETROUTE))
+	if (nl_request(sd, seq, RTM_GETROUTE))
 		_pe("Failed netlink route request");
 }
 
 static void nl_resync_ifaces(int sd, unsigned int seq)
 {
-	if (nl_resync_act(sd, seq, RTM_GETLINK))
+	if (nl_request(sd, seq, RTM_GETLINK))
 		_pe("Failed netlink link request");
 }
 
@@ -336,6 +350,7 @@ static void nl_resync(int all)
 	}
 
 	if (all) {
+		_d("============================ RESYNC =================================");
 		/* this doesn't update condtions, and thus does not stop services */
 		cond_deassert("net/");
 
@@ -344,6 +359,7 @@ static void nl_resync(int all)
 
 		/* delayed update after we've corrected things */
 		service_step_all(SVC_TYPE_ANY);
+		_d("=========================== RESYNCED ================================");
 	} else
 		nl_resync_routes(sd, seq++);
 
@@ -352,28 +368,14 @@ static void nl_resync(int all)
 
 static void nl_callback(void *arg, int sd, int events)
 {
-	ssize_t len;
-
-	len = recv(sd, nl_buf, NL_BUFSZ, 0);
-	if (len < 0) {
-		switch (errno) {
-		case EINTR:	/* Signal */
-			break;
-
-		case ENOBUFS:	/* netlink(7) */
+	if (nl_parse(sd) < 0) {
+		if (errno == ENOBUFS) {	/* netlink(7) */
 			_w("busy system, resynchronizing with kernel.");
 			nl_resync(1);
-			break;
-
-		default:
-			_pe("recv()");
-			break;
 		}
+
 		return;
 	}
-
-	_d("recv %lld bytes in regular path", len);
-	nl_parse((struct nlmsghdr *)nl_buf, len);
 
 	/*
 	 * Linux doesn't send route changes when interfaces go down, so
