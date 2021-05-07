@@ -134,7 +134,7 @@ Some components are optional: runlevel(s), condition(s) and description,
 making it easy to create simple start scripts and still possible for more
 advanced uses as well:
 
-    service sshd -D
+    service /usr/sbin/sshd -D
 
 Dependencies are handled using [conditions](doc/conditions.md).  One of
 the most common conditions is to wait for basic networking to become
