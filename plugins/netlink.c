@@ -32,7 +32,16 @@
 #include "plugin.h"
 #include "service.h"
 
-#define  NL_BUFSZ	8192
+/* Used on resync, when we potentially read ALL interfaces in the system */
+#define  NL_BUFSZ	65536
+
+struct nl_request {
+	struct nlmsghdr nh;
+	union {
+		struct rtmsg     rtm;
+		struct ifinfomsg ifi;
+	};
+};
 
 static int   nl_defidx;
 static int   nl_ifdown;
@@ -262,19 +271,42 @@ static int nl_parse(struct nlmsghdr *nh, ssize_t len)
 
 static int nl_resync_act(int sd, unsigned int seq, int type)
 {
-	struct nlmsghdr *nh;
+	struct nl_request *nlr = (struct nl_request *)nl_buf;
+	ssize_t len;
 
-	nh = (struct nlmsghdr *)nl_buf;
-	nh->nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg));
-	nh->nlmsg_type  = type;
-	nh->nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
-	nh->nlmsg_seq   = seq;
-	nh->nlmsg_pid   = 1;
+	memset(nlr, 0, sizeof(struct nl_request));
+	nlr->nh.nlmsg_type  = type;
+	nlr->nh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
+	nlr->nh.nlmsg_seq   = seq;
+	nlr->nh.nlmsg_pid   = 1;
 
-	if (send(sd, nh, nh->nlmsg_len, 0) < 0)
+	switch (type) {
+	case RTM_GETROUTE:
+		nlr->rtm.rtm_family = AF_INET;
+		nlr->rtm.rtm_table  = RT_TABLE_MAIN;
+		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg));
+		break;
+
+	case RTM_GETLINK:
+		nlr->ifi.ifi_family = AF_UNSPEC;
+		nlr->ifi.ifi_change = 0xFFFFFFFF;
+		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+		break;
+
+	default:
+		_w("Cannot resync, unhandled message type %d", type);
+		return -1;
+	}
+
+	if (send(sd, nlr, nlr->nh.nlmsg_len, 0) < 0)
 		return 1;
 
-	return nl_parse(nh, recv(sd, nl_buf, NL_BUFSZ, 0));
+	len = recv(sd, nl_buf, NL_BUFSZ, 0);
+	if (len < 0)
+		return -1;
+
+	_d("recv %lld bytes in resync path", len);
+	return nl_parse((struct nlmsghdr *)nl_buf, len);
 }
 
 static void nl_resync_routes(int sd, unsigned int seq)
@@ -340,6 +372,7 @@ static void nl_callback(void *arg, int sd, int events)
 		return;
 	}
 
+	_d("recv %lld bytes in regular path", len);
 	nl_parse((struct nlmsghdr *)nl_buf, len);
 
 	/*
