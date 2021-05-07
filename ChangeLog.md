@@ -27,6 +27,16 @@ Bug fix release.
 * Fix #171: restore automatic mount of `/dev/shm`, `/dev/pts`, `/run`
   and `/tmp`, unless mounted already by `/etc/fstab`.  This is what most
   desktop systems expect PID 1 to do
+* Fix #173: netlink plugin runs out of socket buffer space;
+
+        finit[1]: nl_callback():recv(): No buffer space available
+
+  Fixed by adding support for resync with kernel on `ENOBUFS`.  See
+  netlink(7) for details.  As a spin-off the plugin now supports any
+  number of interfaces and routes on a system.  On resync, the following
+  message is now logged, as a warning:
+
+        finit[1]: nl_callback():busy system, resynchronizing with kernel.
 
 
 [4.0][] - 2021-04-26
