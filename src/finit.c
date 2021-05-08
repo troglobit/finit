@@ -221,7 +221,7 @@ static void fs_finalize(void)
 
 	/* Modern systems use tmpfs for /tmp */
 	if (!fismnt("/tmp"))
-		mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=0755");
+		mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=1777");
 }
 
 static void fs_mount(void)
