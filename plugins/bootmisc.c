@@ -119,7 +119,8 @@ static void setup(void *arg)
 	makedir("/var/lib/urandom",0755);
 	if (fisdir("/run")) {
 		_d("System with new /run tmpfs ...");
-		makedir("/run/lock",       1777);
+		if (!fisdir("/run/lock"))
+			makedir("/run/lock", 1777);
 		symlink("/run/lock", "/var/lock");
 		symlink("/dev/shm",  "/run/shm");
 
