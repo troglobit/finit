@@ -215,9 +215,22 @@ static void fs_finalize(void)
 		mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620,ptmxmode=0666");
 	}
 
-	/* Modern systems use tmpfs for /run */
-	if (!fismnt("/run"))
-		mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0755");
+	/*
+	 * Modern systems use tmpfs for /run.  Fallback to /var/run if
+	 * /run doesn't exist is handled by the bootmisc plugin.  It
+	 * also sets up compat symlinks.
+	 *
+	 * The unconditional mount of /run/lock is for DoS prevention.
+	 * To override any of this behavior, add entries to /etc/fstab
+	 * for /run (and optionally /run/lock).
+	 */
+	if (fisdir("/run") && !fismnt("/run")) {
+		mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0755,size=10%");
+
+		/* This prevents user DoS of /run by filling /run/lock at the expense of another tmpfs, max 5MiB */
+		makedir("/run/lock", 1777);
+		mount("tmpfs", "/run/lock", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0777,size=5252880");
+	}
 
 	/* Modern systems use tmpfs for /tmp */
 	if (!fismnt("/tmp"))
