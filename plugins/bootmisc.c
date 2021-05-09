@@ -122,13 +122,13 @@ static void setup(void *arg)
 		if (!fisdir("/run/lock"))
 			makedir("/run/lock", 1777);
 		symlink("/run/lock", "/var/lock");
-		symlink("/dev/shm",  "/run/shm");
+		symlink("/dev/shm", "/run/shm");
 
 		/* compat only, should really be set up by OS/dist */
-		symlink("/run",      "/var/run");
+		symlink("/run", "/var/run");
 	} else {
-		makedir("/var/lock",       1777);
-		makedir("/var/run",        0755);
+		makedir("/var/lock", 1777);
+		makedir("/var/run", 0755);
 	}
 	makedir("/var/log",        0755);
 	makedir("/var/mail",       0755);
