@@ -26,12 +26,18 @@ Some of these are also registered in the issue tracker on GitHub.
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
 * Write man pages for finit and `finit.conf`, steal from the excellent
   `pimd` man pages ...
+
+
+Initctl
+-------
+
 * Add support for timed shutdown in Finit, including cancelled shutdown:
 
         shutdown -h 03:35 "foobar was here"
 
 * Add support for JSON output, or similar, from `initctl show`, e.g.
   `initctl show --json`
+* Add support for `-s` to redirect all output to syslog, for scripting
 
 
 Init
