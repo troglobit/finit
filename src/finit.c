@@ -211,8 +211,20 @@ static void fs_finalize(void)
 
 	/* Modern systems use /dev/pts */
 	if (!fismnt("/dev/pts")) {
+		char opts[32];
+		int mode;
+		int gid;
+
+		gid = getgroup("tty");
+		if (gid == -1)
+			gid = 0;
+
+		/* 0600 is default on Debian, use 0620 to get mesg y by default */
+		mode = 0620;
+		snprintf(opts, sizeof(opts), "gid=%d,mode=%d,ptmxmode=0666", gid, mode);
+
 		makedir("/dev/pts", 0755);
-		mount("devpts", "/dev/pts", "devpts", 0, "gid=5,mode=620,ptmxmode=0666");
+		mount("devpts", "/dev/pts", "devpts", MS_NOSUID | MS_NOEXEC, opts);
 	}
 
 	/*
