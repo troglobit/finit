@@ -1,8 +1,9 @@
 SUBDIRS    = available
 docsdir   := @docdir@/contrib/debian/finit.d
-d_LINKS    = console-setup.conf elogind.conf getty.conf 	\
-	     keyboard-setup.conf modules.conf rsyslogd.conf	\
-	     sshd.conf
+d_LINKS    = acpid.conf apparmor.conf avahi-demon.conf		\
+	     bluetooth.conf console-setup.conf elogind.conf 	\
+	     getty.conf keyboard-setup.conf modules.conf	\
+	     rsyslogd.conf sshd.conf
 
 install-exec-hook:
 	@$(MKDIR_P) $(DESTDIR)$(docsdir)/available
