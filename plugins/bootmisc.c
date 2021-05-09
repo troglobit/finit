@@ -183,6 +183,12 @@ static void setup(void *arg)
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
 	mksubsys("/var/run/uuidd", 0755, "uuidd", "uuidd");
 
+	/* Debian has /run/sudo, ensure correct perms and SELinux label */
+	mksubsys("/var/run/sudo", 0711, "root", "root");
+	mksubsys("/var/run/sudo/ts", 0700, "root", "root");
+	if (whichp("restorecon"))
+		run("restorecon /var/run/sudo /var/run/sudo/ts");
+
 	umask(prev);
 }
 
