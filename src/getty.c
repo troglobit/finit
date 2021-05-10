@@ -204,7 +204,7 @@ static int do_login(char *name)
 int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	const char cln[] = "\r\e[2K\n";
-	char name[30];
+	char name[33];		/* useradd(1) limit at 32 chars */
 
 	/*
 	 * Clean up tty name.
