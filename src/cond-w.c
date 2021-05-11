@@ -163,7 +163,7 @@ int cond_set_path(const char *path, enum cond_state next)
 	return next != prev;
 }
 
-/* Should only be used by cond_set*(), cond_clear(), and usr plugin! */
+/* Should only be used by cond_set*(), cond_clear(), and usr/sys plugins! */
 void cond_update(const char *name)
 {
 	svc_t *svc, *iter = NULL;
