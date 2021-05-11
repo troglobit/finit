@@ -50,7 +50,9 @@ extern char *prognm;
 char *progname     (char *arg0);
 
 char *str          (char *fmt, ...);
+int   fnread       (char *buf, size_t len, char *fmt, ...);
 int   fnwrite      (char *value, char *fmt, ...);
+int   fngetint     (char *path, int *val);
 
 int   has_utmp     (void);
 int   strtobytes   (char *arg);

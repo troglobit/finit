@@ -154,6 +154,35 @@ char *str(char *fmt, ...)
 	return buf;
 }
 
+int fnread(char *buf, size_t len, char *fmt, ...)
+{
+	char path[256];
+	va_list ap;
+	FILE *fp;
+
+	va_start(ap, fmt);
+	vsnprintf(path, sizeof(path), fmt, ap);
+	va_end(ap);
+
+	if (!buf || !len) {
+		struct stat st;
+
+		if (stat(path, &st))
+			return -1;
+
+		return (ssize_t)st.st_size;
+	}
+
+	fp = fopen(path, "r");
+	if (!fp)
+		return -1;
+
+	len = fread(buf, sizeof(char), len, fp);
+	fclose(fp);
+
+	return (int)len;
+}
+
 int fnwrite(char *value, char *fmt, ...)
 {
 	char path[256];
@@ -183,6 +212,21 @@ int fnwrite(char *value, char *fmt, ...)
 		rc = 0;
 
 	return rc;
+}
+
+int fngetint(char *path, int *val)
+{
+	char buf[10];
+
+	if (fnread(buf, sizeof(buf), path) <= 0)
+		return -1;
+
+	errno = 0;
+	*val = strtoul(chomp(buf), NULL, 0);
+	if (errno)
+		return -1;
+
+	return 0;
 }
 
 /*
