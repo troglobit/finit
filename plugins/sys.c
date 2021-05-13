@@ -50,9 +50,18 @@ static void sys_cond(int set)
 		cond_clear(cond);
 }
 
-static int check_online(char *path)
+static int check_online(char *ac)
 {
+	char path[strlen(ac) + 1];
+	char *ptr;
 	int val;
+
+	strlcpy(path, ac, sizeof(path));
+	ptr = strrchr(path, '/');
+	if (!ptr)
+		return 0;
+	ptr[1] = 0;
+	strlcat(path, "online", sizeof(path));
 
 	if (fngetint(path, &val))
 		return 0;
@@ -172,11 +181,11 @@ static void sys_init(void *arg)
 		if (is_ac(path, sizeof(path))) {
 			num_ac++;
 
-			snprintf(path, sizeof(path), "%s/%s/online", _PATH_SYSFS_PWR, nm);
+			snprintf(path, sizeof(path), "%s/%s/uevent", _PATH_SYSFS_PWR, nm);
 			if (check_online(path))
 				num_ac_online++;
 
-			if (iwatch_add(&iw_sys, path, 0))
+			if (iwatch_add(&iw_sys, path, IN_CLOSE_NOWRITE))
 				_pe("Failed setting up pwr monitor for %s", path);
 		}
 		free(d[i]);
