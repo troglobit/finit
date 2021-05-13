@@ -36,21 +36,28 @@
 #define _PATH_SYSFS_PWR  "/sys/class/power_supply"
 
 static struct iwatch iw_sys;
+static int num_ac_online;
 static int num_ac;
 
-static void check_online(char *path, int clear)
+static void sys_cond(int set)
 {
 	char cond[MAX_COND_LEN] = COND_SYS;
+
+	strlcat(cond, "pwr/ac", sizeof(cond));
+	if (set)
+		cond_set_oneshot(cond);
+	else
+		cond_clear(cond);
+}
+
+static int check_online(char *path)
+{
 	int val;
 
 	if (fngetint(path, &val))
-		return;
+		return 0;
 
-	strlcat(cond, "pwr/ac", sizeof(cond));
-	if (val)
-		cond_set_oneshot(cond);
-	else if (clear)
-		cond_clear(cond);
+	return val;
 }
 
 static void sys_callback(void *arg, int fd, int events)
@@ -86,7 +93,19 @@ static void sys_callback(void *arg, int fd, int events)
 		if (!iwp)
 			continue;
 
-		check_online(iwp->path, 1);
+		if (check_online(iwp->path)) {
+			if (!num_ac_online)
+				sys_cond(1);
+
+			if (num_ac_online < num_ac)
+				num_ac_online++;
+		} else {
+			if (num_ac_online > 0)
+				num_ac_online--;
+
+			if (!num_ac_online)
+				sys_cond(0);
+		}
 	}
 }
 
@@ -122,6 +141,13 @@ static int is_ac(char *path, size_t len)
 	return 0;
 }
 
+/*
+ * Called when base filesystem is up, modules have been probed,
+ * or insmodded from /etc/finit.conf, so by now we should have
+ * /sys/class/power_supply/ available for probing.  If none is
+ * found we assert /sys/pwr/ac condition anyway, this is what
+ * systemd does (ConditionACPower) and also makes most sense.
+ */
 static void sys_init(void *arg)
 {
 	struct dirent **d = NULL;
@@ -147,7 +173,8 @@ static void sys_init(void *arg)
 			num_ac++;
 
 			snprintf(path, sizeof(path), "%s/%s/online", _PATH_SYSFS_PWR, nm);
-			check_online(path, 0);
+			if (check_online(path))
+				num_ac_online++;
 
 			if (iwatch_add(&iw_sys, path, 0))
 				_pe("Failed setting up pwr monitor for %s", path);
@@ -155,6 +182,10 @@ static void sys_init(void *arg)
 		free(d[i]);
 	}
 	free(d);
+
+	/* if any power_supply is online, or none can be found */
+	if (num_ac == 0 || num_ac_online > 0)
+		sys_cond(1);
 }
 
 static plugin_t plugin = {
