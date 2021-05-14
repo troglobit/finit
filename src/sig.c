@@ -521,7 +521,11 @@ void sig_setup(uev_ctx_t *ctx)
 	erase(SYNC_SHUTDOWN);
 	erase(SYNC_STOPPED);
 
-	/* Standard SysV init calls ctrl-alt-delete handler */
+	/*
+	 * Standard SysV init calls ctrl-alt-delete handler
+	 * We need to disable kernel default so it sends us SIGINT
+	 */
+	reboot(RB_DISABLE_CAD);
 	uev_signal_init(ctx, &sigint_watcher, sigint_cb, NULL, SIGINT);
 
 	/* BusyBox/SysV init style signals for halt, power-off and reboot. */
