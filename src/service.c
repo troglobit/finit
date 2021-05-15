@@ -1260,6 +1260,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		if (type == SVC_TYPE_SERVICE && manual)
 			svc_stop(svc);
 	} else {
+		/* update type, may have changed from service -> task */
+		svc->type = type;
+
 		/* e.g., if missing cmd or env before */
 		svc_unblock(svc);
 	}
