@@ -36,7 +36,7 @@
 #define MODULES_LOAD_PATH "/etc/modules-load.d"
 #endif
 #define SERVICE_LINE \
-	":%d name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
+	"cgroup.init :%d name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
 
 static void load(void *arg)
 {
@@ -71,8 +71,7 @@ static void load(void *arg)
 
 			mod = strtok_r(mod, " ", &args);
 
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE,
-					 index, mod, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE, index, mod, mod, args, mod);
 			service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
 
 			index++;

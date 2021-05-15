@@ -64,7 +64,7 @@ static void setup(void *arg)
 	remove("/var/run/dbus/pid");
 
 	/* Register service with Finit */
-	snprintf(line, sizeof(line), "[S12345789] @%s:%s %s %s -- %s",
+	snprintf(line, sizeof(line), "[S12345789] cgroup.system @%s:%s %s %s -- %s",
 		 DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
 		_pe("Failed registering %s", DAEMON);
