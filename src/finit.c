@@ -594,6 +594,12 @@ int main(int argc, char *argv[])
 		wdog = svc_find_by_nameid("watchdog", "finit");
 	}
 
+	/*
+	 * Start kernel event daemon as soon as possible, if enabled
+	 */
+	if (whichp(FINIT_LIBPATH_ "/keventd"))
+		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init " FINIT_LIBPATH_ "/keventd -- Finit kernel event daemon", global_rlimit, NULL);
+
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
 

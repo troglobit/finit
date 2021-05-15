@@ -33,40 +33,71 @@
 #include "plugin.h"
 #include "iwatch.h"
 
-#define _PATH_SYSFS_PWR  "/sys/class/power_supply"
-
 static struct iwatch iw_sys;
-static int num_ac_online;
-static int num_ac;
 
-static void sys_cond(int set)
+
+static int sys_add_path(struct iwatch *iw, char *path)
 {
-	char cond[MAX_COND_LEN] = COND_SYS;
-
-	strlcat(cond, "pwr/ac", sizeof(cond));
-	if (set)
-		cond_set_oneshot(cond);
-	else
-		cond_clear(cond);
+	return iwatch_add(iw, path, IN_ONLYDIR | IN_CLOSE_WRITE);
 }
 
-static int check_online(char *ac)
+static void sys_update_conds(char *dir, char *name, uint32_t mask)
 {
-	char path[strlen(ac) + 1];
-	char *ptr;
-	int val;
+	char fn[PATH_MAX];
+	char *cond;
 
-	strlcpy(path, ac, sizeof(path));
-	ptr = strrchr(path, '/');
-	if (!ptr)
-		return 0;
-	ptr[1] = 0;
-	strlcat(path, "online", sizeof(path));
+	paste(fn, sizeof(fn), dir, name);
+	cond = strstr(fn, COND_BASE);
+	if (!cond)
+		return;
 
-	if (fngetint(path, &val))
-		return 0;
+	cond += strlen(COND_BASE) + 1;
+	_d("cond: %s set: %d", cond, mask & IN_CREATE ? 1 : 0);
+	cond_update(cond);
+}
 
-	return val;
+/* synthesize events in case of new run dirs */
+static void sys_scandir(struct iwatch *iw, char *dir, int len)
+{
+	glob_t gl;
+	size_t i;
+	char path[len + 6];
+	int rc;
+
+	snprintf(path, sizeof(path), "%s/*", dir);
+	rc = glob(path, GLOB_NOSORT, NULL, &gl);
+	if (rc && rc != GLOB_NOMATCH)
+		return;
+
+	for (i = 0; i < gl.gl_pathc; i++) {
+		_d("scan found %s", gl.gl_pathv[i]);
+		sys_update_conds(dir, gl.gl_pathv[i], IN_CREATE);
+	}
+	globfree(&gl);
+}
+
+/*
+ * create/remove sub-directory in monitored directory
+ */
+static void sys_handle_dir(struct iwatch *iw, char *dir, char *name, int mask)
+{
+	char path[strlen(dir) + strlen(name) + 2];
+	struct iwatch_path *iwp;
+
+	paste(path, sizeof(path), dir, name);
+	_d("path: %s", path);
+
+	iwp = iwatch_find_by_path(iw, path);
+
+	if (mask & IN_CREATE) {
+		if (!iwp) {
+			if (!sys_add_path(iw, path))
+				sys_scandir(iw, path, sizeof(path));
+		}
+	} else if (mask & IN_DELETE) {
+		if (iwp)
+			iwatch_del(&iw_sys, iwp);
+	}
 }
 
 static void sys_callback(void *arg, int fd, int events)
@@ -102,99 +133,34 @@ static void sys_callback(void *arg, int fd, int events)
 		if (!iwp)
 			continue;
 
-		if (check_online(iwp->path)) {
-			if (!num_ac_online)
-				sys_cond(1);
-
-			if (num_ac_online < num_ac)
-				num_ac_online++;
-		} else {
-			if (num_ac_online > 0)
-				num_ac_online--;
-
-			if (!num_ac_online)
-				sys_cond(0);
+		if (ev->mask & IN_ISDIR) {
+			sys_handle_dir(&iw_sys, iwp->path, ev->name, ev->mask);
+			continue;
 		}
+
+		if (ev->mask & (IN_CREATE | IN_DELETE))
+			sys_update_conds(iwp->path, ev->name, ev->mask);
 	}
 }
 
-static int is_ac(char *path, size_t len)
-{
-	char type[32] = { 0 };
-	char *types[] = {
-		"Mains",
-		"USB",
-		"BrickID",
-		"Wireless",
-		NULL
-	};
-	FILE *fp;
-	int i;
-
-	strlcat(path, "/type", len);
-	fp = fopen(path, "r");
-	if (!fp)
-		return 0;
-
-	if (!fgets(type, sizeof(type), fp)) {
-		fclose(fp);
-		return 0;
-	}
-	fclose(fp);
-
-	for (i = 0; types[i]; i++) {
-		if (!strncmp(type, types[i], strlen(types[i])))
-			return 1;
-	}
-
-	return 0;
-}
-
-/*
- * Called when base filesystem is up, modules have been probed,
- * or insmodded from /etc/finit.conf, so by now we should have
- * /sys/class/power_supply/ available for probing.  If none is
- * found we assert /sys/pwr/ac condition anyway, this is what
- * systemd does (ConditionACPower) and also makes most sense.
- */
 static void sys_init(void *arg)
 {
-	struct dirent **d = NULL;
-	char path[384];
-	int i, n;
+	char sysdir[MAX_ARG_LEN];
+	char *path;
 
-	if (mkpath(pid_runpath(_PATH_CONDSYS, path, sizeof(path)), 0755) && errno != EEXIST) {
+	if (mkpath(pid_runpath(_PATH_CONDSYS, sysdir, sizeof(sysdir)), 0755) && errno != EEXIST) {
 		_pe("Failed creating %s condition directory, %s", COND_SYS, _PATH_CONDSYS);
 		return;
 	}
 
-	n = scandir(_PATH_SYSFS_PWR, &d, NULL, alphasort);
-	if (n <= 0) {
-		iwatch_exit(&iw_sys);
+	path = realpath(_PATH_CONDSYS, NULL);
+	if (!path) {
+		_pe("Cannot figure out real path to %s, aborting", _PATH_CONDSYS);
 		return;
 	}
-		
-	for (i = 0; i < n; i++) {
-		char *nm = d[i]->d_name;
 
-		snprintf(path, sizeof(path), "%s/%s", _PATH_SYSFS_PWR, nm);
-		if (is_ac(path, sizeof(path))) {
-			num_ac++;
-
-			snprintf(path, sizeof(path), "%s/%s/uevent", _PATH_SYSFS_PWR, nm);
-			if (check_online(path))
-				num_ac_online++;
-
-			if (iwatch_add(&iw_sys, path, IN_CLOSE_NOWRITE))
-				_pe("Failed setting up pwr monitor for %s", path);
-		}
-		free(d[i]);
-	}
-	free(d);
-
-	/* if any power_supply is online, or none can be found */
-	if (num_ac == 0 || num_ac_online > 0)
-		sys_cond(1);
+	if (iwatch_add(&iw_sys, path, IN_ONLYDIR))
+		iwatch_exit(&iw_sys);
 }
 
 static plugin_t plugin = {
@@ -205,11 +171,6 @@ static plugin_t plugin = {
 PLUGIN_INIT(plugin_init)
 {
 	int fd;
-
-	if (!fisdir(_PATH_SYSFS_PWR)) {
-		_w("System does not have %s, disabling AC power monitor.", _PATH_SYSFS_PWR);
-		return;
-	}
 
 	fd = iwatch_init(&iw_sys);
 	if (fd < 0)

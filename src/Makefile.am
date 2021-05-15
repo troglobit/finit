@@ -8,17 +8,21 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  = logit sulogin
+pkglibexec_PROGRAMS  = keventd logit sulogin
+if WATCHDOGD
+pkglibexec_PROGRAMS += watchdogd
+endif
+
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
+
+keventd_SOURCES      = keventd.c iwatch.c iwatch.h util.c util.h
+keventd_CFLAGS       = -W -Wall -Wextra -std=gnu99
+keventd_LDADD        = $(lite_LIBS)
 
 sulogin_SOURCES      = sulogin.c
 sulogin_CFLAGS       = -W -Wall -Wextra -std=gnu99
 sulogin_LDADD        = -lcrypt
-
-if WATCHDOGD
-pkglibexec_PROGRAMS += watchdogd
-endif
 
 logit_SOURCES        = logit.c logrotate.c
 logit_CFLAGS         = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
