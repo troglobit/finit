@@ -345,7 +345,7 @@ static int do_cond_act(char *arg, int creat)
 		if (symlink(_PATH_RECONF, oneshot) && errno != EEXIST)
 			err(1, "Failed asserting condition <%s>", &oneshot[off]);
 	} else {
-		if (erase(oneshot))
+		if (erase(oneshot) && errno != ENOENT)
 			err(1, "Failed deasserting condition <%s>", &oneshot[off]);
 	}
 
