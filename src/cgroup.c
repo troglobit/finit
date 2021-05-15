@@ -172,6 +172,9 @@ int cgroup_service(char *name, int pid, struct cgroup *cg)
 		if (!strcmp(cg->name, "root"))
 			return fnwrite(str("%d", pid), FINIT_CGPATH "/cgroup.procs");
 
+		if (!strcmp(cg->name, "init"))
+			return fnwrite(str("%d", pid), FINIT_CGPATH "/init/cgroup.procs");
+
 		snprintf(path, sizeof(path), "/sys/fs/cgroup/%s", cg->name);
 		if (fisdir(path))
 			group = cg->name;
