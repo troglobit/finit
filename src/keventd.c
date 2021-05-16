@@ -80,7 +80,7 @@ static void sys_cond(char *cond, int set)
 	}
 }
 
-static int fgetln(char *path, char *buf, size_t len)
+static int fgetline(char *path, char *buf, size_t len)
 {
 	FILE *fp;
 
@@ -155,11 +155,11 @@ static void init(void)
  		char buf[10];
 
 		snprintf(path, sizeof(path), "%s/%s/type", _PATH_SYSFS_PWR, nm);
-		if (!fgetln(path, buf, sizeof(buf)) && is_ac(buf)) {
+		if (!fgetline(path, buf, sizeof(buf)) && is_ac(buf)) {
 			num_ac++;
 
 			snprintf(path, sizeof(path), "%s/%s/online", _PATH_SYSFS_PWR, nm);
-			if (!fgetln(path, buf, sizeof(buf))) {
+			if (!fgetline(path, buf, sizeof(buf))) {
 				if (check_online(buf))
 					num_ac_online++;
 			}
