@@ -70,16 +70,17 @@ Example
 First, unpack the archive:
 
 ```shell
-$ tar xf finit-3.0.tar.xz
-$ cd finit-3.0/
+$ tar xf finit-4.1.tar.gz
+$ cd finit-4.1/
 ```
 
 Then configure, build and install:
 
 ```shell
-$ ./configure --prefix=/usr                 --exec-prefix=                    \
-              --sysconfdir=/etc             --localstatedir=/var              \
-              --with-heading="Alpine Linux 3.13" --with-hostname=alpine
+$ ./configure --prefix=/usr                 --exec-prefix=         \
+              --sysconfdir=/etc             --localstatedir=/var   \
+			  --with-keventd                --with-watchdog        \
+              --with-heading="Alpine Linux" --with-hostname=alpine
 $ make
 .
 .
@@ -87,13 +88,13 @@ $ make
 $ DESTDIR=/tmp/finit make install
 ```
 
-In this example the [finit-3.0.tar.xz][1] archive is unpacked to the
+In this example the [finit-4.1.tar.gz][1] archive is unpacked to the
 user's home directory, configured, built and installed to a temporary
 staging directory.  The environment variable `DESTDIR` controls the
 destination directory when installing, very useful for building binary
 standalone packages.
 
-Finit 3.0 and later can detect if it runs on an embedded system, or a
+Finit 4.1 and later can detect if it runs on an embedded system, or a
 system that use BusyBox tools instead of udev & C:o.  On such systems
 `mdev` instead of `udev` is used.  However, remember to also change the
 Linux config to:
@@ -171,6 +172,6 @@ it only for debugging start up issues when Finit crashes.
          systems since they can potentially give a user root access.
 
 
-[1]:       ftp://troglobit.com/finit/finit-3.0.tar.xz
+[1]:       ftp://troglobit.com/finit/finit-4.1.tar.gz
 [libuEv]:  https://github.com/troglobit/libuev
 [libite]:  https://github.com/troglobit/libite
