@@ -38,6 +38,7 @@ void cond_clear       (const char *name);
 void cond_reload      (void);
 
 int cond_set_noupdate (const char *name);
+int cond_set_oneshot_noupdate(const char *name);
 int cond_clear_noupdate(const char *name);
 
 void cond_reassert    (const char *pat);

@@ -199,21 +199,33 @@ void cond_set(const char *name)
 	cond_update(name);
 }
 
-void cond_set_oneshot(const char *name)
+int cond_set_oneshot_noupdate(const char *name)
 {
 	const char *path;
 
 	if (string_compare(name, "nop"))
-		return;
+		return 1;
 
 	path = cond_path(name);
 	_d("%s => %s", name, path);
 
 	if (cond_checkpath(path))
+		return 1;
+
+	if (symlink(_PATH_RECONF, path) && errno != EEXIST) {
+		_pe("Failed creating onshot cond %s", name);
+		return 1;
+	}
+
+	return 0;
+}
+
+void cond_set_oneshot(const char *name)
+{
+	_d("%s", name);
+	if (cond_set_oneshot_noupdate(name))
 		return;
 
-	if (symlink(_PATH_RECONF, path) && errno != EEXIST)
-		_pe("Failed creating onshot cond %s", name);
 	cond_update(name);
 }
 
