@@ -111,6 +111,9 @@ AC_ARG_WITH(random-seed,
         AS_HELP_STRING([--with-random-seed=FILE], [Save a random seed for /dev/urandom across reboots, default /var/lib/misc/random-seed]),
 	[random_seed=$withval], [random_seed=yes])
 
+AC_ARG_WITH(keventd,
+        AS_HELP_STRING([--with-keventd], [Enable built-in keventd, default: no]),, [with_keventd=no])
+
 AC_ARG_WITH(watchdog,
         AS_HELP_STRING([--with-watchdog=[DEV]], [Enable built-in watchdog, default: /dev/watchdog]),
 	[watchdog=$withval], [with_watchdog=no watchdog=])
@@ -179,6 +182,8 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 	AC_EXPAND_DIR(random_path, "$random_seed")
 	AC_DEFINE_UNQUOTED(RANDOMSEED, "$random_path", [Improve random at boot by seeding it with sth from before.])])
 
+AS_IF([test "x$with_keventd" != "xno"], [with_keventd=yes])
+
 AS_IF([test "x$with_watchdog" != "xno"], [
 	AS_IF([test "x$watchdog" = "xyes"], [
 		watchdog=/dev/watchdog])
@@ -188,6 +193,7 @@ AS_IF([test "x$with_watchdog" != "xno"], [
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
+AM_CONDITIONAL(KEVENTD,   [test "x$with_keventd"  != "xno"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
 AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
@@ -234,6 +240,7 @@ Behavior:
 Optional features:
   Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
+  Built-in keventd......: $with_keventd
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
   Redirect output.......: $enable_redirect

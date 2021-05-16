@@ -8,7 +8,10 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  = keventd logit sulogin
+pkglibexec_PROGRAMS  = logit sulogin
+if KEVENTD
+pkglibexec_PROGRAMS += keventd
+endif
 if WATCHDOGD
 pkglibexec_PROGRAMS += watchdogd
 endif

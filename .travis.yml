@@ -44,7 +44,7 @@ script:
   - ./configure --prefix= --enable-static
   - make clean
   - make V=1 -j5
-  - ./configure --prefix= --enable-x11-common-plugin --with-watchdog
+  - ./configure --prefix= --enable-x11-common-plugin --with-watchdog --with-keventd
   - cat config.log
   - make clean
   - make V=1 -j5
