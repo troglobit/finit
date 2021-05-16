@@ -87,12 +87,15 @@ Static (one-shot) conditions, like `usr/`, never enter the `flux` state.
 Built-in Conditions
 -------------------
 
-Finit comes with a `pidfile` and `netlink` plugin.  When enabled, the
-`pidfile` plugin watches `/var/run/` (recursively) for PID files created
-by the monitored services, and sets a corresponding condition in the
-`pid/` namespace.  Similarily, the `netlink` plugin provides basic
-conditions for when an interface is brought up/down and when a default
-route (gateway) is set, in the `net/` namespace.
+Finit comes with a set of plugins for conditions: `pidfile`, `netlink`,
+`sys`, and `usr`.  The `pidfile` plugin (recursively) watches `/run/`
+(recursively) for PID files created by the monitored services, and sets
+a corresponding condition in the `pid/` namespace.  Similarily, the
+`netlink` plugin provides basic conditions for when an interface is
+brought up/down and when a default route (gateway) is set, in the `net/`
+namespace.  The `sys` and `usr` plugins monitor are passive condition
+monitors where the action is provided by `keventd`, signal handlers,
+and in the case of `usr`, the end-user via the `initctl` tool
 
 With the example listed above, finit does not start the `/sbin/netd`
 daemon until `setupd` and `zebra` has started *and* created their PID
@@ -111,6 +114,8 @@ Built-in conditions:
 - `net/<IFNAME>/exist`
 - `net/<IFNAME>/up`
 - `net/<IFNAME>/running`
+- `sys/pwr/ac`
+- `usr/foo`
 
 **Note:** `up` means administratively up, the interface flag `IFF_UP`.
   `running` is the `IFF_RUNNING` flag, meaning operatively up.  The
