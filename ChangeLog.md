@@ -16,17 +16,31 @@ Bug fix release.
   sysvinit (upgrading/reinstalling causes scripts to `kill -USR1 1`)
 * Change how `contrib/debian/install.sh` sets up a Grub boot entry for
   finit.  We now modify the $SUPPORTED_INITS variable in `10_linux`
+* Disable default kernel ctrl-alt-delete handler and let Finit instead
+  catch `SIGINT` from kernel to be able to perform a proper reboot. 
+  See the TODO for a future `sys/key/ctrlaltdel` condition extension 
+* Added keventd to provide `sys/pwr/ac` condition to Finit.  keventd is
+  currently only responsible for monitoring `/sys/class/power_supply`
+  for changes to active AC mains power online status.
 
 ### Fixes
 * Stricter interface name validation in netlink plugin, modeled after
   the kernel.  Suggested by Coverity Scan
+* Fix problem of re-registering a service as a task.  Previously, if a
+  fundamental change, like type, was made to an active service/run/task
+  it did not take.  Only possible workaround was to remove from config
+* Drop warning from initctl when removing a non-existing usr condition
+* Ensure services in plugins and from Finit main belong to a cgroup
+* Ensure init top-level cgroup remains a leaf group
 * The `contrib/*/install.sh` scripts failed to run from tarball
 * Fix #170: detect loss of default route when interfaces go down.  This
   emulates the missing kernel netlink message to remove the condition
   net/default/route to allow stopping dependent services
 * Fix #171: restore automatic mount of `/dev/shm`, `/dev/pts`, `/run`
   and `/tmp`, unless mounted already by `/etc/fstab`.  This is what most
-  desktop systems expect PID 1 to do
+  desktop systems expect PID 1 to do.  Here we also make sure to mount
+  `/run/lock` as a tmpfs as well, with write perms for regular users,
+  this prevents regular users from filling up `/run` and causing DoS.
 * Fix #173: netlink plugin runs out of socket buffer space;
 
         finit[1]: nl_callback():recv(): No buffer space available
