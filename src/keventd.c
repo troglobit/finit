@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <dirent.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -30,7 +31,6 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
