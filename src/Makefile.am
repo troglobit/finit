@@ -18,6 +18,7 @@ finit_pkglib_SCRIPTS = rescue.conf sample.conf
 
 keventd_SOURCES      = keventd.c iwatch.c iwatch.h util.c util.h
 keventd_CFLAGS       = -W -Wall -Wextra -std=gnu99
+keventd_CFLAGS      += $(lite_CFLAGS)
 keventd_LDADD        = $(lite_LIBS)
 
 sulogin_SOURCES      = sulogin.c
