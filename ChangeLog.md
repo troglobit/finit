@@ -17,11 +17,16 @@ Bug fix release.
 * Change how `contrib/debian/install.sh` sets up a Grub boot entry for
   finit.  We now modify the $SUPPORTED_INITS variable in `10_linux`
 * Disable default kernel ctrl-alt-delete handler and let Finit instead
-  catch `SIGINT` from kernel to be able to perform a proper reboot. 
-  See the TODO for a future `sys/key/ctrlaltdel` condition extension 
-* Added keventd to provide `sys/pwr/ac` condition to Finit.  keventd is
-  currently only responsible for monitoring `/sys/class/power_supply`
-  for changes to active AC mains power online status.
+  catch `SIGINT` from kernel to be able to perform a proper reboot.
+  There is no default command for this, you need to set up a task that
+  triggers on `<sys/key/ctrlaltdel>` to issue `initctl reboot`
+* Added keventd to provide `<sys/pwr/ac>` condition to Finit.  keventd
+  is currently only responsible for monitoring `/sys/class/power_supply`
+  for changes to active AC mains power online status
+* For handling power fail events (from UPS and similar) a process may
+  send `SIGPWR` to PID 1. Finit no longer redirects this to `SIGUSR1`
+  (poweroff).  There is no default command for this, you need to set up
+  a task that triggers on `<sys/pwr/fail>` to issue `initctl poweroff`
 
 ### Fixes
 * Stricter interface name validation in netlink plugin, modeled after

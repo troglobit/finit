@@ -311,7 +311,9 @@ static void sighup_cb(uev_t *w, void *arg, int events)
 }
 
 /*
- * SIGINT: Should generate <sys/key/ctrlaltdel> condition, for now reboot
+ * SIGINT: generates <sys/key/ctrlaltdel> condition, which the sys.so
+ *         plugin picks up and tells Finit to start any service(s) or
+ *         task(s) associated with the condition.
  */
 static void sigint_cb(uev_t *w, void *arg, int events)
 {
@@ -321,8 +323,23 @@ static void sigint_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	halt = SHUT_REBOOT;
-	service_runlevel(6);
+	cond_set_oneshot_noupdate("sys/key/ctrlaltdel");
+}
+
+/*
+ * SIGPWR: generates <sys/pwr/fail> condition, which the sys.so plugin
+ *         picks up and tells Finit to start any service(s) or task(s)
+ *         associated with the condition.
+ */
+static void sigpwr_cb(uev_t *w, void *arg, int events)
+{
+	_d("...");
+	if (UEV_ERROR == events) {
+		_e("Unrecoverable error in signal watcher");
+		return;
+	}
+
+	cond_set_oneshot_noupdate("sys/pwr/fail");
 }
 
 /*
@@ -531,7 +548,7 @@ void sig_setup(uev_ctx_t *ctx)
 	/* BusyBox/SysV init style signals for halt, power-off and reboot. */
 	uev_signal_init(ctx, &sigusr1_watcher, sigusr1_cb, NULL, SIGUSR1);
 	uev_signal_init(ctx, &sigusr2_watcher, sigusr2_cb, NULL, SIGUSR2);
-	uev_signal_init(ctx, &sigpwr_watcher, sigusr2_cb, NULL, SIGPWR);
+	uev_signal_init(ctx, &sigpwr_watcher,  sigpwr_cb,  NULL, SIGPWR);
 	uev_signal_init(ctx, &sigterm_watcher, sigterm_cb, NULL, SIGTERM);
 
 	/* Some C APIs may need SIGALRM for implementing timers. */

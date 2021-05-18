@@ -115,6 +115,8 @@ Built-in conditions:
 - `net/<IFNAME>/up`
 - `net/<IFNAME>/running`
 - `sys/pwr/ac`
+- `sys/pwr/fail`
+- `sys/key/ctrlaltdel`
 - `usr/foo`
 
 **Note:** `up` means administratively up, the interface flag `IFF_UP`.
