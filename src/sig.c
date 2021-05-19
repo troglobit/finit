@@ -55,7 +55,7 @@
  * SIGINT
  *      Sent from kernel when the CTRL-ALT-DEL key combo is pressed.
  *      SysV init and systemd default to reboot with `shutdown -r`.
- *      Finit currently forwards this to SIGTERM.
+ *      Finit defaults to nothing but sets sys/key/ctrlaltdel condition.
  *
  * SIGWINCH
  *      Sent from kernel when the KeyboardSignal key is pressed.  Some
@@ -66,7 +66,7 @@
  *      Sent from a power daemon, like powstatd(8), on changes to the
  *      UPS status.  Traditionally SysV init read /etc/powerstatus and
  *      acted on "OK", "FAIL", or "LOW" and then removed the file.
- *      Finit currently forwards this to SIGUSR2.
+ *      Finit  defaults to nothing but sets sys/pwr/fail condition.
  */
 
 #include <dirent.h>
@@ -76,6 +76,7 @@
 #include <lite/lite.h>
 
 #include "finit.h"
+#include "cond.h"
 #include "conf.h"
 #include "config.h"
 #include "helpers.h"
