@@ -104,7 +104,7 @@ void logit(int prio, const char *fmt, ...)
 		goto done;
 	}
 
-	if (prio > loglevel)
+	if (LOG_PRI(prio) > loglevel)
 		goto done;
 
 	fp = fopen("/dev/kmsg", "w");
