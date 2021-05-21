@@ -161,7 +161,7 @@ int tty_parse_args(char *cmd, struct tty *tty)
 			tty->notty = 1;		/* for board bringup */
 		else if (!strcmp(cmd, "rescue"))
 			tty->rescue = 1;	/* for rescue shells */
-		else if (!access(cmd, X_OK))
+		else if (whichp(cmd))		/* in $PATH? */
 			tty->cmd = cmd;
 		else
 			tty->args[tty->num++] = cmd;
