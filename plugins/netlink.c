@@ -231,6 +231,7 @@ static int nl_parse(int sd)
 	while (1) {
 		struct nlmsghdr *nh;
 		ssize_t len;
+		size_t l;
 
 		while ((len = recv(sd, nl_buf, NL_BUFSZ, 0)) < 0) {
 			switch (errno) {
@@ -252,8 +253,8 @@ static int nl_parse(int sd)
 		}
 
 		_d("recv %lld bytes", len);
-
-		for (nh = (struct nlmsghdr *)nl_buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
+		l = (size_t)len;
+		for (nh = (struct nlmsghdr *)nl_buf; NLMSG_OK(nh, l); nh = NLMSG_NEXT(nh, l)) {
 			struct nlmsgerr *nle;
 
 			switch (nh->nlmsg_type) {
