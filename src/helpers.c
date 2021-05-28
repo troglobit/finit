@@ -115,7 +115,7 @@ static void add_console(char *cons)
 	}
 
 	/* this requires we have /dev mounted && a device there */
-	fds[num_cons] = open(path, O_WRONLY);
+	fds[num_cons] = open(path, O_WRONLY | O_NOCTTY);
 	if (fds[num_cons] < 0) {
 		_pe("Failed opening console %s", path);
 		return;

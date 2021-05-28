@@ -229,7 +229,7 @@ int tty_exists(char *dev)
 	struct termios c;
 	int fd, rc;
 
-	fd = open(dev, O_RDWR);
+	fd = open(dev, O_RDWR | O_NOCTTY);
 	if (-1 == fd)
 		return 0;
 
