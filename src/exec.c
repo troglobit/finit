@@ -107,8 +107,6 @@ int run(char *cmd)
 	if (0 == pid) {
 		FILE *fp;
 
-		/* Reset signal handlers that were set by the parent process */
-		sig_unblock();
 		setsid();
 
 		/* Always redirect stdio for run() */
