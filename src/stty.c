@@ -113,7 +113,7 @@ void stty(int fd, speed_t speed)
 	/* Timeouts, minimum chars and default flags */
 	term.c_cc[VTIME]  = 0;
 	term.c_cc[VMIN]   = 1;
-	term.c_iflag      = ICRNL|IXON|IXOFF;
+	term.c_iflag      = ICRNL|IXON|IXOFF|IUTF8;
 	term.c_oflag      = OPOST|ONLCR;
 	term.c_lflag     |= ICANON|ISIG|ECHO|ECHOE|ECHOK|ECHOKE;
 
