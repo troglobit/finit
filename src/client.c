@@ -67,6 +67,7 @@ int client_send(struct init_request *rq, ssize_t len)
 {
 	struct pollfd pfd = { 0 };
 	int sd, result = 255;
+	int rc;
 
 	sd = client_connect();
 	if (-1 == sd)
@@ -86,8 +87,11 @@ int client_send(struct init_request *rq, ssize_t len)
 
 	pfd.fd = sd;
 	pfd.events = POLLIN;
-	if (poll(&pfd, 1, 2000) <= 0) {
-		warn("Timed out waiting for reply from Finit, errno %d", errno);
+	if ((rc = poll(&pfd, 1, 2000)) <= 0) {
+		if (rc)
+			warn("poll(), errno %d", errno);
+		else
+			warnx("Timed out waiting for reply from Finit.");
 		goto exit;
 	}
 
