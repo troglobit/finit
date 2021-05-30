@@ -8,7 +8,7 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  = logit sulogin
+pkglibexec_PROGRAMS  = getty logit sulogin
 if KEVENTD
 pkglibexec_PROGRAMS += keventd
 endif
@@ -18,6 +18,11 @@ endif
 
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
+
+getty_SOURCES        = getty.c helpers.h logrotate.c stty.c utmp-api.c utmp-api.h
+getty_CFLAGS         = -W -Wall -Wextra -std=gnu99
+getty_CFLAGS        += $(lite_CFLAGS)
+getty_LDADD          = $(lite_LIBS)
 
 keventd_SOURCES      = keventd.c iwatch.c iwatch.h util.c util.h
 keventd_CFLAGS       = -W -Wall -Wextra -std=gnu99
@@ -37,7 +42,7 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     cond.c	cond-w.c	cond.h		\
 		     conf.c	conf.h				\
 		     exec.c	finit.c		finit.h		\
-		     getty.c	stty.c				\
+		     		stty.c				\
 		     helpers.c	helpers.h			\
 		     iwatch.c   iwatch.h			\
 		     log.c	log.h				\

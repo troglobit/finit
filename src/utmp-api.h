@@ -42,6 +42,16 @@ int utmp_show        (char *file);
 
 void runlevel_set    (int pre, int now);
 
+/*
+ * musl libc default to /dev/null/utmp and /dev/null/wtmp, respectively.
+ * See https://www.openwall.com/lists/musl/2012/03/04/4 for reasoning.
+ * Also, there's no __MUSL__, so we cannot make a libc-specific #ifdef
+ */
+static inline int has_utmp(void)
+{
+	return strncmp(_PATH_UTMP, "/dev/null", 9);
+}
+
 #endif /* FINIT_UTMP_API_H_ */
 
 /**

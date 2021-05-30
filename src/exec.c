@@ -26,6 +26,7 @@
 
 #include <ctype.h>		/* isdigit() */
 #include <dirent.h>
+#include <err.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
@@ -388,9 +389,19 @@ pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, stru
 	speed = stty_parse_speed(baud);
 	prepare_tty(tty, speed, "tty", rlimit);
 	if (activate_console(noclear, nowait)) {
-		logit(LOG_INFO, "Starting built-in getty on %s, speed %u", tty, speed);
-		rc = getty(tty, speed, term, NULL);
+		char spd[15];
+		char *args[5] = {
+			"getty",
+			tty,
+			spd,
+			term,
+			NULL
+		};
+		snprintf(spd, sizeof(spd), "%d", speed);
+		logit(LOG_ERR, "Starting built-in getty on %s, speed %u", tty, speed);
+		rc = execv("/libexec/finit/getty", args);
 	}
+	logit(LOG_ERR, "Failed starting built-in getty on %s, speed %u", tty, speed);
 
 	return rc;
 }
@@ -412,6 +423,32 @@ pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, st
 	vhangup();
 
 	return rc;
+}
+
+int sh(char *tty)
+{
+	char *args[2] = {
+		NULL,
+		NULL
+	};
+	char *arg0;
+	size_t len;
+
+	/* The getty process is usually responsible for the UTMP login record */
+	utmp_set_login(tty, NULL);
+
+	/* Start /bin/sh as a login shell, i.e. with a prefix '-' */
+	len = strlen(_PATH_BSHELL) + 2;
+	arg0 = malloc(len);
+	if (!arg0)
+		err(1, "Failed allocating memory");
+	snprintf(arg0, len, "-%s", _PATH_BSHELL);
+	args[0] = arg0;
+
+	/* Unblock signals inherited from parent */
+	sig_unblock();
+
+	return execv(_PATH_BSHELL, args);
 }
 
 pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])

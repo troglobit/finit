@@ -54,7 +54,6 @@ int   fnread       (char *buf, size_t len, char *fmt, ...);
 int   fnwrite      (char *value, char *fmt, ...);
 int   fngetint     (char *path, int *val);
 
-int   has_utmp     (void);
 int   strtobytes   (char *arg);
 char *sig2str      (int sig);
 char *code2str     (int code);

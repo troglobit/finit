@@ -1,5 +1,6 @@
 .deps/*
 finit
+getty
 initctl
 keventd
 logit

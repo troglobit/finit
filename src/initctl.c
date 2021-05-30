@@ -41,6 +41,7 @@
 #include "service.h"
 #include "cgutil.h"
 #include "util.h"
+#include "utmp-api.h"
 
 struct cmd {
 	char        *cmd;

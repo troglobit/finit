@@ -26,15 +26,13 @@
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
 
-#include "finit.h"
-#include "cgroup.h"
 #include "helpers.h"
-#include "sig.h"
 #include "utmp-api.h"
 
 #ifndef _PATH_LOGIN
@@ -44,19 +42,14 @@
 /*
  * Read one character from stdin.
  */
-static int readch(char *tty)
+static int readch(void)
 {
-	int st;
 	char ch1;
+	int st;
 
 	st = read(STDIN_FILENO, &ch1, 1);
-	if (st == 0) {
-		dprint(STDOUT_FILENO, "\n", 0);
-		_exit(0);
-	}
-
-	if (st < 0)
-		errx(1, "getty: %s: read error", tty);
+	if (st <= 0)
+		return -1;
 
 	return ch1 & 0xFF;
 }
@@ -141,10 +134,10 @@ static void do_issue(char *tty)
 /*
  * Handle the process of a GETTY.
  */
-static void do_getty(char *tty, char *name, size_t len)
+static int get_logname(char *tty, char *name, size_t len)
 {
-	int ch;
 	char *np;
+	int ch;
 
 	/*
 	 * Display prompt.
@@ -155,14 +148,9 @@ static void do_getty(char *tty, char *name, size_t len)
 		do_issue(tty);
 
 		np = name;
-		while ((ch = readch(tty)) != '\n') {
-			if (ch == CTRL('U')) {
-				while (np > name) {
-					dprint(STDOUT_FILENO, "\b \b", 3);
-					np--;
-				}
-				continue;
-			}
+		while ((ch = readch()) != '\n') {
+			if (ch < 0)
+				return 1;
 
 			if (np < name + len)
 				*np++ = ch;
@@ -174,6 +162,7 @@ static void do_getty(char *tty, char *name, size_t len)
 	}
 
 	name[len - 1] = 0;
+	return 0;
 }
 
 /*
@@ -185,7 +174,6 @@ static int do_login(char *name)
 {
 	struct stat st;
 
-	cgroup_user(name, 0);
 	execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
 
 	/*
@@ -196,12 +184,12 @@ static int do_login(char *name)
 	 */
 	warnx("Failed exec %s, attempting fallback to %s ...", _PATH_LOGIN, _PATH_BSHELL);
 	if (fstat(0, &st) == 0 && S_ISCHR(st.st_mode))
-		execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
+		execl(_PATH_BSHELL, _PATH_BSHELL, NULL); /* XXX: run sulogin instead! */
 
 	return 1;	/* We shouldn't get here ... */
 }
 
-int getty(char *tty, speed_t speed, char *term, char *user)
+static int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	const char cln[] = "\r\e[2K\n";
 	char name[33];		/* useradd(1) limit at 32 chars */
@@ -212,15 +200,20 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 	if (!strncmp(tty, _PATH_DEV, strlen(_PATH_DEV)))
 		tty += 5;
 
-	/* Set up TTY, re-enabling ISIG et al. */
-	stty(STDIN_FILENO, speed);
-	dprint(STDERR_FILENO, cln, strlen(cln));
-
 	/* The getty process is responsible for the UTMP login record */
 	utmp_set_login(tty, NULL);
-	if (!user)
-		do_getty(tty, name, sizeof(name));
-	else
+
+	/* Replace "Please press enter ..." with login: */
+	dprint(STDERR_FILENO, cln, strlen(cln));
+
+restart:
+	stty(STDIN_FILENO, speed);
+	if (!user) {
+		if (get_logname(tty, name, sizeof(name))) {
+			sleep(5);
+			goto restart;
+		}
+	} else
 		strlcpy(name, user, sizeof(name));
 
 	if (term && term[0])
@@ -229,42 +222,14 @@ int getty(char *tty, speed_t speed, char *term, char *user)
 	return do_login(name);
 }
 
-int sh(char *tty)
+int main(int argc, char *argv[])
 {
-	struct termios term;
-	char *args[2] = {
-		NULL,
-		NULL
-	};
-	char *arg0;
-	size_t len;
-
-	/* The getty process is usually responsible for the UTMP login record */
-	utmp_set_login(tty, NULL);
-
-	/* Set up TTY, re-enabling ISIG et al. */
-	stty(STDIN_FILENO, B0);
-
-	/* Start /bin/sh as a login shell, i.e. with a prefix '-' */
-	len = strlen(_PATH_BSHELL) + 2;
-	arg0 = malloc(len);
-	if (!arg0)
-		err(1, "Failed allocating memory");
-	snprintf(arg0, len, "-%s", _PATH_BSHELL);
-	args[0] = arg0;
-
-	/* Reenable Ctrl-D and Ctrl-C, and ... */
-	if (!tcgetattr(STDIN_FILENO, &term)) {
-		term.c_lflag    |= ISIG;
-		term.c_cc[VEOF]  = CEOF;
-		term.c_cc[VINTR] = CINTR;
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
+	if (argc < 4) {
+		warnx("usage: getty tty speed term");
+		return 1;
 	}
 
-	/* ... unblock signals in general */
-	sig_unblock();
-
-	return execv(_PATH_BSHELL, args);
+	return getty(argv[1], atoi(argv[2]), argv[3], NULL);
 }
 
 /**
