@@ -345,35 +345,7 @@ static int activate_console(int noclear, int nowait)
  * since /bin/login usually only disables ECHO until a password line has
  * been entered.  Upon starting the user's $SHELL the ISIG flag is reset
  */
-pid_t run_getty(char *tty, char *baud, char *term, int noclear, int nowait, struct rlimit rlimit[])
-{
-	speed_t speed;
-	int rc = 1;
-
-	speed = stty_parse_speed(baud);
-	prepare_tty(tty, speed, "tty", rlimit);
-	if (activate_console(noclear, nowait)) {
-		char spd[15];
-		char *args[5] = {
-			"getty",
-			tty,
-			spd,
-			term,
-			NULL
-		};
-		snprintf(spd, sizeof(spd), "%d", speed);
-		logit(LOG_ERR, "Starting built-in getty on %s, speed %u", tty, speed);
-		rc = execv("/libexec/finit/getty", args);
-	}
-	logit(LOG_ERR, "Failed starting built-in getty on %s, speed %u", tty, speed);
-
-	return rc;
-}
-
-/*
- * Start external getty as defined by user in .conf file
- */
-pid_t run_getty2(char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[])
+pid_t run_getty(char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[])
 {
 	int rc = 1;
 

@@ -221,6 +221,10 @@ int tty_parse_args(char *cmd, struct tty *tty)
 	_d("Registering %s getty on TTY %s at %s baud with term %s", tty->cmd ? "external" : "built-in",
 	   tty->dev, tty->baud ?: "0", tty->term ?: "N/A");
 
+	/* Built-in getty now comes as standalone program */
+	if (!tty->cmd)
+		tty->cmd = _PATH_GETTY;
+
 	return 0;
 }
 
@@ -285,10 +289,7 @@ int tty_exec(svc_t *svc)
 		return run_sh(dev, svc->noclear, svc->nowait, svc->rlimit);
 	}
 
-	_d("%s: Starting %sgetty ...", dev, !svc->cmd ? "built-in " : "");
-	if (!strcmp(svc->cmd, "tty"))
-		return run_getty(dev, svc->baud, svc->term, svc->noclear, svc->nowait, svc->rlimit);
-
+	_d("%s: Starting %s ...", dev, svc->cmd);
 	for (i = 1, j = 0; i < MAX_NUM_SVC_ARGS; i++) {
 		if (!svc->args[i][0])
 			break;
@@ -297,7 +298,7 @@ int tty_exec(svc_t *svc)
 	}
 	args[j++] = NULL;
 
-	return run_getty2(dev, svc->cmd, args, svc->noclear, svc->nowait, svc->rlimit);
+	return run_getty(dev, svc->cmd, args, svc->noclear, svc->nowait, svc->rlimit);
 }
 
 /**
