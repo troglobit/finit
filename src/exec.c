@@ -34,6 +34,7 @@
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
 #include <lite/lite.h>
+#include <linux/vt.h>
 
 #include "finit.h"
 #include "cgroup.h"
@@ -240,7 +241,7 @@ int exec_runtask(char *cmd, char *args[])
 static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit rlimit[])
 {
 	char name[80];
-	int fd;
+	int fd, dummy;
 
 	fd = open(tty, O_RDWR);
 	if (fd < 0) {
@@ -251,12 +252,18 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	dup2(fd, STDIN_FILENO);
 	dup2(fd, STDOUT_FILENO);
 	dup2(fd, STDERR_FILENO);
-	close(fd);
+
+	/* Set default TERM, run_getty() below allows override */
+	if (ioctl(fd, VT_OPENQRY, &dummy) == -1)
+		setenv("TERM", "vt102", 1); /* likely a serial line */
+	else
+		setenv("TERM", "linux", 1);
 
 	/*
 	 * Reset to sane defaults in case of messup from prev. session
 	 */
-	stty(STDIN_FILENO, speed);
+	stty(fd, speed);
+	close(fd);
 
 	/* Set configured limits */
 	for (int i = 0; i < RLIMIT_NLIMITS; i++) {

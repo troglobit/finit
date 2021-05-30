@@ -525,6 +525,8 @@ int main(int argc, char *argv[])
 	 */
 	setenv("PATH", _PATH_STDPATH, 1);
 	setenv("SHELL", _PATH_BSHELL, 1);
+	setenv("LOGNAME", "root", 1);
+	setenv("USER", "root", 1);
 
 	if (chdir("/"))
 		_pe("Failed cd /");
