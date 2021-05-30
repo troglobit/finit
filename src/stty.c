@@ -27,7 +27,8 @@
 #include <sys/ttydefaults.h>  /* Not included by default in musl libc */
 #include <termios.h>
 
-#include <helpers.h>
+#include "helpers.h"
+#include "sig.h"
 
 /* B0 means; keep kernel default */
 speed_t stty_parse_speed(char *baud)
@@ -90,6 +91,10 @@ speed_t stty_parse_speed(char *baud)
 void stty(int fd, speed_t speed)
 {
 	struct termios term;
+	struct sigaction sa;
+
+	/* Ignore SIGINT during login phase, /bin/login resets */
+	IGNSIG(sa, SIGINT, SA_RESTART);
 
 	tcdrain(fd);
 	if (tcgetattr(fd, &term))
@@ -98,14 +103,12 @@ void stty(int fd, speed_t speed)
 	if (speed != B0) {
 		cfsetispeed(&term, speed);
 		cfsetospeed(&term, speed);
-		tcsetattr(fd, TCSAFLUSH, &term);
 	}
 
 	/* Modem specific control flags */
 	term.c_cflag     &= ~(PARENB|PARODD|CSTOPB|CRTSCTS);
 	term.c_cflag     |= CS8|HUPCL|CREAD|CLOCAL;
 	term.c_line       = 0;
-	tcsetattr(fd, TCSAFLUSH, &term);
 
 	/* Timeouts, minimum chars and default flags */
 	term.c_cc[VTIME]  = 0;
@@ -113,7 +116,6 @@ void stty(int fd, speed_t speed)
 	term.c_iflag      = ICRNL|IXON|IXOFF;
 	term.c_oflag      = OPOST|ONLCR;
 	term.c_lflag     |= ICANON|ISIG|ECHO|ECHOE|ECHOK|ECHOKE;
-	tcsetattr(fd, TCSAFLUSH, &term);
 
 	/* Reset special characters to defaults */
 	term.c_cc[VINTR]  = CINTR;
