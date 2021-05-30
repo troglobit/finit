@@ -239,8 +239,6 @@ int exec_runtask(char *cmd, char *args[])
 
 static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit rlimit[])
 {
-	struct sigaction sa;
-	struct termios term;
 	char name[80];
 	int fd;
 
@@ -256,41 +254,9 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 	close(fd);
 
 	/*
-	 * Become session leader and set controlling TTY
-	 * to enable Ctrl-C and job control in shell.
-	 */
-	setsid();
-	if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) < 0)
-		logit(LOG_WARNING, "Failed TIOCSCTTY on %s: %s", tty, strerror(errno));
-
-	/*
 	 * Reset to sane defaults in case of messup from prev. session
 	 */
 	stty(STDIN_FILENO, speed);
-
-	/*
-	 * Disable ISIG (INTR, QUIT, SUSP) before handing over to getty.
-	 * It is up to the getty process to allow them again.
-	 */
-	if (!tcgetattr(STDIN_FILENO, &term)) {
-		term.c_lflag    &= ~ISIG;
-		term.c_cc[VEOF]  = _POSIX_VDISABLE;
-		term.c_cc[VINTR] = _POSIX_VDISABLE;
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
-	}
-
-	/* Reset signal handlers that were set by the parent process */
-	sig_unblock();
-
-	/*
-	 * Ignore a few signals, needed to prevent Ctrl-C at login:
-	 * prompt and to prevent QUIT from dumping core.
-	 */
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags   = SA_RESTART;
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGINT,  &sa, NULL);
-	sigaction(SIGQUIT, &sa, NULL);
 
 	/* Set configured limits */
 	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
