@@ -75,9 +75,16 @@ static const char *color[] = STATUS_CLASS;
  */
 #define MAX_CONS 3
 
-static char *consoles[MAX_CONS];
-static int fds[MAX_CONS];
-static int num_cons = 0;
+/*
+ * Linux gives us stdio using /dev/console by default.  This is the
+ * first one listed in /sys/class/tty/console/active so we don't need
+ * to register that again.
+ *
+ * NOTE: the getty @console is handled separately in tty.c, for now.
+ */
+static char *consoles[MAX_CONS] = { "/dev/console" };
+static int fds[MAX_CONS] = { 2 };
+static int num_cons = 1;
 
 /*
  * System default console is always the first
@@ -124,6 +131,14 @@ static void add_console(char *cons)
 	num_cons++;
 }
 
+/*
+ * The main console is the first listed in /sys/class/tty/console/active
+ * we already have that open from the kernel as /dev/console, which is
+ * all we need to display progress and debug messages.  If there are any
+ * more we add them as secondary consoles for displaying progress etc.
+ *
+ * The getty code in tty.c is separate from this, for now.
+ */
 static void find_active_consoles(void)
 {
 	char *cons, *ptr, *tok;
@@ -145,10 +160,9 @@ static void find_active_consoles(void)
 
 	cons = chomp(ptr);
 	_d("Using these system consoles: %s", cons);
-	while ((tok = strtok(cons, " \t"))) {
-		cons = NULL;
+	strtok(cons, " \t");
+	while ((tok = strtok(NULL, " \t")))
 		add_console(tok);
-	}
 }
 
 void console_init(void)
