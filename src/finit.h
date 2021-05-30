@@ -50,6 +50,7 @@
 #define FINIT_CGPATH            "/sys/fs/cgroup"
 #endif
 
+/* To use these, include config.h, or define FINIT_LIBPATH_ */
 #define _PATH_LOGIT             FINIT_LIBPATH_ "/logit"
 #define _PATH_SULOGIN           FINIT_LIBPATH_ "/sulogin"
 #define _PATH_GETTY             FINIT_LIBPATH_ "/getty"

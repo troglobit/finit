@@ -19,7 +19,7 @@ endif
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
 
-getty_SOURCES        = getty.c helpers.h logrotate.c stty.c utmp-api.c utmp-api.h
+getty_SOURCES        = finit.h getty.c helpers.h logrotate.c stty.c utmp-api.c utmp-api.h
 getty_CFLAGS         = -W -Wall -Wextra -std=gnu99
 getty_CFLAGS        += $(lite_CFLAGS)
 getty_LDADD          = $(lite_LIBS)

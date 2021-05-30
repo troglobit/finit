@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <err.h>
 #include <errno.h>
 #include <paths.h>
@@ -32,6 +34,7 @@
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
 
+#include "finit.h"
 #include "helpers.h"
 #include "utmp-api.h"
 
@@ -179,12 +182,14 @@ static int do_login(char *name)
 	/*
 	 * Failed to exec login, should not happen on normal systems.
 	 * Try a starting a rescue shell instead.
-	 *
-	 * Note: Add /etc/securetty handling.
 	 */
-	warnx("Failed exec %s, attempting fallback to %s ...", _PATH_LOGIN, _PATH_BSHELL);
-	if (fstat(0, &st) == 0 && S_ISCHR(st.st_mode))
-		execl(_PATH_BSHELL, _PATH_BSHELL, NULL); /* XXX: run sulogin instead! */
+	if (fstat(0, &st) == 0 && S_ISCHR(st.st_mode)) {
+		warnx("Failed exec %s, attempting fallback to %s ...", _PATH_LOGIN, _PATH_SULOGIN);
+		execl(_PATH_SULOGIN, _PATH_SULOGIN, NULL);
+
+		warnx("Failed exec %s, attempting fallback to %s ...", _PATH_SULOGIN, _PATH_BSHELL);
+		execl(_PATH_BSHELL, _PATH_BSHELL, NULL);
+	}
 
 	return 1;	/* We shouldn't get here ... */
 }
