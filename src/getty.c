@@ -222,14 +222,37 @@ restart:
 	return do_login(name);
 }
 
+static int usage(int rc)
+{
+	warnx("usage: getty [-h?] tty [speed [term]]");
+	return rc;
+}
+
 int main(int argc, char *argv[])
 {
-	if (argc < 4) {
-		warnx("usage: getty tty speed term");
-		return 1;
+	char *tty, *speed = "0", *term = NULL;
+	int c;
+
+	while ((c = getopt(argc, argv, "h?")) != EOF) {
+		switch(c) {
+		case 'h':
+		case '?':
+			return usage(0);
+		default:
+			return usage(1);
+		}
 	}
 
-	return getty(argv[1], atoi(argv[2]), argv[3], NULL);
+	if (optind >= argc)
+		return usage(1);
+
+	tty = argv[optind++];
+	if (optind < argc)
+		speed = argv[optind++];
+	if (optind < argc)
+		term = argv[optind++];
+
+	return getty(tty, atoi(speed), term, NULL);
 }
 
 /**
