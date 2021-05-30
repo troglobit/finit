@@ -564,10 +564,6 @@ static int service_start(svc_t *svc)
 		}
 		args[i] = NULL;
 
-		if (!svc_is_tty(svc))
-			redirect(svc);
-		sig_unblock();
-
 		/*
 		 * The setsid() call takes care to detach the process
 		 * from its controlling terminal, preventing daemons
@@ -579,7 +575,13 @@ static int service_start(svc_t *svc)
 		 * to the console at boot, for debugging or similar,
 		 * have a look at redirect() and log.console instead.
 		 */
-		setsid();
+		pid = setsid();
+		if (pid < 1)
+			logit(LOG_ERR, "failed setsid(), pid %d: %s", pid, strerror(errno));
+
+		if (!svc_is_tty(svc))
+			redirect(svc);
+		sig_unblock();
 
 		if (svc_is_runtask(svc))
 			status = exec_runtask(args[0], &args[1]);
@@ -744,6 +746,7 @@ static int service_stop(svc_t *svc)
 		pid = fork();
 		switch (pid) {
 		case 0:
+			setsid();
 			redirect(svc);
 			exec_runtask(svc->cmd, args);
 			_exit(0);
