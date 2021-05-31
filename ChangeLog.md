@@ -7,7 +7,9 @@ All relevant changes are documented in this file.
 [4.1][UNRELEASED]
 -----------------
 
-Bug fix release.
+Bug fix release.  Also disables handlers for `SIGINT` and `SIGPWR`, a
+new set of `sys` conditions are instead generated which can be used to
+trigger external programs.
 
 ### Changes
 * Change behavior on SIGUSR1 to be compatible with sysvinit and systemd.
@@ -32,6 +34,8 @@ Bug fix release.
 * Default termios for TTYs now enable `IUTF8` on input
 * If `/bin/login` is not found, Finit now tries `sulogin` before it
   falls back to an unauthenticated `/bin/sh`
+* Dropped (broken) support for multiple consoles.  Finit now follows
+  the default console selected by the kernel, `/dev/console`
 
 ### Fixes
 * Stricter interface name validation in netlink plugin, modeled after
@@ -66,6 +70,7 @@ Bug fix release.
   message is now logged, as a warning:
 
         finit[1]: nl_callback():busy system, resynchronizing with kernel.
+
 * Fix #174: loss of log messages using combo of prio and facility, e.g.,
   `logit(LOG_CONSOLE | LOG_NOTICE, ...)`, by Jacques de Laval, Westermo
 * Fix #175: ensure Finit does not acquire a controlling TTY when checking
