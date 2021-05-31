@@ -68,106 +68,13 @@ static const char *status2[] = STATUS_CLASS;
 #define CHOOSE(x,y,z) z
 static const char *color[] = STATUS_CLASS;
 
-/*
- * System consoles, can be given multiple times on the kernel cmdline.
- * We support only three currently.  If none are given on the cmdline
- * we probe /sys/class/tty/console/active and use the first (default).
- */
-#define MAX_CONS 3
-
-/*
- * Linux gives us stdio using /dev/console by default.  This is the
- * first one listed in /sys/class/tty/console/active so we don't need
- * to register that again.
- *
- * NOTE: the getty @console is handled separately in tty.c, for now.
- */
-static char *consoles[MAX_CONS] = { "/dev/console" };
-static int fds[MAX_CONS] = { 2 };
-static int num_cons = 1;
-
-/*
- * System default console is always the first
- */
 char *console(void)
 {
-	return consoles[0];
-}
-
-static void add_console(char *cons)
-{
-	char path[80];
-	char *ptr;
-	int i;
-
-	if (num_cons == NELEMS(fds)) {
-		_e("too many consoles, max %d supported", NELEMS(fds));
-		return;
-	}
-
-	/* drop any options */
-	ptr = strchr(cons, ',');
-	if (ptr)
-		*ptr = 0;
-
-	if (!strncmp(cons, "/dev/", 5))
-		cons += 5;
-
-	snprintf(path, sizeof(path), "/dev/%s", cons);
-
-	/* check for and skip duplicates */
-	for (i = 0; i < num_cons; i++) {
-		if (string_compare(path, consoles[i]))
-			return;
-	}
-
-	/* this requires we have /dev mounted && a device there */
-	fds[num_cons] = open(path, O_WRONLY | O_NOCTTY);
-	if (fds[num_cons] < 0) {
-		_pe("Failed opening console %s", path);
-		return;
-	}
-	consoles[num_cons] = strdup(path);
-	num_cons++;
-}
-
-/*
- * The main console is the first listed in /sys/class/tty/console/active
- * we already have that open from the kernel as /dev/console, which is
- * all we need to display progress and debug messages.  If there are any
- * more we add them as secondary consoles for displaying progress etc.
- *
- * The getty code in tty.c is separate from this, for now.
- */
-static void find_active_consoles(void)
-{
-	char *cons, *ptr, *tok;
-	char buf[512];
-	FILE *fp;
-
-	fp = fopen("/sys/class/tty/console/active", "r");
-	if (!fp) {
-	fallback:
-		_d("Using fallback /dev/console");
-		add_console("console");
-		return;
-	}
-
-	ptr = fgets(buf, sizeof(buf), fp);
-	fclose(fp);
-	if (!ptr)
-		goto fallback;
-
-	cons = chomp(ptr);
-	_d("Using these system consoles: %s", cons);
-	strtok(cons, " \t");
-	while ((tok = strtok(NULL, " \t")))
-		add_console(tok);
+	return _PATH_CONSOLE;
 }
 
 void console_init(void)
 {
-	find_active_consoles();
 	ttinit();
 }
 
@@ -177,14 +84,12 @@ ssize_t cprintf(const char *fmt, ...)
 	char buf[len < 256 ? 256 : len];
 	size_t size;
 	va_list ap;
-	int i;
 
 	va_start(ap, fmt);
 	size = vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	for (i = 0; i < num_cons; i++)
-		dprint(fds[i], buf, size);
+	dprint(STDERR_FILENO, buf, size);
 
 	return size;
 }
