@@ -702,6 +702,7 @@ static void service_cleanup(svc_t *svc)
  */
 static int service_stop(svc_t *svc)
 {
+	int do_progress = 1;
 	int rc = 0;
 
 	if (!svc)
@@ -726,7 +727,10 @@ static int service_stop(svc_t *svc)
 
 	svc_set_state(svc, SVC_STOPPING_STATE);
 
-	if (runlevel != 1)
+	if (!svc->desc[0])
+		do_progress = 0;
+
+	if (runlevel != 1 && do_progress)
 		print_desc("Stopping ", svc->desc);
 
 	if (!svc_is_sysv(svc)) {
