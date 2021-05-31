@@ -43,11 +43,9 @@ static int sys_add_path(struct iwatch *iw, char *path)
 
 static void sys_update_conds(char *dir, char *name, uint32_t mask)
 {
-	char fn[PATH_MAX];
 	char *cond;
 
-	paste(fn, sizeof(fn), dir, name);
-	cond = strstr(fn, COND_BASE);
+	cond = strstr(name, COND_BASE);
 	if (!cond)
 		return;
 
