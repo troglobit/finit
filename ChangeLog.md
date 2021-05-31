@@ -22,11 +22,16 @@ Bug fix release.
   triggers on `<sys/key/ctrlaltdel>` to issue `initctl reboot`
 * Added keventd to provide `<sys/pwr/ac>` condition to Finit.  keventd
   is currently only responsible for monitoring `/sys/class/power_supply`
-  for changes to active AC mains power online status
+  for changes to active AC mains power online status.  Enable keventd
+  with `configure --with-keventd`
 * For handling power fail events (from UPS and similar) a process may
   send `SIGPWR` to PID 1. Finit no longer redirects this to `SIGUSR1`
   (poweroff).  There is no default command for this, you need to set up
   a task that triggers on `<sys/pwr/fail>` to issue `initctl poweroff`
+* Built-in Finit getty is now a standalone program
+* Default termios for TTYs now enable `IUTF8` on input
+* If `/bin/login` is not found, Finit now tries `sulogin` before it
+  falls back to an unauthenticated `/bin/sh`
 
 ### Fixes
 * Stricter interface name validation in netlink plugin, modeled after
@@ -34,9 +39,14 @@ Bug fix release.
 * Fix problem of re-registering a service as a task.  Previously, if a
   fundamental change, like type, was made to an active service/run/task
   it did not take.  Only possible workaround was to remove from config
-* Drop warning from initctl when removing a non-existing usr condition
+* initctl: drop warning when removing a non-existing usr condition
+* initctl: drop confusing `errno 0` when timing out waiting for reply
 * Ensure services in plugins and from Finit main belong to a cgroup
 * Ensure init top-level cgroup remains a leaf group
+* Fix tty parse error for detecting use of external getty
+* Fix default `name:` and `:ID` for tty's, e.g. `ttyS0` now gives
+  `tty:S0` as expected.  This was default for built-in getty already
+* Fix max username (32 chars) in bundled Finit getty
 * The `contrib/*/install.sh` scripts failed to run from tarball
 * Fix #170: detect loss of default route when interfaces go down.  This
   emulates the missing kernel netlink message to remove the condition
@@ -56,6 +66,12 @@ Bug fix release.
   message is now logged, as a warning:
 
         finit[1]: nl_callback():busy system, resynchronizing with kernel.
+* Fix #174: loss of log messages using combo of prio and facility, e.g.,
+  `logit(LOG_CONSOLE | LOG_NOTICE, ...)`, by Jacques de Laval, Westermo
+* Fix #175: ensure Finit does not acquire a controlling TTY when checking
+  if a device is a TTY before starting a getty.  This fixes an old bug
+  where Ctrl-C after logout from a shell could cause PID 1 to get SIGINT,
+  which in turn could lead to a system reboot
 
 
 [4.0][] - 2021-04-26
