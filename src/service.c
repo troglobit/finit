@@ -1309,12 +1309,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		/* Create name:id tuple for identiy, e.g., tty:S0 */
 		ptr = strrchr(svc->dev, '/');
-		if (ptr) {
+		if (ptr)
 			ptr++;
-			if (!strncmp(ptr, "tty", 3))
-				ptr += 3;
-		} else
+		else
 			ptr = svc->dev;
+		if (!strncmp(ptr, "tty", 3))
+			ptr += 3;
 		if (!id || id[0] == 0)
 			id = ptr;
 		strlcpy(svc->name, "tty", sizeof(svc->name));
