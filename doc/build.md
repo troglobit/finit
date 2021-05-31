@@ -53,6 +53,10 @@ Below are a few of the main switches to configure:
   built-ins (.o files) and all external libraries, except the C library
   will be linked statically.
 
+* `--enable-kernel-cmdline`: Enable Finit pre-4.1 parsing of init args from
+  `/proc/cmdline`, this is not recommended since Finit may be running as the
+  init for container apps that can see the host's `/proc` filesystem
+
 * `--enable-alsa-utils-plugin`: Enable the optional `alsa-utils.so` sound plugin.
 
 * `--enable-dbus-plugin`: Enable the optional D-Bus `dbus.so` plugin.

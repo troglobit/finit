@@ -145,24 +145,27 @@ static void parse_arg(char *arg)
 		single = 1;
 }
 
-void conf_parse_cmdline(int argc, char *argv[])
+#ifdef KERNEL_CMDLINE
+/*
+ * Parse /proc/cmdline to find args for init.  Don't use this!
+ *
+ * Instead, rely on the kernel to give Finit its arguments as
+ * regular argc + argv[].  Only use this if the system you run
+ * on has a broken initramfs system that cannot forward args
+ * to Finit properly.
+ */
+static void parse_kernel_cmdline(void)
 {
-	int dbg = 0;
-	FILE *fp;
 	char line[LINE_SIZE], *cmdline, *tok;
-
-	for (int i = 1; i < argc; i++)
-		parse_arg(argv[i]);
-
-	hide_args(argc, argv);
+	FILE *fp;
 
 	fp = fopen("/proc/cmdline", "r");
 	if (!fp)
-		goto done;
+		return;
 
 	if (!fgets(line, sizeof(line), fp)) {
 		fclose(fp);
-		goto done;
+		return;
 	}
 
 	cmdline = chomp(line);
@@ -173,8 +176,24 @@ void conf_parse_cmdline(int argc, char *argv[])
 		parse_arg(tok);
 	}
 	fclose(fp);
+}
+#else
+#define parse_kernel_cmdline()
+#endif
 
-done:
+/*
+ * Kernel gives us all non-kernel options on our cmdline
+ */
+void conf_parse_cmdline(int argc, char *argv[])
+{
+	int dbg = 0;
+
+	for (int i = 1; i < argc; i++)
+		parse_arg(argv[i]);
+
+	hide_args(argc, argv);
+	parse_kernel_cmdline();
+
 	log_init(dbg);
 }
 

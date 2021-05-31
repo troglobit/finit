@@ -52,6 +52,10 @@ AC_ARG_ENABLE(auto_reload,
         AS_HELP_STRING([--enable-auto-reload], [Automatic reload on any .conf change]),,[
 	enable_auto_reload=no])
 
+AC_ARG_ENABLE(kernel_cmdline,
+        AS_HELP_STRING([--enable-kernel-cmdline], [Parse init args from /proc/cmdline (don't use!)]),,[
+	enable_kernel_cmdline=no])
+
 AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--disable-redirect], [Disable redirection of service output to /dev/null]),,[
 	enable_redirect=yes])
@@ -123,6 +127,9 @@ AC_ARG_WITH(watchdog,
 # Create config.h from selected features and fallback defaults
 AS_IF([test "x$enable_auto_reload" = "xyes"], [
         AC_DEFINE(AUTO_RELOAD, 1, [Finit automatically does `initctl reload` on any .conf change])])
+
+AS_IF([test "x$enable_kernel_cmdline" = "xyes"], [
+        AC_DEFINE(KERNEL_CMDLINE, 1, [Dumpster diving after init args from /proc/cmdline])])
 
 AS_IF([test "x$enable_redirect" = "xyes"], [
 	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])

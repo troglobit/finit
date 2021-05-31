@@ -6,6 +6,8 @@ passed on the Linux kernel command line.  Not limited to Finit.
 
 The `bool` setting is one of `on, off, true false, 1, 0`.
 
+> **NOTE:** remember to use `--` to separate kernel parameters from
+> parameters to init.  E.g., `init=/sbin/finit -- finit.debug rescue`
 
 * `debug`: Enable kernel debug.  Debug messages are printed to the
     console until Finit starts up.
