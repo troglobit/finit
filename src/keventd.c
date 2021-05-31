@@ -227,9 +227,10 @@ int main(int argc, char *argv[])
 				continue;
 			default:
 				panic("unhandled");
-				break;
+				continue;
 			}
 		}
+		buf[len] = 0;
 
 		/* skip libusb events, focus on kernel events/changes */
 		if (strncmp(buf, "change@", 7))
