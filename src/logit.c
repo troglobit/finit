@@ -98,28 +98,37 @@ static int logit(int level, char *buf, size_t len)
 
 static int parse_prio(char *arg, int *f, int *l)
 {
-	char *ptr;
+	char *duparg = strdup(arg);
+	char *ptr, *prio;
 
-	ptr = strchr(arg, '.');
+	if (!duparg)
+		prio = arg;
+	else
+		prio = duparg;
+
+	ptr = strchr(prio, '.');
 	if (ptr) {
 		*ptr++ = 0;
 
 		for (int i = 0; facilitynames[i].c_name; i++) {
-			if (!strcmp(facilitynames[i].c_name, arg)) {
+			if (!strcmp(facilitynames[i].c_name, prio)) {
 				*f = facilitynames[i].c_val;
 				break;
 			}
 		}
 
-		arg = ptr;
+		prio = ptr;
 	}
 
 	for (int i = 0; prioritynames[i].c_name; i++) {
-		if (!strcmp(prioritynames[i].c_name, arg)) {
+		if (!strcmp(prioritynames[i].c_name, prio)) {
 			*l = prioritynames[i].c_val;
 			break;
 		}
 	}
+
+	if (duparg != arg)
+		free(duparg);
 
 	return 0;
 }
