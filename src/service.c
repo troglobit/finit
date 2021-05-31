@@ -138,7 +138,7 @@ static int fredirect(const char *file)
 {
 	int fd;
 
-	fd = open(file, O_WRONLY | O_APPEND);
+	fd = open(file, O_WRONLY | O_APPEND | O_NOCTTY);
 	if (-1 != fd) {
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
