@@ -295,6 +295,15 @@ static void fs_init(void)
 	for (i = 0; i < NELEMS(fs); i++) {
 		int rc;
 
+		/*
+		 * Check if already mounted, we may be running in a
+		 * container, or an initramfs ran before us.  The
+		 * function fismnt() reliles on /proc/mounts being
+		 * unique for each chroot/container.
+		 */
+		if (fismnt(fs[i].file))
+			continue;
+
 		rc = mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
 		if (rc && errno != EBUSY)
 			_pe("Failed mounting %s on %s", fs[i].spec, fs[i].file);
