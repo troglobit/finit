@@ -127,6 +127,7 @@ typedef struct svc {
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
+	char           respawn;	       /* ttys, or services with `respawn`, never increment restart_cnt */
 	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
 
 	union {

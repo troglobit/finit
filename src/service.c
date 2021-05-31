@@ -1123,6 +1123,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *pre_script = NULL, *post_script = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
+	int respawn = 0;
 	int levels = 0;
 	int manual = 0;
 	char *line;
@@ -1182,6 +1183,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			name = cmd;
 		else if (!strncasecmp(cmd, "manual:yes", 10))
 			manual = 1;
+		else if (!strncasecmp(cmd, "respawn", 7))
+			respawn = 1;
 		else if (!strncasecmp(cmd, "halt:", 5))
 			halt = &cmd[5];
 		else if (!strncasecmp(cmd, "kill:", 5))
@@ -1242,6 +1245,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			dev = tty_atcon();
 		else
 			dev = tty.dev;
+
+		/* tty's always respawn, never incr. restart_cnt */
+		respawn = 1;
 	next:
 		svc = svc_find_by_tty(dev);
 	} else
@@ -1348,6 +1354,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_env(svc, env);
 	if (file)
 		strlcpy(svc->file, file, sizeof(svc->file));
+	if (respawn)
+		svc->respawn = 1;
 
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));
@@ -1568,11 +1576,15 @@ static void service_retry(svc_t *svc)
 	char *restart_cnt = (char *)&svc->restart_cnt;
 
 	service_timeout_cancel(svc);
+	if (svc->respawn) {
+		_d("%s crashed, respawning ...", svc->cmd);
+		svc_unblock(svc);
+		service_step(svc);
+		return;
+	}
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
-		if (!svc_is_tty(svc))
-			_d("%s not crashing anymore", svc->cmd);
 		*restart_cnt = 0;
 		return;
 	}
