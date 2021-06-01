@@ -33,6 +33,10 @@ if BUILD_RESOLVCONF_PLUGIN
 libplug_la_SOURCES += resolvconf.c
 endif
 
+if BUILD_X11_COMMON_PLUGIN
+libplug_la_SOURCES += x11-common.c
+endif
+
 else
 pkglib_LTLIBRARIES  = bootmisc.la modprobe.la rtc.la pidfile.la procps.la sys.la tty.la urandom.la usr.la
 
