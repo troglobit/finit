@@ -7,7 +7,7 @@ AM_CPPFLAGS        += $(lite_CFLAGS)
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = bootmisc.c modprobe.c rtc.c pidfile.c procps.c sys.c tty.c urandom.c usr.c
+libplug_la_SOURCES  = bootmisc.c modprobe.c pidfile.c procps.c sys.c tty.c usr.c
 
 if BUILD_ALSA_UTILS_PLUGIN
 libplug_la_SOURCES += alsa-utils.c
@@ -33,12 +33,20 @@ if BUILD_RESOLVCONF_PLUGIN
 libplug_la_SOURCES += resolvconf.c
 endif
 
+if BUILD_RTC_PLUGIN
+libplug_la_SOURCES += rtc.c
+endif
+
+if BUILD_URANDOM_PLUGIN
+libplug_la_SOURCES += urandom.c
+endif
+
 if BUILD_X11_COMMON_PLUGIN
 libplug_la_SOURCES += x11-common.c
 endif
 
 else
-pkglib_LTLIBRARIES  = bootmisc.la modprobe.la rtc.la pidfile.la procps.la sys.la tty.la urandom.la usr.la
+pkglib_LTLIBRARIES  = bootmisc.la modprobe.la pidfile.la procps.la sys.la tty.la usr.la
 
 if BUILD_ALSA_UTILS_PLUGIN
 pkglib_LTLIBRARIES += alsa-utils.la
@@ -62,6 +70,14 @@ endif
 
 if BUILD_RESOLVCONF_PLUGIN
 pkglib_LTLIBRARIES += resolvconf.la
+endif
+
+if BUILD_RTC_PLUGIN
+pkglib_LTLIBRARIES += rtc.la
+endif
+
+if BUILD_URANDOM_PLUGIN
+pkglib_LTLIBRARIES += urandom.la
 endif
 
 if BUILD_X11_COMMON_PLUGIN

@@ -81,6 +81,8 @@ AC_PLUGIN([resolvconf],    [no],  [Setup necessary files for resolvconf])
 AC_PLUGIN([x11-common],    [no],  [Console setup (for X)])
 AC_PLUGIN([netlink],       [yes], [Basic netlink plugin for IFUP/IFDN and GW events. Can be replaced with externally built plugin that links with libnl or similar.])
 AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
+AC_PLUGIN([rtc],           [yes], [Save and restore RTC using hwclock])
+AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
 
 # Check for extra arguments or packages
 AC_ARG_WITH(heading,

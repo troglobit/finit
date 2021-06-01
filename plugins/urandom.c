@@ -1,4 +1,4 @@
-/* Setup random seed
+/* Setup and save random seed at boot/shutdown
  *
  * Copyright (c) 2012-2021  Joachim Wiberg <troglobit@gmail.com>
  *
