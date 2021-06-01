@@ -63,6 +63,9 @@ trigger external programs.
 * The `contrib/*/install.sh` scripts failed to run from tarball
 * Finit no longer forcibly mounts; `/dev`, `/proc`, or `/sys`, instead
   it checks first if they are already mounted (devtmpfs or container)
+* Fix `/etc/fstab` parser to properly check for 'ro' to not remount the
+  root filesystem at boot.  The wrong field was read, so a root mounted
+  by an initramfs, or by lxc for a container, had their root remounted
 * Fix #170: detect loss of default route when interfaces go down.  This
   emulates the missing kernel netlink message to remove the condition
   net/default/route to allow stopping dependent services
@@ -962,6 +965,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/4.0...HEAD
+[4.1]: https://github.com/troglobit/finit/compare/4.0...4.1
 [4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
 [3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
 [3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
