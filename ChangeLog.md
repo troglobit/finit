@@ -36,6 +36,15 @@ trigger external programs.
   falls back to an unauthenticated `/bin/sh`
 * Dropped (broken) support for multiple consoles.  Finit now follows
   the default console selected by the kernel, `/dev/console`
+* Finit no longer parses `/proc/cmdline` for its options.  Instead all
+  options are by default now read from `argv[]`, like a normal program,
+  this is also what the kernel does by default.  Please note, this may
+  not work if your systems boots with an initramfs (ymmv), for such
+  cases, see `configure --enable-kernel-cmdline`
+* The following plugins are now possible to disable (for containers):
+  `rtc.so`, `urandom.so`, you may also want to disable `hotplug.so`.
+  They are all enabled by default, as in Finit 4.0, but may be moved
+  to external tools or entries in `finit.conf` in Finit 5.0
 
 ### Fixes
 * Stricter interface name validation in netlink plugin, modeled after
@@ -52,6 +61,8 @@ trigger external programs.
   `tty:S0` as expected.  This was default for built-in getty already
 * Fix max username (32 chars) in bundled Finit getty
 * The `contrib/*/install.sh` scripts failed to run from tarball
+* Finit no longer forcibly mounts; `/dev`, `/proc`, or `/sys`, instead
+  it checks first if they are already mounted (devtmpfs or container)
 * Fix #170: detect loss of default route when interfaces go down.  This
   emulates the missing kernel netlink message to remove the condition
   net/default/route to allow stopping dependent services
