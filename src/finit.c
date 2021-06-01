@@ -149,6 +149,25 @@ static int fsck_all(void)
 }
 
 #ifndef SYSROOT
+/* If / is not listed in fstab, or listed as 'ro', leave it alone */
+static int fs_readonly_root(struct fstab *fs)
+{
+	char *tok, *str;
+
+	if (!fs)
+		return 1;
+
+	str = fs->fs_mntops;
+	while ((tok = strtok(str, ","))) {
+		if (!strcmp(tok, "ro"))
+			return 1;
+
+		str = NULL;
+	}
+
+	return 0;
+}
+
 static void fs_remount_root(int fsckerr)
 {
 	struct fstab *fs;
@@ -161,8 +180,7 @@ static void fs_remount_root(int fsckerr)
 			break;
 	}
 
-	/* If / is not listed in fstab, or listed as 'ro', leave it alone */
-	if (!fs || !strcmp(fs->fs_type, "ro"))
+	if (fs_readonly_root(fs))
 		goto out;
 
 	if (fsckerr)
