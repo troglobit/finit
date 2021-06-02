@@ -403,13 +403,17 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 	}
 
 	/* Reap all the children! */
-	do {
+	while (1) {
 		pid = waitpid(-1, &status, WNOHANG);
-		if (pid > 0) {
-			_d("Collected child %d", pid);
-			service_monitor(pid, status);
+		if (pid <= 0) {
+			if (pid == -1 && errno == EINTR)
+				continue;
+			break;
 		}
-	} while (pid > 0);
+
+		_d("Collected child %d", pid);
+		service_monitor(pid, status);
+	}
 }
 
 /*
