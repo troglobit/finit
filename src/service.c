@@ -725,6 +725,13 @@ static int service_stop(svc_t *svc)
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", svc->cmd);
 	}
 
+	/*
+	 * Make sure we are no longer considering the service to be starting (if
+	 * that was the case). service_monitor() might get confused otherwise, and
+	 * leave the service in a lingering, "stopping", state.
+	 */
+	svc_started(svc);
+
 	svc_set_state(svc, SVC_STOPPING_STATE);
 
 	if (!svc->desc[0])
