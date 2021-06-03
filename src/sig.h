@@ -28,8 +28,6 @@
 #include <signal.h>
 #include <uev/uev.h>
 
-#define SYNC_SHUTDOWN   "/var/run/finit/.shutdown"
-
 #define SETSIG(sa, sig, fun, flags)			\
 	do {						\
 		sa.sa_sigaction = fun;			\

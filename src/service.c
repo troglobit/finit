@@ -1422,7 +1422,7 @@ void service_monitor(pid_t lost, int status)
 {
 	svc_t *svc;
 
-	if (fexist(SYNC_SHUTDOWN) || lost <= 1)
+	if (lost <= 1)
 		return;
 
 	svc = svc_find_by_pid(lost);

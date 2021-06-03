@@ -281,8 +281,12 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 
 static int activate_console(int noclear, int nowait)
 {
+	static const char msg[] = "\nPlease press Enter to activate this console.";
+	static const char clr[] = "\r\e[2K";
+	static const char cup[] = "\e[A";
 	struct termios orig;
-	int ret = 0;
+	char c;
+	int rc;
 
 	if (nowait || rescue)
 		return 1;
@@ -301,27 +305,24 @@ static int activate_console(int noclear, int nowait)
 		tcsetattr(STDIN_FILENO, TCSAFLUSH, &c);
 	}
 
-	if (!fexist(SYNC_SHUTDOWN)) {
-		char c;
-		static const char clr[] = "\r\e[2K";
-		static const char cup[] = "\e[A";
-		static const char msg[] = "\nPlease press Enter to activate this console.";
+	dprint(STDERR_FILENO, clr, strlen(clr));
+	dprint(STDERR_FILENO, msg, strlen(msg));
+	while ((rc = read(STDIN_FILENO, &c, 1)) > 0 && c != '\r')
+		continue;
 
-		dprint(STDERR_FILENO, clr, strlen(clr));
-		dprint(STDERR_FILENO, msg, strlen(msg));
-		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\r')
-			continue;
+	/* On any error (likely EINTR), we avoid starting getty */
+	if (rc == -1)
+		rc = 0;
 
-		dprint(STDERR_FILENO, clr, strlen(clr));
-		dprint(STDERR_FILENO, cup, strlen(cup));
-		ret = 1;
-	}
+	/* Clear msg and move cursor up for next message/login: */
+	dprint(STDERR_FILENO, clr, strlen(clr));
+	dprint(STDERR_FILENO, cup, strlen(cup));
 
 	/* Restore TTY */
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig) == -1)
-		ret = 0;
+		rc = 0;		/* TTY in bad shape, restart */
 
-	return ret;
+	return rc;
 }
 
 /*

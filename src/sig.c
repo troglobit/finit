@@ -209,8 +209,6 @@ void do_kill(int signo)
 
 void do_shutdown(shutop_t op)
 {
-	touch(SYNC_SHUTDOWN);
-
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
 
@@ -500,9 +498,6 @@ void sig_setup(uev_ctx_t *ctx)
 	struct sigaction sa;
 
 	_d("Setup signals");
-
-	/* Cleanup any stale finit control files */
-	erase(SYNC_SHUTDOWN);
 
 	/*
 	 * Standard SysV init calls ctrl-alt-delete handler
