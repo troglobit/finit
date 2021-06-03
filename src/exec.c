@@ -301,29 +301,20 @@ static int activate_console(int noclear, int nowait)
 		tcsetattr(STDIN_FILENO, TCSAFLUSH, &c);
 	}
 
-	while (!fexist(SYNC_SHUTDOWN)) {
+	if (!fexist(SYNC_SHUTDOWN)) {
 		char c;
 		static const char clr[] = "\r\e[2K";
 		static const char cup[] = "\e[A";
 		static const char msg[] = "\nPlease press Enter to activate this console.";
-
-		if (fexist(SYNC_STOPPED)) {
-			sleep(5);
-			continue;
-		}
 
 		dprint(STDERR_FILENO, clr, strlen(clr));
 		dprint(STDERR_FILENO, msg, strlen(msg));
 		while (read(STDIN_FILENO, &c, 1) == 1 && c != '\r')
 			continue;
 
-		if (fexist(SYNC_STOPPED))
-			continue;
-
 		dprint(STDERR_FILENO, clr, strlen(clr));
 		dprint(STDERR_FILENO, cup, strlen(cup));
 		ret = 1;
-		break;
 	}
 
 	/* Restore TTY */

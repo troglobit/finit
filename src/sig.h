@@ -29,7 +29,6 @@
 #include <uev/uev.h>
 
 #define SYNC_SHUTDOWN   "/var/run/finit/.shutdown"
-#define SYNC_STOPPED    "/var/run/finit/.stopped"
 
 #define SETSIG(sa, sig, fun, flags)			\
 	do {						\
@@ -69,7 +68,6 @@ typedef enum {
 extern shutop_t halt;
 
 void do_shutdown    (shutop_t op);
-int  sig_stopped    (void);
 int  sig_num        (const char *name);
 void sig_init       (void);
 void sig_unblock    (void);

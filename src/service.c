@@ -347,8 +347,7 @@ static void source_env(svc_t *svc)
 
 static int is_norespawn(void)
 {
-	return  sig_stopped()            ||
-		fexist("/mnt/norespawn") ||
+	return  fexist("/mnt/norespawn") ||
 		fexist("/tmp/norespawn");
 }
 

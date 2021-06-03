@@ -96,11 +96,9 @@ extern svc_t *wdog;
  */
 shutop_t halt = SHUT_DEFAULT;
 
-static int   stopped = 0;
 static uev_t sigterm_watcher, sigusr1_watcher, sigusr2_watcher;
 static uev_t sighup_watcher,  sigint_watcher,  sigpwr_watcher;
 static uev_t sigchld_watcher;
-static uev_t sigstop_watcher, sigtstp_watcher, sigcont_watcher;
 
 static struct sigmap {
 	int   num;
@@ -417,42 +415,6 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 }
 
 /*
- * SIGSTOP/SIGTSTP: Paused by user or netflash
- */
-static void sigstop_cb(uev_t *w, void *arg, int events)
-{
-	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
-		return;
-	}
-
-	touch(SYNC_STOPPED);
-	stopped++;
-}
-
-/*
- * SIGCONT: Restart service monitor
- */
-static void sigcont_cb(uev_t *w, void *arg, int events)
-{
-	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
-		return;
-	}
-
-	stopped = 0;
-	erase(SYNC_STOPPED);
-}
-
-/*
- * Is SIGSTOP asserted?
- */
-int sig_stopped(void)
-{
-	return stopped;
-}
-
-/*
  * Convert SIGFOO to a number, if it exists
  */
 int sig_num(const char *name)
@@ -541,7 +503,6 @@ void sig_setup(uev_ctx_t *ctx)
 
 	/* Cleanup any stale finit control files */
 	erase(SYNC_SHUTDOWN);
-	erase(SYNC_STOPPED);
 
 	/*
 	 * Standard SysV init calls ctrl-alt-delete handler
@@ -564,11 +525,6 @@ void sig_setup(uev_ctx_t *ctx)
 
 	/* After initial bootstrap of Finit we call the service monitor to reap children */
 	uev_signal_init(ctx, &sigchld_watcher, sigchld_cb, NULL, SIGCHLD);
-
-	/* Stopping init is a bit tricky. */
-	uev_signal_init(ctx, &sigstop_watcher, sigstop_cb, NULL, SIGSTOP);
-	uev_signal_init(ctx, &sigtstp_watcher, sigstop_cb, NULL, SIGTSTP);
-	uev_signal_init(ctx, &sigcont_watcher, sigcont_cb, NULL, SIGCONT);
 
 	setsid();
 }
