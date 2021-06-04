@@ -8,7 +8,7 @@ if [ "x`id -u`" != "x0" ]; then
 fi
 
 # Adjust base directory
-grep -q Debian os-release 2>/dev/null
+grep -q debian Makefile 2>/dev/null
 if [ $? -eq 0 ]; then
     cd ../..
 elif [ ! -e configure.ac ]; then

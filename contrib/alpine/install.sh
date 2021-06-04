@@ -8,7 +8,8 @@ if [ "x`id -u`" != "x0" ]; then
 fi
 
 # Adjust base directory
-if [ -e alpine-release ]; then
+grep -q alpine Makefile 2>/dev/null
+if [ $? -eq 0 ]; then
     cd ../..
 elif [ ! -e configure.ac ]; then
     echo "*** Please run this script from the Finit base directory."
