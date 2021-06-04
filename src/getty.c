@@ -214,10 +214,8 @@ static int getty(char *tty, speed_t speed, char *term, char *user)
 restart:
 	stty(STDIN_FILENO, speed);
 	if (!user) {
-		if (get_logname(tty, name, sizeof(name))) {
-			sleep(5);
+		if (get_logname(tty, name, sizeof(name)))
 			goto restart;
-		}
 	} else
 		strlcpy(name, user, sizeof(name));
 
