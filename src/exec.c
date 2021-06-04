@@ -307,7 +307,7 @@ static int activate_console(int noclear, int nowait)
 
 	dprint(STDERR_FILENO, clr, strlen(clr));
 	dprint(STDERR_FILENO, msg, strlen(msg));
-	while ((rc = read(STDIN_FILENO, &c, 1)) > 0 && c != '\r')
+	while ((rc = read(STDIN_FILENO, &c, 1)) > 0 && c != '\r' && c != '\n')
 		continue;
 
 	/* On any error (likely EINTR), we avoid starting getty */
