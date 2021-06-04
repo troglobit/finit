@@ -198,6 +198,7 @@ static int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	const char cln[] = "\r\e[2K\n";
 	char name[33];		/* useradd(1) limit at 32 chars */
+	pid_t sid;
 
 	/*
 	 * Clean up tty name.
@@ -218,6 +219,13 @@ restart:
 			goto restart;
 	} else
 		strlcpy(name, user, sizeof(name));
+
+	/* check current session associated with our tty */
+	sid = tcgetsid(0);
+	if (sid < 0 || getpid() != sid) {
+		if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) == -1)
+			err(1, "failed stealing controlling TTY");
+	}
 
 	if (term && term[0])
 		setenv("TERM", term, 1);
