@@ -83,8 +83,7 @@ Then configure, build and install:
 ```shell
 $ ./configure --prefix=/usr                 --exec-prefix=         \
               --sysconfdir=/etc             --localstatedir=/var   \
-			  --with-keventd                --with-watchdog        \
-              --with-heading="Alpine Linux" --with-hostname=alpine
+			  --with-keventd                --with-watchdog
 $ make
 .
 .

@@ -66,6 +66,7 @@ char *network   = NULL;
 char *hostname  = NULL;
 char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;
+char *osheading = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */
 svc_t *wdog     = NULL;		/* No watchdog by default */
@@ -90,7 +91,14 @@ static void banner(void)
 	 */
 	plugin_run_hooks(HOOK_BANNER);
 
-	print_banner(INIT_HEADING);
+#ifdef INIT_OSHEADING
+	osheading = INIT_OSHEADING;
+	if (osheading) {
+		if (!osheading[0])
+			osheading = release_heading();
+		print_banner(osheading);
+	}
+#endif
 }
 
 /*

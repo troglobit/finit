@@ -115,6 +115,7 @@ extern char  *sdown;
 extern char  *network;
 extern char  *hostname;
 extern char  *runparts;
+extern char  *osheading;
 extern uev_ctx_t *ctx;
 
 #endif /* FINIT_H_ */

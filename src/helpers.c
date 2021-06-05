@@ -125,6 +125,49 @@ void show_progress(pstyle_t style)
 }
 
 /*
+ * Find PRETTY_NAME in /etc/os-release to use as heading at boot
+ * and on runlevel changes.  Fallback: "Finit vX.YY"
+ */
+char *release_heading(void)
+{
+	char *name = NULL;
+	char buf[256];
+	FILE *fp;
+
+	fp = fopen("/etc/os-release", "r");
+	if (fp) {
+		while (fgets(buf, sizeof(buf), fp)) {
+			char *ptr = &buf[12];
+
+			if (strncmp(buf, "PRETTY_NAME=", 12))
+				continue;
+
+			if (*ptr == '"' || *ptr == '\"') {
+				char *end = &ptr[strlen(ptr) - 1];
+				char q = *ptr;
+
+				while (end > ptr && isspace(*end))
+					*end-- = 0;
+
+				if (*end == q) {
+					*end = 0;
+					ptr++;
+				}
+			}
+
+			name = strdup(ptr);
+			break;
+		}
+		fclose(fp);
+	}
+
+	if (!name)
+		name = strdup(PACKAGE_NAME " v" PACKAGE_VERSION);
+
+	return name;
+}
+
+/*
  * Return screen length of string, not counting escape chars, and
  * accounting for unicode characters as only one screen byte wide
  */

@@ -86,7 +86,7 @@ AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
 
 # Check for extra arguments or packages
 AC_ARG_WITH(heading,
-        AS_HELP_STRING([--with-heading=GREET], [Display GREET instead of Finit version at boot]),
+        AS_HELP_STRING([--with-heading=GREET], [Heading for boot progress. Default: PRETTY_NAME from /etc/os-release, fallback to "Finit vX.YY"]),
 	[heading=$withval], [heading=yes])
 
 AC_ARG_WITH(config,
@@ -170,9 +170,8 @@ AS_IF([test "x$with_sysconfig" != "xno"], [
 			    [System environment, default /etc/default & /etc/conf.d])])])
 
 AS_IF([test "x$with_heading" != "xno"], [
-	AS_IF([test "x$heading" = "xyes"], [
-		heading="$PACKAGE_NAME v$PACKAGE_VERSION"])])
-AC_DEFINE_UNQUOTED(INIT_HEADING, "$heading", [Displayed by Finit at boot])
+	AS_IF([test "x$heading" = "xyes"], [heading=""])
+	AC_DEFINE_UNQUOTED(INIT_OSHEADING, "$heading", [Displayed by Finit at boot, defaults to /etc/os-release PRETTY_NAME])])
 
 AS_IF([test "x$with_hostname" != "xno"], [
 	AS_IF([test "x$hostname" = "xyes"], [
@@ -221,6 +220,9 @@ AC_EXPAND_DIR(rescue_conf, "$libdir/finit/rescue.conf")
 AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
 AC_EXPAND_DIR(sample_conf, "$libdir/finit/sample.conf")
 AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl create])
+
+AS_IF([test "$heading" = ""],   [heading="<DEFAULT>"])
+AS_IF([test "$heading" = "no"], [heading="<NONE>"])
 
 # Generate all files
 AC_OUTPUT

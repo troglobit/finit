@@ -68,6 +68,8 @@ char   *strip_line      (char *line);
 void    enable_progress (int onoff);
 void    show_progress   (pstyle_t style);
 
+char   *release_heading (void);
+
 speed_t stty_parse_speed(char *baud);
 void    stty            (int fd, speed_t speed);
 

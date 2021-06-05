@@ -150,7 +150,10 @@ restart:
 		}
 
 		_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
-		logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %d", INIT_HEADING, runlevel);
+		if (osheading)
+			logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %d", osheading, runlevel);
+		else
+			logit(LOG_CONSOLE | LOG_NOTICE, "Entering runlevel %d", runlevel);
 		runlevel_set(prevlevel, runlevel);
 
 		/* Disable login in single-user mode as well as shutdown/reboot */

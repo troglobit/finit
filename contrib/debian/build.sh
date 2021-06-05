@@ -26,8 +26,7 @@ echo
     --sysconfdir=/etc                 --localstatedir=/var		\
     --enable-dbus-plugin              --enable-x11-common-plugin	\
     --enable-alsa-utils-plugin	      --with-keventd			\
-    --with-random-seed=/var/lib/urandom/random-seed			\
-    --with-heading="Debian GNU/Linux"
+    --with-random-seed=/var/lib/urandom/random-seed
 
 if [ $? -ne 0 ]; then
     echo
