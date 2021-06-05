@@ -164,18 +164,22 @@ int cond_set_path(const char *path, enum cond_state next)
 }
 
 /* Should only be used by cond_set*(), cond_clear(), and usr/sys plugins! */
-void cond_update(const char *name)
+int cond_update(const char *name)
 {
 	svc_t *svc, *iter = NULL;
+	int affects = 0;
 
 	_d("%s", name);
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
 			continue;
 
+		affects++;
 		_d("%s: match <%s> %s(%s)", name ?: "nil", svc->cond, svc->desc, svc->cmd);
 		service_step(svc);
 	}
+
+	return affects;
 }
 
 int cond_set_noupdate(const char *name)
