@@ -41,17 +41,31 @@ static int sys_add_path(struct iwatch *iw, char *path)
 	return iwatch_add(iw, path, IN_ONLYDIR | IN_CLOSE_WRITE);
 }
 
+/*
+ * unlink conditions with no active task/service, otherwise they may
+ * trigger inadvertently when calling `initctl reload` to activate
+ * a new configuration.
+ */
 static void sys_update_conds(char *dir, char *name, uint32_t mask)
 {
+	char path[256];
 	char *cond;
+	char *ptr;
 
-	cond = strstr(name, COND_BASE);
+	ptr = strrchr(name, '/');
+	if (ptr)
+		snprintf(path, sizeof(path), "%s/%s", dir, ++ptr);
+	else
+		snprintf(path, sizeof(path), "%s/%s", dir, name);
+
+	cond = strstr(path, COND_BASE);
 	if (!cond)
 		return;
 
 	cond += strlen(COND_BASE) + 1;
 	_d("cond: %s set: %d", cond, mask & IN_CREATE ? 1 : 0);
-	cond_update(cond);
+	if (!cond_update(cond))
+		unlink(path);
 }
 
 /* synthesize events in case of new run dirs */
