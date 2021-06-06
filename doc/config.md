@@ -43,13 +43,13 @@ Not all configuration directives are available in `/etc/finit.d/*.conf`
 and some directives are only available at [bootstrap][], runlevel `S`,
 see the section [Limitations](#limitations) below for details.
 
-To add a new service, simply drop a `.conf` file in `/etc/finit.d` and
-run `initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or
-call `finit q`, but that has been deprecated with the `initctl` tool).
-Finit monitors all known active `.conf` files, so if you want to force
-a restart of any service you can simply touch its corresponding `.conf`
-file in `/etc/finit.d` and call `initctl reload`.  Finit handle any
-and all conditions and dependencies between services automatically.
+To add a new service, drop a `.conf` file in `/etc/finit.d` and run
+`initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or call
+`finit q`, but that has been deprecated with the `initctl` tool).  Finit
+monitors all known active `.conf` files, so if you want to force a
+restart of any service you can touch its corresponding `.conf` file in
+`/etc/finit.d` and call `initctl reload`.  Finit handle any and all
+conditions and dependencies between services automatically.
 
 It is also possible to drop `.conf` files in `/etc/finit.d/available/`
 and use `initctl enable` to enable a service `.conf` file.  This may be
@@ -154,7 +154,7 @@ Top-level group configuration.
     cgroup system cpu.weight:9800
 
 Adding an extra cgroup `maint/` will require you to adjust the weight of
-the above three.  We leave `init/` and `user /` as-is reducing weight of
+the above three.  We leave `init/` and `user/` as-is reducing weight of
 `system/` to 9700.
 
     cgroup system cpu.weight:9700
@@ -184,7 +184,7 @@ The latter form also allows per-stanza limits on the form:
 
 Notice the comma separation and the `mem.` exception to the rule: every
 cgroup setting maps directly to cgroup v2 syntax.  I.e., `cpu.max` maps
-to the file `/sys/fs/cgroup/maint/foo/cpu.max`.  There is not filtering,
+to the file `/sys/fs/cgroup/maint/foo/cpu.max`.  There is no filtering,
 except for expanding the shorthand `mem.` to `memory.`, if the file is
 not available, either the cgroup controller is not available in your
 Linux kernel, or the name is misspelled.
@@ -473,8 +473,9 @@ size limit is reached.
   `tty [LVLS] <COND> [notty] [rescue]`
 
 The first variant of this option uses the built-in getty on the given
-TTY device DEV, in the given runlevels.  The DEV may be the special
-keyword `@console`, or `console`, useful on embedded systems.
+TTY device DEV, in the given runlevels.  DEV may be the special keyword
+`@console`, which is expanded from `/sys/class/tty/console/active`,
+useful on embedded systems.
 
 The default baud rate is 0, i.e., keep kernel default.
 
@@ -555,8 +556,8 @@ One can also use the `service` stanza to start a stand-alone shell:
 ### Non-privileged Services
 
 Every `run`, `task`, or `service` can also list the privileges the
-`/path/to/cmd` should be executed with.  Simply prefix the path with
-`[@USR[:GRP]]` like this:
+`/path/to/cmd` should be executed with.  Prefix the command with
+`@USR[:GRP]`, group is optional, like this:
 
     run [2345] @joe:users logger "Hello world"
 
@@ -654,8 +655,9 @@ Limitations
 -----------
 
 As of Finit v4 there are no limitations to where `.conf` settings can be
-placed.  Except for the system/global `rlimit`, which can only be set
-from `/etc/finit.conf`, since it is the first `.conf` file Finit reads.
+placed.  Except for the system/global `rlimit` and `cgroup` top-level
+group declarations, which can only be set from `/etc/finit.conf`, since
+it is the first `.conf` file Finit reads.
 
 Originally, `/etc/finit.conf` was the only way to set up a Finit system.
 Today it is mainly used for bootstrap settings like system hostname,
