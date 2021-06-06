@@ -1,0 +1,814 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.Dd Oct 17, 2020
+.Dt FINIT.CONF 5 SMM
+.Os Linux
+.Sh NAME
+.Nm finit.conf
+.Nd Finit configuration file format
+.Sh SYNOPSIS
+.Nm /etc/finit.conf
+.Nm /etc/finit.d/*.conf
+.Nm /etc/finit.d/available/*.conf
+.Sh DESCRIPTION
+.Nm finit
+can be configured using only the original
+.Pa /etc/finit.conf
+file or in combination with
+.Pa /etc/finit.d/*.conf .
+Useful for package-based Linux distributions \(em each package can
+provide its own "script" file.
+.Pp
+.Bl -tag -width /etc/finit.d/*.conf -offset indent -compact
+.It Pa /etc/finit.conf
+Main configuration file
+.It Pa /etc/finit.d/*.conf
+Snippets, usually one service per file
+.El
+.Pp
+Not all configuration directives are available in
+.Pa /etc/finit.d/*.conf
+and some directives are only available at bootstrap, runlevel
+.Cm S ,
+see the section
+.Sx Limitations
+below for details.
+.Sh FILES
+.Bl -tag -width /etc/finit.d/available/*.conf -compact
+.It Pa /etc/finit.conf
+Main configuration file
+.It Pa /etc/finit.d/*.conf
+Static service definitions
+.It Pa /etc/finit.d/available/*.conf
+Available services
+.It Pa /etc/finit.d/enabled/*.conf
+Enabled services, symlinks from available
+.El
+.Sh FILE FORMAT
+Lines starting with `#' are ignored. Note that end-of-line comments are
+NOT supported, comments must be on a line of their own.
+.Pp
+A configuration stanza must be on a single (long) line and
+.Em cannot
+be broken up in multiple lines by use of a backslash as the last
+character.
+.Sh DIRECTIVES
+This section lists all supported configuration directives.  There also exist
+deprecated directives, see the Markdown documentation for details on these.
+.Pp
+.Bl -tag -width 1n
+.It Cm rlimit Oo hard|soft Oc Ar RESOURCE Aq LIMIT | unlimited
+.Pp
+Set the hard or soft limit for a resource, or both if that argument is
+omitted.
+.Ar RESOURCE
+is the lower-case
+.Cm RLIMIT_
+string constants from
+.Xr setrlimit 2 ,
+without prefix.  E.g. to set
+.Cm RLIMIT_CPU ,
+use
+.Cm cpu .
+.Pp
+.Ar LIMIT
+is an integer that depends on the resource being modified, see
+the man page, or the kernel
+.Pa /proc/PID/limits
+file, for details.
+Finit versions before v3.1 used
+.Cm infinity
+for
+.Cm unlimited ,
+which is still supported, albeit deprecated.
+.Bd -unfilled -offset indent
+# No process is allowed more than 8MB of address space
+rlimit hard as 8388608
+
+# Core dumps may be arbitrarily large
+rlimit soft core infinity
+
+# CPU limit for all services, soft & hard = 10 sec
+rlimit cpu 10
+.Ed
+.Pp
+.Cm rlimit
+can be set globally, in
+.Pa /etc/finit.conf ,
+or locally per each
+.Pa /etc/finit.d/*.conf
+read.  I.e., a set of task/run/service stanzas can share the same
+rlimits if they are in the same .conf.
+.It Cm runlevel Aq N
+The system runlevel to go to after bootstrap (S) has completed.
+.Cm N
+is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
+halt.  All other can be used by operating system administrators.
+Default: 2
+.Pp
+.Sy Note:
+only read and executed in runlevel S (bootstrap).
+.It Cm run Oo LVLS Oc Ao COND Ac Ar /path/to/cmd ARGS Op -- Optional description
+One-shot command to run in sequence when entering a runlevel, with
+optional arguments and description.
+.Pp  
+.Cm run
+commands are guaranteed to be completed before running the next
+command.  Highly useful if true serialization is needed.  Usually
+only used in the bootstrap (S) runlevel.
+.Pp
+.Cm Aq COND
+conditions are described in
+.Xr finit 8 ,
+see also the
+.Sx Examples
+section below.
+.It Cm task Oo LVLS Oc Ao COND Ac Ar /path/to/cmd ARGS Op -- Optional description
+One-shot like
+.Cm run ,
+but starts in parallel with the next command.
+.Pp  
+Both
+.Cm run
+and
+.Cm task
+commands are run in a shell, so pipes and redirects can be freely used:
+.Bd -unfilled -offset indent
+task [s] echo "foo" | cat >/tmp/bar
+.Ed
+.It Cm sysv Oo LVLS Oc Ao COND Ac Ar /path/to/script ARGS Op -- Optional description
+Similar to
+.Cm task
+is the
+.Cm sysv
+stanza, which can be used to call SysV style start/stop scripts.  The
+primary intention for this command is to be able to re-use much of
+existing setup and init scripts in Linux distributions.
+.Pp  
+When entering an allowed runlevel, Finit calls
+.Cm init-script start ,
+when entering a disallowed runlevel, Finit calls
+.Cm init-script stop ,
+and if the Finit .conf, where the
+.Cm sysv
+stanza is declared, is modified, Finit calls
+.Cm init-script restart
+on
+.Cm initctl reload .
+Similar to how
+.Cm service
+stanzas work.
+.Pp
+Forking services started with
+.Cm sysv
+scripts can be monitored by Finit by declaring the PID file to look for:
+.Bd -unfilled -offset indent
+sysv pid:!/path/to/pidfile.pid /path/to/script ...
+.Ed
+.Pp
+The leading '!' is to prevent Finit from managing the PID file, which is
+the default behavior for the
+.Cm pid:
+command modifier.
+.It Cm service Oo LVLS Oc Ao COND Ac Ar /path/to/daemon ARGS Op -- Optional description
+Service, or daemon, to be monitored and automatically restarted if it
+exits prematurely.  Finit tries to restart services that die 10 times
+before giving up, then you have to restart it manually:
+.Cm initctl restart NAME
+.Pp  
+For daemons that support it, we recommend appending
+.Cm --foreground , --no-background , -n , -F ,
+or similar command line argument to prevent them from forking off a
+sub-process in the background.  This is the most reliable way to monitor
+a service.
+.Pp
+However, not all daemons support running in the foreground, or they may
+start logging to the foreground as well, these are called forking
+services and are supported using the same syntax as forking
+.Cm sysv
+services, using the
+.Cm pid:!/path/to/pidfile.pid
+command modifier syntax.
+.Pp
+.Sy Example: in the case of
+.Cm ospfd
+(below), we omit the
+.Cm -d
+flag (daemonize) to prevent it from forking to the background:
+.Bd -unfilled -offset indent
+service [2345] <pid/zebra> /sbin/ospfd -- OSPF daemon
+.Ed
+.Cm [2345]
+denote the runlevels
+.Cm ospfd
+is allowed to run in, they are optional and default to runlevel 2-5 if
+omitted.
+.Pp
+.Cm <pid/zebra>
+is the condition for starting
+.Cm ospfd .
+In this example Finit waits for another service,
+.Cm zebra ,
+to have created its PID file in
+.Pa /var/run/quagga/zebra.pid
+before starting
+.Cm ospfd .
+Finit watches *all* files in
+.Pa /var/run ,
+for each file named
+.Cm *.pid ,
+.Cm */pid ,
+Finit opens it and find the matching
+.Cm NAME:ID
+using the PID.
+.Pp
+Some services do not maintain a PID file and rather than patching each
+application Finit provides a workaround.  A
+.Cm pid
+modifier keyword can be set to have Finit automatically create (when
+starting) and later remove (when stopping) the PID file.  The file is
+created in the
+.Pa /var/run
+directory using the
+.Xr basename 3
+of the service.  The full syntax of the
+.Cm pid
+modifier is:
+.Bd -unfilled -offset indent
+pid[:[!][/path/to/]filename[.pid]]
+.Ed
+.Pp
+For example, by adding
+.Cm pid:/run/foo.pid
+to the service
+.Cm /sbin/bar ,
+that PID file will, not only be created and removed automatically, but
+also be used by the Finit condition subsystem.  So a service/run/task
+can depend on the
+.Cm <pid/bar>
+condition.
+.Pp
+If a service should not be automatically started, it can be configured
+as manual with the
+.Cm manual:yes
+command modifier.  The service can then be started at any time by
+running
+.Cm initctl start NAME
+.Pp
+The name of a service, shown by the
+.Cm initctl
+tool, defaults to the basename of the service executable. It can be
+changed with the
+.Cm name:foo
+command modifier.
+.Pp
+When stopping a service (run/task/sysv/service), either manually or when
+moving to another runlevel, Finit starts by sending SIGTERM, to allow
+the process to shut down gracefully.  If the process has not been
+collected within 3 seconds, Finit sends SIGKILL.  To halt the process
+using a different signal, use the command modifier
+.Cm halt:SIGNAL ,
+e.g.,
+.Cm halt:SIGPWR .
+To change the delay between your halt signal and KILL, use the command
+modifier
+.Cm kill:SEC ,
+e.g.,
+.Cm kill:10
+to wait 10 seconds before sending SIGKILL.
+.Pp
+Services support the
+.Cm pre:script
+and
+.Cm post:script
+command actions as well.  These run as the same
+.Cm @USER:GROUP
+as the service itself, with any
+.Cm env:file
+sourced.  The scripts must use an absolute path, but are executed from
+the
+.Cm $HOME
+of the given user.  The scripts are not called with any argument
+(currently), but both get the
+.Cm SERVICE_IDENT=foo
+environment variable set.  Here
+.Cm foo
+denotes the identity of the service, which if there are multiple
+services named
+.Cm foo ,
+may be
+.Cm foo:1 ,
+or any unique identifier specified in the .conf file.  The
+.cm post:script
+is called with an additional set of environment variables:
+.Bl -tag -offset indent -width 1n
+.It Cm EXIT_CODE=[exited,signal]
+set to one of
+.Cm exited
+or
+.Cm signal
+.It Cm EXIT_STATUS=[num,SIGNAME]
+set to one of exit status code from the program, if it exited normally,
+or the signal name (HUP, TERM, etc.) if it exited due to signal
+.El
+.Pp
+The scripts have a default execution time of 3 seconds before they are
+SIGKILLed, this can be adjusted using the
+.Cm kill:SEC
+modifier syntax.
+.Pp
+.Sy Note:
+the
+.Cm pre:script
+.Em must
+be idempotent, because a service can transition between READY and HALTED
+states any number of times before going to RUNNING.
+.It Cm runparts Aq DIR
+Call
+.Xr run-parts 8
+on
+.Cm DIR
+to run start scripts.  All executable files, or scripts, in the
+directory are called, in alphabetic order.  The scripts in this
+directory are executed at the very end of bootstrap, runlevel S.
+.Pp
+It can be beneficial to use
+.Cm S01name ,
+.Cm S02othername ,
+etc. if there is a dependency order between the scripts.  Symlinks to
+existing daemons can talso be used, but make sure they daemonize by
+default.
+.Pp
+Similar to the
+.Pa /etc/rc.local
+shell script, make sure that all your services and programs either
+terminate or start in the background or you will block Finit.
+.Sy Note:
+only read and executed in runlevel S (bootstrap).
+.It Cm include Aq CONF
+Include another configuration file.  Absolute path required.
+.It Cm log size:BYTES count:NUM
+Log rotation for run/task/services using the
+.Cm log
+command modifier with redirection to a log file.  Global setting,
+applies to all services.
+.Pp
+The size can be given as bytes, without a specifier, or in `k`, `M`,
+or `G`, e.g.
+.Cm size:10M ,
+or
+.Cm size:3G .
+A value of
+.Cm size:0
+disables log rotation.  The default is
+.Cm size:200k .
+.Pp
+The count value is recommended to be between 1-5, with a default 5.
+Setting count to 0 means the logfile will be truncated when the MAX
+size limit is reached.
+.It Cm tty Oo LVLS Oc Ao COND Ac Ar DEV Oo BAUD Oc Oo noclear Oc Oo nowait Oc Oo nologin Oc Oo TERM Oc
+This form of the
+.Cm tty
+stanza uses the built-in getty on the given TTY device
+.Ar DEV ,
+in the given runlevels.
+.Ar DEV may be the special keyword
+.Cm @console ,
+or `console`, which is expanded from `/sys/class/tty/console/active`,
+useful on embedded systems.
+.Pp
+The default baud rate is 0, i.e., keep kernel default.
+.Pp
+The `tty` stanza inherits runlevel, condition (and other feature)
+parsing from the `service` stanza.  So TTYs can run in one or many
+runlevels and depend on any condition supported by Finit.  This is
+useful e.g. to depend on `<pid/elogind>` before starting a TTY.
+.Bd -unfilled -offset indent
+tty [12345] /dev/ttyAMA0 115200 noclear vt220
+.Ed
+.It Cm tty Oo LVLS Oc Ao COND Ac Ar CMD DEV Oo noclear Oc Oo nowait Oc
+This form of the
+.Cm tty
+stanza is for using an external getty, like agetty or the BusyBox getty.
+.Pp
+By default, these first two syntax variants
+.Em clear
+the TTY and
+.Em wait
+for the user to press enter before starting getty.
+.Bd -unfilled -offset indent
+tty [12345] /sbin/getty  -L 115200 /dev/ttyAMA0 vt100
+tty [12345] /sbin/agetty -L ttyAMA0 115200 vt100 nowait
+.Ed
+.Pp
+The
+.Cm noclear
+option disables clearing the TTY after each session.  Clearing the TTY
+when a user logs out is usually preferable.
+.Pp  
+The
+.Cm nowait
+option disables the
+.Cm Please press Enter to activate console
+message before actually starting the getty program.  On small and
+embedded systems running multiple unused getty wastes both memory and
+CPU cycles, so `wait` is the preferred default.
+.Pp
+The
+.Cm nologin
+option disables getty and
+.Pa /bin/login ,
+and gives the user a root (login) shell on the given TTY
+.Cm DEV
+immediately.  Needless to say, this is a rather insecure option, but can
+be very useful for developer builds, during board bringup, or similar.
+.Pp
+Notice the ordering, the
+.Cm TERM
+option to the built-in getty must be the last argument.
+.Pp
+Embedded systems may want to enable automatic `DEV` by supplying the
+special
+.Cm @console
+device.  This works regardless weather the system uses
+.Cm ttyS0 , ttyAMA0 ,  ttyMXC0 ,
+or anything else.  Finit figures it out by querying sysfs:
+.Pa /sys/class/tty/console/active .
+The speed can be omitted to keep the kernel default.
+.Pp
+Most systems get by fine by just using `console`, which will evaluate
+to
+.Pa /dev/console .
+If you have to use
+.Cm @console
+to get any output, you may have some issue with your kernel config.
+.Bd -unfilled -offset indent
+tty [12345] @console noclear vt220
+.Ed
+.Pp
+On really bare bones systems, or for board bringup, Finit can give you a
+shell prompt as soon as bootstrap is done, without opening any device
+node:
+.Bd -unfilled -offset indent
+tty [12345789] notty
+.Ed
+.Pp
+This should of course not be enabled on production systems.  Because it
+may give a user root access without having to log in.  However, for
+board bringup and system debugging it can come in handy.
+.Pp
+One can also use the
+.Cm service
+stanza to start a stand-alone shell:
+.Bd -unfilled -offset indent
+service [12345] /bin/sh -l
+.Ed
+.Pp
+.It Cm tty Oo LVLS Oc Ao COND Ac Oo notty Oc Oo rescue Oc
+The third
+.Cm tty
+form is for board bringup and the
+.Cm rescue
+boot mode.  No device node is required in this variant, the same output
+that the kernel uses is reused for stdio.  If the
+.Cm rescue
+option is omitted, a shell is started.  The flags
+.Cm nologin , noclear ,
+and
+.Cm nowait
+are implied.   If the
+.Cm rescue
+option is set the bundled
+.Pa /libexec/finit/sulogin
+is started to present a bare-bones root login prompt.  If the root
+(uid:0, gid:0) user does not have a password set, no rescue is possible.
+.El
+.Sh COMMAND MODIFIERS
+The run/task/tty/service/sysv stanzas take modifiers, or options, to
+control their behavior.  This section lists them with their limitations.
+All modifiers must be placed between the stanza and its command.
+.Bl -tag -width 1n
+.It Cm @user:group
+Every
+.Cm run , task ,
+or
+.Cm service
+can also list the privileges the
+.Cm /path/to/cmd
+should be executed with.  Prefix the command with
+.Cm @USR[:GRP] ,
+group is optional, like this:
+.Bd -unfilled -offset indent
+run [2345] @joe:users logger "Hello world"
+.Ed
+.Pp
+For multiple instances of the same command, e.g. a DHCP client or
+multiple web servers, add
+.Cm :ID
+somewhere between the
+.Cm run , task , service
+keyword and the command, like this:
+.Bd -unfilled -offset indent
+service :80  [2345] httpd -f -h /http -p 80   -- Web server
+service :8080[2345] httpd -f -h /http -p 8080 -- Old web server
+.Ed
+.Pp
+Without the
+.Cm :ID
+to the service the latter will overwrite the former and only the old web
+server would be started and supervised.
+.It Cm log:/path/to/file
+Redirect stdout/stderr of a command to the given log file.  See the
+global log directive, above, for details on log rotation.
+.It Cm log:console
+Redirect stdout/stderr of a command to
+.Pa /dev/console ,
+only use this for debugging or bringup.
+.It Cm log:null
+Redirect stdout/stderr of a command to
+.Pa /dev/null .
+.It Cm log:prio:facility.level,tag:ident
+Redirect stdout/stderr of a command to syslog using the given priority
+and tag identity.
+.Bd -unfilled -offset indent
+service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
+.Ed
+.It Cm log
+Default
+.Cm prio
+is
+.Cm daemon.info
+and the default
+.Cm tag
+identity is the basename of the service or run/task command.
+.El
+.Sh RESCUE MODE
+Finit supports a rescue mode which is activated by the
+.Cm rescue
+option on the kernel command line.  The rescue mode comes in two
+flavors:
+.Em traditional
+and
+.Em fallback .
+.Ss Traditional
+This is what most users expect.  A very early maintenance login prompt,
+served by the bundled
+.Pa /libexec/finit/sulogin
+program, or the standard
+.Cm sulogin
+from util-linux or BusyBox is searched for in the UNIX default
+.Cm $PATH .
+If a successful login is made, or the user exits (Ctrl-D), the rescue
+mode is ended and the system boots up normally.
+.Pp
+.Sy Note:
+if the user (UID 0 and GID 0) does not have a password, or
+.Em the account is locked ,
+the user is presented with a password-less prompt:
+.Cm "Press enter to enter maintenance mode." ,
+which opens up a root shell.
+.Ss Fallback
+If no
+.Cm sulogin
+program is found, Finit tries to bring up as much of its own
+functionality as possible, yet limiting many aspects, meaning; no
+network, no`fsck` of file systems in
+.Pa /etc/fstab ,
+no
+.Pa /etc/rc.local ,
+no
+.Cm runparts ,
+and most plugins are skipped (except those that provide functionality
+for the condition subsystem).
+.Pp
+Instead of reading
+.Pa /etc/finit.conf
+et al, system configuration is read from
+.Pa /lib/finit/rescue.conf ,
+which can be freely modified by the system administrator.
+.Pp
+The bundled default `rescue.conf` contains nothing more than:
+.Bd -unfilled -offset indent
+runlevel 1
+tty [12345] rescue
+.Ed
+.Pp
+The
+.Cm tty
+has the
+.Cm rescue
+option set, which works similar to the board bring-up tty option
+.Cm notty .
+The major difference being that `sulogin` is started to query for
+root/admin password.  If
+.Cm sulogin
+is not found,
+.Cm rescue
+behaves like
+.Cm notty
+and gives a plain root shell prompt.
+.Pp
+If Finit cannot find
+.Pa /lib/finit/rescue.conf
+it defaults to:
+.Bd -unfilled -offset indent
+tty [12345] rescue
+.Ed
+.Pp
+There is no way to exit the
+.Em fallback
+rescue mode.
+.Sh SERVICE ENVIRONMENT
+Finit supports sourcing environment variables from
+.Pa /etc/default/* ,
+or similar.  This is a common pattern from SysV init scripts, where the
+start/stop script is a generic script for the given service,
+.Cm foo ,
+and the options for the service are sourced from the file
+.Pa /etc/default/foo .
+Like this:
+.Bd -unfilled -offset indent
+/etc/default/foo:
+
+    FOO_OPTIONS=--extra-arg="bar" -s -x
+
+/etc/finit.conf:
+
+    service [2345] env:-/etc/default/foo foo -n $FOO_OPTIONS -- Example foo daemon
+.Ed
+.Pp
+Here the service
+.Cm foo
+is started with
+.Op Fl -n ,
+to make sure it runs in the foreground, and the with the options found
+in the environment file.  With the
+.Cm ps
+command we can see that the process is started with:
+.Bd -unfilled -offset indent
+foo -n --extra-arg=bar -s -x
+.Ed
+.Pp
+.Sy Note:
+the leading `-` determines if Finit should treat a missing environment
+file as blocking the start of the service or not.  When `-` is used, a
+missing environment file does
+.Em not
+block the start.
+.Sh SERVICE WRAPPER SCRIPTS
+If your service requires to run additional commands, executed before the
+service is actually started, like the systemd `ExecStartPre`, you can
+use a wrapper shell script to start your service.
+.Pp
+The Finit service
+.Cm .conf
+file can be put into
+.Pa /etc/finit.d/available ,
+so you can control the service using
+.Cm initctl .
+Then use the path to the wrapper script in the Finit
+.Cm .conf
+service stanza.  The following example employs a wrapper script in
+.Pa /etc/start.d .
+.Bd -unfilled
+/etc/finit.d/available/program.conf:
+
+    service [235] <!> /etc/start.d/program -- Example Program
+
+/etc/start.d/program:
+
+    #!/bin/sh
+    # Prepare the command line options
+    OPTIONS="-u $(cat /etc/username)"
+
+    # Execute the program
+    exec /usr/bin/program $OPTIONS
+.Ed
+.Pp
+.Sy Note:
+the example sets
+.Cm <!>
+to denote that it doesn't support SIGHUP.  That way Finit will
+stop/start the service instead of sending SIGHUP at restart/reload
+events.
+.Sh CGROUPS
+There are three major cgroup configuration directives:
+.Pp
+.Bl -enum -offset indent -compact
+.It
+Global top-level group: init, system, user, or a custom group
+.It
+Selecting a top-level group for a set of run/task/services
+.It
+Per run/task/service limits
+.El
+.Pp
+Top-level group configuration.
+.Bd -unfilled -offset indent
+# Top-level cgroups and their default settings.  All groups mandatory
+# but more can be added, max 8 groups in total currently.  The cgroup
+# 'root' is also available, reserved for RT processes.  Settings are
+# as-is, only one shorthand 'mem.' exists, other than that it's the
+# cgroup v2 controller default names.
+cgroup init   cpu.weight:100
+cgroup user   cpu.weight:100
+cgroup system cpu.weight:9800
+.Ed
+.Pp
+Adding an extra cgroup
+.Cm maint/
+will require you to adjust the weight of the above three.  We leave
+.Cm init/
+and
+.Cm user/
+as-is reducing weight of
+.Cm system/
+to 9700.
+.Bd -unfilled -offset indent
+cgroup system cpu.weight:9700
+
+# Example extra cgroup 'maint'
+cgroup maint  cpu.weight:100
+.Ed
+.Pp
+By default, the
+.Cm system/
+cgroup is selected for almost everything.  The
+.Cm init/
+cgroup is reserved for PID 1 itself and its closest relatives.  The
+.Cm user/
+cgroup is for local TTY logins spawned by getty.
+.Pp
+To select a different top-level cgroup, e.g.
+.Cm maint/ ,
+one can either define it for a group of run/task/service directives in a
+.Cm .conf
+or per each stanza:
+.Bd -unfilled -offset indent
+cgroup.maint
+service [...] <...> /path/to/foo args -- description
+service [...] <...> /path/to/bar args -- description
+.Ed
+.Pp
+or
+.Bd -unfilled -offset indent
+service [...] <...> cgroup.maint /path/to/foo args -- description
+.Ed
+.Pp
+The latter form also allows per-stanza limits on the form:
+.Bd -unfilled -offset indent
+service [...] <...> cgroup.maint:cpu.max:10000,mem.max:655360 /path/to/foo args -- description
+.Ed
+.Pp
+Notice the comma separation and the
+.Cm mem.
+exception to the rule: every cgroup setting maps directly to cgroup v2
+syntax.  I.e.,
+.Cm cpu.max
+maps to the file
+.Pm /sys/fs/cgroup/maint/foo/cpu.max .
+There is no filtering, except for expanding the shorthand
+.Cm mem.
+to
+.Cm memory. ,
+if the file is not available, either the cgroup controller is not
+available in your Linux kernel, or the name is misspelled.
+.Pp
+Linux cgroups and details surrounding values are not explained in the
+Finit documentation.  The Linux admin-guide cover this well:
+.Lk https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+.Sh LIMITATIONS
+As of Finit v4 there are no limitations to where
+.Cm .conf
+settings can be placed.  Except for the system/global
+.Cm rlimit
+and
+.Cm cgroup
+top-level group declarations, which can only be set from
+.Pa /etc/finit.conf ,
+since it is the first
+.Cm .conf
+file Finit reads.
+.Pp
+Originally,
+.Pp /etc/finit.conf
+was the only way to set up a Finit system.  Today it is mainly used for
+bootstrap settings like system hostname, early module loading for
+watchdogd, network bringup and system shutdown.  These can now also be
+set in any
+.Cm .conf
+file in
+.Pa /etc/finit.d .
+.Pp
+There is, however, nothing preventing you from having all configuration
+settings in
+.Pa /etc/finit.conf .
+.Sh SEE ALSO
+.Xr finit 8 ,
+.Xr initctl 8
+.Sh AUTHORS
+.Nm finit
+was conceived and reverse engineered by Claudio Matsuoka.  Since v1.0,
+maintained by Joachim Wiberg, with contributions by many others.
