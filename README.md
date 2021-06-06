@@ -22,19 +22,19 @@
 Introduction
 ------------
 
-Finit is a simple alternative to [SysV init][4] and [systemd][6].  It
-was reverse engineered from the [EeePC fastinit][] over ten years ago
-by [Claudio Matsuoka][] — "gaps filled with frog DNA …"
+Fast init for Linux systems.  Reverse engineered from the [EeePC
+fastinit][] over ten years ago by [Claudio Matsuoka][] — "gaps filled
+with frog DNA …"
 
 ![Alpine screenshot](img/finit4-screenshot.png)  
 *Figure 1: Screenshot showing Finit booting [Alpine Linux](https://www.alpinelinux.org/).*
 
 Features include:
 
-  * Runlevels
-  * One-shot tasks, daemons, or SysV init scripts
-  * Runparts and rc.local
-  * Process supervision
+  * Runlevels, defined per service
+  * One-shot tasks, services (daemons), or [SysV init][4] start/stop scripts
+  * Runparts and `/etc/rc.local` support
+  * Process supervision similar to [systemd][]
   * Sourcing environment files
   * Conditions for network/process/custom dependencies
   * Pre/Post script actions
@@ -581,8 +581,6 @@ and proposed extensions.
 [3]:  http://smarden.org/runit/
 [4]:  http://en.wikipedia.org/wiki/Init
 [5]:  http://en.wikipedia.org/wiki/Runlevel
-[6]:  https://www.freedesktop.org/wiki/Software/systemd/
-[9]:  https://github.com/troglobit/troglos
 [RFC862]:           https://tools.ietf.org/html/rfc862
 [RFC863]:           https://tools.ietf.org/html/rfc863
 [RFC864]:           https://tools.ietf.org/html/rfc864
