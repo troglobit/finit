@@ -142,7 +142,7 @@ char *release_heading(void)
 			if (strncmp(buf, "PRETTY_NAME=", 12))
 				continue;
 
-			if (*ptr == '"' || *ptr == '\"') {
+			if (*ptr == '"' || *ptr == '\'') {
 				char *end = &ptr[strlen(ptr) - 1];
 				char q = *ptr;
 
