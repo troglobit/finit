@@ -1,0 +1,175 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.Dd June 6, 2021
+.\" Please adjust this date whenever revising the manpage.
+.Dt INITCTL 8 SMM
+.Os Linux
+.Sh NAME
+.Nm initctl
+.Nd Control tool for Finit
+.Sh SYNOPSIS
+.Nm /sbin/initctl
+.Op Fl bcfhlpqtv
+.Op COMMAND
+.Sh DESCRIPTION
+.Nm
+is the official tool for interacting with
+.Xr finit 8 .
+It comes with functions for showing status, querying health of services,
+as well as editing, enabling and disabling services.
+.Sh OPTIONS
+This program follows the usual UNIX command line syntax, with long
+options starting with two dashes (`-').  The options are as follows:
+.Bl -tag -width Ds
+.It Fl b, -batch
+Batch mode, no screen size probing.
+.It Fl c, -create
+Create missing paths (and files) as needed.  Useful with the edit command.
+.It Fl f, -force
+Ignore missing files and arguments, never prompt.
+.It Fl h, -help
+Show built-in help text.
+.It Fl 1, -once
+Only one lap in commands like top.
+.It Fl p, -plain
+Use plain table headings, no ANSI control characters.
+.It Fl q, -quiet
+Silent, only return status of command.
+.It Fl t, -no-heading
+Skip table headings.
+.It Fl v, -verbose
+Verbose output, where applicable.
+.El
+.Sh COMMANDS
+.Bl -tag -width Ds
+.It Nm Ar debug
+Toggle finit (daemon) debug to
+.Pa /dev/console
+.It Nm Ar help
+Show built-in help text
+.It Nm Ar version
+Show Finit (daemon) version
+.It Nm Ar ls | list
+List all
+.Cm *.conf
+files in
+.Pa /etc/finit.d
+.It Nm Ar create Ar CONF
+Create
+.Cm .conf
+in
+.Pa /etc/finit.d/available
+.It Nm Ar delete Ar CONF
+Delete
+.Cm .conf
+in
+.Pa /etc/finit.d/available
+.It Nm Ar show Ar CONF
+Show
+.Cm .conf
+in
+.Pa /etc/finit.d/available
+.It Nm Ar edit Ar CONF
+Edit
+.Cm .conf
+in
+.Pa /etc/finit.d/available
+.It Nm Ar touch Ar CONF
+Change (mark as modified)
+.Cm .conf
+in
+.Pa /etc/finit.d/available ,
+like
+.Ar edit
+this tells
+.Nm finit
+that a configuration has been changed and is a candidate to be restarted
+(or SIGHUP'ed) on
+.Cm initctl reload
+.It Nm Ar enable Ar CONF
+Enable
+.Cm .conf
+in
+.Pa /etc/finit.d/available ,
+i.e., add symlink in
+.Pa /etc/finit.d/enabled
+.It Nm Ar disable Ar CONF
+Disable
+.Cm .conf
+in
+.Pa /etc/finit.d/enabled ,
+i.e., removes symlink
+.It Nm Ar reload
+Reload
+.Cm *.conf in
+.Pa /etc/finit.d ,
+i.e., activates changes
+.It Nm Ar cond set Ar COND
+Set (assert) user-defined condition,
+.Cm +usr/COND
+.It Nm Ar cond clr | clear Ar COND
+Clear (deassert) user-defined condition,
+.Cm -usr/COND
+.It Nm Ar cond status
+Show condition status, default
+.Cm cond
+command.
+.It Nm Ar cond dump
+Dump all conditions and their status
+.It Nm Ar log Op Cm NAME
+Show ten last Finit, or
+.Cm NAME ,
+messages from syslog
+.It Nm Ar start Cm NAME[:ID]
+Start service by name, with optional ID, e.g.,
+.Cm initctl start tty:1
+.It Nm Ar stop Cm NAME[:ID]
+Stop/Pause a running service by name
+.It Nm Ar reload Cm NAME[:ID]
+Reload service by name (SIGHUP or restart)
+.It Nm Ar restart Cm NAME[:ID]
+Restart (stop/start) service by name
+.It Nm Ar status Cm NAME[:ID]
+Show service status, by name
+.It Nm Ar status
+Show status of all services, default command
+.It Nm Ar cgroup
+List cgroup config overview
+.It Nm Ar ps
+List processes based on cgroups
+.It Nm Ar top
+Show top-like listing based on cgroups
+.It Nm Ar runlevel Op Ar 0-9
+Show or set runlevel: 0 halt, 6 reboot
+.It Nm Ar reboot
+Reboot system, default if
+.Cm reboot
+is symlinked to
+.Nm
+.It Nm Ar halt
+Halt system, default if
+.Cm halt
+is symlinked to
+.Nm
+.It Nm Ar poweroff
+Power-off system, default if
+.Cm poweroff
+is symlinked to
+.Nm
+.It Nm Ar suspend
+Suspend system, default if
+.Cm suspend
+is symlinked to
+.Nm
+.It Nm Ar utmp show
+Raw dump of UTMP/WTMP db
+.El
+.Sh SEE ALSO
+.Xr finit.conf 5
+.Xr finit 8
+.Sh AUTHORS
+.Nm finit
+was conceived and reverse engineered by Claudio Matsuoka.  Since v1.0,
+maintained by Joachim Wiberg, with contributions by many others.
