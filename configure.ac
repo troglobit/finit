@@ -11,6 +11,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
 	doc/Makefile
+	man/Makefile
 	plugins/Makefile
 	src/Makefile
 	test/test.env

@@ -1,0 +1,178 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.Dd June 6, 2021
+.\" Please adjust this date whenever revising the manpage.
+.Dt FINIT 8 SMM
+.Os Linux
+.Sh NAME
+.Nm finit
+.Nd Fast init for Linux systems
+.Sh SYNOPSIS
+.Nm /sbin/finit
+.Op finit.status_style=classic
+.Op finit.show_status=[on,off]
+.Op finit.debug
+.Op rescue | recover
+.Op single | S
+.Nm /sbin/telinit
+.Op Fl hv
+.Op q | Q | 0-9
+.Sh DESCRIPTION
+Fast init for Linux systems.  Reverse engineered from the EeePC
+fastinit, 10+ years ago by Claudio Matsuoka, "gaps filled with frog
+DNA ...".  Focus is on small and embedded systems, although Finit is
+fully usable on server and desktop systems as well.
+.Pp
+Features include:
+.Bl -bullet -width 1n -compact
+.It
+Runlevels, defined per service
+.It
+One-shot tasks, services (daemons), or SysV init start/stop scripts
+.It
+Runparts and
+.Pa /etc/rc.local
+support
+.It
+Process supervision similar to
+.Xr systemd 8
+.It
+Sourcing environment files
+.It
+Conditions for network/process/custom dependencies
+.It
+Pre/Post script actions
+.It
+Tooling to enable/disable services
+.It
+Built-in getty
+.It
+Built-in watchdog, with support for hand-over to
+.Lk https://troglobit.com/watchdogd.html watchdogd
+.It
+Built-in support for Debian/BusyBox
+.Pa /etc/network/interfaces
+.It
+Cgroups v2, both configuration and monitoring in `initctl top`
+.It
+Plugin support for customization
+.It
+Proper rescue mode with bundled `sulogin` for protected maintenance shell
+.El
+.Sh BOOTING
+.Pp
+Before laucnhing services, the system needs to be bootstrapped.  This
+involves mounting all filesystems (not already mounted by an initramfs)
+in
+.Pa /etc/fstab ,
+ensuring that necessary filesystems like:
+.Pa /dev ,
+.Pa /proc ,
+.Pa /sys ,
+and
+.Pa /run
+are available and can provide the system with the services required.
+.Pp
+With that out of the way, a set of plugins take over:
+.Pp
+.Bl -tag -width bootmisc.so -offset indent
+.It Cm bootmisc.so
+Cleans up stale files from previous boots and default directories are
+created in tmpfs filesystems
+.It Cm modprobe.so
+Probes kernel modules required by the system
+.It Cm procps.so
+Set kernel variables from
+.Pa /etc/sysctl.conf
+et al
+.El
+.Pp
+When the plugins are done, finit reads
+.Pa /etc/finit.conf
+and all other enabled services in
+.Pa /etc/finit.d/* .
+First all services, run/tasks in runlevel S (bootStrap) are started,
+When all run/tasks have completed, Finit changes to the configured
+runlevel (default 2), Processes are started in parallel, in dependency
+order according to their conditions.
+.Pp
+When all services and run/tasks have been started, the console progress
+is disabled and all configured getty services are started.
+.Sh CONDITIONS
+The condition subysystem in Finit was initially created to track PID
+files of daemons.  If service/task B requires service A to have started,
+Finit waits for the PID file of service A to be created/updated before
+it starts service B.  Conversely, if service A is stopped and its PID
+file removed, service B is also stopped.
+.Pp
+The following condition families are availble today:
+.Pp
+.Bl -tag -width pid -offset indent
+.It Cm net
+Linux netlink events, e.g. net/route/default, net/eth0/up, and
+net/et0/running
+.It Cm pid
+PID files basd on the service declaration
+.Cm name:id ,
+gives the condition pid/name:id
+.It Cm sys
+System conditions, e.g. sys/key/ctrlaltdel and sys/pwr/fail
+.It Cm usr
+User conditions, assert and deassert using
+.Cm initctl cond [set|clr] foo
+.El
+.Sh SIGNALS
+PID 1 is the only process that by default blocks all signals.  Finit
+allows for the following signals to control operation, but recommends
+instead using the
+.Xr initctl 8
+tool.
+.Pp
+.Bl -tag -width TERM
+.It HUP
+Tell
+.Nm
+to reload its configuration file(s), same as
+.Cm initctl reload
+.It USR1
+Restart API
+.Cm ( initctl )
+socket.
+.It USR2
+Tell
+.Nm
+to perform a system shutdown, same as
+.Cm initctl poweroff
+.It TERM
+Like SIGUSR2 but performs a reboot, same as
+.Cm initctl reboot
+.It INT
+Sent from kernel when Ctrl-Alt-Del is pressed (on the console), this
+asserts the sys/key/ctrlaltdel condition, which can be used to start
+tasks or services
+.It PWR
+Sent from a a power daemon on changes to UPS status, Finit asserts
+the sys/pwr/fail condition
+.El
+.Sh FILES
+.Bl -tag -width /etc/finit.d/available/*.conf -compact
+.It Pa /etc/finit.conf
+Main configuration file
+.It Pa /etc/finit.d/*.conf
+Static service definitions
+.It Pa /etc/finit.d/available/*.conf
+Available services
+.It Pa /etc/finit.d/enabled/*.conf
+Symlinks from available
+.It Pa /run/finit/
+Runtime files, including the condition subsystem
+.El
+.Sh SEE ALSO
+.Xr finit.conf 5
+.Xr initctl 8
+.Sh AUTHORS
+.Nm
+was conceived and reverse engineered by Claudio Matsuoka.  Since v1.0,
+maintained by Joachim Wiberg, with contributions by many others.
