@@ -32,8 +32,6 @@ Some of these are also registered in the issue tracker on GitHub.
   no check if the signal actually originates from the kernel.  To get
   this verification, a new libuEv release is needed.  As of June 6 -21
   that functionality is not yet released.
-* Write man pages for finit and `finit.conf`, steal from the excellent
-  `pimd` man pages ...
 
 
 Initctl

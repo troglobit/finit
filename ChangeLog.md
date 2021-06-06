@@ -4,8 +4,8 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.1][UNRELEASED]
------------------
+[4.1][] - 2021-06-06
+--------------------
 
 Bug fix release.  Also disables handlers for `SIGINT` and `SIGPWR`, a
 new set of `sys` conditions are instead generated which can be used to
@@ -36,6 +36,9 @@ trigger external programs.
   falls back to an unauthenticated `/bin/sh`
 * Dropped (broken) support for multiple consoles.  Finit now follows
   the default console selected by the kernel, `/dev/console`
+* Dropped signal handlers for SIGSTOP/TSTP and SIGCONT
+* Added support for `\n`, in addition to `\r`, in "Please press Enter"
+  prompt before starting getty
 * Finit no longer parses `/proc/cmdline` for its options.  Instead all
   options are by default now read from `argv[]`, like a normal program,
   this is also what the kernel does by default.  Please note, this may
@@ -45,6 +48,9 @@ trigger external programs.
   `rtc.so`, `urandom.so`, you may also want to disable `hotplug.so`.
   They are all enabled by default, as in Finit 4.0, but may be moved
   to external tools or entries in `finit.conf` in Finit 5.0
+* Added support for reading `PRETTY_NAME` from `/etc/os-release` to use
+  as heading in progress output, unless `--with-heading=GREET` is used.
+* Added manual pages for finit(8), initctl(8), and finit.conf(5)
 
 ### Fixes
 * Stricter interface name validation in netlink plugin, modeled after
@@ -66,6 +72,11 @@ trigger external programs.
 * Fix `/etc/fstab` parser to properly check for 'ro' to not remount the
   root filesystem at boot.  The wrong field was read, so a root mounted
   by an initramfs, or by lxc for a container, had their root remounted
+* Fix SIGCHLD handler, `waitpd()` may be interrupted by a signal
+* Reset `starting` flag of services being stopped.  When a service
+  is started and then stopped before it has created its pid file,
+  it could be left forever in the stopping state, unless we reset
+  the starting flag.
 * Fix #170: detect loss of default route when interfaces go down.  This
   emulates the missing kernel netlink message to remove the condition
   net/default/route to allow stopping dependent services
