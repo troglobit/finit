@@ -47,12 +47,13 @@ comands to `initctl`, followed by `reload` to activate your changes.
 You can also use a standard [/etc/rc.local](rc.local) for one-shot tasks
 and initialization like keyboard language etc.
 
-If you want to use the X Window system, `sudo apt install elogind`
-(Bullseye and later).  Followed by `initctl reload` (enabled by default)
-and logout/login again.  The elogind daemon ensures a regular non-root
-user can start and interact with an X session, otherwise keyboard and
-mouse won't work.  When you're happy, you can enable the lightdm.conf,
-change the default runlevel to 3, and presto! you have a desktop again.
+> **NOTE:** X Window system, you may need to `sudo apt install elogind`
+> (Bullseye and later), followed by `initctl reload` to activate it (it
+> is enabled by default), and logout/login again.  The elogind daemon
+> ensures a regular non-root user can start and interact with an X
+> session, otherwise keyboard and mouse won't work.  When you're happy,
+> you can enable the lightdm.conf, change the default runlevel to 3, and
+> presto!  you have a desktop again.
 
 
 Have fun!  
