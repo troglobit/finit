@@ -21,9 +21,17 @@ Some of these are also registered in the issue tracker on GitHub.
 * Allow running as non-pid1 => read .conf and RCSD form cmdline
 * Add `finit.conf` support for UPS notification (SIGPWR) to start a task
   using, e.g. <sys/power/{ok,fail,low}> conditions.  More info in sig.c
+
+  As of Finit v4.1 SIGPWR generates <sys/power/fail> condition and it
+  is up to a task to check why and take appropriate action.
 * Add `finit.conf` support for ctrl-alt-delete (SIGINT) and kbrequest,
   i.e. KeyboardSignal, (SIGWINCH) behavior.  Using conditions to a task,
   e.g, <sys/key/ctrlaltdel> and <sys/key/signal> like SIGPWR handling.
+
+  As of Finit v4.1 SIGINT generates <sys/key/ctrlaltdel>, but there is
+  no check if the signal actually originates from the kernel.  To get
+  this verification, a new libuEv release is needed.  As of June 6 -21
+  that functionality is not yet released.
 * Write man pages for finit and `finit.conf`, steal from the excellent
   `pimd` man pages ...
 
