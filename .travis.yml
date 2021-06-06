@@ -8,6 +8,7 @@ sudo: false
 # Test build with both GCC and Clang (LLVM)
 compiler:
   - gcc
+  - clang
 
 # The secure: declaration is the encrypted COVERITY_SCAN_TOKEN, created
 #   via the "travis encrypt" command using the project repo's public key
