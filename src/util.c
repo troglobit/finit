@@ -177,7 +177,8 @@ int fnread(char *buf, size_t len, char *fmt, ...)
 	if (!fp)
 		return -1;
 
-	len = fread(buf, sizeof(char), len, fp);
+	len = fread(buf, sizeof(char), len - 1, fp);
+	buf[len] = 0;
 	fclose(fp);
 
 	return (int)len;
@@ -216,7 +217,7 @@ int fnwrite(char *value, char *fmt, ...)
 
 int fngetint(char *path, int *val)
 {
-	char buf[10];
+	char buf[64];
 
 	if (fnread(buf, sizeof(buf), path) <= 0)
 		return -1;
