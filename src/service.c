@@ -1282,7 +1282,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc->type = type;
 
 		/* e.g., if missing cmd or env before */
-		svc_unblock(svc);
+		if (!manual)
+			svc_unblock(svc);
 	}
 
 	/* Always clear svc PID file, for now.  See TODO */
