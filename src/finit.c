@@ -156,6 +156,18 @@ static int fsck_all(void)
 	return rc;
 }
 
+/* Wrapper for mount(2), logs any errors to stderr */
+static void fs_mount(const char *src, const char *tgt, const char *fstype,
+		     unsigned long flags, const void *data)
+{
+	const char *msg = !fstype ? "MS_MOVE" : "mounting";
+	int rc;
+
+	rc = mount(src, tgt, fstype, flags, data);
+	if (rc && errno != EBUSY)
+		_pe("Failed %s %s on %s", msg, src, tgt);
+}
+
 #ifndef SYSROOT
 /* If / is not listed in fstab, or listed as 'ro', leave it alone */
 static int fs_readonly_root(struct fstab *fs)
@@ -207,8 +219,7 @@ static void fs_remount_root(int fsckerr)
 	 * XXX: Untested, in the initramfs age we should
 	 *      probably use switch_root instead.
 	 */
-	if (mount(SYSROOT, "/", NULL, MS_MOVE, NULL))
-		_pe("Failed %s / MS_MOVE");
+	fs_mount(SYSROOT, "/", NULL, MS_MOVE, NULL);
 }
 #endif	/* SYSROOT */
 
@@ -232,7 +243,7 @@ static void fs_finalize(void)
 	 */
 	if (!fismnt("/dev/shm")) {
 		makedir("/dev/shm", 0777);
-		mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
+		fs_mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
 	}
 
 	/* Modern systems use /dev/pts */
@@ -250,7 +261,7 @@ static void fs_finalize(void)
 		snprintf(opts, sizeof(opts), "gid=%d,mode=%d,ptmxmode=0666", gid, mode);
 
 		makedir("/dev/pts", 0755);
-		mount("devpts", "/dev/pts", "devpts", MS_NOSUID | MS_NOEXEC, opts);
+		fs_mount("devpts", "/dev/pts", "devpts", MS_NOSUID | MS_NOEXEC, opts);
 	}
 
 	/*
@@ -263,19 +274,19 @@ static void fs_finalize(void)
 	 * for /run (and optionally /run/lock).
 	 */
 	if (fisdir("/run") && !fismnt("/run")) {
-		mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0755,size=10%");
+		fs_mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0755,size=10%");
 
 		/* This prevents user DoS of /run by filling /run/lock at the expense of another tmpfs, max 5MiB */
 		makedir("/run/lock", 1777);
-		mount("tmpfs", "/run/lock", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0777,size=5252880");
+		fs_mount("tmpfs", "/run/lock", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0777,size=5252880");
 	}
 
 	/* Modern systems use tmpfs for /tmp */
 	if (!fismnt("/tmp"))
-		mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=1777");
+		fs_mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=1777");
 }
 
-static void fs_mount(void)
+static void fs_mount_all(void)
 {
 	if (!rescue)
 		fs_remount_root(fsck_all());
@@ -299,7 +310,7 @@ static void fs_mount(void)
  * We need /proc for rs_remount_root() and conf_parse_cmdline(), /dev
  * for early multi-console, and /sys for the cgroups support.  Any
  * occurrence of these file systems in /etc/fstab will replace these
- * mounts later in fs_mount()
+ * mounts later in fs_mount_all()
  *
  * Ignore any mount errors with EBUSY, kernel likely alread mounted
  * the filesystem for us automatically, e.g., CONFIG_DEVTMPFS_MOUNT.
@@ -319,8 +330,6 @@ static void fs_init(void)
 	umask(022);
 
 	for (i = 0; i < NELEMS(fs); i++) {
-		int rc;
-
 		/*
 		 * Check if already mounted, we may be running in a
 		 * container, or an initramfs ran before us.  The
@@ -330,9 +339,7 @@ static void fs_init(void)
 		if (fismnt(fs[i].file))
 			continue;
 
-		rc = mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
-		if (rc && errno != EBUSY)
-			_pe("Failed mounting %s on %s", fs[i].spec, fs[i].file);
+		fs_mount(fs[i].spec, fs[i].file, fs[i].type, 0, NULL);
 	}
 }
 
@@ -608,7 +615,7 @@ int main(int argc, char *argv[])
 	cgroup_init(&loop);
 
 	/* Check and mount filesystems. */
-	fs_mount();
+	fs_mount_all();
 
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
