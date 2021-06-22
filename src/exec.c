@@ -351,7 +351,7 @@ pid_t run_getty(char *tty, char *cmd, char *args[], int noclear, int nowait, str
 	/* Dunno speed, tell stty() to not mess with it */
 	prepare_tty(tty, B0, "getty", rlimit);
 	if (activate_console(noclear, nowait)) {
-		logit(LOG_INFO, "Starting external getty on %s", tty);
+		logit(LOG_INFO, "Starting getty on %s", tty);
 		rc = execv(cmd, args);
 	}
 
