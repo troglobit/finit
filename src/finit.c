@@ -625,8 +625,10 @@ int main(int argc, char *argv[])
 	/* Bootstrap conditions, needed for hooks */
 	cond_init();
 
-	/* Emit conditions for early hooks that ran before the
-	 * condition system was initialized in case anyone . */
+	/*
+	 * Emit conditions for early hooks that ran before the condition
+	 * system was initialized in case anyone.
+	 */
 	cond_set_oneshot(plugin_hook_str(HOOK_BANNER));
 	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
 
