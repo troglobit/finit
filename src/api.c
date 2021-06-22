@@ -387,7 +387,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 				break;
 			}
 
-			_e("Request to hand-over wdog ... to PID %d", rq.runlevel);
+			_d("Request to hand-over wdog ... to PID %d", rq.runlevel);
 			svc = svc_find_by_pid(rq.runlevel);
 			if (!svc) {
 				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq.runlevel);
