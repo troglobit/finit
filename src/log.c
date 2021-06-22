@@ -32,14 +32,14 @@
 #include "util.h"
 
 static int up       = 0;
-static int loglevel = LOG_NOTICE;
+static int loglevel = LOG_INFO;
 
 void log_init(int dbg)
 {
 	if (debug)
 		loglevel = LOG_DEBUG;
 	else
-		loglevel = LOG_NOTICE;
+		loglevel = LOG_INFO;
 }
 
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
