@@ -604,6 +604,11 @@ int main(int argc, char *argv[])
 	enable_progress(1);	/* Allow progress, if enabled */
 	banner();
 
+	if (osheading)
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel S", osheading);
+	else
+		logit(LOG_CONSOLE | LOG_NOTICE, "Entering runlevel S");
+
 	/*
 	 * Initial setup of signals, ignore all until we're up.
 	 */
