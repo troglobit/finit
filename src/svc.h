@@ -40,7 +40,7 @@ typedef int svc_cmd_t;
 typedef enum {
 	SVC_TYPE_FREE       = 0,	/* Free to allocate */
 	SVC_TYPE_SERVICE    = 1,	/* Monitored, will be respawned */
-	SVC_TYPE_TASK       = 2,	/* One-shot, runs in parallell */
+	SVC_TYPE_TASK       = 2,	/* One-shot, runs in parallel */
 	SVC_TYPE_RUN        = 4,	/* Like task, but wait for completion */
 	SVC_TYPE_TTY        = 8,	/* Like service, but dedicated to TTYs */
 	SVC_TYPE_SYSV       = 32,	/* SysV style init.d script w/ start/stop */

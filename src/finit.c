@@ -301,7 +301,7 @@ static void fs_mount(void)
  * occurrence of these file systems in /etc/fstab will replace these
  * mounts later in fs_mount()
  *
- * Ignore any mount errors with EBUSY, kernel likely alread mounted
+ * Ignore any mount errors with EBUSY, kernel likely already mounted
  * the filesystem for us automatically, e.g., CONFIG_DEVTMPFS_MOUNT.
  */
 static void fs_init(void)
@@ -382,7 +382,7 @@ static void finalize(void *unused)
 static void crank_worker(void *unused)
 {
 	/*
-	 * Initalize state machine and start all bootstrap tasks
+	 * Initialize state machine and start all bootstrap tasks
 	 * NOTE: no network available!
 	 */
 	sm_init(&sm);
@@ -550,7 +550,7 @@ int main(int argc, char *argv[])
 	console_init();
 
 	/*
-	 * Initalize event context.
+	 * Initialize event context.
 	 */
 	uev_init1(&loop, 1);
 	ctx = &loop;

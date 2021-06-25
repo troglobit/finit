@@ -413,7 +413,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 		case INIT_CMD_SVC_ITER:
 //			_d("svc iter, first: %d", rq.runlevel);
 			/*
-			 * XXX: This severly limits the number of
+			 * XXX: This severely limits the number of
 			 * simultaneous client connections, but will
 			 * have to do for now.
 			 */
@@ -493,7 +493,7 @@ int api_init(uev_ctx_t *ctx)
 		return 0;
 
 error:
-	_pe("Failed intializing API socket");
+	_pe("Failed initializing API socket");
 	umask(oldmask);
 	close(sd);
 	return 1;

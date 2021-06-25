@@ -59,7 +59,7 @@ files for a package and let the user decide when to enable a service.
 On `initctl reload` the following is checked for all services:
 
 - If a service's `.conf` file has been removed, or its conditions are no
-  longer satisifed, the service is stopped.
+  longer satisfied, the service is stopped.
 - If the file is modified, or a service it depends on has been reloaded,
   the service is reloaded (stopped and started).
 - If a new service is added it is automatically started — respecting

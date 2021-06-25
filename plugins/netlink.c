@@ -355,7 +355,7 @@ static void nl_resync(int all)
 
 	if (all) {
 		_d("============================ RESYNC =================================");
-		/* this doesn't update condtions, and thus does not stop services */
+		/* this doesn't update conditions, and thus does not stop services */
 		cond_deassert("net/");
 
 		nl_resync_ifaces(sd, seq++);

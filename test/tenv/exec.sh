@@ -1,5 +1,5 @@
 #!/bin/sh
-# Execute a given command from withing the test environment.
+# Execute a given command from within the test environment.
 #
 # Copyright (c) 2021  Jacques de Laval <jacques@de-laval.se>
 #

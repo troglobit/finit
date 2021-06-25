@@ -274,7 +274,7 @@ static int init_plugins(uev_ctx_t *ctx)
  * Loads a plugin from @path/@name[.so].  Note, if ".so" is missing from
  * the plugin @name it is added before attempting to load.
  *
- * It is up to the plugin itself ot register itself as a "ctor" with the
+ * It is up to the plugin itself or register itself as a "ctor" with the
  * %PLUGIN_INIT macro so that plugin_register() is called automatically.
  *
  * Returns:

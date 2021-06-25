@@ -166,7 +166,7 @@ int pid_file_set(svc_t *svc, char *file, int not)
  * The logic is explained below.  Please note that using the first form
  * of the syntax not only creates and removes the PID file, but it also
  * calls touch to update the mtime on service_restart(), only applicable
- * to processes that accept SIGHUP.  This to ensure dependant services
+ * to processes that accept SIGHUP.  This to ensure dependent services
  * are sent SIGCONT properly on reload, otherwise their condition would
  * never be asserted again after `initctl reload`.
  *
