@@ -580,7 +580,7 @@ static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 		return;
 	}
 
-	/* Read contrl group limits */
+	/* Read control group limits */
 	if (MATCH_CMD(line, "cgroup ", x)) {
 		conf_parse_cgroup(x);
 		return;

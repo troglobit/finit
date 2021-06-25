@@ -445,7 +445,7 @@ const char *sig_name(int signo)
 }
 
 /*
- * Inital signal setup - ignore everything but SIGCHLD until we're capable of responding
+ * Initial signal setup - ignore everything but SIGCHLD until we're capable of responding
  */
 static void chld_handler(int sig, siginfo_t *info, void *ctx)
 {

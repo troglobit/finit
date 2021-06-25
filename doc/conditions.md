@@ -90,7 +90,7 @@ Built-in Conditions
 Finit comes with a set of plugins for conditions: `pidfile`, `netlink`,
 `sys`, and `usr`.  The `pidfile` plugin (recursively) watches `/run/`
 (recursively) for PID files created by the monitored services, and sets
-a corresponding condition in the `pid/` namespace.  Similarily, the
+a corresponding condition in the `pid/` namespace.  Similarly, the
 `netlink` plugin provides basic conditions for when an interface is
 brought up/down and when a default route (gateway) is set, in the `net/`
 namespace.  The `sys` and `usr` plugins monitor are passive condition

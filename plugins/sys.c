@@ -1,4 +1,4 @@
-/* System condtion event monitor for the Finit condition engine
+/* System condition event monitor for the Finit condition engine
  *
  * Copyright (c) 2021  Joachim Wiberg <troglobit@gmail.com>
  *

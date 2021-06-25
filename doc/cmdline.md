@@ -44,7 +44,7 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
     `[1]` will be started, so a `tty [1] @console nologin` configuration
     presents you with a root console without login.
 
-For more on kernel boot paramaters, see the man page [bootparam(7)][].
+For more on kernel boot parameters, see the man page [bootparam(7)][].
 
 [config.md][]:  config.md#rescue-mode
 [bootparam(7)]: https://www.man7.org/linux/man-pages/man7/bootparam.7.html

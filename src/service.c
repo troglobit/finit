@@ -843,7 +843,7 @@ static int service_restart(svc_t *svc)
 /**
  * service_reload_dynamic - Called on SIGHUP, 'init q' or 'initctl reload'
  *
- * This function is called when Finit has recieved SIGHUP to reload
+ * This function is called when Finit has received SIGHUP to reload
  * .conf files in /etc/finit.d.  It is responsible for starting,
  * stopping and reloading (forwarding SIGHUP) to processes affected.
  */
@@ -1079,7 +1079,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  * This function is used to register commands to be run on different
  * system runlevels with optional username.  The @type argument details
  * if it's service to bo monitored/respawned (daemon), a one-shot task
- * or a command that must run in sequence and not in parallell, like
+ * or a command that must run in sequence and not in parallel, like
  * service and task commands do.
  *
  * The @line can optionally start with a username, denoted by an @
@@ -1119,7 +1119,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
  *
  * Without the :ID syntax, Finit replaces the first service line with
  * the contents of the second.  The :ID can be any string value and
- * defaults to "" (emtpy string).
+ * defaults to "" (empty string).
  *
  * Returns:
  * POSIX OK(0) on success, or non-zero errno exit status on failure.
@@ -1328,7 +1328,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		/* TTYs cannot be redirected */
 		log = NULL;
 
-		/* Create name:id tuple for identiy, e.g., tty:S0 */
+		/* Create name:id tuple for identity, e.g., tty:S0 */
 		ptr = strrchr(svc->dev, '/');
 		if (ptr)
 			ptr++;

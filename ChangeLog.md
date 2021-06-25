@@ -184,7 +184,7 @@ make sure to read the whole change log when upgrading.
   - As long as a stepped service changes state we queue another step all
     event, because services may depend on each other
 * Require new libuEv API: `uev_init1()` to reduce event cache so that
-  the kernel can invalidate deleted events before enqueing to userspace
+  the kernel can invalidate deleted events before enqueuing to userspace
 * Rename `hwclock.so` plugin to `rtc.so` since it now is stand-alone
   from the `hwclock` tool.  Note: the kernel can also be set to load
   and store RTC to/from system clock at boot/halt as well, issue #110
@@ -506,7 +506,7 @@ Bug fix release.
 
 * Add support for status/show service by `name:id`
 * Enforce terse mode after boot, if verbose mode is disabled
-* Reenable verbose mode at reboot, if disabled at boot
+* Re-enable verbose mode at reboot, if disabled at boot
 * Update section mentioning BusyBox getty
 * Update debugging documentation
 * Allow debug to override terse mode
@@ -561,7 +561,7 @@ handling and reconfiguration at runtime.
 * Clarify how to select different plugins with the configure script
 * Improve urandom plugin for embedded systems w/o random seed
 * Add `--debug` flag to `initctl`
-* The runlevels listed for services in `initctl show` now hightlight the
+* The runlevels listed for services in `initctl show` now highlight the
   active runlevel.
 * Clarify in the README and in `initctl help` that the GW event to
   listen for in service declarations is `GW:UP`
@@ -593,7 +593,7 @@ handling and reconfiguration at runtime.
 * Do not use `-Os` use `-O2` as default optimization level.  Many cross
   compiler toolchains are known to have problems with `-Os`
 * Do not allow build VERSION to be overloaded by an environment variable
-* Fix too small MAX arguments and too few argments in `svc_t` for
+* Fix too small MAX arguments and too few arguments in `svc_t` for
   reading currently running services with `initctl show`
 * Unblock blocked signals after forking off a child
 
@@ -711,7 +711,7 @@ The inetd release.
   turned out to not work so well after all.  For instance, launching
   TTYs in a background process completely blocked inetd services from
   even starting up listening sockets ... proper fork seems to work fine
-  though.  This is the casue for *yanking* the [1.11] release, below.
+  though.  This is the cause for *yanking* the [1.11] release, below.
 * Trap segfaults caused by external plugins/callbacks in a sub-process.
   This prevents a single programming mistake in by a 3rd party developer
   from taking down the entire system.
@@ -807,7 +807,7 @@ Major bug fix release.
 
 ### Changes
 * Show `__FILE__` in `_d()` debug messages, useful for plugins with
-  similarily named callbacks. Also, only in debug mode anyway
+  similarly named callbacks. Also, only in debug mode anyway
 * Make sure to cleanup recorded PID when a service is lost.  Required by
   service plugins for their callbacks to work.
 * Only clear screen when in verbose mode. Maybe this should be removed

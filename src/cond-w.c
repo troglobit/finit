@@ -273,7 +273,7 @@ static int do_assert(const char *fpath, const struct stat *sb, int tflg, struct 
 
 	nm = strstr((char *)fpath, COND_BASE);
 	if (!nm) {
-		_e("Incorrect condtion path %s, cannot %sassert", fpath, set ? "re" : "de");
+		_e("Incorrect condition path %s, cannot %sassert", fpath, set ? "re" : "de");
 		return 1;
 	}
 

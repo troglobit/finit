@@ -187,7 +187,7 @@ restart:
 		}
 
 		/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
-		_d("All services have been stoppped, calling runlevel change hooks ...");
+		_d("All services have been stopped, calling runlevel change hooks ...");
 		plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
 
 		_d("Starting services new to this runlevel ...");

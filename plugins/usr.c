@@ -1,4 +1,4 @@
-/* User-defined condtion event monitor for the Finit condition engine
+/* User-defined condition event monitor for the Finit condition engine
  *
  * Copyright (c) 2021  Joachim Wiberg <troglobit@gmail.com>
  *

@@ -140,7 +140,7 @@ Dependencies are handled using [conditions](doc/conditions.md).  One of
 the most common conditions is to wait for basic networking to become
 available:
 
-    service <net/route/default> nginx -- High performace HTTP server
+    service <net/route/default> nginx -- High performance HTTP server
 
 Here is another example where we instruct Finit to not start BusyBox
 `ntpd` until `syslogd` has started properly.  Finit waits for `syslogd`
