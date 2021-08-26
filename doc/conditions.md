@@ -180,7 +180,7 @@ PID     IDENT         STATUS  CONDITION (+ ON, ~ FLUX, - OFF)
 
 Here we can see that `netd` is allowed to run since both its conditions
 are in the `on` state, as indicated by the `+`-prefix.  `udhcpc` however
-is not allowed to run since `net/vlan1/exist` condition is not satsifed.
+is not allowed to run since `net/vlan1/exist` condition is not satisfied.
 As indicated by the `-`-prefix.
 
 To fake interface `vlan1` suddenly appearing, and test what happens to
