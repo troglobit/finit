@@ -57,6 +57,14 @@ AC_ARG_ENABLE(kernel_cmdline,
         AS_HELP_STRING([--enable-kernel-cmdline], [Parse init args from /proc/cmdline (don't use!)]),,[
 	enable_kernel_cmdline=no])
 
+AC_ARG_ENABLE(fastboot,
+        AS_HELP_STRING([--enable-fastboot], [Skip fsck check on filesystems listed in /etc/fstab]),,[
+	enable_fastboot=no])
+
+AC_ARG_ENABLE(fsckfix,
+        AS_HELP_STRING([--enable-fsckfix], [Run fsck fix mode (options: -yf) on filesystems listed in /etc/fstab]),,[
+	enable_fsckfix=no])
+
 AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--disable-redirect], [Disable redirection of service output to /dev/null]),,[
 	enable_redirect=yes])
@@ -133,6 +141,12 @@ AS_IF([test "x$enable_auto_reload" = "xyes"], [
 
 AS_IF([test "x$enable_kernel_cmdline" = "xyes"], [
         AC_DEFINE(KERNEL_CMDLINE, 1, [Dumpster diving after init args from /proc/cmdline])])
+
+AS_IF([test "x$enable_fastboot" = "xyes"], [
+	AC_DEFINE(FAST_BOOT, 1, [Skip fsck check on filesystems listed in /etc/fstab])])
+
+AS_IF([test "x$enable_fsckfix" = "xyes"], [
+	AC_DEFINE(FSCK_FIX, 1, [Run fsck fix mode (options: -yf) on filesystems listed in /etc/fstab])])
 
 AS_IF([test "x$enable_redirect" = "xyes"], [
 	AC_DEFINE(REDIRECT_OUTPUT, 1, [Enable redirection of service output to /dev/null])])
