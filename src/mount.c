@@ -36,7 +36,7 @@
 static int is_protected(char *dir)
 {
 	size_t i;
-	char *protected[] = {
+	char *protected_mnts[] = {
 		"/sys", "/proc",
 		"/.dev", "/dev", "/dev/pts", "/dev/shm", "dev/.static/dev", "/dev/vcs",
 		"/run", "/var/run",
@@ -46,8 +46,8 @@ static int is_protected(char *dir)
 		"/proc/", "/sys/", "/run/", NULL
 	};
 
-	for (i = 0; protected[i]; i++) {
-		if (!strcmp(dir, protected[i]))
+	for (i = 0; protected_mnts[i]; i++) {
+		if (!strcmp(dir, protected_mnts[i]))
 			return 1;
 	}
 

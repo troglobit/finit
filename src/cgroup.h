@@ -34,7 +34,7 @@ struct cgroup {
 void cgroup_mark_all(void);
 void cgroup_cleanup (void);
 
-int  cgroup_add     (char *name, char *cfg, int protected);
+int  cgroup_add     (char *name, char *cfg, int is_protected);
 int  cgroup_del     (char *dir);
 void cgroup_config  (void);
 
