@@ -97,6 +97,8 @@ static void usr_init(void *arg)
 
 	if (iwatch_add(&iw_usr, path, IN_ONLYDIR))
 		iwatch_exit(&iw_usr);
+
+	free(path);
 }
 
 static plugin_t plugin = {
