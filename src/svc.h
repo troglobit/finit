@@ -102,7 +102,7 @@ typedef struct svc {
 	struct cgroup  cgroup;
 
 	/* Service details */
-	int            sighalt;        /* Signal to stop prorcess, default: SIGTERM */
+	int            sighalt;        /* Signal to stop process, default: SIGTERM */
 	int            killdelay;      /* Delay in msec before sending SIGKILL */
 	pid_t          oldpid, pid;
 	char           pidfile[256];

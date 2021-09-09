@@ -28,7 +28,7 @@
 /*
  * SysV init on Debian/Ubuntu skips these protected mount points
  *
- * It also skips anything below /proc, /sys and /run for good meausre so
+ * It also skips anything below /proc, /sys and /run for good measure so
  * we do the same here.  What we want is a list of non-protected tmpfs
  * and regular filesystems that can be safely unmounted before we do
  * swapoff, and remount / as read-only, respectively.
