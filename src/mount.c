@@ -93,7 +93,7 @@ void unmount_tmpfs(void)
 
 	while ((mnt = iterator("/proc/mounts", &fp))) {
 		if (!strcmp("tmpfs", mnt->mnt_fsname) && !umount(mnt->mnt_dir))
-			iterator_end(&fp);  // Restart iteration
+			iterator_end(&fp);  /* Restart iteration */
 	}
 }
 
@@ -103,10 +103,8 @@ void unmount_regular(void)
 	FILE *fp = NULL;
 
 	while ((mnt = iterator("/proc/mounts", &fp))) {
-		if (!umount(mnt->mnt_dir)) {
-			print(0, "Unmounted %s", mnt->mnt_dir);
-			iterator_end(&fp);  // Restart iteration
-		}
+		if (!umount(mnt->mnt_dir))
+			iterator_end(&fp);  /* Restart iteration */
 	}
 }
 
