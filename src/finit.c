@@ -117,6 +117,7 @@ static int fsck(int pass)
 	while ((fs = getfsent())) {
 		char cmd[80];
 		struct stat st;
+		int fsck_rc = 0;
 
 		if (fs->fs_passno != pass)
 			continue;
@@ -134,8 +135,33 @@ static int fsck(int pass)
 			continue;
 		}
 
+#ifdef FSCK_FIX
+		snprintf(cmd, sizeof(cmd), "fsck -yf %s", fs->fs_spec);
+#else
 		snprintf(cmd, sizeof(cmd), "fsck -a %s", fs->fs_spec);
-		rc += run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
+#endif
+		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
+		/*
+		 * "failure" is defined as exiting with a return code of
+		 * 2 or larger.  A return code of 1 indicates that filesystem
+		 * errors were corrected but that the boot may proceed.
+		 */
+		if (fsck_rc > 1) {
+			char *sulogin[] = {
+				_PATH_SULOGIN,
+				"sulogin",
+			};
+			size_t i;
+
+			for (i = 0; i < NELEMS(sulogin); i++) {
+				if (systemf(sulogin[i]))
+					continue;
+				break;
+			}
+
+			do_shutdown(SHUT_REBOOT);
+		}
+		rc += fsck_rc;
 	}
 
 	endfsent();
@@ -145,14 +171,16 @@ static int fsck(int pass)
 
 static int fsck_all(void)
 {
-	int pass, rc = 0;
+	int rc = 0;
+#ifndef FAST_BOOT
+	int pass;
 
 	for (pass = 1; pass < 10; pass++) {
 		rc = fsck(pass);
 		if (rc)
 			break;
 	}
-
+#endif
 	return rc;
 }
 
