@@ -42,7 +42,7 @@ struct cg {
 	char *cfg;		/* kernel settings */
 
 	int  active;		/* for mark & sweep */
-	int  protected;		/* for init/, user/, & system/ */
+	int  is_protected;	/* for init/, user/, & system/ */
 };
 
 static TAILQ_HEAD(, cg) cgroups = TAILQ_HEAD_INITIALIZER(cgroups);
@@ -303,7 +303,7 @@ void cgroup_mark_all(void)
 	struct cg *cg;
 
 	TAILQ_FOREACH(cg, &cgroups, link) {
-		if (cg->protected)
+		if (cg->is_protected)
 			continue;
 
 		cg->active = 0;
@@ -330,7 +330,7 @@ void cgroup_cleanup(void)
 /*
  * Add, or update, settings for top-level cgroup
  */
-int cgroup_add(char *name, char *cfg, int protected)
+int cgroup_add(char *name, char *cfg, int is_protected)
 {
 	struct cg *cg;
 
@@ -364,7 +364,7 @@ int cgroup_add(char *name, char *cfg, int protected)
 		free(cg);
 		return -1;
 	}
-	cg->protected = protected;
+	cg->is_protected = is_protected;
 	cg->active = 1;
 
 	return 0;
