@@ -151,15 +151,15 @@ static int fsck(int pass)
 				_PATH_SULOGIN,
 				"sulogin",
 			};
-
 			size_t i;
+
 			for (i = 0; i < NELEMS(sulogin); i++) {
 				if (systemf(sulogin[i]))
 					continue;
 				break;
 			}
-			do_shutdown(SHUT_REBOOT);
 
+			do_shutdown(SHUT_REBOOT);
 		}
 		rc += fsck_rc;
 	}
@@ -173,7 +173,9 @@ static int fsck_all(void)
 {
 	int rc = 0;
 #ifndef FAST_BOOT
-	for (int pass = 1; pass < 10; pass++) {
+	int pass;
+
+	for (pass = 1; pass < 10; pass++) {
 		rc = fsck(pass);
 		if (rc)
 			break;
