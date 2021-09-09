@@ -59,46 +59,52 @@ static int is_protected(char *dir)
 	return 0;
 }
 
-static struct mntent *iterator(char *fstab)
+static void iterator_end(FILE **fp)
 {
-	static FILE *fp = NULL;
+	endmntent(*fp);
+	*fp = NULL;
+}
+
+static struct mntent *iterator(char *fstab, FILE **fp)
+{
 	static struct mntent *mnt;
 
-	if (!fp && fstab) {
-		fp = setmntent(fstab, "r");
-		if (!fp)
+	if (!*fp && fstab) {
+		*fp = setmntent(fstab, "r");
+		if (!*fp)
 			return NULL;
 	}
 
-	while ((mnt = getmntent(fp))) {
+	while ((mnt = getmntent(*fp))) {
 		if (is_protected(mnt->mnt_dir))
 			continue;
 
 		return mnt;
 	}
 
-	endmntent(fp);
-	fp = NULL;
-
+	iterator_end(fp);
 	return NULL;
 }
 
 void unmount_tmpfs(void)
 {
 	struct mntent *mnt;
+	FILE *fp = NULL;
 
-	while ((mnt = iterator("/proc/mounts"))) {
-		if (!strcmp("tmpfs", mnt->mnt_fsname))
-			umount(mnt->mnt_dir);
+	while ((mnt = iterator("/proc/mounts", &fp))) {
+		if (!strcmp("tmpfs", mnt->mnt_fsname) && !umount(mnt->mnt_dir))
+			iterator_end(&fp);  /* Restart iteration */
 	}
 }
 
 void unmount_regular(void)
 {
 	struct mntent *mnt;
+	FILE *fp = NULL;
 
-	while ((mnt = iterator("/proc/mounts"))) {
-		umount(mnt->mnt_dir);
+	while ((mnt = iterator("/proc/mounts", &fp))) {
+		if (!umount(mnt->mnt_dir))
+			iterator_end(&fp);  /* Restart iteration */
 	}
 }
 
