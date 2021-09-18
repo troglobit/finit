@@ -269,6 +269,8 @@ Optional features:
   Built-in keventd......: $with_keventd
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
+  Skip fsck check.......: $enable_fastboot
+  Run fsck fix mode.....: $enable_fsckfix
   Redirect output.......: $enable_redirect
   Default hostname......: $hostname
   Default runlevel......: $runlevel
