@@ -14,6 +14,7 @@ AC_CONFIG_FILES([Makefile
 	man/Makefile
 	plugins/Makefile
 	src/Makefile
+	src/libfinit.pc
 	test/test.env
 	test/Makefile])
 

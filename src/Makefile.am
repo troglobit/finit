@@ -61,7 +61,19 @@ if LOGROTATE
 finit_SOURCES     += logrotate.c
 endif
 
-pkginclude_HEADERS = cgroup.h cond.h finit.h helpers.h log.h plugin.h svc.h
+lib_LTLIBRARIES     = libfinit.la
+libfinit_la_SOURCES = $(finit_SOURCES)
+libfinit_la_CFLAGS  = $(finit_CFLAGS)
+libfinit_la_LIBADD  = $(finit_LDADD)
+
+pkginclude_HEADERS = cgroup.h cgutil.h client.h cond.h conf.h	\
+		     finit.h helpers.h initctl.h iwatch.h log.h	\
+		     pid.h plugin.h private.h schedule.h serv.h	\
+		     service.h sig.h sm.h svc.h tty.h util.h	\
+		     utmp-api.h watchdog.h
+pkgconfig_DATA     = libfinit.pc
+pkgconfigdir       = $(libdir)/pkgconfig
+pkgincludedir      = $(includedir)/finit
 
 finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
