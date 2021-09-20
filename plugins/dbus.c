@@ -35,7 +35,13 @@
 #define ARGS   "--nofork --system --syslog-only"
 #define DESC   "D-Bus message bus daemon"
 
+#ifndef DAEMONUSER
 #define DAEMONUSER "messagebus"
+#endif
+
+#ifndef DAEMONPIDFILE
+#define DAEMONPIDFILE "/var/run/dbus/pid"
+#endif
 
 static void setup(void *arg)
 {
@@ -61,11 +67,11 @@ static void setup(void *arg)
 		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
 
 	/* Clean up from any previous pre-bootstrap run */
-	remove("/var/run/dbus/pid");
+	remove(DAEMONPIDFILE);
 
 	/* Register service with Finit */
-	snprintf(line, sizeof(line), "[S12345789] cgroup.system @%s:%s %s %s -- %s",
-		 DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
+	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
+		 DAEMONPIDFILE, DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
 		_pe("Failed registering %s", DAEMON);
 	free(cmd);
