@@ -2,7 +2,8 @@
 #define FINIT_COND_H_
 
 #include <paths.h>
-#include <svc.h>
+
+#include "svc.h"
 
 #define COND_BASE      "finit/cond"
 #define COND_PID       "pid/"
