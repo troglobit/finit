@@ -70,6 +70,11 @@ typedef enum {
 	SVC_BLOCK_RESTARTING,
 } svc_block_t;
 
+typedef enum {
+	SVC_ONCRASH_IGNORE = 0,
+	SVC_ONCRASH_REBOOT = 1,
+} svc_oncrash_action_t;
+
 #define MAX_ID_LEN       16
 #define MAX_ARG_LEN      64
 #define MAX_IDENT_LEN    (MAX_ARG_LEN + MAX_ID_LEN + 1)
@@ -127,6 +132,9 @@ typedef struct svc {
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
+	unsigned char  restart_max;    /* Maximum number of restarts allowed */
+	unsigned       restart_tmo;    /* Time required for the service to start. */
+	unsigned       oncrash_action; /* Action to perform in crashed state. */
 	char           respawn;	       /* ttys, or services with `respawn`, never increment restart_cnt */
 	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
 
