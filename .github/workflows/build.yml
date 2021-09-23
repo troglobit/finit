@@ -55,8 +55,8 @@ jobs:
           size /tmp/sbin/initctl
           ldd  /tmp/sbin/reboot
           size /tmp/sbin/reboot
-          /tmp/finit/sbin/finit -h
-          /tmp/finit/sbin/initctl -h
+          /tmp/sbin/finit -h
+          /tmp/sbin/initctl -h
       - name: Run Unit Tests
         run: |
           make check || (cat test/test-suite.log; false)
