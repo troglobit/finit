@@ -34,6 +34,7 @@ jobs:
           tar xf libite-2.3.1.tar.gz
           (cd libuev-2.3.2 && ./configure && make && sudo make install-strip)
           (cd libite-2.3.1 && ./configure && make && sudo make install-strip)
+          ldconfig
       - uses: actions/checkout@v2
       - name: Static Finit
         run: |
