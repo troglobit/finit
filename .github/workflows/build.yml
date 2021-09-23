@@ -32,8 +32,8 @@ jobs:
           wget https://github.com/troglobit/libite/releases/download/v2.3.1/libite-2.3.1.tar.gz
           tar xf libuev-2.3.2.tar.xz
           tar xf libite-2.3.1.tar.gz
-          (cd libuev-2.3.2 && ./configure --prefix=/tmp && make && make install-strip)
-          (cd libite-2.3.1 && ./configure --prefix=/tmp && make && make install-strip)
+          (cd libuev-2.3.2 && ./configure && make && sudo make install-strip)
+          (cd libite-2.3.1 && ./configure && make && sudo make install-strip)
       - uses: actions/checkout@v2
       - name: Static Finit
         run: |
