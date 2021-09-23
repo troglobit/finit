@@ -1,0 +1,67 @@
+name: Bob the Builder
+
+# Run on all branches, including all pull requests, except the 'dev'
+# branch since that's where we run Coverity Scan (limited tokens/day)
+on:
+  push:
+    branches:
+      - '**'
+      - '!dev'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    # Verify we can build on latest Ubuntu with both gcc and clang
+    name: ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+      fail-fast: false
+    env:
+      MAKEFLAGS: -j3
+      CC: ${{ matrix.compiler }}
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install pkg-config
+          wget https://github.com/troglobit/libuev/releases/download/v2.3.2/libuev-2.3.2.tar.xz
+          wget https://github.com/troglobit/libite/releases/download/v2.3.1/libite-2.3.1.tar.gz
+          tar xf libuev-2.3.2.tar.xz
+          tar xf libite-2.3.1.tar.gz
+          (cd libuev-2.3.2 && ./configure --prefix=/tmp && make && make install-strip)
+          (cd libite-2.3.1 && ./configure --prefix=/tmp && make && make install-strip)
+      - uses: actions/checkout@v2
+      - name: Static Finit
+        run: |
+          ./autogen.sh
+          ./configure --prefix= --enable-static
+          make V=1
+      - name: Regular Finit
+        run: |
+          ./configure --prefix= --enable-x11-common-plugin --with-watchdog --with-keventd
+          make clean
+          make V=1
+      - name: Install to ~/tmp and Inspect
+        run: |
+          DESTDIR=~/tmp make install-strip
+          tree ~/tmp
+          ldd ~/tmp/sbin/finit
+          size ~/tmp/sbin/finit
+          ldd ~/tmp/sbin/initctl
+          size ~/tmp/sbin/initctl
+          ldd ~/tmp/sbin/reboot
+          size ~/tmp/sbin/reboot
+          LD_LIBRARY_PATH=~/tmp/lib /tmp/finit/sbin/finit -h
+          LD_LIBRARY_PATH=~/tmp/lib /tmp/finit/sbin/initctl -h
+      - name: Run Unit Tests
+        run: |
+          LD_LIBRARY_PATH=~/tmp/lib make check || (cat test/test-suite.log; false)
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: finit-test-${{ matrix.compiler }}
+          path: test/*

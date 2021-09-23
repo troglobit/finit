@@ -1,4 +1,4 @@
-[![License Badge][]][License] [![Travis Status]][Travis] [![Coverity Status]][Coverity Scan]
+[![License Badge][]][License] [![GitHub Status]][GitHub] [![Coverity Status]][Coverity Scan]
 <img align="right" src="img/finit3.png" alt="Finit: Fast Init">
 
 * [Introduction](#introduction)
@@ -571,34 +571,34 @@ This project is based on the [original finit][] by [Claudio Matsuoka][]
 which was reverse engineered from syscalls of the [EeePC fastinit][] —
 "gaps filled with frog DNA …"
 
-Finit is developed and maintained by [Joachim Wiberg][] at [GitHub][].
+Finit is developed and maintained by [Joachim Wiberg][] at [GitHub][6].
 Please file bug reports, clone it, or send pull requests for bug fixes
 and proposed extensions.
 
 
-[1]:  https://en.wikipedia.org/wiki/Process_supervision
-[2]:  http://cr.yp.to/daemontools.html
-[3]:  http://smarden.org/runit/
-[4]:  http://en.wikipedia.org/wiki/Init
-[5]:  http://en.wikipedia.org/wiki/Runlevel
+[1]:                https://en.wikipedia.org/wiki/Process_supervision
+[2]:                https://cr.yp.to/daemontools.html
+[3]:                https://smarden.org/runit/
+[4]:                https://en.wikipedia.org/wiki/Init
+[5]:                https://en.wikipedia.org/wiki/Runlevel
+[6]:                https://github.com/troglobit/finit
 [RFC862]:           https://tools.ietf.org/html/rfc862
 [RFC863]:           https://tools.ietf.org/html/rfc863
 [RFC864]:           https://tools.ietf.org/html/rfc864
 [RFC867]:           https://tools.ietf.org/html/rfc867
 [RFC868]:           https://tools.ietf.org/html/rfc868
-[init]:             http://en.wikipedia.org/wiki/Init
-[upstart]:          http://upstart.ubuntu.com/
-[systemd]:          http://www.freedesktop.org/wiki/Software/systemd/
-[openrc]:           http://www.gentoo.org/proj/en/base/openrc/
-[run-parts(8)]:     http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
+[init]:             https://en.wikipedia.org/wiki/Init
+[upstart]:          https://upstart.ubuntu.com/
+[systemd]:          https://www.freedesktop.org/wiki/Software/systemd/
+[openrc]:           https://www.gentoo.org/proj/en/base/openrc/
+[run-parts(8)]:     https://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
-[Joachim Wiberg]:   http://troglobit.com
-[GitHub]:           https://github.com/troglobit/finit
+[Joachim Wiberg]:   https://troglobit.com
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
-[Travis]:           https://travis-ci.org/troglobit/finit
-[Travis Status]:    https://travis-ci.org/troglobit/finit.svg?branch=master
+[GitHub]:           https://travis-ci.org/troglobit/finit
+[GitHub Status]:    https://travis-ci.org/troglobit/finit.svg?branch=master
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
 [Coverity Status]:  https://scan.coverity.com/projects/3545/badge.svg
