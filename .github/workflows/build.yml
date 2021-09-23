@@ -47,19 +47,19 @@ jobs:
           make V=1
       - name: Install to ~/tmp and Inspect
         run: |
-          DESTDIR=~/tmp make install-strip
-          tree ~/tmp
-          ldd ~/tmp/sbin/finit
-          size ~/tmp/sbin/finit
-          ldd ~/tmp/sbin/initctl
-          size ~/tmp/sbin/initctl
-          ldd ~/tmp/sbin/reboot
-          size ~/tmp/sbin/reboot
-          LD_LIBRARY_PATH=~/tmp/lib /tmp/finit/sbin/finit -h
-          LD_LIBRARY_PATH=~/tmp/lib /tmp/finit/sbin/initctl -h
+          DESTDIR=/tmp make install-strip
+          tree /tmp
+          ldd  /tmp/sbin/finit
+          size /tmp/sbin/finit
+          ldd  /tmp/sbin/initctl
+          size /tmp/sbin/initctl
+          ldd  /tmp/sbin/reboot
+          size /tmp/sbin/reboot
+          /tmp/finit/sbin/finit -h
+          /tmp/finit/sbin/initctl -h
       - name: Run Unit Tests
         run: |
-          LD_LIBRARY_PATH=~/tmp/lib make check || (cat test/test-suite.log; false)
+          make check || (cat test/test-suite.log; false)
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
