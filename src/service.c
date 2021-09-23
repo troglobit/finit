@@ -26,6 +26,7 @@
 
 #include <ctype.h>		/* isblank() */
 #include <string.h>
+#include <sys/reboot.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -1136,6 +1137,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	int respawn = 0;
 	int levels = 0;
 	int manual = 0;
+	int restart_max = SVC_RESPAWN_MAX;
+	int restart_tmo = 0;
+	unsigned oncrash_action = SVC_ONCRASH_IGNORE;
 	char *line;
 	svc_t *svc;
 
@@ -1193,6 +1197,17 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			name = cmd;
 		else if (!strncasecmp(cmd, "manual:yes", 10))
 			manual = 1;
+		else if (!strncasecmp(cmd, "restart:", 8))
+			restart_max = atoi(&cmd[8]);
+		else if (!strncasecmp(cmd, "restarttmo:", 11))
+			restart_tmo = atoi(&cmd[11])*1000;
+		else if (!strncasecmp(cmd, "norestart", 9))
+			restart_max = 0;
+		else if (!strncasecmp(cmd, "oncrash:", 8)) {
+			if (!strncasecmp(&cmd[8], "reboot", 6)) {
+				oncrash_action = SVC_ONCRASH_REBOOT;
+			}
+		}
 		else if (!strncasecmp(cmd, "respawn", 7))
 			respawn = 1;
 		else if (!strncasecmp(cmd, "halt:", 5))
@@ -1277,6 +1292,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (type == SVC_TYPE_SERVICE && manual)
 			svc_stop(svc);
+
+		svc->restart_max = restart_max;
+		svc->restart_tmo = restart_tmo;
+		svc->oncrash_action = oncrash_action;
 	} else {
 		/* update type, may have changed from service -> task */
 		svc->type = type;
@@ -1604,11 +1623,16 @@ static void service_retry(svc_t *svc)
 		return;
 	}
 
-	if (*restart_cnt >= SVC_RESPAWN_MAX) {
+	if (*restart_cnt >= svc->restart_max) {
 		logit(LOG_CONSOLE | LOG_WARNING, "Service %s keeps crashing, not restarting.",
 		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);
 		*restart_cnt = 0;
+		if (svc->oncrash_action == SVC_ONCRASH_REBOOT) {
+			logit(LOG_ERR, "%s issuing reboot", svc->cmd);
+			sync();
+			kill(1, SIGTERM);
+		}
 		service_step(svc);
 		return;
 	}
@@ -1617,12 +1641,14 @@ static void service_retry(svc_t *svc)
 
 	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
 	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
-	      svc_ident(svc, NULL, 0), svc->oldpid, *restart_cnt, SVC_RESPAWN_MAX);
+	      svc_ident(svc, NULL, 0), svc->oldpid, *restart_cnt, svc->restart_max);
 	svc_unblock(svc);
 	service_step(svc);
 
 	/* Wait 2s for the first 5 respawns, then back off to 5s */
-	timeout = ((*restart_cnt) <= (SVC_RESPAWN_MAX / 2)) ? 2000 : 5000;
+	timeout = ((*restart_cnt) <= (svc->restart_max / 2)) ? 2000 : 5000;
+	/* If a longer timeout was specified in the conf, use that instead. */
+	timeout = max(svc->restart_tmo, timeout);
 	service_timeout_after(svc, timeout, service_retry);
 }
 
