@@ -466,12 +466,13 @@ error:
 
 int api_init(uev_ctx_t *ctx)
 {
-	int sd;
-	mode_t oldmask;
 	struct sockaddr_un sun = {
 		.sun_family = AF_UNIX,
 		.sun_path   = INIT_SOCKET,
 	};
+	mode_t oldmask;
+	int uid, gid;
+	int sd;
 
 	_d("Setting up external API socket ...");
 	sd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
@@ -480,13 +481,19 @@ int api_init(uev_ctx_t *ctx)
 		return 1;
 	}
 
+	uid = geteuid();
+	gid = getgroup(DEFGROUP);
+
 	erase(INIT_SOCKET);
-	oldmask = umask(0077);
+	oldmask = umask(0117);
 	if (-1 == bind(sd, (struct sockaddr*)&sun, sizeof(sun)))
 		goto error;
 
 	if (-1 == listen(sd, 10))
 		goto error;
+
+	if (chown(INIT_SOCKET, uid, gid))
+		_pe("Failed setting group %s on %s", DEFGROUP, INIT_SOCKET);
 
 	umask(oldmask);
 	if (!uev_io_init(ctx, &api_watcher, api_cb, NULL, sd, UEV_READ))

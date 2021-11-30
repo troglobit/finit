@@ -114,6 +114,10 @@ AC_ARG_WITH(sysconfig,
         AS_HELP_STRING([--with-sysconfig=DIR], [System environment directory, sourced by .conf files, default /etc/default & /etc/conf.d]),
 	[sysconfig=$withval], [sysconfig=default])
 
+AC_ARG_WITH(group,
+	AS_HELP_STRING([--with-group=NAME], [Group for /run/finit/socket (initctl), default: root]),
+	[group=$withval], [group=root])
+
 AC_ARG_WITH(hostname,
         AS_HELP_STRING([--with-hostname=NAME], [If /etc/hostname is missing, default: noname]),
 	[hostname=$withval], [hostname=yes])
@@ -187,6 +191,11 @@ AS_IF([test "x$with_sysconfig" != "xno"], [
 AS_IF([test "x$with_heading" != "xno"], [
 	AS_IF([test "x$heading" = "xyes"], [heading=""])
 	AC_DEFINE_UNQUOTED(INIT_OSHEADING, "$heading", [Displayed by Finit at boot, defaults to /etc/os-release PRETTY_NAME])])
+
+AS_IF([test "x$with_group" != "xno"], [
+	AS_IF([test "x$group" = "xyes"], [
+		group=root])])
+AC_DEFINE_UNQUOTED(DEFGROUP, "$group", [For /run/finit/socket])
 
 AS_IF([test "x$with_hostname" != "xno"], [
 	AS_IF([test "x$hostname" = "xyes"], [
@@ -273,6 +282,7 @@ Optional features:
   Run fsck fix mode.....: $enable_fsckfix
   Redirect output.......: $enable_redirect
   Default hostname......: $hostname
+  Default group.........: $group
   Default runlevel......: $runlevel
 
 ------------- Compiler version --------------
