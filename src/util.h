@@ -32,9 +32,14 @@
 #include <sys/reboot.h>
 #include <termios.h>
 #endif
+
+/* Define for printheader() from conio.h, used in initctl */
+#define SCREEN_WIDTH ttcols
 #ifdef _LIBITE_LITE
+# include <libite/conio.h>
 # include <libite/lite.h>
 #else
+# include <lite/conio.h>
 # include <lite/lite.h>
 #endif
 
@@ -46,10 +51,6 @@ extern int   debug;			/* defined in finit or initctl */
 extern int   ttrows;
 extern int   ttcols;
 extern char *prognm;
-
-/* Define for printheader() from conio.h, used in initctl */
-#define SCREEN_WIDTH ttcols
-#include <lite/conio.h>
 
 char *progname     (char *arg0);
 
