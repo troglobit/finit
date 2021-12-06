@@ -26,7 +26,11 @@
 #define FINIT_IWATCH_H_
 
 #include <stdint.h>
-#include <lite/queue.h>
+#ifdef _LIBITE_LITE
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 #include <sys/inotify.h>
 
 #ifndef IN_MASK_CREATE

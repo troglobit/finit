@@ -37,7 +37,11 @@
 #include <linux/types.h>
 #include <linux/netlink.h>
 
-#include "lite/lite.h"
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "cond.h"
 #include "pid.h"

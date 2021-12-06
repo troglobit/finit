@@ -23,8 +23,12 @@
 
 #include <ftw.h>
 #include <libgen.h>
-#include <lite/lite.h>
 #include <stdio.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "finit.h"
 #include "cond.h"

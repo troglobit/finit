@@ -20,12 +20,16 @@
  * THE SOFTWARE.
  */
 
-#include <lite/lite.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 static int recreate(char *path, mode_t mode, uid_t uid, gid_t gid)
 {

@@ -25,7 +25,11 @@
 #define FINIT_PLUGIN_H_
 
 #include <uev/uev.h>
-#include <lite/queue.h>		/* BSD sys/queue.h API */
+#ifdef _LIBITE_LITE
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 
 #include "svc.h"
 

@@ -32,7 +32,11 @@
 #include <sys/reboot.h>
 #include <termios.h>
 #endif
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #ifndef RB_SW_SUSPEND /* Since Linux 2.5.18, but not in GLIBC until 2.19 */
 #define RB_SW_SUSPEND	0xd000fce2

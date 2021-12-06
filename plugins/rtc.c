@@ -24,7 +24,11 @@
 #include <time.h>
 #include <sys/ioctl.h>
 #include <linux/rtc.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "finit.h"
 #include "helpers.h"

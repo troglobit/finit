@@ -28,8 +28,13 @@
 #include <sys/ipc.h>		/* IPC_CREAT */
 #include <sys/resource.h>
 #include <sys/types.h>		/* pid_t */
-#include <lite/lite.h>
-#include <lite/queue.h>		/* BSD sys/queue.h API */
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/lite.h>
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 #include <uev/uev.h>
 
 #include "cgroup.h"

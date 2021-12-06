@@ -36,7 +36,11 @@
 #include <sys/mount.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
 #include <sys/wait.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "finit.h"
 #include "cgroup.h"

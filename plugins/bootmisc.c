@@ -24,7 +24,11 @@
 #include <ftw.h>
 #include <mntent.h>
 #include <string.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "config.h"
 #include "finit.h"

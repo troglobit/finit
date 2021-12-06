@@ -32,7 +32,11 @@
 #include <sys/types.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 #include "log.h"
 
 #define PROGRESS_DEFAULT PROGRESS_MODERN

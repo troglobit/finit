@@ -30,7 +30,11 @@
 #include <stdlib.h>
 #include <search.h>
 #include <inttypes.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 #include <sys/sysinfo.h>		/* sysinfo() */
 
 #include "cgutil.h"

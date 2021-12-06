@@ -28,8 +28,13 @@
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/resource.h>
-#include <lite/lite.h>
-#include <lite/queue.h>		/* BSD sys/queue.h API */
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/lite.h>
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 #include <time.h>
 #include <glob.h>
 

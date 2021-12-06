@@ -24,8 +24,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <lite/lite.h>
-#include <lite/queue.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/lite.h>
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 #include <sys/mount.h>
 #include <sys/sysinfo.h>		/* get_nprocs_conf() */
 

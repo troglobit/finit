@@ -27,7 +27,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "pid.h"
 #include "svc.h"

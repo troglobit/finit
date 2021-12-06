@@ -26,8 +26,13 @@
 #include <dirent.h>		/* readdir() et al */
 #include <poll.h>
 #include <string.h>
-#include <lite/lite.h>
-#include <lite/queue.h>		/* BSD sys/queue.h API */
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/lite.h>
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 
 #include "config.h"
 #include "cond.h"

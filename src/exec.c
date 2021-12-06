@@ -33,7 +33,11 @@
 #include <sys/wait.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 #include <linux/vt.h>
 
 #include "finit.h"

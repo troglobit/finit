@@ -29,7 +29,11 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/time.h>
-#include <lite/queue.h>		/* BSD sys/queue.h API */
+#ifdef _LIBITE_LITE
+# include <libite/queue.h>	/* BSD sys/queue.h API */
+#else
+# include <lite/queue.h>	/* BSD sys/queue.h API */
+#endif
 
 #include "finit.h"
 #include "svc.h"

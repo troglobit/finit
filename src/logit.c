@@ -30,7 +30,11 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <lite/lite.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 static const char version_info[] = PACKAGE_NAME " v" PACKAGE_VERSION;
 extern int logrotate(char *file, int num, off_t sz);

@@ -37,7 +37,11 @@
 # include <sys/ioctl.h>
 #endif
 #include <sys/sysinfo.h>	/* sysinfo() */
-#include <lite/lite.h>		/* strlcat() */
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 #include "util.h"
 
 #ifdef HAVE_TERMIOS_H
