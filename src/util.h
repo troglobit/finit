@@ -33,6 +33,15 @@
 #include <termios.h>
 #endif
 
+#ifndef RB_SW_SUSPEND /* Since Linux 2.5.18, but not in GLIBC until 2.19 */
+#define RB_SW_SUSPEND	0xd000fce2
+#endif
+
+extern int   debug;			/* defined in finit or initctl */
+extern int   ttrows;
+extern int   ttcols;
+extern char *prognm;
+
 /* Define for printheader() from conio.h, used in initctl */
 #define SCREEN_WIDTH ttcols
 #ifdef _LIBITE_LITE
@@ -42,15 +51,6 @@
 # include <lite/conio.h>
 # include <lite/lite.h>
 #endif
-
-#ifndef RB_SW_SUSPEND /* Since Linux 2.5.18, but not in GLIBC until 2.19 */
-#define RB_SW_SUSPEND	0xd000fce2
-#endif
-
-extern int   debug;			/* defined in finit or initctl */
-extern int   ttrows;
-extern int   ttcols;
-extern char *prognm;
 
 char *progname     (char *arg0);
 
