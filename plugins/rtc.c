@@ -156,8 +156,18 @@ static void rtc_restore(void *arg)
 			logit(LOG_ERR, "RTC has no previously saved (valid) time.");
 		else
 			logit(LOG_ERR, "RTC error code %d: %s", errno, strerror(errno));
+
+		/* Been here already? */
+		if (rc)
+			goto out;
+
+		/* Attempt to set RTC to a sane value ... */
+		tv.tv_sec = RTC_TIMESTAMP_BEGIN_2000;
+		if (!gmtime_r(&tv.tv_sec, &tm))
+			goto out;
+
+		logit(LOG_NOTICE, "Resetting RTC to kernel default, 2000-01-01 00:00.");
 		rc = 2;
-		goto out;
 	}
 
 	print_desc(NULL, "Restoring system clock (UTC) from RTC");
