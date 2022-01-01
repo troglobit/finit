@@ -558,11 +558,11 @@ static int telinit(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	struct wq crank = {
+	struct wq crank_work = {
 		.cb = crank_worker,
 		.delay = 10
 	};
-	struct wq bootstrap = {
+	struct wq bootstrap_work = {
 		.cb = bootstrap_worker,
 		.delay = 100
 	};
@@ -699,10 +699,10 @@ int main(int argc, char *argv[])
 	api_init(&loop);
 
 	_d("Starting the big state machine ...");
-	schedule_work(&crank);
+	schedule_work(&crank_work);
 
 	_d("Starting bootstrap finalize timer ...");
-	schedule_work(&bootstrap);
+	schedule_work(&bootstrap_work);
 
 	/*
 	 * Enter main loop to monitor /dev/initctl and services
