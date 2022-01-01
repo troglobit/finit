@@ -196,7 +196,7 @@ static int do_login(char *name)
 
 static int getty(char *tty, speed_t speed, char *term, char *user)
 {
-	const char cln[] = "\r\e[2K\n";
+	const char cln[] = "\r\e[K\n";
 	char name[33];		/* useradd(1) limit at 32 chars */
 	pid_t sid;
 

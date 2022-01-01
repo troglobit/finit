@@ -286,7 +286,7 @@ static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit 
 static int activate_console(int noclear, int nowait)
 {
 	static const char msg[] = "\nPlease press Enter to activate this console.";
-	static const char clr[] = "\r\e[2K";
+	static const char clr[] = "\r\e[K";
 	static const char cup[] = "\e[A";
 	struct termios orig;
 	char c;

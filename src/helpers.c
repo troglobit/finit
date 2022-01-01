@@ -227,7 +227,7 @@ void print_banner(const char *heading)
 		return;
 
 	buf[0] = 0;
-	strlcat(buf, "\r\e[2K", sizeof(buf));
+	strlcat(buf, "\r\e[K", sizeof(buf));
 
 	if (progress_style == PROGRESS_CLASSIC) {
 		strlcat(buf, "\e[1m", sizeof(buf));
@@ -312,7 +312,7 @@ void printv(const char *fmt, va_list ap)
 	if (progress_style == PROGRESS_CLASSIC)
 		cprintf("\r%s ", pad(buf, sizeof(buf), ".", sizeof(buf)));
 	else
-		cprintf("\r\e[2K%s%s", status(3), buf);
+		cprintf("\r\e[K%s%s", status(3), buf);
 }
 
 void print(int rc, const char *fmt, ...)
