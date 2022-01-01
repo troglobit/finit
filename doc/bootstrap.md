@@ -16,7 +16,9 @@ Bootstrap
 11. Load all `/etc/finit.d/*.conf` files and set hostname
 12. Remount `/` read-write if `/` is listed in `/etc/fstab` without `ro`
 13. Call 1st level hooks, `HOOK_ROOTFS_UP`
-14. Mount all file systems listed in `/etc/fstab` and swap, if available
+14. Mount all file systems listed in `/etc/fstab` and swap, if available.
+    On mount error `HOOK_MOUNT_ERROR` is called.  After mount, regardless
+    of error, `HOOK_MOUNT_POST` is called
 15. Enable SysV init signals
 16. Call 2nd level hooks, `HOOK_BASEFS_UP`
 17. Cleanup stale files from `/tmp/*` et al, handled by `bootmisc` plugin
@@ -38,16 +40,13 @@ Bootstrap
 26. Call 5th level (last) hooks, `HOOK_SYSTEM_UP`
 27. Start all configured TTYs
 
-In (19) and (22) tasks and services defined in `/etc/finit.conf` and
-`/etc/sysctl.d/*.conf` are started.  Remember, all `service` and `task`
-stanzas are started in parallel and `run` in sequence, and in the order
-listed.  Hence, to emulate a SysV `/etc/init.d/rcS` one could write a
-long `finit.conf` with only `run` statements.
+In (19) and (23) tasks and services defined in `/etc/finit.conf` and
+`/etc/finit.d/*.conf` are started.
 
-Notice the five hook points that are called at various point in the
-bootstrap process.  This is where plugins can extend the boot in any way
-they please.  There are other hook points, e.g. `HOOK_MOUNT_ERROR`, for
-more on this see [plugins.md](plugins.md).
+Notice the seven hook points that are called at various point in the
+bootstrap process.  This is where plugins can extend the boot in any
+way they please.  There are other hook points available, for more on
+this, see [plugins.md](plugins.md).
 
 For instance, at `HOOK_BASEFS_UP` a plugin could read an XML file from a
 USB stick, convert/copy its contents to the system's `/etc/` directory,
