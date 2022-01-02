@@ -138,8 +138,8 @@ typedef struct svc {
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
 	unsigned char  restart_max;    /* Maximum number of restarts allowed */
-	unsigned       restart_tmo;    /* Time required for the service to start. */
-	unsigned       oncrash_action; /* Action to perform in crashed state. */
+	int            restart_tmo;    /* Time required for the service to start. */
+	unsigned char  oncrash_action; /* Action to perform in crashed state. */
 	char           respawn;	       /* ttys, or services with `respawn`, never increment restart_cnt */
 	const char     restart_cnt;    /* Incremented for each restart by service monitor. */
 

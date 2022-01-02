@@ -1204,13 +1204,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else if (!strncasecmp(cmd, "restart:", 8))
 			restart_max = atoi(&cmd[8]);
 		else if (!strncasecmp(cmd, "restarttmo:", 11))
-			restart_tmo = atoi(&cmd[11])*1000;
+			restart_tmo = atoi(&cmd[11]) * 1000;
 		else if (!strncasecmp(cmd, "norestart", 9))
 			restart_max = 0;
 		else if (!strncasecmp(cmd, "oncrash:", 8)) {
-			if (!strncasecmp(&cmd[8], "reboot", 6)) {
+			if (!strncasecmp(&cmd[8], "reboot", 6))
 				oncrash_action = SVC_ONCRASH_REBOOT;
-			}
 		}
 		else if (!strncasecmp(cmd, "respawn", 7))
 			respawn = 1;
@@ -1610,8 +1609,8 @@ static void service_post_script(svc_t *svc)
 
 static void service_retry(svc_t *svc)
 {
-	int timeout;
 	char *restart_cnt = (char *)&svc->restart_cnt;
+	int timeout;
 
 	service_timeout_cancel(svc);
 	if (svc->respawn) {
