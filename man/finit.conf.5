@@ -174,9 +174,13 @@ the default behavior for the
 command modifier.
 .It Cm service Oo LVLS Oc Ao COND Ac Ar /path/to/daemon ARGS Op -- Optional description
 Service, or daemon, to be monitored and automatically restarted if it
-exits prematurely.  Finit tries to restart services that die 10 times
-before giving up, then you have to restart it manually:
-.Cm initctl restart NAME
+exits prematurely.  Finit tries to restart services that die, by
+default 10 times, before giving up and marking them as
+.Em crashed .
+After which they have to be restarted manually using
+.Cm initctl restart NAME .
+The number of restarts, the delay between each restart, and more is
+configurable, see the options below.
 .Pp  
 For daemons that support it, we recommend appending
 .Cm --foreground , --no-background , -n , -F ,
@@ -200,6 +204,7 @@ flag (daemonize) to prevent it from forking to the background:
 .Bd -unfilled -offset indent
 service [2345] <pid/zebra> /sbin/ospfd -- OSPF daemon
 .Ed
+.Pp
 .Cm [2345]
 denote the runlevels
 .Cm ospfd
@@ -263,6 +268,34 @@ tool, defaults to the basename of the service executable. It can be
 changed with the
 .Cm name:foo
 command modifier.
+.Pp
+As mentioned previously, services are automatically restarted should
+they crash, this is configurable with the following options:
+.Bl -tag -width 1n
+.It Cm restart:NUM
+number of times Finit tries to restart a crashing
+service, default: 10.  When this limit is reached the service is
+marked
+.Em crashed
+and must be restarted manually with
+.Xr initctl 8 .
+.It Cm restart_sec:SEC
+number of seconds before Finit tries to restart
+a crashing service, default: 2 seconds for the first five retries,
+then back-off to 5 seconds.  The maximum of this configured value
+and the above (2 and 5) will be used
+.It Cm norestart
+dont restart on failures, same as
+.Cm restart:0
+.It Cm oncrash:reboot
+when all retries have failed, and the service
+has
+.Em crashed ,
+if this option is set the system is rebooted.  Note, future releases
+may include other
+.Cm oncrash:
+actions.
+.El
 .Pp
 When stopping a service (run/task/sysv/service), either manually or when
 moving to another runlevel, Finit starts by sending SIGTERM, to allow

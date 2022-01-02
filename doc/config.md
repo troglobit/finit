@@ -332,8 +332,11 @@ by declaring the PID file to look for: `pid:!/path/to/pidfile.pid`.
 **Syntax:** `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`
 
 Service, or daemon, to be monitored and automatically restarted if it
-exits prematurely.  Finit tries to restart services that die 10 times
-before giving up, then you have to `initctl restart NAME` it manually.
+exits prematurely.  Finit tries to restart services that die, by
+default 10 times before giving up and marking them as *crashed*.
+After which they have to be manually restarted with `initctl restart
+NAME`.  The limits controling this are configurable, see the options
+below.
   
 For daemons that support it, we recommend appending `--foreground`,
 `--no-background`, `-n`, `-F`, or similar command line argument to
@@ -389,6 +392,21 @@ basename of the service executable. It can be changed with the
 optional `name` argument:
 
     name:<service-name>
+
+As mentioned previously, services are automatically restarted, this is
+configurable with the following options:
+
+  * `restart:NUM` -- number of times Finit tries to restart a crashing
+    service, default: 10.  When this limit is reached the service is
+	marked *crashed* and must be restarted manually with `initctl`
+  * `restart_sec:SEC` -- number of seconds before Finit tries to restart
+    a crashing service, default: 2 seconds for the first five retries,
+	then back-off to 5 seconds.  The maximum of this configured value
+	and the above (2 and 5) will be used
+  * `norestart` -- dont restart on failures, same as `restart:0`
+  * `oncrash:reboot` -- when all retries have failed, and the service
+    has *crashed*, if this option is set the system is rebooted.
+    Note, future releases may include other `oncrash:` actions
 
 When stopping a service (run/task/sysv/service), either manually or
 when moving to another runlevel, Finit starts by sending `SIGTERM`, to
