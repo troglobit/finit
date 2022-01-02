@@ -38,7 +38,7 @@
 static int up       = 0;
 static int loglevel = LOG_INFO;
 
-void log_init(int dbg)
+void log_init(void)
 {
 	if (debug)
 		loglevel = LOG_DEBUG;

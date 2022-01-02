@@ -175,14 +175,12 @@ static void parse_kernel_cmdline(void)
  */
 void conf_parse_cmdline(int argc, char *argv[])
 {
-	int dbg = 0;
-
 	for (int i = 1; i < argc; i++)
 		parse_arg(argv[i]);
 
 	parse_kernel_cmdline();
 
-	log_init(dbg);
+	log_init();
 }
 
 static int kmod_exists(char *mod)
