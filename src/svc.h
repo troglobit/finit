@@ -220,7 +220,6 @@ void	    svc_prune_bootstrap	   (void);
 
 void        svc_enable             (svc_t *svc);
 int         svc_enabled            (svc_t *svc);
-int         svc_is_unique          (svc_t *svc);
 
 int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *));
 

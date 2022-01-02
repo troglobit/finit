@@ -617,27 +617,6 @@ int svc_enabled(svc_t *svc)
 	return 1;
 }
 
-int svc_is_unique(svc_t *svc)
-{
-	svc_t *s, *iter = NULL;
-	int unique = 1;
-
-	for (s = svc_iterator(&iter, 1); s; s = svc_iterator(&iter, 0)) {
-		if (svc->type == SVC_TYPE_FREE)
-			continue;
-
-		if (s == svc)
-			continue;
-
-		if (s->job == svc->job) {
-			unique = 0;
-			break;
-		}
-	}
-
-	return unique;
-}
-
 /* break up "job:id job:id job:id ..." into several "job:id" tokens */
 static char *tokstr(char *str, size_t len)
 {
