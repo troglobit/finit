@@ -87,6 +87,7 @@ fallback:
 /*
  * finit.debug = [on,off]
  * finit.show_status = [on,off]
+ * finit.status_style = [old,classic,modern]
  */
 static void parse_finit_opts(char *opt)
 {
@@ -170,6 +171,29 @@ static void parse_kernel_cmdline(void)
 #define parse_kernel_cmdline()
 #endif
 
+static void parse_kernel_loglevel(void)
+{
+	char line[LINE_SIZE], *ptr;
+	FILE *fp;
+	int val;
+
+	fp = fopen("/proc/sys/kernel/printk", "r");
+	if (!fp)
+		return;
+
+	if (!fgets(line, sizeof(line), fp)) {
+		fclose(fp);
+		return;
+	}
+	fclose(fp);
+
+	ptr = chomp(line);
+	_d("%s", ptr);
+	val = atoi(ptr);
+	if (val >= 7)
+		kerndebug = 1;
+}
+
 /*
  * Kernel gives us all non-kernel options on our cmdline
  */
@@ -179,6 +203,7 @@ void conf_parse_cmdline(int argc, char *argv[])
 		parse_arg(argv[i]);
 
 	parse_kernel_cmdline();
+	parse_kernel_loglevel();
 
 	log_init();
 }

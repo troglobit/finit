@@ -114,6 +114,7 @@ extern int    debug;
 extern int    rescue;
 extern int    single;
 extern int    bootstrap;
+extern int    kerndebug;
 extern char  *rcsd;
 extern char  *sdown;
 extern char  *network;

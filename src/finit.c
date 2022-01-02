@@ -65,6 +65,7 @@ int   debug     = 0;		/* debug mode from kernel cmdline */
 int   rescue    = 0;		/* rescue mode from kernel cmdline */
 int   single    = 0;		/* single user mode from kernel cmdline */
 int   bootstrap = 1;		/* set while bootrapping (for TTYs) */
+int   kerndebug = 0;		/* set if /proc/sys/kernel/printk > 7 */
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
@@ -86,7 +87,7 @@ static void banner(void)
 	 * similar enabled to start emptying /dev/kmsg, but for
 	 * our progress we want to own the console.
 	 */
-	if (!debug)
+	if (!debug && !kerndebug)
 		klogctl(6, NULL, 0);
 
 	/*
