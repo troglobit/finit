@@ -4,6 +4,53 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.2][UNRELEASED]
+--------------------
+
+### Changes
+* Support for non-root users to use `initctl`, e.g. group wheel
+* Support for new libite (-lite) header namespace
+* RTC plugin now reset an invalid RTC time to the kernel default
+  time, 2000-01-01 00:00, prevents errors and is less crazy than
+  some systems coming with with <= Jan 1, 1970
+* urandom plugin now use RNDADDENTROPY ioctl to seed kernel rng,
+  incrementing entropy count.  Also, 32 kiB instead of 512 bytes are
+  now saved (and restored) on reboot.  This should greatly improve
+  reliability of systems with none or poor HWRNG
+* Kernel logging to console (loglevel >= 7, debug, when quiet mode is
+  not used) is now honored by Finit, regardless of the finit.debug
+  command line option
+* Reduced default log level from `LOG_NOTICE` to `LOG_INFO`
+* Wrapped all calls to mount(2) to add logging in case of failure
+* New configure options to control fastboot (no fsck) and fsck fix
+  options, by Ming Liu, Atlas Copco
+* Support for overriding default `/etc/nologin` file with an external
+  `#define`, by Ming Liu, Atlas Copco
+* Support for overriding default `/var/run/dbus/pid` file with an
+  external `#define`, by Ming Liu, Atlas Copco
+* Support for more service options to control respawn behavior of
+  crashing services, by Robert Andersson and Ming Liu, Atlas Copco
+* Support for `initctl ident [NAME]` which lists all instances of
+  `NAME`, or all enabled system run/tasks and services
+
+### Fixes
+* Fix #180: user managed (`manual:yes`) services accidentally started
+  by `initctl reload`, regression introduced in Finit v4.0
+* Fix #181: lots of typos all over the tree, by David Yang, Debian
+* Fix #187: fix typos, incl. small cleanup, in doc/bootstrap.md
+* Fix #197: `initctl status foo` now shows a focused overview of all
+  matching instances; foo:1, foo:2 -- if only one instance matches the
+  command line argument, or if onle one instance exists, the detailed
+  view is shown, as before
+* Fix #198: a few typos found by Tim Gates
+* Fix #199: avoid using C++ reserved keywords
+* Fix #201: memory leak in usr condition plugin, by Ming Liu, Atlas Copco
+* Fix #203: ensure all filesystems listed in /proc/mounts are properly
+  unumounted on shutdown/reboot, by Robert Andersson, Atlas Copco
+* Fix #210: resizing terminal (smaller) after boot causes empty lines
+  to be inserted between boot progress
+
+
 [4.1][] - 2021-06-06
 --------------------
 
@@ -975,7 +1022,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.0...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.1...HEAD
+[4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
 [4.1]: https://github.com/troglobit/finit/compare/4.0...4.1
 [4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
 [3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
