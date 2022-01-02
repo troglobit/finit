@@ -22,6 +22,7 @@
  */
 
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/time.h>		/* gettimeofday() */
 #include <sys/types.h>
@@ -30,15 +31,25 @@
 #else
 # include <lite/lite.h>
 #endif
+#include <linux/random.h>
 
 #include "config.h"
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
 
+#ifndef RANDOM_BYTES
+#define RANDOM_BYTES (32*1024)
+#endif
+
 static void setup(void *arg)
 {
 #ifdef RANDOMSEED
+	struct rand_pool_info *rpi;
+	ssize_t len = 0;
+	int rc = -1;
+	int fd, err;
+
 	if (rescue) {
 		_d("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
@@ -71,7 +82,58 @@ static void setup(void *arg)
 	}
 
 	print_desc("Initializing random number generator", NULL);
-	print_result(512 != copyfile(RANDOMSEED, "/dev/urandom", 0, 0));
+
+	/*
+	 * Simply copying our saved entropy to /dev/urandom doesn't
+	 * increment the kernel "entropy count", instead we must use
+	 * the ioctl below.
+	 */
+	fd = open(RANDOMSEED, O_RDONLY);
+	if (fd < 0)
+		goto fallback;
+
+	rpi = malloc(sizeof(*rpi) + RANDOM_BYTES);
+	if (!rpi) {
+		close(fd);
+		goto fallback;
+	}
+
+	do {
+		ssize_t num;
+
+		num = read(fd, &rpi->buf[len], RANDOM_BYTES - len);
+		if (num <= 0) {
+			if (num == -1 && errno == EINTR)
+				continue;
+			if (len > 0)
+				break;
+
+			free(rpi);
+			goto fallback;
+		}
+
+		len += num;
+	} while (len < RANDOM_BYTES);
+	close(fd);
+
+	fd = open("/dev/urandom", O_WRONLY);
+	if (fd < 0) {
+		free(rpi);
+		goto fallback;
+	}
+
+	rpi->buf_size = len;
+	rpi->entropy_count = len * 8;
+	rc = ioctl(fd, RNDADDENTROPY, rpi);
+	err = errno;
+	close(fd);
+	free(rpi);
+	if (rc < 0)
+		logit(LOG_ERR, "Failed adding entropy to kernel random pool: %s", strerror(err));
+	print_result(rc < 0);
+	return;
+fallback:
+	print_result(512 > copyfile(RANDOMSEED, "/dev/urandom", 0, 0));
 #endif
 }
 
@@ -88,7 +150,7 @@ static void save(void *arg)
 	prev = umask(077);
 
 	print_desc("Saving random seed", NULL);
-	print_result(512 != copyfile("/dev/urandom", RANDOMSEED, 512, 0));
+	print_result(RANDOM_BYTES != copyfile("/dev/urandom", RANDOMSEED, RANDOM_BYTES, 0));
 
 	umask(prev);
 #endif
