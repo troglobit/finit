@@ -803,6 +803,30 @@ static int show_status(char *arg)
 	return 0;
 }
 
+static int show_ident(char *arg)
+{
+	svc_t *svc;
+
+	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
+		char ident[MAX_IDENT_LEN];
+		size_t len;
+		char *pos;
+
+		svc_ident(svc, ident, sizeof(ident));
+		pos = strchr(ident, ':');
+		if (pos)
+			len = pos - ident;
+		else
+			len = strlen(ident);
+		if (arg && arg[0] && strncasecmp(ident, arg, len))
+			continue;
+
+		puts(ident);
+	}
+
+	return 0;
+}
+
 static int transform(char *nm)
 {
 	char *names[] = {
@@ -899,6 +923,7 @@ static int usage(int rc)
 		"  stop     <NAME>[:ID]      Stop/Pause a running service by name\n"
 		"  reload   <NAME>[:ID]      Reload service by name (SIGHUP or restart)\n"
 		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
+		"  ident    [NAME]           Show matching identities for NAME, or all\n"
 		"  status   <NAME>[:ID]      Show service status, by name\n"
 		"  status                    Show status of services, default command\n"
 		"\n"
@@ -992,6 +1017,7 @@ int main(int argc, char *argv[])
 	};
 	struct cmd command[] = {
 		{ "status",   NULL, show_status  }, /* default cmd */
+		{ "ident",    NULL, show_ident   },
 
 		{ "debug",    NULL, toggle_debug },
 		{ "devel",    NULL, do_devel     },
