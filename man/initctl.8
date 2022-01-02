@@ -132,7 +132,11 @@ Reload service by name (SIGHUP or restart)
 .It Nm Ar restart Cm NAME[:ID]
 Restart (stop/start) service by name
 .It Nm Ar status Cm NAME[:ID]
-Show service status, by name
+Show service status, by name.  If only
+.Cm NAME
+is given and multiple instances exits, a summary of all matching
+instances are shown.  Only an exact match displays the detailed status
+for a particular instance
 .It Nm Ar status
 Show status of all services, default command
 .It Nm Ar cgroup

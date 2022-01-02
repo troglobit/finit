@@ -703,17 +703,30 @@ static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
 	char buf[512];
+	int num = 0;
 	svc_t *svc;
 
 	runlevel = runlevel_get(NULL);
 
-	if (arg && arg[0]) {
+	while (arg && arg[0]) {
 		long now = jiffies();
 		char uptm[42] = "N/A";
 		char grbuf[128];
 		char path[256];
 		struct cg *cg;
+		int exact = 0;
 		char *group;
+
+		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
+			svc_ident(svc, ident, sizeof(ident));
+			if (string_match(ident, arg))
+				num++;
+			if (string_case_compare(ident, arg))
+				exact++;
+		}
+
+		if (num > 1 && !exact)
+			break;
 
 		svc = client_svc_find(arg);
 		if (!svc)
@@ -768,9 +781,11 @@ static int show_status(char *arg)
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		char *lvls;
 
-		printf("%-*d  ", pw, svc->pid);
-
 		svc_ident(svc, ident, sizeof(ident));
+		if (num && !string_match(ident, arg))
+			continue;
+
+		printf("%-*d  ", pw, svc->pid);
 		printf("%-*s  %s ", iw, ident, status(svc, 0));
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
