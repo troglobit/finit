@@ -174,11 +174,11 @@ static int do_runlevel(char *arg)
 
 	if (!arg) {
 		int prevlevel = 0;
-		int runlevel;
+		int currlevel;
 		char prev;
 
-		runlevel = runlevel_get(&prevlevel);
-		if (255 == runlevel) {
+		currlevel = runlevel_get(&prevlevel);
+		if (255 == currlevel) {
 			printf("unknown\n");
 			return 0;
 		}
@@ -187,7 +187,7 @@ static int do_runlevel(char *arg)
 		if (prev <= '0' || prev > '9')
 			prev = 'N';
 
-		printf("%c %d\n", prev , runlevel);
+		printf("%c %d\n", prev , currlevel);
 		return 0;
 	}
 
@@ -545,7 +545,7 @@ static int show_version(char *arg)
  * Pointer to string on the form [2345], may be up to 12 chars long,
  * plus escape sequences for highlighting current runlevel.
  */
-char *runlevel_string(int runlevel, int levels)
+char *runlevel_string(int currlevel, int levels)
 {
 	int i, pos = 1;
 	static char lvl[21];
@@ -555,7 +555,7 @@ char *runlevel_string(int runlevel, int levels)
 
 	for (i = 0; i < 10; i++) {
 		if (ISSET(levels, i)) {
-			if (!plain && runlevel == i)
+			if (!plain && currlevel == i)
 				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
 
 			if (i == 0)
@@ -563,7 +563,7 @@ char *runlevel_string(int runlevel, int levels)
 			else
 				lvl[pos++] = '0' + i;
 
-			if (!plain && runlevel == i)
+			if (!plain && currlevel == i)
 				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
 		} else {
 			lvl[pos++] = '-';
