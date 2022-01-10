@@ -64,6 +64,7 @@ int plain    = 0;
 int quiet    = 0;
 int runlevel = 0;
 int cgrp     = 0;
+int utmp     = 0;
 
 int iw, pw;
 
@@ -516,7 +517,7 @@ int utmp_show(char *file)
 
 static int do_utmp(char *file)
 {
-	if (!has_utmp())
+	if (!utmp)
 		return 1;
 
 	if (fexist(file))
@@ -944,13 +945,11 @@ static int usage(int rc)
 		"  poweroff                  Halt and power off system\n"
 		"  suspend                   Suspend system\n");
 
-	if (has_utmp())
+	if (utmp)
 		fprintf(stderr,
 			"\n"
-			"  utmp     show             Raw dump of UTMP/WTMP db\n"
-			"\n");
-	else
-		fprintf(stderr, "\n");
+			"  utmp     show             Raw dump of UTMP/WTMP db\n");
+	fprintf(stderr, "\n");
 
 	return rc;
 }
@@ -1069,7 +1068,7 @@ int main(int argc, char *argv[])
 		{ "poweroff", NULL, do_poweroff,  NULL },
 		{ "suspend",  NULL, do_suspend,   NULL },
 
-		{ "utmp",     NULL, do_utmp,      NULL },
+		{ "utmp",     NULL, do_utmp,     &utmp },
 		{ NULL, NULL, NULL, NULL }
 	};
 	int interactive = 1, c;
@@ -1077,8 +1076,9 @@ int main(int argc, char *argv[])
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
 
-	/* Enable some functionality if kernel supports cgroups v2 */
+	/* Enable functionality depending on system capabilities */
 	cgrp = cgroup_avail();
+	utmp = has_utmp();
 
 	while ((c = getopt_long(argc, argv, "1bcdfh?pqtv", long_options, NULL)) != EOF) {
 		switch(c) {
@@ -1126,17 +1126,6 @@ int main(int argc, char *argv[])
 
 	if (interactive)
 		ttinit();
-
-	if (!has_utmp()) {
-		/* system w/o utmp support, disable 'utmp' command */
-		for (c = 0; command[c].cmd; c++) {
-			if (!string_compare(command[c].cmd, "utmp"))
-				continue;
-
-			command[c].cb = NULL;
-			break;
-		}
-	}
 
 	return cmd_parse(argc - optind, &argv[optind], command);
 }
