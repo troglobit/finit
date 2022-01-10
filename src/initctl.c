@@ -476,15 +476,12 @@ int do_suspend (char *arg) { return do_cmd(INIT_CMD_SUSPEND);  }
 
 int utmp_show(char *file)
 {
-	static int once = 0;
-	struct tm *sectm;
 	struct utmp *ut;
 	time_t sec;
 
-	int pid;
-	char id[sizeof(ut->ut_id) + 1], user[sizeof(ut->ut_user) + 1], when[80];
-
 	if (heading) {
+		static int once = 0;
+
 		print_header("%s%s ", once ? "\n" : "", file);
 		once++;
 	}
@@ -492,7 +489,12 @@ int utmp_show(char *file)
 
 	setutent();
 	while ((ut = getutent())) {
+		char user[sizeof(ut->ut_user) + 1];
+		char id[sizeof(ut->ut_id) + 1];
+		struct tm *sectm;
+		char when[80];
 		char addr[64];
+		int pid;
 
 		strlcpy(id, ut->ut_id, sizeof(id));
 		strlcpy(user, ut->ut_user, sizeof(user));
