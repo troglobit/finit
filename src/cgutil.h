@@ -52,6 +52,8 @@ struct cg {
 	} cg_cpu;
 };
 
+int cgroup_avail(void);
+
 char *pid_cmdline (int pid, char *buf, size_t len);
 char *pid_comm    (int pid, char *buf, size_t len);
 char *pid_cgroup  (int pid, char *buf, size_t len);

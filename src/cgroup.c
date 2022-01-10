@@ -56,6 +56,7 @@ static char controllers[256];
 
 static struct iwatch iw_cgroup;
 static uev_t cgw;
+static int avail;
 
 
 static void cgset(const char *path, char *ctrl, char *prop)
@@ -164,12 +165,18 @@ static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
 
 int cgroup_user(char *name, int pid)
 {
+	if (!avail)
+		return 0;
+
 	return cgroup_leaf_init("user", name, pid, NULL);
 }
 
 int cgroup_service(char *name, int pid, struct cgroup *cg)
 {
 	char *group = "system";
+
+	if (!avail)
+		return 0;
 
 	if (cg && cg->name[0]) {
 		char path[256];
@@ -307,6 +314,9 @@ void cgroup_mark_all(void)
 {
 	struct cg *cg;
 
+	if (!avail)
+		return;
+
 	TAILQ_FOREACH(cg, &cgroups, link) {
 		if (cg->is_protected)
 			continue;
@@ -323,6 +333,9 @@ void cgroup_cleanup(void)
 	struct cg *cg, *tmp;
 	char path[256];
 
+	if (!avail)
+		return;
+
 	TAILQ_FOREACH_SAFE(cg, &cgroups, link, tmp) {
 		if (cg->active)
 			continue;
@@ -338,6 +351,9 @@ void cgroup_cleanup(void)
 int cgroup_add(char *name, char *cfg, int is_protected)
 {
 	struct cg *cg;
+
+	if (!avail)
+		return 0;
 
 	if (!name)
 		return -1;
@@ -383,6 +399,9 @@ int cgroup_del(char *dir)
 	struct cg *cg;
 	char path[256];
 
+	if (!avail)
+		return 0;
+
 	TAILQ_FOREACH(cg, &cgroups, link) {
 		snprintf(path, sizeof(path), FINIT_CGPATH "/%s", cg->name);
 		if (strcmp(path, dir))
@@ -414,6 +433,9 @@ void cgroup_config(void)
 {
 	struct cg *cg;
 
+	if (!avail)
+		return;
+
 	TAILQ_FOREACH(cg, &cgroups, link) {
 		char path[256];
 		int leaf = 0;
@@ -442,14 +464,21 @@ void cgroup_init(uev_ctx_t *ctx)
 	int fd;
 
 	if (mount("none", FINIT_CGPATH, "cgroup2", opts, NULL)) {
-		_pe("Failed mounting cgroup v2");
+		if (errno == ENOENT)
+			logit(LOG_NOTICE, "Kernel does not support cgroups v2, disabling.");
+		else
+			_pe("Failed mounting cgroup v2, disabling.");
+		avail = 0;
 		return;
 	}
+	avail = 1;
 
 	/* Find available controllers */
 	fp = fopen(FINIT_CGPATH "/cgroup.controllers", "r");
 	if (!fp) {
 		_pe("Failed opening %s", FINIT_CGPATH "/cgroup.controllers");
+		umount(FINIT_CGPATH);
+		avail = 0;
 		return;
 	}
 

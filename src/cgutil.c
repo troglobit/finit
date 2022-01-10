@@ -53,6 +53,10 @@ uint64_t total_ram;			/* From sysinfo() */
 struct cg  dummy;			/* empty result "NULL"      */
 struct cg *list;
 
+int cgroup_avail(void)
+{
+	return fismnt(FINIT_CGPATH);
+}
 
 char *pid_cmdline(int pid, char *buf, size_t len)
 {

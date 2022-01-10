@@ -51,6 +51,7 @@ struct cmd {
 	char        *cmd;
 	struct cmd  *ctx;
 	int        (*cb)(char *arg);
+	int         *cond;
 };
 
 int icreate  = 0;
@@ -62,6 +63,8 @@ int verbose  = 0;
 int plain    = 0;
 int quiet    = 0;
 int runlevel = 0;
+int cgrp     = 0;
+
 int iw, pw;
 
 extern int reboot_main(int argc, char *argv[]);
@@ -711,11 +714,7 @@ static int show_status(char *arg)
 	while (arg && arg[0]) {
 		long now = jiffies();
 		char uptm[42] = "N/A";
-		char grbuf[128];
-		char path[256];
-		struct cg *cg;
 		int exact = 0;
-		char *group;
 
 		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 			svc_ident(svc, ident, sizeof(ident));
@@ -735,10 +734,6 @@ static int show_status(char *arg)
 		if (quiet)
 			return svc->state != SVC_RUNNING_STATE;
 
-		group = pid_cgroup(svc->pid, grbuf, sizeof(grbuf));
-		snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, group);
-		cg = cg_conf(path);
-
 		printf("     Status : %s\n", status(svc, 1));
 		printf("   Identity : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
@@ -752,7 +747,16 @@ static int show_status(char *arg)
 		printf("      Group : %s\n", svc->group);
 		printf("     Uptime : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
 		printf("  Runlevels : %s\n", runlevel_string(runlevel, svc->runlevels));
-		if (svc->pid > 1) {
+		if (cgrp && svc->pid > 1) {
+			char grbuf[128];
+			char path[256];
+			struct cg *cg;
+			char *group;
+
+			group = pid_cgroup(svc->pid, grbuf, sizeof(grbuf));
+			snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, group);
+			cg = cg_conf(path);
+
 			printf("     Memory : %s\n", memsz(cgroup_memory(group), uptm, sizeof(uptm)));
 			printf("     CGroup : %s cpu %s [%s, %s] mem [%s, %s]\n",
 			       group, cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max,
@@ -925,11 +929,14 @@ static int usage(int rc)
 		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
 		"  ident    [NAME]           Show matching identities for NAME, or all\n"
 		"  status   <NAME>[:ID]      Show service status, by name\n"
-		"  status                    Show status of services, default command\n"
-		"\n"
-		"  cgroup                    List cgroup config overview\n"
-		"  ps                        List processes based on cgroups\n"
-		"  top                       Show top-like listing based on cgroups\n"
+		"  status                    Show status of services, default command\n");
+	if (cgrp)
+		fprintf(stderr,
+			"\n"
+			"  cgroup                    List cgroup config overview\n"
+			"  ps                        List processes based on cgroups\n"
+			"  top                       Show top-like listing based on cgroups\n");
+	fprintf(stderr,
 		"\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
@@ -962,11 +969,22 @@ static int do_help(char *arg)
 	return usage(0);
 }
 
+static int cmd_cond(struct cmd *cmd)
+{
+	if (!cmd || !cmd->cond)
+		return 1;
+
+	return *cmd->cond;
+}
+
 static int cmd_parse(int argc, char *argv[], struct cmd *command)
 {
 	int i, j;
 
 	for (i = 0; argc > 0 && command[i].cmd; i++) {
+		if (!cmd_cond(&command[i]))
+			continue;
+
 		if (!string_match(command[i].cmd, argv[0]))
 			continue;
 
@@ -991,7 +1009,6 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 
 	return command[0].cb(NULL); /* default cmd */
 }
-
 int main(int argc, char *argv[])
 {
 	struct option long_options[] = {
@@ -1008,57 +1025,60 @@ int main(int argc, char *argv[])
 		{ NULL, 0, NULL, 0 }
 	};
 	struct cmd cond[] = {
-		{ "status",   NULL, do_cond_show }, /* default cmd */
-		{ "dump",     NULL, do_cond_dump },
-		{ "set",      NULL, do_cond_set  },
-		{ "clr",      NULL, do_cond_clr  },
-		{ "clear",    NULL, do_cond_clr  },
-		{ NULL, NULL, NULL }
+		{ "status",   NULL, do_cond_show, NULL }, /* default cmd */
+		{ "dump",     NULL, do_cond_dump, NULL },
+		{ "set",      NULL, do_cond_set,  NULL },
+		{ "clr",      NULL, do_cond_clr,  NULL },
+		{ "clear",    NULL, do_cond_clr,  NULL },
+		{ NULL, NULL, NULL, NULL }
 	};
 	struct cmd command[] = {
-		{ "status",   NULL, show_status  }, /* default cmd */
-		{ "ident",    NULL, show_ident   },
+		{ "status",   NULL, show_status,  NULL }, /* default cmd */
+		{ "ident",    NULL, show_ident,   NULL },
 
-		{ "debug",    NULL, toggle_debug },
-		{ "devel",    NULL, do_devel     },
-		{ "help",     NULL, do_help      },
-		{ "version",  NULL, show_version },
+		{ "debug",    NULL, toggle_debug, NULL },
+		{ "devel",    NULL, do_devel,     NULL },
+		{ "help",     NULL, do_help,      NULL },
+		{ "version",  NULL, show_version, NULL },
 
-		{ "list",     NULL, serv_list    },
-		{ "ls",       NULL, serv_list    },
-		{ "enable",   NULL, serv_enable  },
-		{ "disable",  NULL, serv_disable },
-		{ "touch",    NULL, serv_touch   },
-		{ "show",     NULL, serv_show    },
-		{ "edit",     NULL, serv_edit    },
-		{ "create",   NULL, serv_creat   },
-		{ "delete",   NULL, serv_delete  },
-		{ "reload",   NULL, do_reload    },
+		{ "list",     NULL, serv_list,    NULL },
+		{ "ls",       NULL, serv_list,    NULL },
+		{ "enable",   NULL, serv_enable,  NULL },
+		{ "disable",  NULL, serv_disable, NULL },
+		{ "touch",    NULL, serv_touch,   NULL },
+		{ "show",     NULL, serv_show,    NULL },
+		{ "edit",     NULL, serv_edit,    NULL },
+		{ "create",   NULL, serv_creat,   NULL },
+		{ "delete",   NULL, serv_delete,  NULL },
+		{ "reload",   NULL, do_reload,    NULL },
 
-		{ "cond",     cond, NULL         },
+		{ "cond",     cond, NULL, NULL         },
 
-		{ "log",      NULL, do_log       },
-		{ "start",    NULL, do_start     },
-		{ "stop",     NULL, do_stop      },
-		{ "restart",  NULL, do_restart   },
+		{ "log",      NULL, do_log,       NULL },
+		{ "start",    NULL, do_start,     NULL },
+		{ "stop",     NULL, do_stop,      NULL },
+		{ "restart",  NULL, do_restart,   NULL },
 
-		{ "cgroup",   NULL, show_cgroup  },
-		{ "ps",       NULL, show_cgps    },
-		{ "top",      NULL, show_cgtop   },
+		{ "cgroup",   NULL, show_cgroup, &cgrp },
+		{ "ps",       NULL, show_cgps,   &cgrp },
+		{ "top",      NULL, show_cgtop,  &cgrp },
 
-		{ "runlevel", NULL, do_runlevel  },
-		{ "reboot",   NULL, do_reboot    },
-		{ "halt",     NULL, do_halt      },
-		{ "poweroff", NULL, do_poweroff  },
-		{ "suspend",  NULL, do_suspend   },
+		{ "runlevel", NULL, do_runlevel,  NULL },
+		{ "reboot",   NULL, do_reboot,    NULL },
+		{ "halt",     NULL, do_halt,      NULL },
+		{ "poweroff", NULL, do_poweroff,  NULL },
+		{ "suspend",  NULL, do_suspend,   NULL },
 
-		{ "utmp",     NULL, do_utmp      },
-		{ NULL, NULL, NULL }
+		{ "utmp",     NULL, do_utmp,      NULL },
+		{ NULL, NULL, NULL, NULL }
 	};
 	int interactive = 1, c;
 
 	if (transform(progname(argv[0])))
 		return reboot_main(argc, argv);
+
+	/* Enable some functionality if kernel supports cgroups v2 */
+	cgrp = cgroup_avail();
 
 	while ((c = getopt_long(argc, argv, "1bcdfh?pqtv", long_options, NULL)) != EOF) {
 		switch(c) {
