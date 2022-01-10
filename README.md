@@ -119,10 +119,10 @@ some of the most common components needed to start a UNIX daemon:
 
 ```
 service [LVLS] <COND> log env:[-]/etc/default/daemon daemon ARGS -- Daemon daemon
-^       ^      ^      ^   ^                          ^              ^       ^
-|       |      |      |   |                          |              |        `-- Optional description
-|       |      |      |   |                          |              `----------- Daemon arguments
-|       |      |      |   |                          `-------------------------- Path to daemon
+^       ^      ^      ^   ^                          ^      ^       ^
+|       |      |      |   |                          |      |        `---------- Optional description
+|       |      |      |   |                          |       `------------------ Daemon arguments
+|       |      |      |   |                           `------------------------- Path to daemon
 |       |      |      |    `---------------------------------------------------- Optional env. file
 |       |      |       `-------------------------------------------------------- Redirect output to log
 |       |       `--------------------------------------------------------------- Optional conditions
