@@ -38,6 +38,11 @@ All relevant changes are documented in this file.
   by `initctl reload`, regression introduced in Finit v4.0
 * Fix #181: lots of typos all over the tree, by David Yang, Debian
 * Fix #187: fix typos, incl. small cleanup, in doc/bootstrap.md
+* Fix #188: support running on kernels that do not have cgroups v2.
+  When this is detect, all functions related to cgroups support in
+  Finit are disabled, *except* the .conf file parser.  Hence, you
+  may get parse error if you have invalid cgroup configuration in
+  your Finit .conf files
 * Fix #197: `initctl status foo` now shows a focused overview of all
   matching instances; foo:1, foo:2 -- if only one instance matches the
   command line argument, or if onle one instance exists, the detailed
