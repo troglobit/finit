@@ -130,9 +130,6 @@ static inline int dprint(int fd, const char *s, size_t len)
 	return rc;
 }
 
-int	ismnt		(char *file, char *dir, char *mode);
-int	fismnt		(char *dir);
-
 #endif /* FINIT_HELPERS_H_ */
 
 /**

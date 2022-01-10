@@ -48,7 +48,7 @@
 
 #include "config.h"
 #include "finit.h"
-#include "helpers.h"
+#include "util.h"
 #include "plugin.h"
 
 struct module {

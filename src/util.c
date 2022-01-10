@@ -24,6 +24,7 @@
 #include "config.h"
 #include <ctype.h>		/* isprint() */
 #include <errno.h>
+#include <mntent.h>
 #include <regex.h>
 #include <string.h>
 #include <stdlib.h>
@@ -396,6 +397,55 @@ char *sanitize(char *arg, size_t len)
 		return NULL;
 
 	return arg;
+}
+
+static int hasopt(char *opts, char *opt)
+{
+	char buf[strlen(opts) + 1];
+	char *ptr;
+
+	memcpy(buf, opts, sizeof(buf));
+	ptr = strtok(buf, ",");
+	while (ptr) {
+		if (!strcmp(ptr, opt))
+			return 1;
+
+		ptr = strtok(NULL, ",");
+	}
+
+	return 0;
+}
+
+int ismnt(char *file, char *dir, char *mode)
+{
+	struct mntent *mnt;
+	int found = 0;
+	FILE *fp;
+
+	fp = setmntent(file, "r");
+	if (!fp)
+		return 0;	/* Dunno, maybe not */
+
+	while ((mnt = getmntent(fp))) {
+		if (!strcmp(mnt->mnt_dir, dir)) {
+			if (mode) {
+				if (hasopt(mnt->mnt_opts, mode))
+					found = 1;
+			} else
+				found = 1;
+
+			break;
+		}
+	}
+	endmntent(fp);
+
+	return found;
+}
+
+/* Requires /proc to be mounted */
+int fismnt(char *dir)
+{
+	return ismnt("/proc/mounts", dir, NULL);
 }
 
 #ifdef HAVE_TERMIOS_H
