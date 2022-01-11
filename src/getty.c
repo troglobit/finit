@@ -25,6 +25,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <limits.h>		/* LOGIN_NAME_MAX */
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
@@ -33,6 +34,7 @@
 #include <sys/utsname.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
+#include <unistd.h>		/* sysconf() */
 
 #include "finit.h"
 #include "helpers.h"
@@ -41,6 +43,12 @@
 #ifndef _PATH_LOGIN
 #define _PATH_LOGIN  "/bin/login"
 #endif
+
+#ifndef LOGIN_NAME_MIN
+#define LOGIN_NAME_MIN 64
+#endif
+
+static long logname_len = 32;	/* useradd(1) limit at 32 chars */
 
 /*
  * Read one character from stdin.
@@ -197,7 +205,7 @@ static int do_login(char *name)
 static int getty(char *tty, speed_t speed, char *term, char *user)
 {
 	const char cln[] = "\r\e[K\n";
-	char name[33];		/* useradd(1) limit at 32 chars */
+	char name[logname_len + 1]; /* +1 for NUL termination */
 	pid_t sid;
 
 	/*
@@ -262,6 +270,12 @@ int main(int argc, char *argv[])
 		speed = argv[optind++];
 	if (optind < argc)
 		term = argv[optind++];
+
+	logname_len = sysconf(_SC_LOGIN_NAME_MAX);
+	if (logname_len == -1i)
+	       logname_len = LOGIN_NAME_MAX;
+	if (logname_len < LOGIN_NAME_MIN)
+		logname_len = LOGIN_NAME_MIN;
 
 	return getty(tty, atoi(speed), term, NULL);
 }
