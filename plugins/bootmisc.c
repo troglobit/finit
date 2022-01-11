@@ -104,6 +104,12 @@ static void clean(void *arg)
 	}
 }
 
+static void ln(const char *target, const char *linkpath, int ignerr)
+{
+	if (symlink(target, linkpath) && !ignerr)
+		_pe("Failed creating %s -> %s symlink", target, linkpath);
+}
+
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
@@ -125,11 +131,11 @@ static void setup(void *arg)
 		_d("System with new /run tmpfs ...");
 		if (!fisdir("/run/lock"))
 			makedir("/run/lock", 1777);
-		symlink("/run/lock", "/var/lock");
-		symlink("/dev/shm", "/run/shm");
+		ln("/run/lock", "/var/lock", 0);
+		ln("/dev/shm", "/run/shm", 0);
 
 		/* compat only, should really be set up by OS/dist */
-		symlink("/run", "/var/run");
+		ln("/run", "/var/run", 1);
 	} else {
 		makedir("/var/lock", 1777);
 		makedir("/var/run", 0755);
@@ -183,7 +189,7 @@ static void setup(void *arg)
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
 
 	if (!fexist("/etc/mtab"))
-		symlink("../proc/self/mounts", "/etc/mtab");
+		ln("../proc/self/mounts", "/etc/mtab", 1);
 
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
 	mksubsys("/var/run/uuidd", 0755, "uuidd", "uuidd");
