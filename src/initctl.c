@@ -756,6 +756,7 @@ static int show_status(char *arg)
 		printf("       User : %s\n", svc->username);
 		printf("      Group : %s\n", svc->group);
 		printf("     Uptime : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
+		printf("   Restarts : %d/%d\n", svc->restart_cnt, svc->restart_max);
 		printf("  Runlevels : %s\n", runlevel_string(runlevel, svc->runlevels));
 		if (cgrp && svc->pid > 1) {
 			char grbuf[128];
