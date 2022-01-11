@@ -1310,8 +1310,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			svc_unblock(svc);
 	}
 
-	/* Always clear svc PID file, for now.  See TODO */
-	svc->pidfile[0] = 0;
 	/* Decode any optional pid:/optional/path/to/file.pid */
 	if (pid && svc_is_daemon(svc) && pid_file_parse(svc, pid))
 		_e("Invalid 'pid' argument to service: %s", pid);

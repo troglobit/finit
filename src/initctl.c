@@ -717,6 +717,7 @@ static int show_status(char *arg)
 	while (arg && arg[0]) {
 		long now = jiffies();
 		char uptm[42] = "N/A";
+		char *pidfn = NULL;
 		int exact = 0;
 
 		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
@@ -737,6 +738,12 @@ static int show_status(char *arg)
 		if (quiet)
 			return svc->state != SVC_RUNNING_STATE;
 
+		pidfn = svc->pidfile;
+		if (pidfn[0] == '!')
+			pidfn++;
+		else if (pidfn[0] == 0)
+			pidfn = "none";
+
 		printf("     Status : %s\n", status(svc, 1));
 		printf("   Identity : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
@@ -744,7 +751,7 @@ static int show_status(char *arg)
 		printf("Environment : %s\n", svc_environ(svc, buf, sizeof(buf)));
 		printf("Condition(s): %s\n", svc_cond(svc, buf, sizeof(buf)));
 		printf("    Command : %s\n", svc_command(svc, buf, sizeof(buf)));
-		printf("   PID file : %s\n", svc->pidfile);
+		printf("   PID file : %s\n", pidfn);
 		printf("        PID : %d\n", svc->pid);
 		printf("       User : %s\n", svc->username);
 		printf("      Group : %s\n", svc->group);
