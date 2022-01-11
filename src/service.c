@@ -496,6 +496,12 @@ static int service_start(svc_t *svc)
 	/* Declare we're waiting for svc to create its pidfile */
 	svc_starting(svc);
 
+	/* Increment total restarts, unless first time or non-service */
+	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+		if (svc->restart_cnt || svc->restart_tot)
+			svc->restart_tot++;
+	}
+
 	/* Block SIGCHLD while forking.  */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
