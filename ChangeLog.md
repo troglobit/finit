@@ -32,6 +32,8 @@ All relevant changes are documented in this file.
   crashing services, by Robert Andersson and Ming Liu, Atlas Copco
 * Support for `initctl ident [NAME]` which lists all instances of
   `NAME`, or all enabled system run/tasks and services
+* Show number of total restarts and current respawn count for a
+  service in `initctl status foo`
 
 ### Fixes
 * Fix #180: user managed (`manual:yes`) services accidentally started
@@ -54,6 +56,10 @@ All relevant changes are documented in this file.
   unumounted on shutdown/reboot, by Robert Andersson, Atlas Copco
 * Fix #210: resizing terminal (smaller) after boot causes empty lines
   to be inserted between boot progress
+* Fix #211: drop hard-coded 32 character limit in getty, now reads
+  `_SC_LOGIN_NAME_MAX` from `sysconf(3)`
+* Fix #212: service PID file lost after inictl reload, visible from
+  the output from `initctl status foo`
 
 
 [4.1][] - 2021-06-06
