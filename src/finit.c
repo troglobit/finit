@@ -706,6 +706,11 @@ int main(int argc, char *argv[])
 	schedule_work(&bootstrap_work);
 
 	/*
+	 * Background service tasks
+	 */
+	service_init();
+
+	/*
 	 * Enter main loop to monitor /dev/initctl and services
 	 */
 	_d("Entering main loop ...");

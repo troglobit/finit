@@ -41,6 +41,7 @@
 #include "finit.h"
 #include "cond.h"
 #include "iwatch.h"
+#include "private.h"
 #include "service.h"
 #include "tty.h"
 #include "helpers.h"
@@ -570,6 +571,26 @@ static void parse_static(char *line, int is_rcsd)
 			cfglevel = RUNLEVEL;
 		if (cfglevel < 1 || cfglevel > 9 || cfglevel == 6)
 			cfglevel = 2; /* Fallback */
+		return;
+	}
+
+	/*
+	 * Periodic check and instability index leveler, seconds
+	 */
+	if (MATCH_CMD(line, "service-interval ", x)) {
+		char *token = strip_line(x);
+		const char *err = NULL;
+		int val;
+
+		/* 0 min to 1 day, should check at least daily */
+		val = strtonum(token, 0, 1440, &err);
+		if (!err) {
+			int disabled = !service_interval;
+
+			service_interval = val * 1000; /* to milliseconds */
+			if (disabled)
+				service_init();
+		}
 		return;
 	}
 }

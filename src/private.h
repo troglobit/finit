@@ -28,6 +28,9 @@
 #include "svc.h"
 #include "plugin.h"
 
+#define SERVICE_INTERVAL_DEFAULT 300000 /* 5 mins */
+extern int service_interval;
+
 int       api_init         (uev_ctx_t *ctx);
 int       api_exit         (void);
 

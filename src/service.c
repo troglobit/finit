@@ -56,6 +56,7 @@
 static struct wq work = {
 	.cb = service_worker,
 };
+int service_interval = SERVICE_INTERVAL_DEFAULT;
 
 static void svc_set_state(svc_t *svc, svc_state_t new);
 
@@ -1628,10 +1629,12 @@ static void service_retry(svc_t *svc)
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
-		*restart_cnt = 0;
+		logit(LOG_CONSOLE | LOG_NOTICE, "Successfully restarted crashing service %s.",
+		      svc_ident(svc, NULL, 0));
 		return;
 	}
 
+	/* Peak instability index */
 	if (*restart_cnt >= svc->restart_max) {
 		logit(LOG_CONSOLE | LOG_WARNING, "Service %s keeps crashing, not restarting.",
 		      svc_ident(svc, NULL, 0));
@@ -1966,6 +1969,65 @@ int service_completed(void)
 	}
 
 	return 1;
+}
+
+/*
+ * Every five¹ minutes we sweep over all services, skipping crashed or
+ * otherwise no longer running ones.  Decrement non-zero crash counters
+ * to allow services that have started after an initial crash to slowly
+ * prove themselves again as stable services.  Previously this counter
+ * was reset as soon as such services had stopped crashing at least once
+ * per second.  This new scheme allows us to catch those that rage-quit
+ * immediately when we try to start them, but now also those that are
+ * only slightly buggy -- when they reach their restart_max, they too
+ * are marked 'crashed'.
+ *
+ * This does not affect the restart_tot counter, which you can see in
+ * the output from 'initctl status foo', along with this instability
+ * "index" in parethesis: total (cnt/max)
+ */
+static void service_interval_cb(uev_t *w, void *arg, int events)
+{
+	svc_t *svc, *iter = NULL;
+
+	(void)arg;
+	if (UEV_ERROR == events) {
+		uev_timer_start(w);
+		return;
+	}
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+			char *restart_cnt = (char *)&svc->restart_cnt;
+
+			if (!svc_is_running(svc))
+				continue;
+
+			if (*restart_cnt > 0) {
+				logit(LOG_CONSOLE | LOG_DEBUG, "Aging %s instability index (%d/%d)",
+				      svc_ident(svc, NULL, 0), svc->restart_cnt, svc->restart_max);
+				(*restart_cnt)--;
+			}
+		}
+	}
+
+	service_init();
+}
+
+/*
+ * The service_interval may change (conf) between invocations, so we
+ * periodically reset the one-shot timer instead of using a periodic.
+ */
+void service_init(void)
+{
+	static int initialized = 0;
+	static uev_t watcher;
+
+	if (!initialized) {
+		uev_timer_init(ctx, &watcher, service_interval_cb, NULL, service_interval, 0);
+		initialized = 1;
+	} else
+		uev_timer_set(&watcher, service_interval, 0);
 }
 
 /**

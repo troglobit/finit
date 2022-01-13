@@ -41,6 +41,8 @@ void      service_worker         (void *unused);
 
 int       service_completed      (void);
 
+void      service_init           (void);
+
 #endif	/* FINIT_SERVICE_H_ */
 
 /**
