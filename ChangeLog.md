@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.2][UNRELEASED]
+[4.2][] - 2022-01-16
 --------------------
 
 ### Changes
@@ -34,6 +34,11 @@ All relevant changes are documented in this file.
   `NAME`, or all enabled system run/tasks and services
 * Show number of total restarts and current respawn count for a
   service in `initctl status foo`
+* Crashing services no longer have the crash/restart counter reset as
+  soon as they have stabilized.  Instead, a background timer will
+  slowly (every 300 sec) age (decrement) the counter.  This will still
+  catch services that "rage quit", but also those that crash after a
+  longer period of activity
 
 ### Fixes
 * Fix #180: user managed (`manual:yes`) services accidentally started
@@ -1033,7 +1038,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.1...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.2...HEAD
 [4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
 [4.1]: https://github.com/troglobit/finit/compare/4.0...4.1
 [4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
