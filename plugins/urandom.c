@@ -108,6 +108,7 @@ static void setup(void *arg)
 			if (len > 0)
 				break;
 
+			close(fd);
 			free(rpi);
 			goto fallback;
 		}
