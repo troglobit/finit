@@ -104,9 +104,9 @@ static void clean(void *arg)
 	}
 }
 
-static void ln(const char *target, const char *linkpath, int ignerr)
+static void ln(const char *target, const char *linkpath)
 {
-	if (symlink(target, linkpath) && !ignerr)
+	if (symlink(target, linkpath) && errno != EEXIST)
 		_pe("Failed creating %s -> %s symlink", target, linkpath);
 }
 
@@ -131,11 +131,11 @@ static void setup(void *arg)
 		_d("System with new /run tmpfs ...");
 		if (!fisdir("/run/lock"))
 			makedir("/run/lock", 1777);
-		ln("/run/lock", "/var/lock", 0);
-		ln("/dev/shm", "/run/shm", 0);
+		ln("/run/lock", "/var/lock");
+		ln("/dev/shm", "/run/shm");
 
 		/* compat only, should really be set up by OS/dist */
-		ln("/run", "/var/run", 1);
+		ln("/run", "/var/run");
 	} else {
 		makedir("/var/lock", 1777);
 		makedir("/var/run", 0755);
@@ -189,7 +189,7 @@ static void setup(void *arg)
 	makedir("/var/run/sshd",  01755); /* OpenSSH  */
 
 	if (!fexist("/etc/mtab"))
-		ln("../proc/self/mounts", "/etc/mtab", 1);
+		ln("../proc/self/mounts", "/etc/mtab");
 
 	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
 	mksubsys("/var/run/uuidd", 0755, "uuidd", "uuidd");
