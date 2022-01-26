@@ -477,6 +477,7 @@ void cgroup_init(uev_ctx_t *ctx)
 	fp = fopen(FINIT_CGPATH "/cgroup.controllers", "r");
 	if (!fp) {
 		_pe("Failed opening %s", FINIT_CGPATH "/cgroup.controllers");
+	abort:
 		umount(FINIT_CGPATH);
 		avail = 0;
 		return;
@@ -494,15 +495,25 @@ void cgroup_init(uev_ctx_t *ctx)
 
 	fclose(fp);
 
+	/* Check for cpu controller, abort if missing */
+	if (!strstr(controllers, "+cpu")) {
+		logit(LOG_NOTICE, "Missing CPU controller, disabling cgroup support.");
+		goto abort;
+	}
+
 	/* Enable all controllers */
-	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control"))
+	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control")) {
 		_pe("Failed enabling %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
+		goto abort;
+	}
 
 	/* prepare cgroup.events watcher */
 	fd = iwatch_init(&iw_cgroup);
 	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
 		_pe("Failed setting up cgroup.events watcher");
+		iwatch_exit(&iw_cgroup);
 		close(fd);
+		goto abort;
 	}
 
 	/* Default (protected) groups, PID 1, services, and user/login processes */
@@ -512,8 +523,13 @@ void cgroup_init(uev_ctx_t *ctx)
 	cgroup_config();
 
 	/* Move ourselves to init (best effort, otherwise run in 'root' group */
-	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs"))
+	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs")) {
 		_pe("Failed moving PID 1 to cgroup ", FINIT_CGPATH "/init");
+		uev_io_stop(&cgw);
+		iwatch_exit(&iw_cgroup);
+		close(fd);
+		goto abort;
+	}
 }
 
 /**
