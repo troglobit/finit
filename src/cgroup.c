@@ -498,6 +498,13 @@ void cgroup_init(uev_ctx_t *ctx)
 	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control"))
 		_pe("Failed enabling %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
 
+	/* prepare cgroup.events watcher */
+	fd = iwatch_init(&iw_cgroup);
+	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
+		_pe("Failed setting up cgroup.events watcher");
+		close(fd);
+	}
+
 	/* Default (protected) groups, PID 1, services, and user/login processes */
 	cgroup_add("init",   "cpu.weight:100",  1);
 	cgroup_add("system", "cpu.weight:9800", 1);
@@ -507,13 +514,6 @@ void cgroup_init(uev_ctx_t *ctx)
 	/* Move ourselves to init (best effort, otherwise run in 'root' group */
 	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs"))
 		_pe("Failed moving PID 1 to cgroup ", FINIT_CGPATH "/init");
-
-	/* prepare cgroup.events watcher */
-	fd = iwatch_init(&iw_cgroup);
-	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
-		_pe("Failed setting up cgroup.events watcher");
-		close(fd);
-	}
 }
 
 /**
