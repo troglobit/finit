@@ -11,7 +11,7 @@
 .Nd Control tool for Finit
 .Sh SYNOPSIS
 .Nm /sbin/initctl
-.Op Fl bcfhlpqtv
+.Op Fl bcfhlpqtvV
 .Op COMMAND
 .Sh DESCRIPTION
 .Nm
@@ -41,16 +41,20 @@ Silent, only return status of command.
 Skip table headings.
 .It Fl v, -verbose
 Verbose output, where applicable.
+.It Fl V, -version
+Show program version.
 .El
 .Sh COMMANDS
 .Bl -tag -width Ds
 .It Nm Ar debug
-Toggle finit (daemon) debug to
+Toggle
+.Nm finit
+(daemon) debug to
 .Pa /dev/console
 .It Nm Ar help
 Show built-in help text
 .It Nm Ar version
-Show Finit (daemon) version
+Show program version
 .It Nm Ar ls | list
 List all
 .Cm *.conf

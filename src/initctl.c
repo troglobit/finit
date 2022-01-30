@@ -891,12 +891,13 @@ static int usage(int rc)
 		"  -q, --quiet               Silent, only return status of command\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
+		"  -R, --version             Show program version\n"
 		"  -h, --help                This help text\n"
 		"\n"
 		"Commands:\n"
 		"  debug                     Toggle Finit (daemon) debug\n"
 		"  help                      This help text\n"
-		"  version                   Show Finit version\n"
+		"  version                   Show program version\n"
 		"\n", prognm);
 
 	if (has_rcsd)
@@ -1031,6 +1032,7 @@ int main(int argc, char *argv[])
 		{ "quiet",      0, NULL, 'q' },
 		{ "no-heading", 0, NULL, 't' },
 		{ "verbose",    0, NULL, 'v' },
+		{ "version",    0, NULL, 'V' },
 		{ NULL, 0, NULL, 0 }
 	};
 	struct cmd cond[] = {
@@ -1090,7 +1092,7 @@ int main(int argc, char *argv[])
 	cgrp = cgroup_avail();
 	utmp = has_utmp();
 
-	while ((c = getopt_long(argc, argv, "1bcdfh?pqtv", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "1bcdfh?pqtvV", long_options, NULL)) != EOF) {
 		switch(c) {
 		case '1':
 			ionce = 1;
@@ -1131,6 +1133,9 @@ int main(int argc, char *argv[])
 		case 'v':
 			verbose = 1;
 			break;
+
+		case 'V':
+			return show_version(NULL);
 		}
 	}
 
