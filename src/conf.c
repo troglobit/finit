@@ -211,22 +211,18 @@ void conf_parse_cmdline(int argc, char *argv[])
 
 static int kmod_exists(char *mod)
 {
+	char buf[256];
 	int found = 0;
 	FILE *fp;
-	char buf[256];
-	size_t len;
-
-	for (len = 0; mod[len]; len++) {
-		if (mod[len] == ' ' || mod[len] == '\t')
-			break;
-	}
 
 	fp = fopen("/proc/modules", "r");
 	if (!fp)
 		return 0;
 
-	while (!found && (fgets(buf, sizeof(buf), fp))) {
-		if (!strncmp(buf, mod, len))
+	while (!found && fgets(buf, sizeof(buf), fp)) {
+		char *kmod = strtok(buf, " \t");
+
+		if (kmod && !strcmp(kmod, mod))
 			found = 1;
 	}
 	fclose(fp);
@@ -234,22 +230,26 @@ static int kmod_exists(char *mod)
 	return found;
 }
 
-static void kmod_load(char *line)
+static void kmod_load(char *mod)
 {
-	char *mod;
+	char module[64] = { 0 };
 	char cmd[CMD_SIZE];
 
 	if (runlevel != 0)
 		return;
 
-	mod = strip_line(line);
-	if (kmod_exists(mod))
+	/* Strip args for progress below and kmod_exists() */
+	strlcpy(module, mod, sizeof(module));
+	if (!strtok(module, " \t"))
+		return;
+
+	if (kmod_exists(module))
 		return;
 
 	strcpy(cmd, "modprobe ");
 	strlcat(cmd, mod, sizeof(cmd));
 
-	run_interactive(cmd, "Loading kernel module %s", mod);
+	run_interactive(cmd, "Loading kernel module %s", module);
 }
 
 /* Convert optional "[!123456789S]" string into a bitmask */
@@ -502,7 +502,7 @@ static void parse_static(char *line, int is_rcsd)
 
 	/* Kernel module to load */
 	if (BOOTSTRAP && MATCH_CMD(line, "module ", x)) {
-		kmod_load(x);
+		kmod_load(strip_line(x));
 		return;
 	}
 
