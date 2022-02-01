@@ -57,7 +57,7 @@ static pstyle_t progress_style = PROGRESS_DEFAULT;
 #define STATUS_CLASS {							\
 	CHOOSE(" OK ",  " OK ",  "\e[1;32m"),		/* Green  */	\
 	CHOOSE("FAIL",  "FAIL",  "\e[1;31m"),		/* Red    */	\
-	CHOOSE("WARN",  "WARN",  "\e[1;31m"),		/* Red    */	\
+	CHOOSE("WARN",  "WARN",  "\e[1;33m"),		/* Yellow */	\
 	CHOOSE(" \\/ ", " ⋯  ", "\e[1;33m"),		/* Yellow */	\
 }
 
