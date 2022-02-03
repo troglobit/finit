@@ -722,7 +722,7 @@ static int show_status(char *arg)
 
 		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 			svc_ident(svc, ident, sizeof(ident));
-			if (string_match(ident, arg))
+			if (string_compare(ident, arg))
 				num++;
 			if (string_case_compare(ident, arg))
 				exact++;
@@ -797,7 +797,7 @@ static int show_status(char *arg)
 		char *lvls;
 
 		svc_ident(svc, ident, sizeof(ident));
-		if (num && !string_match(ident, arg))
+		if (num && !string_compare(ident, arg))
 			continue;
 
 		printf("%-*d  ", pw, svc->pid);
@@ -995,7 +995,7 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 		if (!cmd_cond(&command[i]))
 			continue;
 
-		if (!string_match(command[i].cmd, argv[0]))
+		if (!string_compare(command[i].cmd, argv[0]))
 			continue;
 
 		if (command[i].ctx)
