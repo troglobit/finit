@@ -1677,6 +1677,21 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 		service_timeout_cancel(svc);
 		service_timeout_after(svc, svc->killdelay, service_kill);
 	}
+
+	if (svc_is_runtask(svc)) {
+		char cond[MAX_COND_LEN];
+
+		snprintf(cond, sizeof(cond), "%s/%s/done", svc->type, svc->name);
+
+		/* create done condition when entering SVC_DONE_STATE. */
+		if (*state == SVC_DONE_STATE)
+			cond_set_oneshot(cond);
+
+		/* clear done condition when entering SVC_HALTED_STATE. */
+		if (*state == SVC_HALTED_STATE)
+			cond_clear(cond);
+
+	}
 }
 
 /*
