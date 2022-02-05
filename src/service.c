@@ -1548,6 +1548,14 @@ static void service_kill_script(svc_t *svc)
 	kill(-svc->pid, SIGKILL);
 }
 
+/*
+ * Shared env vars for both pre: and post: scripts
+ */
+static void set_pre_post_envs(svc_t *svc)
+{
+	setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
+}
+
 static void service_pre_script(svc_t *svc)
 {
 	svc->pid = service_fork(svc);
@@ -1564,7 +1572,7 @@ static void service_pre_script(svc_t *svc)
 			NULL
 		};
 
-		setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
+		set_pre_post_envs(svc);
 		execvp(_PATH_BSHELL, argv);
 		_exit(EX_OSERR);
 	}
@@ -1593,7 +1601,7 @@ static void service_post_script(svc_t *svc)
 		rc = WEXITSTATUS(svc->status);
 		sig = WTERMSIG(svc->status);
 
-		setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
+		set_pre_post_envs(svc);
 
 		if (WIFEXITED(svc->status)) {
 			char val[4];
