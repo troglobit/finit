@@ -1551,9 +1551,28 @@ static void service_kill_script(svc_t *svc)
 /*
  * Shared env vars for both pre: and post: scripts
  */
-static void set_pre_post_envs(svc_t *svc)
+static void set_pre_post_envs(svc_t *svc, const char *type)
 {
+	char buf[25 + 256] = "/etc/default:/etc/conf.d";
+	const char *fn = svc_getenv(svc);
+	const char *exist = "0";
+
 	setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
+	setenv("SERVICE_TYPE", type, 1);
+
+	if (fn) {
+		setenv("SERVICE_ENV_FILE", fn, 1);
+		if (!access(fn, R_OK))
+			exist = "1";
+	}
+	setenv("SERVICE_ENV_FILE", fn, 1);
+	setenv("SERVICE_ENV_FILE_EXIST", exist, 1);
+
+#ifdef FINIT_SYSCONFIG
+	strlcat(buf, ":", sizeof(buf));
+	strlcat(buf, FINIT_SYSCONFIG, sizeof(buf));
+#endif
+	setenv("SERVICE_CONF_DIR", buf, 1);
 }
 
 static void service_pre_script(svc_t *svc)
@@ -1572,7 +1591,7 @@ static void service_pre_script(svc_t *svc)
 			NULL
 		};
 
-		set_pre_post_envs(svc);
+		set_pre_post_envs(svc, "pre");
 		execvp(_PATH_BSHELL, argv);
 		_exit(EX_OSERR);
 	}
@@ -1601,7 +1620,7 @@ static void service_post_script(svc_t *svc)
 		rc = WEXITSTATUS(svc->status);
 		sig = WTERMSIG(svc->status);
 
-		set_pre_post_envs(svc);
+		set_pre_post_envs(svc, "post");
 
 		if (WIFEXITED(svc->status)) {
 			char val[4];
