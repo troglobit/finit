@@ -71,6 +71,7 @@
 
 #include <dirent.h>
 #include <string.h>		/* strerror() */
+#include <sched.h>
 #include <sys/reboot.h>
 #include <sys/wait.h>
 #ifdef _LIBITE_LITE
@@ -172,7 +173,7 @@ void unmount_regular(void);
  *
  * https://www.freedesktop.org/wiki/Software/systemd/RootStorageDaemons/
  */
-void do_kill(int signo)
+void do_iterate_proc(int (*callback)(int, int *), int *context)
 {
 	DIR *dirp;
 
@@ -191,6 +192,8 @@ void do_kill(int signo)
 			pid = atoi(d->d_name);
 			if (!pid)
 				continue;
+			if (pid == 1)
+				continue;
 
 			snprintf(file, sizeof(file), "/proc/%s/cmdline", d->d_name);
 			fp = fopen(file, "r");
@@ -203,7 +206,10 @@ void do_kill(int signo)
 				else if (file[0] == '@')
 					_d("Skipping %s ...", &file[1]);
 				else
-					kill(pid, signo);
+					if (callback(pid, context)) {
+						print(0, "PID %d is still alive (%s)", pid, file);
+						break;
+					}
 			}
 			fclose(fp);
 		}
@@ -211,8 +217,51 @@ void do_kill(int signo)
 	}
 }
 
+static int kill_callback(int pid, int *context)
+{
+	kill(pid, (int)context);
+	return 0;
+}
+
+static int status_callback(int pid, int *context)
+{
+	*context = 1;
+	return 1;
+}
+
+/* return value:
+ *  1 - at least one process remaining
+ *  0 - no processes remaining
+ */
+static int do_wait(int secs)
+{
+	int has_proc;
+	int tmo = 250000;
+	int iterations = secs*1000*1000/tmo;
+
+	do {
+		do_usleep(tmo);
+		while (waitpid(-1, NULL, WNOHANG) > 0)
+			;
+		has_proc = 0;
+		iterations--;
+		do_iterate_proc(status_callback, &has_proc);
+	}
+	while (has_proc && iterations > 0);
+
+	return has_proc;
+}
+
 void do_shutdown(shutop_t op)
 {
+	struct sched_param sched_param = { .sched_priority = 99 };
+
+	/*
+	 * On a PREEMPT-RT system, Finit must run as the highest prioritized
+	 * RT process to ensure it completes the shutdown sequence.
+	 */
+	sched_setscheduler(1, SCHED_RR, &sched_param);
+
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
 
@@ -223,9 +272,10 @@ void do_shutdown(shutop_t op)
 	 * Tell remaining non-monitored processes to exit, give them
 	 * time to exit gracefully, 2 sec was customary, we go for 1.
 	 */
-	do_kill(SIGTERM);
-	do_sleep(1);
-	do_kill(SIGKILL);
+	do_iterate_proc(kill_callback, (int*)SIGTERM);
+	if (do_wait(1)) {
+		do_iterate_proc(kill_callback, (int*)SIGKILL);
+	}
 
 	/* Exit plugins and API gracefully */
 	plugin_exit();
