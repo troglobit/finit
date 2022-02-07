@@ -256,7 +256,7 @@ svc_t *svc_named_iterator(svc_t **iter, int first, char *cmd)
 	for (svc = svc_iterator(iter, first); svc; svc = svc_iterator(iter, 0)) {
 		char *name = svc->name;
 
-		if (!strncmp(name, cmd, strlen(name)))
+		if (string_compare(name, cmd))
 			return svc;
 	}
 
