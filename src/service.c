@@ -1557,8 +1557,9 @@ static void set_pre_post_envs(svc_t *svc, const char *type)
 	const char *fn = svc_getenv(svc);
 	const char *exist = "0";
 
+	setenv("SERVICE_TYPE", svc_typestr(svc), 1);
 	setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
-	setenv("SERVICE_TYPE", type, 1);
+	setenv("SERVICE_SCRIPT_TYPE", type, 1);
 
 	if (fn) {
 		setenv("SERVICE_ENV_FILE", fn, 1);
