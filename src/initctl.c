@@ -292,7 +292,7 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 	if (strncmp("pid/", cond, 4) == 0) {
 		svc_t *svc;
 
-		svc= client_svc_find_by_cond(cond);
+		svc = client_svc_find_by_cond(cond);
 		if (!svc) {
 			nm  = "unknown";
 			pid = 0;

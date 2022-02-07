@@ -1709,7 +1709,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	if (svc_is_runtask(svc)) {
 		char cond[MAX_COND_LEN];
 
-		snprintf(cond, sizeof(cond), "%s/%s/done", svc->type, svc->name);
+		snprintf(cond, sizeof(cond), "%s/%s/done", svc_typestr(svc), svc->name);
 
 		/* create done condition when entering SVC_DONE_STATE. */
 		if (*state == SVC_DONE_STATE)
