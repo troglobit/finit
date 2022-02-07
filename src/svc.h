@@ -278,6 +278,31 @@ static inline int svc_has_cond(svc_t *svc)
 	return 0;
 }
 
+static inline const char *svc_typestr(svc_t *svc)
+{
+	switch (svc->type) {
+	case SVC_TYPE_FREE:
+		return "free";
+
+	case SVC_TYPE_SERVICE:
+		return "service";
+
+	case SVC_TYPE_TASK:
+		return "task";
+
+	case SVC_TYPE_RUN:
+		return "run";
+
+	case SVC_TYPE_TTY:
+		return "tty";
+
+	case SVC_TYPE_SYSV:
+		return "sysv";
+	}
+
+	return "unknown";
+}
+
 static inline char *svc_status(svc_t *svc)
 {
 	if (!svc)
