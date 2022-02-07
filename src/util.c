@@ -297,6 +297,20 @@ void do_sleep(unsigned int sec)
 		;
 }
 
+void do_usleep(unsigned int usec)
+{
+	struct timespec deadline;
+
+	clock_gettime(CLOCK_MONOTONIC, &deadline);
+
+	deadline.tv_nsec += usec * 1000;
+	deadline.tv_sec += deadline.tv_nsec / 1000000000;
+	deadline.tv_nsec = deadline.tv_nsec % 1000000000;
+
+	while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL) != 0 && errno == EINTR)
+		;
+}
+
 /* Seconds since boot, from sysinfo() */
 long jiffies(void)
 {
