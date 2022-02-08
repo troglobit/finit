@@ -4,6 +4,31 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.3][UNRELEASED]
+--------------------
+
+Critical bug fix release.  If you run a 32-bit target with GLIBC 2.34
+you *need* to upgrade!
+
+### Changes
+* Loading `module`s no longer shows arguments in progress output
+* Warning messages in progress output now in yellow, not red, issue 214
+* `initctl`, new command line option `-v,--version` for ease of use
+* Extended environment variables for pre/post scripts, issue #189
+* New condition `done` for run task, issue #207 by Ming Liu, Atlas Copco
+* Refactor parts of shutdown and reboot sequence for PREEMPT-RT kernels,
+  by Robert Andersson, Mathias Thore, and Ming Liu, Atlas Copco
+
+### Fixes
+* Fix nasty 32/64-bit alignment issue between finit and its plugins,
+  applicable to 32-bit targets with GLIBC 2.34 and later.  External
+  plugins must make sure to use, at least: `-D_TIME_BITS=64`
+* Fix #215: disable cgroup support at runtime if kernel lacks support
+  or does not have the required controllers (cpu)
+* Fix #217: iwatcher initialization issue, by Ming Liu, Atlas Copco
+* Fix #218: initctl matches too many services, by Ming Liu, Atlas Copco
+
+
 [4.2][] - 2022-01-16
 --------------------
 
@@ -1039,6 +1064,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/4.2...HEAD
+[4.3]: https://github.com/troglobit/finit/compare/4.2...4.3
 [4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
 [4.1]: https://github.com/troglobit/finit/compare/4.0...4.1
 [4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
