@@ -1,4 +1,4 @@
-[![License Badge][]][License] [![GitHub Status]][GitHub] [![Coverity Status]][Coverity Scan]
+[![License Badge][]][License] [![GitHub Status][]][GitHub] [![Coverity Status][]][Coverity Scan]
 <img align="right" src="img/finit3.png" alt="Finit: Fast Init">
 
 * [Introduction](#introduction)
