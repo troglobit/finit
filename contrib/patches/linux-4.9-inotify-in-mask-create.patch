@@ -1,0 +1,75 @@
+In Finit issue #196 we were reminded [1] of a missing inotify flag in
+Linux older kernels, IN_MASK_CREATE.  Finit makes use of this internally
+for monitoring PID conditions, and more.  This is a central mechanism to
+synchronize services at boot and reload at runtime.
+
+The following patch for Linux 4.9.0, was provided by Andy Savage for
+other people that may want to run Finit on slightly older kernels.
+
+[1]: https://github.com/troglobit/finit/issues/196
+
+Index: fs/notify/inotify/inotify_user.c
+===================================================================
+--- fs.orig/notify/inotify/inotify_user.c
++++ fs/notify/inotify/inotify_user.c
+@@ -522,6 +522,7 @@ static int inotify_update_existing_watch
+ 	__u32 old_mask, new_mask;
+ 	__u32 mask;
+ 	int add = (arg & IN_MASK_ADD);
++	int create = (arg & IN_MASK_CREATE);
+ 	int ret;
+
+ 	mask = inotify_arg_to_mask(arg);
+@@ -529,6 +530,8 @@ static int inotify_update_existing_watch
+ 	fsn_mark = fsnotify_find_inode_mark(group, inode);
+ 	if (!fsn_mark)
+ 		return -ENOENT;
++	else if (create)
++		return -EEXIST;
+
+ 	i_mark = container_of(fsn_mark, struct inotify_inode_mark, fsn_mark);
+
+@@ -726,6 +729,10 @@ SYSCALL_DEFINE3(inotify_add_watch, int,
+ 	if (unlikely(!f.file))
+ 		return -EBADF;
+
++	/* IN_MASK_ADD and IN_MASK_CREATE don't make sense together */
++	if (unlikely((mask & IN_MASK_ADD) && (mask & IN_MASK_CREATE)))
++		return -EINVAL;
++
+ 	/* verify that this is indeed an inotify instance */
+ 	if (unlikely(f.file->f_op != &inotify_fops)) {
+ 		ret = -EINVAL;
+@@ -814,7 +821,7 @@ static int __init inotify_user_setup(voi
+ 	BUILD_BUG_ON(IN_ISDIR != FS_ISDIR);
+ 	BUILD_BUG_ON(IN_ONESHOT != FS_IN_ONESHOT);
+
+-	BUG_ON(hweight32(ALL_INOTIFY_BITS) != 21);
++	BUG_ON(hweight32(ALL_INOTIFY_BITS) != 22);
+
+ 	inotify_inode_mark_cachep = KMEM_CACHE(inotify_inode_mark, SLAB_PANIC);
+
+Index: include/linux/inotify.h
+===================================================================
+--- include.orig/linux/inotify.h
++++ include/linux/inotify.h
+@@ -17,6 +17,6 @@ extern struct ctl_table inotify_table[];
+ 			  IN_DELETE_SELF | IN_MOVE_SELF | IN_UNMOUNT | \
+ 			  IN_Q_OVERFLOW | IN_IGNORED | IN_ONLYDIR | \
+ 			  IN_DONT_FOLLOW | IN_EXCL_UNLINK | IN_MASK_ADD | \
+-			  IN_ISDIR | IN_ONESHOT)
++			  IN_MASK_CREATE | IN_ISDIR | IN_ONESHOT)
+
+ #endif	/* _LINUX_INOTIFY_H */
+Index: include/uapi/linux/inotify.h
+===================================================================
+--- include.orig/uapi/linux/inotify.h
++++ include/uapi/linux/inotify.h
+@@ -52,6 +52,7 @@ struct inotify_event {
+ #define IN_ONLYDIR		0x01000000	/* only watch the path if it is a directory */
+ #define IN_DONT_FOLLOW		0x02000000	/* don't follow a sym link */
+ #define IN_EXCL_UNLINK		0x04000000	/* exclude events on unlinked objects */
++#define IN_MASK_CREATE		0x10000000	/* only create watches */
+ #define IN_MASK_ADD		0x20000000	/* add to the mask of an already existing watch */
+ #define IN_ISDIR		0x40000000	/* event occurred against dir */
+ #define IN_ONESHOT		0x80000000	/* only send event once */
