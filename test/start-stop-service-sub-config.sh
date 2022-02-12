@@ -20,7 +20,7 @@ say "Test start $(date)"
 cp "$TEST_DIR"/common/service.sh "$TENV_ROOT"/test_assets/
 
 say "Add service stanza in $FINIT_RCSD/service.conf"
-texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh' > $FINIT_RCSD/service.conf"
+texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh -- Subserv' > $FINIT_RCSD/service.conf"
 
 say 'Reload Finit'
 texec sh -c "initctl reload"
