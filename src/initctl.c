@@ -891,7 +891,7 @@ static int usage(int rc)
 		"  -q, --quiet               Silent, only return status of command\n"
 		"  -t, --no-heading          Skip table headings\n"
 		"  -v, --verbose             Verbose output\n"
-		"  -R, --version             Show program version\n"
+		"  -V, --version             Show program version\n"
 		"  -h, --help                This help text\n"
 		"\n"
 		"Commands:\n"
