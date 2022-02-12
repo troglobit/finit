@@ -57,6 +57,8 @@ dirs = $(DEST)/bin \
 	$(DEST)/etc \
 	$(DEST)/proc \
 	$(DEST)/sbin \
+	$(DEST)/var \
+	$(DEST)/run \
 	$(DEST)/sys \
 	$(DEST)/test_assets \
 	$(DEST)/tmp
@@ -65,6 +67,7 @@ _libs_src = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
 libs = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
 
 all: $(dirs) $(binaries) $(libs) $(DEST)/bin/chrootsetup.sh
+	touch $(DEST)/etc/fstab
 
 $(dirs):
 	mkdir -p $@
