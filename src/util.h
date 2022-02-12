@@ -61,6 +61,7 @@ int   fngetint     (char *path, int *val);
 
 int   strtobytes   (char *arg);
 char *sig2str      (int sig);
+int   str2sig      (char *sig);
 char *code2str     (int code);
 
 void  do_sleep     (unsigned int sec);

@@ -140,6 +140,10 @@ Start service by name, with optional ID, e.g.,
 Stop/Pause a running service by name
 .It Nm Ar reload Cm NAME[:ID]
 Reload service by name (SIGHUP or restart)
+.It Nm Ar signal Cm NAME:[ID] S
+Send signal S to service, by name.
+.Cm S
+may be a complete signal name such as SIGHUP, or short name such as HUP, or the signal number such as 1 (SIGHUP).
 .It Nm Ar restart Cm NAME[:ID]
 Restart (stop/start) service by name
 .It Nm Ar status Cm NAME[:ID]

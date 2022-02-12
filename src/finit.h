@@ -95,6 +95,7 @@
 #define INIT_CMD_SVC_QUERY      130
 #define INIT_CMD_SVC_FIND       131
 #define INIT_CMD_SVC_FIND_BYC   132
+#define INIT_CMD_SIGNAL         133
 #define INIT_CMD_NACK           254
 #define INIT_CMD_ACK            255
 
