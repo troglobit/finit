@@ -25,6 +25,11 @@ assert_num_children() {
     assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
 }
 
+assert_new_pid() {
+    # shellcheck disable=SC2086
+    assert "Finit has registered new PID" "$(texec initctl |grep $1 |awk '{print $1}')" -eq "$(texec cat $2)"
+}
+
 texec() {
     # shellcheck disable=SC2154
     "$TEST_DIR/tenv/exec.sh" "$finit_pid" "$@"

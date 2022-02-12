@@ -26,6 +26,7 @@ TESTS			+= add-remove-dynamic-service.sh
 TESTS			+= add-remove-dynamic-service-sub-config.sh
 TESTS			+= start-stop-service.sh
 TESTS			+= start-stop-service-sub-config.sh
+TESTS			+= start-kill-service.sh
 
 clean-local:
 	-rm -rf $(builddir)/tenv-root/
