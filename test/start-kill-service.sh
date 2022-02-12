@@ -1,4 +1,6 @@
 #!/bin/sh
+# Verifies Finit restarts crashing services and registers their new PID
+# from their (default) PID file.
 
 set -eu
 
