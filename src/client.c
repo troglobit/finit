@@ -86,11 +86,13 @@ int client_send(struct init_request *rq, ssize_t len)
 	}
 
 	pfd.fd = sd;
-	pfd.events = POLLIN;
+	pfd.events = POLLIN | POLLERR | POLLHUP;
 	if ((rc = poll(&pfd, 1, 2000)) <= 0) {
-		if (rc)
+		if (rc) {
+			if (errno == EINTR) /* shutdown/reboot */
+				goto exit;
 			warn("poll(), errno %d", errno);
-		else
+		} else
 			warnx("Timed out waiting for reply from Finit.");
 		goto exit;
 	}
