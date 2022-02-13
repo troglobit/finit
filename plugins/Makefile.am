@@ -7,7 +7,7 @@ AM_CPPFLAGS        += $(lite_CFLAGS) $(uev_CFLAGS)
 
 if STATIC
 noinst_LTLIBRARIES  = libplug.la
-libplug_la_SOURCES  = bootmisc.c modprobe.c pidfile.c procps.c sys.c tty.c usr.c
+libplug_la_SOURCES  = bootmisc.c pidfile.c procps.c sys.c usr.c
 
 if BUILD_ALSA_UTILS_PLUGIN
 libplug_la_SOURCES += alsa-utils.c
@@ -25,6 +25,10 @@ if BUILD_MODULES_LOAD_PLUGIN
 libplug_la_SOURCES += modules-load.c
 endif
 
+if BUILD_MODPROBE_PLUGIN
+libplug_la_SOURCES += modprobe.c
+endif
+
 if BUILD_NETLINK_PLUGIN
 libplug_la_SOURCES += netlink.c
 endif
@@ -37,6 +41,10 @@ if BUILD_RTC_PLUGIN
 libplug_la_SOURCES += rtc.c
 endif
 
+if BUILD_TTY_PLUGIN
+libplug_la_SOURCES += tty.c
+endif
+
 if BUILD_URANDOM_PLUGIN
 libplug_la_SOURCES += urandom.c
 endif
@@ -46,7 +54,7 @@ libplug_la_SOURCES += x11-common.c
 endif
 
 else
-pkglib_LTLIBRARIES  = bootmisc.la modprobe.la pidfile.la procps.la sys.la tty.la usr.la
+pkglib_LTLIBRARIES  = bootmisc.la pidfile.la procps.la sys.la usr.la
 
 if BUILD_ALSA_UTILS_PLUGIN
 pkglib_LTLIBRARIES += alsa-utils.la
@@ -64,6 +72,10 @@ if BUILD_MODULES_LOAD_PLUGIN
 pkglib_LTLIBRARIES += modules-load.la
 endif
 
+if BUILD_MODPROBE_PLUGIN
+pkglib_LTLIBRARIES += modprobe.la
+endif
+
 if BUILD_NETLINK_PLUGIN
 pkglib_LTLIBRARIES += netlink.la
 endif
@@ -74,6 +86,10 @@ endif
 
 if BUILD_RTC_PLUGIN
 pkglib_LTLIBRARIES += rtc.la
+endif
+
+if BUILD_TTY_PLUGIN
+pkglib_LTLIBRARIES += tty.la
 endif
 
 if BUILD_URANDOM_PLUGIN
