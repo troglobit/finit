@@ -222,7 +222,7 @@ void	    svc_prune_bootstrap	   (void);
 void        svc_enable             (svc_t *svc);
 int         svc_enabled            (svc_t *svc);
 
-int         svc_parse_jobstr       (char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *));
+int         svc_parse_jobstr       (char *str, size_t len, void *user_data, int (*found)(svc_t *, void *), int (not_found)(char *, char *, void *));
 
 static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
 static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV    == svc->type; }
