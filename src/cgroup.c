@@ -466,8 +466,10 @@ void cgroup_init(uev_ctx_t *ctx)
 	if (mount("none", FINIT_CGPATH, "cgroup2", opts, NULL)) {
 		if (errno == ENOENT)
 			logit(LOG_NOTICE, "Kernel does not support cgroups v2, disabling.");
+		else if (errno == EPERM) /* Probably inside an unpriviliged container */
+			logit(LOG_NOTICE, "Not allowed to mount cgroups v2, disabling.");
 		else
-			_pe("Failed mounting cgroup v2, disabling.");
+			_pe("Failed mounting cgroup v2");
 		avail = 0;
 		return;
 	}
