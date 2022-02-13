@@ -143,7 +143,7 @@ int run(char *cmd)
 
 	result = WEXITSTATUS(status);
 	if (WIFEXITED(status)) {
-		_d("Started %s and ended OK: %d", args[0], result);
+		_d("Started %s and exit without signal, status: %d", args[0], result);
 	} else if (WIFSIGNALED(status)) {
 		_d("Process %s terminated by signal %d", args[0], WTERMSIG(status));
 		if (!result)
