@@ -98,11 +98,6 @@ static void do_kill(int signo, char *msg)
 	do_sleep(5);
 }
 
-static void sig(int signo)
-{
-	(void)signo;		/* NOP */
-}
-
 static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS]\n\n"
@@ -163,9 +158,6 @@ int reboot_main(int argc, char *argv[])
 
 	/* Check for any overrides */
 	transform(NULL);
-
-	/* Catch and ignore SIGTERM on halt/poweroff */
-	signal(SIGTERM, sig);
 
 	if (force) {
 		switch (cmd) {
