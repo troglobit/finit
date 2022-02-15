@@ -101,7 +101,7 @@ teardown() {
     test_status="$?"
 
     if type test_teardown > /dev/null 2>&1 ; then
-	test_teardown
+        test_teardown
     fi
 
     log "$color_reset" '--' ''
@@ -116,9 +116,6 @@ teardown() {
 
     wait
 
-    if [ -d "$TENV_ROOT/var/lock" ]; then
-        chmod +r "$TENV_ROOT/var/lock"
-    fi
     rm -f "$TENV_ROOT"/running_test.pid
 }
 
