@@ -45,3 +45,6 @@ GTAGS
 /.autoconf
 /.automake
 /.built
+
+# VS Code user settings
+.vscode

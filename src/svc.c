@@ -650,7 +650,7 @@ static char *tokstr(char *str, size_t len)
 /*
  * Used by api.c (to start/stop/restart) and initctl.c (for input validation)
  */
-int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_found)(char *, char *))
+int svc_parse_jobstr(char *str, size_t len, void *user_data, int (*found)(svc_t *, void *), int (not_found)(char *, char *, void *))
 {
 	char *input, *token;
 	int result = 0;
@@ -686,11 +686,11 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 			if (!ptr) {
 				svc = svc_job_iterator(&iter, 1, job);
 				if (!svc && not_found)
-					result += not_found(NULL, token);
+					result += not_found(NULL, token, user_data);
 
 				while (svc) {
 					if (found)
-						result += found(svc);
+						result += found(svc, user_data);
 					svc = svc_job_iterator(&iter, 0, job);
 				}
 			} else {
@@ -699,19 +699,19 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 
 				svc = svc_find_by_jobid(job, id);
 				if (!svc && not_found)
-					result += not_found(token, id);
+					result += not_found(token, id, user_data);
 				else if (found)
-					result += found(svc);
+					result += found(svc, user_data);
 			}
 		} else {
 			if (!ptr) {
 				svc = svc_named_iterator(&iter, 1, token);
 				if (!svc && not_found)
-					result += not_found(token, id);
+					result += not_found(token, id, user_data);
 
 				while (svc) {
 					if (found)
-						result += found(svc);
+						result += found(svc, user_data);
 					svc = svc_named_iterator(&iter, 0, token);
 				}
 			} else {
@@ -720,9 +720,9 @@ int svc_parse_jobstr(char *str, size_t len, int (*found)(svc_t *), int (not_foun
 
 				svc = svc_find_by_nameid(token, id);
 				if (!svc && not_found)
-					result += not_found(token, id);
+					result += not_found(token, id, user_data);
 				else if (found)
-					result += found(svc);
+					result += found(svc, user_data);
 			}
 		}
 

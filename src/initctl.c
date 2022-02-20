@@ -52,6 +52,7 @@ struct cmd {
 	struct cmd  *ctx;
 	int        (*cb)(char *arg);
 	int         *cond;
+	int        (*cb_multiarg)(int argc, char **argv);
 };
 
 int icreate  = 0;
@@ -273,6 +274,60 @@ static int do_restart(char *arg)
 		errx(1, "Failed stopping %s (restart)", arg);
 
 	return do_startstop(INIT_CMD_RESTART_SVC, arg);
+}
+
+/**
+ * do_signal - Ask finit to send a signal to a service.
+ * @argv: must point to an array of strings, containing a service 
+ *        and signal name, in that order.
+ * @argc: must be 2.
+ * 
+ * A signal can be a complete signal name such as "SIGHUP", or
+ * it can be the shortest unique name, such as "HUP" (no SIG prefix).
+ * It can also be a raw signal number, such as "9" (SIGKILL).
+ */
+int do_signal(int argc, char **argv)
+{
+	int signum;
+
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd   = INIT_CMD_SVC_QUERY
+	};
+
+	if (argc != 2)
+		errx(1, "invalid number of arguments to signal");
+	
+	/* Validate service name */
+	strlcpy(rq.data, argv[0], sizeof(rq.data));
+	if (client_send(&rq, sizeof(rq))) {
+		fprintf(stderr, "No such task or service(s): %s\n\n", argv[0]);
+		goto show_usage;
+	}
+
+	/* Validate signal name (or number) */
+	if ((signum = str2sig(argv[1])) < 0) {
+		/* It wasn't a signal name, so let's see if argv[1]
+		   is an actual signal number. */
+		errno = 0; /* Make sure errno is reset */
+		signum = (int) strtol(argv[1], NULL, 10);
+
+		/* Was it a number? Was it a signum that finit recognizes? */
+		if (errno || !*(sig2str(signum))) {
+			fprintf(stderr, "Not a valid signal (or signum): %s\n", argv[1]);
+			goto show_usage;
+		}
+	}
+
+	rq.magic = INIT_MAGIC;
+	rq.cmd = INIT_CMD_SIGNAL;
+	strlcpy(rq.data, argv[0], sizeof(rq.data));
+	rq.runlevel = signum; /* Reuse runlevel for signal number. */
+	return client_send(&rq, sizeof(rq));
+
+show_usage:
+	fprintf(stderr, "Usage: initctl signal <NAME>[:ID] <S>\n");
+	return 1;
 }
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
@@ -939,6 +994,7 @@ static int usage(int rc)
 		"  stop     <NAME>[:ID]      Stop/Pause a running service by name\n"
 		"  reload   <NAME>[:ID]      Reload service by name (SIGHUP or restart)\n"
 		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
+		"  signal   <NAME>[:ID] <S>  Send signal S to service by name, with optional ID\n"
 		"  ident    [NAME]           Show matching identities for NAME, or all\n"
 		"  status   <NAME>[:ID]      Show service status, by name\n"
 		"  status                    Show status of services, default command\n");
@@ -1001,6 +1057,9 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 		if (command[i].ctx)
 			return cmd_parse(argc - 1, &argv[1], command[i].ctx);
 
+		if (command[i].cb_multiarg)
+			return command[i].cb_multiarg(argc - 1, argv + 1);
+
 		if (command[i].cb) {
 			int rc = 0;
 
@@ -1019,6 +1078,7 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 
 	return command[0].cb(NULL); /* default cmd */
 }
+
 int main(int argc, char *argv[])
 {
 	struct option long_options[] = {
@@ -1036,52 +1096,53 @@ int main(int argc, char *argv[])
 		{ NULL, 0, NULL, 0 }
 	};
 	struct cmd cond[] = {
-		{ "status",   NULL, do_cond_show, NULL }, /* default cmd */
-		{ "dump",     NULL, do_cond_dump, NULL },
-		{ "set",      NULL, do_cond_set,  NULL },
-		{ "clr",      NULL, do_cond_clr,  NULL },
-		{ "clear",    NULL, do_cond_clr,  NULL },
-		{ NULL, NULL, NULL, NULL }
+		{ "status",   NULL, do_cond_show, NULL, NULL }, /* default cmd */
+		{ "dump",     NULL, do_cond_dump, NULL, NULL  },
+		{ "set",      NULL, do_cond_set,  NULL, NULL  },
+		{ "clr",      NULL, do_cond_clr,  NULL, NULL  },
+		{ "clear",    NULL, do_cond_clr,  NULL, NULL  },
+		{ NULL, NULL, NULL, NULL, NULL  }
 	};
 	struct cmd command[] = {
-		{ "status",   NULL, show_status,  NULL }, /* default cmd */
-		{ "ident",    NULL, show_ident,   NULL },
+		{ "status",   NULL, show_status,  NULL, NULL  }, /* default cmd */
+		{ "ident",    NULL, show_ident,   NULL, NULL  },
 
-		{ "debug",    NULL, toggle_debug, NULL },
-		{ "devel",    NULL, do_devel,     NULL },
-		{ "help",     NULL, do_help,      NULL },
-		{ "version",  NULL, show_version, NULL },
+		{ "debug",    NULL, toggle_debug, NULL, NULL  },
+		{ "devel",    NULL, do_devel,     NULL, NULL  },
+		{ "help",     NULL, do_help,      NULL, NULL  },
+		{ "version",  NULL, show_version, NULL, NULL  },
 
-		{ "list",     NULL, serv_list,    NULL },
-		{ "ls",       NULL, serv_list,    NULL },
-		{ "enable",   NULL, serv_enable,  NULL },
-		{ "disable",  NULL, serv_disable, NULL },
-		{ "touch",    NULL, serv_touch,   NULL },
-		{ "show",     NULL, serv_show,    NULL },
-		{ "edit",     NULL, serv_edit,    NULL },
-		{ "create",   NULL, serv_creat,   NULL },
-		{ "delete",   NULL, serv_delete,  NULL },
-		{ "reload",   NULL, do_reload,    NULL },
+		{ "list",     NULL, serv_list,    NULL, NULL  },
+		{ "ls",       NULL, serv_list,    NULL, NULL  },
+		{ "enable",   NULL, serv_enable,  NULL, NULL  },
+		{ "disable",  NULL, serv_disable, NULL, NULL  },
+		{ "touch",    NULL, serv_touch,   NULL, NULL  },
+		{ "show",     NULL, serv_show,    NULL, NULL  },
+		{ "edit",     NULL, serv_edit,    NULL, NULL  },
+		{ "create",   NULL, serv_creat,   NULL, NULL  },
+		{ "delete",   NULL, serv_delete,  NULL, NULL  },
+		{ "reload",   NULL, do_reload,    NULL, NULL  },
 
-		{ "cond",     cond, NULL, NULL         },
+		{ "cond",     cond, NULL, NULL, NULL          },
 
-		{ "log",      NULL, do_log,       NULL },
-		{ "start",    NULL, do_start,     NULL },
-		{ "stop",     NULL, do_stop,      NULL },
-		{ "restart",  NULL, do_restart,   NULL },
+		{ "log",      NULL, do_log,       NULL, NULL  },
+		{ "start",    NULL, do_start,     NULL, NULL  },
+		{ "stop",     NULL, do_stop,      NULL, NULL  },
+		{ "restart",  NULL, do_restart,   NULL, NULL  },
+		{ "signal",   NULL, NULL,         NULL, do_signal  },
 
-		{ "cgroup",   NULL, show_cgroup, &cgrp },
-		{ "ps",       NULL, show_cgps,   &cgrp },
-		{ "top",      NULL, show_cgtop,  &cgrp },
+		{ "cgroup",   NULL, show_cgroup, &cgrp, NULL  },
+		{ "ps",       NULL, show_cgps,   &cgrp, NULL  },
+		{ "top",      NULL, show_cgtop,  &cgrp, NULL  },
 
-		{ "runlevel", NULL, do_runlevel,  NULL },
-		{ "reboot",   NULL, do_reboot,    NULL },
-		{ "halt",     NULL, do_halt,      NULL },
-		{ "poweroff", NULL, do_poweroff,  NULL },
-		{ "suspend",  NULL, do_suspend,   NULL },
+		{ "runlevel", NULL, do_runlevel,  NULL, NULL  },
+		{ "reboot",   NULL, do_reboot,    NULL, NULL  },
+		{ "halt",     NULL, do_halt,      NULL, NULL  },
+		{ "poweroff", NULL, do_poweroff,  NULL, NULL  },
+		{ "suspend",  NULL, do_suspend,   NULL, NULL  },
 
-		{ "utmp",     NULL, do_utmp,     &utmp },
-		{ NULL, NULL, NULL, NULL }
+		{ "utmp",     NULL, do_utmp,     &utmp, NULL  },
+		{ NULL, NULL, NULL, NULL, NULL  }
 	};
 	int interactive = 1, c;
 

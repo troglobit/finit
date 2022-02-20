@@ -51,12 +51,12 @@
 extern svc_t *wdog;
 static uev_t api_watcher;
 
-static int call(int (*action)(svc_t *), char *buf, size_t len)
+static int call(int (*action)(svc_t *, void *), char *buf, size_t len)
 {
-	return svc_parse_jobstr(buf, len, action, NULL);
+	return svc_parse_jobstr(buf, len, NULL, action, NULL);
 }
 
-static int stop(svc_t *svc)
+static int stop(svc_t *svc, void *user_data)
 {
 	if (!svc)
 		return 1;
@@ -67,7 +67,7 @@ static int stop(svc_t *svc)
 	return 0;
 }
 
-static int start(svc_t *svc)
+static int start(svc_t *svc, void *user_data)
 {
 	if (!svc)
 		return 1;
@@ -83,7 +83,7 @@ static int start(svc_t *svc)
  *       responsibility of initctl to do.  Otherwise we'd block PID 1,
  *       or introduce some nasty race conditions.
  */
-static int restart(svc_t *svc)
+static int restart(svc_t *svc, void *user_data)
 {
 	if (!svc)
 		return 1;
@@ -95,7 +95,7 @@ static int restart(svc_t *svc)
 	return 0;
 }
 
-static int reload(svc_t *svc)
+static int reload(svc_t *svc, void *user_data)
 {
 	if (!svc)
 		return 1;
@@ -114,8 +114,32 @@ static int do_start  (char *buf, size_t len) { return call(start,   buf, len); }
 static int do_restart(char *buf, size_t len) { return call(restart, buf, len); }
 static int do_reload (char *buf, size_t len) { return call(reload,  buf, len); }
 
+static int do_signal_svc(svc_t *svc, void *user_data)
+{
+	if (!svc)
+		return 1;
+	
+	if (!svc_is_running(svc))
+		return 1;
+
+	int sig = *(int *)user_data;
+	if (kill(svc->pid, sig))
+		return 1;
+
+	return 0;
+}
+
+static int do_signal(char *buf, size_t len, int sig)
+{
+	/* Sanity check: Do we know this signal!? */
+	if (!*sig2str(sig))
+		return 1;
+
+	return svc_parse_jobstr(buf, len, &sig, do_signal_svc, NULL);
+}
+
 static char query_buf[368];
-static int missing(char *job, char *id)
+static int missing(char *job, char *id, void *user_data)
 {
 	char buf[20];
 
@@ -133,7 +157,7 @@ static int missing(char *job, char *id)
 static int do_query(char *buf, size_t len)
 {
 	query_buf[0] = 0;
-	if (svc_parse_jobstr(buf, len, NULL, missing)) {
+	if (svc_parse_jobstr(buf, len, NULL, NULL, missing)) {
 		memcpy(buf, query_buf, len);
 		return 1;
 	}
@@ -407,7 +431,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 				if (wdog->protect) {
 					logit(LOG_NOTICE, "Stopping and deleting built-in watchdog.");
-					stop(wdog);
+					stop(wdog, NULL);
 					svc_del(wdog);
 				}
 			}
@@ -442,6 +466,12 @@ static void api_cb(uev_t *w, void *arg, int events)
 			strterm(rq.data, sizeof(rq.data));
 			send_svc(sd, do_find_byc(rq.data, sizeof(rq.data)));
 			goto leave;
+
+		case INIT_CMD_SIGNAL:
+			_d("svc signal %d: %s", rq.runlevel, rq.data);
+			strterm(rq.data, sizeof(rq.data));
+			result = do_signal(rq.data, sizeof(rq.data), rq.runlevel /* runlevel is reused for signal! */);
+			break;
 
 		default:
 			_d("Unsupported cmd: %d", rq.cmd);

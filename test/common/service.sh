@@ -2,6 +2,10 @@
 
 set -eu
 
+# Hook SIGUSR1 and dump trace to file system
+# shellcheck disable=SC2172
+trap 'echo USR1 > /tmp/usr1.log' 10
+
 echo $$ > /run/service.pid
 
 while true; do
