@@ -286,14 +286,13 @@ static int do_restart(char *arg)
  * it can be the shortest unique name, such as "HUP" (no SIG prefix).
  * It can also be a raw signal number, such as "9" (SIGKILL).
  */
-int do_signal(int argc, char **argv)
+int do_signal(int argc, char *argv[])
 {
-	int signum;
-
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
 		.cmd   = INIT_CMD_SVC_QUERY
 	};
+	int signo;
 
 	if (argc != 2)
 		errx(1, "invalid number of arguments to signal");
@@ -306,15 +305,15 @@ int do_signal(int argc, char **argv)
 	}
 
 	/* Validate signal name (or number) */
-	if ((signum = str2sig(argv[1])) < 0) {
-		/* It wasn't a signal name, so let's see if argv[1]
-		   is an actual signal number. */
-		errno = 0; /* Make sure errno is reset */
-		signum = (int) strtol(argv[1], NULL, 10);
+	signo = str2sig(argv[1]);
+	if (signo == -1) {
+		/* Not a signal name, is it an actual signal number? */
+		errno = 0;
+		signo = (int)strtol(argv[1], NULL, 10);
 
-		/* Was it a number? Was it a signum that finit recognizes? */
-		if (errno || !*(sig2str(signum))) {
-			fprintf(stderr, "Not a valid signal (or signum): %s\n", argv[1]);
+		/* Was it a number? Was it a signo that finit recognizes? */
+		if (errno || !*(sig2str(signo))) {
+			fprintf(stderr, "Not a valid signal (or signo): %s\n", argv[1]);
 			goto show_usage;
 		}
 	}
