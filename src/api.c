@@ -116,17 +116,13 @@ static int do_reload (char *buf, size_t len) { return call(reload,  buf, len); }
 
 static int do_signal_svc(svc_t *svc, void *user_data)
 {
-	if (!svc)
-		return 1;
-	
-	if (!svc_is_running(svc))
+	int signo;
+
+	if (!svc || !user_data || !svc_is_running(svc))
 		return 1;
 
-	int sig = *(int *)user_data;
-	if (kill(svc->pid, sig))
-		return 1;
-
-	return 0;
+	signo = *(int *)user_data;
+	return !!kill(svc->pid, signo);
 }
 
 static int do_signal(char *buf, size_t len, int sig)
