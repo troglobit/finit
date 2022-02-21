@@ -278,7 +278,7 @@ char *sig2str(int sig)
 /**
  * str2sig - Translate signal name to the corresponding signal number.
  * @sig: The name of the signal
- * 
+ *
  * A signal can be a complete signal name such as "SIGHUP", or
  * it can be the shortest unique name, such as "HUP" (no SIG prefix).
  */
@@ -287,10 +287,6 @@ int str2sig(char *sig)
 	int name_offset = 0;
 	size_t i;
 
-	/* if sig name starts with "SIG", then skip the first
-	 * three characters. signames holds the names without
-	 * the "SIG" prefix.
-	 */
 	if (strncasecmp(sig, "SIG", 3) == 0) {
 		name_offset = 3;
 	}

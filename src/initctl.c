@@ -278,10 +278,10 @@ static int do_restart(char *arg)
 
 /**
  * do_signal - Ask finit to send a signal to a service.
- * @argv: must point to an array of strings, containing a service 
+ * @argv: must point to an array of strings, containing a service
  *        and signal name, in that order.
  * @argc: must be 2.
- * 
+ *
  * A signal can be a complete signal name such as "SIGHUP", or
  * it can be the shortest unique name, such as "HUP" (no SIG prefix).
  * It can also be a raw signal number, such as "9" (SIGKILL).
@@ -297,7 +297,7 @@ int do_signal(int argc, char **argv)
 
 	if (argc != 2)
 		errx(1, "invalid number of arguments to signal");
-	
+
 	/* Validate service name */
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
 	if (client_send(&rq, sizeof(rq))) {
@@ -319,10 +319,12 @@ int do_signal(int argc, char **argv)
 		}
 	}
 
-	rq.magic = INIT_MAGIC;
-	rq.cmd = INIT_CMD_SIGNAL;
+	/* Reuse runlevel for signal number. */
+	rq.magic    = INIT_MAGIC;
+	rq.cmd      = INIT_CMD_SIGNAL;
+	rq.runlevel = signo;
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
-	rq.runlevel = signum; /* Reuse runlevel for signal number. */
+
 	return client_send(&rq, sizeof(rq));
 
 show_usage:

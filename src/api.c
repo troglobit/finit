@@ -131,7 +131,7 @@ static int do_signal_svc(svc_t *svc, void *user_data)
 
 static int do_signal(char *buf, size_t len, int sig)
 {
-	/* Sanity check: Do we know this signal!? */
+	/* Sanity check: do we know this signal? */
 	if (!*sig2str(sig))
 		return 1;
 
@@ -468,9 +468,10 @@ static void api_cb(uev_t *w, void *arg, int events)
 			goto leave;
 
 		case INIT_CMD_SIGNAL:
+			/* runlevel is reused for signal */
 			_d("svc signal %d: %s", rq.runlevel, rq.data);
 			strterm(rq.data, sizeof(rq.data));
-			result = do_signal(rq.data, sizeof(rq.data), rq.runlevel /* runlevel is reused for signal! */);
+			result = do_signal(rq.data, sizeof(rq.data), rq.runlevel);
 			break;
 
 		default:
