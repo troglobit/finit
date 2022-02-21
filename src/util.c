@@ -284,15 +284,13 @@ char *sig2str(int sig)
  */
 int str2sig(char *sig)
 {
-	int name_offset = 0;
 	size_t i;
 
-	if (strncasecmp(sig, "SIG", 3) == 0) {
-		name_offset = 3;
-	}
+	if (!strncasecmp(sig, "SIG", 3))
+		sig += 3;
 
 	for (i = 1; i < NELEMS(signames); ++i) {
-		if (strcasecmp(&sig[name_offset], signames[i]) == 0)
+		if (strcasecmp(sig, signames[i]) == 0)
 			return i;
 	}
 
