@@ -264,14 +264,14 @@ int strtobytes(char *arg)
 	return bytes;
 }
 
-char *sig2str(int sig)
+char *sig2str(int signo)
 {
 	static char signame[8];
 
-	if (sig < 1 || sig >= (int)NELEMS(signames))
+	if (signo < 1 || signo >= (int)NELEMS(signames))
 		return "";
 
-	snprintf(signame, sizeof(signame), "/%s", signames[sig]);
+	snprintf(signame, sizeof(signame), "/%s", signames[signo]);
 	return signame;
 }
 
