@@ -173,7 +173,7 @@ void unmount_regular(void);
  *
  * https://www.freedesktop.org/wiki/Software/systemd/RootStorageDaemons/
  */
-void do_iterate_proc(int (*callback)(int, int *), int *context)
+void do_iterate_proc(int (*cb)(int, void *), void *data)
 {
 	DIR *dirp;
 
@@ -206,7 +206,7 @@ void do_iterate_proc(int (*callback)(int, int *), int *context)
 				else if (file[0] == '@')
 					_d("Skipping %s ...", &file[1]);
 				else
-					if (callback(pid, context)) {
+					if (cb(pid, data)) {
 						print(0, "PID %d is still alive (%s)", pid, file);
 						break;
 					}
@@ -217,15 +217,21 @@ void do_iterate_proc(int (*callback)(int, int *), int *context)
 	}
 }
 
-static int kill_callback(int pid, int *context)
+static int kill_cb(int pid, void *data)
 {
-	kill(pid, (int)context);
+	int signo = *(int *)data;
+
+	kill(pid, signo);
+
 	return 0;
 }
 
-static int status_callback(int pid, int *context)
+static int status_cb(int pid, void *data)
 {
-	*context = 1;
+	int *has_proc = (int *)data;
+
+	*has_proc = 1;
+
 	return 1;
 }
 
@@ -235,17 +241,17 @@ static int status_callback(int pid, int *context)
  */
 static int do_wait(int secs)
 {
+	const int delay = 250000;
+	int iterations = secs * 1000 * 1000 / delay;
 	int has_proc;
-	int tmo = 250000;
-	int iterations = secs*1000*1000/tmo;
 
 	do {
-		do_usleep(tmo);
+		do_usleep(delay);
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			;
 		has_proc = 0;
 		iterations--;
-		do_iterate_proc(status_callback, &has_proc);
+		do_iterate_proc(status_cb, &has_proc);
 	}
 	while (has_proc && iterations > 0);
 
@@ -255,6 +261,7 @@ static int do_wait(int secs)
 void do_shutdown(shutop_t op)
 {
 	struct sched_param sched_param = { .sched_priority = 99 };
+	int signo = SIGTERM;
 
 	/*
 	 * On a PREEMPT-RT system, Finit must run as the highest prioritized
@@ -272,9 +279,10 @@ void do_shutdown(shutop_t op)
 	 * Tell remaining non-monitored processes to exit, give them
 	 * time to exit gracefully, 2 sec was customary, we go for 1.
 	 */
-	do_iterate_proc(kill_callback, (int*)SIGTERM);
+	do_iterate_proc(kill_cb, &signo);
 	if (do_wait(1)) {
-		do_iterate_proc(kill_callback, (int*)SIGKILL);
+		signo = SIGKILL;
+		do_iterate_proc(kill_cb, &signo);
 	}
 
 	/* Exit plugins and API gracefully */
