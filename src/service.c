@@ -883,7 +883,7 @@ void service_runlevel(int newlevel)
 	sm_set_runlevel(&sm, newlevel);
 	sm_step(&sm);
 
-	if (!rescue && runlevel <= 1)
+	if (!rescue && (runlevel <= 1 || runlevel == 6))
 		networking(0);
 }
 
