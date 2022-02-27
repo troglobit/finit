@@ -58,7 +58,7 @@ static void setup(void *arg)
 	if ((fd = open("/var/run/console/console.lock", O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
 		write(fd, username, strlen(username));
 		close(fd);
-		run("pam_console_apply");
+		run("pam_console_apply", "pam-console");
 	}
 #endif
 
@@ -66,7 +66,7 @@ static void setup(void *arg)
 	makedir("/tmp/.ICE-unix", 01777);
 
 	if (whichp("restorecon"))
-		run("restorecon /tmp/.ICE-unix /tmp/.X11-unix");
+		run("restorecon /tmp/.ICE-unix /tmp/.X11-unix", "restorecon");
 
 	umask(prev);
 }

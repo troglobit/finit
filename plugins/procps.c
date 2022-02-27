@@ -34,9 +34,7 @@
 
 static void setup(void *arg)
 {
-	size_t i;
 	glob_t gl;
-	char buf[160];
 
 	if (rescue) {
 		_d("Skipping %s plugin in rescue mode.", __FILE__);
@@ -51,9 +49,13 @@ static void setup(void *arg)
 	glob("/mnt/sysctl.d/*.conf",           GLOB_APPEND, NULL, &gl);
 	glob("/etc/sysctl.conf",               GLOB_APPEND, NULL, &gl);
 	if (gl.gl_pathc > 0) {
+		size_t i;
+
 		for (i = 0; i < gl.gl_pathc; i++) {
-			snprintf(buf, sizeof(buf), "/sbin/sysctl -e -p %s >/dev/null", gl.gl_pathv[i]);
-			run(buf);
+			char cmd[160];
+
+			snprintf(cmd, sizeof(cmd), "/sbin/sysctl -e -p %s >/dev/null", gl.gl_pathv[i]);
+			run(cmd, "sysctl");
 		}
 		globfree(&gl);
 	}

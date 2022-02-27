@@ -28,6 +28,7 @@
 #include <dirent.h>
 #include <err.h>
 #include <stdarg.h>
+#include <sysexits.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
@@ -70,74 +71,110 @@ int complete(char *cmd, int pid)
 	return status;
 }
 
-int run(char *cmd)
+static int do_redirect(void)
+{
+	FILE *fp;
+
+	fp = fopen("/dev/null", "w");
+	if (fp) {
+		int fd = fileno(fp);
+
+		dup2(fd, STDIN_FILENO);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+
+		return fclose(fp);
+	}
+
+	return -1;
+}
+
+/*
+ * Run 'cmd' and wait for completion.  If 'log' is not NULL any output
+ * from the command is logged with the given string as prefix, use "" to
+ * skip.  If 'log' is NULL all output is redirected to /dev/null, which
+ * is what this function originally did.
+ */
+int run(char *cmd, char *log)
 {
 	int status, result, i = 0;
-	char *args[NUM_ARGS + 1], *arg, *backup;
+	char *args[NUM_ARGS + 1], *arg;
+	char *backup = NULL;
 	pid_t pid;
 
-	/* We must create a copy that is possible to modify. */
-	backup = arg = strdup(cmd);
-	if (!arg)
-		return 1; /* Failed allocating a string to be modified. */
+	if (!log) {
+		/* We must create a copy that is possible to modify. */
+		backup = arg = strdup(cmd);
+		if (!arg)
+			return 1;
 
-	/* Split command line into tokens of an argv[] array. */
-	args[i++] = strsep(&arg, "\t ");
-	while (arg && i < NUM_ARGS) {
-		/* Handle run("su -c \"dbus-daemon --system\" messagebus");
-		 *   => "su", "-c", "\"dbus-daemon --system\"", "messagebus" */
-		if (*arg == '\'' || *arg == '"') {
-			char *p, delim[2] = " ";
+		/* Split command line into tokens of an argv[] array. */
+		args[i++] = strsep(&arg, "\t ");
+		while (arg && i < NUM_ARGS) {
+			/* Handle run("su -c \"dbus-daemon --system\" messagebus");
+			 *   => "su", "-c", "\"dbus-daemon --system\"", "messagebus" */
+			if (*arg == '\'' || *arg == '"') {
+				char *p, delim[2] = " ";
 
-			delim[0]  = arg[0];
-			args[i++] = arg++;
-			strsep(&arg, delim);
-			 p     = arg - 1;
-			*p     = *delim;
-			*arg++ = 0;
-		} else {
-			args[i++] = strsep(&arg, "\t ");
+				delim[0]  = arg[0];
+				args[i++] = arg++;
+				strsep(&arg, delim);
+				 p     = arg - 1;
+				*p     = *delim;
+				*arg++ = 0;
+			} else {
+				args[i++] = strsep(&arg, "\t ");
+			}
 		}
-	}
-	args[i] = NULL;
+		args[i] = NULL;
 
-	if (i == NUM_ARGS && arg) {
-		_e("Command too long: %s", cmd);
-		free(backup);
-		errno = EOVERFLOW;
-		return 1;
+		if (i == NUM_ARGS && arg) {
+			_e("Command too long: %s", cmd);
+			free(backup);
+			errno = EOVERFLOW;
+			return 1;
+		}
 	}
 
 	pid = fork();
 	if (0 == pid) {
-		FILE *fp;
+		int rc = EX_OSERR;
 
 		setsid();
+		sig_unblock();
+		if (!log) {
+			do_redirect();
+			execvp(args[0], args);
+		} else {
+			char *pfx = *log ? ": " : "";
+			FILE *pp;
 
-		/* Always redirect stdio for run() */
-		fp = fopen("/dev/null", "w");
-		if (fp) {
-			int fd = fileno(fp);
+			pp = popen(cmd, "r");
+			if (pp) {
+				char buf[256];
 
-			dup2(fd, STDIN_FILENO);
-			dup2(fd, STDOUT_FILENO);
-			dup2(fd, STDERR_FILENO);
+				while (fgets(buf, sizeof(buf), pp)) {
+					chomp(buf);
+					logit(LOG_NOTICE, "%s%s%s", log, pfx, buf);
+				}
+
+				rc = pclose(pp);
+			}
 		}
 
-		sig_unblock();
-		execvp(args[0], args);
-
-		_exit(1); /* Only if execv() fails. */
+		_exit(rc);
 	} else if (-1 == pid) {
 		_pe("%s", args[0]);
-		free(backup);
+		if (backup)
+			free(backup);
 
 		return -1;
 	}
 
 	status = complete(args[0], pid);
 	if (-1 == status) {
-		free(backup);
+		if (backup)
+			free(backup);
 		return 1;
 	}
 
@@ -152,7 +189,8 @@ int run(char *cmd)
 				     * change their return code accordingly. --Jocke */
 	}
 
-	free(backup);
+	if (backup)
+		free(backup);
 
 	return result;
 }
@@ -186,7 +224,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 	}
 
 	/* Run cmd ... */
-	status = run(cmd);
+	status = run(cmd, "");
 
 	/* Restore stderr/stdout */
 	if (fp && !debug) {

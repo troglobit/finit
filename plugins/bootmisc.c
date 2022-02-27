@@ -198,7 +198,7 @@ static void setup(void *arg)
 	mksubsys("/var/run/sudo", 0711, "root", "root");
 	mksubsys("/var/run/sudo/ts", 0700, "root", "root");
 	if (whichp("restorecon"))
-		run("restorecon /var/run/sudo /var/run/sudo/ts");
+		run("restorecon /var/run/sudo /var/run/sudo/ts", "restorecon");
 
 	umask(prev);
 }

@@ -333,7 +333,7 @@ static void fs_mount_all(void)
 	_d("Calling extra mount hook, after mount -a ...");
 	plugin_run_hooks(HOOK_MOUNT_POST);
 
-	run("swapon -ea");
+	run("swapon -ea", "swapon");
 
 	_d("Finalize, ensure common file systems are available ...");
 	fs_finalize();

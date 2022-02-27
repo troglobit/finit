@@ -96,7 +96,7 @@ void    networking      (int updown);
 int     in_container    (void);
 
 int     complete        (char *cmd, int pid);
-int     run             (char *cmd);
+int     run             (char *cmd, char *log);
 int     run_interactive (char *cmd, char *fmt, ...);
 int     exec_runtask    (char *cmd, char *args[]);
 pid_t   run_getty       (char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[]);
