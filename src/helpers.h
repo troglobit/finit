@@ -93,6 +93,7 @@ int     mksubsys        (const char *dir, mode_t mode, char *user, char *group);
 
 void    set_hostname    (char **hostname);
 void    networking      (int updown);
+int     in_container    (void);
 
 int     complete        (char *cmd, int pid);
 int     run             (char *cmd);

@@ -522,6 +522,39 @@ done:
 	}
 }
 
+/*
+ * Very basic, and incomplete, check if we're running in a container.
+ */
+int in_container(void)
+{
+	const char *files[] = {
+		"/run/.containerenv",
+		"/.dockerenv"
+	};
+	const char *containers[] = {
+		"lxc",
+		"docker",
+		"kubepod"
+	};
+	size_t i;
+	char *c;
+
+	c = getenv("container");
+	if (c) {
+		for (i = 0; i < NELEMS(containers); i++) {
+			if (!strcmp(containers[i], c))
+				return 1;
+		}
+	}
+
+	for (i = 0; i < NELEMS(files); i++) {
+		if (!access(files[i], F_OK))
+			return 1;
+	}
+
+	return 0;
+}
+
 #ifndef HAVE_GETFSENT
 static lfile_t *fstab = NULL;
 
