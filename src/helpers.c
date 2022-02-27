@@ -493,7 +493,7 @@ void networking(int updown)
 
 	/* Debian/Ubuntu/Busybox/RH/Suse */
 	if (!whichp("ifup"))
-		goto done;
+		goto fallback;
 
 	if (fexist("/etc/network/interfaces")) {
 		pid_t pid;
@@ -511,9 +511,10 @@ void networking(int updown)
 		print(pid > 0 ? 0 : 1, "%s networking", updown ? "Starting" : "Stopping");
 	}
 
-done:
+fallback:
 	/* Fall back to bring up at least loopback */
 	ifconfig("lo", "127.0.0.1", "255.0.0.0", updown);
+done:
 
 	/* Hooks that rely on loopback, or basic networking being up. */
 	if (updown) {
