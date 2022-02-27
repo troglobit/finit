@@ -30,6 +30,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdarg.h>
+#include <sysexits.h>
 #include <sys/ioctl.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
@@ -40,6 +41,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "private.h"
+#include "sig.h"
 #include "util.h"
 #include "utmp-api.h"
 
@@ -498,17 +500,35 @@ void networking(int updown)
 	if (fexist("/etc/network/interfaces")) {
 		pid_t pid;
 
+		if (!updown) {
+			run_interactive("ifdown -a", "Stopping networking");
+			goto done;
+		}
+
 		pid = fork();
 		if (pid == 0) {
-			if (updown)
-				run("ifup -a");
-			else
-				run("ifdown -a");
-			_exit(0);
+			int rc = EX_OSERR;
+			FILE *pp;
+
+			setsid();
+			sig_unblock();
+
+			pp = popen("ifup -a 2>&1", "r");
+			if (pp) {
+				char buf[256];
+
+				while (fgets(buf, sizeof(buf), pp))
+					logit(LOG_NOTICE, "network: %s", buf);
+
+				rc = pclose(pp);
+			}
+
+			_exit(rc);
 		}
 		cgroup_service("network", pid, NULL);
+		print(pid > 0 ? 0 : 1, "Bringing up network interfaces ...");
 
-		print(pid > 0 ? 0 : 1, "%s networking", updown ? "Starting" : "Stopping");
+		goto done;
 	}
 
 fallback:
