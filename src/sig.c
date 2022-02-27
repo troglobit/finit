@@ -261,13 +261,16 @@ static int do_wait(int secs)
 void do_shutdown(shutop_t op)
 {
 	struct sched_param sched_param = { .sched_priority = 99 };
+	int in_cont = in_container();
 	int signo = SIGTERM;
 
-	/*
-	 * On a PREEMPT-RT system, Finit must run as the highest prioritized
-	 * RT process to ensure it completes the shutdown sequence.
-	 */
-	sched_setscheduler(1, SCHED_RR, &sched_param);
+	if (!in_cont) {
+		/*
+		 * On a PREEMPT-RT system, Finit must run as the highest prioritized
+		 * RT process to ensure it completes the shutdown sequence.
+		 */
+		sched_setscheduler(1, SCHED_RR, &sched_param);
+	}
 
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
@@ -306,6 +309,11 @@ void do_shutdown(shutop_t op)
 		return;
 	}
 
+	if (in_cont) {
+		sync();
+		goto done;
+	}
+
 	if (wdog) {
 		print(kill(wdog->pid, SIGPWR) == 1, "Advising watchdog, system going down");
 		do_sleep(2);
@@ -327,7 +335,7 @@ void do_shutdown(shutop_t op)
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
 
-	/* Reboot via watchdog or kernel, or shutdown? */
+done:	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
 		if (wdog && wdog->pid > 1) {
 			int timeout = 10;
