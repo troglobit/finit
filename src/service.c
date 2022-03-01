@@ -628,10 +628,13 @@ static int service_start(svc_t *svc)
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
 		svc->status = complete(svc->cmd, pid);
-		if (WIFEXITED(svc->status) && !WEXITSTATUS(svc->status))
+		if (WIFEXITED(svc->status) && !WEXITSTATUS(svc->status)) {
+			svc->started = 1;
 			result = 0;
-		else
+		} else {
+			svc->started = 0;
 			result = 1;
+		}
 		svc->start_time = svc->pid = 0;
 		svc->once++;
 		svc_set_state(svc, SVC_STOPPING_STATE);
@@ -1707,18 +1710,24 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	}
 
 	if (svc_is_runtask(svc)) {
-		char cond[MAX_COND_LEN];
+		char success[MAX_COND_LEN], failure[MAX_COND_LEN];
 
-		snprintf(cond, sizeof(cond), "%s/%s/done", svc_typestr(svc), svc->name);
+		snprintf(success, sizeof(success), "%s/%s/success", svc_typestr(svc), svc->name);
+		snprintf(failure, sizeof(failure), "%s/%s/failure", svc_typestr(svc), svc->name);
 
-		/* create done condition when entering SVC_DONE_STATE. */
-		if (*state == SVC_DONE_STATE)
-			cond_set_oneshot(cond);
+		/* create success/failure condition when entering SVC_DONE_STATE. */
+		if (*state == SVC_DONE_STATE) {
+			if (svc->started)
+				cond_set_oneshot(success);
+			else
+				cond_set_oneshot(failure);
+		}
 
-		/* clear done condition when entering SVC_HALTED_STATE. */
-		if (*state == SVC_HALTED_STATE)
-			cond_clear(cond);
-
+		/* clear all conditions when entering SVC_HALTED_STATE. */
+		if (*state == SVC_HALTED_STATE) {
+			cond_clear(success);
+			cond_clear(failure);
+		}
 	}
 }
 
