@@ -332,7 +332,10 @@ static inline char *svc_status(svc_t *svc)
 		return "unknown";
 
 	case SVC_DONE_STATE:
-		return "done";
+		if (svc->started)
+			return "done";
+		else
+			return "failed";
 
 	case SVC_STOPPING_STATE:
 		switch (svc->type) {

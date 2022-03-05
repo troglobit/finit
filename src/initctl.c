@@ -791,8 +791,15 @@ static int show_status(char *arg)
 		if (!svc)
 			return 255;
 
-		if (quiet)
-			return svc->state != SVC_RUNNING_STATE;
+		if (quiet) {
+			if (svc_is_runtask(svc))
+				if (svc->started)
+					return 0;
+				else
+					return 1;
+			else
+				return svc->state != SVC_RUNNING_STATE;
+		}
 
 		pidfn = svc->pidfile;
 		if (pidfn[0] == '!')
