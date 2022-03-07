@@ -161,8 +161,11 @@ static int do_log(char *svc)
 	if (!svc || !svc[0])
 		svc = "finit";
 
-	if (!fexist(logfile))
+	if (!fexist(logfile)) {
 		logfile = "/var/log/messages";
+		if (!fexist(logfile))
+			return 0; /* bail out, maybe in container */
+	}
 
 	return systemf("cat %s | grep %s | tail -10", logfile, svc);
 }
