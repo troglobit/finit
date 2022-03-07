@@ -1,5 +1,5 @@
-Tests
-=====
+Finit Test Suite
+================
 
 Finit comes with a set of tests and a small framework for running them.
 Contributors are encouraged to write new tests when implementing features, or
@@ -17,7 +17,7 @@ Running tests
 To run the test suite, first [build](../doc/build.md) Finit, e.g:
 
     ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var
-	make -j9 clean all
+    make -j9 clean all
 
 Then run (parallel does not work atm):
 
@@ -31,3 +31,7 @@ test. To execute an individual test, simply invoke the script containing it:
 
     ./test/name-of-the-test.sh
 
+Another way to run a single (or more) test(s) is to define the `TESTS`
+environment variable:
+
+    TESTS="start-kill-service" make check
