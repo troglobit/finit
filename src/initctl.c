@@ -831,6 +831,8 @@ static int show_status(char *arg)
 			char *group;
 
 			group = pid_cgroup(svc->pid, grbuf, sizeof(grbuf));
+			if (!group)
+				goto no_cgroup; /* ... or PID doesn't exist (anymore) */
 			snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, group);
 			cg = cg_conf(path);
 
@@ -840,6 +842,7 @@ static int show_status(char *arg)
 			       cg->cg_mem.min, cg->cg_mem.max);
 			show_cgroup_tree(group, "              ");
 		}
+	no_cgroup:
 		printf("\n");
 
 		return do_log(svc->cmd);
