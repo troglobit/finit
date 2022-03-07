@@ -31,12 +31,14 @@ BBVER ?= 1.31.0
 BBBIN  = busybox-$(ARCH)
 BBURL ?= https://www.busybox.net/downloads/binaries/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
 
-binaries = $(DEST)/bin/cat \
+binaries = $(DEST)/bin/awk \
+	$(DEST)/bin/cat \
 	$(DEST)/bin/cp \
 	$(DEST)/bin/date \
 	$(DEST)/bin/echo \
 	$(DEST)/bin/env \
 	$(DEST)/bin/find \
+	$(DEST)/bin/grep \
 	$(DEST)/bin/kill \
 	$(DEST)/bin/ls \
 	$(DEST)/bin/mkdir \
@@ -49,6 +51,7 @@ binaries = $(DEST)/bin/cat \
 	$(DEST)/bin/rm \
 	$(DEST)/bin/sh \
 	$(DEST)/bin/sleep \
+	$(DEST)/bin/tail \
 	$(DEST)/bin/top \
 	$(DEST)/bin/touch
 
