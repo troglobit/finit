@@ -23,6 +23,7 @@
  */
 
 #include <errno.h>
+#include <sys/socket.h>
 
 #include "finit.h"
 #include "iwatch.h"
@@ -39,6 +40,9 @@ static int initialized = 0;
 
 int iwatch_init(struct iwatch *iw)
 {
+	socklen_t len;
+	int sz;
+
 	if (!iw) {
 		errno = EINVAL;
 		return -1;
@@ -51,6 +55,16 @@ int iwatch_init(struct iwatch *iw)
 		_pe("Failed creating inotify descriptor");
 		return -1;
 	}
+
+	/*
+	 * Double the size of the socket's receive buffer to address
+	 * issues with lost events in some cases, e.g. bootstrap and
+	 * reconf of systems with lots of services.
+	 */
+	len = sizeof(sz);
+	if (!getsockopt(iw->fd, SOL_SOCKET, SO_RCVBUF, &sz, &len))
+		setsockopt(iw->fd, SOL_SOCKET, SO_RCVBUF, &sz, sizeof(sz));
+
 	initialized = 1;
 
 	return iw->fd;
