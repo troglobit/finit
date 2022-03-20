@@ -598,7 +598,7 @@ and proposed extensions.
 [Joachim Wiberg]:   https://troglobit.com
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
-[GitHub]:           https://travis-ci.org/troglobit/finit
-[GitHub Status]:    https://travis-ci.org/troglobit/finit.svg?branch=master
+[GitHub]:           https://github.com/troglobit/finit/actions/workflows/build.yml/
+[GitHub Status]:    https://github.com/troglobit/finit/actions/workflows/build.yml/badge.svg
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
 [Coverity Status]:  https://scan.coverity.com/projects/3545/badge.svg
