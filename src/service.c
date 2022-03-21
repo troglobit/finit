@@ -1771,11 +1771,11 @@ restart:
 
 	case SVC_STOPPING_STATE:
 		if (!svc->pid) {
-			char cond[MAX_COND_LEN];
+			char condstr[MAX_COND_LEN];
 
 			_d("%s: stopped, cleaning up timers and conditions ...", svc->cmd);
 			service_timeout_cancel(svc);
-			cond_clear(mkcond(svc, cond, sizeof(cond)));
+			cond_clear(mkcond(svc, condstr, sizeof(condstr)));
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
