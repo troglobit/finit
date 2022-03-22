@@ -180,9 +180,9 @@ int run(char *cmd, char *log)
 
 	result = WEXITSTATUS(status);
 	if (WIFEXITED(status)) {
-		_d("Started %s and exit without signal, status: %d", args[0], result);
+		_d("Started '%s' and exit without signal, status: %d", cmd, result);
 	} else if (WIFSIGNALED(status)) {
-		_d("Process %s terminated by signal %d", args[0], WTERMSIG(status));
+		_d("Process '%s' terminated by signal %d", cmd, WTERMSIG(status));
 		if (!result)
 			result = 1; /* Must alert callee that the command did complete successfully.
 				     * This is necessary since not all programs trap signals and
