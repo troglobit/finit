@@ -746,8 +746,6 @@ static int service_stop(svc_t *svc)
 	 */
 	svc_started(svc);
 
-	svc_set_state(svc, SVC_STOPPING_STATE);
-
 	if (!svc->desc[0])
 		do_progress = 0;
 
@@ -758,12 +756,17 @@ static int service_stop(svc_t *svc)
 		if (svc->pid > 1) {
 			/* Kill all children in the same proess group, e.g. logit */
 			rc = kill(-svc->pid, svc->sighalt);
-			_d("kill(-%d, %d) => rc %d", svc->pid, svc->sighalt, rc);
+			_d("kill(-%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
 			/* PID lost or forking process never really started */
-			if (rc == -1 && ESRCH == errno)
+			if (rc == -1 && errno == ESRCH) {
 				service_cleanup(svc);
-		} else
-				service_cleanup(svc);
+				svc_set_state(svc, SVC_HALTED_STATE);
+			} else
+				svc_set_state(svc, SVC_STOPPING_STATE);
+		} else {
+			service_cleanup(svc);
+			svc_set_state(svc, SVC_HALTED_STATE);
+		}
 	} else {
 		char *args[] = { svc->cmd, "stop", NULL };
 		pid_t pid;
@@ -781,6 +784,7 @@ static int service_stop(svc_t *svc)
 			rc = 1;
 			break;
 		default:
+			svc_set_state(svc, SVC_STOPPING_STATE);
 			rc = WEXITSTATUS(complete(svc->cmd, pid));
 			break;
 		}
