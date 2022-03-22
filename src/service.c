@@ -758,7 +758,7 @@ static int service_stop(svc_t *svc)
 			rc = kill(-svc->pid, svc->sighalt);
 			_d("kill(-%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
 			/* PID lost or forking process never really started */
-			if (rc == -1 && errno == ESRCH) {
+			if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
 				service_cleanup(svc);
 				svc_set_state(svc, SVC_HALTED_STATE);
 			} else
@@ -836,7 +836,7 @@ static int service_restart(svc_t *svc)
 	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s[%d], sending SIGHUP ...",
 	      svc_ident(svc, NULL, 0), svc->pid);
 	rc = kill(svc->pid, SIGHUP);
-	if (rc == -1 && errno == ESRCH) {
+	if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
 		/* nobody home, reset internal state machine */
 		lost = svc->pid;
 	} else {
