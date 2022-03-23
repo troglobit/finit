@@ -548,29 +548,33 @@ done:
  */
 int in_container(void)
 {
-	const char *files[] = {
-		"/run/.containerenv",
-		"/.dockerenv"
-	};
 	const char *containers[] = {
 		"lxc",
 		"docker",
 		"kubepod"
 	};
+	const char *files[] = {
+		"/run/.containerenv",
+		"/.dockerenv"
+	};
+	static int incont = -1;
 	size_t i;
 	char *c;
+
+	if (incont > 0)
+		return incont;
 
 	c = getenv("container");
 	if (c) {
 		for (i = 0; i < NELEMS(containers); i++) {
 			if (!strcmp(containers[i], c))
-				return 1;
+				return incont = 1;
 		}
 	}
 
 	for (i = 0; i < NELEMS(files); i++) {
 		if (!access(files[i], F_OK))
-			return 1;
+			return incont = 1;
 	}
 
 	return 0;
