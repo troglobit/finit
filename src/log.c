@@ -59,18 +59,24 @@ void log_exit(void)
 	enable_progress(1);
 }
 
-static void log_open(void)
+static int log_open(void)
 {
-	int opts = LOG_PID;
+	int opts;
+
+	if (up)
+		return 1;
+	if (access("/dev/log", W_OK))
+		return 0;
+
+	opts = LOG_CONS | LOG_PID;
+	if (debug)
+		opts |= LOG_PERROR;
 
 	closelog();
-
-	if (debug)
-		opts |= LOG_PERROR; /* LOG_CONS | */
 	openlog("finit", opts, LOG_DAEMON);
 	setlogmask(LOG_UPTO(loglevel));
 
-	up = 1;
+	return up = 1;
 }
 
 /* Toggle debug mode */
@@ -95,15 +101,12 @@ void log_debug(void)
  */
 void logit(int prio, const char *fmt, ...)
 {
-	FILE *fp;
 	va_list ap;
+	FILE *fp;
 
 	va_start(ap, fmt);
 
-	if (up || fexist("/dev/log")) {
-		if (!up)
-			log_open();
-
+	if (up || log_open()) {
 		vsyslog(prio, fmt, ap);
 		goto done;
 	}
@@ -111,8 +114,7 @@ void logit(int prio, const char *fmt, ...)
 	if (LOG_PRI(prio) > loglevel)
 		goto done;
 
-	fp = fopen("/dev/kmsg", "w");
-	if (!fp) {
+	if (in_container() || !(fp = fopen("/dev/kmsg", "w"))) {
 		vfprintf(stderr, fmt, ap);
 		goto done;
 	}
