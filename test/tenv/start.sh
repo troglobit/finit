@@ -29,6 +29,7 @@ TENV_ROOT="${TENV_ROOT:-$(pwd)/${TEST_DIR}/tenv-root}"
 unshare=$(command -v unshare)
 chroot=$(command -v chroot)
 
+export container="unshare"
 export PS1='\w \$ '
 export PS2='> '
 export PS3='#? '

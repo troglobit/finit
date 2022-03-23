@@ -551,7 +551,8 @@ int in_container(void)
 	const char *containers[] = {
 		"lxc",
 		"docker",
-		"kubepod"
+		"kubepod",
+		"unshare"
 	};
 	const char *files[] = {
 		"/run/.containerenv",
