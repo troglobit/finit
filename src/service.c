@@ -1656,7 +1656,7 @@ static void service_retry(svc_t *svc)
 
 	service_timeout_cancel(svc);
 	if (svc->respawn) {
-		_d("%s crashed, respawning ...", svc->cmd);
+		_d("%s crashed/exited, respawning ...", svc->cmd);
 		svc_unblock(svc);
 		service_step(svc);
 		return;
@@ -1853,7 +1853,8 @@ restart:
 				 * Restart directly after the first crash,
 				 * then retry after 2 sec
 				 */
-				_d("delayed restart of %s", svc->cmd);
+				if (!svc->respawn)
+					_d("delayed restart of %s", svc->cmd);
 				service_timeout_after(svc, 1, service_retry);
 				break;
 			}
