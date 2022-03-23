@@ -116,6 +116,7 @@ void logit(int prio, const char *fmt, ...)
 
 	if (in_container() || !(fp = fopen("/dev/kmsg", "w"))) {
 		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
 		goto done;
 	}
 
@@ -127,6 +128,7 @@ void logit(int prio, const char *fmt, ...)
 		va_end(ap);
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
 	}
 
 done:
