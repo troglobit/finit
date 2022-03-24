@@ -8,6 +8,7 @@ EXTRA_DIST		+= add-remove-dynamic-service-sub-config.sh
 EXTRA_DIST		+= start-stop-service.sh
 EXTRA_DIST		+= start-stop-service-sub-config.sh
 EXTRA_DIST		+= start-kill-service.sh
+EXTRA_DIST		+= start-stop-sysv.sh
 EXTRA_DIST		+= signal-service.sh
 
 AM_TESTS_ENVIRONMENT	 = TENV_ROOT='$(abs_builddir)/tenv-root/';
@@ -29,6 +30,7 @@ TESTS			+= add-remove-dynamic-service-sub-config.sh
 TESTS			+= start-stop-service.sh
 TESTS			+= start-stop-service-sub-config.sh
 TESTS			+= start-kill-service.sh
+TESTS			+= start-stop-sysv.sh
 TESTS			+= signal-service.sh
 
 clean-local:

@@ -53,7 +53,8 @@ binaries = $(DEST)/bin/awk \
 	$(DEST)/bin/sleep \
 	$(DEST)/bin/tail \
 	$(DEST)/bin/top \
-	$(DEST)/bin/touch
+	$(DEST)/bin/touch \
+	$(DEST)/bin/start-stop-daemon
 
 dirs = $(DEST)/bin \
 	$(DEST)/dev \
