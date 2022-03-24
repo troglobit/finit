@@ -260,7 +260,6 @@ int run_interactive(char *cmd, char *fmt, ...)
 
 int exec_runtask(char *cmd, char *args[])
 {
-	size_t i;
 	char buf[1024] = "";
 	char *argv[4] = {
 		"sh",
@@ -268,6 +267,7 @@ int exec_runtask(char *cmd, char *args[])
 		buf,
 		NULL
 	};
+	size_t i;
 
 	strlcat(buf, cmd, sizeof(buf));
 	for (i = 1; args[i]; i++) {

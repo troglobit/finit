@@ -296,6 +296,12 @@ void do_shutdown(shutop_t op)
 	while (waitpid(-1, NULL, WNOHANG) > 0)
 		;
 
+	if (in_cont) {
+		if (osheading)
+			logit(LOG_CONSOLE | LOG_NOTICE, "%s, shutting down container.", osheading);
+		_exit(0);
+	}
+
 	/* Close all local non-console descriptors */
 	for (int fd = 3; fd < 128; fd++)
 		close(fd);
@@ -307,11 +313,6 @@ void do_shutdown(shutop_t op)
 		 * ... causing "aiii killing init" during reboot ...
 		 */
 		return;
-	}
-
-	if (in_cont) {
-		sync();
-		goto done;
 	}
 
 	if (wdog) {
@@ -336,7 +337,7 @@ void do_shutdown(shutop_t op)
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
 
-done:	/* Reboot via watchdog or kernel, or shutdown? */
+	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
 		if (wdog && wdog->pid > 1) {
 			int timeout = 10;
