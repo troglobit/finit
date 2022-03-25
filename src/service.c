@@ -1326,7 +1326,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	/* Decode any optional pid:/optional/path/to/file.pid */
-	if (pid && svc_is_daemon(svc) && pid_file_parse(svc, pid))
+	if (pid && (svc_is_daemon(svc) || svc_is_sysv(svc)) && pid_file_parse(svc, pid))
 		_e("Invalid 'pid' argument to service: %s", pid);
 
 	if (username) {
