@@ -473,23 +473,23 @@ svc_t *svc_find_by_pidfile(char *fn)
 	pid_t pid;
 
 	pid = pid_file_read(fn);
-	if (pid <= 0) {
-		for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-			int v = 0;
-
-			if (svc->pidfile[0] == '!')
-				v = 1;
-			if (strcmp(&svc->pidfile[v], fn))
-				continue;
-
+	if (pid > 1) {
+		svc = svc_find_by_pid(pid);
+		if (svc)
 			return svc;
-		}
-
-		return NULL;
 	}
 
+	/*
+	 * No PID in file, or a sysv service.  So it has probably forked
+	 * off a chiled that we don't know about.  See if we can match
+	 * the PID file to a service instead.
+	 */
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->pid != pid)
+		int v = 0;
+
+		if (svc->pidfile[0] == '!')
+			v = 1;
+		if (strcmp(&svc->pidfile[v], fn))
 			continue;
 
 		return svc;
