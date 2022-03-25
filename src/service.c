@@ -571,6 +571,7 @@ static int service_start(svc_t *svc)
 		} else {
 			i = 0;
 			args[i++] = svc->cmd;
+			args[i++] = svc->cmd;
 			args[i++] = "start";
 		}
 		args[i] = NULL;
