@@ -1784,6 +1784,7 @@ restart:
 
 			switch (svc->type) {
 			case SVC_TYPE_SERVICE:
+			case SVC_TYPE_SYSV:
 			case SVC_TYPE_TTY:
 				if (svc_has_post(svc)) {
 					svc_set_state(svc, SVC_CLEANUP_STATE);
@@ -1794,7 +1795,6 @@ restart:
 
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
-			case SVC_TYPE_SYSV:
 				svc_set_state(svc, SVC_DONE_STATE);
 				break;
 
