@@ -705,7 +705,7 @@ static void service_cleanup(svc_t *svc)
 		utmp_set_dead(svc->pid); /* Set DEAD_PROCESS UTMP entry */
 
 	svc->oldpid = svc->pid;
-	svc->start_time = svc->pid = 0;
+	svc->starting = svc->start_time = svc->pid = 0;
 }
 
 /**
