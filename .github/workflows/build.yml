@@ -60,7 +60,7 @@ jobs:
           /tmp/sbin/initctl -h
       - name: Run Unit Tests
         run: |
-          make -j1 distcheck || (ls -l test; cat test/start-kill-service.log; cat test/start-stop-sysv.log; cat test/test-suite.log; false)
+          make -j1 distcheck || (ls -l test; cat finit-4.3-dev/_build/sub/test/start-kill-service.log; cat finit-4.3-dev/_build/sub/test/start-stop-sysv.log; cat test/test-suite.log; cat finit-4.3-dev/_build/sub/test/test-suite.log; false)
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
