@@ -1870,6 +1870,7 @@ restart:
 				break;
 			}
 		}
+		service_timeout_cancel(svc);
 
 		cond = cond_get_agg(svc->cond);
 		switch (cond) {
