@@ -21,7 +21,7 @@ say "Test start $(date)"
 
 cp "$TEST_DIR"/common/slay.sh    "$TENV_ROOT"/test_assets/
 cp "$TEST_DIR"/common/service.sh "$TENV_ROOT"/test_assets/
-rm "$TENV_ROOT"/oldpid
+rm -f "$TENV_ROOT"/oldpid
 
 say "Add service stanza in $FINIT_CONF"
 texec sh -c "echo 'service [2345] respawn log /test_assets/service.sh -- Test service' > $FINIT_CONF"
