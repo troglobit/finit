@@ -786,7 +786,6 @@ static int service_stop(svc_t *svc)
 			break;
 		default:
 			svc_set_state(svc, SVC_STOPPING_STATE);
-			rc = WEXITSTATUS(complete(svc->cmd, pid));
 			break;
 		}
 	}
