@@ -60,7 +60,12 @@ jobs:
           /tmp/sbin/initctl -h
       - name: Run Unit Tests
         run: |
-          make -j1 distcheck || (cat test/test-suite.log; fail)
+          make -j1 distcheck
+          rc=$?
+          pwd
+          ls
+          cat test/test-suite.log
+          [ $rc -eq 0 ] || false
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
