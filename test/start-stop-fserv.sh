@@ -18,7 +18,7 @@ test_teardown()
 
 say "Test start $(date)"
 
-cp "$TEST_DIR"/common/fserv "$TENV_ROOT"/test_assets/
+cp "$TENV_ROOT"/../common/fserv "$TENV_ROOT"/test_assets/
 
 say "Add service stanza in $FINIT_CONF"
 texec sh -c "echo 'service [2345] pid:!/run/fserv.pid /test_assets/fserv -- Forking service' > $FINIT_CONF"
