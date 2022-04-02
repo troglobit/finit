@@ -14,8 +14,8 @@ AC_CONFIG_FILES([Makefile
 	man/Makefile
 	plugins/Makefile
 	src/Makefile
-	test/test.env
-	test/Makefile])
+	test/test.env test/Makefile
+	test/tenv/Makefile test/common/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/plugin.m4])
