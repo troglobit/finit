@@ -40,10 +40,10 @@ export PATH
 
 # Not supported by Busybox unshare:
 #  --cgroup --time
-exec "$unshare" \
-    --user --map-root-user \
-    --fork --pid --mount-proc \
-    --mount \
-    --mount-proc \
-    --uts --ipc --net \
-    "$chroot" "$TENV_ROOT" /bin/chrootsetup.sh "$@"
+exec "$unshare"						\
+     --user --map-root-user				\
+     --fork --pid --mount-proc				\
+     --mount						\
+     --mount-proc					\
+     --uts --ipc --net					\
+     "$chroot" "$TENV_ROOT" /bin/chrootsetup.sh "$@"

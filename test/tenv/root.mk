@@ -20,55 +20,55 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DEST		?= ../tenv-root
-srcdir		?= ../
+DEST           ?= ../tenv-root
+srcdir         ?= ../
 
-ARCH		?= x86_64
+ARCH           ?= x86_64
 
-FINITBIN   ?= ./sbin/finit
+FINITBIN       ?= ./sbin/finit
 
-BBVER ?= 1.31.0
-BBBIN  = busybox-$(ARCH)
-BBURL ?= https://www.busybox.net/downloads/binaries/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
+BBVER          ?= 1.31.0
+BBBIN           = busybox-$(ARCH)
+BBURL          ?= https://www.busybox.net/downloads/binaries/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
 
-binaries = $(DEST)/bin/awk \
-	$(DEST)/bin/cat \
-	$(DEST)/bin/cp \
-	$(DEST)/bin/date \
-	$(DEST)/bin/echo \
-	$(DEST)/bin/env \
-	$(DEST)/bin/find \
-	$(DEST)/bin/grep \
-	$(DEST)/bin/kill \
-	$(DEST)/bin/ls \
-	$(DEST)/bin/mkdir \
-	$(DEST)/bin/mkfifo \
-	$(DEST)/bin/mknod \
-	$(DEST)/bin/mount \
-	$(DEST)/bin/printf \
-	$(DEST)/bin/pgrep \
-	$(DEST)/bin/ps \
-	$(DEST)/bin/rm \
-	$(DEST)/bin/sh \
-	$(DEST)/bin/sleep \
-	$(DEST)/bin/tail \
-	$(DEST)/bin/top \
-	$(DEST)/bin/touch \
-	$(DEST)/bin/start-stop-daemon
+binaries        = $(DEST)/bin/awk		\
+		$(DEST)/bin/cat			\
+		$(DEST)/bin/cp			\
+		$(DEST)/bin/date		\
+		$(DEST)/bin/echo		\
+		$(DEST)/bin/env			\
+		$(DEST)/bin/find		\
+		$(DEST)/bin/grep		\
+		$(DEST)/bin/kill		\
+		$(DEST)/bin/ls			\
+		$(DEST)/bin/mkdir		\
+		$(DEST)/bin/mkfifo		\
+		$(DEST)/bin/mknod		\
+		$(DEST)/bin/mount		\
+		$(DEST)/bin/printf		\
+		$(DEST)/bin/pgrep		\
+		$(DEST)/bin/ps			\
+		$(DEST)/bin/rm			\
+		$(DEST)/bin/sh			\
+		$(DEST)/bin/sleep		\
+		$(DEST)/bin/tail		\
+		$(DEST)/bin/top			\
+		$(DEST)/bin/touch		\
+		$(DEST)/bin/start-stop-daemon
 
-dirs = $(DEST)/bin \
-	$(DEST)/dev \
-	$(DEST)/etc \
-	$(DEST)/proc \
-	$(DEST)/sbin \
-	$(DEST)/var \
-	$(DEST)/run \
-	$(DEST)/sys \
-	$(DEST)/test_assets \
-	$(DEST)/tmp
+dirs            = $(DEST)/bin			\
+		$(DEST)/dev			\
+		$(DEST)/etc			\
+		$(DEST)/proc			\
+		$(DEST)/sbin			\
+		$(DEST)/var			\
+		$(DEST)/run			\
+		$(DEST)/sys			\
+		$(DEST)/test_assets		\
+		$(DEST)/tmp
 
-_libs_src = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
-libs = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
+_libs_src       = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
+libs            = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
 
 all: $(dirs) $(binaries) $(libs) $(DEST)/bin/chrootsetup.sh
 	touch $(DEST)/etc/fstab

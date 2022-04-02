@@ -2,9 +2,9 @@
 
 cleanup()
 {
-  echo "Got signal, stopping ..."
-  rm -f /run/service.pid
-  exit 0
+	echo "Got signal, stopping ..."
+	rm -f /run/service.pid
+	exit 0
 }
 
 # Hook SIGUSR1 and dump trace to file system
@@ -20,5 +20,5 @@ echo $$ > /run/service.pid
 # sleep may exit on known signal, so
 # we cannot use 'set -e'
 while true; do
-  sleep 1
+	sleep 1
 done

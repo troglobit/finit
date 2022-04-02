@@ -33,12 +33,12 @@ mount -t proc none /proc
 mount -t sysfs none /sys
 
 if [ "$(ls -A /tmp)" ]; then
-    mkdir -p /tmp.shadow
-    mount --bind /tmp /tmp.shadow
-    mount -t tmpfs none /tmp
-    cp -a /tmp.shadow/* /tmp/
+	mkdir -p /tmp.shadow
+	mount --bind /tmp /tmp.shadow
+	mount -t tmpfs none /tmp
+	cp -a /tmp.shadow/* /tmp/
 else
-    mount -t tmpfs none /tmp
+	mount -t tmpfs none /tmp
 fi
 
 mkdir -p "$FINIT_RCSD"

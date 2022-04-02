@@ -24,9 +24,9 @@
 set -eu
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage:"
-    echo "  $0 [target-pid] [command [arguments]]"
-    exit 1
+	echo "Usage:"
+	echo "  $0 [target-pid] [command [arguments]]"
+	exit 1
 fi
 target="$1"
 shift
@@ -45,13 +45,13 @@ export PS4='+ '
 PATH="$TESTENV_PATH"
 export PATH
 
-"$nsenter" \
-    --preserve-credentials \
-    --user \
-    --mount \
-    --uts \
-    --ipc \
-    --net \
-    --pid \
-    -w -t "$target" \
-    "$chroot" "$TENV_ROOT" "$@"
+"$nsenter"					\
+	--preserve-credentials			\
+	--user					\
+	--mount					\
+	--uts					\
+	--ipc					\
+	--net					\
+	--pid					\
+	-w -t "$target"				\
+	"$chroot" "$TENV_ROOT" "$@"

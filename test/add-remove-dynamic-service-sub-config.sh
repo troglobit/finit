@@ -7,12 +7,13 @@ TEST_DIR=$(dirname "$0")
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-test_teardown() {
-    say "Test done $(date)"
-    say "Running test teardown."
+test_teardown()
+{
+	say "Test done $(date)"
+	say "Running test teardown."
 
-    texec rm -f "$FINIT_RCSD/service.conf"
-    texec rm -f /test_assets/service.sh
+	texec rm -f "$FINIT_RCSD/service.conf"
+	texec rm -f /test_assets/service.sh
 }
 
 say "Test start $(date)"

@@ -9,12 +9,13 @@ TEST_DIR=$(dirname "$0")
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-test_teardown() {
-    say "Test done $(date)"
-    say "Running test teardown."
+test_teardown()
+{
+	say "Test done $(date)"
+	say "Running test teardown."
 
-    texec rm -f "$FINIT_CONF"
-    texec rm -f /test_assets/service.sh
+	texec rm -f "$FINIT_CONF"
+	texec rm -f /test_assets/service.sh
 }
 
 say "Test start $(date)"
@@ -37,9 +38,9 @@ say 'Simulate service crash (kill -9 ..)'
 i=0
 laps=1000
 while [ $i -lt $laps ]; do
-    i=$((i + 1))
-    say "Lap $i/$laps, killing service ..." # we have this, no sleep needed
-    texec sh -c "/test_assets/slay.sh service.sh"
+	i=$((i + 1))
+	say "Lap $i/$laps, killing service ..." # we have this, no sleep needed
+	texec sh -c "/test_assets/slay.sh service.sh"
 done
 
 retry 'assert_new_pid service.sh /run/service.pid'
