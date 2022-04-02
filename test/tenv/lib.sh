@@ -51,7 +51,8 @@ fg_red='\e[1;31m'
 fg_green='\e[1;32m'
 fg_yellow='\e[1;33m'
 log() {
-    printf "< %s > %b%b%b %s\n" "$0" "$1" "$2" "$color_reset" "$3"
+    test=$(basename "$0" ".sh")
+    printf "\e[2m[%s]\e[0m %b%b%b %s\n" "$test" "$1" "$2" "$color_reset" "$3"
 }
 
 assert() {
