@@ -328,11 +328,8 @@ void do_shutdown(shutop_t op)
 	/* ... unmount remaining regular file systems. */
 	unmount_regular();
 
-	/* We sit on / so we must remount it ro, try all the things! */
-	sync();
-	run("mount -n -o remount,ro -t dummytype dummydev /", "mount");
-	run("mount -n -o remount,ro dummydev /", "mount");
-	run("mount -n -o remount,ro /", "mount");
+	/* We sit on / so we must remount it read-only */
+	run("mount -n -o remount,ro -t none rootfs /", "mount");
 
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
