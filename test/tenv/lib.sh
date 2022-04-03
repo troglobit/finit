@@ -32,6 +32,12 @@ assert_new_pid()
 	assert "Finit has registered new PID" "$(texec initctl |grep $1 |awk '{print $1}')" -eq "$(texec cat $2)"
 }
 
+# shellcheck disable=SC2086
+assert_pidfile()
+{
+	assert "Process has PID file" "$(texec find $1 2>/dev/null)"
+}
+
 # shellcheck disable=SC2154
 texec()
 {
@@ -156,6 +162,10 @@ echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
 log "$color_reset" 'Setup of test environment done' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
+
+if type test_setup > /dev/null 2>&1 ; then
+	test_setup
+fi
 
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
