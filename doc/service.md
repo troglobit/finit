@@ -15,12 +15,12 @@ Finit can *not* start and monitor a daemon that:
 
 * Forks to background and does *not* create a PID file
 
-|   | Forking | Creates PID File | Finit can create PID File |
-|---|---------|------------------|---------------------------|
-| ✔ | Yes     | Yes              | N/A                       |
-| ✔ | No      | Yes              | N/A                       |
-| ✔ | No      | No               | Yes                       |
-| ✘ | Yes     | No               | No                        |
+|   | Forking | Creates PID File | Finit creates PID File |
+|---|---------|------------------|------------------------|
+| ✔ | Yes     | Yes              | No                     |
+| ✔ | No      | Yes              | No                     |
+| ✔ | No      | No               | Yes, optionally        |
+| ✘ | Yes     | No               | No                     |
 
 > **Note:** PID files is one mechanism used to assert conditions to
 > synchronize the start and stop of other, dependent, services.
@@ -45,8 +45,6 @@ need it to synchronize start/stop of a dependent service.
     service pid:/run/servy.pid serv -n -p -P /run/servy.pid -- Foreground service w/ custom PID file
 
 
-![The service state machine](svc-machine.png "The service state machine")
-
 State Machine
 -------------
 
@@ -54,6 +52,8 @@ A service is bound to a state machine that is in one of six (6) states.
 For `run`s and `task`s there is an additional end state called `DONE`,
 not shown in the diagram for brevity.  Services start in the `HALTED`
 state.
+
+![The service state machine](svc-machine.png "The service state machine")
 
 The current state depends on the two following conditions:
 
