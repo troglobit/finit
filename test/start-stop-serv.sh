@@ -13,15 +13,15 @@ test_teardown()
 	say "Running test teardown."
 
 	texec rm -f "$FINIT_CONF"
-	texec rm -f /test_assets/fserv
+	texec rm -f /test_assets/serv
 }
 
 say "Test start $(date)"
 
-cp "$TENV_ROOT"/../common/fserv "$TENV_ROOT"/test_assets/
+cp "$TENV_ROOT"/../common/serv "$TENV_ROOT"/test_assets/
 
 say "Add service stanza in $FINIT_CONF"
-texec sh -c "echo 'service [2345] pid:!/run/fserv.pid /test_assets/fserv -- Forking service' > $FINIT_CONF"
+texec sh -c "echo 'service [2345] pid:!/run/serv.pid /test_assets/serv -- Forking service' > $FINIT_CONF"
 
 say 'Reload Finit'
 #texec sh -c "initctl debug"
@@ -35,16 +35,16 @@ sleep 2
 
 #texec sh -c "initctl status"
 #texec sh -c "ps"
-#texec sh -c "initctl status fserv"
+#texec sh -c "initctl status serv"
 
-retry 'assert_num_children 1 fserv'
+retry 'assert_num_children 1 serv'
 
 say 'Stop the service'
-texec sh -c "initctl stop fserv"
+texec sh -c "initctl stop serv"
 
-retry 'assert_num_children 0 fserv'
+retry 'assert_num_children 0 serv'
 
 say 'Start the service again'
-texec sh -c "initctl start fserv"
+texec sh -c "initctl start serv"
 
-retry 'assert_num_children 1 fserv'
+retry 'assert_num_children 1 serv'

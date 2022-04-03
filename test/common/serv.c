@@ -21,7 +21,7 @@ static void pidfile(char *nm)
 	FILE *fp;
 
 	if (!nm)
-		nm = "fserv";
+		nm = "serv";
 
 	snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, nm);
 	pid = getpid();
