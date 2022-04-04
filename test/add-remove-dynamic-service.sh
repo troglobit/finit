@@ -16,6 +16,9 @@ test_teardown()
 	texec rm -f /test_assets/service.sh
 }
 
+say "Hi, this is /run et al"
+texec sh -c "ls -l /bin/; ls -l /sbin/; ls -l /run/; ls -l /dev/"
+
 say "Test start $(date)"
 
 cp "$TEST_DIR"/common/service.sh "$TENV_ROOT"/test_assets/

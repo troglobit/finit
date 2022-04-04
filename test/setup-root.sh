@@ -12,3 +12,10 @@ FINITBIN="$(pwd)/$top_builddir/src/finit" DEST="$TENV_ROOT" make -f "$srcdir/ten
 for plugin in tty.so urandom.so rtc.so modprobe.so hotplug.so; do
 	find "$TENV_ROOT" -name $plugin -delete
 done
+
+ls -l $DESTDIR
+ls -l $DESTDIR/bin
+ls -l $DESTDIR/sbin
+ls -l $DESTDIR/var/
+ls -l $DESTDIR/var/run/
+
