@@ -60,9 +60,6 @@ jobs:
           /tmp/sbin/initctl -h
       - name: Run Unit Tests
         run: |
-          echo "~/.cache contents =============="
-          ls -l ~/.cache
-          echo "================================"
           ver=$(/tmp/sbin/initctl -V | awk '/Finit.*/ {print $2;}')
           dir=finit-$ver/_build/sub
           make -j1 distcheck || (cat $dir/test/setup-root.log; cat $dir/test/test-suite.log; false)
