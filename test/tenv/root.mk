@@ -23,6 +23,7 @@
 DEST           ?= ../tenv-root
 srcdir         ?= ../
 
+CACHE          ?= ~/.cache
 ARCH           ?= x86_64
 
 FINITBIN       ?= ./sbin/finit
@@ -79,11 +80,29 @@ $(dirs):
 $(DEST)/bin/$(BBBIN).md5:
 	cp $(srcdir)/tenv/$(notdir $@) $@
 
+.PHONY: $(DEST)/bin/$(BBBIN)
 $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
-	wget -O $@ $(BBURL)
-	chmod +x $@
-	cd $(dir $@); \
-	  md5sum -c $(BBBIN).md5
+	@cd $(dir $@)
+	@if ! md5sum --status -c $(BBBIN).md5 2>/dev/null; then			\
+		if [ -d $(CACHE) ]; then					\
+			echo "Cannot find $(BBBIN), checking $(CACHE) ...";	\
+			cd $(CACHE);						\
+			cp $(DEST)/bin/$(BBBIN).md5 .;				\
+			if ! md5sum --status -c $(BBBIN).md5; then		\
+				echo "No $(BBBIN) available downloading ...";	\
+				wget $(BBURL);					\
+			else							\
+				echo "Found valid $(BBBIN) in cache!";		\
+			fi;							\
+			cp $(BBBIN) $@;						\
+		else								\
+			echo "Cannot find $(BBBIN), downloading ...";		\
+			wget -O $@ $(BBURL);					\
+		fi;								\
+		cd $(dir $@);							\
+		md5sum -c $(BBBIN).md5;						\
+	fi
+	@chmod +x $@
 
 $(DEST)/bin/chrootsetup.sh:
 	cp $(srcdir)/tenv/$(notdir $@) $@
