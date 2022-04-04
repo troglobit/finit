@@ -13,9 +13,14 @@ for plugin in tty.so urandom.so rtc.so modprobe.so hotplug.so; do
 	find "$TENV_ROOT" -name $plugin -delete
 done
 
-ls -l $DESTDIR
-ls -l $DESTDIR/bin
-ls -l $DESTDIR/sbin
-ls -l $DESTDIR/var/
-ls -l $DESTDIR/var/run/
+echo "ROOT:"
+ls -l $TENV_ROOT
+echo "ROOT:/bin"
+ls -l $TENV_ROOT/bin
+echo "ROOT:/sbin"
+ls -l $TENV_ROOT/sbin
+echo "ROOT:/var"
+ls -l $TENV_ROOT/var/
+echo "ROOT:/var/run"
+ls -l $TENV_ROOT/var/run/
 
