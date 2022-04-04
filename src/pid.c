@@ -69,10 +69,11 @@ int pid_alive(pid_t pid)
  */
 char *pid_get_name(pid_t pid, char *name, size_t len)
 {
+	static char line[64];
+	char *pname = NULL;
+	char path[32];
 	int ret = 1;
 	FILE *fp;
-	char *pname, path[32];
-	static char line[64];
 
 	snprintf(path, sizeof(path), "/proc/%d/status", pid);
 	fp = fopen(path, "r");
@@ -113,8 +114,8 @@ char *pid_file(svc_t *svc)
 pid_t pid_file_read(const char *fn)
 {
 	pid_t pid = 0;
-	FILE *fp;
 	char buf[42];
+	FILE *fp;
 
 	fp = fopen(fn, "r");
 	if (!fp)
@@ -199,8 +200,8 @@ int pid_file_parse(svc_t *svc, char *arg)
 
 	/* 'pid:' implies argument following*/
 	if (!strncmp(arg, "pid:", 4)) {
-		int len, not = 0;
 		char path[MAX_ARG_LEN];
+		int len, not = 0;
 
 		arg += 4;
 		if ((arg[0] == '!' && arg[1] == '/') || arg[0] == '/')
