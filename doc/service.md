@@ -27,7 +27,17 @@ Finit can *not* start and monitor a daemon that:
 
 ### Forks to Background w/ PID File
 
-    service pid:!/run/serv.pid serv       -- Forking service
+There are two syntax variants, type 1 and type 2.  The former is the
+traditional one used also for `sysv` start/stop scripts, and the latter
+is inspired by systemd, with a twist -- it lets Finit guess the pifdile
+to look for based on the standard path and the basename of the command.
+
+    service pid:!/run/serv.pid serv       -- Forking service, type 1
+    service type:forking       serv       -- Forking service, type 2
+
+In this example the resulting files to watch for are `/run/serv.pid` and
+`/var/run/serv.pid`, respectively.  On most modern Linux systems this is
+the same directory (`/var/run` is a symlink to `../run`).
 
 ### Runs in Foreground w/ PID File
 

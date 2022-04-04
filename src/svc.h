@@ -127,6 +127,7 @@ typedef struct svc {
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
 	int	       runlevels;
 	int            sighup;	       /* This service supports SIGHUP :) */
+	int	       forking;	       /* This is a service/sysv daemon that forks, wait for it ... */
 	svc_block_t    block;	       /* Reason that this service is currently stopped */
 	char           cond[MAX_COND_LEN];
 
@@ -228,7 +229,7 @@ static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE
 static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV    == svc->type; }
 static inline int svc_is_tty       (svc_t *svc) { return svc && SVC_TYPE_TTY     == svc->type; }
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);}
-static inline int svc_is_forking   (svc_t *svc) { return (svc_is_daemon(svc) || svc_is_sysv(svc)) && svc->pidfile[0] == '!'; }
+static inline int svc_is_forking   (svc_t *svc) { return svc && svc->forking; }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_nohup        (svc_t *svc) { return svc &&  (0 == svc->sighup || 0 != svc->args_dirty); }

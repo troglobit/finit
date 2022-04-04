@@ -57,7 +57,8 @@ test_one()
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-test_one "/run/serv.pid"  "service pid:!/run/serv.pid /test_assets/serv -- Forking service"
+test_one "/run/serv.pid"  "service pid:!/run/serv.pid /test_assets/serv -- Forking service, type 1"
+test_one "/run/serv.pid"  "service type:forking       /test_assets/serv -- Forking service, type 2"
 # This one could never be started by and monitored by Finit: it forks to
 # background and does not create a PID file.  Essentially it's lost to
 # Finit, and any other sane process monitor.

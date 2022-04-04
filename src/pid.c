@@ -158,6 +158,11 @@ int pid_file_set(svc_t *svc, char *file, int not)
 		file++;
 	}
 
+	if (svc_is_forking(svc) && !not) {
+		logit(LOG_WARNING, "Service %s is forking, adjusting to pid:!%s", svc->name, file);
+		not = 1;
+	}
+
 	pid_runpath(file, &svc->pidfile[not], sizeof(svc->pidfile) - not);
 	if (not)
 		svc->pidfile[0] = '!';

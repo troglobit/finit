@@ -1154,7 +1154,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *dev = NULL;
 	int respawn = 0;
 	int levels = 0;
-	int manual = 0;
+	int forking = 0, manual = 0;
 	int restart_max = SVC_RESPAWN_MAX;
 	int restart_tmo = 0;
 	unsigned oncrash_action = SVC_ONCRASH_IGNORE;
@@ -1213,6 +1213,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			pid = cmd;
 		else if (!strncasecmp(cmd, "name:", 5))
 			name = cmd;
+		else if (!strncasecmp(cmd, "type:forking", 10))
+			forking = 1;
 		else if (!strncasecmp(cmd, "manual:yes", 10))
 			manual = 1;
 		else if (!strncasecmp(cmd, "restart:", 8))
@@ -1324,10 +1326,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			svc_unblock(svc);
 	}
 
-	/* Decode any optional pid:/optional/path/to/file.pid */
-	if (pid && (svc_is_daemon(svc) || svc_is_sysv(svc)) && pid_file_parse(svc, pid))
-		_e("Invalid 'pid' argument to service: %s", pid);
-
 	if (username) {
 		char *ptr = strchr(username, ':');
 
@@ -1406,6 +1404,25 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (file)
 		strlcpy(svc->file, file, sizeof(svc->file));
 	svc->respawn = respawn;
+	svc->forking = forking;
+
+	/* Decode any (optional) pid:/optional/path/to/file.pid */
+	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+		char tmp[sizeof(svc->name) + 6]; /* pid:! + svc->name */
+
+		/* no pid: set, figure out a default to track this svc */
+		if (!pid && forking) {
+			snprintf(tmp, sizeof(tmp), "pid:!%s", svc->name);
+			pid = tmp;
+			logit(LOG_INFO, "%s: forking but no pid:!file set, guessing -> %s", svc->name, tmp);
+		}
+
+		if (pid && pid_file_parse(svc, pid))
+			logit(LOG_WARNING, "%s: service has invalid 'pid:' config: %s", svc->name, pid);
+
+		if (svc->pidfile[0] == '!')
+			svc->forking = 1;
+	}
 
 	/* Set configured limits */
 	memcpy(svc->rlimit, rlimit, sizeof(svc->rlimit));

@@ -323,6 +323,10 @@ calls `init-script restart` on `initctl reload`.  Similar to how
 
 Forking services started with `sysv` scripts can be monitored by Finit
 by declaring the PID file to look for: `pid:!/path/to/pidfile.pid`.
+Notice the leading `!`, it signifies Finit should not try to create the
+file, but rather watch that file for the resulting forked-off PID.  This
+syntax also works for forking daemons that do not have a command line
+option to run it in the foreground, more on this below in `service`.
 
 > `<COND>` is described in the [Services](#services) section.
 
@@ -344,9 +348,19 @@ prevent them from forking off a sub-process in the background.  This is
 the most reliable way to monitor a service.
 
 However, not all daemons support running in the foreground, or they may
-start logging to the foreground as well, these are called forking
-services and are supported using the same syntax as forking `sysv`
-services, using the `pid:!/path/to/pidfile.pid` syntax.
+start logging to the foreground as well, these are forking daemons and
+are supported using the same syntax as forking `sysv` services, using
+the `pid:!/path/to/pidfile.pid` syntax.  There is an alternative syntax
+that may be more intuitive, where Finit can also guess the PID file
+based on the daemon's command name:
+
+    service type:forking ntpd -- NTP daemon
+
+This example lets BusyBox `ntpd` daemonize itself.  Finit uses the
+basename of the binary to guess the PID file to watch for the PID:
+`/var/run/ntpd.pid`.  If Finit guesses wrong, you have to submit the
+full `pid:!/path/to/file.pid`.
+
   
 **Example:**
 

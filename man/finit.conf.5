@@ -194,7 +194,21 @@ services and are supported using the same syntax as forking
 .Cm sysv
 services, using the
 .Cm pid:!/path/to/pidfile.pid
-command modifier syntax.
+command modifier syntax.  There is an alternative syntax that may be
+more intuitive, where Finit can also guess the PID file based on the
+daemon's command name:
+.Bd -unfilled -offset indent
+service type:forking ntpd -- NTP daemon
+.Ed
+.Pp
+Here we let BusyBox
+.Nm ntpd
+daemonize itself.  Finit uses the basename of the binary to guess the
+PID file to watch for the PID:
+.Pa /var/run/ntpd.pid .
+If Finit guesses wrong, you have to submit the full
+.Cm pid:!/path/to/file.pid
+option to your service stanza.
 .Pp
 .Sy Example: in the case of
 .Cm ospfd
