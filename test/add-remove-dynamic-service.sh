@@ -3,6 +3,7 @@
 set -eu
 
 TEST_DIR=$(dirname "$0")
+export DEBUG=1
 
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
