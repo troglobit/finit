@@ -160,19 +160,23 @@ static void sys_init(void *arg)
 	char sysdir[MAX_ARG_LEN];
 	char *path;
 
+	_d("Calling mkpath() on sys conds");
 	if (mkpath(pid_runpath(_PATH_CONDSYS, sysdir, sizeof(sysdir)), 0755) && errno != EEXIST) {
 		_pe("Failed creating %s condition directory, %s", COND_SYS, _PATH_CONDSYS);
 		return;
 	}
 
+	_d("Calling realpth() on condsys");
 	path = realpath(_PATH_CONDSYS, NULL);
 	if (!path) {
 		_pe("Cannot figure out real path to %s, aborting", _PATH_CONDSYS);
 		return;
 	}
 
+	_d("Calling iwatch_add()");
 	if (iwatch_add(&iw_sys, path, IN_ONLYDIR))
 		iwatch_exit(&iw_sys);
+	_d("Done.");
 }
 
 static plugin_t plugin = {
