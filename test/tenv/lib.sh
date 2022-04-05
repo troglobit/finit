@@ -154,7 +154,7 @@ if [ -n "${DEBUG:-}" ]; then
 	FINIT_ARGS="${FINIT_ARGS:-} finit.debug=on"
 fi
 # shellcheck disable=2086
-"$TEST_DIR/tenv/start.sh" finit ${FINIT_ARGS:-} &
+"$TEST_DIR/tenv/start.sh" finit ${FINIT_ARGS:-} finit.debug=on &
 finit_ppid=$!
 echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
 
@@ -169,4 +169,6 @@ fi
 
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
-#sleep 1
+sleep 5
+kill -HUP "$finit_pid"
+
