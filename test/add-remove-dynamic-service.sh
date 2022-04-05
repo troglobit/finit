@@ -19,6 +19,8 @@ test_teardown()
 
 say "Hi, this is /run et al"
 texec sh -c "echo 'ROOT:/bin'; ls -l /bin/; echo 'ROOT:/sbin'; ls -l /sbin/; echo 'ROOT:/run'; ls -l /run/; echo 'ROOT:/run/finit/'; ls -l /run/finit/; echo 'ROOT:/dev'; ls -l /dev/; ps; ls -l /proc/1/fd/"
+say "HUPing PID 1 ..."
+texec sh -c "kill -HUP 1"
 
 say "Test start $(date)"
 

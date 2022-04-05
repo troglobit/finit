@@ -158,6 +158,7 @@ fi
 finit_ppid=$!
 echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
 
+>&2 echo "Finit runs as PID $finit_ppid outside of container."
 >&2 echo "Hint: Execute 'TENV_ROOT=$TENV_ROOT $TEST_DIR/tenv/enter.sh' to enter the test namespace"
 log "$color_reset" 'Setup of test environment done' ''
 
@@ -170,5 +171,4 @@ fi
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
 sleep 5
-kill -HUP "$finit_pid"
 
