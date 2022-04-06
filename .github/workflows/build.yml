@@ -15,7 +15,7 @@ jobs:
   build:
     # Verify we can build on latest Ubuntu with both gcc and clang
     name: ${{ matrix.compiler }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         compiler: [gcc, clang]
