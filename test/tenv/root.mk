@@ -30,38 +30,16 @@ FINITBIN       ?= ./sbin/finit
 
 BBVER          ?= 1.31.0
 BBBIN           = busybox-$(ARCH)
-BBURL          ?= https://www.busybox.net/downloads/binaries/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
-
-binaries        = $(DEST)/bin/awk		\
-		$(DEST)/bin/cat			\
-		$(DEST)/bin/cp			\
-		$(DEST)/bin/date		\
-		$(DEST)/bin/echo		\
-		$(DEST)/bin/env			\
-		$(DEST)/bin/find		\
-		$(DEST)/bin/grep		\
-		$(DEST)/bin/kill		\
-		$(DEST)/bin/ls			\
-		$(DEST)/bin/mkdir		\
-		$(DEST)/bin/mkfifo		\
-		$(DEST)/bin/mknod		\
-		$(DEST)/bin/mount		\
-		$(DEST)/bin/printf		\
-		$(DEST)/bin/pgrep		\
-		$(DEST)/bin/ps			\
-		$(DEST)/bin/rm			\
-		$(DEST)/bin/sh			\
-		$(DEST)/bin/sleep		\
-		$(DEST)/bin/tail		\
-		$(DEST)/bin/top			\
-		$(DEST)/bin/touch		\
-		$(DEST)/bin/start-stop-daemon
+BBHOME         ?= https://www.busybox.net/downloads/binaries
+BBURL          ?= $(BBHOME)/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
 
 dirs            = $(DEST)/bin			\
 		$(DEST)/dev			\
 		$(DEST)/etc			\
 		$(DEST)/proc			\
 		$(DEST)/sbin			\
+		$(DEST)/usr/bin			\
+		$(DEST)/usr/sbin		\
 		$(DEST)/var			\
 		$(DEST)/run			\
 		$(DEST)/sys			\
@@ -71,8 +49,12 @@ dirs            = $(DEST)/bin			\
 _libs_src       = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
 libs            = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
 
-all: $(dirs) $(binaries) $(libs) $(DEST)/bin/chrootsetup.sh
+all: $(dirs) $(libs) $(DEST)/bin/chrootsetup.sh $(DEST)/bin/$(BBBIN)
 	touch $(DEST)/etc/fstab
+	@(cd $(DEST);					\
+	for prg in `./bin/$(BBBIN) --list-full`; do 	\
+		ln -sf /bin/$(BBBIN) $$prg;		\
+	done)
 
 $(dirs):
 	mkdir -p $@
@@ -80,10 +62,9 @@ $(dirs):
 $(DEST)/bin/$(BBBIN).md5:
 	cp $(srcdir)/tenv/$(notdir $@) $@
 
-.PHONY: $(DEST)/bin/$(BBBIN)
 $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
-	@cd $(dir $@)
-	@if ! md5sum --status -c $(BBBIN).md5 2>/dev/null; then			\
+	@(cd $(dir $@);								\
+	if ! md5sum --status -c $(BBBIN).md5 2>/dev/null; then			\
 		if [ -d $(CACHE) ]; then					\
 			echo "Cannot find $(BBBIN), checking $(CACHE) ...";	\
 			cd $(CACHE);						\
@@ -101,16 +82,11 @@ $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
 		fi;								\
 		cd $(dir $@);							\
 		md5sum -c $(BBBIN).md5;						\
-	fi
+	fi)
 	@chmod +x $@
 
 $(DEST)/bin/chrootsetup.sh:
 	cp $(srcdir)/tenv/$(notdir $@) $@
-
-$(binaries): $(DEST)/bin/$(BBBIN)
-	cd $(DEST)/bin; \
-	  rm -f $(notdir $@); \
-	  ln -s $(BBBIN) $(notdir $@)
 
 $(libs):
 	mkdir -p $(dir $@)
