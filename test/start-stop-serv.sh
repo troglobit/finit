@@ -6,7 +6,6 @@ TEST_DIR=$(dirname "$0")
 test_setup()
 {
 	say "Test start $(date)"
-	cp "$TENV_ROOT"/../common/serv "$TENV_ROOT"/test_assets/
 }
 
 test_teardown()
@@ -15,7 +14,6 @@ test_teardown()
 	say "Running test teardown."
 
 	texec rm -f "$FINIT_CONF"
-	texec rm -f /test_assets/serv
 }
 
 test_one()
@@ -57,12 +55,12 @@ test_one()
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-test_one "/run/serv.pid"  "service pid:!/run/serv.pid /test_assets/serv -- Forking service, type 1"
-test_one "/run/serv.pid"  "service type:forking       /test_assets/serv -- Forking service, type 2"
+test_one "/run/serv.pid"  "service pid:!/run/serv.pid serv -- Forking service, type 1"
+test_one "/run/serv.pid"  "service type:forking       serv -- Forking service, type 2"
 # This one could never be started by and monitored by Finit: it forks to
 # background and does not create a PID file.  Essentially it's lost to
 # Finit, and any other sane process monitor.
-#test_one "/run/serv.pid"  "service pid:/run/serv.pid  /test_assets/serv -p -- Forking service w/o PID file"
-test_one "/run/serv.pid"  "service pid:/run/serv.pid  /test_assets/serv -n -- Foreground service w/o PID file"
-test_one "/run/serv.pid"  "service                    /test_assets/serv -n -p -- Foreground service w/ PID file"
-test_one "/run/servy.pid" "service pid:/run/servy.pid /test_assets/serv -n -p -P /run/servy.pid -- Foreground service w/ custom PID file"
+#test_one "/run/serv.pid"  "service pid:/run/serv.pid  serv -p -- Forking service w/o PID file"
+test_one "/run/serv.pid"  "service pid:/run/serv.pid  serv -n -- Foreground service w/o PID file"
+test_one "/run/serv.pid"  "service                    serv -n -p -- Foreground service w/ PID file"
+test_one "/run/servy.pid" "service pid:/run/servy.pid serv -n -p -P /run/servy.pid -- Foreground service w/ custom PID file"

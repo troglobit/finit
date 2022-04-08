@@ -46,4 +46,4 @@ exec "$unshare"						\
      --mount						\
      --mount-proc					\
      --uts --ipc --net					\
-     "$chroot" "$TENV_ROOT" /bin/chrootsetup.sh "$@"
+     "$chroot" "$TENV_ROOT" /sbin/chrootsetup.sh "$@"

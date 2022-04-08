@@ -20,8 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DEST           ?= ../tenv-root
 srcdir         ?= ../
+SKEL           ?= $(srcdir)/skel
+DEST           ?= ../tenv-root
 
 CACHE          ?= ~/.cache
 ARCH           ?= x86_64
@@ -33,34 +34,19 @@ BBBIN           = busybox-$(ARCH)
 BBHOME         ?= https://www.busybox.net/downloads/binaries
 BBURL          ?= $(BBHOME)/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
 
-dirs            = $(DEST)/bin			\
-		$(DEST)/dev			\
-		$(DEST)/etc			\
-		$(DEST)/proc			\
-		$(DEST)/sbin			\
-		$(DEST)/usr/bin			\
-		$(DEST)/usr/sbin		\
-		$(DEST)/var			\
-		$(DEST)/run			\
-		$(DEST)/sys			\
-		$(DEST)/test_assets		\
-		$(DEST)/tmp
-
 _libs_src       = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
 libs            = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
 
-all: $(dirs) $(libs) $(DEST)/bin/chrootsetup.sh $(DEST)/bin/$(BBBIN)
-	touch $(DEST)/etc/fstab
+all: $(libs) $(DEST)/bin/$(BBBIN)
 	@(cd $(DEST);					\
 	for prg in `./bin/$(BBBIN) --list-full`; do 	\
 		ln -sf /bin/$(BBBIN) $$prg;		\
 	done)
 
-$(dirs):
-	mkdir -p $@
-
 $(DEST)/bin/$(BBBIN).md5:
-	cp $(srcdir)/tenv/$(notdir $@) $@
+	@mkdir -p $(DEST)
+	@cp -a $(SKEL)/* $(DEST)/
+	@find $(DEST) -name .empty -delete
 
 $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
 	@(cd $(dir $@);								\
@@ -84,9 +70,6 @@ $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
 		md5sum -c $(BBBIN).md5;						\
 	fi)
 	@chmod +x $@
-
-$(DEST)/bin/chrootsetup.sh:
-	cp $(srcdir)/tenv/$(notdir $@) $@
 
 $(libs):
 	mkdir -p $(dir $@)

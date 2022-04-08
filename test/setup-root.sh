@@ -4,6 +4,7 @@ set -eu
 
 # shellcheck disable=SC2154
 make -C "$top_builddir" DESTDIR="$TENV_ROOT" install
+cp "$top_builddir/test/common/serv" "$TENV_ROOT/sbin/"
 
 # shellcheck disable=SC2154
 FINITBIN="$(pwd)/$top_builddir/src/finit" DEST="$TENV_ROOT" make -f "$srcdir/tenv/root.mk"

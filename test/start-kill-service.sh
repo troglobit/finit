@@ -15,17 +15,13 @@ test_teardown()
 	say "Running test teardown."
 
 	texec rm -f "$FINIT_CONF"
-	texec rm -f /test_assets/service.sh
 }
 
 say "Test start $(date)"
-
-cp "$TEST_DIR"/common/slay.sh    "$TENV_ROOT"/test_assets/
-cp "$TEST_DIR"/common/service.sh "$TENV_ROOT"/test_assets/
 rm -f "$TENV_ROOT"/oldpid
 
 say "Add service stanza in $FINIT_CONF"
-texec sh -c "echo 'service [2345] respawn log /test_assets/service.sh -- Test service' > $FINIT_CONF"
+texec sh -c "echo 'service [2345] respawn log service.sh -- Test service' > $FINIT_CONF"
 
 say 'Reload Finit'
 texec sh -c "initctl reload"
@@ -40,7 +36,7 @@ laps=1000
 while [ $i -lt $laps ]; do
 	i=$((i + 1))
 	say "Lap $i/$laps, killing service ..." # we have this, no sleep needed
-	texec sh -c "/test_assets/slay.sh service.sh"
+	texec sh -c "slay service.sh"
 done
 
 retry 'assert_new_pid service.sh /run/service.pid'

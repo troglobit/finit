@@ -12,7 +12,7 @@
 # furnished to do so, subject to the following conditions:
 #
 # The above copyright notice and this permission notice shall be included in
-#     all copies or substantial portions of the Software.
+# all copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -29,6 +29,8 @@ export PATH=$PATH:/usr/bin:/usr/sbin
 # that's not possible if you're not privileged. For now tmpfs will
 # have to do.
 mount -n -t tmpfs none /dev
+# Silence BusyBox init
+touch /dev/null
 
 mount -t proc none /proc
 mount -t sysfs none /sys

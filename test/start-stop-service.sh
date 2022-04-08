@@ -13,15 +13,12 @@ test_teardown()
 	say "Running test teardown."
 
 	texec rm -f "$FINIT_CONF"
-	texec rm -f /test_assets/service.sh
 }
 
 say "Test start $(date)"
 
-cp "$TEST_DIR"/common/service.sh "$TENV_ROOT"/test_assets/
-
 say "Add service stanza in $FINIT_CONF"
-texec sh -c "echo 'service [2345] kill:20 log /test_assets/service.sh -- Test service' > $FINIT_CONF"
+texec sh -c "echo 'service [2345] kill:20 log service.sh -- Test service' > $FINIT_CONF"
 
 say 'Reload Finit'
 texec sh -c "initctl reload"

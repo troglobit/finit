@@ -1,7 +1,7 @@
 #!/bin/sh
 # SysV style start script for service.sh
 
-DAEMON="/test_assets/service.sh"
+DAEMON="/sbin/service.sh"
 PIDFILE="/var/run/service.pid"
 
 start()
