@@ -747,6 +747,14 @@ static int service_stop(svc_t *svc)
 	 */
 	svc_started(svc);
 
+	/*
+	 * Verify there's still something there before we send the reaper.
+	 */
+	if (svc->pid > 1 && !pid_alive(svc->pid)) {
+		svc->pid = 0;
+		return 0;
+	}
+
 	if (!svc->desc[0])
 		do_progress = 0;
 
@@ -1501,8 +1509,10 @@ void service_monitor(pid_t lost, int status)
 	}
 
 	/* Forking sysv/services declare themselves with pid:!/path/to/pid.file  */
-	if (svc_is_starting(svc) && svc_is_forking(svc))
+	if (svc_is_starting(svc) && svc_is_forking(svc)) {
+		svc->pid = 0;	/* Expect no more activity from this one */
 		return;
+	}
 
 	/* Terminate any children in the same proess group, e.g. logit */
 	kill(-svc->pid, SIGKILL);
