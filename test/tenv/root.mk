@@ -46,6 +46,7 @@ all: $(libs) $(DEST)/bin/$(BBBIN)
 $(DEST)/bin/$(BBBIN).md5:
 	@mkdir -p $(DEST)
 	@cp -a $(SKEL)/* $(DEST)/
+	@chmod -R u+w $(DEST)/
 	@find $(DEST) -name .empty -delete
 
 $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
@@ -71,6 +72,6 @@ $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
 	fi)
 	@chmod +x $@
 
-$(libs):
+$(libs): $(DEST)/bin/$(BBBIN).md5
 	mkdir -p $(dir $@)
 	cp $(patsubst $(abspath $(DEST))%,%,$@) $@
