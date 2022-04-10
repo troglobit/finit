@@ -135,7 +135,7 @@ static void setup(void *arg)
 		ln("/dev/shm", "/run/shm");
 
 		/* compat only, should really be set up by OS/dist */
-		ln("../run", "/var/run");
+		ln("/run", "/var/run");
 	} else {
 		makedir("/var/lock", 1777);
 		makedir("/var/run", 0755);
