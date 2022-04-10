@@ -13,7 +13,7 @@ EXTRA_DIST		 = skel/bin/busybox-x86_64.md5 skel/sbin/service.sh skel/bin/slay \
 			   skel/usr/local/games/.empty skel/usr/local/sbin/.empty	  \
 			   skel/usr/local/share/.empty skel/usr/local/src/.empty	  \
 			   skel/usr/local/lib/.empty skel/usr/local/bin/.empty		  \
-			   skel/usr/local/etc/.empty skel/var/run
+			   skel/usr/local/etc/.empty skel/var/.empty
 
 EXTRA_DIST		+= setup-root.sh
 EXTRA_DIST		+= add-remove-dynamic-service.sh
