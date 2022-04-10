@@ -159,7 +159,7 @@ finit_ppid=$!
 echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
 
 >&2 echo "Hint: Execute 'TENV_ROOT=$TENV_ROOT $TEST_DIR/tenv/enter.sh' to enter the test namespace"
-log "$color_reset" 'Setup of test environment done' ''
+log "$color_reset" 'Setup of test environment done, waiting for Finit to start up ...' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
 
