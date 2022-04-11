@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -52,6 +53,10 @@
 static int num_ac_online;
 static int num_ac;
 
+static int running = 1;
+static int level;
+static int logon;
+
 int debug;			/* debug in other modules as well */
 
 void logit(int prio, const char *fmt, ...)
@@ -59,9 +64,9 @@ void logit(int prio, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (!debug)
+	if (logon)
 		vsyslog(prio, fmt, ap);
-	else {
+	else if (prio <= level) {
 		vfprintf(stderr, fmt, ap);
 		fprintf(stderr, "\n");
 	}
@@ -179,6 +184,26 @@ static void init(void)
 		sys_cond("pwr/ac", 1);
 }
 
+static void set_logging(int prio)
+{
+	setlogmask(LOG_UPTO(prio));
+	level = prio;
+}
+
+static void toggle_debug(int signo)
+{
+	(void)signo;
+
+	debug ^= 1;
+	set_logging(debug ? LOG_DEBUG : LOG_NOTICE);
+}
+
+static void shut_down(int signo)
+{
+	(void)signo;
+	running = 0;
+}
+
 /*
  * Started by Finit as soon as possible when base filesystem is up,
  * modules have been probed, or insmodded from /etc/finit.conf, so by
@@ -198,10 +223,13 @@ int main(int argc, char *argv[])
 	}
 
 	if (!debug) {
-		openlog("keventd", LOG_CONS | LOG_PID, LOG_DAEMON);
-		setlogmask(LOG_UPTO(LOG_NOTICE));
+		openlog("keventd", LOG_PID, LOG_DAEMON);
+		set_logging(LOG_NOTICE);
+		logon = 1;
 	}
 
+	signal(SIGUSR1, toggle_debug);
+	signal(SIGTERM, shut_down);
 	init();
 
 	pfd.events = POLLIN;
@@ -216,10 +244,17 @@ int main(int argc, char *argv[])
 		panic("bind failed");
 
 	logit(LOG_DEBUG, "Waiting for events ...");
-	while (-1 != poll(&pfd, 1, -1)) {
+	while (running) {
 		char *path = NULL;
 		int ac = 0;
 		int i, len;
+
+		if (-1 == poll(&pfd, 1, -1)) {
+			if (errno == EINTR)
+				continue;
+
+			break;
+		}
 
 		len = recv(pfd.fd, buf, sizeof(buf), MSG_DONTWAIT);
 		if (len == -1) {
@@ -235,6 +270,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		buf[len] = 0;
+		logit(LOG_DEBUG, "%s", buf);
 
 		/* skip libusb events, focus on kernel events/changes */
 		if (strncmp(buf, "change@", 7))
