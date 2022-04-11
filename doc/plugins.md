@@ -35,25 +35,27 @@ For your convenience a set of *optional* plugins are available:
   _Optional plugin._
 
 * *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
-  available.
+  available.  Enabled by default.
 
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
+  Enabled by default.
 
 * *modules-load.so*: Scans /etc/modules-load.d for modules to modprobe.
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor
   for services that may want to be SIGHUP'ed on new default route or
-  interfaces going up/down.
+  interfaces going up/down.  Enabled by default.
 
 * *resolvconf.so*: Setup necessary files for `resolvconf` at startup.
   _Optional plugin._
 
 * *tty.so*: Watches `/dev`, using inotify, for new device nodes (TTY's)
   to start/stop getty consoles on them on demand.  Useful when plugging
-  in a usb2serial converter to login to your embedded device.
+  in a usb2serial converter to login to your embedded device.  Enabled
+  by default.
 
-* *urandom.so*: Setup random seed at startup.
+* *urandom.so*: Setup random seed at startup.  Enabled by default.
 
 * *x11-common.so*: Setup necessary files for X-Window.  _Optional plugin._
 
