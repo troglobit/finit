@@ -34,8 +34,23 @@
 # include <lite/lite.h>
 #endif
 
+#include "client.h"
 #include "initctl.h"
 
+
+static int is_builtin(char *arg)
+{
+	svc_t *svc;
+
+	svc = client_svc_find(arg);
+	if (!svc)
+		return 0;
+
+	if (svc->file[0])
+		return 0;
+
+	return 1;
+}
 
 static int calc_width(char *arr[], size_t len)
 {
@@ -292,6 +307,8 @@ int serv_touch(char *arg)
 	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
 			errx(1, "%s not available.", arg);
+		if (is_builtin(arg))
+			errx(1, "%s is a built-in service.", arg);
 
 		strlcpy(path, FINIT_CONF, sizeof(path));
 		fn = path;
@@ -311,6 +328,9 @@ int serv_show(char *arg)
 
 	fn = conf(path, sizeof(path), arg, 0);
 	if (!fexist(fn)) {
+		if (is_builtin(arg))
+			errx(1, "%s is a built-in service.", arg);
+
 		warnx("Cannot find %s", arg);
 		return 1;
 	}
@@ -345,6 +365,9 @@ static int do_edit(char *arg, int creat)
 
 	fn = conf(path, sizeof(path), arg, creat);
 	if (!fexist(fn)) {
+		if (is_builtin(arg))
+			errx(1, "%s is a built-in service.", arg);
+
 		if (!creat) {
 			warnx("Cannot find %s, use -c flag, create command, or select one of:", arg);
 			return serv_list(NULL);
@@ -385,6 +408,9 @@ int serv_creat(char *arg)
 	if (!arg || !arg[0])
 		errx(1, "missing argument to create");
 
+	if (is_builtin(arg))
+		errx(1, "%s is a built-in service.", arg);
+
 	/* Input from a pipe or a proper TTY? */
 	if (isatty(STDIN_FILENO))
 		return do_edit(arg, 1);
@@ -420,8 +446,11 @@ int serv_delete(char *arg)
 	}
 
 	fn = conf(buf, sizeof(buf), arg, 0);
-	if (!fn)
+	if (!fn) {
+		if (is_builtin(arg))
+			errx(1, "%s is a built-in service.", arg);
 		errx(1, FINIT_RCSD " missing on system.");
+	}
 
 	if (!fexist(fn))
 		warnx("cannot find %s", fn);
