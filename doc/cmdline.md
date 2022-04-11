@@ -10,7 +10,7 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 > parameters to init.  E.g., `init=/sbin/finit -- finit.debug rescue`
 
 * `debug`: Enable kernel debug.  Debug messages are printed to the
-    console until Finit starts up.
+   console until Finit starts up, unless `loglevel=7` (below) is used.
 
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
 	independently of the kernel debug setting.  New as of Finit v4.
@@ -26,11 +26,18 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 	signals and has no job control.  Recommend using, and modifying,
 	`rescue` mode instead.
 
+* `loglevel=<0-7>`, sets the kernel's log level, which is more granular
+  than `debug`.  Also, when `loglevel=7`, Finit will *not disable*
+  kernel logs to the console.  This is very useful when debugging the
+  kernel at system bring-up.  Since `loglevel=7` is the same as `debug`
+  this means you have to use `quiet` for a quiet boot, until sysklogd
+  takes over logging of kernel events.
+
 * `panic=SEC`: By default the kernel does not reboot after a kernel
     panic.  This setting will cause a kernel reboot after SEC seconds.
 
 * `quiet`: Suppress kernel logging to console, except for warnings and
-  errors.
+  errors.  Also, see `loglevel` and `quiet` above.
 
 * `rescue`: Start rescue/maintenance mode.  If your system comes with
     the bundled `sulogin` program (Finit, or from util-linux/Busybox),
