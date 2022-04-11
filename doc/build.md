@@ -29,8 +29,8 @@ optional plugins to enable.  It depends on two external libraries:
 The configure script checks for all dependencies, including the correct
 version of the above mentioned libraries.  Currently required versions:
 
-- libite v2.2.0
-- libuEv v2.2.0
+- libite v2.2.0, or later
+- libuEv v2.2.0, or later
 
 
 Configure
@@ -74,8 +74,8 @@ Example
 First, unpack the archive:
 
 ```shell
-$ tar xf finit-4.1.tar.gz
-$ cd finit-4.1/
+$ tar xf finit-4.3.tar.gz
+$ cd finit-4.3/
 ```
 
 Then configure, build and install:
@@ -91,7 +91,7 @@ $ make
 $ DESTDIR=/tmp/finit make install
 ```
 
-In this example the [finit-4.1.tar.gz][1] archive is unpacked to the
+In this example the [finit-4.3.tar.gz][1] archive is unpacked to the
 user's home directory, configured, built and installed to a temporary
 staging directory.  The environment variable `DESTDIR` controls the
 destination directory when installing, very useful for building binary
@@ -175,6 +175,6 @@ it only for debugging start up issues when Finit crashes.
          systems since they can potentially give a user root access.
 
 
-[1]:       ftp://troglobit.com/finit/finit-4.1.tar.gz
+[1]:       ftp://troglobit.com/finit/finit-4.3.tar.gz
 [libuEv]:  https://github.com/troglobit/libuev
 [libite]:  https://github.com/troglobit/libite
