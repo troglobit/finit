@@ -500,20 +500,25 @@ void networking(int updown)
 	if (fexist("/etc/network/interfaces")) {
 		pid_t pid;
 
-		if (!updown) {
-			run_interactive("ifdown -a", "Stopping networking");
-			goto done;
-		}
-
 		pid = fork();
 		if (pid == 0) {
 			int rc = EX_OSERR;
+			const char *cmd;
 			FILE *pp;
 
 			setsid();
 			sig_unblock();
 
-			pp = popen("ifup -a 2>&1", "r");
+			if (updown)
+				cmd = "ifup -a 2>&1";
+			else if (whichp("ifquery"))
+				/* Regular ifodwn supports --force but not -f */
+				cmd = "ifdown -a --force 2>&1";
+			else
+				/* Busybox ifdown support -f, but not --force */
+				cmd = "ifdown -a -f 2>&1";
+
+			pp = popen(cmd, "r");
 			if (pp) {
 				char buf[256];
 
@@ -526,7 +531,8 @@ void networking(int updown)
 			_exit(rc);
 		}
 		cgroup_service("network", pid, NULL);
-		print(pid > 0 ? 0 : 1, "Bringing up network interfaces ...");
+		print(pid > 0 ? 0 : 1, "%s network interfaces ...",
+		      updown ? "Bringing up" : "Taking down");
 
 		goto done;
 	}
