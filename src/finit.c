@@ -334,7 +334,7 @@ static void fs_mount_all(void)
 	plugin_run_hooks(HOOK_MOUNT_POST);
 
 	if (whichp("swapon"))
-		run("swapon -ea", "swapon");
+		run_interactive("swapon -ea", "Enabling system swap");
 
 	_d("Finalize, ensure common file systems are available ...");
 	fs_finalize();
