@@ -94,10 +94,12 @@ static int unmount(const char *target)
 	int rc;
 
 	rc = umount(target);
-	if (rc)
+	if (rc && errno != EBUSY) {
 		print(2, "Failed unmounting %s, error %d: %s", target, errno, strerror(errno));
+		return rc;
+	}
 
-	return rc;
+	return 0;
 }
 
 void unmount_tmpfs(void)
