@@ -207,7 +207,7 @@ void do_iterate_proc(int (*cb)(int, void *), void *data)
 					_d("Skipping %s ...", &file[1]);
 				else
 					if (cb(pid, data)) {
-						print(0, "PID %d is still alive (%s)", pid, file);
+						_d("PID %d is still alive (%s)", pid, file);
 						break;
 					}
 			}
