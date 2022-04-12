@@ -21,9 +21,12 @@
  * THE SOFTWARE.
  */
 
+#include <errno.h>
 #include <string.h>
 #include <mntent.h>
 #include <sys/mount.h>
+
+#include "helpers.h"
 
 /*
  * SysV init on Debian/Ubuntu skips these protected mount points
@@ -86,13 +89,24 @@ static struct mntent *iterator(char *fstab, FILE **fp)
 	return NULL;
 }
 
+static int unmount(const char *target)
+{
+	int rc;
+
+	rc = umount(target);
+	if (rc)
+		print(2, "Failed unmounting %s, error %d: %s", target, errno, strerror(errno));
+
+	return rc;
+}
+
 void unmount_tmpfs(void)
 {
 	struct mntent *mnt;
 	FILE *fp = NULL;
 
 	while ((mnt = iterator("/proc/mounts", &fp))) {
-		if (!strcmp("tmpfs", mnt->mnt_fsname) && !umount(mnt->mnt_dir))
+		if (!strcmp("tmpfs", mnt->mnt_fsname) && !unmount(mnt->mnt_dir))
 			iterator_end(&fp);  /* Restart iteration */
 	}
 }
@@ -103,7 +117,7 @@ void unmount_regular(void)
 	FILE *fp = NULL;
 
 	while ((mnt = iterator("/proc/mounts", &fp))) {
-		if (!umount(mnt->mnt_dir))
+		if (!unmount(mnt->mnt_dir))
 			iterator_end(&fp);  /* Restart iteration */
 	}
 }
