@@ -54,7 +54,7 @@ Below are a few of the main switches to configure:
   will be linked statically.
 
 * `--enable-kernel-cmdline`: Enable Finit pre-4.1 parsing of init args from
-  `/proc/cmdline`, this is not recommended since Finit may be running as the
+  `/proc/cmdline`, this is *not recommended* since Finit may be running as the
   init for container apps that can see the host's `/proc` filesystem
 
 * `--enable-alsa-utils-plugin`: Enable the optional `alsa-utils.so` sound plugin.
@@ -66,6 +66,13 @@ Below are a few of the main switches to configure:
 * `--enable-x11-common-plugin`: Enable the optional X Window `x11-common.so` plugin.
 
 For more configure flags, see <kbd>./configure --help</kbd>
+
+> **Note:** the configure script is not available in the GIT sources.  It is
+>           however included in (officially supported) released tarballs.  The
+>           idea is that you should not need GNU autotools to build, only the
+>           above mentioned dependencies, a POSIX shell, a C compiler and make.
+>           Any contributing to Finit can generate it from `configure.ac` using
+>           the `autogen.sh` script.
 
 
 Example
@@ -83,7 +90,7 @@ Then configure, build and install:
 ```shell
 $ ./configure --prefix=/usr                 --exec-prefix=         \
               --sysconfdir=/etc             --localstatedir=/var   \
-			  --with-keventd                --with-watchdog
+              --with-keventd                --with-watchdog
 $ make
 .
 .
@@ -151,11 +158,13 @@ Debugging
 ---------
 
 Edit, or append to, the kernel command line: remove `quiet` to enable
-kernel messages and add `debug` to enable Finit debug messages.
+kernel messages and add `finit.debug` to enable Finit debug messages.
 
 ```shell
-append="init=/sbin/finit debug"
+append="init=/sbin/finit -- finit.debug"
 ```
+
+Notice the `--` separator.
 
 To debug startup issues, in particular issues with getty/login, add
 the following to your Finit .conf file:
