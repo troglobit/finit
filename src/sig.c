@@ -328,10 +328,15 @@ void do_shutdown(shutop_t op)
 	/* ... unmount remaining regular file systems. */
 	unmount_regular();
 
-	/* We sit on / so we must remount it ro, try all the things! */
+	/*
+	 * We sit on / so we must remount it ro, try all the things!
+	 * See the following links for details:
+	 *  - https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=339023
+	 *  - https://bugs.launchpad.net/ubuntu/+source/util-linux/+bug/29187
+	 */
 	sync();
-	run("mount -n -o remount,ro -t dummytype dummydev /", "mount");
-	run("mount -n -o remount,ro dummydev /", "mount");
+	run("mount -n -o remount,ro -t dummytype dummydev /", NULL);
+	run("mount -n -o remount,ro dummydev /", NULL);
 	run("mount -n -o remount,ro /", "mount");
 
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
