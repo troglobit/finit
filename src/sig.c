@@ -323,7 +323,7 @@ void do_shutdown(shutop_t op)
 	/* Unmount any tmpfs before unmounting swap ... */
 	unmount_tmpfs();
 	if (whichp("swapoff"))
-		run("swapoff -e -a", "swapoff");
+		run("swapoff -a", "swapoff");
 
 	/* ... unmount remaining regular file systems. */
 	unmount_regular();
