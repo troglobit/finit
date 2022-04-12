@@ -54,6 +54,11 @@ on server and desktop systems as well.  For working examples, see the
   * [Alpine Linux](contrib/alpine/), and
   * [Debian GNU/Linux](contrib/debian/)
 
+> **Note:** support for various Linux distributions does not mean Finit
+> installs easily on all architectures.  The bundled install scripts are
+> examples for standard installations, tested on x86_64 systems.  Custom
+> setups, targeted at embedded systems, can be found in [myLinux][].
+
 
 Example
 -------
@@ -598,6 +603,7 @@ and proposed extensions.
 [Joachim Wiberg]:   https://troglobit.com
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
+[GitHub]:           https://github.com/troglobit/myLinux/
 [GitHub]:           https://github.com/troglobit/finit/actions/workflows/build.yml/
 [GitHub Status]:    https://github.com/troglobit/finit/actions/workflows/build.yml/badge.svg
 [Coverity Scan]:    https://scan.coverity.com/projects/3545
