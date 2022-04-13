@@ -991,7 +991,7 @@ static void parse_killdelay(svc_t *svc, char *delay)
 static void parse_script(char *type, char *script, char *buf, size_t len)
 {
 	if (access(script, X_OK))
-		logit(LOG_WARNING, "%s: %s:%s is missing or not executable, skipping.", type, script);
+		logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.", type, script);
 	else
 		strlcpy(buf, script, len);
 }
