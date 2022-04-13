@@ -50,7 +50,7 @@ void    log_exit        (void);
 
 void    log_debug       (void);
 
-void    logit           (int prio, const char *fmt, ...);
-void    flog            (char *file, const char *fmt, ...);
+void    logit           (int prio, const char *fmt, ...)   __attribute__ ((format (printf, 2, 3)));
+void    flog            (char *file, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
 #endif /* FINIT_LOG_H_ */
