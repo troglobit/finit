@@ -526,7 +526,7 @@ void cgroup_init(uev_ctx_t *ctx)
 
 	/* Move ourselves to init (best effort, otherwise run in 'root' group */
 	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs")) {
-		_pe("Failed moving PID 1 to cgroup ", FINIT_CGPATH "/init");
+		_pe("Failed moving PID 1 to cgroup %s", FINIT_CGPATH "/init");
 		uev_io_stop(&cgw);
 		iwatch_exit(&iw_cgroup);
 		close(fd);

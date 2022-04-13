@@ -558,7 +558,7 @@ static int service_start(svc_t *svc)
 
 			for (i = 0; i < we.we_wordc; i++) {
 				if (strlen(we.we_wordv[i]) >= sizeof(svc->args[i])) {
-					logit(LOG_ERR, "%s: expanded arg. '%s' too long", we.we_wordv[i]);
+					logit(LOG_ERR, "%s: expanded arg. '%s' too long", svc->cmd, we.we_wordv[i]);
 					rc = WRDE_NOSPACE;
 					goto nomem;
 				}
@@ -931,7 +931,7 @@ static void parse_env(svc_t *svc, char *env)
 		return;
 
 	if (strlen(env) >= sizeof(svc->env)) {
-		_e("%s: env file is too long (>%d chars)", svc->cmd, sizeof(svc->env));
+		_e("%s: env file is too long (>%zu chars)", svc->cmd, sizeof(svc->env));
 		return;
 	}
 
@@ -955,7 +955,7 @@ static void parse_cgroup(svc_t *svc, char *cgroup)
 	}
 
 	if (strlen(ptr) >= sizeof(svc->cgroup)) {
-		_e("%s: cgroup settings too long (>%d chars)", svc->cmd, sizeof(svc->cgroup));
+		_e("%s: cgroup settings too long (>%zu chars)", svc->cmd, sizeof(svc->cgroup));
 		return;
 	}
 

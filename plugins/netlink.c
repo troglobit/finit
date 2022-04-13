@@ -1,3 +1,4 @@
+
 /* Netlink plugin for IFUP/IFDN and GW events
  *
  * Copyright (C) 2009-2011  Mårten Wikström <marten.wikstrom@keystream.se>
@@ -252,7 +253,7 @@ static int nl_parse(int sd)
 			return -1;
 		}
 
-		_d("recv %lld bytes", len);
+		_d("recv %zd bytes", len);
 		l = (size_t)len;
 		for (nh = (struct nlmsghdr *)nl_buf; NLMSG_OK(nh, l); nh = NLMSG_NEXT(nh, l)) {
 			struct nlmsgerr *nle;
