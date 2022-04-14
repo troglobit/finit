@@ -205,8 +205,6 @@ void conf_parse_cmdline(int argc, char *argv[])
 
 	parse_kernel_cmdline();
 	parse_kernel_loglevel();
-
-	log_init();
 }
 
 static int kmod_exists(char *mod)

@@ -81,7 +81,7 @@ char *console(void)
 
 void console_init(void)
 {
-	ttinit();
+	log_init();
 }
 
 ssize_t cprintf(const char *fmt, ...)

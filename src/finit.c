@@ -570,7 +570,7 @@ int main(int argc, char *argv[])
 	};
 	uev_ctx_t loop;
 
-	/* telinit or stand-alone process monitor */
+	/* user calling telinit or init */
 	if (getpid() != 1)
 		return telinit(argc, argv);
 
@@ -581,12 +581,12 @@ int main(int argc, char *argv[])
 
 	/*
 	 * Parse /proc/cmdline (debug, rescue, console=, etc.)
-	 * Also calls log_init() to set correct log level
 	 */
 	conf_parse_cmdline(argc, argv);
 
 	/*
-	 * Figure out system console(s)
+	 * Figure out system console(s) and call log_init() to set
+	 * correct log level, possibly finit.debug enabled.
 	 */
 	console_init();
 

@@ -40,6 +40,8 @@ static int loglevel = LOG_INFO;
 
 void log_init(void)
 {
+	ttinit();
+
 	if (debug)
 		loglevel = LOG_DEBUG;
 	else
@@ -72,11 +74,16 @@ static int log_open(void)
 	if (debug)
 		opts |= LOG_PERROR;
 
-	closelog();
 	openlog("finit", opts, LOG_DAEMON);
 	setlogmask(LOG_UPTO(loglevel));
 
 	return up = 1;
+}
+
+static void log_close(void)
+{
+	closelog();
+	up = 0;
 }
 
 /* Toggle debug mode */
@@ -84,12 +91,8 @@ void log_debug(void)
 {
 	debug = !debug;
 
-	if (debug) {
-		loglevel = LOG_DEBUG;
-	} else {
-		loglevel = LOG_NOTICE;
-		ttinit();
-	}
+	log_close();
+	log_init();
 	log_open();
 
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
