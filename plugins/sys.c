@@ -197,8 +197,8 @@ PLUGIN_INIT(plugin_init)
 
 PLUGIN_EXIT(plugin_exit)
 {
-	iwatch_exit(&iw_sys);
 	plugin_unregister(&plugin);
+	iwatch_exit(&iw_sys);
 }
 
 /**

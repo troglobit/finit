@@ -116,10 +116,9 @@ PLUGIN_INIT(plugin_init)
 
 PLUGIN_EXIT(plugin_exit)
 {
+	plugin_unregister(&plugin);
 	if (plugin.io.fd)
 		close(plugin.io.fd);
-
-	plugin_unregister(&plugin);
 }
 
 /**

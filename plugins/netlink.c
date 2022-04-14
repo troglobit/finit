@@ -450,6 +450,7 @@ PLUGIN_INIT(plugin_init)
 PLUGIN_EXIT(plugin_exit)
 {
 	plugin_unregister(&plugin);
+	close(plugin.io.fd);
 }
 
 /**
