@@ -1599,7 +1599,6 @@ static void set_pre_post_envs(svc_t *svc, const char *type)
 		if (!access(fn, R_OK))
 			exist = "1";
 	}
-	setenv("SERVICE_ENV_FILE", fn, 1);
 	setenv("SERVICE_ENV_FILE_EXIST", exist, 1);
 
 #ifdef FINIT_SYSCONFIG
