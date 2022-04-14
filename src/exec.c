@@ -97,12 +97,14 @@ static int do_redirect(void)
  */
 int run(char *cmd, char *log)
 {
+	char *args[NUM_ARGS + 1] = { 0 };
 	int status, result, i = 0;
-	char *args[NUM_ARGS + 1], *arg;
 	char *backup = NULL;
 	pid_t pid;
 
 	if (!log) {
+		char *arg;
+
 		/* We must create a copy that is possible to modify. */
 		backup = arg = strdup(cmd);
 		if (!arg)
@@ -164,7 +166,7 @@ int run(char *cmd, char *log)
 
 		_exit(rc);
 	} else if (-1 == pid) {
-		_pe("%s", args[0]);
+		_pe("%s", !log ? args[0] : cmd);
 		if (backup)
 			free(backup);
 
