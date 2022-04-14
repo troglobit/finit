@@ -54,9 +54,9 @@ extern char *prognm;
 
 char *progname     (char *arg0);
 
-char *str          (char *fmt, ...);
-int   fnread       (char *buf, size_t len, char *fmt, ...);
-int   fnwrite      (char *value, char *fmt, ...);
+char *str          (char *fmt, ...)                        __attribute__ ((format (printf, 1, 2)));
+int   fnread       (char *buf, size_t len, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
+int   fnwrite      (char *value, char *fmt, ...)           __attribute__ ((format (printf, 2, 3)));
 int   fngetint     (char *path, int *val);
 
 int   strtobytes   (char *arg);
@@ -85,7 +85,7 @@ int     ttcooked   (void);
 #define ttcooked() 0
 #endif
 
-static inline void dbg(char *fmt, ...)
+static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
 {
 	va_list ap;
 

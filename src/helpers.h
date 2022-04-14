@@ -65,7 +65,7 @@ struct fstab *getfsent  (void);
 
 char   *console         (void);
 void    console_init    (void);
-ssize_t cprintf         (const char *fmt, ...);
+ssize_t cprintf         (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
 char   *strip_line      (char *line);
 
@@ -79,7 +79,7 @@ void    stty            (int fd, speed_t speed);
 
 void    print_banner    (const char *heading);
 void    printv          (const char *fmt, va_list ap);
-void    print           (int action, const char *fmt, ...);
+void    print           (int action, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 
@@ -97,7 +97,7 @@ int     in_container    (void);
 
 int     complete        (char *cmd, int pid);
 int     run             (char *cmd, char *log);
-int     run_interactive (char *cmd, char *fmt, ...);
+int     run_interactive (char *cmd, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 int     exec_runtask    (char *cmd, char *args[]);
 pid_t   run_getty       (char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[]);
 pid_t   run_sh          (char *tty, int noclear, int nowait, struct rlimit rlimit[]);

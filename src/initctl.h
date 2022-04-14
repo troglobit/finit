@@ -34,7 +34,7 @@ extern int heading;			/* initctl -t */
 extern int verbose;			/* initctl -v */
 extern int plain;			/* initctl -p */
 
-extern void print_header(const char *fmt, ...);
+extern void print_header(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
 #endif /* FINIT_INITCTL_H_ */
 
