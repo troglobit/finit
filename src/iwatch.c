@@ -62,8 +62,10 @@ int iwatch_init(struct iwatch *iw)
 	 * reconf of systems with lots of services.
 	 */
 	len = sizeof(sz);
-	if (!getsockopt(iw->fd, SOL_SOCKET, SO_RCVBUF, &sz, &len))
-		setsockopt(iw->fd, SOL_SOCKET, SO_RCVBUF, &sz, sizeof(sz));
+	if (!getsockopt(iw->fd, SOL_SOCKET, SO_RCVBUF, &sz, &len)) {
+		if (setsockopt(iw->fd, SOL_SOCKET, SO_RCVBUF, &sz, sizeof(sz)))
+			_pe("Failed increasing size of inotify socket");
+	}
 
 	initialized = 1;
 
