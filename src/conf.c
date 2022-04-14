@@ -86,8 +86,8 @@ fallback:
 }
 
 /*
- * finit.debug = [on,off]
- * finit.show_status = [on,off]
+ * finit.debug  = [on,off]
+ * finit.status = [on,off]     (compat finit.show_status)
  * finit.status_style = [old,classic,modern]
  */
 static void parse_finit_opts(char *opt)
@@ -116,7 +116,7 @@ static void parse_finit_opts(char *opt)
 		return;
 	}
 
-	if (string_compare(opt, "show_status")) {
+	if (string_compare(opt, "status") || string_compare(opt, "show_status")) {
 		show_progress(get_bool(arg, 1) ? PROGRESS_DEFAULT : PROGRESS_SILENT);
 		return;
 	}

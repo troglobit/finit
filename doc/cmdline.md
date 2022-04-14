@@ -15,8 +15,8 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
 	independently of the kernel debug setting.  New as of Finit v4.
 
-* `finit.show_status[=bool]`: Control finit boot progress, including
-  banner.
+* `finit.status[=bool]`: Control finit boot progress, including banner.
+  (Used to be `finit.show_status`, which works but is deprecated.)
 
 * `finit.status_style=<classic,modern>`: Set Finit boot progress style,
   when enabled.
