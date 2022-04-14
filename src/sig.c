@@ -208,6 +208,7 @@ void do_iterate_proc(int (*cb)(int, void *), void *data)
 				else
 					if (cb(pid, data)) {
 						_d("PID %d is still alive (%s)", pid, file);
+						fclose(fp);
 						break;
 					}
 			}
