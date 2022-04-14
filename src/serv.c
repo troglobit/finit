@@ -394,6 +394,7 @@ int serv_edit(char *arg)
 	if (!arg || !arg[0]) {
 		if (!yorn("Do you want to edit %s (y/N)? ", FINIT_CONF))
 			return 0;
+		arg = "";
 	}
 
 	return do_edit(arg, icreate);
