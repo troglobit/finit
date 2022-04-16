@@ -59,6 +59,8 @@ int   fnread       (char *buf, size_t len, char *fmt, ...) __attribute__ ((forma
 int   fnwrite      (char *value, char *fmt, ...)           __attribute__ ((format (printf, 2, 3)));
 int   fngetint     (char *path, int *val);
 
+int   suspend      (void);
+
 int   strtobytes   (char *arg);
 char *sig2str      (int sig);
 int   str2sig      (char *sig);

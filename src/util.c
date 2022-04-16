@@ -235,6 +235,40 @@ int fngetint(char *path, int *val)
 	return 0;
 }
 
+/*
+ * This is a replacement for the non-working reboot(RB_SW_SUSPEND).  It
+ * checks for suspend to RAM support, assuming `mem_sleep` has a sane
+ * default, e.g. 'deep' or 's2idle'.  The latter should be possible to
+ * select from finit.conf, but for now we go with the kernel default.
+ * For more information on kernel sleep states, see:
+ * https://www.kernel.org/doc/html/latest/admin-guide/pm/sleep-states.html
+ */
+int suspend(void)
+{
+	char buf[80];
+	char *ptr;
+
+	if (fnread(buf, sizeof(buf), "/sys/power/state") <= 0) {
+	opnotsup:
+		errno = EINVAL;
+		return 1;
+	}
+
+	chomp(buf);
+
+	ptr = strtok(buf, " ");
+	while (ptr) {
+		if (!strcmp(ptr, "mem"))
+			break;
+
+		ptr = strtok(NULL, " ");
+	}
+	if (!ptr)
+		goto opnotsup;
+
+	return fnwrite("mem", "/sys/power/state");
+}
+
 int strtobytes(char *arg)
 {
 	int mod = 0, bytes;

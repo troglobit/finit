@@ -160,6 +160,8 @@ int reboot_main(int argc, char *argv[])
 	transform(NULL);
 
 	if (force) {
+		sync();
+
 		switch (cmd) {
 		case CMD_REBOOT:
 			c = reboot(RB_AUTOBOOT);
@@ -174,9 +176,9 @@ int reboot_main(int argc, char *argv[])
 			break;
 
 		case CMD_SUSPEND:
-			c = reboot(RB_SW_SUSPEND);
+			c = suspend();
 			if (c && errno == EINVAL)
-				errx(1, "Kernel does not support suspend.");
+				errx(1, "Kernel does not support suspend to RAM.");
 			break;
 
 		case CMD_UNKNOWN:
