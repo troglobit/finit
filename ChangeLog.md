@@ -10,14 +10,36 @@ All relevant changes are documented in this file.
 Critical bug fix release.  If you run a 32-bit target with GLIBC 2.34
 you *need* to upgrade!
 
+> **Note:** system verbosity on console at start and shutdown has been
+>           increased.  Now the output of all commands is logged to the
+>           system logger, for early services `/dev/kmsg` is used.
+>
+> **Also:** please notice the updated support for enabling and disabling
+>           kernel and Finit debug messages on the system console.  Very
+>           useful when debugging either of them, e.g., a kernel module.
+
 ### Changes
 * Loading `module`s no longer shows arguments in progress output
-* Warning messages in progress output now in yellow, not red, issue 214
+* Warning messages in progress output now in yellow, not red, issue #214
 * `initctl`, new command line option `-v,--version` for ease of use
 * Extended environment variables for pre/post scripts, issue #189
 * New condition `done` for run task, issue #207 by Ming Liu, Atlas Copco
 * Refactor parts of shutdown and reboot sequence for PREEMPT-RT kernels,
   by Robert Andersson, Mathias Thore, and Ming Liu, Atlas Copco
+* Conditions for run/task/sysv status, e.g. `run/foo/success` and
+  `task/bar/failure`.  Issue #232, by Ming Liu, Atlas Copco
+* Network services now also stopped when going to runlevel 6 (reboot),
+  not just runlevel 0 (shutdown) or 1 (single-user)
+* When `ifup` is missing on the system, bring at least `lo` up at boot
+* Log output from `ifup -a` (and `ifdown -a`), to syslog
+* Avoid blocking PID 1 when starting SysV init scripts
+* Allow custom `pid:` for SysV init scripts
+* Document supported types of forking/non-forking services
+* Auto-detect running in some common forms of containers
+* Simplify shutdown/reboot when running in a container
+* Log to `stderr` when running in a container w/o syslog daemon
+* Add support for `type:forking` to services, already supported but
+  with a very difficult `pid:` syntax.  Documentation updated
 
 ### Fixes
 * Fix nasty 32/64-bit alignment issue between finit and its plugins,
@@ -27,6 +49,16 @@ you *need* to upgrade!
   or does not have the required controllers (cpu)
 * Fix #217: iwatcher initialization issue, by Ming Liu, Atlas Copco
 * Fix #218: initctl matches too many services, by Ming Liu, Atlas Copco
+* Fix #219: not all filesystems unmounted at shutdown, by Ming Liu, 
+  Mathias Thore, and Robert Andersson, Atlas Copco
+* Fix #226: initctl shows wrong PID for crashing services
+* Fix #227: reboot stalls if process stopped with `[WARN]`
+* Fix #233: initctl shows wrong status for run/task, by Sergio Morlans
+  and Ming Liu, Atlas Copco
+* Fix start/stop of SysV init scripts
+* Fix call to `swapoff` at shutdown, does not support `-e` flag
+* Fix suspend to RAM issue.  Previously `reboot(RB_SW_SUSPEND)` was
+  used, now the modern `/sys/power/state` API is used instead.
 
 
 [4.2][] - 2022-01-16
