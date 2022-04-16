@@ -250,7 +250,7 @@ static int do_reboot(int cmd, char *buf, size_t len)
 	case INIT_CMD_SUSPEND:
 		_d("suspend");
 		sync();
-		rc = sys_suspend();
+		rc = suspend();
 		if (rc) {
 			if (errno == EINVAL)
 				snprintf(buf, len, "Kernel does not support suspend to RAM.");
