@@ -13,7 +13,7 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
    console until Finit starts up, unless `loglevel=7` (below) is used.
 
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
-	independently of the kernel debug setting.  New as of Finit v4.
+	independently of the kernel `debug` setting.  New as of Finit v4.
 
 * `finit.status[=bool]`: Control finit boot progress, including banner.
   (Used to be `finit.show_status`, which works but is deprecated.)
