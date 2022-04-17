@@ -1871,6 +1871,9 @@ restart:
 
 		if (!svc->pid) {
 			if (svc_is_daemon(svc) || svc_is_tty(svc)) {
+				if (svc_is_forking(svc))
+					break;
+
 				svc_restarting(svc);
 				svc_set_state(svc, SVC_HALTED_STATE);
 
