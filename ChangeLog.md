@@ -17,6 +17,7 @@ you *need* to upgrade!
 > **Also:** please notice the updated support for enabling and disabling
 >           kernel and Finit debug messages on the system console.  Very
 >           useful when debugging either of them, e.g., a kernel module.
+>           For details, see [cmdline.md](doc/cmdline.md).
 
 ### Changes
 * Loading `module`s no longer shows arguments in progress output
@@ -28,6 +29,9 @@ you *need* to upgrade!
   by Robert Andersson, Mathias Thore, and Ming Liu, Atlas Copco
 * Conditions for run/task/sysv status, e.g. `run/foo/success` and
   `task/bar/failure`.  Issue #232, by Ming Liu, Atlas Copco
+* initctl support for sending signals to services, by Jörgen
+  Sigvardsson, issue #225
+* `[WARN]` messages on console now printed in yellow, issue #214
 * Network services now also stopped when going to runlevel 6 (reboot),
   not just runlevel 0 (shutdown) or 1 (single-user)
 * When `ifup` is missing on the system, bring at least `lo` up at boot
@@ -813,7 +817,7 @@ The inetd release.
 ### Changes
 * Add support for built-in inetd super server -- launch services on
   demand.  Supports filtering per interface and custom Inet ports.
-* Upgrade to [libuEv] v1.1.0 to better handle error conditions.
+* Upgrade to [libuEv][] v1.1.0 to better handle error conditions.
 * Allow mixed case config directives in `finit.conf`
 * Add support for RFC 868 (rdate) time plugin, start as inetd service.
 * Load plugins before parsing `finit.conf`, this makes it possible to
@@ -844,7 +848,7 @@ The inetd release.
 [1.11][] - 2015-01-24 [YANKED]
 ------------------------------
 
-The [libuEv] release.
+The [libuEv][] release.
 
 **Note:** This release has been *yanked* from distribution due to a
   regression in launching background processes and TTY's.  Fixed in
