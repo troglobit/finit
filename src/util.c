@@ -224,7 +224,7 @@ int fngetint(char *path, int *val)
 {
 	char buf[64];
 
-	if (fnread(buf, sizeof(buf), path) <= 0)
+	if (fnread(buf, sizeof(buf), "%s", path) <= 0)
 		return -1;
 
 	errno = 0;
