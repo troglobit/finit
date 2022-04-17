@@ -53,5 +53,5 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 
 For more on kernel boot parameters, see the man page [bootparam(7)][].
 
-[config.md][]:  config.md#rescue-mode
+[config.md]:    config.md#rescue-mode
 [bootparam(7)]: https://www.man7.org/linux/man-pages/man7/bootparam.7.html
