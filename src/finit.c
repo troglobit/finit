@@ -159,7 +159,7 @@ static int fsck(int pass)
 			size_t i;
 
 			for (i = 0; i < NELEMS(sulogin); i++) {
-				if (systemf(sulogin[i]))
+				if (systemf("%s", sulogin[i]))
 					continue;
 				break;
 			}
@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
 		size_t i;
 
 		for (i = 0; i < NELEMS(sulogin); i++) {
-			if (systemf(sulogin[i]))
+			if (systemf("%s", sulogin[i]))
 				continue;
 
 			rescue = 0;
