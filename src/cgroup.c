@@ -1,6 +1,6 @@
 /* Finit control group support functions
  *
- * Copyright (c) 2019-2021  Joachim Wiberg <troglobit@gmail.com>
+ * Copyright (c) 2019-2022  Joachim Wiberg <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
