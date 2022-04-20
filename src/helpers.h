@@ -27,9 +27,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_FSTAB_H
-#include <fstab.h>
-#endif
 #include <mntent.h>
 #include <sched.h>		/* sched_yield() */
 #include <stdarg.h>
@@ -51,22 +48,6 @@ typedef enum {
 	PROGRESS_CLASSIC,
 	PROGRESS_MODERN,
 } pstyle_t;
-
-#ifndef HAVE_FSTAB_H
-struct fstab {
-	char       *fs_spec;       /* block device name */
-	char       *fs_file;       /* mount point */
-	char       *fs_vfstype;    /* file-system type */
-	char       *fs_mntops;     /* mount options */
-	const char *fs_type;       /* rw/rq/ro/sw/xx option */
-	int         fs_freq;       /* dump frequency, in days */
-	int         fs_passno;     /* pass number on parallel dump */
-};
-
-int           setfsent  (void);
-void          endfsent  (void);
-struct fstab *getfsent  (void);
-#endif /* HAVE_FSTAB_H */
 
 char   *console         (void);
 void    console_init    (void);

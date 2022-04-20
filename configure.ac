@@ -33,8 +33,8 @@ AC_PROG_MKDIR_P
 
 # Configuration.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fstab.h termios.h sys/ioctl.h])
-AC_CHECK_FUNCS([strstr getopt getfsenty])
+AC_CHECK_HEADERS([termios.h sys/ioctl.h mntent.h])
+AC_CHECK_FUNCS([strstr getopt getmntent])
 
 # Check for uint[8,16,32]_t
 AC_TYPE_UINT8_T

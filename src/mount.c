@@ -23,7 +23,9 @@
 
 #include <errno.h>
 #include <string.h>
+#ifdef HAVE_MNTENT_H
 #include <mntent.h>
+#endif
 #include <sys/mount.h>
 
 #include "helpers.h"

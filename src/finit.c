@@ -26,11 +26,10 @@
 
 #include <ctype.h>
 #include <dirent.h>
-#ifdef HAVE_FSTAB_H
-#include <fstab.h>
-#endif
 #include <getopt.h>
+#ifdef HAVE_MNTENT_H
 #include <mntent.h>
+#endif
 #include <time.h>		/* tzet() */
 #include <sys/klog.h>
 #include <sys/mount.h>
@@ -111,41 +110,43 @@ static void banner(void)
  */
 static int fsck(int pass)
 {
-	struct fstab *fs;
+	struct mntent *mnt;
 	int rc = 0;
+	FILE *fp;
 
-	if (!setfsent()) {
+	fp = setmntent("/etc/fstab", "r");
+	if (!fp) {
 		_pe("Failed opening fstab");
 		return 1;
 	}
 
-	while ((fs = getfsent())) {
+	while ((mnt = getmntent(fp))) {
 		char cmd[80];
 		struct stat st;
 		int fsck_rc = 0;
 
-		if (fs->fs_passno != pass)
+		if (mnt->mnt_passno != pass)
 			continue;
 
 		errno = 0;
-		if (stat(fs->fs_spec, &st) || !S_ISBLK(st.st_mode)) {
-			if (!string_match(fs->fs_spec, "UUID=") && !string_match(fs->fs_spec, "LABEL=")) {
-				_d("Cannot fsck %s, not a block device: %s", fs->fs_spec, strerror(errno));
+		if (stat(mnt->mnt_fsname, &st) || !S_ISBLK(st.st_mode)) {
+			if (!string_match(mnt->mnt_fsname, "UUID=") && !string_match(mnt->mnt_fsname, "LABEL=")) {
+				_d("Cannot fsck %s, not a block device: %s", mnt->mnt_fsname, strerror(errno));
 				continue;
 			}
 		}
 
-		if (ismnt("/proc/mounts", fs->fs_file, "rw")) {
-			_d("Skipping fsck of %s, already mounted rw on %s.", fs->fs_spec, fs->fs_file);
+		if (ismnt("/proc/mounts", mnt->mnt_dir, "rw")) {
+			_d("Skipping fsck of %s, already mounted rw on %s.", mnt->mnt_fsname, mnt->mnt_dir);
 			continue;
 		}
 
 #ifdef FSCK_FIX
-		snprintf(cmd, sizeof(cmd), "fsck -yf %s", fs->fs_spec);
+		snprintf(cmd, sizeof(cmd), "fsck -yf %s", mnt->mnt_fsname);
 #else
-		snprintf(cmd, sizeof(cmd), "fsck -a %s", fs->fs_spec);
+		snprintf(cmd, sizeof(cmd), "fsck -a %s", mnt->mnt_fsname);
 #endif
-		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", fs->fs_spec);
+		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", mnt->mnt_fsname);
 		/*
 		 * "failure" is defined as exiting with a return code of
 		 * 2 or larger.  A return code of 1 indicates that filesystem
@@ -169,7 +170,7 @@ static int fsck(int pass)
 		rc += fsck_rc;
 	}
 
-	endfsent();
+	endmntent(fp);
 
 	return rc;
 }
@@ -202,38 +203,22 @@ static void fs_mount(const char *src, const char *tgt, const char *fstype,
 }
 
 #ifndef SYSROOT
-/* If / is not listed in fstab, or listed as 'ro', leave it alone */
-static int fs_readonly_root(struct fstab *fs)
-{
-	char *tok, *str;
-
-	if (!fs)
-		return 1;
-
-	str = fs->fs_mntops;
-	while ((tok = strtok(str, ","))) {
-		if (!strcmp(tok, "ro"))
-			return 1;
-
-		str = NULL;
-	}
-
-	return 0;
-}
-
 static void fs_remount_root(int fsckerr)
 {
-	struct fstab *fs;
+	struct mntent *mnt;
+	FILE *fp;
 
-	if (!setfsent())
+	fp = setmntent("/etc/fstab", "r");
+	if (!fp)
 		return;
 
-	while ((fs = getfsent())) {
-		if (!strcmp(fs->fs_file, "/"))
-			break;
+	while ((mnt = getmntent(fp))) {
+		if (strcmp(mnt->mnt_dir, "/"))
+			continue;
 	}
 
-	if (fs_readonly_root(fs))
+	/* If / is not listed in fstab, or listed as 'ro', leave it alone */
+	if (!mnt || hasmntopt(mnt, "ro"))
 		goto out;
 
 	if (fsckerr)
@@ -243,7 +228,7 @@ static void fs_remount_root(int fsckerr)
 				"Remounting / as read-write");
 
 out:
-	endfsent();
+	endmntent(fp);
 }
 #else
 static void fs_remount_root(int fsckerr)
