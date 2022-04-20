@@ -12,9 +12,9 @@
 .Sh SYNOPSIS
 .Nm /sbin/finit
 .Op --
-.Op finit.status=[on,off]
-.Op finit.status_style=[classic,modern]
 .Op finit.debug
+.Op finit.status=<on,off>
+.Op finit.status_style=<classic,modern>
 .Op rescue | recover
 .Op single | S
 .Nm /sbin/telinit
@@ -61,6 +61,46 @@ Cgroups v2, both configuration and monitoring in `initctl top`
 Plugin support for customization
 .It
 Proper rescue mode with bundled `sulogin` for protected maintenance shell
+.El
+.Sh BOOTPARAM
+.Nm
+support the following command line parameters to alter the behavior
+at boot.  Notice the
+.Cm --
+separator needed to tell the kernel which paramters should be given to
+PID 1.  For more information on this, and available kernel command line
+options, see
+.Xr bootparam 7 .
+.Bl -tag -width pid -offset indent
+.It Cm finit.debug
+Enable Finit debug messages on system console and log.  Sometimes useful
+when doing board bringup.  Before the system log daemon has started,
+Finit use the kernel ring buffer,
+.Pa /dev/kmsg .
+.It Cm finit.status=<on,off>
+Control finit boot progress, including banner.  This used to be called
+.Cm finit.show_status ,
+which still works but is deprecated.
+.It Cm finit.status_style=<classic,modern>
+Set Finit boot progress style, when enabled.
+.It Cm rescue | recover
+Start rescue/maintenance mode.  If your system comes with the bundled
+.Cm sulogin
+program (Finit, or from util-linux/Busybox), you will be given a root
+login to a maintenance shell.  However, if
+.Cm sulogin
+is missing, the file
+.Pa /lib/finit/rescue.conf
+is read and the system booted in a limited fallback mode.  See
+.Xr finit.conf 5
+for more information.
+.It Cm single | S
+Single user mode, runlevel 1, in Finit.  Useful to debug problems with
+the regular runlevel.  All services and TTYs in
+.Cm [1]
+will be started, e.g., a
+.Cm tty [1] @console nologin
+configuration presents you with a root console without login.
 .El
 .Sh BOOTING
 .Pp
