@@ -21,6 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+assert_file_contains()
+{
+	assert "File $1 contains the string $2" "$(texec grep "$2" "$1")"
+}
+
 assert_num_children()
 {
 	assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
