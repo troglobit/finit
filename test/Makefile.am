@@ -1,6 +1,7 @@
 SUBDIRS                  = common tenv
 
 EXTRA_DIST		 = skel/bin/busybox-x86_64.md5 skel/sbin/service.sh skel/bin/slay \
+			   skel/sbin/task.sh						  \
 			   skel/cdrom/.empty skel/dev/shm/.empty skel/dev/pts/.empty	  \
 			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		  \
 			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	  \
