@@ -341,6 +341,8 @@ default 10 times before giving up and marking them as *crashed*.
 After which they have to be manually restarted with `initctl restart
 NAME`.  The limits controling this are configurable, see the options
 below.
+
+> **Tip:** to allow endless restarts, see below option `respawn`
   
 For daemons that support it, we recommend appending `--foreground`,
 `--no-background`, `-n`, `-F`, or similar command line argument to
@@ -411,13 +413,17 @@ As mentioned previously, services are automatically restarted, this is
 configurable with the following options:
 
   * `restart:NUM` -- number of times Finit tries to restart a crashing
-    service, default: 10.  When this limit is reached the service is
-	marked *crashed* and must be restarted manually with `initctl`
+    service, default: 10, max: 255.  When this limit is reached the
+    service is marked *crashed* and must be restarted manually with
+    `initctl restart NAME`
   * `restart_sec:SEC` -- number of seconds before Finit tries to restart
     a crashing service, default: 2 seconds for the first five retries,
 	then back-off to 5 seconds.  The maximum of this configured value
 	and the above (2 and 5) will be used
   * `norestart` -- dont restart on failures, same as `restart:0`
+  * `respawn` -- bypasses the `restart` mechanism completely, allows
+    endless restarts.  Useful in many use-cases, but not what `service`
+    was originally designed for so not the default behavior
   * `oncrash:reboot` -- when all retries have failed, and the service
     has *crashed*, if this option is set the system is rebooted.
     Note, future releases may include other `oncrash:` actions

@@ -181,6 +181,12 @@ After which they have to be restarted manually using
 .Cm initctl restart NAME .
 The number of restarts, the delay between each restart, and more is
 configurable, see the options below.
+.Pp
+.Bd -filled -offset indent
+.Sy Tip:
+to allow endless restarts, see below option
+.Cm respawn
+.Ed
 .Pp  
 For daemons that support it, we recommend appending
 .Cm --foreground , --no-background , -n , -F ,
@@ -301,6 +307,13 @@ and the above (2 and 5) will be used
 .It Cm norestart
 dont restart on failures, same as
 .Cm restart:0
+.It Cm respawn
+bypasses the
+.Cm restart
+mechanism completely, allows endless restarts.  Useful in many
+use-cases, but not what
+.Cm service
+was originally designed for so not the default behavior.
 .It Cm oncrash:reboot
 when all retries have failed, and the service
 has
