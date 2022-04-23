@@ -174,4 +174,6 @@ fi
 
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
-#sleep 1
+
+# Allow Finit to start up properly before launching the test
+sleep 1
