@@ -35,16 +35,20 @@ test_one()
 #	texec sh -c "initctl status"
 #	texec sh -c "ps"
 
-	sleep 1
+	date
+	sleep 2
+	date
 	texec sh -c "ls -l /run/ /run/finit/"
 	say 'Asserting condition'
 	texec sh -c "initctl cond set $cond"
 
-	sleep 1
+	date
+	sleep 2
+	date
 	texec sh -c "ls -l /run/ /run/finit/"
-	texec sh -c "initctl status"
+#	texec sh -c "initctl status"
 	texec sh -c "ps"
-	texec sh -c "initctl status task.sh"
+#	texec sh -c "initctl status task.sh"
 
 	sleep 1
 	texec sh -c "echo Hej; cat /run/task.state"
