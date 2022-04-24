@@ -5,7 +5,7 @@
 # asserting a condition.
 set -eu
 
-TEST_CONF=/etc/finit.d/cond.conf
+TEST_CONF=/etc/finit.conf
 TEST_DIR=$(dirname "$0")
 
 test_setup()
