@@ -168,12 +168,24 @@ log "$color_reset" 'Setup of test environment done, waiting for Finit ...' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
 
-if type test_setup > /dev/null 2>&1 ; then
-	test_setup
-fi
-
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
 
 # Allow Finit to start up properly before launching the test
-sleep 2
+i=0
+while [ $i -lt 10 ]; do
+	echo "Checking runlevel ..."
+	lvl=$(texec sh -c "initctl runlevel | awk '{print \$2;}'")
+	echo "Runlevel is $lvl"
+	if [ $lvl -eq 2 ]; then
+		say 'Reached runlevel 2, releasing test.'
+		break;
+	fi
+	echo "Waiting for Finit ..."
+	i=$((i + 1))
+	sleep 1
+done
+
+if type test_setup > /dev/null 2>&1 ; then
+	test_setup
+fi
