@@ -5,7 +5,7 @@
 # asserting a condition.
 set -eu
 
-TEST_CONF=/etc/finit.d/foo.conf
+TEST_CONF=/etc/finit.d/cond.conf
 TEST_DIR=$(dirname "$0")
 
 test_setup()
@@ -30,9 +30,10 @@ test_one()
 
 	texec sh -c "ls -l /run/ /run/finit/"
 	say 'Reload Finit'
-#	texec sh -c "initctl debug"
+	texec sh -c "initctl debug"
+	texec sh -c "initctl ls"
 	texec sh -c "initctl reload"
-#	texec sh -c "initctl status"
+	texec sh -c "initctl status"
 #	texec sh -c "ps"
 
 	date
@@ -46,9 +47,9 @@ test_one()
 	sleep 2
 	date
 	texec sh -c "ls -l /run/ /run/finit/"
-#	texec sh -c "initctl status"
+	texec sh -c "initctl status"
 	texec sh -c "ps"
-#	texec sh -c "initctl status task.sh"
+	texec sh -c "initctl status task.sh"
 
 	sleep 1
 	texec sh -c "echo Hej; cat /run/task.state"
