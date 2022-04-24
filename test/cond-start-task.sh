@@ -5,8 +5,13 @@
 # asserting a condition.
 set -eu
 
-TEST_CONF=/etc/finit.conf
 TEST_DIR=$(dirname "$0")
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/tenv/lib.sh"
+
+TEST_CONF=$FINIT_RCSD/cond.conf
+
 
 test_setup()
 {
@@ -82,8 +87,5 @@ test_one()
 	texec sh -c "rm $TEST_CONF"
 	texec sh -c "initctl reload"
 }
-
-# shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
 
 test_one "hello" "task <usr/hello> task.sh -- Hello task"
