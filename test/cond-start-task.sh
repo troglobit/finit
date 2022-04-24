@@ -25,16 +25,19 @@ test_one()
 	cond=$1
 	stanza=$2
 
+	sleep 5
+	say 'Enable finit debug, try to figure out what is going on ...'
+	texec sh -c "initctl debug"
+
 	say "Add stanza '$stanza' to $TEST_CONF ..."
 	texec sh -c "echo '$stanza' > $TEST_CONF"
 
 	texec sh -c "ls -l /run/ /run/finit/"
 	say 'Reload Finit'
-	texec sh -c "initctl debug"
 	texec sh -c "initctl ls"
 	texec sh -c "initctl reload"
 	texec sh -c "initctl status"
-#	texec sh -c "ps"
+	texec sh -c "ps"
 
 	date
 	sleep 2
