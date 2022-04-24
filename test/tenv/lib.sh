@@ -176,4 +176,4 @@ fi
 #texec cat "$tty" &
 
 # Allow Finit to start up properly before launching the test
-sleep 1
+sleep 2
