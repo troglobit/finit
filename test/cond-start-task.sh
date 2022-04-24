@@ -28,20 +28,27 @@ test_one()
 	say "Add stanza '$stanza' to $TEST_CONF ..."
 	texec sh -c "echo '$stanza' > $TEST_CONF"
 
+	texec sh -c "ls -l /run/ /run/finit/"
 	say 'Reload Finit'
 #	texec sh -c "initctl debug"
 	texec sh -c "initctl reload"
 #	texec sh -c "initctl status"
 #	texec sh -c "ps"
 
+	sleep 1
+	texec sh -c "ls -l /run/ /run/finit/"
 	say 'Asserting condition'
 	texec sh -c "initctl cond set $cond"
 
-#	texec sh -c "initctl status"
-#	texec sh -c "ps"
-#	texec sh -c "initctl status task.sh"
+	sleep 1
+	texec sh -c "ls -l /run/ /run/finit/"
+	texec sh -c "initctl status"
+	texec sh -c "ps"
+	texec sh -c "initctl status task.sh"
 
 	sleep 1
+	texec sh -c "echo Hej; cat /run/task.state"
+
 	assert_file_contains /run/task.state 1
 
 	say 'Reload Finit'
