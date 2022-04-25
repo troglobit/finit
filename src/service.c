@@ -1776,6 +1776,24 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 			cond_clear(failure);
 		}
 	}
+
+	if (svc_is_daemon(svc)) {
+		char cond[MAX_COND_LEN];
+
+		snprintf(cond, sizeof(cond), "service/%s/", svc_ident(svc, NULL, 0));
+		cond_clear(cond);
+
+		switch (svc->state) {
+		case SVC_HALTED_STATE:
+		case SVC_RUNNING_STATE:
+			strlcat(cond, svc_status(svc), sizeof(cond));
+			cond_set_oneshot(cond);
+			break;
+
+		default:
+			break;
+		}
+	}
 }
 
 /*

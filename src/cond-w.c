@@ -21,6 +21,7 @@
  * THE SOFTWARE.
  */
 
+#include <dirent.h>
 #include <ftw.h>
 #include <libgen.h>
 #include <stdio.h>
@@ -132,6 +133,25 @@ static int cond_checkpath(const char *path)
 	return 0;
 }
 
+/* Intended for 'service/foo/`, nothing else */
+static void cond_delpath(const char *path)
+{
+	char fn[PATH_MAX];
+	struct dirent *d;
+	DIR *dir;
+
+	dir = opendir(path);
+	if (!dir)
+		return;
+
+	while ((d = readdir(dir))) {
+		paste(fn, sizeof(fn), path, d->d_name);
+		remove(fn);
+	}
+	closedir(dir);
+	unlink(path);
+}
+
 int cond_set_path(const char *path, enum cond_state next)
 {
 	enum cond_state prev;
@@ -155,8 +175,12 @@ int cond_set_path(const char *path, enum cond_state next)
 		break;
 
 	case COND_OFF:
-		if (unlink(path) && errno != ENOENT)
-			_pe("Failed removing condition '%s'", path);
+		if (unlink(path)) {
+			if (errno == ENOENT)
+				_pe("Failed removing condition '%s'", path);
+			if (errno == EISDIR)
+				cond_delpath(path);
+		}
 		break;
 
 	default:
