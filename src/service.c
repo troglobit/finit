@@ -482,7 +482,7 @@ static int service_start(svc_t *svc)
 	}
 
 	if (svc_is_sysv(svc))
-		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", svc->cmd);
+		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s [..] start' ...", svc->cmd);
 
 	if (!svc->desc[0])
 		do_progress = 0;
@@ -569,8 +569,16 @@ static int service_start(svc_t *svc)
 			}
 			wordfree(&we);
 		} else {
+			size_t j;
+
 			i = 0;
 			args[i++] = svc->cmd;
+			/* this handles, e.g., bridge-stop br0 start */
+			for (j = 0; j < MAX_NUM_SVC_ARGS; j++) {
+				if (!strlen(svc->args[j]))
+					break;
+				args[i++] = svc->args[j];
+			}
 			args[i++] = "start";
 		}
 		args[i] = NULL;
@@ -736,7 +744,7 @@ static int service_stop(svc_t *svc)
 		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...",
 		      svc_ident(svc, NULL, 0), svc->pid, sig_name(svc->sighalt));
 	} else {
-		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", svc->cmd);
+		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s [..] stop' ...", svc->cmd);
 	}
 
 	/*
@@ -776,15 +784,26 @@ static int service_stop(svc_t *svc)
 			svc_set_state(svc, SVC_HALTED_STATE);
 		}
 	} else {
-		char *args[] = { svc->cmd, "stop", NULL };
+		char *args[MAX_NUM_SVC_ARGS + 1];
+		size_t i = 0, j;
 		pid_t pid;
+
+		args[i++] = svc->cmd;
+		/* this handles, e.g., bridge-stop br0 stop */
+		for (j = 0; j < MAX_NUM_SVC_ARGS; j++) {
+			if (!strlen(svc->args[j]))
+				break;
+			args[i++] = svc->args[j];
+		}
+		args[i++] = "stop";
+		args[i] = NULL;
 
 		pid = fork();
 		switch (pid) {
 		case 0:
 			setsid();
 			redirect(svc);
-			exec_runtask(svc->cmd, args);
+			exec_runtask(args[0], &args[1]);
 			_exit(0);
 			break;
 		case -1:
