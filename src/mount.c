@@ -70,12 +70,12 @@ static void iterator_end(FILE **fp)
 	*fp = NULL;
 }
 
-static struct mntent *iterator(char *fstab, FILE **fp)
+static struct mntent *iterator(char *filename, FILE **fp)
 {
 	static struct mntent *mnt;
 
-	if (!*fp && fstab) {
-		*fp = setmntent(fstab, "r");
+	if (!*fp && filename) {
+		*fp = setmntent(filename, "r");
 		if (!*fp)
 			return NULL;
 	}
