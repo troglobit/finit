@@ -468,8 +468,8 @@ static void sigterm_cb(uev_t *w, void *arg, int events)
  */
 static void sigchld_cb(uev_t *w, void *arg, int events)
 {
-	pid_t pid;
 	int status;
+	pid_t pid;
 
 	if (UEV_ERROR == events) {
 		_e("Unrecoverable error in signal watcher");
@@ -532,8 +532,8 @@ static void chld_handler(int sig, siginfo_t *info, void *ctx)
 
 void sig_init(void)
 {
-	int i;
 	struct sigaction sa;
+	int i;
 
 	for (i = 1; i < NSIG; i++)
 		IGNSIG(sa, i, SA_RESTART);
@@ -546,9 +546,9 @@ void sig_init(void)
  */
 void sig_unblock(void)
 {
-	int i;
-	sigset_t nmask;
 	struct sigaction sa;
+	sigset_t nmask;
+	int i;
 
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGHUP);
