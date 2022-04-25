@@ -96,8 +96,9 @@ static int unmount(const char *target)
 	int rc;
 
 	rc = umount(target);
-	if (rc && errno != EBUSY) {
-		print(2, "Failed unmounting %s, error %d: %s", target, errno, strerror(errno));
+	if (rc) {
+		if (errno != EBUSY)
+			print(2, "Failed unmounting %s, error %d: %s", target, errno, strerror(errno));
 		return rc;
 	}
 	print(0, "Unmounting %s", target);
