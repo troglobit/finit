@@ -193,6 +193,9 @@ int main(void)
 		nopass:
 			freepw(&pw);
 
+			/* tell initctl/reboot to trigger force mode */
+			setenv("SULOGIN", "finit", 1);
+
 			return sh();
 		}
 	}

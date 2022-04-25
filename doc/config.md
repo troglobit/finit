@@ -645,6 +645,9 @@ activate it.
 
 The rescue mode comes in two flavors; *traditional* and *fallback*.
 
+> **Note:** in this mode `initctl` will not work.  Use the `-f` flag to
+> force `reboot`, `shutdown`, or `poweroff`.
+
 
 ### Traditional
 

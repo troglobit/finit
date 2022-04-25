@@ -63,7 +63,10 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
     you will be given a root login to a maintenance shell.  However, if
     `sulogin` is missing, the file `/lib/finit/rescue.conf` is read and
     the system booted in a limited fallback mode.  See [config.md][]
-	for more information.
+    for more information.
+
+    **Note:** in this mode `initctl` will not work.  Correct the problem
+    and use `reboot -f` to force reboot.
 
 * `single`, or `S`: Single user mode, runlevel 1, in Finit.  Useful to
     debug problems with the regular runlevel.  All services and TTYs in

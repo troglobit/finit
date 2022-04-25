@@ -26,6 +26,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "util.h"
@@ -158,6 +159,10 @@ int reboot_main(int argc, char *argv[])
 
 	/* Check for any overrides */
 	transform(NULL);
+
+	/* Check if we're in sulogin shell */
+	if (getenv("SULOGIN"))
+		force = 1;
 
 	if (force) {
 		sync();

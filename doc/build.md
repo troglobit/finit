@@ -153,6 +153,9 @@ enabled.  The default Finit rescue mode configuration is installed into
 
 By default the a root shell, without login, is started.
 
+> **Note:** in this mode `initctl` will not work.  Use the `-f` flag to
+> force `reboot`, `shutdown`, or `poweroff`.
+
 
 Debugging
 ---------
