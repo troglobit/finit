@@ -39,11 +39,17 @@ int client_connect(void)
 	};
 
 	sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-	if (-1 == sd)
-		err(1, "Failed creating UNIX domain socket");
+	if (-1 == sd) {
+		warn("Failed creating UNIX domain socket");
+		return -1;
+	}
 
-	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
-		err(1, "Failed connecting to finit");
+	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
+		if (errno != ENOENT)
+			warnx("Failed connecting to finit");
+		close(sd);
+		return -1;
+	}
 
 	return sd;
 }
