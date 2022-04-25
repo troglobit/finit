@@ -664,6 +664,13 @@ static char *svc_command(svc_t *svc, char *buf, size_t len)
 		strlcat(buf, svc->args[i], len);
 	}
 
+	if (svc_is_sysv(svc)) {
+		char *cmd = svc->state == SVC_HALTED_STATE ? "stop" : "start";
+
+		strlcat(buf, " ", len);
+		strlcat(buf, cmd, len);
+	}
+
 	strlcat(buf, bold ? "\e[0m" : "", len);
 
 	return buf;
