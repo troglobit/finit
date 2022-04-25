@@ -65,6 +65,7 @@ int   rescue    = 0;		/* rescue mode from kernel cmdline */
 int   single    = 0;		/* single user mode from kernel cmdline */
 int   bootstrap = 1;		/* set while bootrapping (for TTYs) */
 int   kerndebug = 0;		/* set if /proc/sys/kernel/printk > 7 */
+char *fstab     = FINIT_FSTAB;
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
@@ -105,6 +106,35 @@ static void banner(void)
 #endif
 }
 
+static int sulogin(int do_reboot)
+{
+	int rc = EX_OSFILE;
+	char *cmd[] = {
+		_PATH_SULOGIN,
+		"sulogin",
+	};
+	size_t i;
+
+	for (i = 0; i < NELEMS(cmd); i++) {
+		char *path = which(cmd[i]);
+
+		if (access(path, X_OK)) {
+			free(path);
+			continue;
+		}
+
+		rc = systemf("%s", path);
+		break;
+	}
+
+	if (do_reboot) {
+		do_shutdown(SHUT_REBOOT);
+		exit(rc);
+	}
+
+	return rc;
+}
+
 /*
  * Check all filesystems in /etc/fstab with a fs_passno > 0
  */
@@ -114,10 +144,10 @@ static int fsck(int pass)
 	int rc = 0;
 	FILE *fp;
 
-	fp = setmntent("/etc/fstab", "r");
+	fp = setmntent(fstab, "r");
 	if (!fp) {
-		_pe("Failed opening fstab");
-		return 1;
+		_pe("Failed opening fstab: %s", fstab);
+		sulogin(1);
 	}
 
 	while ((mnt = getmntent(fp))) {
@@ -153,19 +183,8 @@ static int fsck(int pass)
 		 * errors were corrected but that the boot may proceed.
 		 */
 		if (fsck_rc > 1) {
-			char *sulogin[] = {
-				_PATH_SULOGIN,
-				"sulogin",
-			};
-			size_t i;
-
-			for (i = 0; i < NELEMS(sulogin); i++) {
-				if (systemf("%s", sulogin[i]))
-					continue;
-				break;
-			}
-
-			do_shutdown(SHUT_REBOOT);
+			logit(LOG_CONSOLE | LOG_ALERT, "Failed fsck of %s, attempting sulogin ...", mnt->mnt_fsname);
+			sulogin(1);
 		}
 		rc += fsck_rc;
 	}
@@ -208,7 +227,7 @@ static void fs_remount_root(int fsckerr)
 	struct mntent *mnt;
 	FILE *fp;
 
-	fp = setmntent("/etc/fstab", "r");
+	fp = setmntent(fstab, "r");
 	if (!fp)
 		return;
 
@@ -306,13 +325,29 @@ static void fs_finalize(void)
 
 static void fs_mount_all(void)
 {
+	char cmd[256] = "mount -na";
+
+	if (!fstab || !fexist(fstab)) {
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s system fstab %s, trying fallback ...",
+		      !fstab ? "Missing" : "Cannot find", fstab ?: "\b");
+		fstab = FINIT_FSTAB;
+	}
+	if (!fstab || !fexist(fstab)) {
+		logit(LOG_CONSOLE | LOG_EMERG, "%s system fstab %s, attempting sulogin ...",
+		      !fstab ? "Missing" : "Cannot find", fstab ?: "\b");
+		sulogin(1);
+	}
+
 	if (!rescue)
 		fs_remount_root(fsck_all());
 
 	_d("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);
 
-	if (run_interactive("mount -na", "Mounting filesystems"))
+	if (fstab && strcmp(fstab, "/etc/fstab"))
+		snprintf(cmd, sizeof(cmd), "mount -na -T %s", fstab);
+
+	if (run_interactive(cmd, "Mounting filesystems from %s", fstab))
 		plugin_run_hooks(HOOK_MOUNT_ERROR);
 
 	_d("Calling extra mount hook, after mount -a ...");
@@ -595,21 +630,8 @@ int main(int argc, char *argv[])
 	/*
 	 * In case of emergency.
 	 */
-	if (rescue) {
-		char *sulogin[] = {
-			_PATH_SULOGIN,
-			"sulogin",
-		};
-		size_t i;
-
-		for (i = 0; i < NELEMS(sulogin); i++) {
-			if (systemf("%s", sulogin[i]))
-				continue;
-
-			rescue = 0;
-			break;
-		}
-	}
+	if (rescue)
+		rescue = sulogin(0);
 
 	/*
 	 * Load plugins early, the first hook is in banner(), so we
@@ -638,7 +660,10 @@ int main(int argc, char *argv[])
 	 */
 	cgroup_init(&loop);
 
-	/* Check and mount filesystems. */
+	/*
+	 * Check custom fstab from cmdline, including fallback, then run
+	 * fsck before mounting all filesystems, on error call sulogin.
+	 */
 	fs_mount_all();
 
 	/* Bootstrap conditions, needed for hooks */

@@ -29,3 +29,5 @@ release: distcheck
 		printf "$$file.md5\t";    cat ../$$file.md5    | cut -f1 -d' ';	\
 		printf "$$file.sha256\t"; cat ../$$file.sha256 | cut -f1 -d' ';	\
 	done
+
+DISTCHECK_CONFIGURE_FLAGS = --with-fstab=/etc/fstab

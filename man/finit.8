@@ -13,6 +13,7 @@
 .Nm /sbin/finit
 .Op --
 .Op finit.debug
+.Op finit.fstab=/etc/fstab.alt
 .Op finit.status=<on,off>
 .Op finit.status_style=<classic,modern>
 .Op rescue | recover
@@ -77,6 +78,43 @@ Enable Finit debug messages on system console and log.  Sometimes useful
 when doing board bringup.  Before the system log daemon has started,
 Finit use the kernel ring buffer,
 .Pa /dev/kmsg .
+.It Cm finit.fstab=/path/to/fstab.alt
+Tell
+.Nm
+to use an alternate
+.Cm fstab
+to mount the file system from.  Remember, this file must be on the
+.Cm root=...
+file system provided to Finit from the kernel.  If this file is missing,
+.Nm
+falls back to its built-in default, which can be changed at build time
+using the
+.Cm --with-fstab=/path/to/footab
+configure option.  It is even possible to completely disable the
+built-in using
+.Cm --without-fstab ,
+meaning
+.Nm
+.Sy must
+be started with the
+.Cm finit.fstab
+option.
+.Pp
+Should
+.Nm
+discover that there is no fstab file available, including the fallback,
+it triggers the same failure mode as when
+.Cm fsck
+fails, starting
+.Xr sulogin 8 ,
+if that is availble.  When
+.Cm sulogin
+is missing, or when the user exits from
+.Cm sulogin ,
+the system is rebooted.
+.Pp
+Default fstab, unless changed at build-time:
+.Pa /etc/fstab
 .It Cm finit.status=<on,off>
 Control finit boot progress, including banner.  This used to be called
 .Cm finit.show_status ,
@@ -108,6 +146,10 @@ Before laucnhing services, the system needs to be bootstrapped.  This
 involves mounting all filesystems (not already mounted by an initramfs)
 in
 .Pa /etc/fstab ,
+or any alternate
+.Pa fstab
+file provided on the Finit command line using
+.Cm finit.fstab ,
 ensuring that necessary filesystems like:
 .Pa /dev ,
 .Pa /proc ,

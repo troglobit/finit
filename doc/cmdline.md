@@ -15,6 +15,25 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
 	independently of the kernel `debug` setting.  New as of Finit v4.
 
+* `finit.fstab=</path/to/etc/fstab.alternative>`: Tell Finit to use an
+  alternate `fstab` to mount the file system from.  Remember, this file
+  must be on the `root=...` file system provided to Finit from the
+  kernel.  By default the built-in fstab is used, which itself defaults
+  to `/etc/fstab`, but can be changed at build time with:
+
+        ./configure --with-fstab=/path/to/fstab
+
+  It is even possible to disable a built-in default using:
+
+        ./configure --without-fstab
+
+  Making `finit.fstab=/path/to/fstab` a *mandatory* command line option.
+  Note, if the command line fstab is missing, Finit falls back to the
+  built-in fstab, and if both are missing, the system treats this as a
+  bad `fsck` and thus calls `sulogin`.  If, in turn, `sulogin` is not
+  available on the system, Finit calls reboot, which is also what will
+  happen when a user exits from `sulogin`.
+
 * `finit.status[=bool]`: Control finit boot progress, including banner.
   (Used to be `finit.show_status`, which works but is deprecated.)
 

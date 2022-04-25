@@ -87,6 +87,7 @@ fallback:
 
 /*
  * finit.debug  = [on,off]
+ * finit.fstab  = /path/to/etc/fstab.aternative
  * finit.status = [on,off]     (compat finit.show_status)
  * finit.status_style = [old,classic,modern]
  */
@@ -100,6 +101,11 @@ static void parse_finit_opts(char *opt)
 
 	if (string_compare(opt, "debug")) {
 		debug = get_bool(arg, 1);
+		return;
+	}
+
+	if (string_compare(opt, "fstab")) {
+		fstab = arg;
 		return;
 	}
 

@@ -96,6 +96,10 @@ AC_PLUGIN([tty],           [yes], [Automatically activate new TTYs, e.g. USB-to-
 AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
 
 # Check for extra arguments or packages
+AC_ARG_WITH(fstab,
+        AS_HELP_STRING([--with-fstab=FILE], [System default fstab, default $sysconfdir/fstab]),
+	[fstab=$withval], [fstab=yes])
+
 AC_ARG_WITH(heading,
         AS_HELP_STRING([--with-heading=GREET], [Heading for boot progress. Default: PRETTY_NAME from /etc/os-release, fallback to "Finit vX.YY"]),
 	[heading=$withval], [heading=yes])
@@ -164,6 +168,12 @@ AS_IF([test "x$enable_logrotate" != "xno"], [
 AM_CONDITIONAL(LOGROTATE, [test "x$enable_logrotate" = "xyes"])
 
 ### With features ##############################################################################
+AS_IF([test "x$with_fstab" != "xno"], [
+	AS_IF([test "x$fstab" = "xyes"], [fstab=$sysconfdir/fstab])
+	AC_EXPAND_DIR(fstab_path, "$fstab")
+	AC_DEFINE_UNQUOTED(FINIT_FSTAB, "$fstab_path", [Built-in default: /etc/fstab])],[
+	AC_DEFINE_UNQUOTED(FINIT_FSTAB, NULL, [No built-in default fstab])])
+
 AS_IF([test "x$with_config" != "xno"], [
 	AS_IF([test "x$conf" = "xyes"], [
 		conf=$sysconfdir/finit.conf])])
@@ -261,6 +271,7 @@ cat <<EOF
   Exec prefix...........: $eprefix
   Sysconfdir............: `eval echo $sysconfdir`
   Localstatedir.........: `eval echo $localstatedir`
+  Default fstab.........: `eval echo $fstab`
   Finit config file.....: $conf_path
   Finit config.d path...: $rcsd_path
   Finit plugin path.....: $plugin_path
