@@ -253,18 +253,18 @@ static int nl_parse(int sd)
 			return -1;
 		}
 
-		_d("recv %zd bytes", len);
+//		_d("recv %zd bytes", len);
 		l = (size_t)len;
 		for (nh = (struct nlmsghdr *)nl_buf; NLMSG_OK(nh, l); nh = NLMSG_NEXT(nh, l)) {
 			struct nlmsgerr *nle;
 
 			switch (nh->nlmsg_type) {
 			case NLMSG_DONE:
-				_d("Done with netlink messages.");
+//				_d("Done with netlink messages.");
 				return 0;
 
 			case NLMSG_ERROR:
-				_d("Kernel netlink comm. error.");
+//				_d("Kernel netlink comm. error.");
 				nle = NLMSG_DATA(nh);
 				if (nle) {
 					errno = -nle->error;
@@ -274,13 +274,13 @@ static int nl_parse(int sd)
 
 			case RTM_NEWROUTE:
 			case RTM_DELROUTE:
-				_d("Netlink route ...");
+//				_d("Netlink route ...");
 				nl_route(nh, len);
 				break;
 
 			case RTM_NEWLINK:
 			case RTM_DELLINK:
-				_d("Netlink link ...");
+//				_d("Netlink link ...");
 				nl_link(nh, len);
 				break;
 
@@ -304,14 +304,14 @@ static int nl_request(int sd, unsigned int seq, int type)
 
 	switch (type) {
 	case RTM_GETROUTE:
-		_d("RTM_GETROUTE");
+//		_d("RTM_GETROUTE");
 		nlr->rtm.rtm_family = AF_INET;
 		nlr->rtm.rtm_table  = RT_TABLE_MAIN;
 		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg));
 		break;
 
 	case RTM_GETLINK:
-		_d("RTM_GETLINK");
+//		_d("RTM_GETLINK");
 		nlr->ifi.ifi_family = AF_UNSPEC;
 		nlr->ifi.ifi_change = 0xFFFFFFFF;
 		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifinfomsg));
