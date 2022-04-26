@@ -381,6 +381,20 @@ static char *group_name(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
+static void compose_cmdline(svc_t *svc, char *buf, size_t len)
+{
+	size_t i;
+
+	strlcpy(buf, svc->cmd, len);
+	for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+		if (!strlen(svc->args[i]))
+			break;
+
+		strlcat(buf, " ", len);
+		strlcat(buf, svc->args[i], len);
+	}
+}
+
 static pid_t service_fork(svc_t *svc)
 {
 	pid_t pid;
@@ -445,6 +459,7 @@ static pid_t service_fork(svc_t *svc)
 static int service_start(svc_t *svc)
 {
 	int result = 0, do_progress = 1;
+	char cmdline[CMD_SIZE] = "";
 	sigset_t nmask, omask;
 	char grnam[80];
 	pid_t pid;
@@ -481,8 +496,9 @@ static int service_start(svc_t *svc)
 		}
 	}
 
+	compose_cmdline(svc, cmdline, sizeof(cmdline));
 	if (svc_is_sysv(svc))
-		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s [..] start' ...", svc->cmd);
+		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", cmdline);
 
 	if (!svc->desc[0])
 		do_progress = 0;
@@ -611,16 +627,7 @@ static int service_start(svc_t *svc)
 
 		_exit(status);
 	} else if (debug) {
-		char buf[CMD_SIZE] = "";
-
-		for (i = 0; i < MAX_NUM_SVC_ARGS; i++) {
-			if (strlen(svc->args[i]) == 0)
-				break;
-			if (buf[0])
-				strlcat(buf, " ", sizeof(buf));
-			strlcat(buf, svc->args[i], sizeof(buf));
-		}
-		_d("Starting %s %s", svc->cmd, buf);
+		_d("Starting %s", cmdline);
 	}
 
 	if (svc_is_tty(svc))
@@ -628,7 +635,8 @@ static int service_start(svc_t *svc)
 	else
 		cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
 
-	logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
+	if (!svc_is_sysv(svc))
+		logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
 
 	svc->pid = pid;
 	svc->start_time = jiffies();
@@ -724,6 +732,7 @@ static void service_cleanup(svc_t *svc)
  */
 static int service_stop(svc_t *svc)
 {
+	char cmdline[CMD_SIZE] = "";
 	int do_progress = 1;
 	int rc = 0;
 
@@ -735,6 +744,7 @@ static int service_stop(svc_t *svc)
 
 	service_timeout_cancel(svc);
 
+	compose_cmdline(svc, cmdline, sizeof(cmdline));
 	if (!svc_is_sysv(svc)) {
 		if (svc->pid <= 1)
 			return 1;
@@ -744,7 +754,7 @@ static int service_stop(svc_t *svc)
 		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...",
 		      svc_ident(svc, NULL, 0), svc->pid, sig_name(svc->sighalt));
 	} else {
-		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s [..] stop' ...", svc->cmd);
+		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", cmdline);
 	}
 
 	/*
@@ -807,7 +817,7 @@ static int service_stop(svc_t *svc)
 			_exit(0);
 			break;
 		case -1:
-			_pe("Failed fork() to call sysv script '%s stop'", svc->cmd);
+			_pe("Failed fork() to call sysv script '%s stop'", cmdline);
 			rc = 1;
 			break;
 		default:
