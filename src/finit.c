@@ -338,6 +338,14 @@ static void fs_mount_all(void)
 		sulogin(1);
 	}
 
+	/*
+	 * Needed by fsck, both BusyBox and util-linux support this.
+	 * We leave it set in the env. for the benefit of any mount
+	 * helpers and other system tools that the user expects to
+	 * behave even if we've booted with a different fstab.
+	 */
+	setenv("FSTAB_FILE", fstab, 1);
+
 	if (!rescue)
 		fs_remount_root(fsck_all());
 
