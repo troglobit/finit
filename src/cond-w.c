@@ -176,10 +176,16 @@ int cond_set_path(const char *path, enum cond_state next)
 
 	case COND_OFF:
 		if (unlink(path)) {
-			if (errno == ENOENT)
-				_pe("Failed removing condition '%s'", path);
-			if (errno == EISDIR)
+			switch (errno) {
+			case ENOENT:
+				break;
+			case EISDIR:
 				cond_delpath(path);
+				break;
+			default:
+				_pe("Failed removing condition '%s'", path);
+				break;
+			}
 		}
 		break;
 
