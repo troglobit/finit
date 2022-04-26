@@ -70,6 +70,9 @@
  */
 
 #include <dirent.h>
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
+#endif
 #include <string.h>		/* strerror() */
 #include <sched.h>
 #include <sys/reboot.h>
@@ -165,6 +168,30 @@ static struct sigmap {
 void mdadm_wait(void);
 void unmount_tmpfs(void);
 void unmount_regular(void);
+
+static void fs_swapoff(void)
+{
+	struct mntent *mnt;
+	char cmd[256];
+	FILE *fp;
+
+	if (!whichp("swapoff"))
+		return;
+
+	fp = setmntent(fstab, "r");
+	if (!fp)
+		return;
+
+	while ((mnt = getmntent(fp))) {
+		if (strcmp(mnt->mnt_type, MNTTYPE_SWAP))
+			continue;
+
+		snprintf(cmd, sizeof(cmd), "swapoff %s", mnt->mnt_fsname);
+		run_interactive(cmd, "Disabling swap %s", mnt->mnt_fsname);
+	}
+
+	endmntent(fp);
+}
 
 /*
  * Kernel threads have no cmdline so fgets() returns NULL for them.  We
@@ -323,8 +350,7 @@ void do_shutdown(shutop_t op)
 
 	/* Unmount any tmpfs before unmounting swap ... */
 	unmount_tmpfs();
-	if (whichp("swapoff"))
-		run_interactive("swapoff -a", "Disabling system swap");
+	fs_swapoff();
 
 	/* ... unmount remaining regular file systems. */
 	unmount_regular();

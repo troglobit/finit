@@ -323,6 +323,29 @@ static void fs_finalize(void)
 		fs_mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=1777");
 }
 
+static void fs_swapon(char *cmd, size_t len)
+{
+	struct mntent *mnt;
+	FILE *fp;
+
+	if (!whichp("swapon"))
+		return;
+
+	fp = setmntent(fstab, "r");
+	if (!fp)
+		return;
+
+	while ((mnt = getmntent(fp))) {
+		if (strcmp(mnt->mnt_type, MNTTYPE_SWAP))
+			continue;
+
+		snprintf(cmd, len, "swapon %s", mnt->mnt_fsname);
+		run_interactive(cmd, "Enabling swap %s", mnt->mnt_fsname);
+	}
+
+	endmntent(fp);
+}
+
 static void fs_mount_all(void)
 {
 	char cmd[256] = "mount -na";
@@ -361,8 +384,8 @@ static void fs_mount_all(void)
 	_d("Calling extra mount hook, after mount -a ...");
 	plugin_run_hooks(HOOK_MOUNT_POST);
 
-	if (whichp("swapon"))
-		run_interactive("swapon -ea", "Enabling system swap");
+	_d("Enable any swap ...");
+	fs_swapon(cmd, sizeof(cmd));
 
 	_d("Finalize, ensure common file systems are available ...");
 	fs_finalize();
