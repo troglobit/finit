@@ -1537,10 +1537,16 @@ void service_monitor(pid_t lost, int status)
 	}
 
 	/* Forking sysv/services declare themselves with pid:!/path/to/pid.file  */
-	if (svc_is_starting(svc) && svc_is_forking(svc)) {
-		svc->pid = 0;	/* Expect no more activity from this one */
-		return;
+	if (svc_is_forking(svc)) {
+		/* Likely start script exiting */
+		if (svc_is_starting(svc)) {
+			svc->pid = 0;	/* Expect no more activity from this one */
+			return;
+		}
+
+		logit(LOG_CONSOLE | LOG_NOTICE, "Stopped %s[%d]", svc_ident(svc, NULL, 0), lost);
 	}
+
 
 	/* Terminate any children in the same proess group, e.g. logit */
 	kill(-svc->pid, SIGKILL);

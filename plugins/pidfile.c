@@ -102,6 +102,9 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 				_d("Forking service %s changed PID from %d to %d",
 				   svc->cmd, svc->pid, pid);
 				svc->pid = pid;
+
+				/* Complement log in service.c for non-forking services */
+				logit(LOG_CONSOLE | LOG_NOTICE, "Started %s[%d]", svc_ident(svc, NULL, 0), pid);
 			}
 		}
 
