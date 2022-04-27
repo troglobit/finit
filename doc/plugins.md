@@ -44,6 +44,12 @@ For your convenience a set of *optional* plugins are available:
   using `modprobe`.  Each file in this directory can contain multiple
   lines with the name of the module to load.  Any line starting with
   the standard UNIX comment character, `#`, is skipped.
+  
+  **Note:** unlike the traditional .conf `module` directive, which load
+  any listed module immediately, this plugin creates standard `taks`
+  directives which load the module(s) in the background.  As long as
+  the `modprobe` program is found in the path, these tasks will always
+  return `[ OK ]` at boot.  Check the actual status using `initctl`.
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor
