@@ -40,7 +40,10 @@ For your convenience a set of *optional* plugins are available:
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
   Enabled by default.
 
-* *modules-load.so*: Scans /etc/modules-load.d for modules to modprobe.
+* *modules-load.so*: Scans `/etc/modules-load.d/` for modules to load
+  using `modprobe`.  Each file in this directory can contain multiple
+  lines with the name of the module to load.  Any line starting with
+  the standard UNIX comment character, `#`, is skipped.
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor

@@ -69,6 +69,9 @@ static void load(void *arg)
 		while (fgets(line, sizeof(line), fp)) {
 			char cmd[CMD_SIZE], *mod, *args;
 
+			if (line[0] == '#')
+				continue;
+
 			mod = strip_line(line);
 			if (!*mod)
 				continue;
