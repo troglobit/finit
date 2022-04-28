@@ -1621,19 +1621,10 @@ static void service_kill_script(svc_t *svc)
 static void set_pre_post_envs(svc_t *svc, const char *type)
 {
 	char buf[25 + 256] = "/etc/default:/etc/conf.d";
-	const char *fn = svc_getenv(svc);
-	const char *exist = "0";
 
 	setenv("SERVICE_TYPE", svc_typestr(svc), 1);
 	setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
 	setenv("SERVICE_SCRIPT_TYPE", type, 1);
-
-	if (fn) {
-		setenv("SERVICE_ENV_FILE", fn, 1);
-		if (!access(fn, R_OK))
-			exist = "1";
-	}
-	setenv("SERVICE_ENV_FILE_EXIST", exist, 1);
 
 #ifdef FINIT_SYSCONFIG
 	strlcat(buf, ":", sizeof(buf));
@@ -1651,12 +1642,20 @@ static void service_pre_script(svc_t *svc)
 	}
 
 	if (svc->pid == 0) {
+		char buf[CMD_SIZE];
 		char *argv[4] = {
 			"sh",
-			"-c",
-			svc->pre_script,
+			"-ac",
+			buf,
 			NULL
 		};
+		char *env_file;
+
+		env_file = svc_getenv(svc);
+		if (env_file)
+			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->pre_script);
+		else
+			strlcpy(buf, svc->pre_script, sizeof(buf));
 
 		set_pre_post_envs(svc, "pre");
 		execvp(_PATH_BSHELL, argv);
@@ -1676,17 +1675,24 @@ static void service_post_script(svc_t *svc)
 	}
 
 	if (svc->pid == 0) {
+		char buf[CMD_SIZE];
 		char *argv[4] = {
 			"sh",
-			"-c",
-			svc->post_script,
+			"-ac",
+			buf,
 			NULL
 		};
+		char *env_file;
 		int rc, sig;
 
 		rc = WEXITSTATUS(svc->status);
 		sig = WTERMSIG(svc->status);
 
+		env_file = svc_getenv(svc);
+		if (env_file)
+			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->post_script);
+		else
+			strlcpy(buf, svc->post_script, sizeof(buf));
 		set_pre_post_envs(svc, "post");
 
 		if (WIFEXITED(svc->status)) {
