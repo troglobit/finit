@@ -1,0 +1,5 @@
+# Some environments to be sourced by Finit services
+# and their pre:- and post:scripts
+
+foo=bar
+baz=qux

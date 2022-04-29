@@ -15,6 +15,29 @@
 
 #define PROGNM "serv"
 
+static void verify_env(char *arg)
+{
+	char *key, *value;
+	char *replica;
+	char *env;
+
+	key = replica = strdup(arg);
+	if (!replica)
+		err(1, "Failed duplicating arg %s", arg);
+
+	value = strchr(replica, ':');
+	if (!value)
+		errx(1, "Invalid format of KEY:VALUE arg, missing ':' in %s", replica);
+	*(value++) = 0;
+
+	env = getenv(key);
+	if (!env)
+		errx(1, "No '%s' in environment", key);
+
+	if (strcmp(env, value))
+		errx(1, "Mismatch, environment '%s' vs expected value '%s'", env, value);
+}
+
 static void sig(int signo)
 {
 	warnx("We got signal %d ...", signo);
@@ -48,8 +71,9 @@ static int usage(int rc)
 	fprintf(fp,
 		"%s [-nhp] [-P FILE]\n"
 		"\n"
-		" -n       Run in foreground\n"
 		" -h       Show help text (this)\n"
+		" -e K:V   Verify K environment variable is V value\n"
+		" -n       Run in foreground\n"
 		" -p       Create PID file despite running in foreground\n"
 		" -P FILE  Create PID file using FILE\n"
 		"\n"
@@ -69,10 +93,13 @@ int main(int argc, char *argv[])
 	char *pidfn = NULL;
 	int c;
 
-	while ((c = getopt(argc, argv, "hnpP:")) != EOF) {
+	while ((c = getopt(argc, argv, "e:hnpP:")) != EOF) {
 		switch (c) {
 		case 'h':
 			return usage(0);
+		case 'e':
+			verify_env(optarg);
+			break;
 		case 'n':
 			do_background = 0;
 			do_pidfile--;
