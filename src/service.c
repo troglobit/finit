@@ -1781,8 +1781,8 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	if (svc_is_runtask(svc)) {
 		char success[MAX_COND_LEN], failure[MAX_COND_LEN];
 
-		snprintf(success, sizeof(success), "%s/%s/success", svc_typestr(svc), svc->name);
-		snprintf(failure, sizeof(failure), "%s/%s/failure", svc_typestr(svc), svc->name);
+		snprintf(success, sizeof(success), "%s/%s/success", svc_typestr(svc), svc_ident(svc));
+		snprintf(failure, sizeof(failure), "%s/%s/failure", svc_typestr(svc), svc_ident(svc));
 
 		/* create success/failure condition when entering SVC_DONE_STATE. */
 		if (*state == SVC_DONE_STATE) {
