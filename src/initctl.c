@@ -391,7 +391,7 @@ static int do_cond_dump(char *arg)
 	return 0;
 }
 
-static int do_cond_act(char *arg, int creat)
+static int do_cond_act(char *arg, int op)
 {
 	char oneshot[256];
 	size_t off;
@@ -409,17 +409,29 @@ static int do_cond_act(char *arg, int creat)
 	snprintf(oneshot, sizeof(oneshot), _PATH_CONDUSR "%s", arg);
 	off = strlen(_PATH_COND);
 
-	if (creat) {
+	switch (op) {
+	case 2:
+		off = !fexist(oneshot);
+		if (verbose)
+			puts(off ? "off" : "on");
+		return off;
+	case 1:
 		if (symlink(_PATH_RECONF, oneshot) && errno != EEXIST)
 			err(1, "Failed asserting condition <%s>", &oneshot[off]);
-	} else {
+		break;
+	case 0:
 		if (erase(oneshot) && errno != ENOENT)
 			err(1, "Failed deasserting condition <%s>", &oneshot[off]);
+		break;
+	default:
+		errx(1, "Unsupported operation (%d)", op);
+		break;
 	}
 
 	return 0;
 }
 
+static int do_cond_get(char *arg) { return do_cond_act(arg, 2); }
 static int do_cond_set(char *arg) { return do_cond_act(arg, 1); }
 static int do_cond_clr(char *arg) { return do_cond_act(arg, 0); }
 
@@ -1120,6 +1132,7 @@ int main(int argc, char *argv[])
 		{ "status",   NULL, do_cond_show, NULL, NULL }, /* default cmd */
 		{ "dump",     NULL, do_cond_dump, NULL, NULL  },
 		{ "set",      NULL, do_cond_set,  NULL, NULL  },
+		{ "get",      NULL, do_cond_get,  NULL, NULL  },
 		{ "clr",      NULL, do_cond_clr,  NULL, NULL  },
 		{ "clear",    NULL, do_cond_clr,  NULL, NULL  },
 		{ NULL, NULL, NULL, NULL, NULL  }
