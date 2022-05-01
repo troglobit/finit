@@ -190,8 +190,10 @@ char *fs_root_dev(char *real, size_t len)
  */
 static int fsck(int pass)
 {
+	struct mntent mount;
 	struct mntent *mnt;
 	char real[192];
+	char buf[256];
 	int rc = 0;
 	FILE *fp;
 
@@ -201,7 +203,7 @@ static int fsck(int pass)
 		sulogin(1);
 	}
 	_d("Opened %s, pass %d", fstab, pass);
-	while ((mnt = getmntent(fp))) {
+	while ((mnt = getmntent_r(fp, &mount, buf, sizeof(buf)))) {
 		int fsck_rc = 0;
 		struct stat st;
 		char cmd[256];
@@ -211,7 +213,7 @@ static int fsck(int pass)
 		   mnt->mnt_fsname, mnt->mnt_dir, mnt->mnt_type, mnt->mnt_opts,
 		   mnt->mnt_freq, mnt->mnt_passno);
 
-		if (mnt->mnt_passno != pass)
+		if (mnt->mnt_passno == 0 || mnt->mnt_passno != pass)
 			continue;
 
 		/* Device to maybe fsck,  */
@@ -252,6 +254,7 @@ static int fsck(int pass)
 #else
 		snprintf(cmd, sizeof(cmd), "fsck -a %s", dev);
 #endif
+		_d("Running pass %d fsck command %s", pass, cmd);
 		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", dev);
 		/*
 		 * "failure" is defined as exiting with a return code of

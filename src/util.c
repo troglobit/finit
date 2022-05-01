@@ -488,7 +488,9 @@ static int hasopt(char *opts, char *opt)
 
 int ismnt(char *file, char *dir, char *mode)
 {
+	struct mntent mount;
 	struct mntent *mnt;
+	char buf[256];
 	int found = 0;
 	FILE *fp;
 
@@ -496,7 +498,7 @@ int ismnt(char *file, char *dir, char *mode)
 	if (!fp)
 		return 0;	/* Dunno, maybe not */
 
-	while ((mnt = getmntent(fp))) {
+	while ((mnt = getmntent_r(fp, &mount, buf, sizeof(buf)))) {
 		if (!strcmp(mnt->mnt_dir, dir)) {
 			if (mode) {
 				if (hasopt(mnt->mnt_opts, mode))
