@@ -232,8 +232,8 @@ static void fs_remount_root(int fsckerr)
 		return;
 
 	while ((mnt = getmntent(fp))) {
-		if (strcmp(mnt->mnt_dir, "/"))
-			continue;
+		if (!strcmp(mnt->mnt_dir, "/"))
+			break;
 	}
 
 	/* If / is not listed in fstab, or listed as 'ro', leave it alone */
