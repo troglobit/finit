@@ -44,6 +44,7 @@ you *need* to upgrade!
 * Log to `stderr` when running in a container w/o syslog daemon
 * Add support for `type:forking` to services, already supported but
   with a very difficult `pid:` syntax.  Documentation updated
+* Support for setting global environment variables in `finit.conf`
 
 ### Fixes
 * Fix nasty 32/64-bit alignment issue between finit and its plugins,
