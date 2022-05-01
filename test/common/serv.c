@@ -38,6 +38,15 @@ static void verify_env(char *arg)
 		errx(1, "Mismatch, environment '%s' vs expected value '%s'", env, value);
 }
 
+static void verify_noenv(char *key)
+{
+	char *val;
+
+	val = getenv(key);
+	if (val)
+		errx(1, "Error, key %s is set in environment to '%s'", key, val);
+}
+
 static void sig(int signo)
 {
 	warnx("We got signal %d ...", signo);
@@ -73,6 +82,7 @@ static int usage(int rc)
 		"\n"
 		" -h       Show help text (this)\n"
 		" -e K:V   Verify K environment variable is V value\n"
+		" -E K     Verify K is not set in the environment\n"
 		" -n       Run in foreground\n"
 		" -p       Create PID file despite running in foreground\n"
 		" -P FILE  Create PID file using FILE\n"
@@ -93,12 +103,15 @@ int main(int argc, char *argv[])
 	char *pidfn = NULL;
 	int c;
 
-	while ((c = getopt(argc, argv, "e:hnpP:")) != EOF) {
+	while ((c = getopt(argc, argv, "e:E:hnpP:")) != EOF) {
 		switch (c) {
 		case 'h':
 			return usage(0);
 		case 'e':
 			verify_env(optarg);
+			break;
+		case 'E':
+			verify_noenv(optarg);
 			break;
 		case 'n':
 			do_background = 0;
