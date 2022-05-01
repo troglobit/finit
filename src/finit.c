@@ -135,12 +135,60 @@ static int sulogin(int do_reboot)
 	return rc;
 }
 
+char *fs_root_dev(char *real, size_t len)
+{
+	struct dirent *d;
+	struct stat st;
+	int found = 0;
+	dev_t dev;
+	DIR *dir;
+
+	if (stat("/", &st))
+		return NULL;
+
+	if (S_ISBLK(st.st_mode))
+		dev = st.st_rdev;
+	else
+		dev = st.st_dev;
+
+	dir = opendir("/sys/block");
+	if (!dir)
+		return NULL;
+
+	while ((d = readdir(dir))) {
+		char buf[10];
+		char *ptr;
+
+		if (fnread(buf, sizeof(buf), "/sys/block/%s/dev", d->d_name) == -1)
+			continue;
+
+		ptr = strchr(buf, ':');
+		if (!ptr)
+			continue;
+		*ptr++ = 0;
+
+		if (atoi(buf) == (int)major(dev) && atoi(ptr) == (int)minor(dev)) {
+			/* Guess name, assume no renaming */
+			snprintf(real, len, "/dev/%s", d->d_name);
+			found = 1;
+			break;
+		}
+	}
+
+	closedir(dir);
+	if (!found)
+		return NULL;
+
+	return real;
+}
+
 /*
  * Check all filesystems in /etc/fstab with a fs_passno > 0
  */
 static int fsck(int pass)
 {
 	struct mntent *mnt;
+	char real[192];
 	int rc = 0;
 	FILE *fp;
 
@@ -149,41 +197,66 @@ static int fsck(int pass)
 		_pe("Failed opening fstab: %s", fstab);
 		sulogin(1);
 	}
-
+	_d("Opened %s, pass %d", fstab, pass);
 	while ((mnt = getmntent(fp))) {
-		char cmd[80];
-		struct stat st;
 		int fsck_rc = 0;
+		struct stat st;
+		char cmd[256];
+		char *dev;
+
+		_d("got: fsname '%s' dir '%s' type '%s' opts '%s' freq '%d' passno '%d'",
+		   mnt->mnt_fsname, mnt->mnt_dir, mnt->mnt_type, mnt->mnt_opts,
+		   mnt->mnt_freq, mnt->mnt_passno);
 
 		if (mnt->mnt_passno != pass)
 			continue;
 
+		/* Device to maybe fsck,  */
+		dev = mnt->mnt_fsname;
+
 		errno = 0;
-		if (stat(mnt->mnt_fsname, &st) || !S_ISBLK(st.st_mode)) {
-			if (!string_match(mnt->mnt_fsname, "UUID=") && !string_match(mnt->mnt_fsname, "LABEL=")) {
-				_d("Cannot fsck %s, not a block device: %s", mnt->mnt_fsname, strerror(errno));
+		if (stat(dev, &st) || !S_ISBLK(st.st_mode)) {
+			int skip = 1;
+
+			if (string_match(dev, "UUID=") || string_match(dev, "LABEL="))
+				skip = 0;
+
+			/*
+			 * Kernel short form for root= device, figure out
+			 * actual device since we cannot rely on symlinks
+			 * https://bugs.busybox.net/show_bug.cgi?id=8891
+			 */
+			else if (string_compare(dev, "/dev/root")) {
+				if (fs_root_dev(real, sizeof(real))) {
+					dev = real;
+					skip = 0;
+				}
+			}
+
+			if (skip) {
+				_d("Cannot fsck %s, not a block device: %s", dev, strerror(errno));
 				continue;
 			}
 		}
 
 		if (ismnt("/proc/mounts", mnt->mnt_dir, "rw")) {
-			_d("Skipping fsck of %s, already mounted rw on %s.", mnt->mnt_fsname, mnt->mnt_dir);
+			_d("Skipping fsck of %s, already mounted rw on %s.", dev, mnt->mnt_dir);
 			continue;
 		}
 
 #ifdef FSCK_FIX
-		snprintf(cmd, sizeof(cmd), "fsck -yf %s", mnt->mnt_fsname);
+		snprintf(cmd, sizeof(cmd), "fsck -yf %s", dev);
 #else
-		snprintf(cmd, sizeof(cmd), "fsck -a %s", mnt->mnt_fsname);
+		snprintf(cmd, sizeof(cmd), "fsck -a %s", dev);
 #endif
-		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", mnt->mnt_fsname);
+		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", dev);
 		/*
 		 * "failure" is defined as exiting with a return code of
 		 * 2 or larger.  A return code of 1 indicates that filesystem
 		 * errors were corrected but that the boot may proceed.
 		 */
 		if (fsck_rc > 1) {
-			logit(LOG_CONSOLE | LOG_ALERT, "Failed fsck of %s, attempting sulogin ...", mnt->mnt_fsname);
+			logit(LOG_CONSOLE | LOG_ALERT, "Failed fsck %s, attempting sulogin ...", dev);
 			sulogin(1);
 		}
 		rc += fsck_rc;
