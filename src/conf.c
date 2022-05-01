@@ -54,6 +54,12 @@
 int logfile_size_max = 200000;	/* 200 kB */
 int logfile_count_max = 5;
 
+struct env_entry {
+	TAILQ_ENTRY(env_entry) link;
+	char *name;
+};
+static TAILQ_HEAD(, env_entry) env_list = TAILQ_HEAD_INITIALIZER(env_list);
+
 struct rlimit initial_rlimit[RLIMIT_NLIMITS];
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
 
@@ -67,7 +73,7 @@ struct conf_change {
 static struct iwatch iw_conf;
 static uev_t etcw;
 
-static TAILQ_HEAD(head, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
+static TAILQ_HEAD(, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
 
 static int  parse_conf(char *file, int is_rcsd);
 static void drop_changes(void);
@@ -211,6 +217,98 @@ void conf_parse_cmdline(int argc, char *argv[])
 
 	parse_kernel_cmdline();
 	parse_kernel_loglevel();
+}
+
+/*
+ * Clear all environment variables read in parse_env(), they may be
+ * removed now so let the next call to parse_env() restore them.
+ */
+void conf_reset_env(void)
+{
+	struct env_entry *node, *tmp;
+
+	TAILQ_FOREACH_SAFE(node, &env_list, link, tmp) {
+		TAILQ_REMOVE(&env_list, node, link);
+		if (node->name) {
+			unsetenv(node->name);
+			free(node->name);
+		}
+		free(node);
+	}
+
+	setenv("PATH", _PATH_STDPATH, 1);
+	setenv("SHELL", _PATH_BSHELL, 1);
+	setenv("LOGNAME", "root", 1);
+	setenv("USER", "root", 1);
+}
+
+/*
+ * Sets, and makes a note of, all KEY=VALUE lines in a given .conf line
+ * from finit.conf, or other .conf file.  Note, PATH is always reset in
+ * the conf_reset_env() function.
+ */
+static void parse_env(char *line)
+{
+	struct env_entry *node;
+	char *key, *val, *end;
+
+	/* skip any leading whitespace */
+	key = line;
+	while (isspace(*key))
+		key++;
+
+	/* find end of line */
+	end = key;
+	while (*end)
+		end++;
+
+	/* strip trailing whitespace */
+	if (end > key) {
+		end--;
+		while (isspace(*end))
+			*end-- = 0;
+	}
+
+	val = strchr(key, '=');
+	if (!val)
+		return;
+	*val++ = 0;
+
+	/* strip leading whitespace from value */
+	while (isspace(*val))
+		val++;
+
+	/* unquote value, if quoted */
+	if (val[0] == '"' || val[0] == '\'') {
+		char q = val[0];
+
+		if (*end == q) {
+			val = &val[1];
+			*end = 0;
+		}
+	}
+
+	/* find end of key */
+	end = key;
+	while (*end)
+		end++;
+
+	/* strip trailing whitespace */
+	if (end > key) {
+		end--;
+		while (isspace(*end))
+			*end-- = 0;
+	}
+
+	setenv(key, val, 1);
+
+	node = malloc(sizeof(*node));
+	if (!node) {
+		_pe("Out of memory cannot track env vars");
+		return;
+	}
+	node->name = strdup(key);
+	TAILQ_INSERT_HEAD(&env_list, node, link);
 }
 
 static int kmod_exists(char *mod)
@@ -484,7 +582,7 @@ static void conf_parse_cgroup(char *line)
 	cgroup_add(name, config, 0);
 }
 
-static void parse_static(char *line, int is_rcsd)
+static int parse_static(char *line, int is_rcsd)
 {
 	char cmd[CMD_SIZE];
 	char *x;
@@ -492,7 +590,7 @@ static void parse_static(char *line, int is_rcsd)
 	if (BOOTSTRAP && (MATCH_CMD(line, "host ", x) || MATCH_CMD(line, "hostname ", x))) {
 		if (hostname) free(hostname);
 		hostname = strdup(strip_line(x));
-		return;
+		return 0;
 	}
 
 	if (BOOTSTRAP && MATCH_CMD(line, "mknod ", x)) {
@@ -501,25 +599,25 @@ static void parse_static(char *line, int is_rcsd)
 		strcpy(cmd, "mknod ");
 		strlcat(cmd, dev, sizeof(cmd));
 		run_interactive(cmd, "Creating device node %s", dev);
-		return;
+		return 0;
 	}
 
 	/* Kernel module to load */
 	if (BOOTSTRAP && MATCH_CMD(line, "module ", x)) {
 		kmod_load(strip_line(x));
-		return;
+		return 0;
 	}
 
 	if (BOOTSTRAP && MATCH_CMD(line, "network ", x)) {
 		if (network) free(network);
 		network = strdup(strip_line(x));
-		return;
+		return 0;
 	}
 
 	if (BOOTSTRAP && MATCH_CMD(line, "runparts ", x)) {
 		if (runparts) free(runparts);
 		runparts = strdup(strip_line(x));
-		return;
+		return 0;
 	}
 
 	if (MATCH_CMD(line, "include ", x)) {
@@ -528,11 +626,10 @@ static void parse_static(char *line, int is_rcsd)
 		strlcpy(cmd, file, sizeof(cmd));
 		if (!fexist(cmd)) {
 			_e("Cannot find include file %s, absolute path required!", x);
-			return;
+			return 1;
 		}
 
-		parse_conf(cmd, is_rcsd);
-		return;
+		return parse_conf(cmd, is_rcsd);
 	}
 
 	if (MATCH_CMD(line, "log ", x)) {
@@ -553,12 +650,14 @@ static void parse_static(char *line, int is_rcsd)
 			logfile_size_max = size;
 		if (count >= 0)
 			logfile_count_max = count;
+
+		return 0;
 	}
 
 	if (MATCH_CMD(line, "shutdown ", x)) {
 		if (sdown) free(sdown);
 		sdown = strdup(strip_line(x));
-		return;
+		return 0;
 	}
 
 	/*
@@ -575,7 +674,7 @@ static void parse_static(char *line, int is_rcsd)
 			cfglevel = RUNLEVEL;
 		if (cfglevel < 1 || cfglevel > 9 || cfglevel == 6)
 			cfglevel = 2; /* Fallback */
-		return;
+		return 0;
 	}
 
 	/*
@@ -595,61 +694,65 @@ static void parse_static(char *line, int is_rcsd)
 			if (disabled)
 				service_init();
 		}
-		return;
+		return 0;
 	}
+
+	return 1;
 }
 
-static void parse_dynamic(char *line, struct rlimit rlimit[], char *file)
+static int parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 {
 	char *x;
 
 	/* Monitored daemon, will be respawned on exit */
 	if (MATCH_CMD(line, "service ", x)) {
 		service_register(SVC_TYPE_SERVICE, x, rlimit, file);
-		return;
+		return 0;
 	}
 
 	/* One-shot task, will not be respawned */
 	if (MATCH_CMD(line, "task ", x)) {
 		service_register(SVC_TYPE_TASK, x, rlimit, file);
-		return;
+		return 0;
 	}
 
 	/* Like task but waits for completion, useful w/ [S] */
 	if (MATCH_CMD(line, "run ", x)) {
 		service_register(SVC_TYPE_RUN, x, rlimit, file);
-		return;
+		return 0;
 	}
 
 	/* Similar to task but is treated like a SysV init script */
 	if (MATCH_CMD(line, "sysv ", x)) {
 		service_register(SVC_TYPE_SYSV, x, rlimit, file);
-		return;
+		return 0;
 	}
 
 	/* Read resource limits */
 	if (MATCH_CMD(line, "rlimit ", x)) {
 		conf_parse_rlimit(x, rlimit);
-		return;
+		return 0;
 	}
 
 	/* Read control group limits */
 	if (MATCH_CMD(line, "cgroup ", x)) {
 		conf_parse_cgroup(x);
-		return;
+		return 0;
 	}
 
 	/* Set current cgroup for the following services/run/tasks */
 	if (MATCH_CMD(line, "cgroup.", x)) {
 		strlcpy(cgroup_current, x, sizeof(cgroup_current));
-		return;
+		return 0;
 	}
 
 	/* Regular or serial TTYs to run getty */
 	if (MATCH_CMD(line, "tty ", x)) {
 		service_register(SVC_TYPE_TTY, strip_line(x), rlimit, file);
-		return;
+		return 0;
 	}
+
+	return 1;
 }
 
 static void tabstospaces(char *line)
@@ -694,8 +797,13 @@ static int parse_conf(char *file, int is_rcsd)
 		if (MATCH_CMD(line, "#", x))
 			continue;
 
-		parse_static(line, is_rcsd);
-		parse_dynamic(line, is_rcsd ? rlimit : global_rlimit, file);
+		if (!parse_static(line, is_rcsd))
+			continue;
+		if (!parse_dynamic(line, is_rcsd ? rlimit : global_rlimit, file))
+			continue;
+
+		/* Not static or dynamic conf, check if it is a global env. */
+		parse_env(line);
 	}
 
 	fclose(fp);
@@ -719,6 +827,7 @@ int conf_reload(void)
 	/* Mark and sweep */
 	cgroup_mark_all();
 	svc_mark_dynamic();
+	conf_reset_env();
 
 	/*
 	 * Reset global rlimit to bootstrap values from conf_init().

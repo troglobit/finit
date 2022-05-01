@@ -729,10 +729,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Set PATH, SHELL, and PWD early to something sane
 	 */
-	setenv("PATH", _PATH_STDPATH, 1);
-	setenv("SHELL", _PATH_BSHELL, 1);
-	setenv("LOGNAME", "root", 1);
-	setenv("USER", "root", 1);
+	conf_reset_env();
 
 	if (chdir("/"))
 		_pe("Failed cd /");
