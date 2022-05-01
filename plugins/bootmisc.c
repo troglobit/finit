@@ -39,10 +39,12 @@
 
 static int is_tmpfs(char *path)
 {
+	struct mntent mount;
+	struct mntent *mnt;
+	char buf[256];
 	int tmpfs = 0;
 	FILE *fp;
 	char *dir;
-	struct mntent *mnt;
 
 	/* If path is a symlink, check what it resolves to */
 	dir = realpath(path, NULL);
@@ -55,7 +57,7 @@ static int is_tmpfs(char *path)
 		return 0;	/* Dunno, maybe not */
 	}
 
-	while ((mnt = getmntent(fp))) {
+	while ((mnt = getmntent_r(fp, &mount, buf, sizeof(buf)))) {
 		if (!strcmp(dir, mnt->mnt_dir))
 			break;
 	}
