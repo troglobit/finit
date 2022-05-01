@@ -35,6 +35,9 @@
 #include <sys/mount.h>
 #include <sys/stat.h>		/* umask(), mkdir() */
 #include <sys/wait.h>
+#ifdef HAVE_SYS_SYSMACROS_H
+#include <sys/sysmacros.h>
+#endif
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 #else
