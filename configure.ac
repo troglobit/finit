@@ -139,6 +139,9 @@ AC_ARG_WITH(random-seed,
 AC_ARG_WITH(keventd,
         AS_HELP_STRING([--with-keventd], [Enable built-in keventd, default: no]),, [with_keventd=no])
 
+AC_ARG_WITH(sulogin,
+        AS_HELP_STRING([--with-sulogin], [Enable built-in sulogin, default: no.]),, [with_sulogin=no])
+
 AC_ARG_WITH(watchdog,
         AS_HELP_STRING([--with-watchdog=[DEV]], [Enable built-in watchdog, default: /dev/watchdog]),
 	[watchdog=$withval], [with_watchdog=no watchdog=])
@@ -228,6 +231,8 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 
 AS_IF([test "x$with_keventd" != "xno"], [with_keventd=yes])
 
+AS_IF([test "x$with_sulogin" != "xno"], [with_sulogin=yes])
+
 AS_IF([test "x$with_watchdog" != "xno"], [
 	AS_IF([test "x$watchdog" = "xyes"], [
 		watchdog=/dev/watchdog])
@@ -238,6 +243,7 @@ AS_IF([test "x$with_watchdog" != "xno"], [
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
 AM_CONDITIONAL(KEVENTD,   [test "x$with_keventd"  != "xno"])
+AM_CONDITIONAL(SULOGIN,   [test "x$with_sulogin"  != "xno"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
 AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
@@ -289,6 +295,7 @@ Optional features:
   Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
   Built-in keventd......: $with_keventd
+  Built-in sulogin......: $with_sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
   Skip fsck check.......: $enable_fastboot
