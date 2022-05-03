@@ -127,6 +127,7 @@ static int sulogin(int do_reboot)
 		}
 
 		rc = systemf("%s", path);
+		free(path);
 		break;
 	}
 
