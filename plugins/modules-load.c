@@ -21,6 +21,29 @@
  * THE SOFTWARE.
  */
 
+/*
+ * This plugin scans files in /etc/modules-load.d/, for each line in the
+ * file it assumes the name of a kernel module, with optional arguments.
+ * Each module is loaded when entering runlevel 2, 3, 4, or 5, using the
+ * modprobe tool.
+ *
+ * Loading is done by inserting a `task` stanza in Finit, ensuring all
+ * modules are loaded in parallel, with other modules and programs.
+ * Each `task` stanza is by default given the name:modprobe.module and
+ * indexed with `:ID`, starting with 1.
+ *
+ * Indexing can be disabled per file in /etc/modules-load.d/, anywwhere
+ * in a file, by putting the keyword `noindex` on a line of its own.  A
+ * noindex command can appear anywhere in the file, and up to the point
+ * it is read, tasks will be indexed with an incrementing `:ID`.  When
+ * `noindex` is read indexing is disabled and all subseequent tasks will
+ * not have any `:ID` at all.
+ *
+ * Please note, the :ID is there for your benefit, it ensures that tasks
+ * in Finit are unique.  If you have two tasks with the same name and ID
+ * (or no ID), the last one read replaces any preceeding one!
+ */
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -40,13 +63,14 @@
 #define MODULES_LOAD_PATH "/etc/modules-load.d"
 #endif
 #define SERVICE_LINE \
-	"cgroup.init :%d name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
+	"cgroup.init name:modprobe.%s :%d [2345] /sbin/modprobe %s %s -- Kernel module: %s"
+#define SERVICE_LINE_NOINDEX \
+	"cgroup.init name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
 
 static void load(void *arg)
 {
 	struct dirent *d;
-	char line[256];
-	int index = 1;
+	int counter = 1;
 	FILE *fp;
 	DIR *dir;
 
@@ -58,6 +82,8 @@ static void load(void *arg)
 
 	while ((d = readdir(dir))) {
 		char module_path[PATH_MAX];
+		int index = counter;
+		char line[256];
 
 		strlcpy(module_path, MODULES_LOAD_PATH "/", sizeof(module_path));
 		strlcat(module_path, d->d_name, sizeof(module_path));
@@ -69,25 +95,38 @@ static void load(void *arg)
 		while (fgets(line, sizeof(line), fp)) {
 			char cmd[CMD_SIZE], *mod, *args;
 
-			if (line[0] == '#')
-				continue;
+			chomp(line);
 
 			mod = strip_line(line);
-			if (!*mod)
+			if (!mod[0])
 				continue;
 
-			mod = chomp(mod);
-			if (!mod || !*mod)
+			if (mod[0] == '#' || mod[0] == ';')
 				continue;
+
+			if (!strcmp(mod, "set noindex")) {
+				index = 0;
+				continue;
+			}
+			if (!strncmp(mod, "set index", 9)) {
+				mod += 9;
+				args = strchr(mod, '=');
+				if (args) /* optional */
+					mod = args + 1;
+				index = atoi(mod);
+				continue;
+			}
 
 			mod = strtok_r(mod, " ", &args);
 			if (!mod)
 				continue;
 
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE, index, mod, mod, args, mod);
+			if (!index)
+				snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, mod, args, mod);
+			else
+				snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, mod, args, mod);
 			service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
-
-			index++;
+			counter++;
 		}
 
 		fclose(fp);
