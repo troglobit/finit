@@ -7,7 +7,8 @@ TEST_DIR=$(dirname "$0")
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-test_teardown() {
+test_teardown()
+{
     say "Test done $(date)"
     say "Running test teardown."
 

@@ -34,7 +34,7 @@ assert_num_children()
 # shellcheck disable=SC2086
 assert_new_pid()
 {
-	assert "Finit has registered new PID" "$(texec initctl |grep $1 |awk '{print $1}')" -eq "$(texec cat $2)"
+	assert "Finit has registered new PID" "$(texec initctl |grep $1 | awk '{print $1;}')" -eq "$(texec cat $2)"
 }
 
 # shellcheck disable=SC2086
