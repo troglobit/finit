@@ -90,7 +90,7 @@ static void service_timeout_cb(uev_t *w, void *arg, int events)
  * Returns:
  * POSIX OK(0) on success, non-zero on error.
  */
-static int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc))
+int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc))
 {
 	if (svc->timer_cb)
 		return -EBUSY;
@@ -108,7 +108,7 @@ static int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc)
  * Returns:
  * POSIX OK(0) on success, non-zero on error.
  */
-static int service_timeout_cancel(svc_t *svc)
+int service_timeout_cancel(svc_t *svc)
 {
 	int err;
 

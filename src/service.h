@@ -35,6 +35,9 @@ void      service_runtask_clean  (void);
 void      service_reload_dynamic (void);
 void      service_update_rdeps   (void);
 
+int       service_timeout_after  (svc_t *svc, int timeout, void (*cb)(svc_t *svc));
+int       service_timeout_cancel (svc_t *svc);
+
 int       service_step           (svc_t *svc);
 void      service_step_all       (int types);
 void      service_worker         (void *unused);
