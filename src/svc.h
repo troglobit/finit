@@ -193,14 +193,13 @@ typedef struct svc {
 	struct timespec gc;
 } svc_t;
 
-svc_t      *svc_new                (char *cmd, char *id, int type);
+svc_t      *svc_new                (char *cmd, char *name, char *id, int type);
 int	    svc_del	           (svc_t *svc);
 void	    svc_validate	   (svc_t *svc);
 
-svc_t	   *svc_find	           (char *cmd, char *id);
+svc_t	   *svc_find	           (char *name, char *id);
 svc_t	   *svc_find_by_pid        (pid_t pid);
 svc_t	   *svc_find_by_jobid      (int job, char *id);
-svc_t	   *svc_find_by_nameid     (char *name, char *id);
 svc_t	   *svc_find_by_tty        (char *dev);
 svc_t      *svc_find_by_pidfile    (char *fn);
 

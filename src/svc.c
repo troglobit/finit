@@ -107,16 +107,17 @@ static void svc_gc(void *arg)
 /**
  * svc_new - Create a new service
  * @cmd:  External program to call
+ * @name: Default or custom svc name
  * @id:   Instance id
  * @type: Service type, one of service, task, run
  *
  * Returns:
  * A pointer to a new &svc_t object, or %NULL if out of empty slots.
  */
-svc_t *svc_new(char *cmd, char *id, int type)
+svc_t *svc_new(char *cmd, char *name, char *id, int type)
 {
-	int job = -1;
 	svc_t *svc, *iter = NULL;
+	int job = -1;
 
 	/* Find first job n:o if registering multiple instances */
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
@@ -134,6 +135,8 @@ svc_t *svc_new(char *cmd, char *id, int type)
 
 	svc->type = type;
 	svc->job  = job;
+	if (name)
+		strlcpy(svc->name, name, sizeof(svc->name));
 	if (id && id[0])
 		strlcpy(svc->id, id, sizeof(svc->id));
 	if (cmd)
@@ -348,13 +351,13 @@ svc_t *svc_stop_completed(void)
 
 /**
  * svc_find - Find a service object by its full path name
- * @cmd: Full path name, e.g., /sbin/syslogd
- * @id:  Optional instance id
+ * @name: Full path name, e.g., /sbin/syslogd
+ * @id:   Optional instance id
  *
  * Returns:
  * A pointer to an &svc_t object, or %NULL if not found.
  */
-svc_t *svc_find(char *cmd, char *id)
+svc_t *svc_find(char *name, char *id)
 {
 	svc_t *svc, *iter = NULL;
 
@@ -362,7 +365,7 @@ svc_t *svc_find(char *cmd, char *id)
 		id = "";
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!strcmp(svc->cmd, cmd) && !strcmp(svc->id, id))
+		if (!strcmp(svc->name, name) && !strcmp(svc->id, id))
 			return svc;
 	}
 
@@ -410,30 +413,6 @@ svc_t *svc_find_by_jobid(int job, char *id)
 
 	return NULL;
 }
-
-/**
- * svc_find_by_nameid - Find an service object by its basename:ID
- * @name: Process name to match
- * @id:   Optional instance id
- *
- * Returns:
- * A pointer to an &svc_t object, or %NULL if not found.
- */
-svc_t *svc_find_by_nameid(char *name, char *id)
-{
-	svc_t *svc, *iter = NULL;
-
-	if (!id)
-		id = "";
-
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!strcmp(svc->id, id) && !strcmp(name, svc->name))
-			return svc;
-	}
-
-	return NULL;
-}
-
 
 svc_t *svc_find_by_tty(char *dev)
 {
@@ -720,7 +699,7 @@ int svc_parse_jobstr(char *str, size_t len, void *user_data, int (*found)(svc_t 
 				*ptr++ = 0;
 				id  = ptr;
 
-				svc = svc_find_by_nameid(token, id);
+				svc = svc_find(token, id);
 				if (!svc && not_found)
 					result += not_found(token, id, user_data);
 				else if (found)

@@ -198,7 +198,7 @@ static svc_t *do_find(char *buf, size_t len)
 	if (!id)
 		return svc_named_iterator(&iter, 1, input);
 
-	return svc_find_by_nameid(input, id);
+	return svc_find(input, id);
 }
 
 static svc_t *do_find_byc(char *buf, size_t len)

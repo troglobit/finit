@@ -1352,11 +1352,11 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	next:
 		svc = svc_find_by_tty(dev);
 	} else
-		svc = svc_find(cmd, id);
+		svc = svc_find(name, id);
 
 	if (!svc) {
 		_d("Creating new svc for %s name %s id %s type %d", cmd, name, id, type);
-		svc = svc_new(cmd, id, type);
+		svc = svc_new(cmd, name, id, type);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
 			return errno = ENOMEM;

@@ -794,7 +794,7 @@ int main(int argc, char *argv[])
 	 */
 	if (whichp(FINIT_LIBPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
 		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init name:watchdog :finit " FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
-		wdog = svc_find_by_nameid("watchdog", "finit");
+		wdog = svc_find("watchdog", "finit");
 	}
 
 	/*
