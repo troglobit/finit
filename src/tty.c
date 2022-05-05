@@ -172,7 +172,7 @@ int tty_parse_args(char *cmd, struct tty *tty)
 		else
 			tty->args[tty->num++] = cmd;
 
-		cmd = strtok(NULL, " \t");
+		cmd = strtok(NULL, " ");
 	} while (cmd && tty->num < NELEMS(tty->args));
 
 	/* rescue shells are always notty */
