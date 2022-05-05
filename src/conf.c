@@ -755,17 +755,6 @@ static int parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 	return 1;
 }
 
-static void tabstospaces(char *line)
-{
-	if (!line)
-		return;
-
-	for (int i = 0; line[i]; i++) {
-		if (line[i] == '\t')
-			line[i] = ' ';
-	}
-}
-
 static int parse_conf(char *file, int is_rcsd)
 {
 	struct rlimit rlimit[RLIMIT_NLIMITS];

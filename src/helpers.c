@@ -102,6 +102,17 @@ ssize_t cprintf(const char *fmt, ...)
 	return size;
 }
 
+void tabstospaces(char *line)
+{
+	if (!line)
+		return;
+
+	for (int i = 0; line[i]; i++) {
+		if (line[i] == '\t')
+			line[i] = ' ';
+	}
+}
+
 char *strip_line(char *line)
 {
 	char *ptr;

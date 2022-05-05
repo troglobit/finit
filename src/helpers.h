@@ -49,6 +49,7 @@ char   *console         (void);
 void    console_init    (void);
 ssize_t cprintf         (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
+void    tabstospaces    (char *line);
 char   *strip_line      (char *line);
 
 void    enable_progress (int onoff);
