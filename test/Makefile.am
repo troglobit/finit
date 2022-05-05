@@ -6,6 +6,7 @@ EXTRA_DIST		 = skel/bin/busybox-x86_64.md5 skel/sbin/service.sh skel/bin/slay  \
 			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		   \
 			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	   \
 			   skel/etc/finit.d/.empty skel/etc/init.d/S01-service.sh 	   \
+			   skel/etc/init.d/S02-serv.sh					   \
 			   skel/proc/.empty skel/root/.empty skel/run/.empty		   \
 			   skel/sbin/chrootsetup.sh skel/srv/.empty skel/sys/.empty	   \
 			   skel/usr/bin/.empty skel/usr/lib/.empty skel/usr/sbin/.empty	   \
@@ -20,6 +21,7 @@ EXTRA_DIST		+= setup-root.sh
 EXTRA_DIST		+= add-remove-dynamic-service.sh
 EXTRA_DIST		+= add-remove-dynamic-service-sub-config.sh
 EXTRA_DIST		+= cond-start-task.sh
+EXTRA_DIST		+= failing-sysv.sh
 EXTRA_DIST		+= global-envs.sh
 EXTRA_DIST		+= pre-post-serv.sh
 EXTRA_DIST		+= start-stop-service.sh
@@ -46,6 +48,7 @@ TESTS			+= setup-root.sh
 TESTS			+= add-remove-dynamic-service.sh
 TESTS			+= add-remove-dynamic-service-sub-config.sh
 TESTS			+= cond-start-task.sh
+TESTS			+= failing-sysv.sh
 TESTS			+= global-envs.sh
 TESTS			+= pre-post-serv.sh
 TESTS			+= start-stop-service.sh

@@ -37,6 +37,11 @@ assert_new_pid()
 	assert "Finit has registered new PID" "$(texec initctl |grep $1 | awk '{print $1;}')" -eq "$(texec cat $2)"
 }
 
+assert_restarts()
+{
+	assert "Finit has registered restarts" "$(texec initctl status "$2" | awk '/Restarts/{print $3;}')" -ge "$1"
+}
+
 # shellcheck disable=SC2086
 assert_pidfile()
 {
