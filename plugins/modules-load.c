@@ -85,6 +85,9 @@ static void load(void *arg)
 		int index = counter;
 		char line[256];
 
+		if (d->d_name[strlen(d->d_name) - 1] == '~')
+			continue; /* skip backup files */
+
 		strlcpy(module_path, MODULES_LOAD_PATH "/", sizeof(module_path));
 		strlcat(module_path, d->d_name, sizeof(module_path));
 
