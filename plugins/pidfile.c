@@ -98,6 +98,9 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 				return;
 			}
 
+			/* Service is not crashing, let's tell state machine! */
+			service_forked(svc);
+
 			if (pid != svc->pid) {
 				_d("Forking service %s changed PID from %d to %d",
 				   svc->cmd, svc->pid, pid);

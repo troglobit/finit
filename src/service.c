@@ -1557,7 +1557,7 @@ void service_monitor(pid_t lost, int status)
 		/* Likely start script exiting */
 		if (svc_is_starting(svc)) {
 			svc->pid = 0;	/* Expect no more activity from this one */
-			return;
+			goto cont;
 		}
 
 		logit(LOG_CONSOLE | LOG_NOTICE, "Stopped %s[%d]", svc_ident(svc, NULL, 0), lost);
@@ -1581,7 +1581,7 @@ void service_monitor(pid_t lost, int status)
 done:
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;
-
+cont:
 	if (!service_step(svc)) {
 		/* Clean out any bootstrap tasks, they've had their time in the sun. */
 		if (svc_clean_bootstrap(svc))
@@ -1745,6 +1745,7 @@ static void service_retry(svc_t *svc)
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
+		svc_set_state(svc, SVC_RUNNING_STATE);
 		logit(LOG_CONSOLE | LOG_NOTICE, "Successfully restarted crashing service %s.",
 		      svc_ident(svc, NULL, 0));
 		return;
@@ -1832,6 +1833,21 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 			break;
 		}
 	}
+}
+
+/*
+ * Called by pidfile plugin for forking services that have successfully started.
+ * We get here when the service_monitor() collects the PID, sets svc->pid to 0,
+ * and the state machine prepares for the worst bu setting state to HALTED.
+ */
+void service_forked(svc_t *svc)
+{
+	/* Stop forking_retry() timer */
+	service_timeout_cancel(svc);
+
+	/* Not crashing, restore RUNNING state */
+	svc_unblock(svc);
+	svc_set_state(svc, SVC_RUNNING_STATE);
 }
 
 /*
@@ -1944,30 +1960,26 @@ restart:
 		}
 
 		if (!svc->pid) {
-			if (svc_is_daemon(svc) || svc_is_tty(svc)) {
-				if (svc_is_forking(svc))
-					break;
-
+			if (svc_is_daemon(svc) || svc_is_sysv(svc) || svc_is_tty(svc)) {
 				svc_restarting(svc);
 				svc_set_state(svc, SVC_HALTED_STATE);
 
 				/*
-				 * Restart directly after the first crash,
-				 * then retry after 2 sec
+				 * Restart directly after the first crash, except for forking services
+				 * which we need to wait for the forked-off child to create its pid
+				 * file.  In both cases, after that, retry after 2 sec
 				 */
 				if (!svc->respawn)
 					_d("delayed restart of %s", svc_ident(svc, NULL, 0));
-				service_timeout_after(svc, 1, service_retry);
+				if (svc_is_forking(svc))
+					service_timeout_after(svc, 2000, service_retry);
+				else
+					service_timeout_after(svc, 1, service_retry);
 				break;
 			}
 
-			if (svc_is_runtask(svc)) {
-				if (svc_is_sysv(svc)) {
-					if (!svc->started)
-						svc_set_state(svc, SVC_STOPPING_STATE);
-				} else {
-					svc_set_state(svc, SVC_STOPPING_STATE);
-				}
+			if (svc_is_runtask(svc)) { /* only run/task, not sysv here */
+				svc_set_state(svc, SVC_STOPPING_STATE);
 				svc->once++;
 				break;
 			}
