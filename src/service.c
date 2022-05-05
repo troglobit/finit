@@ -1026,20 +1026,33 @@ static void parse_script(char *type, char *script, char *buf, size_t len)
 }
 
 /*
- * name:<name>
+ * 'name:<name>' or derived from '/path/to/cmd args'
  */
-static void parse_name(svc_t *svc, char *arg)
+static char *parse_name(char *cmd, char *arg)
 {
 	char *name = NULL;
 
 	if (arg && !strncasecmp(arg, "name:", 5)) {
 		name = arg + 5;
 	} else {
-		name = strrchr(svc->cmd, '/');
-		name = name ? name + 1 : svc->cmd;
+		char *ptr;
+
+		ptr = strchr(cmd, ' ');
+		if (!ptr)
+			ptr = cmd + strlen(cmd);
+
+		while (ptr > cmd) {
+			if (*ptr == '/') {
+				ptr++;
+				break;
+			}
+			ptr--;
+		}
+
+		name = ptr;
 	}
 
-	strlcpy(svc->name, name, sizeof(svc->name));
+	return name;
 }
 
 /*
@@ -1297,6 +1310,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		return 0;
 	}
 
+	name = parse_name(cmd, name);
 	if (!id)
 		id = "";
 
@@ -1341,7 +1355,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc = svc_find(cmd, id);
 
 	if (!svc) {
-		_d("Creating new svc for %s id #%s type %d", cmd, id, type);
+		_d("Creating new svc for %s name %s id %s type %d", cmd, name, id, type);
 		svc = svc_new(cmd, id, type);
 		if (!svc) {
 			_e("Out of memory, cannot register service %s", cmd);
@@ -1413,8 +1427,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			id = ptr;
 		strlcpy(svc->name, "tty", sizeof(svc->name));
 		strlcpy(svc->id, id, sizeof(svc->id));
-	} else
-		parse_name(svc, name);
+	}
 
 	parse_cmdline_args(svc, cmd);
 
