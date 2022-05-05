@@ -1355,6 +1355,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc->restart_tmo = restart_tmo;
 		svc->oncrash_action = oncrash_action;
 	} else {
+		_d("Found existing svc for %s name %s id %s type %d", cmd, name, id, type);
+
 		/* update type, may have changed from service -> task */
 		svc->type = type;
 
@@ -1377,7 +1379,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	svc->runlevels = levels;
-	_d("Service %s runlevel 0x%02x", svc->cmd, svc->runlevels);
+	_d("Service %s runlevel 0x%02x", svc_ident(svc, NULL, 0), svc->runlevels);
 
 	conf_parse_cond(svc, cond);
 
@@ -1532,7 +1534,7 @@ void service_monitor(pid_t lost, int status)
 
 	default:
 		_d("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
-		   svc->cmd, lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+		   svc_ident(svc, NULL, 0), lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
 		svc->status = status;
 		break;
 	}
@@ -1570,7 +1572,7 @@ done:
 	if (!service_step(svc)) {
 		/* Clean out any bootstrap tasks, they've had their time in the sun. */
 		if (svc_clean_bootstrap(svc))
-			_d("collected bootstrap task %s(%d), removing.", svc->cmd, lost);
+			_d("collected bootstrap task %s(%d), removing.", svc_ident(svc, NULL, 0), lost);
 	}
 
 	sm_step(&sm);
@@ -1722,7 +1724,7 @@ static void service_retry(svc_t *svc)
 
 	service_timeout_cancel(svc);
 	if (svc->respawn) {
-		_d("%s crashed/exited, respawning ...", svc->cmd);
+		_d("%s crashed/exited, respawning ...", svc_ident(svc, NULL, 0));
 		svc_unblock(svc);
 		service_step(svc);
 		return;
@@ -1742,7 +1744,7 @@ static void service_retry(svc_t *svc)
 		svc_crashing(svc);
 		*restart_cnt = 0;
 		if (svc->oncrash_action == SVC_ONCRASH_REBOOT) {
-			logit(LOG_ERR, "%s issuing reboot", svc->cmd);
+			logit(LOG_ERR, "%s issuing reboot", svc_ident(svc, NULL, 0));
 			sync();
 			kill(1, SIGTERM);
 		}
@@ -1752,7 +1754,7 @@ static void service_retry(svc_t *svc)
 
 	(*restart_cnt)++;
 
-	_d("%s crashed, trying to start it again, attempt %d", svc->cmd, *restart_cnt);
+	_d("%s crashed, trying to start it again, attempt %d", svc_ident(svc, NULL, 0), *restart_cnt);
 	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
 	      svc_ident(svc, NULL, 0), svc->oldpid, *restart_cnt, svc->restart_max);
 	svc_unblock(svc);
@@ -1774,7 +1776,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
 	if (*state == SVC_STOPPING_STATE) {
 		_d("%s is stopping, wait %d sec before sending SIGKILL ...",
-		   svc->cmd, svc->killdelay / 1000);
+		   svc_ident(svc, NULL, 0), svc->killdelay / 1000);
 		service_timeout_cancel(svc);
 		service_timeout_after(svc, svc->killdelay, service_kill);
 	}
@@ -1837,7 +1839,7 @@ restart:
 	old_state = svc->state;
 	enabled = svc_enabled(svc);
 
-	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc->cmd, svc->pid,
+	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc_ident(svc, NULL, 0), svc->pid,
 	   svc_status(svc), enabled ? "en" : "dis", svc_dirtystr(svc),
 	   condstr(cond_get_agg(svc->cond)));
 
@@ -1861,7 +1863,7 @@ restart:
 		if (!svc->pid) {
 			char condstr[MAX_COND_LEN];
 
-			_d("%s: stopped, cleaning up timers and conditions ...", svc->cmd);
+			_d("%s: stopped, cleaning up timers and conditions ...", svc_ident(svc, NULL, 0));
 			service_timeout_cancel(svc);
 			cond_clear(mkcond(svc, condstr, sizeof(condstr)));
 
@@ -1941,7 +1943,7 @@ restart:
 				 * then retry after 2 sec
 				 */
 				if (!svc->respawn)
-					_d("delayed restart of %s", svc->cmd);
+					_d("delayed restart of %s", svc_ident(svc, NULL, 0));
 				service_timeout_after(svc, 1, service_retry);
 				break;
 			}
@@ -2031,7 +2033,7 @@ restart:
 	}
 
 	if (svc->state != old_state) {
-		_d("%20s(%4d): -> %8s", svc->cmd, svc->pid, svc_status(svc));
+		_d("%20s(%4d): -> %8s", svc_ident(svc, NULL, 0), svc->pid, svc_status(svc));
 		changed++;
 		goto restart;
 	}
@@ -2102,15 +2104,15 @@ int service_completed(void)
 
 		if (strstr(svc->cond, plugin_hook_str(HOOK_SVC_UP)) ||
 		    strstr(svc->cond, plugin_hook_str(HOOK_SYSTEM_UP))) {
-			_d("Skipping %s(%s), post-strap hook", svc->desc, svc->cmd);
+			_d("Skipping %s(%s), post-strap hook", svc->desc, svc_ident(svc, NULL, 0));
 			continue;
 		}
 
 		if (!svc->once) {
-			_d("%s has not yet completed ...", svc->cmd);
+			_d("%s has not yet completed ...", svc_ident(svc, NULL, 0));
 			return 0;
 		}
-		_d("%s has completed ...", svc->cmd);
+		_d("%s has completed ...", svc_ident(svc, NULL, 0));
 	}
 
 	return 1;
