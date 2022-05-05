@@ -25,10 +25,6 @@
 #ifndef FINIT_HELPERS_H_
 #define FINIT_HELPERS_H_
 
-#include "config.h"
-
-#include <mntent.h>
-#include <sched.h>		/* sched_yield() */
 #include <stdarg.h>
 #include <sys/resource.h>
 #include <sys/types.h>
