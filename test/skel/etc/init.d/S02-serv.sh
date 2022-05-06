@@ -10,7 +10,7 @@ PIDFILE="/var/run/serv.pid"
 start()
 {
 	printf 'Starting %s: ' "$DAEMON $SERV_ARGS"
-	# shellcheck disable=SC2086 # we need the word splitting
+	# shellcheck disable=SC2086
 	start-stop-daemon -S -b -q -p "$PIDFILE" -x "$DAEMON" -- $SERV_ARGS
 
 	status=$?
