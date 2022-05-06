@@ -80,6 +80,11 @@ Hooks
 
 ### Bootstrap Hooks
 
+* `HOOK_BANNER`: The very first point at which a plugin can run.
+  Intended to be used as a banner replacement.  Essentially this runs
+  just before entering runlevel S.  Assume nothing is available, so
+  be prepared to use absolute paths, etc.
+
 * `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
   mounted — very early
 

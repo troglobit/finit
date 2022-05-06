@@ -1,6 +1,8 @@
 Bootstrap
 =========
 
+0. Get bearings, disable kernel logs, initialize TTY and print banner,
+   unless `HOOK_BANNER` is defined, then call that instead
 1. Prepare emergency shell, if enabled
 2. Set up initial signal handlers
 3. Set up default $PATH early
