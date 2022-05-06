@@ -34,6 +34,12 @@ For your convenience a set of *optional* plugins are available:
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
   _Optional plugin._
 
+* *hook-scripts.so*: Trigger the execution of scripts from plugin hook
+  points (see [Hooks](#hooks)).  Scripts are located in
+  `/libexec/finit/hook` by default, this can be build-time customized
+  by using the `--with-hook-scripts-path=PATH` argument to
+  `configure`.  _Optional plugin._
+
 * *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
   available.  Enabled by default.
 
