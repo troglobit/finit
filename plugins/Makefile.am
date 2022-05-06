@@ -64,6 +64,10 @@ if BUILD_DBUS_PLUGIN
 pkglib_LTLIBRARIES += dbus.la
 endif
 
+if BUILD_HOOK_SCRIPTS_PLUGIN
+pkglib_LTLIBRARIES += hook-scripts.la
+endif
+
 if BUILD_HOTPLUG_PLUGIN
 pkglib_LTLIBRARIES += hotplug.la
 endif

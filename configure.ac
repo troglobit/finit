@@ -90,6 +90,7 @@ AC_PLUGIN([modprobe],      [yes], [Coldplug modules using modalias magic])
 AC_PLUGIN([resolvconf],    [no],  [Setup necessary files for resolvconf])
 AC_PLUGIN([x11-common],    [no],  [Console setup (for X)])
 AC_PLUGIN([netlink],       [yes], [Basic netlink plugin for IFUP/IFDN and GW events. Can be replaced with externally built plugin that links with libnl or similar.])
+AC_PLUGIN([hook-scripts],  [no],  [Trigger script execution from hook points])
 AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
 AC_PLUGIN([rtc],           [yes], [Save and restore RTC using hwclock])
 AC_PLUGIN([tty],           [yes], [Automatically activate new TTYs, e.g. USB-to-serial])
@@ -145,6 +146,11 @@ AC_ARG_WITH(sulogin,
 AC_ARG_WITH(watchdog,
         AS_HELP_STRING([--with-watchdog=[DEV]], [Enable built-in watchdog, default: /dev/watchdog]),
 	[watchdog=$withval], [with_watchdog=no watchdog=])
+
+AC_ARG_WITH(hook-scripts-path,
+        AS_HELP_STRING([--with-hook-scripts-path=DIR], [Base directory for hook scripts, default $libexecdir/finit/hook]),
+	[hook_scripts_path=$withval], [hook_scripts_path=yes])
+
 
 ### Enable features ###########################################################################
 
@@ -239,6 +245,11 @@ AS_IF([test "x$with_watchdog" != "xno"], [
 	with_watchdog=yes
         AC_DEFINE_UNQUOTED(WDT_DEVNODE, "$watchdog", [Built-in watchdog device node])], [
 	watchdog=])
+
+AS_IF([test "x$enable_hook_scripts_plugin" = "xyes" -a "x$with_hook_scripts_path" != "xno"], [
+	AS_IF([test "x$hook_scripts_path" = "xyes"], [hook_scripts_path=$libexecdir/finit/hook])
+	AC_EXPAND_DIR(hook_scripts_path, "$hook_scripts_path")
+	AC_DEFINE_UNQUOTED(PLUGIN_HOOK_SCRIPTS_PATH, "$hook_scripts_path", [Built-in default: $libexecdir/finit])])
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
