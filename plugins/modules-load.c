@@ -67,75 +67,90 @@
 #define SERVICE_LINE_NOINDEX \
 	"cgroup.init name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
 
-static void load(void *arg)
+static int load_file(const char *file, int index)
 {
-	struct dirent *d;
-	int counter = 1;
+	char module_path[PATH_MAX];
+	char line[256];
+	int num = 0;
 	FILE *fp;
-	DIR *dir;
 
-	_d("Scanning " MODULES_LOAD_PATH " for config files ...");
+	strlcpy(module_path, MODULES_LOAD_PATH "/", sizeof(module_path));
+	strlcat(module_path, file, sizeof(module_path));
 
-	dir = opendir(MODULES_LOAD_PATH);
-	if (!dir)
-		return;
+	fp = fopen(module_path, "r");
+	if (!fp)
+		return 0;
 
-	while ((d = readdir(dir))) {
-		char module_path[PATH_MAX];
-		int index = counter;
-		char line[256];
+	while (fgets(line, sizeof(line), fp)) {
+		char cmd[CMD_SIZE], *mod, *args;
 
-		if (d->d_name[strlen(d->d_name) - 1] == '~')
-			continue; /* skip backup files */
+		chomp(line);
 
-		strlcpy(module_path, MODULES_LOAD_PATH "/", sizeof(module_path));
-		strlcat(module_path, d->d_name, sizeof(module_path));
-
-		fp = fopen(module_path, "r");
-		if (!fp)
+		mod = strip_line(line);
+		if (!mod[0])
 			continue;
 
-		while (fgets(line, sizeof(line), fp)) {
-			char cmd[CMD_SIZE], *mod, *args;
+		if (mod[0] == '#' || mod[0] == ';')
+			continue;
 
-			chomp(line);
-
-			mod = strip_line(line);
-			if (!mod[0])
-				continue;
-
-			if (mod[0] == '#' || mod[0] == ';')
-				continue;
-
-			if (!strcmp(mod, "set noindex")) {
-				index = 0;
-				continue;
-			}
-			if (!strncmp(mod, "set index", 9)) {
-				mod += 9;
-				args = strchr(mod, '=');
-				if (args) /* optional */
-					mod = args + 1;
-				index = atoi(mod);
-				continue;
-			}
-
-			mod = strtok_r(mod, " ", &args);
-			if (!mod)
-				continue;
-
-			if (!index)
-				snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, mod, args, mod);
-			else
-				snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, mod, args, mod);
-			service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
-			counter++;
+		if (!strcmp(mod, "set noindex")) {
+			index = 0;
+			continue;
+		}
+		if (!strncmp(mod, "set index", 9)) {
+			mod += 9;
+			args = strchr(mod, '=');
+			if (args) /* optional */
+				mod = args + 1;
+			index = atoi(mod);
+			continue;
 		}
 
-		fclose(fp);
-	}
+		mod = strtok_r(mod, " ", &args);
+		if (!mod)
+			continue;
 
-	closedir(dir);
+		if (!index)
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, mod, args, mod);
+		else
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, mod, args, mod);
+
+		service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
+		num++;
+	}
+	fclose(fp);
+
+	return num;
+}
+
+/* XXX: check here for .conf only? */
+static int module_filter(const struct dirent *d)
+{
+	if (d->d_type == DT_DIR)
+		return 0;
+	if (d->d_name[0] == '.')
+		return 0;	/* skip dot files */
+	if (d->d_name[strlen(d->d_name) - 1] == '~')
+		return 0;	/* skip backup files */
+
+	return 1;
+}
+
+static void load(void *arg)
+{
+	struct dirent **dentry;
+	int index = 1;
+	int i, num;
+
+	_d("Scanning " MODULES_LOAD_PATH " for config files ...");
+	num = scandir(MODULES_LOAD_PATH, &dentry, module_filter, alphasort);
+	if (num > 0) {
+		for (i = 0; i < num; i++) {
+			index += load_file(dentry[i]->d_name, index);
+			free(dentry[i]);
+		}
+		free(dentry);
+	}
 }
 
 static plugin_t plugin = {
