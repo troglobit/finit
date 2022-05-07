@@ -46,11 +46,18 @@ For your convenience a set of *optional* plugins are available:
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
   Enabled by default.
 
-* *modules-load.so*: Scans `/etc/modules-load.d/` for modules to load
-  using `modprobe`.  Each file in this directory can contain multiple
-  lines with the name of the module to load.  Any line starting with
-  the standard UNIX comment character, `#`, is skipped.
+* *modules-load.so*: Scans `/etc/modules-load.d/*.conf` for modules to
+  load using `modprobe`.  Each file can contain multiple lines with the
+  name of the module to load.  Any line starting with the standard UNIX
+  comment character, `#`, is skipped.
   
+  Modules are loaded when entering runlevel `[2345]` using the `task`
+  stanza.  Each module gets a unique `name:modprobe.foo`, and
+  optional`:ID`.  The `:ID` is a globally incremented index, which can
+  be disabled per file (anywhere) using the following config line:
+
+        set noindex
+
   **Note:** unlike the traditional .conf `module` directive, which load
   any listed module immediately, this plugin creates standard `taks`
   directives which load the module(s) in the background.  As long as
