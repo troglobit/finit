@@ -163,6 +163,14 @@ export TENV_ROOT
 if [ -n "${DEBUG:-}" ]; then
 	FINIT_ARGS="${FINIT_ARGS:-} finit.debug=on"
 fi
+
+# Tests may want to override runlevel
+if [ -n "${FINIT_RUNLEVEL:-}" ]; then
+	FINIT_ARGS="${FINIT_ARGS:-} $FINIT_RUNLEVEL"
+else
+	FINIT_RUNLEVEL=2
+fi
+
 # shellcheck disable=2086
 "$TEST_DIR/tenv/start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
@@ -179,14 +187,11 @@ finit_pid=$(retry "pgrep -P $finit_ppid")
 # Allow Finit to start up properly before launching the test
 i=0
 while [ $i -lt 10 ]; do
-	echo "Checking runlevel ..."
 	lvl=$(texec sh -c "initctl runlevel | awk '{print \$2;}'")
-	echo "Runlevel is $lvl"
-	if [ $lvl -eq 2 ]; then
-		say 'Reached runlevel 2, releasing test.'
+	if [ "$lvl" -eq "$FINIT_RUNLEVEL" ]; then
+#		say "Reached runlevel $FINIT_RUNLEVEL, releasing test."
 		break;
 	fi
-	echo "Waiting for Finit ..."
 	i=$((i + 1))
 	sleep 1
 done
