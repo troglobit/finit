@@ -1018,6 +1018,7 @@ static int usage(int rc)
 //		"  reload   <NAME>[:ID]      Reload (SIGHUP) service by name\n"  
 		"\n"
 		"  cond     set   <COND>     Set (assert) user-defined condition     +usr/COND\n"
+		"  cond     get   <COND>     Get status of user-defined condition, see $? and -v\n"
 		"  cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND\n"
 		"  cond     status           Show condition status, default cond command\n"
 		"  cond     dump             Dump all conditions and their status\n"
