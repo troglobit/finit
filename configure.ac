@@ -130,7 +130,7 @@ AC_ARG_WITH(hostname,
 	[hostname=$withval], [hostname=yes])
 
 AC_ARG_WITH(runlevel,
-        AS_HELP_STRING([--with-runlevel=N], [Runlevel to switch to after bootstrap, default: 2]),
+        AS_HELP_STRING([--with-runlevel=N], [Runlevel to switch to after bootstrap [1-9], default: 2]),
 	[runlevel=$withval], [runlevel=yes])
 
 AC_ARG_WITH(random-seed,

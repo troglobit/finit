@@ -73,6 +73,12 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
     `[1]` will be started, so a `tty [1] @console nologin` configuration
     presents you with a root console without login.
 
+ * `1-9`, except `6`: override the configured `runlevel`.  Like the `S`
+   and `rescue`, giving a single number on the kernel command line tells
+   Finit to ignore any `runlevel` in `/etc/finit.conf` as well as the
+   configure fallback `--with-runlevel=N` setting.  Remember, `6` is the
+   reboot runlevel and is not permitted.  Any other values are ignored.
+
 For more on kernel boot parameters, see the man page [bootparam(7)][].
 
 [config.md]:    config.md#rescue-mode

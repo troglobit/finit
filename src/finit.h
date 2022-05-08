@@ -110,6 +110,7 @@ struct init_request {
 
 extern int    runlevel;
 extern int    cfglevel;
+extern int    cmdlevel;
 extern int    prevlevel;
 extern int    debug;
 extern int    rescue;

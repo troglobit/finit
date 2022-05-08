@@ -62,6 +62,7 @@
 
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
+int   cmdlevel  = 0;		/* runlevel override from cmdline */
 int   prevlevel = -1;
 int   debug     = 0;		/* debug mode from kernel cmdline */
 int   rescue    = 0;		/* rescue mode from kernel cmdline */
@@ -569,11 +570,12 @@ static void crank_worker(void *unused)
  */
 static void bootstrap_worker(void *work)
 {
-	static int cnt = 120;
 	static struct wq final = {
 		.cb = finalize,
 		.delay = 10
 	};
+	static int cnt = 120;
+	int level = cfglevel;
 
 	_d("Step all services ...");
 	service_step_all(SVC_TYPE_ANY);
@@ -598,11 +600,18 @@ static void bootstrap_worker(void *work)
 	if (runparts && fisdir(runparts) && !rescue)
 		run_parts(runparts, NULL);
 
+
 	/*
-	 * Start all tasks/services in the configured runlevel
+	 * Start all tasks/services in the configured runlevel, or jump
+	 * into the runlevel selected from the command line.
 	 */
-	_d("Change to default runlevel(%d), starting all services ...", cfglevel);
-	service_runlevel(cfglevel);
+	if (cmdlevel) {
+		_d("Runlevel %d requested from command line, starting all services ...", cmdlevel);
+		level = cmdlevel;
+	} else
+		_d("Change to default runlevel(%d), starting all services ...", cfglevel);
+
+	service_runlevel(level);
 }
 
 static int version(int rc)

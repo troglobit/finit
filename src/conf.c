@@ -134,6 +134,33 @@ static void parse_finit_opts(char *opt)
 	}
 }
 
+/*
+ * When runlevel (single integer) is given on the command line,
+ * it overrides the runlevel in finit.conf and the built-in
+ * default (from configure).  It do however have to pass the
+ * same sanity checks.
+ */
+static int parse_runlevel(char *arg)
+{
+	const char *err = NULL;
+	char *ptr = arg;
+	long long num;
+
+	/* Sanity check the token is just digit(s) */
+	while (*ptr) {
+		if (!isdigit(*ptr++))
+			return 0;
+	}
+
+	num = strtonum(arg, 1, 9, &err);
+	if (err || num == 6) {
+		_d("Not a valid runlevel (%s), valid levels are [1-9], excluding 6, skipping.", arg);
+		return 0;
+	}
+
+	return (int)num;
+}
+
 static void parse_arg(char *arg)
 {
 	if (!strncmp(arg, "finit.", 6)) {
@@ -141,11 +168,19 @@ static void parse_arg(char *arg)
 		return;
 	}
 
-	if (string_compare(arg, "rescue") || string_compare(arg, "recover"))
+	if (string_compare(arg, "rescue") || string_compare(arg, "recover")) {
 		rescue = 1;
+		return;
+	}
 
-	if (string_compare(arg, "single") || string_compare(arg, "S"))
+	if (string_compare(arg, "single") || string_compare(arg, "S")) {
 		single = 1;
+		return;
+	}
+
+	/* Put any new command line options before this line. */
+
+	cmdlevel = parse_runlevel(arg);
 }
 
 #ifdef KERNEL_CMDLINE
