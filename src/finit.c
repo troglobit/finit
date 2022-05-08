@@ -257,7 +257,7 @@ static int fsck(int pass)
 		snprintf(cmd, sizeof(cmd), "fsck -a %s", dev);
 #endif
 		_d("Running pass %d fsck command %s", pass, cmd);
-		fsck_rc = run_interactive(cmd, "Checking filesystem %.13s", dev);
+		fsck_rc = run_interactive(cmd, "Checking filesystem %s", dev);
 		/*
 		 * "failure" is defined as exiting with a return code of
 		 * 2 or larger.  A return code of 1 indicates that filesystem
