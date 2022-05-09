@@ -20,17 +20,30 @@ you *need* to upgrade!
 >           For details, see [cmdline.md](doc/cmdline.md).
 
 ### Changes
+* Support for overriding default runlevel from kernel command line.  Any
+  runlevel `[1-9]` may be selected, except 6 (reboot).  Issue #261
+* New command line option: `finit.fstab=/etc/fstab.custom`, with full
+  support for mounting, mount helpers, fsck, and swapon/off, issue #224
+* Support for special device `/dev/root`, which may not exist in `/dev`.
+  Finit now looks up the matching block device for `/` in `/sys/block/`
 * Loading `module`s no longer shows arguments in progress output
 * Warning messages in progress output now in yellow, not red, issue #214
-* `initctl`, new command line option `-v,--version` for ease of use
-* Extended environment variables for pre/post scripts, issue #189
+* `initctl`, new command line option `-V,--version` for ease of use
 * New condition `done` for run task, issue #207 by Ming Liu, Atlas Copco
 * Refactor parts of shutdown and reboot sequence for PREEMPT-RT kernels,
   by Robert Andersson, Mathias Thore, and Ming Liu, Atlas Copco
 * Conditions for run/task/sysv status, e.g. `run/foo/success` and
   `task/bar/failure`.  Issue #232, by Ming Liu, Atlas Copco
-* initctl support for sending signals to services, by Jörgen
-  Sigvardsson, issue #225
+* Conditions for services, can be used to synchronize other stanzas:
+  - `service/foo/running`
+  - `service/foo/halted`
+  - `service/foo/missing`
+  - `service/foo/crashed`
+  - `service/foo/stopped`
+  - `service/foo/busy`
+  - `service/foo/restart`
+* `initctl signal` support, by Jörgen Sigvardsson, issue #225
+* `initctl cond get` support to match `cond [set | clear]`, issue #255
 * `[WARN]` messages on console now printed in yellow, issue #214
 * Network services now also stopped when going to runlevel 6 (reboot),
   not just runlevel 0 (shutdown) or 1 (single-user)
@@ -43,8 +56,27 @@ you *need* to upgrade!
 * Simplify shutdown/reboot when running in a container
 * Log to `stderr` when running in a container w/o syslog daemon
 * Add support for `type:forking` to services, already supported but
-  with a very difficult `pid:` syntax.  Documentation updated
-* Support for setting global environment variables in `finit.conf`
+  with a very difficult `pid:` syntax, issue #223.  Docs updated
+* Support for setting global environment variables in `finit.conf`,
+  please note: this also affects Finit itself, be careful!
+* Extended environment variables for pre/post scripts, issue #189
+* Document secret service option `respawn`, which bypasses the crash
+  semantics, allowing endless restarts
+* Document secret `HOOK_BANNER`, the first hook point before the banner
+* New plugin: `hook-scripts`, allows [run-parts(8)][] style scripts to
+  run on any hook point.  Contributed by Tobias Waldekranz
+* `initctl` (`reboot`) falls back to `-f` when it detects it is in
+  `sulogin` recovery mode, issue #247
+* The bundled `sulogin` is no longer enabled by default, in favor of
+  distribution versions.  Enable with `./configure --with-sulogin`
+* Support args to sysv-like scripts, e.g. `bridge-stp br0 start`
+* The `modules-load` plugin now skips all lines starting with `#` and
+  `;`.  Furthermore, files in `/etc/modules-load.d/*.conf` are now read
+  in lexicographic order and UNIX backup files (`foo.conf~`) are skipped
+* The `name:id` tuple is now more consistently used in all log and debug
+  messages instead of the basename of the command
+
+[run-parts(8)]: https://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 
 ### Fixes
 * Fix nasty 32/64-bit alignment issue between finit and its plugins,
@@ -60,10 +92,16 @@ you *need* to upgrade!
 * Fix #227: reboot stalls if process stopped with `[WARN]`
 * Fix #233: initctl shows wrong status for run/task, by Sergio Morlans
   and Ming Liu, Atlas Copco
-* Fix start/stop of SysV init scripts
+* Fix #248: source `env:file` also in `pre:` and `post` scripts
+* Fix #260: drop limit on device name in `Checking filesystem`...` output
+* Fix start/stop and monitoring (restart) of SysV init scripts and
+  forking services, see the updated documentation for details
 * Fix call to `swapoff` at shutdown, does not support `-e` flag
 * Fix suspend to RAM issue.  Previously `reboot(RB_SW_SUSPEND)` was
   used, now the modern `/sys/power/state` API is used instead.
+* Fix nasty run/task/service matcher bug, triggered by stanzas using the
+  same basename of a command but different `:ID`.  Caused Finit to match
+  with already registered but different run/task/service
 
 
 [4.2][] - 2022-01-16
