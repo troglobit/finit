@@ -418,7 +418,6 @@ services, called `initctl`.  Unlike `telinit` the `initctl` tool does
 not return until the given command has fully completed.
 
 ```
-alpine:~# initctl help
 Usage: initctl [OPTIONS] [COMMAND]
 
 Options:
@@ -430,12 +429,13 @@ Options:
   -q, --quiet               Silent, only return status of command
   -t, --no-heading          Skip table headings
   -v, --verbose             Verbose output
+  -V, --version             Show program version
   -h, --help                This help text
 
 Commands:
   debug                     Toggle Finit (daemon) debug
   help                      This help text
-  version                   Show Finit version
+  version                   Show program version
 
   ls | list                 List all .conf in /etc/finit.d
   create   <CONF>           Create   .conf in /etc/finit.d/available
@@ -448,6 +448,7 @@ Commands:
   reload                    Reload  *.conf in /etc/finit.d (activate changes)
 
   cond     set   <COND>     Set (assert) user-defined condition     +usr/COND
+  cond     get   <COND>     Get status of user-defined condition, see $? and -v
   cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND
   cond     status           Show condition status, default cond command
   cond     dump             Dump all conditions and their status
@@ -459,6 +460,8 @@ Commands:
                             This allows restart of run/tasks that have already run
                             Note: Finit .conf file(s) are *not* reloaded!
   restart  <NAME>[:ID]      Restart (stop/start) service by name
+  signal   <NAME>[:ID] <S>  Send signal S to service by name, with optional ID
+  ident    [NAME]           Show matching identities for NAME, or all
   status   <NAME>[:ID]      Show service status, by name
   status                    Show status of services, default command
 
@@ -471,6 +474,8 @@ Commands:
   halt                      Halt system
   poweroff                  Halt and power off system
   suspend                   Suspend system
+
+  utmp     show             Raw dump of UTMP/WTMP db
 ```
 
 For services *not* supporting `SIGHUP` the `<!>` notation in the .conf
