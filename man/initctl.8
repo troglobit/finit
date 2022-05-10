@@ -139,7 +139,24 @@ Start service by name, with optional ID, e.g.,
 .It Nm Ar stop Cm NAME[:ID]
 Stop/Pause a running service by name
 .It Nm Ar reload Cm NAME[:ID]
-Reload service by name (SIGHUP or restart)
+Reload service as if its configuration had changed.  Internally,
+.Nm finit
+marks the named service as "dirty" and turns the state machine,
+resulting in a SIGHUP or restart of (at least) the named service.
+Any dependant services are also restarted.
+.Pp
+.Sy Note:
+no .conf file is reloaded with this variant of the command.  Essentially
+it is the same as calling
+.Cm restart .
+Except for two things:
+.Bl -enum -offset indent -compact
+.It
+if the service supports HUP, it's signaled instead of stop-started, and
+.It
+it allows restarting run/task in the same runlevel -- which is otherwise
+restricted
+.El
 .It Nm Ar signal Cm NAME:[ID] S
 Send signal S to service, by name.
 .Cm S

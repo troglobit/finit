@@ -1015,7 +1015,6 @@ static int usage(int rc)
 			"  reload                    Reload   " FINIT_CONF " (activate changes)\n");
 
 	fprintf(stderr,
-//		"  reload   <NAME>[:ID]      Reload (SIGHUP) service by name\n"  
 		"\n"
 		"  cond     set   <COND>     Set (assert) user-defined condition     +usr/COND\n"
 		"  cond     get   <COND>     Get status of user-defined condition, see $? and -v\n"
@@ -1026,7 +1025,9 @@ static int usage(int rc)
 		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
 		"  start    <NAME>[:ID]      Start service by name, with optional ID\n"
 		"  stop     <NAME>[:ID]      Stop/Pause a running service by name\n"
-		"  reload   <NAME>[:ID]      Reload service by name (SIGHUP or restart)\n"
+		"  reload   <NAME>[:ID]      Reload service as if .conf changed (SIGHUP or restart)\n"
+		"                            This allows restart of run/tasks that have already run\n"
+		"                            Note: Finit .conf file(s) are *not* reloaded!\n"
 		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
 		"  signal   <NAME>[:ID] <S>  Send signal S to service by name, with optional ID\n"
 		"  ident    [NAME]           Show matching identities for NAME, or all\n"

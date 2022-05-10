@@ -451,7 +451,9 @@ Commands:
   log      [NAME]           Show ten last Finit, or NAME, messages from syslog
   start    <NAME>[:ID]      Start service by name, with optional ID
   stop     <NAME>[:ID]      Stop/Pause a running service by name
-  reload   <NAME>[:ID]      Reload service by name (SIGHUP or restart)
+  reload   <NAME>[:ID]      Reload service as if .conf changed (SIGHUP or restart)
+                            This allows restart of run/tasks that have already run
+                            Note: Finit .conf file(s) are *not* reloaded!
   restart  <NAME>[:ID]      Restart (stop/start) service by name
   status   <NAME>[:ID]      Show service status, by name
   status                    Show status of services, default command
