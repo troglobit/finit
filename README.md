@@ -268,8 +268,8 @@ unnecessary overhead, which can be removed at build-time using:
 
 **Cgroups**
 
-Finit supports cgroups v2 and comes with the following default groups
-in which services and user sessions are placed in:
+Finit supports cgroups v2 and comes with the following default groups in
+which services and user sessions are placed in:
 
      /sys/fs/cgroup
        |-- init/               # cpu.weight:100
@@ -304,6 +304,10 @@ how to configure per-group limits.
 The `initctl` tool has three commands to help debug and optimize the
 setup and monitoring of cgroups.  See the `ps`, `top`, and `cgroup`
 commands for details.
+
+> **Note:** systems that do not support cgroups, specifically version 2,
+> are automatically detected.  On such systems the above functionality
+> is disabled early at boot.
 
 
 Runparts & /etc/rc.local
