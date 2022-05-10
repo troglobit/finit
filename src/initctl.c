@@ -1009,7 +1009,7 @@ static int usage(int rc)
 			"  disable  <CONF>           Disable  .conf in %s\n", ena);
 	if (has_rcsd)
 		fprintf(stderr,
-			"  reload                    Reload   *.conf in " FINIT_RCSD " (activate changes)\n");
+			"  reload                    Reload  *.conf in " FINIT_RCSD " (activate changes)\n");
 	else
 		fprintf(stderr,
 			"  reload                    Reload   " FINIT_CONF " (activate changes)\n");
