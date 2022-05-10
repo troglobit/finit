@@ -24,9 +24,11 @@ This program follows the usual UNIX command line syntax, with long
 options starting with two dashes (`-').  The options are as follows:
 .Bl -tag -width Ds
 .It Fl b, -batch
-Batch mode, no screen size probing.
+Batch mode, no screen size probing.  Useful for scripting.
 .It Fl c, -create
-Create missing paths (and files) as needed.  Useful with the edit command.
+Create missing paths (and files) as needed.  Useful with the
+.Cm edit
+command.
 .It Fl f, -force
 Ignore missing files and arguments, never prompt.
 .It Fl h, -help
@@ -64,7 +66,16 @@ files in
 Create
 .Cm .conf
 in
-.Pa /etc/finit.d/available
+.Pa /etc/finit.d/available .
+.Pp
+Piping the contents into
+.Nm
+works as one would expect:
+.Bd -literal -offset indent
+echo "task name:foo /tmp/foo.sh -- Foo logger" | initctl create foo
+initctl enable foo
+initctl reload
+.Ed
 .It Nm Ar delete Ar CONF
 Delete
 .Cm .conf
