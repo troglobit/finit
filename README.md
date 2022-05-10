@@ -424,13 +424,13 @@ Options:
   -b, --batch               Batch mode, no screen size probing
   -c, --create              Create missing paths (and files) as needed
   -f, --force               Ignore missing files and arguments, never prompt
+  -h, --help                This help text
   -1, --once                Only one lap in commands like 'top'
   -p, --plain               Use plain table headings, no ctrl chars
   -q, --quiet               Silent, only return status of command
   -t, --no-heading          Skip table headings
   -v, --verbose             Verbose output
   -V, --version             Show program version
-  -h, --help                This help text
 
 Commands:
   debug                     Toggle Finit (daemon) debug
