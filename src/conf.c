@@ -454,12 +454,12 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	ptr[i] = 0;
 
 	if (i >= sizeof(svc->cond)) {
-		logit(LOG_WARNING, "Too long event list in declaration of %s: %s", svc->cmd, ptr);
+		logit(LOG_WARNING, "Too long event list in declaration of %s: %s", svc_ident(svc, NULL, 0), ptr);
 		return;
 	}
 
 	if (!strncmp(ptr, "svc/", 4)) {
-		logit(LOG_ERR, "Unsupported cond syntax for %s: <%s", svc->cmd, ptr);
+		logit(LOG_ERR, "Unsupported cond syntax for %s: <%s", svc_ident(svc, NULL, 0), ptr);
 		return;
 	}
 

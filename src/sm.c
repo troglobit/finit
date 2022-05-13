@@ -187,7 +187,7 @@ restart:
 		 */
 		svc = svc_stop_completed();
 		if (svc) {
-			_d("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
+			_d("Waiting to collect %s, cmd %s(%d) ...", svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
 			break;
 		}
 
@@ -240,7 +240,7 @@ restart:
 		 */
 		svc = svc_stop_completed();
 		if (svc) {
-			_d("Waiting to collect %s(%d) ...", svc->cmd, svc->pid);
+			_d("Waiting to collect %s, cmd %s(%d) ...", svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
 			break;
 		}
 

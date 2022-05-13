@@ -198,9 +198,10 @@ static int lredirect(svc_t *svc)
 
 	pid = fork();
 	if (pid == 0) {
-		int fds;
-		char *tag  = basename(svc->cmd);
 		char *prio = "daemon.info";
+		char buf[MAX_IDENT_LEN];
+		char *tag;
+		int fds;
 
 		sched_yield();
 
@@ -212,6 +213,9 @@ static int lredirect(svc_t *svc)
 
 		/* Reset signals */
 		sig_unblock();
+
+		/* Default syslog identity name[:id] */
+		tag = svc_ident(svc, buf, sizeof(buf));
 
 		if (!whichp(_PATH_LOGIT)) {
 			logit(LOG_INFO, _PATH_LOGIT " missing, using syslog for %s instead", svc->name);
@@ -416,20 +420,19 @@ static pid_t service_fork(svc_t *svc)
 		/* Set configured limits */
 		for (int i = 0; i < RLIMIT_NLIMITS; i++) {
 			if (setrlimit(i, &svc->rlimit[i]) == -1)
-				logit(LOG_WARNING,
-				      "%s: rlimit: Failed setting %s",
-				      svc->cmd, rlim2str(i));
+				logit(LOG_WARNING, "%s: rlimit: failed setting %s",
+				      svc_ident(svc, NULL, 0), rlim2str(i));
 		}
 
 		/* Set desired user+group */
 		if (gid >= 0) {
 			if (setgid(gid))
-				_pe("%s: failed setgid(%d)", svc->cmd, gid);
+				_pe("%s: failed setgid(%d)", svc_ident(svc, NULL, 0), gid);
 		}
 
 		if (uid >= 0) {
 			if (setuid(uid))
-				_pe("%s: failed setuid(%d)", svc->cmd, uid);
+				_pe("%s: failed setuid(%d)", svc_ident(svc, NULL, 0), uid);
 
 			/* Set default path for regular users */
 			if (uid > 0)
@@ -438,7 +441,7 @@ static pid_t service_fork(svc_t *svc)
 				setenv("HOME", home, 1);
 				if (chdir(home)) {
 					if (chdir("/"))
-						_pe("%s: failed chdir(%s) and chdir(/)", svc->cmd, home);
+						_pe("%s: failed chdir(%s) and chdir(/)", svc_ident(svc, NULL, 0), home);
 				}
 			}
 		}
@@ -475,14 +478,14 @@ static int service_start(svc_t *svc)
 
 	/* Don't try and start service if it doesn't exist. */
 	if (!whichp(svc->cmd)) {
-		logit(LOG_WARNING, "%s: missing or not in $PATH", svc->cmd);
+		logit(LOG_WARNING, "%s: missing %s or not in $PATH", svc_ident(svc, NULL, 0), svc->cmd);
 		svc_missing(svc);
 		return 1;
 	}
 
 	/* Unlike systemd we do not allow starting service if env is missing, unless - */
 	if (!svc_checkenv(svc)) {
-		logit(LOG_WARNING, "%s: missing env file %s", svc->cmd, svc->env);
+		logit(LOG_WARNING, "%s: missing %s env file %s", svc_ident(svc, NULL, 0), svc->cmd, svc->env);
 		svc_missing(svc);
 		return 1;
 	}
@@ -535,7 +538,7 @@ static int service_start(svc_t *svc)
 			int rc;
 
 			if ((rc = wordexp(svc->cmd, &we, 0))) {
-				_e("%s: failed wordexp(%s): %d", svc->cmd, svc->cmd, rc);
+				_e("%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), svc->cmd, rc);
 			nomem:
 				wordfree(&we);
 				_exit(1);
@@ -563,19 +566,19 @@ static int service_start(svc_t *svc)
 				strlcat(str, arg, sizeof(str));
 
 				if ((rc = wordexp(str, &we, WRDE_APPEND))) {
-					_e("%s: failed wordexp(%s): %d", svc->cmd, str, rc);
+					_e("%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), str, rc);
 					goto nomem;
 				}
 			}
 
 			if (we.we_wordc > MAX_NUM_SVC_ARGS) {
-				logit(LOG_ERR, "%s: too man args after expansion.", svc->cmd);
+				logit(LOG_ERR, "%s: too many args to %s after expansion.", svc_ident(svc, NULL, 0), svc->cmd);
 				goto nomem;
 			}
 
 			for (i = 0; i < we.we_wordc; i++) {
 				if (strlen(we.we_wordv[i]) >= sizeof(svc->args[i])) {
-					logit(LOG_ERR, "%s: expanded arg. '%s' too long", svc->cmd, we.we_wordv[i]);
+					logit(LOG_ERR, "%s: expanded %s arg. '%s' too long", svc_ident(svc, NULL, 0), svc->cmd, we.we_wordv[i]);
 					rc = WRDE_NOSPACE;
 					goto nomem;
 				}
@@ -684,7 +687,7 @@ static void service_kill(svc_t *svc)
 
 	if (svc->pid <= 1) {
 		/* Avoid killing ourselves or all processes ... */
-		_d("%s: Aborting SIGKILL, already terminated.", svc->cmd);
+		_d("%s: Aborting SIGKILL, already terminated.", svc_ident(svc, NULL, 0));
 		return;
 	}
 
@@ -714,7 +717,7 @@ static void service_cleanup(svc_t *svc)
 	fn = pid_file(svc);
 	if (fn && remove(fn) && errno != ENOENT)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
-		      basename(svc->cmd), fn);
+		      svc_ident(svc, NULL, 0), fn);
 
 	/* No longer running, update books. */
 	if (svc_is_tty(svc) && svc->pid > 1)
@@ -857,7 +860,7 @@ static int service_restart(svc_t *svc)
 		return 1;
 
 	if (svc->pid <= 1) {
-		_d("Bad PID %d for %s, SIGHUP", svc->pid, svc->cmd);
+		_d("%s: bad PID %d for %s, SIGHUP", svc_ident(svc, NULL, 0), svc->pid, svc->cmd);
 		svc->start_time = svc->pid = 0;
 		return 1;
 	}
@@ -960,7 +963,7 @@ static void parse_env(svc_t *svc, char *env)
 		return;
 
 	if (strlen(env) >= sizeof(svc->env)) {
-		_e("%s: env file is too long (>%zu chars)", svc->cmd, sizeof(svc->env));
+		_e("%s: env file is too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->env));
 		return;
 	}
 
@@ -984,7 +987,7 @@ static void parse_cgroup(svc_t *svc, char *cgroup)
 	}
 
 	if (strlen(ptr) >= sizeof(svc->cgroup)) {
-		_e("%s: cgroup settings too long (>%zu chars)", svc->cmd, sizeof(svc->cgroup));
+		_e("%s: cgroup settings too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->cgroup));
 		return;
 	}
 
@@ -1009,7 +1012,7 @@ static void parse_killdelay(svc_t *svc, char *delay)
 
 	sec = strtonum(delay, 1, 60, &errstr);
 	if (errstr) {
-		_e("%s: killdelay %s is %s (1-60)", svc->cmd, delay, errstr);
+		_e("%s: killdelay %s is %s (1-60)", svc_ident(svc, NULL, 0), delay, errstr);
 		return;
 	}
 

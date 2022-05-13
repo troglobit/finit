@@ -102,8 +102,8 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 			service_forked(svc);
 
 			if (pid != svc->pid) {
-				_d("Forking service %s changed PID from %d to %d",
-				   svc->cmd, svc->pid, pid);
+				_d("Forking service %s (cmd %s) changed PID from %d to %d",
+				   svc_ident(svc, NULL, 0), svc->cmd, svc->pid, pid);
 				svc->pid = pid;
 
 				/* Complement log in service.c for non-forking services */
