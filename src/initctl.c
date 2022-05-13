@@ -154,7 +154,7 @@ static int toggle_debug(char *arg)
 	return client_send(&rq, sizeof(rq));
 }
 
-static int do_log(svc_t *svc)
+static int do_log(svc_t *svc, char *tail)
 {
 	const char *logfile = "/var/log/syslog";
 	char *nm = svc_ident(svc, NULL, 0);
@@ -171,7 +171,21 @@ static int do_log(svc_t *svc)
 			return 0; /* bail out, maybe in container */
 	}
 
-	return systemf("cat %s | grep '\\[%d\\]\\|%s' | tail -10", logfile, pid, nm);
+	return systemf("cat %s | grep '\\[%d\\]\\|%s' %s", logfile, pid, nm, tail);
+}
+
+/* initctl log [-10] foo */
+static int show_log(char *arg)
+{
+	const char *num = "-10";
+	svc_t *svc;
+
+
+	svc = client_svc_find(arg);
+	if (!svc)
+		return 255;
+
+	return do_log(svc, "");
 }
 
 static int do_runlevel(char *arg)
@@ -868,7 +882,7 @@ static int show_status(char *arg)
 	no_cgroup:
 		printf("\n");
 
-		return do_log(svc);
+		return do_log(svc, "| tail -10");
 	}
 
 	col_widths();
@@ -1165,7 +1179,7 @@ int main(int argc, char *argv[])
 
 		{ "cond",     cond, NULL, NULL, NULL          },
 
-		{ "log",      NULL, do_log,       NULL, NULL  },
+		{ "log",      NULL, show_log,     NULL, NULL  },
 		{ "start",    NULL, do_start,     NULL, NULL  },
 		{ "stop",     NULL, do_stop,      NULL, NULL  },
 		{ "restart",  NULL, do_restart,   NULL, NULL  },
