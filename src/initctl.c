@@ -154,12 +154,16 @@ static int toggle_debug(char *arg)
 	return client_send(&rq, sizeof(rq));
 }
 
-static int do_log(char *svc)
+static int do_log(svc_t *svc)
 {
-	char *logfile = "/var/log/syslog";
+	const char *logfile = "/var/log/syslog";
+	char *nm = svc_ident(svc, NULL, 0);
+	pid_t pid = svc->pid;
 
-	if (!svc || !svc[0])
-		svc = "finit";
+	if (!nm || !nm[0]) {
+		nm  = "finit";
+		pid = 1;
+	}
 
 	if (!fexist(logfile)) {
 		logfile = "/var/log/messages";
@@ -167,7 +171,7 @@ static int do_log(char *svc)
 			return 0; /* bail out, maybe in container */
 	}
 
-	return systemf("cat %s | grep %s | tail -10", logfile, svc);
+	return systemf("cat %s | grep '\\[%d\\]\\|%s' | tail -10", logfile, pid, nm);
 }
 
 static int do_runlevel(char *arg)
@@ -864,7 +868,7 @@ static int show_status(char *arg)
 	no_cgroup:
 		printf("\n");
 
-		return do_log(svc->cmd);
+		return do_log(svc);
 	}
 
 	col_widths();
