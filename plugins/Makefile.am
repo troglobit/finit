@@ -9,6 +9,14 @@ if STATIC
 noinst_LTLIBRARIES  = libplug.la
 libplug_la_SOURCES  = bootmisc.c pidfile.c procps.c sys.c usr.c
 
+if BUILD_MDEVD_PLUGIN
+libplug_la_SOURCES += mdevd.c
+endif
+
+if BUILD_QMI_PROXY_PLUGIN
+libplug_la_SOURCES += qmi-proxy.c
+endif
+
 if BUILD_ALSA_UTILS_PLUGIN
 libplug_la_SOURCES += alsa-utils.c
 endif
@@ -55,6 +63,14 @@ endif
 
 else
 pkglib_LTLIBRARIES  = bootmisc.la pidfile.la procps.la sys.la usr.la
+
+if BUILD_MDEVD_PLUGIN
+pkglib_LTLIBRARIES += mdevd.c
+endif
+
+if BUILD_QMI_PROXY_PLUGIN
+pkglib_LTLIBRARIES += qmi-proxy.c
+endif
 
 if BUILD_ALSA_UTILS_PLUGIN
 pkglib_LTLIBRARIES += alsa-utils.la

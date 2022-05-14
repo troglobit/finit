@@ -76,27 +76,43 @@ static void setup(void *arg)
 		if (fexist("/lib/udev/udev-finish"))
 			run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 	} else {
-		path = which("mdev");
-		if (path) {
-			/* Embedded Linux systems usually have BusyBox mdev */
-			if (debug)
-				touch("/dev/mdev.log");
+#ifdef BUILD_MDEVD_PLUGIN
+		path = which("mdevd-coldplug");
+		snprintf(cmd, sizeof(cmd), "%s", path);
+		free(path);
+		run_interactive(cmd, "Coldplugging Devices");
+#endif
+    path = which("mdev");
+	  if (path) {
+		 	/* Embedded Linux systems usually have BusyBox mdev */
+		  if (debug)
+			  touch("/dev/mdev.log");
 
-			snprintf(cmd, sizeof(cmd), "%s -s", path);
-			free(path);
+		  snprintf(cmd, sizeof(cmd), "%s -s", path);
+	    free(path);
 
-			run_interactive(cmd, "Populating device tree");
-		}
+  	  run_interactive(cmd, "Populating device tree");
+    }
 	}
 }
 
+#ifdef BUILD_MDEVD_PLUGIN
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
-	.depends = { "bootmisc" },
+	.depends = { "mdevd" },
 };
+#else
+static plugin_t plugin = {
+  .name = __FILE__,
+  .hook[HOOK_BASEFS_UP] = {
+    .cb  = setup
+  },
+  .depends = { "bootmisc" },
+};
+#endif
 
 PLUGIN_INIT(plugin_init)
 {
