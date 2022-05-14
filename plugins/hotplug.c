@@ -76,7 +76,7 @@ static void setup(void *arg)
 		if (fexist("/lib/udev/udev-finish"))
 			run_interactive("/lib/udev/udev-finish", "Finalizing udev");
 	} else {
-#ifdef BUILD_MDEVD_PLUGIN
+#ifdef MDEVD_PLUGIN_COLDPLUG
 		path = which("mdevd-coldplug");
 		snprintf(cmd, sizeof(cmd), "%s", path);
 		free(path);
@@ -96,7 +96,7 @@ static void setup(void *arg)
 	}
 }
 
-#ifdef BUILD_MDEVD_PLUGIN
+#ifdef MDEVD_PLUGIN_COLDPLUG
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {

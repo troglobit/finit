@@ -153,6 +153,8 @@ AC_ARG_WITH(hook-scripts-path,
         AS_HELP_STRING([--with-hook-scripts-path=DIR], [Base directory for hook scripts, default $libexecdir/finit/hook]),
 	[hook_scripts_path=$withval], [hook_scripts_path=yes])
 
+AC_ARG_WITH(mdevd-coldplug,
+        AS_HELP_STRING([--with-mdevd-coldplug], [Enable mdevd coldplug, default: no.]),, [with-mdevd-coldplug=no])
 
 ### Enable features ###########################################################################
 
@@ -278,6 +280,8 @@ AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl 
 
 AS_IF([test "$heading" = ""],   [heading="<DEFAULT>"])
 AS_IF([test "$heading" = "no"], [heading="<NONE>"])
+
+AS_IF([test "x$with_mdevd_coldplug" != "xno"], [with_mdevd_coldplug=yes])
 
 # Generate all files
 AC_OUTPUT

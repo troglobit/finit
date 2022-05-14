@@ -36,8 +36,8 @@
 #include "conf.h"
 
 #define DAEMON "mdevd"
-#define ARGS   "-f /etc/mdev.conf"
-#define DESC   "mdevd - daemon managing kernel hotplug events"
+#define ARGS   ""
+#define DESC   "MDEVD Extended Hotplug Daemon"
 
 #ifndef DAEMONUSER
 #define DAEMONUSER "root"
