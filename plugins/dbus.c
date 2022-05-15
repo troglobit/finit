@@ -66,11 +66,9 @@ static void setup(void *arg)
 
 	prev =umask(0);
 
-  /* Create additional directories */
+  _d("Creating D-Bus Required Directories ...");
 	mksubsys("/var/run/dbus", 0755, DAEMONUSER, DAEMONUSER);
-  mksubsys("/var/run/lock", 0755, DAEMONUSER, DAEMONUSER);
   mksubsys("/var/run/lock/subsys", 0755, DAEMONUSER, DAEMONUSER);
-  mksubsys("/var/lib", 0755, DAEMONUSER, DAEMONUSER);
   mksubsys("/var/lib/dbus", 0755, DAEMONUSER, DAEMONUSER);
 
   /* Generate machine id for dbus */
