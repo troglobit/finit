@@ -434,7 +434,6 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf))) {
 				char proc[ttcols];
-				int len;
 
 				switch (mode) {
 				case 1:
@@ -456,6 +455,8 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 				if (plain) {
 					strlcat(row, proc, rplen);
 				} else {
+					int len;
+
 					strlcat(row, CDIM, rlen);
 					strlcat(row, proc, rlen);
 
@@ -600,7 +601,6 @@ int show_cgtop(char *arg)
         uev_t timer, input, sigint, sigterm, sigquit;
 	char path[512];
         uev_ctx_t ctx;
-	int flags;
 
 	if (!arg)
 		arg = FINIT_CGPATH;
@@ -619,6 +619,8 @@ int show_cgtop(char *arg)
         uev_timer_init(&ctx, &timer, cgtop, arg, 1, ionce ? 0 : 1000);
 
 	if (!ionce && !plain) {
+		int flags;
+
 		atexit(cleanup);
 		ttraw();
 		hidecursor();
