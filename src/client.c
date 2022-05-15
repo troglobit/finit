@@ -28,6 +28,7 @@
 #include <sys/un.h>
 
 #include "client.h"
+#include "initctl.h"
 
 static int sd = -1;
 
@@ -72,11 +73,10 @@ int client_disconnect(void)
 int client_send(struct init_request *rq, ssize_t len)
 {
 	struct pollfd pfd = { 0 };
-	int sd, result = 255;
+	int result = 255;
 	int rc;
 
-	sd = client_connect();
-	if (-1 == sd)
+	if (client_connect() == -1)
 		return -1;
 
 	pfd.fd     = sd;
@@ -120,15 +120,13 @@ exit:
 
 svc_t *client_svc_iterator(int first)
 {
-	int sd = -1;
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
 		.cmd   = INIT_CMD_SVC_ITER,
 	};
 	static svc_t svc;
 
-	sd = client_connect();
-	if (sd == -1)
+	if (client_connect() == -1)
 		return NULL;
 
 	if (first)
@@ -161,10 +159,8 @@ svc_t *do_cmd(int cmd, const char *arg)
 		.cmd   = cmd,
 	};
 	static svc_t svc;
-	int sd = -1;
 
-	sd = client_connect();
-	if (sd == -1)
+	if (client_connect() == -1)
 		return NULL;
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
