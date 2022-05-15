@@ -243,7 +243,7 @@ static float cgroup_cpuload(struct cg *cg)
 	snprintf(fn, sizeof(fn), "%s/cpu.stat", cg->cg_path);
 	fp = fopen(fn, "r");
 	if (!fp)
-		ERR(1, "Cannot open %s", fn);
+		ERR(72, "Cannot open %s", fn);
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		uint64_t curr;
@@ -285,7 +285,7 @@ static struct cg *append(char *path)
 
 	cg = calloc(1, sizeof(struct cg));
 	if (!cg)
-		ERR(1, "failed allocating struct cg");
+		ERR(71, "failed allocating struct cg");
 
 	cg->cg_path = strdup(path);
 	if (list)
@@ -295,7 +295,7 @@ static struct cg *append(char *path)
 	item.key  = cg->cg_path;
 	item.data = cg;
 	if (!hsearch(item, ENTER))
-		ERR(1, "failed adding to hash table");
+		ERR(70, "failed adding to hash table");
 
 	return cg;
 }
@@ -609,7 +609,7 @@ int show_cgtop(char *arg)
 	}
 
 	if (!hcreate(ttrows + 25))
-		ERR(1, "failed creating hash table");
+		ERR(70, "failed creating hash table");
 
 	sysinfo(&si);
 	total_ram = si.totalram * si.mem_unit;
