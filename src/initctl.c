@@ -245,20 +245,11 @@ static int do_startstop(int cmd, char *arg)
 	};
 
 	if (!arg || !arg[0])
-		errx(1, "missing argument to %s", (cmd == INIT_CMD_START_SVC
-						   ? "start"
-						   : (cmd == INIT_CMD_STOP_SVC
-						      ? "stop"
-						      : "restart")));
+		errx(1, "missing command argument");
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
-	if (client_send(&rq, sizeof(rq))) {
-		fprintf(stderr, "No such task or service(s): %s\n\n", arg);
-		fprintf(stderr, "Usage: initctl %s <NAME>[:ID]\n",
-			cmd == INIT_CMD_START_SVC ? "start" :
-			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
-		return 1;
-	}
+	if (client_send(&rq, sizeof(rq)))
+		errx(1, "No such task or service(s): %s", arg);
 
 	return do_svc(cmd, arg);
 }
@@ -290,7 +281,7 @@ static int do_restart(char *arg)
 	}
 
 	if (retries == 0)
-		errx(1, "Failed stopping %s (restart)", arg);
+		errx(1, "failed stopping %s (restart)", arg);
 
 	return do_startstop(INIT_CMD_RESTART_SVC, arg);
 }
@@ -316,25 +307,17 @@ int do_signal(int argc, char *argv[])
 	if (argc != 2)
 		errx(1, "invalid number of arguments to signal");
 
-	/* Validate service name */
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
-	if (client_send(&rq, sizeof(rq))) {
-		fprintf(stderr, "No such task or service(s): %s\n\n", argv[0]);
-		goto show_usage;
-	}
+	if (client_send(&rq, sizeof(rq)))
+		errx(1, "no such task or service(s): %s", argv[0]);
 
-	/* Validate signal name (or number) */
 	signo = str2sig(argv[1]);
 	if (signo == -1) {
-		/* Not a signal name, is it an actual signal number? */
-		errno = 0;
-		signo = (int)strtol(argv[1], NULL, 10);
+		const char *errstr = NULL;
 
-		/* Was it a number? Was it a signo that finit recognizes? */
-		if (errno || !*(sig2str(signo))) {
-			fprintf(stderr, "Not a valid signal (or signo): %s\n", argv[1]);
-			goto show_usage;
-		}
+		signo = (int)strtonum(argv[1], 1, 31, &errstr);
+		if (errstr)
+			errx(1, "%s signal: %s", errstr, argv[1]);
 	}
 
 	/* Reuse runlevel for signal number. */
@@ -344,10 +327,6 @@ int do_signal(int argc, char *argv[])
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
 
 	return client_send(&rq, sizeof(rq));
-
-show_usage:
-	fprintf(stderr, "Usage: initctl signal <NAME>[:ID] <S>\n");
-	return 1;
 }
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
