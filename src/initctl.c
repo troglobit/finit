@@ -157,10 +157,13 @@ static int toggle_debug(char *arg)
 static int do_log(svc_t *svc, char *tail)
 {
 	const char *logfile = "/var/log/syslog";
-	char *nm = svc_ident(svc, NULL, 0);
-	pid_t pid = svc->pid;
+	pid_t pid;
+	char *nm;
 
-	if (!nm || !nm[0]) {
+	if (svc) {
+		nm = svc_ident(svc, NULL, 0);
+		pid = svc->pid;
+	} else {
 		nm  = "finit";
 		pid = 1;
 	}
@@ -174,14 +177,15 @@ static int do_log(svc_t *svc, char *tail)
 	return systemf("cat %s | grep '\\[%d\\]\\|%s' %s", logfile, pid, nm, tail);
 }
 
-/* initctl log [-10] foo */
 static int show_log(char *arg)
 {
-	svc_t *svc;
+	svc_t *svc = NULL;
 
-	svc = client_svc_find(arg);
-	if (!svc)
-		return 255;
+	if (arg) {
+		svc = client_svc_find(arg);
+		if (!svc)
+			return 255;
+	}
 
 	return do_log(svc, "");
 }
