@@ -394,7 +394,7 @@ typedef enum { COND_CLR, COND_SET, COND_GET } condop_t;
 
 static int do_cond_act(char *arg, condop_t op)
 {
-	char oneshot[256];
+	char path[256];
 	size_t off;
 
 	if (arg && strncmp(arg, COND_USR, strlen(COND_USR)) == 0)
@@ -402,27 +402,34 @@ static int do_cond_act(char *arg, condop_t op)
 
 	if (!arg || !arg[0])
 		ERRX(2, "Invalid condition (empty)");
-	if (strchr(arg, '/'))
-		ERRX(2, "Invalid condition (slashes)");
-	if (strchr(arg, '.'))
-		ERRX(2, "Invalid condition (periods)");
 
-	snprintf(oneshot, sizeof(oneshot), _PATH_CONDUSR "%s", arg);
+	/* allowed to read any condition, but not set/clr */
+	if (op != COND_GET) {
+		if (strchr(arg, '/'))
+			ERRX(2, "Invalid condition (slashes)");
+		if (strchr(arg, '.'))
+			ERRX(2, "Invalid condition (periods)");
+	}
+
+	if (strchr(arg, '/'))
+		snprintf(path, sizeof(path), _PATH_COND "%s", arg);
+	else
+		snprintf(path, sizeof(path), _PATH_CONDUSR "%s", arg);
 	off = strlen(_PATH_COND);
 
 	switch (op) {
 	case COND_GET:
-		off = !fexist(oneshot);
+		off = !fexist(path);
 		if (verbose)
 			puts(off ? "off" : "on");
 		return off;
 	case COND_SET:
-		if (symlink(_PATH_RECONF, oneshot) && errno != EEXIST)
-			ERR(73, "Failed asserting condition <%s>", &oneshot[off]);
+		if (symlink(_PATH_RECONF, path) && errno != EEXIST)
+			ERR(73, "Failed asserting condition <%s>", &path[off]);
 		break;
 	case COND_CLR:
-		if (erase(oneshot) && errno != ENOENT)
-			ERR(73, "Failed deasserting condition <%s>", &oneshot[off]);
+		if (erase(path) && errno != ENOENT)
+			ERR(73, "Failed deasserting condition <%s>", &path[off]);
 		break;
 	}
 
