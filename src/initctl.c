@@ -390,7 +390,9 @@ static int do_cond_dump(char *arg)
 	return 0;
 }
 
-static int do_cond_act(char *arg, int op)
+typedef enum { COND_CLR, COND_SET, COND_GET } condop_t;
+
+static int do_cond_act(char *arg, condop_t op)
 {
 	char oneshot[256];
 	size_t off;
@@ -409,30 +411,27 @@ static int do_cond_act(char *arg, int op)
 	off = strlen(_PATH_COND);
 
 	switch (op) {
-	case 2:
+	case COND_GET:
 		off = !fexist(oneshot);
 		if (verbose)
 			puts(off ? "off" : "on");
 		return off;
-	case 1:
+	case COND_SET:
 		if (symlink(_PATH_RECONF, oneshot) && errno != EEXIST)
 			ERR(73, "Failed asserting condition <%s>", &oneshot[off]);
 		break;
-	case 0:
+	case COND_CLR:
 		if (erase(oneshot) && errno != ENOENT)
 			ERR(73, "Failed deasserting condition <%s>", &oneshot[off]);
-		break;
-	default:
-		ERRX(3, "Unsupported operation (%d)", op);
 		break;
 	}
 
 	return 0;
 }
 
-static int do_cond_get(char *arg) { return do_cond_act(arg, 2); }
-static int do_cond_set(char *arg) { return do_cond_act(arg, 1); }
-static int do_cond_clr(char *arg) { return do_cond_act(arg, 0); }
+static int do_cond_get(char *arg) { return do_cond_act(arg, COND_GET); }
+static int do_cond_set(char *arg) { return do_cond_act(arg, COND_SET); }
+static int do_cond_clr(char *arg) { return do_cond_act(arg, COND_CLR); }
 
 static char *svc_cond(svc_t *svc, char *buf, size_t len)
 {
