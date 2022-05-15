@@ -35,16 +35,20 @@
 #include "service.h"
 #include "conf.h"
 
-#define DAEMON "mdevd"
-#define ARGS   ""
-#define DESC   "MDEVD Extended Hotplug Daemon"
+#define MDEVD_DAEMON "mdevd"
+#define MDEVD_ARGS   ""
+#define MDEVD_DESC   "MDEVD Extended Hotplug Daemon"
 
-#ifndef DAEMONUSER
-#define DAEMONUSER "root"
+#ifndef MDEVD_DAEMONUSER
+#define MDEVD_DAEMONUSER "root"
 #endif
 
-#ifndef DAEMONPIDFILE
-#define DAEMONPIDFILE "/var/run/mdevd.pid"
+#ifndef MDEVD_DAEMONGROUP
+#define MDEVD_DAEMONGROUP "root"
+#endif
+
+#ifndef MDEVD_DAEMONPIDFILE
+#define MDEVD_DAEMONPIDFILE "/var/run/mdevd.pid"
 #endif
 
 static void setup(void *arg)
@@ -58,26 +62,26 @@ static void setup(void *arg)
 		return;
 	}
 
-	cmd = which(DAEMON);
+	cmd = which(MDEVD_DAEMON);
 	if (!cmd) {
-		_d("Skipping plugin, %s is not installed.", DAEMON);
+		_d("Skipping plugin, %s is not installed.", MDEVD_DAEMON);
 		return;
 	}
 
 	prev =umask(0);
 
 	/* Clean up from any previous pre-bootstrap run */
-	remove(DAEMONPIDFILE);
+	remove(MDEVD_DAEMONPIDFILE);
 
 	/* Register service with Finit */
   if (debug)
   	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -v 3 -- %s",
-		   DAEMONPIDFILE, DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
+		   MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONUSER, cmd, MDEVD_ARGS, MDEVD_DESC);
   else
     snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
-       DAEMONPIDFILE, DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
+       MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONUSER, cmd, MDEVD_ARGS, MDEVD_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		_pe("Failed registering %s", DAEMON);
+		_pe("Failed registering %s", MDEVD_DAEMON);
 	free(cmd);
 
 	umask(prev);

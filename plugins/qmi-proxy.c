@@ -35,16 +35,20 @@
 #include "service.h"
 #include "conf.h"
 
-#define DAEMON "/usr/libexec/qmi-proxy"
-#define ARGS   "--no-exit"
-#define DESC   "Proxy for QMI devices"
+#define QMI_PROXY_DAEMON "/usr/libexec/qmi-proxy"
+#define QMI_PROXY_ARGS   "--no-exit"
+#define QMI_PROXY_DESC   "Proxy for QMI devices"
 
-#ifndef DAEMONUSER
-#define DAEMONUSER "root"
+#ifndef QMI_PROXY_DAEMONUSER
+#define QMI_PROXY_DAEMONUSER "root"
 #endif
 
-#ifndef DAEMONPIDFILE
-#define DAEMONPIDFILE "/var/run/qmi-proxy.pid"
+#ifndef QMI_PROXY_DAEMONGROUP
+#define QMI_PROXY_DAEMONGROUP "root"
+#endif
+
+#ifndef QMI_PROXY_DAEMONPIDFILE
+#define QMI_PROXY_DAEMONPIDFILE "/var/run/qmi-proxy.pid"
 #endif
 
 static void setup(void *arg)
@@ -58,22 +62,22 @@ static void setup(void *arg)
 		return;
 	}
 
-	cmd = which(DAEMON);
+	cmd = which(QMI_PROXY_DAEMON);
 	if (!cmd) {
-		_d("Skipping plugin, %s is not installed.", DAEMON);
+		_d("Skipping plugin, %s is not installed.", QMI_PROXY_DAEMON);
 		return;
 	}
 
 	prev =umask(0);
 
 	/* Clean up from any previous pre-bootstrap run */
-	remove(DAEMONPIDFILE);
+	remove(QMI_PROXY_DAEMONPIDFILE);
 
 	/* Register service with Finit */
 	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
-		 DAEMONPIDFILE, DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
+		 QMI_PROXY_DAEMONPIDFILE, QMI_PROXY_DAEMONUSER, QMI_PROXY_DAEMONUSER, cmd, QMI_PROXY_ARGS, QMI_PROXY_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		_pe("Failed registering %s", DAEMON);
+		_pe("Failed registering %s", QMI_PROXY_DAEMON);
 	free(cmd);
 
 	umask(prev);
