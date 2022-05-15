@@ -24,6 +24,8 @@
 #ifndef FINIT_INITCTL_H_
 #define FINIT_INITCTL_H_
 
+#include <err.h>
+
 #include "finit.h"
 #include "util.h"
 
@@ -33,6 +35,12 @@ extern int ionce;			/* initctl -1 */
 extern int heading;			/* initctl -t */
 extern int verbose;			/* initctl -v */
 extern int plain;			/* initctl -p */
+extern int quiet;			/* initctl -q */
+
+#define ERR(rc, fmt, args...)  do { if (!quiet) err(rc, fmt, ##args);  else exit(rc); } while (0)
+#define ERRX(rc, fmt, args...) do { if (!quiet) errx(rc, fmt, ##args); else exit(rc); } while (0)
+#define WARN(fmt, args...)     do { if (!quiet) warn(fmt, ##args);  } while (0)
+#define WARNX(fmt, args...)    do { if (!quiet) warnx(fmt, ##args); } while (0)
 
 extern void print_header(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 

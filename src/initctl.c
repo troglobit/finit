@@ -23,7 +23,6 @@
 
 #include "config.h"
 
-#include <err.h>
 #include <ftw.h>
 #include <ctype.h>
 #include <getopt.h>
@@ -39,6 +38,7 @@
 # include <lite/lite.h>
 #endif
 
+#include "initctl.h"
 #include "client.h"
 #include "cond.h"
 #include "serv.h"
@@ -157,10 +157,13 @@ static int toggle_debug(char *arg)
 static int do_log(svc_t *svc, char *tail)
 {
 	const char *logfile = "/var/log/syslog";
-	char *nm = svc_ident(svc, NULL, 0);
-	pid_t pid = svc->pid;
+	pid_t pid;
+	char *nm;
 
-	if (!nm || !nm[0]) {
+	if (svc) {
+		nm = svc_ident(svc, NULL, 0);
+		pid = svc->pid;
+	} else {
 		nm  = "finit";
 		pid = 1;
 	}
@@ -174,16 +177,15 @@ static int do_log(svc_t *svc, char *tail)
 	return systemf("cat %s | grep '\\[%d\\]\\|%s' %s", logfile, pid, nm, tail);
 }
 
-/* initctl log [-10] foo */
 static int show_log(char *arg)
 {
-	const char *num = "-10";
-	svc_t *svc;
+	svc_t *svc = NULL;
 
-
-	svc = client_svc_find(arg);
-	if (!svc)
-		return 255;
+	if (arg) {
+		svc = client_svc_find(arg);
+		if (!svc)
+			ERRX(69, "no such task or service(s): %s", arg);
+	}
 
 	return do_log(svc, "");
 }
@@ -247,20 +249,11 @@ static int do_startstop(int cmd, char *arg)
 	};
 
 	if (!arg || !arg[0])
-		errx(1, "missing argument to %s", (cmd == INIT_CMD_START_SVC
-						   ? "start"
-						   : (cmd == INIT_CMD_STOP_SVC
-						      ? "stop"
-						      : "restart")));
+		ERRX(2, "missing command argument");
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
-	if (client_send(&rq, sizeof(rq))) {
-		fprintf(stderr, "No such task or service(s): %s\n\n", arg);
-		fprintf(stderr, "Usage: initctl %s <NAME>[:ID]\n",
-			cmd == INIT_CMD_START_SVC ? "start" :
-			(cmd == INIT_CMD_STOP_SVC ? "stop"  : "restart"));
-		return 1;
-	}
+	if (client_send(&rq, sizeof(rq)))
+		ERRX(69, "no such task or service(s): %s", arg);
 
 	return do_svc(cmd, arg);
 }
@@ -292,7 +285,7 @@ static int do_restart(char *arg)
 	}
 
 	if (retries == 0)
-		errx(1, "Failed stopping %s (restart)", arg);
+		ERRX(7, "failed stopping %s (restart)", arg);
 
 	return do_startstop(INIT_CMD_RESTART_SVC, arg);
 }
@@ -316,27 +309,19 @@ int do_signal(int argc, char *argv[])
 	int signo;
 
 	if (argc != 2)
-		errx(1, "invalid number of arguments to signal");
+		ERRX(2, "invalid number of arguments to signal");
 
-	/* Validate service name */
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
-	if (client_send(&rq, sizeof(rq))) {
-		fprintf(stderr, "No such task or service(s): %s\n\n", argv[0]);
-		goto show_usage;
-	}
+	if (client_send(&rq, sizeof(rq)))
+		ERRX(69, "no such task or service(s): %s", argv[0]);
 
-	/* Validate signal name (or number) */
 	signo = str2sig(argv[1]);
 	if (signo == -1) {
-		/* Not a signal name, is it an actual signal number? */
-		errno = 0;
-		signo = (int)strtol(argv[1], NULL, 10);
+		const char *errstr = NULL;
 
-		/* Was it a number? Was it a signo that finit recognizes? */
-		if (errno || !*(sig2str(signo))) {
-			fprintf(stderr, "Not a valid signal (or signo): %s\n", argv[1]);
-			goto show_usage;
-		}
+		signo = (int)strtonum(argv[1], 1, 31, &errstr);
+		if (errstr)
+			ERRX(65, "%s signal: %s", errstr, argv[1]);
 	}
 
 	/* Reuse runlevel for signal number. */
@@ -346,10 +331,6 @@ int do_signal(int argc, char *argv[])
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
 
 	return client_send(&rq, sizeof(rq));
-
-show_usage:
-	fprintf(stderr, "Usage: initctl signal <NAME>[:ID] <S>\n");
-	return 1;
 }
 
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
@@ -402,56 +383,62 @@ static int do_cond_dump(char *arg)
 	}
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
-		warnx("Failed parsing %s", _PATH_COND);
+		WARNX("Failed parsing %s", _PATH_COND);
 		return 1;
 	}
 
 	return 0;
 }
 
-static int do_cond_act(char *arg, int op)
+typedef enum { COND_CLR, COND_SET, COND_GET } condop_t;
+
+static int do_cond_act(char *arg, condop_t op)
 {
-	char oneshot[256];
+	char path[256];
 	size_t off;
 
 	if (arg && strncmp(arg, COND_USR, strlen(COND_USR)) == 0)
 		arg += strlen(COND_USR);
 
 	if (!arg || !arg[0])
-		errx(1, "Invalid condition (empty)");
-	if (strchr(arg, '/'))
-		errx(1, "Invalid condition (slashes)");
-	if (strchr(arg, '.'))
-		errx(1, "Invalid condition (periods)");
+		ERRX(2, "Invalid condition (empty)");
 
-	snprintf(oneshot, sizeof(oneshot), _PATH_CONDUSR "%s", arg);
+	/* allowed to read any condition, but not set/clr */
+	if (op != COND_GET) {
+		if (strchr(arg, '/'))
+			ERRX(2, "Invalid condition (slashes)");
+		if (strchr(arg, '.'))
+			ERRX(2, "Invalid condition (periods)");
+	}
+
+	if (strchr(arg, '/'))
+		snprintf(path, sizeof(path), _PATH_COND "%s", arg);
+	else
+		snprintf(path, sizeof(path), _PATH_CONDUSR "%s", arg);
 	off = strlen(_PATH_COND);
 
 	switch (op) {
-	case 2:
-		off = !fexist(oneshot);
+	case COND_GET:
+		off = !fexist(path);
 		if (verbose)
 			puts(off ? "off" : "on");
 		return off;
-	case 1:
-		if (symlink(_PATH_RECONF, oneshot) && errno != EEXIST)
-			err(1, "Failed asserting condition <%s>", &oneshot[off]);
+	case COND_SET:
+		if (symlink(_PATH_RECONF, path) && errno != EEXIST)
+			ERR(73, "Failed asserting condition <%s>", &path[off]);
 		break;
-	case 0:
-		if (erase(oneshot) && errno != ENOENT)
-			err(1, "Failed deasserting condition <%s>", &oneshot[off]);
-		break;
-	default:
-		errx(1, "Unsupported operation (%d)", op);
+	case COND_CLR:
+		if (erase(path) && errno != ENOENT)
+			ERR(73, "Failed deasserting condition <%s>", &path[off]);
 		break;
 	}
 
 	return 0;
 }
 
-static int do_cond_get(char *arg) { return do_cond_act(arg, 2); }
-static int do_cond_set(char *arg) { return do_cond_act(arg, 1); }
-static int do_cond_clr(char *arg) { return do_cond_act(arg, 0); }
+static int do_cond_get(char *arg) { return do_cond_act(arg, COND_GET); }
+static int do_cond_set(char *arg) { return do_cond_act(arg, COND_SET); }
+static int do_cond_clr(char *arg) { return do_cond_act(arg, COND_CLR); }
 
 static char *svc_cond(svc_t *svc, char *buf, size_t len)
 {
@@ -829,7 +816,7 @@ static int show_status(char *arg)
 
 		svc = client_svc_find(arg);
 		if (!svc)
-			return 255;
+			ERRX(69, "no such task or service(s): %s", arg);
 
 		if (quiet) {
 			if (svc_is_runtask(svc))
@@ -1127,7 +1114,7 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 	}
 
 	if (argv[0] && strlen(argv[0]) > 0)
-		errx(1, "No such command.  See 'initctl help' for an overview of available commands.");
+		ERRX(3, "No such command.  See 'initctl help' for an overview of available commands.");
 
 	return command[0].cb(NULL); /* default cmd */
 }
@@ -1263,6 +1250,9 @@ int main(int argc, char *argv[])
 void logit(int prio, const char *fmt, ...)
 {
 	va_list ap;
+
+	if (quiet)
+		return;
 
 	va_start(ap, fmt);
 	if (prio <= LOG_ERR)
