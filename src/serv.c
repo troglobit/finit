@@ -23,7 +23,6 @@
 
 #include "config.h"
 
-#include <err.h>
 #include <fcntl.h> /* Definition of AT_* constants */
 #include <glob.h>
 #include <stdio.h>
@@ -233,7 +232,7 @@ int serv_enable(char *arg)
 	int ena;
 
 	if (!arg || !arg[0]) {
-		warnx("missing argument to enable, may be one of:");
+		WARNX("missing argument to enable, may be one of:");
 		return serv_list("available");
 	}
 
@@ -243,18 +242,18 @@ int serv_enable(char *arg)
 	}
 
 	if (chdir(FINIT_RCSD))
-		err(1, "failed cd %s", FINIT_RCSD);
+		ERR(1, "failed cd %s", FINIT_RCSD);
 
 	if (icreate && mkdir("enabled", 0755) && EEXIST != errno)
-		err(1, "failed creating %s/enabled directory", FINIT_RCSD);
+		ERR(1, "failed creating %s/enabled directory", FINIT_RCSD);
 	ena = !chdir("enabled");   /* System *may* have enabled/ dir. */
 
 	snprintf(path, sizeof(path), "%savailable/%s", ena ? "../" : "", arg);
 	if (!fexist(path))
-		errx(1, "cannot find %s", conf(path, sizeof(path), arg, 0));
+		ERRX(1, "cannot find %s", conf(path, sizeof(path), arg, 0));
 
 	if (fexist(arg))
-		errx(1, "%s already enabled", arg);
+		ERRX(1, "%s already enabled", arg);
 
 	return symlink(path, arg) != 0;
 }
@@ -265,7 +264,7 @@ int do_disable(char *arg, int check)
 	char corr[40];
 
 	if (!arg || !arg[0]) {
-		warnx("missing argument to disable, may be one of:");
+		WARNX("missing argument to disable, may be one of:");
 		return serv_list("enabled");
 	}
 
@@ -275,15 +274,15 @@ int do_disable(char *arg, int check)
 	}
 
 	if (chdir(FINIT_RCSD))
-		err(1, "failed cd %s", FINIT_RCSD);
+		ERR(1, "failed cd %s", FINIT_RCSD);
 	if (chdir("enabled"))	   /* System *may* have enabled/ dir. */
 		dbg("Failed changing to %s/enabled/: %s", FINIT_RCSD, strerror(errno));
 
 	if (check && stat(arg, &st))
-		errx(1, "%s not (an) enabled (service).", arg);
+		ERRX(1, "%s not (an) enabled (service).", arg);
 
 	if (check && (st.st_mode & S_IFMT) == S_IFLNK)
-		errx(1, "cannot disable %s, not a symlink.", arg);
+		ERRX(1, "cannot disable %s, not a symlink.", arg);
 
 	return remove(arg) != 0;
 }
@@ -299,16 +298,16 @@ int serv_touch(char *arg)
 	char *fn;
 
 	if (!arg || !arg[0]) {
-		warnx("missing argument to touch, may be one of:");
+		WARNX("missing argument to touch, may be one of:");
 		return serv_list("enabled");
 	}
 
 	fn = conf(path, sizeof(path), arg, 0);
 	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
-			errx(1, "%s not available.", arg);
+			ERRX(1, "%s not available.", arg);
 		if (is_builtin(arg))
-			errx(1, "%s is a built-in service.", arg);
+			ERRX(1, "%s is a built-in service.", arg);
 
 		strlcpy(path, FINIT_CONF, sizeof(path));
 		fn = path;
@@ -316,7 +315,7 @@ int serv_touch(char *arg)
 
 	/* libite:touch() follows symlinks */
 	if (utimensat(AT_FDCWD, fn, NULL, AT_SYMLINK_NOFOLLOW))
-		err(1, "failed marking %s for reload", fn);
+		ERR(1, "failed marking %s for reload", fn);
 
 	return 0;
 }
@@ -329,9 +328,9 @@ int serv_show(char *arg)
 	fn = conf(path, sizeof(path), arg, 0);
 	if (!fexist(fn)) {
 		if (is_builtin(arg))
-			errx(1, "%s is a built-in service.", arg);
+			ERRX(1, "%s is a built-in service.", arg);
 
-		warnx("Cannot find %s", arg);
+		WARNX("Cannot find %s", arg);
 		return 1;
 	}
 
@@ -366,10 +365,10 @@ static int do_edit(char *arg, int creat)
 	fn = conf(path, sizeof(path), arg, creat);
 	if (!fexist(fn)) {
 		if (is_builtin(arg))
-			errx(1, "%s is a built-in service.", arg);
+			ERRX(1, "%s is a built-in service.", arg);
 
 		if (!creat) {
-			warnx("Cannot find %s, use -c flag, create command, or select one of:", arg);
+			WARNX("Cannot find %s, use -c flag, create command, or select one of:", arg);
 			return serv_list(NULL);
 		}
 
@@ -378,7 +377,7 @@ static int do_edit(char *arg, int creat)
 		copyfile(SAMPLE_CONF, fn, 0, 0);
 #endif
 	} else if (creat)
-		warnx("the file %s already exists, falling back to edit.", fn);
+		WARNX("the file %s already exists, falling back to edit.", fn);
 
 	for (size_t i = 0; i < NELEMS(editor); i++) {
 		if (systemf("%s %s 2>/dev/null", editor[i], path))
@@ -407,10 +406,10 @@ int serv_creat(char *arg)
 	FILE *fp;
 
 	if (!arg || !arg[0])
-		errx(1, "missing argument to create");
+		ERRX(1, "missing argument to create");
 
 	if (is_builtin(arg))
-		errx(1, "%s is a built-in service.", arg);
+		ERRX(1, "%s is a built-in service.", arg);
 
 	/* Input from a pipe or a proper TTY? */
 	if (isatty(STDIN_FILENO))
@@ -419,16 +418,16 @@ int serv_creat(char *arg)
 	/* Open fn for writing from pipe */
 	fn = conf(buf, sizeof(buf), arg, 1);
 	if (!fn)
-		err(1, "failed creating conf %s", arg);
+		ERR(1, "failed creating conf %s", arg);
 
 	if (!icreate && fexist(fn)) {
-		warnx("%s already exists, skipping (use -c to override)", fn);
+		WARNX("%s already exists, skipping (use -c to override)", fn);
 		fn = "/dev/null";
 	}
 
 	fp = fopen(fn, "w");
 	if (!fp)
-		err(1, "failed opening %s for writing", fn);
+		ERR(1, "failed opening %s for writing", fn);
 
 	while (fgets(buf, sizeof(buf), stdin))
 		fputs(buf, fp);
@@ -442,24 +441,24 @@ int serv_delete(char *arg)
 	char *fn;
 
 	if (!arg || !arg[0]) {
-		warnx("missing argument to delete, may be one of:");
+		WARNX("missing argument to delete, may be one of:");
 		return serv_list("available");
 	}
 
 	fn = conf(buf, sizeof(buf), arg, 0);
 	if (!fn) {
 		if (is_builtin(arg))
-			errx(1, "%s is a built-in service.", arg);
-		errx(1, FINIT_RCSD " missing on system.");
+			ERRX(1, "%s is a built-in service.", arg);
+		ERRX(1, FINIT_RCSD " missing on system.");
 	}
 
 	if (!fexist(fn))
-		warnx("cannot find %s", fn);
+		WARNX("cannot find %s", fn);
 
 	if (iforce || yorn("Remove file and symlink(s) to %s (y/N)? ", fn)) {
 		do_disable(arg, 0);
 		if (remove(fn))
-			err(1, "Failed removing %s", fn);
+			ERR(1, "Failed removing %s", fn);
 	}
 
 	return 0;

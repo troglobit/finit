@@ -21,7 +21,6 @@
  * THE SOFTWARE.
  */
 
-#include <err.h>
 #include <errno.h>
 #include <poll.h>
 #include <sys/socket.h>
@@ -41,13 +40,13 @@ int client_connect(void)
 
 	sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 	if (-1 == sd) {
-		warn("Failed creating UNIX domain socket");
+		WARN("Failed creating UNIX domain socket");
 		return -1;
 	}
 
 	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
 		if (errno != ENOENT)
-			warnx("Failed connecting to finit");
+			WARNX("Failed connecting to finit");
 		close(sd);
 		return -1;
 	}
@@ -82,12 +81,12 @@ int client_send(struct init_request *rq, ssize_t len)
 	pfd.fd     = sd;
 	pfd.events = POLLOUT;
 	if (poll(&pfd, 1, 2000) <= 0) {
-		warn("Timed out waiting for Finit, errno %d", errno);
+		WARN("Timed out waiting for Finit, errno %d", errno);
 		goto exit;
 	}
 
 	if (write(sd, rq, len) != len) {
-		warn("Failed communicating with Finit, errno %d", errno);
+		WARN("Failed communicating with Finit, errno %d", errno);
 		goto exit;
 	}
 
@@ -97,14 +96,14 @@ int client_send(struct init_request *rq, ssize_t len)
 		if (rc) {
 			if (errno == EINTR) /* shutdown/reboot */
 				goto exit;
-			warn("poll(), errno %d", errno);
+			WARN("poll(), errno %d", errno);
 		} else
-			warnx("Timed out waiting for reply from Finit.");
+			WARNX("Timed out waiting for reply from Finit.");
 		goto exit;
 	}
 
 	if (read(sd, rq, len) != len) {
-		warn("Failed reading reply from Finit, errno %d", errno);
+		WARN("Failed reading reply from Finit, errno %d", errno);
 		goto exit;
 	}
 
@@ -145,7 +144,7 @@ svc_t *client_svc_iterator(int first)
 
 	return &svc;
 error:
-	perror("Failed communicating with finit");
+	WARN("Failed communicating with finit, error %d", errno);
 	client_disconnect();
 	sd = -1;
 
@@ -176,7 +175,7 @@ svc_t *do_cmd(int cmd, const char *arg)
 	return &svc;
 error:
 	client_disconnect();
-	perror("Failed communicating with finit");
+	WARN("Failed communicating with finit, error %d", errno);
 
 	return NULL;
 }
