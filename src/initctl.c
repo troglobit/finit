@@ -177,9 +177,7 @@ static int do_log(svc_t *svc, char *tail)
 /* initctl log [-10] foo */
 static int show_log(char *arg)
 {
-	const char *num = "-10";
 	svc_t *svc;
-
 
 	svc = client_svc_find(arg);
 	if (!svc)
