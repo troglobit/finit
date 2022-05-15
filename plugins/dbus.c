@@ -66,10 +66,14 @@ static void setup(void *arg)
 
 	prev =umask(0);
 
+  /* Create additional directories */
 	mksubsys("/var/run/dbus", 0755, DAEMONUSER, DAEMONUSER);
+  mksubsys("/var/run/lock", 0755, DAEMONUSER, DAEMONUSER);
   mksubsys("/var/run/lock/subsys", 0755, DAEMONUSER, DAEMONUSER);
+  mksubsys("/var/lib", 0755, DAEMONUSER, DAEMONUSER);
   mksubsys("/var/lib/dbus", 0755, DAEMONUSER, DAEMONUSER);
-  mksubsys("/tmp/dbus", 0755, DAEMONUSER, DAEMONUSER);
+
+  /* Generate machine id for dbus */
 	if (whichp("dbus-uuidgen"))
 		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
 

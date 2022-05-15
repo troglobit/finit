@@ -81,7 +81,7 @@ static void setup(void *arg)
 		snprintf(cmd, sizeof(cmd), "%s", path);
 		free(path);
 		run_interactive(cmd, "Coldplugging Devices");
-#endif
+#else
     path = which("mdev");
 	  if (path) {
 		 	/* Embedded Linux systems usually have BusyBox mdev */
@@ -92,6 +92,7 @@ static void setup(void *arg)
 	    free(path);
 
   	  run_interactive(cmd, "Populating device tree");
+#endif
     }
 	}
 }
