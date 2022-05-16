@@ -23,7 +23,6 @@
 
 #include "config.h"
 
-#include <err.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <signal.h>
@@ -244,7 +243,7 @@ static float cgroup_cpuload(struct cg *cg)
 	snprintf(fn, sizeof(fn), "%s/cpu.stat", cg->cg_path);
 	fp = fopen(fn, "r");
 	if (!fp)
-		err(1, "Cannot open %s", fn);
+		ERR(72, "Cannot open %s", fn);
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		uint64_t curr;
@@ -280,13 +279,13 @@ static struct cg *append(char *path)
 	if (access(fn, F_OK)) {
 		/* older kernels, 4.19, don't have summary cpu.stat in root */
 		if (strcmp(path, FINIT_CGPATH))
-			warn("not a cgroup path with cpu controller, %s", path);
+			WARN("not a cgroup path with cpu controller, %s", path);
 		return NULL;
 	}
 
 	cg = calloc(1, sizeof(struct cg));
 	if (!cg)
-		err(1, "failed allocating struct cg");
+		ERR(71, "failed allocating struct cg");
 
 	cg->cg_path = strdup(path);
 	if (list)
@@ -296,7 +295,7 @@ static struct cg *append(char *path)
 	item.key  = cg->cg_path;
 	item.data = cg;
 	if (!hsearch(item, ENTER))
-		err(1, "failed adding to hash table");
+		ERR(70, "failed adding to hash table");
 
 	return cg;
 }
@@ -434,7 +433,6 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 			pid_comm(pid, comm, sizeof(comm));
 			if (pid_cmdline(pid, buf, sizeof(buf))) {
 				char proc[ttcols];
-				int len;
 
 				switch (mode) {
 				case 1:
@@ -456,6 +454,8 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 				if (plain) {
 					strlcat(row, proc, rplen);
 				} else {
+					int len;
+
 					strlcat(row, CDIM, rlen);
 					strlcat(row, proc, rlen);
 
@@ -600,7 +600,6 @@ int show_cgtop(char *arg)
         uev_t timer, input, sigint, sigterm, sigquit;
 	char path[512];
         uev_ctx_t ctx;
-	int flags;
 
 	if (!arg)
 		arg = FINIT_CGPATH;
@@ -610,7 +609,7 @@ int show_cgtop(char *arg)
 	}
 
 	if (!hcreate(ttrows + 25))
-		err(1, "failed creating hash table");
+		ERR(70, "failed creating hash table");
 
 	sysinfo(&si);
 	total_ram = si.totalram * si.mem_unit;
@@ -619,6 +618,8 @@ int show_cgtop(char *arg)
         uev_timer_init(&ctx, &timer, cgtop, arg, 1, ionce ? 0 : 1000);
 
 	if (!ionce && !plain) {
+		int flags;
+
 		atexit(cleanup);
 		ttraw();
 		hidecursor();

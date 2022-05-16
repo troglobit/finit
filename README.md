@@ -45,6 +45,10 @@ Features include:
   * Cgroups v2, both configuration and monitoring in `initctl top`
   * Plugin support for customization
   * Proper rescue mode with bundled `sulogin` for protected maintenance shell
+  * Integration with [watchdogd][] for full system supervision
+  * Logging to kernel ring buffer before `syslogd` has started, see the
+    recommended [sysklogd][] project for complete logging integration
+	and how to log to the kernel ring buffer from scripts using `logger`
 
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
@@ -52,12 +56,12 @@ on server and desktop systems as well.  For working examples, see the
 
   * [Void Linux](contrib/void/),
   * [Alpine Linux](contrib/alpine/), and
-  * [Debian GNU/Linux](contrib/debian/)
+  * [Debian GNU/Linux](contrib/debian/), also works on Ubuntu/Linux Mint
 
 > **Note:** support for various Linux distributions does not mean Finit
 > installs easily on all architectures.  The bundled install scripts are
-> examples for standard installations, tested on x86_64 systems.  Custom
-> setups, targeted at embedded systems, can be found in [myLinux][].
+> examples for standard installations, tested on amd64 (x86_64) systems.
+> Custom setups, for embedded systems, can be found in [myLinux][].
 
 
 Example
@@ -73,7 +77,11 @@ the [initctl](#commands--status) tool.
 host default
 
 # Runlevel to start after bootstrap, 'S', default: 2
-runlevel 2
+#runlevel 2
+
+# Support for setting global environment variables, using foo=bar syntax
+# be careful though with variables like PATH, SHELL, LOGNAME, etc.
+#PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 # Max file size for each log file: 100 kiB, rotate max 4 copies:
 # log => log.1 => log.2.gz => log.3.gz => log.4.gz
@@ -101,6 +109,11 @@ service :8080 [2345] merecat -n -p 8080 /var/www -- Old web server
 #sysv [S] /etc/init.d/keyboard-setup       -- Setting up preliminary keymap
 #sysv [S] /etc/init.d/acpid                -- Starting ACPI Daemon
 #task [S] /etc/init.d/kbd                  -- Preparing console
+
+# Hidden from boot progress, using empty `--` description
+#sysv [S] /etc/init.d/keyboard-setup       --
+#sysv [S] /etc/init.d/acpid                --
+#task [S] /etc/init.d/kbd                  --
 
 # Run start scripts from this directory
 # runparts /etc/start.d
@@ -614,7 +627,9 @@ and proposed extensions.
 [Joachim Wiberg]:   https://troglobit.com
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
-[GitHub]:           https://github.com/troglobit/myLinux/
+[myLinux]:          https://github.com/troglobit/myLinux/
+[watchdogd]:        https://github.com/troglobit/watchdogd/
+[sysklogd]:         https://github.com/troglobit/sysklogd/
 [GitHub]:           https://github.com/troglobit/finit/actions/workflows/build.yml/
 [GitHub Status]:    https://github.com/troglobit/finit/actions/workflows/build.yml/badge.svg
 [Coverity Scan]:    https://scan.coverity.com/projects/3545

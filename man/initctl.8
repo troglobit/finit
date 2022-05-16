@@ -124,6 +124,20 @@ i.e., activates changes
 .It Nm Ar cond set Ar COND
 Set (assert) user-defined condition,
 .Cm +usr/COND
+.It Nm Ar cond get Ar COND
+Get (quietly) the status of any condition.  Defaults to user-defined
+condions, but if a slash is detected, e.g.,
+.Cm pid/foo
+or
+.Cm net/eth0/exist ,
+then any condition can be read.
+.Pp
+The command is geared for scripting, check the exit code to get the
+status of the condition, or give
+.Nm
+the
+.Fl v
+option for a more verbose output.
 .It Nm Ar cond clr | clear Ar COND
 Clear (deassert) user-defined condition,
 .Cm -usr/COND

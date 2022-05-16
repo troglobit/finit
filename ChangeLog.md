@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.3][UNRELEASED]
+[4.3][] - 2022-05-15
 --------------------
 
 Critical bug fix release.  If you run a 32-bit target with GLIBC 2.34
@@ -63,6 +63,14 @@ you *need* to upgrade!
 * Document secret service option `respawn`, which bypasses the crash
   semantics, allowing endless restarts
 * Document secret `HOOK_BANNER`, the first hook point before the banner
+* Document slightly confusing `initctl reload foo` command.  It does
+  *not* reload the service's `.conf` file!  Issue #263
+* Log changes; all instances where previously the `basename cmd` of a
+  service was used to identify the service, now the proper `name:id` is
+  used instead.  Meaning, a service without a custom `:ID` or `name:`
+  will display the same as before, but with any of those customizations
+  the name and name:id will now be shown.  **Note:** this may affect any
+  log scrapers out there!
 * New plugin: `hook-scripts`, allows [run-parts(8)][] style scripts to
   run on any hook point.  Contributed by Tobias Waldekranz
 * `initctl` (`reboot`) falls back to `-f` when it detects it is in
@@ -75,6 +83,12 @@ you *need* to upgrade!
   in lexicographic order and UNIX backup files (`foo.conf~`) are skipped
 * The `name:id` tuple is now more consistently used in all log and debug
   messages instead of the basename of the command
+* Simplify error output of `initctl start/stop/restart/signal`, no more
+  extra usage help, just a plain error message
+* Exit codes of `initctl` have changed to use LSB script standard and BSD
+  sysexits.h exit codes.  As before, a non-zero exit is error or missing
+* Add support for `initctl -q` to more commands: stop, start, restart,
+  reload, signal, etc.
 
 [run-parts(8)]: https://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 
@@ -93,7 +107,7 @@ you *need* to upgrade!
 * Fix #233: initctl shows wrong status for run/task, by Sergio Morlans
   and Ming Liu, Atlas Copco
 * Fix #248: source `env:file` also in `pre:` and `post` scripts
-* Fix #260: drop limit on device name in `Checking filesystem`...` output
+* Fix #260: drop limit on device name in `Checking filesystem...` output
 * Fix start/stop and monitoring (restart) of SysV init scripts and
   forking services, see the updated documentation for details
 * Fix call to `swapoff` at shutdown, does not support `-e` flag
