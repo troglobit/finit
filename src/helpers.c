@@ -442,9 +442,13 @@ int mksubsys(const char *dir, mode_t mode, char *user, char *group)
 		if (gid < 0)
 			gid = 0;
 
-		rc = makedir(dir, mode);
+    rc = makedir(dir, mode)
+    if (rc > 0)
+      _pe("Failed makedir(%s, %d)", dir, mode);
 		if (chown(dir, uid, gid))
 			_pe("Failed chown(%s, %d, %d)", dir, uid, gid);
+  } else {
+    _pe("Failed to get uid (%s, %d)", user, uid);
 	}
 
 	umask(omask);
