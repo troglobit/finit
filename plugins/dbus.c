@@ -40,11 +40,11 @@
 #define DBUS_DESC   "D-Bus message bus daemon"
 
 #ifndef DBUS_DAEMONUSER
-#define DBUS_DAEMONUSER "dbus"
+#define DBUS_DAEMONUSER "messagebus"
 #endif
 
 #ifndef DBUS_DAEMONGROUP
-#define DBUS_DAEMONGROUP "dbus"
+#define DBUS_DAEMONGROUP "messagebus"
 #endif
 
 #ifndef DBUS_DAEMONPIDFILE
