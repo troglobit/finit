@@ -511,6 +511,9 @@ void cgroup_init(uev_ctx_t *ctx)
 
 	/* prepare cgroup.events watcher */
 	fd = iwatch_init(&iw_cgroup);
+	if (fd == -1)
+		goto abort;
+
 	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
 		_pe("Failed setting up cgroup.events watcher");
 		iwatch_exit(&iw_cgroup);
