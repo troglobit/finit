@@ -74,6 +74,7 @@ static void setup(void *arg)
   mksubsys("/var/run/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
   mksubsys("/var/run/lock/subsys", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
   mksubsys("/var/lib/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+  mksubsys("/tmp/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
 
   /* Generate machine id for dbus */
 	if (whichp("dbus-uuidgen"))
