@@ -36,7 +36,8 @@
 #include "conf.h"
 
 #define MDEVD_DAEMON "mdevd"
-#define MDEVD_ARGS   ""
+/* Rebroadcast events onto nlgroup 4 */
+#define MDEVD_ARGS   "-C -O 4"
 #define MDEVD_DESC   "MDEVD Extended Hotplug Daemon"
 
 #ifndef MDEVD_DAEMONUSER
