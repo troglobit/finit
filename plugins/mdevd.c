@@ -70,6 +70,13 @@ static void setup(void *arg)
 
 	prev =umask(0);
 
+  /* Set hotplug helper */
+  fp = fopen("/proc/sys/kernel/hotplug", "w");
+  if (fp) {
+    fputc('\n', fp);
+    ret = fclose(fp);
+  }
+
 	/* Clean up from any previous pre-bootstrap run */
 	remove(MDEVD_DAEMONPIDFILE);
 
