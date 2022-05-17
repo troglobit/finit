@@ -122,6 +122,9 @@ static int sulogin(int do_reboot)
 	for (i = 0; i < NELEMS(cmd); i++) {
 		char *path = which(cmd[i]);
 
+		if (!path)
+			continue;
+
 		if (access(path, X_OK)) {
 			free(path);
 			continue;
