@@ -167,19 +167,15 @@ static void coldplug(void *arg)
 	print_result(rc);
 }
 
-#ifdef MDEVD_PLUGIN_COLDPLUG
 static plugin_t plugin = {
   .name = __FILE__,
   .hook[HOOK_BASEFS_UP] = { .cb  = coldplug },
+#ifdef MDEVD_PLUGIN_COLDPLUG
   .depends = { "mdevd", }
-};
 #else
-static plugin_t plugin = {
-	.name = __FILE__,
-	.hook[HOOK_BASEFS_UP] = { .cb  = coldplug },
-	.depends = { "bootmisc", }
-};
+  .depends = { "bootmisc", }
 #endif
+};
 
 PLUGIN_INIT(plugin_init)
 {

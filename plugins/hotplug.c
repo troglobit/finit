@@ -29,6 +29,9 @@
 #include "plugin.h"
 #include "service.h"
 
+#define MDEV_COLDPLUG_ARGS    "-s"
+#define MDEVD_COLDPLUG_ARGS   ""
+
 static void setup(void *arg)
 {
 	char cmd[256];
@@ -78,42 +81,41 @@ static void setup(void *arg)
 	} else {
 #ifdef MDEVD_PLUGIN_COLDPLUG
 		path = which("mdevd-coldplug");
-		snprintf(cmd, sizeof(cmd), "%s", path);
-		free(path);
-		run_interactive(cmd, "Coldplugging Devices (mdevd)");
 #else
     path = which("mdev");
-	  if (path) {
-		 	/* Embedded Linux systems usually have BusyBox mdev */
-		  if (debug)
-			  touch("/dev/mdev.log");
-
-		  snprintf(cmd, sizeof(cmd), "%s -s", path);
-	    free(path);
-
-  	  run_interactive(cmd, "Populating device tree");
-    }
 #endif
+    if (path) {
+      /* Embedded Linux systems usually have BusyBox mdev */
+      if (debug)
+        touch("/dev/mdev.log");
+
+#ifdef MDEVD_PLUGIN_COLDPLUG
+      snprintf(cmd, sizeof(cmd), "%s %s", path, MDEVD_COLDPLUG_ARGS);
+#else
+      snprintf(cmd, sizeof(cmd), "%s %s", path, MDEV_COLDPLUG_ARGS);
+#endif
+      free(path);
+
+#ifdef MDEVD_PLUGIN_COLDPLUG
+		  run_interactive(cmd, "Coldplugging Devices (mdevd)");
+#else
+      run_interactive(cmd, "Populating device tree");
+#endif
+    }
 	}
 }
 
-#ifdef MDEVD_PLUGIN_COLDPLUG
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
+#ifdef MDEVD_PLUGIN_COLDPLUG
 	.depends = { "mdevd" },
-};
 #else
-static plugin_t plugin = {
-  .name = __FILE__,
-  .hook[HOOK_BASEFS_UP] = {
-    .cb  = setup
-  },
   .depends = { "bootmisc" },
-};
 #endif
+};
 
 PLUGIN_INIT(plugin_init)
 {
