@@ -153,12 +153,22 @@ static void load(void *arg)
 	}
 }
 
+#ifdef MDEVD_PLUGIN_COLDPLUG
+static plugin_t plugin = {
+  .name = __FILE__,
+  .hook[HOOK_BASEFS_UP] = {
+    .cb  = load
+  },
+  .depends = { "mdevd", },
+};
+#else
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = load
 	},
 };
+#endif
 
 PLUGIN_INIT(plugin_init)
 {
