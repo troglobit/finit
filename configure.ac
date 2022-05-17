@@ -281,9 +281,6 @@ AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl 
 AS_IF([test "$heading" = ""],   [heading="<DEFAULT>"])
 AS_IF([test "$heading" = "no"], [heading="<NONE>"])
 
-AS_IF([test "x$with_mdevd_coldplug" != "xno"], [with_mdevd_coldplug=yes])
-AM_CONDITIONAL(MDEVD_PLUGIN_COLDPLUG,   [test "x$with_mdevd_coldplug"  != "xno"])
-
 # Generate all files
 AC_OUTPUT
 

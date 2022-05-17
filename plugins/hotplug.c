@@ -80,7 +80,7 @@ static void setup(void *arg)
 		path = which("mdevd-coldplug");
 		snprintf(cmd, sizeof(cmd), "%s", path);
 		free(path);
-		run_interactive(cmd, "Coldplugging Devices");
+		run_interactive(cmd, "Coldplugging Devices (mdevd)");
 #else
     path = which("mdev");
 	  if (path) {
@@ -92,8 +92,8 @@ static void setup(void *arg)
 	    free(path);
 
   	  run_interactive(cmd, "Populating device tree");
-#endif
     }
+#endif
 	}
 }
 
