@@ -56,6 +56,7 @@ static void setup(void *arg)
 	char line[256];
 	mode_t prev;
 	char *cmd;
+  int ret = 1;
   FILE *fp;
 
 	if (rescue) {
