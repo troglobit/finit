@@ -36,7 +36,7 @@
 #include "conf.h"
 
 #define MDEVD_DAEMON "mdevd"
-#define MDEVD_ARGS   ""
+#define MDEVD_ARGS   "-C"
 #define MDEVD_DESC   "MDEVD Extended Hotplug Daemon"
 
 #ifndef MDEVD_DAEMONUSER
@@ -75,7 +75,7 @@ static void setup(void *arg)
 
 	/* Register service with Finit */
   if (debug)
-  	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -v 3 -- %s",
+  	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s -v3 %s -- %s",
 		   MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONUSER, cmd, MDEVD_ARGS, MDEVD_DESC);
   else
     snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
