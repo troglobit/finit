@@ -146,10 +146,12 @@ static void cond_delpath(const char *path)
 
 	while ((d = readdir(dir))) {
 		paste(fn, sizeof(fn), path, d->d_name);
-		remove(fn);
+		if (remove(fn))
+			_pe("Failed removing condition path, file %s", fn);
 	}
 	closedir(dir);
-	unlink(path);
+	if (unlink(path))
+		_pe("Failed removing condition path %s", fn);
 }
 
 int cond_set_path(const char *path, enum cond_state next)

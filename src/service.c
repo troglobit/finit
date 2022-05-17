@@ -804,7 +804,7 @@ static int service_stop(svc_t *svc)
 
 		args[i++] = svc->cmd;
 		/* this handles, e.g., bridge-stop br0 stop */
-		for (j = 0; j < MAX_NUM_SVC_ARGS; j++) {
+		for (j = 0; j < MAX_NUM_SVC_ARGS - 2; j++) {
 			if (!strlen(svc->args[j]))
 				break;
 			args[i++] = svc->args[j];

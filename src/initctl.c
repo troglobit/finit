@@ -374,13 +374,9 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 static int do_cond_dump(char *arg)
 {
 	col_widths();
-	if (heading) {
-		char title[80];
-
-		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
-			 iw, "IDENT", "STATUS", "CONDITION");
-		print_header(title);
-	}
+	if (heading)
+		print_header("%-*s  %-*s  %-6s  %s", pw, "PID", iw, "IDENT",
+			     "STATUS", "CONDITION");
 
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		WARNX("Failed parsing %s", _PATH_COND);
@@ -497,13 +493,9 @@ static int do_cond_show(char *arg)
 	svc_t *svc;
 
 	col_widths();
-	if (heading) {
-		char title[80];
-
-		snprintf(title, sizeof(title), "%-*s  %-*s  %-6s  %s", pw, "PID",
-			 iw, "IDENT", "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
-		print_header(title);
-	}
+	if (heading)
+		print_header("%-*s  %-*s  %-6s  %s", pw, "PID", iw, "IDENT",
+			     "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
 		if (!svc->cond[0])
@@ -883,7 +875,7 @@ static int show_status(char *arg)
 		else
 			strlcat(title, "COMMAND", sizeof(title)); 
 
-		print_header(title);
+		print_header("%s", title);
 	}
 
 	for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
