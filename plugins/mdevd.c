@@ -56,6 +56,7 @@ static void setup(void *arg)
 	char line[256];
 	mode_t prev;
 	char *cmd;
+  FILE *fp;
 
 	if (rescue) {
 		_d("Skipping %s plugin in rescue mode.", __FILE__);
