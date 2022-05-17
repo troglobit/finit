@@ -36,7 +36,7 @@
 #include "conf.h"
 
 #define MDEVD_DAEMON "mdevd"
-#define MDEVD_ARGS   "-C"
+#define MDEVD_ARGS   ""
 #define MDEVD_DESC   "MDEVD Extended Hotplug Daemon"
 
 #ifndef MDEVD_DAEMONUSER

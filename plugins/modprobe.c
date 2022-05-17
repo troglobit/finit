@@ -170,11 +170,7 @@ static void coldplug(void *arg)
 static plugin_t plugin = {
   .name = __FILE__,
   .hook[HOOK_BASEFS_UP] = { .cb  = coldplug },
-#ifdef MDEVD_PLUGIN_COLDPLUG
-  .depends = { "mdevd", }
-#else
-  .depends = { "bootmisc", }
-#endif
+  .depends = { "bootmisc", "mdevd" },
 };
 
 PLUGIN_INIT(plugin_init)

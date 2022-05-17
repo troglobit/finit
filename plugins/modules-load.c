@@ -158,9 +158,7 @@ static plugin_t plugin = {
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = load
 	},
-#ifdef MDEVD_PLUGIN_COLDPLUG
   .depends = { "mdevd", },
-#endif
 };
 
 PLUGIN_INIT(plugin_init)

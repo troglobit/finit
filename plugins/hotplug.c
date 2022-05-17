@@ -29,8 +29,11 @@
 #include "plugin.h"
 #include "service.h"
 
+#ifdef MDEVD_PLUGIN_COLDPLUG
+#define MDEV_COLDPLUG_ARGS   ""
+#else
 #define MDEV_COLDPLUG_ARGS    "-s"
-#define MDEVD_COLDPLUG_ARGS   ""
+#endif
 
 static void setup(void *arg)
 {
@@ -89,18 +92,10 @@ static void setup(void *arg)
       if (debug)
         touch("/dev/mdev.log");
 
-#ifdef MDEVD_PLUGIN_COLDPLUG
-      snprintf(cmd, sizeof(cmd), "%s %s", path, MDEVD_COLDPLUG_ARGS);
-#else
       snprintf(cmd, sizeof(cmd), "%s %s", path, MDEV_COLDPLUG_ARGS);
-#endif
       free(path);
 
-#ifdef MDEVD_PLUGIN_COLDPLUG
-		  run_interactive(cmd, "Coldplugging Devices (mdevd)");
-#else
       run_interactive(cmd, "Populating device tree");
-#endif
     }
 	}
 }
@@ -110,11 +105,7 @@ static plugin_t plugin = {
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
-#ifdef MDEVD_PLUGIN_COLDPLUG
-	.depends = { "mdevd" },
-#else
-  .depends = { "bootmisc" },
-#endif
+  .depends = { "bootmisc", "mdevd" },
 };
 
 PLUGIN_INIT(plugin_init)
