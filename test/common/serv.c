@@ -26,16 +26,24 @@ static void verify_env(char *arg)
 		err(1, "Failed duplicating arg %s", arg);
 
 	value = strchr(replica, ':');
-	if (!value)
+	if (!value) {
+		free(replica);
 		errx(1, "Invalid format of KEY:VALUE arg, missing ':' in %s", replica);
+	}
 	*(value++) = 0;
 
 	env = getenv(key);
-	if (!env)
+	if (!env) {
+		free(replica);
 		errx(1, "No '%s' in environment", key);
+	}
 
-	if (strcmp(env, value))
+	if (strcmp(env, value)) {
+		free(replica);
 		errx(1, "Mismatch, environment '%s' vs expected value '%s'", env, value);
+	}
+
+	free(replica);
 }
 
 static void verify_noenv(char *key)
