@@ -145,12 +145,16 @@ static void cond_delpath(const char *path)
 		return;
 
 	while ((d = readdir(dir))) {
+		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+			continue;
+
 		paste(fn, sizeof(fn), path, d->d_name);
 		if (remove(fn))
 			_pe("Failed removing condition path, file %s", fn);
 	}
 	closedir(dir);
-	if (unlink(path))
+
+	if (unlink(path) && errno != EISDIR)
 		_pe("Failed removing condition path %s", fn);
 }
 
