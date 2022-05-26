@@ -96,8 +96,8 @@ AC_PLUGIN([rtc],           [yes], [Save and restore RTC using hwclock])
 AC_PLUGIN([tty],           [yes], [Automatically activate new TTYs, e.g. USB-to-serial])
 AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
 AC_PLUGIN([qmi-proxy],     [yes], [Start a proxy for QMI devices at boot])
-AC_PLUGIN([mdevd],         [yes], [Start mdevd early in boot (replaces mdev)])
 AC_PLUGIN([chronyd],       [yes], [Start chronyd early in boot])
+AC_PLUGIN([mdevd],         [yes], [Start mdevd early in boot (replaces mdev)])
 
 # Check for extra arguments or packages
 AC_ARG_WITH(fstab,
