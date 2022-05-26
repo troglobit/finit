@@ -1,4 +1,4 @@
-/* Setup and start system hotplug helper mdevd
+/* Setup and start system time service chronyd
  *
  * Copyright (c) 2012-2022  Joachim Wiberg <troglobit@gmail.com>
  *
@@ -35,21 +35,20 @@
 #include "service.h"
 #include "conf.h"
 
-#define MDEVD_DAEMON "mdevd"
-/* Rebroadcast events onto nlgroup 4 */
-#define MDEVD_ARGS   "-C -O 4"
-#define MDEVD_DESC   "MDEVD Extended Hotplug Daemon"
+#define CHRONYD_DAEMON "chronyd"
+#define CHRONYD_ARGS   "-n -4 -f /etc/chrony.conf"
+#define CHRONYD_DESC   "Chrony Time Daemon"
 
-#ifndef MDEVD_DAEMONUSER
-#define MDEVD_DAEMONUSER "root"
+#ifndef CHRONYD_DAEMONUSER
+#define CHRONYD_DAEMONUSER "root"
 #endif
 
-#ifndef MDEVD_DAEMONGROUP
-#define MDEVD_DAEMONGROUP "root"
+#ifndef CHRONYD_DAEMONGROUP
+#define CHRONYD_DAEMONGROUP "root"
 #endif
 
-#ifndef MDEVD_DAEMONPIDFILE
-#define MDEVD_DAEMONPIDFILE "/var/run/mdevd.pid"
+#ifndef CHRONYD_DAEMONPIDFILE
+#define CHRONYD_DAEMONPIDFILE "/var/run/chronyd.pid"
 #endif
 
 static void setup(void *arg)
@@ -65,33 +64,29 @@ static void setup(void *arg)
 		return;
 	}
 
-	cmd = which(MDEVD_DAEMON);
+	cmd = which(CHRONYD_DAEMON);
 	if (!cmd) {
-		_d("Skipping plugin, %s is not installed.", MDEVD_DAEMON);
+		_d("Skipping plugin, %s is not installed.", CHRONYD_DAEMON);
 		return;
 	}
 
 	prev =umask(0);
 
-	/* Clean up from any previous pre-bootstrap run */
-	remove(MDEVD_DAEMONPIDFILE);
+  _d("Creating Chrony Daemon Required Directories ...");
 
-  /* Set hotplug helper */
-  fp = fopen("/proc/sys/kernel/hotplug", "w");
-  if (fp) {
-    fputc('\n', fp);
-    ret = fclose(fp);
-  }
+  mksubsys("/var/run/chrony", 0770, CHRONYD_DAEMONUSER, CHRONYD_DAEMONGROUP);
+  mksubsys("/var/run/chrony/dhcp", 0770, CHRONYD_DAEMONUSER, CHRONYD_DAEMONGROUP);
+  mksubsys("/var/lib/chrony", 0770, CHRONYD_DAEMONUSER, CHRONYD_DAEMONGROUP);
+
+	/* Clean up from any previous pre-bootstrap run */
+	remove(CHRONYD_DAEMONPIDFILE);
 
 	/* Register service with Finit */
-  if (debug)
-  	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s -v3 %s -- %s",
-		   MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONUSER, cmd, MDEVD_ARGS, MDEVD_DESC);
-  else
-    snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
-       MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONUSER, cmd, MDEVD_ARGS, MDEVD_DESC);
+  snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
+     CHRONYD_DAEMONPIDFILE, CHRONYD_DAEMONUSER, CHRONYD_DAEMONUSER, cmd, CHRONYD_ARGS, CHRONYD_DESC);
+
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		_pe("Failed registering %s", MDEVD_DAEMON);
+		_pe("Failed registering %s", CHRONYD_DAEMON);
 	free(cmd);
 
 	umask(prev);
@@ -102,7 +97,7 @@ static plugin_t plugin = {
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
-	.depends = { "bootmisc", },
+  .depends = { "bootmisc", "mdevd" },
 };
 
 PLUGIN_INIT(plugin_init)

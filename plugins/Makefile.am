@@ -9,6 +9,10 @@ if STATIC
 noinst_LTLIBRARIES  = libplug.la
 libplug_la_SOURCES  = bootmisc.c pidfile.c procps.c sys.c usr.c
 
+if BUILD_CHRONYD_PLUGIN
+libplug_la_SOURCES += chronyd.c
+endif
+
 if BUILD_MDEVD_PLUGIN
 libplug_la_SOURCES += mdevd.c
 endif
@@ -63,6 +67,10 @@ endif
 
 else
 pkglib_LTLIBRARIES  = bootmisc.la pidfile.la procps.la sys.la usr.la
+
+if BUILD_CHRONYD_PLUGIN
+pkglib_LTLIBRARIES += chronyd.la
+endif
 
 if BUILD_MDEVD_PLUGIN
 pkglib_LTLIBRARIES += mdevd.la
