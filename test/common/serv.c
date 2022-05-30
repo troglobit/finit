@@ -21,29 +21,21 @@ static void verify_env(char *arg)
 	char *replica;
 	char *env;
 
-	key = replica = strdup(arg);
+	key = replica = strdupa(arg);
 	if (!replica)
 		err(1, "Failed duplicating arg %s", arg);
 
 	value = strchr(replica, ':');
-	if (!value) {
-		free(replica);
+	if (!value)
 		errx(1, "Invalid format of KEY:VALUE arg, missing ':' in %s", replica);
-	}
 	*(value++) = 0;
 
 	env = getenv(key);
-	if (!env) {
-		free(replica);
+	if (!env)
 		errx(1, "No '%s' in environment", key);
-	}
 
-	if (strcmp(env, value)) {
-		free(replica);
+	if (strcmp(env, value))
 		errx(1, "Mismatch, environment '%s' vs expected value '%s'", env, value);
-	}
-
-	free(replica);
 }
 
 static void verify_noenv(char *key)
