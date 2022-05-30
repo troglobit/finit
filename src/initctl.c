@@ -271,23 +271,10 @@ static int do_reload (char *arg)
 
 static int do_restart(char *arg)
 {
-	size_t retries = 3;
-	svc_t *svc;
+	if (do_startstop(INIT_CMD_RESTART_SVC, arg))
+		ERRX(7, "failed restarting %s", arg);
 
-	if (do_startstop(INIT_CMD_STOP_SVC, arg))
-		return 1;
-
-	while (retries-- > 0 && (svc = client_svc_find(arg))) {
-		if (!svc_is_running(svc))
-			break;
-
-		sleep(1);
-	}
-
-	if (retries == 0)
-		ERRX(7, "failed stopping %s (restart)", arg);
-
-	return do_startstop(INIT_CMD_RESTART_SVC, arg);
+	return 0;
 }
 
 /**
