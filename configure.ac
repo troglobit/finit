@@ -155,7 +155,7 @@ AC_ARG_WITH(hook-scripts-path,
 	[hook_scripts_path=$withval], [hook_scripts_path=yes])
 
 AC_ARG_WITH(mdevd-coldplug,
-        AS_HELP_STRING([--with-mdevd-coldplug], [Enable mdevd coldplug, default: no.]),, [with-mdevd-coldplug=no])
+        AS_HELP_STRING([--with-mdevd-coldplug], [Enable mdevd coldplug, default: no.]),, [with_mdevd_coldplug=no])
 
 ### Enable features ###########################################################################
 
