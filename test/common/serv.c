@@ -21,29 +21,21 @@ static void verify_env(char *arg)
 	char *replica;
 	char *env;
 
-	key = replica = strdup(arg);
+	key = replica = strdupa(arg);
 	if (!replica)
 		err(1, "Failed duplicating arg %s", arg);
 
 	value = strchr(replica, ':');
-	if (!value) {
-		free(replica);
+	if (!value)
 		errx(1, "Invalid format of KEY:VALUE arg, missing ':' in %s", replica);
-	}
 	*(value++) = 0;
 
 	env = getenv(key);
-	if (!env) {
-		free(replica);
+	if (!env)
 		errx(1, "No '%s' in environment", key);
-	}
 
-	if (strcmp(env, value)) {
-		free(replica);
+	if (strcmp(env, value))
 		errx(1, "Mismatch, environment '%s' vs expected value '%s'", env, value);
-	}
-
-	free(replica);
 }
 
 static void verify_noenv(char *key)
@@ -53,6 +45,28 @@ static void verify_noenv(char *key)
 	val = getenv(key);
 	if (val)
 		errx(1, "Error, key %s is set in environment to '%s'", key, val);
+}
+
+static void inc_restarts(void)
+{
+	char buf[10];
+	int cnt = 0;
+	FILE *fp;
+
+	fp = fopen("/tmp/serv-restart.cnt", "r+");
+	if (!fp) {
+		fp = fopen("/tmp/serv-restart.cnt", "w");
+		if (!fp)
+			err(1, "failed creating restart counter file");
+	} else {
+		if (fgets(buf, sizeof(buf), fp))
+			cnt = atoi(buf);
+	}
+	cnt++;
+
+	fseek(fp, SEEK_SET, 0);
+	fprintf(fp, "%d", cnt);
+	fclose(fp);
 }
 
 static void sig(int signo)
@@ -94,6 +108,7 @@ static int usage(int rc)
 		" -n       Run in foreground\n"
 		" -p       Create PID file despite running in foreground\n"
 		" -P FILE  Create PID file using FILE\n"
+		" -r SVC   Call initctl to restart service SVC (self)\n"
 		"\n"
 		"By default this program daemonizes itself to the background, and,\n"
 		"when it's done setting up its signal handler(s), creates a PID file\n"
@@ -108,10 +123,12 @@ int main(int argc, char *argv[])
 {
 	int do_background = 1;
 	int do_pidfile = 1;
+	int do_restart = 0;
 	char *pidfn = NULL;
+	char cmd[80];
 	int c;
 
-	while ((c = getopt(argc, argv, "e:E:hnpP:")) != EOF) {
+	while ((c = getopt(argc, argv, "e:E:hnpP:r:")) != EOF) {
 		switch (c) {
 		case 'h':
 			return usage(0);
@@ -130,6 +147,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'P':
 			pidfn = optarg;
+			break;
+		case 'r':
+			snprintf(cmd, sizeof(cmd), "initctl restart %s", optarg);
+			do_restart = 1;
 			break;
 		default:
 			return usage(1);
@@ -150,8 +171,15 @@ int main(int argc, char *argv[])
 		pidfile(pidfn);
 
 	warnx("Entering while(1) loop");
-	while (1)
+	while (1) {
 		sleep(1);
+		if (do_restart) {
+			inc_restarts();
+			if (system(cmd))
+				return 1;
+			break;
+		}
+	}
 
 	warnx("Leaving ...");
 	return 0;

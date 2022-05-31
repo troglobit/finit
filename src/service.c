@@ -731,10 +731,14 @@ static void service_cleanup(svc_t *svc)
  * service_stop - Stop service
  * @svc: Service to stop
  *
+ * Called externally by initctl to perform stop/start (restart) of
+ * services.  Internally it is used to bring a run/task/service to
+ * HALTED state.
+ *
  * Returns:
  * 0 if the service was successfully stopped. Non-zero otherwise.
  */
-static int service_stop(svc_t *svc)
+int service_stop(svc_t *svc)
 {
 	char cmdline[CMD_SIZE] = "";
 	int do_progress = 1;

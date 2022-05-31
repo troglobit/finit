@@ -89,8 +89,7 @@ static int restart(svc_t *svc, void *user_data)
 	if (!svc)
 		return 1;
 
-	svc_mark_dirty(svc);
-	svc_start(svc);
+	service_stop(svc);
 	service_step(svc);
 
 	return 0;
@@ -317,6 +316,10 @@ static void api_cb(uev_t *w, void *arg, int events)
 					continue;
 
 				if (EAGAIN == errno)
+					break;
+
+				/* we get here when client restarts itself */
+				if (ECONNRESET == errno)
 					break;
 
 				_e("Failed reading initctl request, error %d: %s", errno, strerror(errno));
