@@ -1274,6 +1274,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			forking = 1;
 		else if (!strncasecmp(cmd, "manual:yes", 10))
 			manual = 1;
+		else if (!strncasecmp(cmd, "restart:always", 14))
+			restart_max = -1;
 		else if (!strncasecmp(cmd, "restart:", 8))
 			restart_max = atoi(&cmd[8]);
 		else if (!strncasecmp(cmd, "restarttmo:", 11)) /* compat alias */
@@ -1759,7 +1761,7 @@ static void service_retry(svc_t *svc)
 	}
 
 	/* Peak instability index */
-	if (*restart_cnt >= svc->restart_max) {
+	if (svc->restart_max != -1 && *restart_cnt >= svc->restart_max) {
 		logit(LOG_CONSOLE | LOG_WARNING, "Service %s keeps crashing, not restarting.",
 		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);
