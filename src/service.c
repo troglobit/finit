@@ -1373,10 +1373,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (type == SVC_TYPE_SERVICE && manual)
 			svc_stop(svc);
-
-		svc->restart_max = restart_max;
-		svc->restart_tmo = restart_tmo;
-		svc->oncrash_action = oncrash_action;
 	} else {
 		_d("Found existing svc for %s name %s id %s type %d", cmd, name, id, type);
 
@@ -1466,6 +1462,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->file, file, sizeof(svc->file));
 	svc->respawn = respawn;
 	svc->forking = forking;
+	svc->restart_max = restart_max;
+	svc->restart_tmo = restart_tmo;
+	svc->oncrash_action = oncrash_action;
 
 	/* Decode any (optional) pid:/optional/path/to/file.pid */
 	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
