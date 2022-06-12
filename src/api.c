@@ -89,6 +89,9 @@ static int restart(svc_t *svc, void *user_data)
 	if (!svc)
 		return 1;
 
+	if (!svc_is_running(svc))
+		return start(svc, user_data);
+
 	service_stop(svc);
 	service_step(svc);
 
