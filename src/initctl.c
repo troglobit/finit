@@ -320,6 +320,7 @@ int do_signal(int argc, char *argv[])
 	return client_send(&rq, sizeof(rq));
 }
 
+char *dump_filter;
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
 	const char *cond, *asserted;
@@ -334,6 +335,10 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 
 	asserted = condstr(cond_get_path(fpath));
 	cond = &fpath[strlen(_PATH_COND)];
+
+	if (dump_filter && dump_filter[0] && strncmp(cond, dump_filter, strlen(dump_filter)))
+		return 0;
+
 	if (strncmp("pid/", cond, 4) == 0) {
 		svc_t *svc;
 
@@ -365,6 +370,7 @@ static int do_cond_dump(char *arg)
 		print_header("%-*s  %-*s  %-6s  %s", pw, "PID", iw, "IDENT",
 			     "STATUS", "CONDITION");
 
+	dump_filter = arg;
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		WARNX("Failed parsing %s", _PATH_COND);
 		return 1;
@@ -1004,7 +1010,7 @@ static int usage(int rc)
 		"  cond     get   <COND>     Get status of user-defined condition, see $? and -v\n"
 		"  cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND\n"
 		"  cond     status           Show condition status, default cond command\n"
-		"  cond     dump             Dump all conditions and their status\n"
+		"  cond     dump  [TYPE]     Dump all, or a type of, conditions and their status\n"
 		"\n"
 		"  log      [NAME]           Show ten last Finit, or NAME, messages from syslog\n"
 		"  start    <NAME>[:ID]      Start service by name, with optional ID\n"
