@@ -49,6 +49,7 @@
 #endif
 
 static long logname_len = 32;	/* useradd(1) limit at 32 chars */
+static int  passenv     = 0;	/* Set /bin/login -p or not     */
 
 /*
  * Read one character from stdin.
@@ -185,7 +186,10 @@ static int do_login(char *name)
 {
 	struct stat st;
 
-	execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
+	if (passenv)
+		execl(_PATH_LOGIN, _PATH_LOGIN, "-p", name, NULL);
+	else
+		execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
 
 	/*
 	 * Failed to exec login, should not happen on normal systems.
@@ -252,11 +256,14 @@ int main(int argc, char *argv[])
 	char *tty, *speed = "0", *term = NULL;
 	int c;
 
-	while ((c = getopt(argc, argv, "h?")) != EOF) {
+	while ((c = getopt(argc, argv, "h?p")) != EOF) {
 		switch(c) {
 		case 'h':
 		case '?':
 			return usage(0);
+		case 'p':
+			passenv = 1;
+			break;
 		default:
 			return usage(1);
 		}

@@ -154,6 +154,7 @@ char *tty_atcon(void)
 int tty_parse_args(char *cmd, struct tty *tty)
 {
 	char  *dev = NULL;
+	int passenv = 0;
 	size_t i;
 
 	do {
@@ -165,6 +166,8 @@ int tty_parse_args(char *cmd, struct tty *tty)
 			tty->nologin = 1;
 		else if (!strcmp(cmd, "notty"))
 			tty->notty = 1;		/* for board bringup */
+		else if (!strcmp(cmd, "passenv"))
+			passenv = 1;
 		else if (!strcmp(cmd, "rescue"))
 			tty->rescue = 1;	/* for rescue shells */
 		else if (whichp(cmd))		/* in $PATH? */
@@ -228,8 +231,15 @@ int tty_parse_args(char *cmd, struct tty *tty)
 	   tty->dev, tty->baud ?: "0", tty->term ?: "N/A");
 
 	/* Built-in getty now comes as standalone program */
-	if (!tty->cmd)
+	if (!tty->cmd) {
+		if (passenv && tty->num < NELEMS(tty->args)) {
+			for (i = tty->num; i > 0; i--)
+				tty->args[i] = tty->args[i - 1];
+			tty->args[0] = "-p";
+			tty->num++;
+		}
 		tty->cmd = _PATH_GETTY;
+	}
 
 	return 0;
 }
