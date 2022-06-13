@@ -1144,7 +1144,6 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	svc->args_dirty = (diff > 0);
 }
 
-
 /**
  * service_register - Register service, task or run commands
  * @type:   %SVC_TYPE_SERVICE(0), %SVC_TYPE_TASK(1), %SVC_TYPE_RUN(2)
@@ -1253,6 +1252,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	while (cmd) {
+		char *arg;
+
 		if (type == SVC_TYPE_TTY && cmd[0] == '@')
 			break;		/* @console */
 
@@ -1264,44 +1265,48 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			cond = &cmd[1];
 		else if (cmd[0] == ':')	/* :ID */
 			id = &cmd[1];
-		else if (!strncasecmp(cmd, "log", 3))
+		else if (MATCH_CMD(cmd, "log", arg))
 			log = cmd;
-		else if (!strncasecmp(cmd, "pid", 3))
+		else if (MATCH_CMD(cmd, "pid", arg))
 			pid = cmd;
-		else if (!strncasecmp(cmd, "name:", 5))
+		else if (MATCH_CMD(cmd, "name:", arg))
 			name = cmd;
-		else if (!strncasecmp(cmd, "type:forking", 10))
+		else if (MATCH_CMD(cmd, "type:forking", arg))
 			forking = 1;
-		else if (!strncasecmp(cmd, "manual:yes", 10))
+		else if (MATCH_CMD(cmd, "manual:yes", arg))
 			manual = 1;
-		else if (!strncasecmp(cmd, "restart:", 8))
-			restart_max = atoi(&cmd[8]);
-		else if (!strncasecmp(cmd, "restarttmo:", 11)) /* compat alias */
-			restart_tmo = atoi(&cmd[11]) * 1000;
-		else if (!strncasecmp(cmd, "restart_sec:", 12))
-			restart_tmo = atoi(&cmd[12]) * 1000;
-		else if (!strncasecmp(cmd, "norestart", 9))
+		else if (MATCH_CMD(cmd, "restart:", arg)) {
+			if (MATCH_CMD(arg, "always", arg))
+				restart_max = -1;
+			else
+				restart_max = atoi(arg);
+		}
+		else if (MATCH_CMD(cmd, "restarttmo:", arg)) /* compat alias */
+			restart_tmo = atoi(arg) * 1000;
+		else if (MATCH_CMD(cmd, "restart_sec:", arg))
+			restart_tmo = atoi(arg) * 1000;
+		else if (MATCH_CMD(cmd, "norestart", arg))
 			restart_max = 0;
-		else if (!strncasecmp(cmd, "oncrash:", 8)) {
-			if (!strncasecmp(&cmd[8], "reboot", 6))
+		else if (MATCH_CMD(cmd, "oncrash:", arg)) {
+			if (MATCH_CMD(arg, "reboot", arg))
 				oncrash_action = SVC_ONCRASH_REBOOT;
 		}
-		else if (!strncasecmp(cmd, "respawn", 7))
+		else if (MATCH_CMD(cmd, "respawn", arg))
 			respawn = 1;
-		else if (!strncasecmp(cmd, "halt:", 5))
-			halt = &cmd[5];
-		else if (!strncasecmp(cmd, "kill:", 5))
-			delay = &cmd[5];
-		else if (!strncasecmp(cmd, "pre:", 4))
-			pre_script = &cmd[4];
-		else if (!strncasecmp(cmd, "post:", 5))
-			post_script = &cmd[5];
-		else if (!strncasecmp(cmd, "env:", 4))
-			env = &cmd[4];
-		else if (!strncasecmp(cmd, "cgroup:", 7))
-			cgroup = &cmd[7]; /* only settings */
-		else if (!strncasecmp(cmd, "cgroup.", 7))
-			cgroup = &cmd[6]; /* with group */
+		else if (MATCH_CMD(cmd, "halt:", arg))
+			halt = arg;
+		else if (MATCH_CMD(cmd, "kill:", arg))
+			delay = arg;
+		else if (MATCH_CMD(cmd, "pre:", arg))
+			pre_script = arg;
+		else if (MATCH_CMD(cmd, "post:", arg))
+			post_script = arg;
+		else if (MATCH_CMD(cmd, "env:", arg))
+			env = arg;
+		else if (MATCH_CMD(cmd, "cgroup:", arg))
+			cgroup = arg; /* only settings */
+		else if (MATCH_CMD(cmd, "cgroup.", arg))
+			cgroup = arg; /* with group */
 		else
 			break;
 
@@ -1371,10 +1376,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (type == SVC_TYPE_SERVICE && manual)
 			svc_stop(svc);
-
-		svc->restart_max = restart_max;
-		svc->restart_tmo = restart_tmo;
-		svc->oncrash_action = oncrash_action;
 	} else {
 		_d("Found existing svc for %s name %s id %s type %d", cmd, name, id, type);
 
@@ -1464,6 +1465,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->file, file, sizeof(svc->file));
 	svc->respawn = respawn;
 	svc->forking = forking;
+	svc->restart_max = restart_max;
+	svc->restart_tmo = restart_tmo;
+	svc->oncrash_action = oncrash_action;
 
 	/* Decode any (optional) pid:/optional/path/to/file.pid */
 	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
@@ -1759,7 +1763,7 @@ static void service_retry(svc_t *svc)
 	}
 
 	/* Peak instability index */
-	if (*restart_cnt >= svc->restart_max) {
+	if (svc->restart_max != -1 && *restart_cnt >= svc->restart_max) {
 		logit(LOG_CONSOLE | LOG_WARNING, "Service %s keeps crashing, not restarting.",
 		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);

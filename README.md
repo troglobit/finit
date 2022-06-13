@@ -464,7 +464,7 @@ Commands:
   cond     get   <COND>     Get status of user-defined condition, see $? and -v
   cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND
   cond     status           Show condition status, default cond command
-  cond     dump             Dump all conditions and their status
+  cond     dump  [TYPE]     Dump all, or a type of, conditions and their status
 
   log      [NAME]           Show ten last Finit, or NAME, messages from syslog
   start    <NAME>[:ID]      Start service by name, with optional ID

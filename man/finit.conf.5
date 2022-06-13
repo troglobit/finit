@@ -304,6 +304,10 @@ number of seconds before Finit tries to restart
 a crashing service, default: 2 seconds for the first five retries,
 then back-off to 5 seconds.  The maximum of this configured value
 and the above (2 and 5) will be used
+.It Cm restart:always
+no upper limit on the number of times Finit tries to restart a crashing
+service.  Same as
+.Cm restart:-1
 .It Cm norestart
 dont restart on failures, same as
 .Cm restart:0

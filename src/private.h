@@ -29,6 +29,9 @@
 #include "plugin.h"
 
 #define SERVICE_INTERVAL_DEFAULT 300000 /* 5 mins */
+#define MATCH_CMD(l, c, x) \
+	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
+
 extern int service_interval;
 
 int       api_init         (uev_ctx_t *ctx);
