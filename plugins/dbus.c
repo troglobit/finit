@@ -35,16 +35,20 @@
 #include "service.h"
 #include "conf.h"
 
-#define DAEMON "dbus-daemon"
-#define ARGS   "--nofork --system --syslog-only"
-#define DESC   "D-Bus message bus daemon"
+#define DBUS_DAEMON "dbus-daemon"
+#define DBUS_ARGS   "--nofork --system --syslog-only"
+#define DBUS_DESC   "D-Bus message bus daemon"
 
-#ifndef DAEMONUSER
-#define DAEMONUSER "messagebus"
+#ifndef DBUS_DAEMONUSER
+#define DBUS_DAEMONUSER "messagebus"
 #endif
 
-#ifndef DAEMONPIDFILE
-#define DAEMONPIDFILE "/var/run/dbus/pid"
+#ifndef DBUS_DAEMONGROUP
+#define DBUS_DAEMONGROUP "messagebus"
+#endif
+
+#ifndef DBUS_DAEMONPIDFILE
+#define DBUS_DAEMONPIDFILE "/var/run/dbus/pid"
 #endif
 
 static void setup(void *arg)
@@ -58,26 +62,32 @@ static void setup(void *arg)
 		return;
 	}
 
-	cmd = which(DAEMON);
+	cmd = which(DBUS_DAEMON);
 	if (!cmd) {
-		_d("Skipping plugin, %s is not installed.", DAEMON);
+		_d("Skipping plugin, %s is not installed.", DBUS_DAEMON);
 		return;
 	}
 
 	prev =umask(0);
 
-	mksubsys("/var/run/dbus", 0755, DAEMONUSER, DAEMONUSER);
+	_d("Creating D-Bus Required Directories ...");
+	mksubsys("/var/run/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	mksubsys("/var/run/lock/subsys", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	mksubsys("/var/lib/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	mksubsys("/tmp/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+
+	/* Generate machine id for dbus */
 	if (whichp("dbus-uuidgen"))
 		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
 
 	/* Clean up from any previous pre-bootstrap run */
-	remove(DAEMONPIDFILE);
+	remove(DBUS_DAEMONPIDFILE);
 
 	/* Register service with Finit */
 	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
-		 DAEMONPIDFILE, DAEMONUSER, DAEMONUSER, cmd, ARGS, DESC);
+		 DBUS_DAEMONPIDFILE, DBUS_DAEMONUSER, DBUS_DAEMONGROUP, cmd, DBUS_ARGS, DBUS_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		_pe("Failed registering %s", DAEMON);
+		_pe("Failed registering %s", DBUS_DAEMON);
 	free(cmd);
 
 	umask(prev);
