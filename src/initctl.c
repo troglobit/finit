@@ -692,16 +692,17 @@ static char *svc_environ(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
-static char *exit_status(int status, char *buf, size_t len)
+static char *exit_status(svc_t *svc, char *buf, size_t len)
 {
 	int rc, sig;
 
-	rc = WEXITSTATUS(status);
-	sig = WTERMSIG(status);
+	rc = WEXITSTATUS(svc->status);
+	sig = WTERMSIG(svc->status);
 
-	if (WIFEXITED(status))
-		snprintf(buf, len, " (code=exited, status=%d%s)", rc, code2str(rc));
-	else if (WIFSIGNALED(status))
+	if (WIFEXITED(svc->status))
+		snprintf(buf, len, " (code=exited, status=%d%s%s)", rc, code2str(rc),
+			 svc->manual ? ", manual=yes" : "");
+	else if (WIFSIGNALED(svc->status))
 		snprintf(buf, len, " (code=signal, status=%d%s)", sig, sig2str(sig));
 
 	return buf;
@@ -717,7 +718,7 @@ static char *status(svc_t *svc, int full)
 	s = svc_status(svc);
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
-		exit_status(svc->status, ok, sizeof(ok));
+		exit_status(svc, ok, sizeof(ok));
 		color = "\e[1m";
 		break;
 
@@ -726,7 +727,7 @@ static char *status(svc_t *svc, int full)
 		break;
 
 	case SVC_DONE_STATE:
-		exit_status(svc->status, ok, sizeof(ok));
+		exit_status(svc, ok, sizeof(ok));
 		if (WIFEXITED(svc->status)) {
 			if (WEXITSTATUS(svc->status))
 				color = "\e[1;31m";
@@ -741,7 +742,7 @@ static char *status(svc_t *svc, int full)
 		break;
 
 	default:
-		exit_status(svc->status, ok, sizeof(ok));
+		exit_status(svc, ok, sizeof(ok));
 		color = "\e[1;33m";
 		break;
 	}
@@ -831,6 +832,8 @@ static int show_status(char *arg)
 		printf("       User : %s\n", svc->username);
 		printf("      Group : %s\n", svc->group);
 		printf("     Uptime : %s\n", svc->pid ? uptime(now - svc->start_time, uptm, sizeof(uptm)) : uptm);
+		if (svc->manual)
+			printf("     Starts : %d\n", svc->once);
 		printf("   Restarts : %d (%d/%d)\n", svc->restart_tot, svc->restart_cnt, svc->restart_max);
 		printf("  Runlevels : %s\n", runlevel_string(runlevel, svc->runlevels));
 		if (cgrp && svc->pid > 1) {

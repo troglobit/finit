@@ -1374,7 +1374,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			return errno = ENOMEM;
 		}
 
-		if (type == SVC_TYPE_SERVICE && manual)
+		if (manual)
 			svc_stop(svc);
 	} else {
 		_d("Found existing svc for %s name %s id %s type %d", cmd, name, id, type);
@@ -1463,6 +1463,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_env(svc, env);
 	if (file)
 		strlcpy(svc->file, file, sizeof(svc->file));
+	svc->manual  = manual;
 	svc->respawn = respawn;
 	svc->forking = forking;
 	svc->restart_max = restart_max;
@@ -1920,7 +1921,11 @@ restart:
 
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
-				svc_set_state(svc, SVC_DONE_STATE);
+				if (svc->manual) {
+					svc_stop(svc);
+					svc_set_state(svc, SVC_HALTED_STATE);
+				} else
+					svc_set_state(svc, SVC_DONE_STATE);
 				break;
 
 			default:
