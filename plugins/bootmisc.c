@@ -116,6 +116,45 @@ static void ln(const char *target, const char *linkpath)
 		_pe("Failed creating %s -> %s symlink", target, linkpath);
 }
 
+/* Kernel defines the following compulsory and recommended links
+ * https://github.com/torvalds/linux/blob/v5.18/Documentation/admin-guide/devices.rst#compulsory-links
+ */
+static void kernel_links(void)
+{
+	struct {
+		char *tgt, *lnk;
+		int  optional;
+	} k[] = {
+		{ "/proc/self/fd", "/dev/fd", 0 },
+		{ "fd/0", "/dev/stdin",  0 },
+		{ "fd/1", "/dev/stdout", 0 },
+		{ "fd/2", "/dev/stderr", 0 },
+		{ "socksys", "/dev/nfsd", 0 },
+		{ "null", "/dev/X0R", 0 },
+		{ "/proc/kcore", "/dev/core", 1 },
+		{ "ram0", "/dev/ramdisk", 1 },
+		{ "qft0", "/dev/ftape", 1 },
+		{ "video0", "/dev/bttv0", 1 },
+		{ "radio0", "/dev/radio", 1 },
+	};
+	char *fn, buf[80];
+	size_t i;
+
+	for (i = 0; i < NELEMS(k); i++) {
+		fn = k[i].tgt;
+
+		if (k[i].optional) {
+			if (fn[0] != '/') {
+				snprintf(buf, sizeof(buf), "/dev/%s", k[i].tgt);
+				fn = buf;
+			}
+			if (!fexist(fn))
+				continue;
+		}
+		ln(k[i].tgt, k[i].lnk);
+	}
+}
+
 /*
  * Setup standard FHS 2.3 structure in /var, and write runlevel to UTMP
  */
@@ -205,6 +244,9 @@ static void setup(void *arg)
 	mksubsys("/var/run/sudo/ts", 0700, "root", "root");
 	if (whichp("restorecon"))
 		run("restorecon /var/run/sudo /var/run/sudo/ts", "restorecon");
+
+	/* Kernel symlinks, e.g. /proc/self/fd -> /dev/fd */
+	kernel_links();
 
 	umask(prev);
 }

@@ -121,7 +121,8 @@ typedef struct svc {
 	int            status;	       /* From waitpid() when process is collected */
 	const svc_state_t state;       /* Paused, Reloading, Restart, Running, ... */
 	svc_type_t     type;	       /* Service, run, task, ... */
-	int            protect;        /* Services like dbus-daemon & udev by Finit */
+	char           protect;        /* Services like dbus-daemon & udev by Finit */
+	char           manual;	       /* run/task that require `initctl start foo` */
 	const int      dirty;	       /* 0: unmodified, 1: modified */
 	const int      removed;
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
@@ -139,7 +140,7 @@ typedef struct svc {
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
 	unsigned int   restart_tot;    /* Total restarts ever, summarized, including `initctl restart` */
-	unsigned char  restart_max;    /* Maximum number of restarts allowed */
+	int            restart_max;    /* Maximum number of restarts allowed */
 	int            restart_tmo;    /* Time required for the service to start. */
 	unsigned char  oncrash_action; /* Action to perform in crashed state. */
 	char           respawn;	       /* ttys, or services with `respawn`, never increment restart_cnt */

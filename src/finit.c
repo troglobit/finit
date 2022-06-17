@@ -577,7 +577,7 @@ static void bootstrap_worker(void *work)
 		.cb = finalize,
 		.delay = 10
 	};
-	static int cnt = 120;
+	static int cnt = 120 * 10;	/* We run with 100ms period */
 	int level = cfglevel;
 
 	_d("Step all services ...");
