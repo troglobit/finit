@@ -70,13 +70,13 @@ static void setup(void *arg)
 
 	prev =umask(0);
 
-  _d("Creating D-Bus Required Directories ...");
-  mksubsys("/var/run/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
-  mksubsys("/var/run/lock/subsys", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
-  mksubsys("/var/lib/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
-  mksubsys("/tmp/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	_d("Creating D-Bus Required Directories ...");
+	mksubsys("/var/run/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	mksubsys("/var/run/lock/subsys", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	mksubsys("/var/lib/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	mksubsys("/tmp/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
 
-  /* Generate machine id for dbus */
+	/* Generate machine id for dbus */
 	if (whichp("dbus-uuidgen"))
 		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
 

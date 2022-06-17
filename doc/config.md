@@ -450,6 +450,8 @@ configurable with the following options:
     a crashing service, default: 2 seconds for the first five retries,
 	then back-off to 5 seconds.  The maximum of this configured value
 	and the above (2 and 5) will be used
+  * `restart:always` -- no upper limit on the number of times Finit
+    tries to restart a crashing service.  Same as `restart:-1`
   * `norestart` -- dont restart on failures, same as `restart:0`
   * `respawn` -- bypasses the `restart` mechanism completely, allows
     endless restarts.  Useful in many use-cases, but not what `service`

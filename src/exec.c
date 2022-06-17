@@ -329,7 +329,7 @@ static int activate_console(int noclear, int nowait)
 	static const char clr[] = "\r\e[K";
 	static const char cup[] = "\e[A";
 	struct termios orig;
-	char c;
+	char ch;
 	int rc;
 
 	if (nowait || rescue)
@@ -351,7 +351,7 @@ static int activate_console(int noclear, int nowait)
 
 	dprint(STDERR_FILENO, clr, strlen(clr));
 	dprint(STDERR_FILENO, msg, strlen(msg));
-	while ((rc = read(STDIN_FILENO, &c, 1)) > 0 && c != '\r' && c != '\n')
+	while ((rc = read(STDIN_FILENO, &ch, 1)) > 0 && ch != '\r' && ch != '\n')
 		continue;
 
 	/* On any error (likely EINTR), we avoid starting getty */

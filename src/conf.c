@@ -48,8 +48,6 @@
 #include "util.h"
 
 #define BOOTSTRAP (runlevel == 0)
-#define MATCH_CMD(l, c, x) \
-	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
 int logfile_size_max = 200000;	/* 200 kB */
 int logfile_count_max = 5;
