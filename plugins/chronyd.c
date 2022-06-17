@@ -1,6 +1,7 @@
 /* Setup and start system time service chronyd
  *
- * Copyright (c) 2012-2022  Joachim Wiberg <troglobit@gmail.com>
+ * Portions Copyright (c) 2012-2022 Joachim Wiberg <troglobit@gmail.com>
+ * Portions Copyright (c) 2022 Andy Savage <andy@savage.hk>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
