@@ -31,6 +31,11 @@ assert_num_children()
 	assert "$1 services are running" "$(texec pgrep -P 1 "$2" | wc -l)" -eq "$1"
 }
 
+assert_num_services()
+{
+	assert "$1 services are loaded" "$(texec initctl -t status "$2" | wc -l)" -eq "$1"
+}
+
 # shellcheck disable=SC2086
 assert_new_pid()
 {
@@ -40,6 +45,11 @@ assert_new_pid()
 assert_restarts()
 {
 	assert "Finit has registered restarts" "$(texec initctl status "$2" | awk '/Restarts/{print $3;}')" -ge "$1"
+}
+
+assert_desc()
+{
+	assert "Service description == $1" "$(texec initctl status "$2" | grep 'Description' | sed 's/Description : //')" = "$1"
 }
 
 # shellcheck disable=SC2086
