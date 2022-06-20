@@ -774,6 +774,28 @@ static void show_cgroup_tree(char *group, char *pfx)
 	cgroup_tree(path, pfx, 0, 0);
 }
 
+/*
+ * arg: 'foo'   should match foo:1 foo:2, etc. but not foobar
+ * arg: 'foo:1' should only match foo:1
+ * arg: 'foo:'  is allowed to fail, unsupported syntax atm
+ * arg: 'foo:*' is allowed to fail, unsupported syntax atm
+ */
+static int svc_compare(svc_t *svc, char *arg)
+{
+	char ident[MAX_IDENT_LEN];
+	char *ptr;
+
+	svc_ident(svc, ident, sizeof(ident));
+	ptr = strchr(ident, ':');
+	if (ptr && !strchr(arg, ':'))
+		*ptr = 0;
+
+	if (!strcmp(ident, arg))
+		return 1;
+
+	return 0;
+}
+
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
@@ -787,17 +809,11 @@ static int show_status(char *arg)
 		long now = jiffies();
 		char uptm[42] = "N/A";
 		char *pidfn = NULL;
-		int exact = 0;
 
-		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
-			svc_ident(svc, ident, sizeof(ident));
-			if (string_compare(ident, arg))
-				num++;
-			if (string_case_compare(ident, arg))
-				exact++;
-		}
+		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0))
+			num += svc_compare(svc, arg);
 
-		if (num > 1 && !exact)
+		if (num > 1)
 			break;
 
 		svc = client_svc_find(arg);
@@ -878,7 +894,7 @@ static int show_status(char *arg)
 		char *lvls;
 
 		svc_ident(svc, ident, sizeof(ident));
-		if (num && !string_compare(ident, arg))
+		if (num && !svc_compare(svc, arg))
 			continue;
 
 		printf("%-*d  ", pw, svc->pid);
