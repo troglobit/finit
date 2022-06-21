@@ -65,7 +65,7 @@ Below are a few of the main switches to configure:
 
 * `--enable-x11-common-plugin`: Enable the optional X Window `x11-common.so` plugin.
 
-* `--with-sulgin`: Enable bundled `sulogin` program.  Default is to use the
+* `--with-sulogin`: Enable bundled `sulogin` program.  Default is to use the
   system `sulogin(8)`.  The sulogin shipped with Finit *allows password-less*
   login if the `root` user is disabled or has no password at all.
 
