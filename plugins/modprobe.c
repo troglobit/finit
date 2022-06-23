@@ -106,7 +106,7 @@ static void alias_remove(struct module *m)
 	TAILQ_REMOVE(&modules, m, link);
 	free(m->alias);
 	free(m);
-}	
+}
 
 static int alias_exist(char *alias)
 {
@@ -120,24 +120,85 @@ static int alias_exist(char *alias)
 	return 0;
 }
 
-static int scan_alias(const char *path, const struct stat *st, int flag, struct FTW *unused)
+static void alias_add_uniq(char *alias)
+{
+
+	if (alias_exist(alias))
+		return;
+
+	alias_add(alias);
+}
+
+static FILE *maybe_fopen_alias(const char *file, const char *path)
+{
+	const char *basename;
+
+	basename = rindex(path, '/');
+	if (!basename)
+		return NULL;
+
+	basename++;
+	if (strcmp(file, basename))
+		return NULL;
+
+	return fopen(path, "r");
+}
+
+static int scan_modalias(const char *path)
 {
 	FILE *fp;
 	char buf[256];
 
-	if (fnmatch("*/modalias", path, 0))
-		return 0;
-
-	fp = fopen(path, "r");
+	fp = maybe_fopen_alias("modalias", path);
 	if (!fp)
-		return 0;
+		return 1;
+
 	if (fgets(buf, sizeof(buf), fp)) {
 		chomp(buf);
-		if (!alias_exist(buf))
-			alias_add(buf);
+		alias_add_uniq(buf);
 	}
+
 	fclose(fp);
 
+	return 0;
+}
+
+static int scan_uevent(const char *path)
+{
+	FILE *fp;
+	char buf[256];
+
+	fp = maybe_fopen_alias("uevent", path);
+	if (!fp)
+		return 1;
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		if (strstr(buf, "MODALIAS=") != buf)
+			continue;
+
+		chomp(buf);
+
+		alias_add_uniq(buf + strlen("MODALIAS="));
+		break;
+	}
+
+	fclose(fp);
+
+	return 0;
+}
+
+static int scan_alias(const char *path, const struct stat *st,
+		      int flag, struct FTW *unused)
+{
+	/* Perform some basic sanity checks first: that this is a
+	 * regular file that we can read. */
+	if (!(S_ISREG(st->st_mode) && (st->st_mode & S_IRUSR)))
+		return 0;
+
+	if (!scan_uevent(path))
+		return 0;
+
+	scan_modalias(path);
 	return 0;
 }
 
