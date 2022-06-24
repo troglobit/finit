@@ -122,7 +122,6 @@ static int alias_exist(char *alias)
 
 static void alias_add_uniq(char *alias)
 {
-
 	if (alias_exist(alias))
 		return;
 
@@ -146,8 +145,8 @@ static FILE *maybe_fopen_alias(const char *file, const char *path)
 
 static int scan_modalias(const char *path)
 {
-	FILE *fp;
 	char buf[256];
+	FILE *fp;
 
 	fp = maybe_fopen_alias("modalias", path);
 	if (!fp)
@@ -165,8 +164,8 @@ static int scan_modalias(const char *path)
 
 static int scan_uevent(const char *path)
 {
-	FILE *fp;
 	char buf[256];
+	FILE *fp;
 
 	fp = maybe_fopen_alias("uevent", path);
 	if (!fp)
@@ -190,8 +189,7 @@ static int scan_uevent(const char *path)
 static int scan_alias(const char *path, const struct stat *st,
 		      int flag, struct FTW *unused)
 {
-	/* Perform some basic sanity checks first: that this is a
-	 * regular file that we can read. */
+	/* Sanity check: is this a regular file we can read? */
 	if (!(S_ISREG(st->st_mode) && (st->st_mode & S_IRUSR)))
 		return 0;
 
@@ -199,6 +197,7 @@ static int scan_alias(const char *path, const struct stat *st,
 		return 0;
 
 	scan_modalias(path);
+
 	return 0;
 }
 
