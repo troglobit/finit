@@ -1893,6 +1893,8 @@ restart:
 	case SVC_DONE_STATE:
 		if (svc_is_changed(svc))
 			svc_set_state(svc, SVC_HALTED_STATE);
+		if (svc_is_runtask(svc) && svc_is_manual(svc) && enabled)
+			svc_set_state(svc, SVC_READY_STATE);
 		break;
 
 	case SVC_STOPPING_STATE:
@@ -1916,11 +1918,9 @@ restart:
 
 			case SVC_TYPE_TASK:
 			case SVC_TYPE_RUN:
-				if (svc->manual) {
+				if (svc->manual)
 					svc_stop(svc);
-					svc_set_state(svc, SVC_HALTED_STATE);
-				} else
-					svc_set_state(svc, SVC_DONE_STATE);
+				svc_set_state(svc, SVC_DONE_STATE);
 				break;
 
 			default:
