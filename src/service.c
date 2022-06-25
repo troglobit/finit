@@ -1886,13 +1886,8 @@ restart:
 
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
-		if (enabled) {
-			if (svc_has_pre(svc)) {
-				svc_set_state(svc, SVC_SETUP_STATE);
-				service_pre_script(svc);
-			} else
-				svc_set_state(svc, SVC_READY_STATE);
-		}
+		if (enabled)
+			svc_set_state(svc, SVC_READY_STATE);
 		break;
 
 	case SVC_DONE_STATE:
@@ -1942,7 +1937,7 @@ restart:
 
 	case SVC_SETUP_STATE:
 		if (!svc->pid)
-			svc_set_state(svc, SVC_READY_STATE);
+			svc_set_state(svc, SVC_STARTING_STATE);
 		break;
 
 	case SVC_READY_STATE:
@@ -1953,20 +1948,34 @@ restart:
 			if (sm_is_in_teardown(&sm))
 				break;
 
-			err = service_start(svc);
-			if (err) {
-				if (svc_is_missing(svc)) {
-					svc_set_state(svc, SVC_HALTED_STATE);
-					break;
-				}
-				(*restart_cnt)++;
+			if (svc_has_pre(svc)) {
+				svc_set_state(svc, SVC_SETUP_STATE);
+				service_pre_script(svc);
 				break;
 			}
-
-			/* Everything went fine, clean and set state */
-			svc_mark_clean(svc);
-			svc_set_state(svc, SVC_RUNNING_STATE);
+			svc_set_state(svc, SVC_STARTING_STATE);
 		}
+		break;
+
+	case SVC_STARTING_STATE:
+		if (!enabled) {
+			svc_set_state(svc, SVC_HALTED_STATE);
+			break;
+		}
+
+		err = service_start(svc);
+		if (err) {
+			if (svc_is_missing(svc)) {
+				svc_set_state(svc, SVC_HALTED_STATE);
+				break;
+			}
+			(*restart_cnt)++;
+			break;
+		}
+
+		/* Everything went fine, clean and set state */
+		svc_mark_clean(svc);
+		svc_set_state(svc, SVC_RUNNING_STATE);
 		break;
 
 	case SVC_RUNNING_STATE:

@@ -63,6 +63,7 @@ typedef enum {
 	SVC_SETUP_STATE,	/* Running pre: script */
 	SVC_WAITING_STATE,	/* Condition is in flux, process SIGSTOPed */
 	SVC_READY_STATE,	/* Enabled but condition not satisfied */
+	SVC_STARTING_STATE,	/* Conditions OK and pre: script done, start */
 	SVC_RUNNING_STATE,	/* Process running */
 } svc_state_t;
 
