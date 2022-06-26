@@ -46,11 +46,16 @@ Triggering
 ----------
 
 Conditions are mainly triggered (asserted) by built-in plugins, e.g.,
-`netlink.so` and `pidfile.so`, see below for built-in conditions.  Finit
-also supports user-defined conditions, sometimes referred to as static
-or one-shot conditions.  They live in the `<usr/...` namespace and are
-constrained to a flat hierarchy without any sub-directories, unlike the
-pidfile plugin, for instance.
+
+  - `netlink.so`: provides `<net/...>`
+  - `pidfile.so`: provides `<pid/...>`
+  - Cmdline `finit.cond=arg`: provides `<boot/arg`
+
+See below for built-in conditions.  Finit also supports user-defined
+conditions, sometimes referred to as static or one-shot conditions.
+They live in the `<usr/...` namespace and are constrained to a flat
+hierarchy without any sub-directories, unlike the pidfile plugin, for
+instance.
 
 User-defined conditions are controlled using the `initctl cond set` and
 `initctl cond clear` commands:
@@ -118,6 +123,7 @@ Built-in conditions:
 - `sys/pwr/fail`
 - `sys/key/ctrlaltdel`
 - `usr/foo`
+- `boot/arg`
 
 **Note:** `up` means administratively up, the interface flag `IFF_UP`.
   `running` is the `IFF_RUNNING` flag, meaning operatively up.  The

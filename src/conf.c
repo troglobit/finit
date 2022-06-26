@@ -113,6 +113,11 @@ static void parse_finit_opts(char *opt)
 		return;
 	}
 
+	if (string_compare(opt, "cond")) {
+		cond_boot_parse(arg);
+		return;
+	}
+
 	if (string_compare(opt, "status_style")) {
 		if (!arg) {
 			_e("status_style option requires an argument, skipping.");

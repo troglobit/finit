@@ -36,6 +36,67 @@
 #include "pid.h"
 #include "service.h"
 
+struct cond_boot {
+	TAILQ_ENTRY(cond_boot) link;
+	char *name;
+};
+static TAILQ_HEAD(, cond_boot) cond_boot_list = TAILQ_HEAD_INITIALIZER(cond_boot_list);
+
+
+/*
+ * Parse finit.cond=cond[,cond[,...]] from command line.  It creates a
+ * temporary linked list of conds which are freed when finit reaches
+ * cond_init(), which calls cond_boot_strap() to realize the conditions
+ * in the file system as regular static conditions.  Policy, however,
+ * dictates that these are read-only and should not be possible to
+ * manage from initctl.
+ */
+void cond_boot_parse(char *arg)
+{
+	struct cond_boot *node;
+
+	if (!arg)
+		return;
+
+	node = malloc(sizeof(*node));
+	if (!node) {
+		_pe("Out of memory cannot track boot conditions");
+		return;
+	}
+
+	node->name = strdup(arg);
+	TAILQ_INSERT_HEAD(&cond_boot_list, node, link);
+}
+
+/*
+ * Convert all conditions read from the kernel command line (above) into
+ * proper finit conditions.
+ */
+static void cond_boot_strap(void)
+{
+	struct cond_boot *node, *tmp;
+
+	TAILQ_FOREACH_SAFE(node, &cond_boot_list, link, tmp) {
+		TAILQ_REMOVE(&cond_boot_list, node, link);
+		if (node->name) {
+			char *ptr;
+
+			ptr = strtok(node->name, ",");
+			while (ptr) {
+				char cond[strlen(ptr) + 6];
+
+				snprintf(cond, sizeof(cond), "boot/%s", ptr);
+				cond_set_oneshot_noupdate(cond);
+
+				ptr = strtok(NULL, ",");
+			}
+
+			free(node->name);
+		}
+		free(node);
+	}
+}
+
 /*
  * The service condition name is constructed from the 'pid/' prefix and
  * the unique NAME:ID tuple that identify each process in Finit.  Here
@@ -366,6 +427,7 @@ void cond_init(void)
 	}
 
 	cond_bump_reconf();
+	cond_boot_strap();
 }
 
 /**

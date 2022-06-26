@@ -12,6 +12,17 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `debug`: Enable kernel debug.  Debug messages are printed to the
    console until Finit starts up, unless `loglevel=7` (below) is used.
 
+* `finit.cond=foo[,bar[,baz]]`: set `<boot/foo>` condition, optionally
+  multiple conditions can be set using the same option, separated with a
+  comma.  Alternatively, multiple `foo.cond=arg` can be given.  Each will
+  result in a `<boot/arg>` condition being set to control the rest of the
+  system bootstrap.
+
+  Very useful for selecting different boot modes, e.g. manufacturing test,
+  firmware upgrade, or rescue mode.
+
+  > Note: `<boot/...>` conditions cannot be cleared with `initctl`!
+
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
 	independently of the kernel `debug` setting.  New as of Finit v4.
 

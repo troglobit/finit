@@ -31,6 +31,7 @@ enum cond_state cond_get     (const char *name);
 enum cond_state cond_get_agg (const char *names);
 int             cond_affects (const char *name, const char *names);
 
+void cond_boot_parse  (char *arg);
 int  cond_update      (const char *name);
 int  cond_set_path    (const char *path, enum cond_state new);
 void cond_set         (const char *name);
@@ -38,9 +39,9 @@ void cond_set_oneshot (const char *name);
 void cond_clear       (const char *name);
 void cond_reload      (void);
 
-int cond_set_noupdate (const char *name);
-int cond_set_oneshot_noupdate(const char *name);
-int cond_clear_noupdate(const char *name);
+int  cond_set_noupdate(const char *name);
+int  cond_set_oneshot_noupdate(const char *name);
+int  cond_clear_noupdate(const char *name);
 
 void cond_reassert    (const char *pat);
 void cond_deassert    (const char *pat);
