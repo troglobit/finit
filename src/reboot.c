@@ -103,7 +103,7 @@ static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS]\n\n"
 		"Options:\n"
-		"      --help      This help text\n"
+		"  -?, --help      This help text\n"
 		"  -f, --force     Force unsafe %s now, do not contact the init system.\n"
 		"      --halt      Halt system, regardless of how the command is called.\n"
 		"  -h              Halt or power off after shutdown.\n"
@@ -116,15 +116,15 @@ static int usage(int rc)
 
 int reboot_main(int argc, char *argv[])
 {
-	int c, force = 0;
 	struct option long_options[] = {
-		{"help",     0, NULL, 'h'},
+		{"help",     0, NULL, '?'},
 		{"force",    0, NULL, 'f'},
 		{"halt",     0, NULL, 'H'},
 		{"poweroff", 0, NULL, 'p'},
 		{"reboot",   0, NULL, 'r'},
 		{NULL, 0, NULL, 0}
 	};
+	int c, force = 0;
 
 	/* Initial command taken from program name */
 	transform(prognm);
