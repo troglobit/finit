@@ -151,6 +151,9 @@ AC_ARG_WITH(hook-scripts-path,
         AS_HELP_STRING([--with-hook-scripts-path=DIR], [Base directory for hook scripts, default $libexecdir/finit/hook]),
 	[hook_scripts_path=$withval], [hook_scripts_path=yes])
 
+AC_ARG_WITH(plugin-path,
+        AS_HELP_STRING([--with-plugin-path=DIR], [Search path for external plugins, default /usr/lib/finit/plugins:/usr/local/lib/finit/plugins]),
+	[plugin_path=$withval], [plugin_path=yes])
 
 ### Enable features ###########################################################################
 
@@ -250,6 +253,11 @@ AS_IF([test "x$enable_hook_scripts_plugin" = "xyes" -a "x$with_hook_scripts_path
 	AS_IF([test "x$hook_scripts_path" = "xyes"], [hook_scripts_path=$libexecdir/finit/hook])
 	AC_EXPAND_DIR(hook_scripts_path, "$hook_scripts_path")
 	AC_DEFINE_UNQUOTED(PLUGIN_HOOK_SCRIPTS_PATH, "$hook_scripts_path", [Built-in default: $libexecdir/finit])])
+
+AS_IF([test "x$with_plugin_path" != "xno"], [
+	AS_IF([test "x$plugin_path" = "xyes"], [plugin_path=/usr/lib/finit/plugins:/usr/local/lib/finit/plugins])
+	AC_EXPAND_DIR(plugin_path, "$plugin_path")
+	AC_DEFINE_UNQUOTED(EXTERNAL_PLUGIN_PATH, "$plugin_path", [Built-in default: /usr/lib/finit/plugins:/usr/local/lib/finit/plugins])])
 
 # Control build with automake flags
 AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])

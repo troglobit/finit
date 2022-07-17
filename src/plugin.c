@@ -260,8 +260,8 @@ int plugin_io_init(plugin_t *p)
 /* Setup any I/O callbacks for plugins that use them */
 static int init_plugins(uev_ctx_t *ctx)
 {
-	int fail = 0;
 	plugin_t *p, *tmp;
+	int fail = 0;
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (plugin_io_init(p))
@@ -302,7 +302,7 @@ static int load_one(char *path, char *name)
 	noext = strcmp(name + strlen(name) - 3, ".so");
 	snprintf(sofile, sizeof(sofile), "%s/%s%s", path, name, noext ? ".so" : "");
 
-	_d("Loading plugin %s ...", basename(sofile));
+	_d("Loading plugin %s ...", sofile);
 	handle = dlopen(sofile, RTLD_LAZY | RTLD_LOCAL);
 	if (!handle) {
 		_e("Failed loading plugin %s: %s", sofile, dlerror());
@@ -356,6 +356,8 @@ static int load_plugins(char *path)
 
 	dp = opendir(path);
 	if (!dp) {
+		if (errno == ENOENT)
+			return 0;
 		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
 		return 1;
 	}
@@ -383,12 +385,24 @@ static int load_plugins(char *path)
 
 int plugin_init(uev_ctx_t *ctx)
 {
-	int fail = 1;
+	load_plugins(PLUGIN_PATH);
 
-	if (!load_plugins(PLUGIN_PATH))
-	    fail = init_plugins(ctx);
+#ifdef EXTERNAL_PLUGIN_PATH
+	char *paths = strdup(EXTERNAL_PLUGIN_PATH);
+	char *path;
 
-	return fail;
+	if (paths) {
+		_d("Loading external plugins from %s ...", paths);
+		path = strtok(paths, ":");
+		while (path) {
+			load_plugins(path);
+			path = strtok(NULL, ":");
+		}
+		free(paths);
+	}
+#endif
+
+	return init_plugins(ctx);
 }
 
 void plugin_exit(void)
