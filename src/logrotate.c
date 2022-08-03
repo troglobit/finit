@@ -49,7 +49,6 @@ static int recreate(char *path, mode_t mode, uid_t uid, gid_t gid)
  */
 int logrotate(char *file, int num, off_t sz)
 {
-	int cnt;
 	struct stat st;
 
 	if (stat(file, &st))
@@ -60,6 +59,7 @@ int logrotate(char *file, int num, off_t sz)
 			size_t len = strlen(file) + 10 + 1;
 			char   ofile[len];
 			char   nfile[len];
+			int    cnt;
 
 			/* First age zipped log files */
 			for (cnt = num; cnt > 2; cnt--) {
