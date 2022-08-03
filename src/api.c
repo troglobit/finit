@@ -45,8 +45,9 @@
 #include "log.h"
 #include "plugin.h"
 #include "private.h"
-#include "sig.h"
+#include "schedule.h"
 #include "service.h"
+#include "sig.h"
 #include "util.h"
 
 extern svc_t *wdog;
@@ -227,9 +228,43 @@ static svc_t *do_find_byc(char *buf, size_t len)
 	return NULL;
 }
 
-static int do_reboot(int cmd, char *buf, size_t len)
+static void bypass_shutdown(void *);
+struct wq emergency = { .cb = bypass_shutdown };
+
+static void bypass_shutdown(void *unused)
+{
+	cprintf("TIMEOUT TIMEOUT SHUTTING DOWN NOW!!\n");
+	do_shutdown(halt);
+}
+
+static int do_reboot(int cmd, int timeout, char *buf, size_t len)
 {
 	int rc = 1;
+
+	switch (cmd) {
+	case INIT_CMD_REBOOT:
+		halt = SHUT_REBOOT;
+		break;
+
+	case INIT_CMD_HALT:
+		halt = SHUT_HALT;
+		break;
+
+	case INIT_CMD_POWEROFF:
+		halt = SHUT_OFF;
+		break;
+
+	case INIT_CMD_SUSPEND:
+		break;
+
+	default:
+		return 255;
+	}
+
+	if (timeout > 0) {
+		emergency.delay = timeout * 1000;
+		schedule_work(&emergency);
+	}
 
 	switch (cmd) {
 	case INIT_CMD_REBOOT:
@@ -263,7 +298,7 @@ static int do_reboot(int cmd, char *buf, size_t len)
 		break;
 
 	default:
-		rc = 255;
+		/* Handled previously */
 		break;
 	}
 
@@ -404,7 +439,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 		case INIT_CMD_HALT:
 		case INIT_CMD_POWEROFF:
 		case INIT_CMD_SUSPEND:
-			result = do_reboot(rq.cmd, rq.data, sizeof(rq.data));
+			result = do_reboot(rq.cmd, rq.sleeptime, rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_ACK:

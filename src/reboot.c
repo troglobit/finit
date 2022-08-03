@@ -43,6 +43,8 @@ static cmd_t cmd = CMD_UNKNOWN;
 static char *msg = NULL;
 
 /* initctl API */
+extern int timeout;
+
 extern int do_reboot  (char *arg);
 extern int do_halt    (char *arg);
 extern int do_poweroff(char *arg);
@@ -103,12 +105,13 @@ static int usage(int rc)
 {
 	fprintf(stderr, "Usage: %s [OPTIONS]\n\n"
 		"Options:\n"
-		"  -?, --help      This help text\n"
-		"  -f, --force     Force unsafe %s now, do not contact the init system.\n"
-		"      --halt      Halt system, regardless of how the command is called.\n"
-		"  -h              Halt or power off after shutdown.\n"
-		"  -P, --poweroff  Power-off system, regardless of how the command is called.\n"
-		"  -r, --reboot    Reboot system, regardless of how the command is called.\n"
+		"  -?, --help         This help text\n"
+		"  -f, --force        Force unsafe %s now, do not contact the init system.\n"
+		"      --halt         Halt system, regardless of how the command is called.\n"
+		"  -h                 Halt or power off after shutdown.\n"
+		"  -P, --poweroff     Power-off system, regardless of how the command is called.\n"
+		"  -r, --reboot       Reboot system, regardless of how the command is called.\n"
+		"  -t, --timeout=SEC  Force reboot/shutdown after a given timeout\n"
 		"\n", prognm, msg);
 
 	return rc;
@@ -122,14 +125,16 @@ int reboot_main(int argc, char *argv[])
 		{"halt",     0, NULL, 'H'},
 		{"poweroff", 0, NULL, 'p'},
 		{"reboot",   0, NULL, 'r'},
+		{"timeout",  1, NULL, 't'},
 		{NULL, 0, NULL, 0}
 	};
 	int c, force = 0;
+	int tmp;
 
 	/* Initial command taken from program name */
 	transform(prognm);
 
-	while ((c = getopt_long(argc, argv, "h?fHPpr", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "h?fHPprt:", long_options, NULL)) != EOF) {
 		switch(c) {
 		case '?':
 			return usage(0);
@@ -150,6 +155,13 @@ int reboot_main(int argc, char *argv[])
 
 		case 'r':
 			cmd = CMD_REBOOT;
+			break;
+
+		case 't':
+			tmp = atoi(optarg);
+			if (tmp < 1)
+				errx(1, "Invalid forced timeout value.");
+			timeout = tmp;
 			break;
 
 		default:

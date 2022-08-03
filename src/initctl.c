@@ -64,6 +64,7 @@ int verbose  = 0;
 int plain    = 0;
 int quiet    = 0;
 int runlevel = 0;
+int timeout  = 0;
 int cgrp     = 0;
 int utmp     = 0;
 
@@ -513,8 +514,9 @@ static int do_cond_show(char *arg)
 static int do_cmd(int cmd)
 {
 	struct init_request rq = {
-		.magic = INIT_MAGIC,
-		.cmd = cmd,
+		.magic     = INIT_MAGIC,
+		.cmd       = cmd,
+		.sleeptime = timeout,
 	};
 
 	if (client_send(&rq, sizeof(rq))) {
