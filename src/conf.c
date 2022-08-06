@@ -442,8 +442,10 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	if (svc_is_daemon(svc))
 		svc->sighup = 1;
 
-	if (!cond)
+	if (!cond) {
+		memset(svc->cond, 0, sizeof(svc->cond));
 		return;
+	}
 
 	/* First character must be '!' if SIGHUP is not supported. */
 	ptr = cond;
