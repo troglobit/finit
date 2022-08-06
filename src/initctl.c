@@ -164,6 +164,8 @@ static int do_log(svc_t *svc, char *tail)
 	if (svc) {
 		nm = svc_ident(svc, NULL, 0);
 		pid = svc->pid;
+		if (!pid)
+			return 0; /* not running */
 	} else {
 		nm  = "finit";
 		pid = 1;
