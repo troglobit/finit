@@ -1382,6 +1382,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		/* update type, may have changed from service -> task */
 		svc->type = type;
 
+		/* update path, may have changed on reload */
+		strlcpy(svc->cmd, cmd, sizeof(svc->cmd));
+
 		/* e.g., if missing cmd or env before */
 		if (!manual)
 			svc_unblock(svc);
