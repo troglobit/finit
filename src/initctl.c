@@ -605,6 +605,44 @@ static int show_version(char *arg)
 	return 0;
 }
 
+static int plugins_list(char *arg)
+{
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.cmd   = INIT_CMD_GET_PLUGINS,
+	};
+	char buf[sizeof(rq.data)];
+	char *ptr;
+	int rc;
+
+	rc = client_send(&rq, sizeof(rq));
+	if (rc) {
+		if (rc == 255)
+			return 69;
+		else
+			ERRX(69, "No such command");
+	}
+	memcpy(buf, rq.data, sizeof(buf));
+
+	if (heading)
+		print_header("%-18s  %s", "PLUGIN", "DEPENDENCIES");
+
+	ptr = strtok(buf, " ");
+	while (ptr) {
+		rq.cmd = INIT_CMD_PLUGIN_DEPS;
+		strlcpy(rq.data, ptr, sizeof(rq.data));
+		rc = client_send(&rq, sizeof(rq));
+		if (rc)
+			printf("%s\n", ptr);
+		else
+			printf("%-18s  %s\n", ptr, rq.data);
+
+		ptr = strtok(NULL, " ");
+	}
+
+	return 0;
+}
+
 /**
  * runlevel_string - Convert a bit encoded runlevel to .conf syntax
  * @levels: Bit encoded runlevels
@@ -1054,6 +1092,8 @@ static int usage(int rc)
 			"  top                       Show top-like listing based on cgroups\n");
 	fprintf(stderr,
 		"\n"
+		"  plugins                   List installed plugins\n"
+		"\n"
 		"  runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot\n"
 		"  reboot                    Reboot system\n"
 		"  halt                      Halt system\n"
@@ -1183,6 +1223,8 @@ int main(int argc, char *argv[])
 		{ "cgroup",   NULL, show_cgroup, &cgrp, NULL  },
 		{ "ps",       NULL, show_cgps,   &cgrp, NULL  },
 		{ "top",      NULL, show_cgtop,  &cgrp, NULL  },
+
+		{ "plugins",  NULL, plugins_list, NULL, NULL  },
 
 		{ "runlevel", NULL, do_runlevel,  NULL, NULL  },
 		{ "reboot",   NULL, do_reboot,    NULL, NULL  },

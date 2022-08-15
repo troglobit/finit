@@ -146,6 +146,9 @@ typedef struct plugin {
 /* Public plugin API */
 int plugin_io_init    (plugin_t *plugin);
 
+int plugin_list       (char *buf, size_t len);
+int plugin_deps       (char *buf, size_t len);
+
 int plugin_register   (plugin_t *plugin);
 int plugin_unregister (plugin_t *plugin);
 

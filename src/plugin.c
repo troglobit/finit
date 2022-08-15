@@ -383,6 +383,48 @@ static int load_plugins(char *path)
 }
 #endif	/* ENABLE_STATIC */
 
+int plugin_list(char *buf, size_t len)
+{
+#ifndef ENABLE_STATIC
+	plugin_t *p, *tmp;
+
+	buf[0] = 0;
+	PLUGIN_ITERATOR(p, tmp) {
+		if (buf[0])
+			strlcat(buf, " ", len);
+		strlcat(buf, p->name, len);
+	}
+#else
+	buf[0] = 0;
+#endif
+	return 0;
+}
+
+int plugin_deps(char *buf, size_t len)
+{
+#ifndef ENABLE_STATIC
+	plugin_t *p;
+
+	p = plugin_find(buf);
+	buf[0] = 0;
+	if (p) {
+		int i;
+
+		for (i = 0; i < PLUGIN_DEP_MAX; i++) {
+			if (!p->depends[i])
+				continue;
+
+			if (buf[0])
+				strlcat(buf, " ", len);
+			strlcat(buf, p->depends[i], len);
+		}
+	}
+#else
+	buf[0] = 0;
+#endif
+	return 0;
+}
+
 int plugin_init(uev_ctx_t *ctx)
 {
 	load_plugins(PLUGIN_PATH);

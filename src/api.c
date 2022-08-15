@@ -429,6 +429,14 @@ static void api_cb(uev_t *w, void *arg, int events)
 			result = do_reload(rq.data, sizeof(rq.data));
 			break;
 
+		case INIT_CMD_GET_PLUGINS:
+			result = plugin_list(rq.data, sizeof(rq.data));
+			break;
+
+		case INIT_CMD_PLUGIN_DEPS:
+			result = plugin_deps(rq.data, sizeof(rq.data));
+			break;
+
 		case INIT_CMD_GET_RUNLEVEL:
 			_d("get runlevel");
 			rq.runlevel  = runlevel;
