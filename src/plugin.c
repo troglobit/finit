@@ -158,8 +158,8 @@ plugin_t *plugin_find(char *name)
 	SEARCH_PLUGIN(name);
 
 	if (plugpath && name[0] != '/') {
-		int noext;
 		char path[CMD_SIZE];
+		int noext;
 
 		noext = strcmp(name + strlen(name) - 3, ".so");
 		snprintf(path, sizeof(path), "%s%s%s%s", plugpath,
@@ -350,9 +350,9 @@ static void check_plugin_depends(plugin_t *plugin)
 
 static int load_plugins(char *path)
 {
+	struct dirent *entry;
 	int fail = 0;
 	DIR *dp;
-	struct dirent *entry;
 
 	dp = opendir(path);
 	if (!dp) {
