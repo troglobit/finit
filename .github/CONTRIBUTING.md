@@ -9,9 +9,9 @@ For email questions/requests/alerts there is always the risk of memory
 exhaustion on the part of the maintainer(s).
 
 If you are unsure of what to do, or how to implement an idea or bugfix,
-open an issue with `"[RFC: Unsure if this is a bug ... ?"`, or similar,
-so we can discuss it.  Talking about the code first is the best way to
-get started before submitting a pull request.
+open an issue with `"[RFC: Unsure if this is a bug ... ?"`, or use the
+GitHub discussions forum, so we can discuss it.  Talking about the code
+first is the best way to get started before submitting a pull request.
 
 Either way, when sending an email, patch, or pull request, start by
 stating the version the change is made against, what it does, and why.
@@ -73,7 +73,6 @@ It is expected of everyone engaging in the project to, in the words of
 Bill & Ted; [be excellent to each other][conduct].
 
 
-[github]:   https://github.com/troglobit/finit/
 [KNF]:      https://en.wikipedia.org/wiki/Kernel_Normal_Form
 [gitbook]:  https://git-scm.com/book/ch5-2.html
 [conduct]:  CODE-OF-CONDUCT.md
