@@ -82,7 +82,9 @@ AC_ARG_ENABLE(contrib,
 	enable_contrib=yes])
 
 # Check for extra plugins to enable
-enable_all_plugins=auto
+AC_ARG_ENABLE(all_plugins,
+    AS_HELP_STRING([--enable-all-plugins], [Enable all plugins, default: auto]),,[
+	enable_all_plugins=$enableval], enable_all_plugins=auto)
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],          [no],  [Setup and start system message bus, D-Bus])
 AC_PLUGIN([mdevd],         [no],  [Setup and start system hotplug helper mdevd])
