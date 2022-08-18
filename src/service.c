@@ -121,6 +121,66 @@ int service_timeout_cancel(svc_t *svc)
 	return err;
 }
 
+struct assoc {
+	TAILQ_ENTRY(assoc) link;
+
+	pid_t  pid;		/* script pid */
+	svc_t *svc;		/* associated svc_t */
+};
+
+static TAILQ_HEAD(, assoc) svc_assoc_list = TAILQ_HEAD_INITIALIZER(svc_assoc_list);
+
+static void service_script_kill(svc_t *svc)
+{
+	struct assoc *ptr, *next;
+
+	TAILQ_FOREACH_SAFE(ptr, &svc_assoc_list, link, next) {
+		if (ptr->svc != svc || ptr->pid <= 1)
+			continue;
+
+		kill(-ptr->pid, SIGKILL);
+		TAILQ_REMOVE(&svc_assoc_list, ptr, link);
+		free(ptr);
+	}
+}
+
+static int service_script_add(svc_t *svc, pid_t pid)
+{
+	struct assoc *ptr = malloc(sizeof(*ptr));
+
+	if (!ptr) {
+		_pe("Failed starting service script timer");
+		return 1;
+	}
+
+	ptr->svc = svc;
+	ptr->pid = pid;
+	TAILQ_INSERT_TAIL(&svc_assoc_list, ptr, link);
+
+	service_timeout_after(svc, svc->killdelay, service_script_kill);
+
+	return 0;
+}
+
+static int service_script_del(pid_t pid)
+{
+	struct assoc *ptr, *next;
+
+	TAILQ_FOREACH_SAFE(ptr, &svc_assoc_list, link, next) {
+		if (ptr->pid != pid)
+			continue;
+
+		service_timeout_cancel(ptr->svc);
+		kill(-ptr->pid, SIGKILL);
+		TAILQ_REMOVE(&svc_assoc_list, ptr, link);
+		free(ptr);
+
+		return 0;
+	}
+
+	return 1;
+}
+
 /*
  * Redirect stdin to /dev/null => all reads by process = EOF
  * https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Logging%20and%20Standard%20Input/Output
