@@ -372,7 +372,7 @@ svc_t *svc_find(char *name, char *id)
 }
 
 /**
- * svc_find_by_pid - Find an service object by its PID
+ * svc_find_by_pid - Find a service object by its PID
  * @pid: Process ID to match
  *
  * Returns:
@@ -391,7 +391,29 @@ svc_t *svc_find_by_pid(pid_t pid)
 }
 
 /**
- * svc_find_by_jobid - Find an service object by its JOB:ID
+ * svc_find_by_cond - Find a service object by its pid/foo condition
+ * @cond: Full "pid/foo" condition
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find_by_cond(const char *cond)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		char buf[MAX_COND_LEN];
+
+		mkcond(svc, buf, sizeof(buf));
+		if (string_compare(buf, cond))
+			return svc;
+	}
+
+	return NULL;
+}
+
+/**
+ * svc_find_by_jobid - Find a service object by its JOB:ID
  * @job: Job n:o
  * @id:  Optional instance id
  *

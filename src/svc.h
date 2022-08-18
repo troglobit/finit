@@ -201,6 +201,7 @@ void	    svc_validate	   (svc_t *svc);
 
 svc_t	   *svc_find	           (char *name, char *id);
 svc_t	   *svc_find_by_pid        (pid_t pid);
+svc_t	   *svc_find_by_cond	   (const char *cond);
 svc_t	   *svc_find_by_jobid      (int job, char *id);
 svc_t	   *svc_find_by_tty        (char *dev);
 svc_t      *svc_find_by_pidfile    (char *fn);

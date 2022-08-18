@@ -206,7 +206,6 @@ static svc_t *do_find(char *buf, size_t len)
 
 static svc_t *do_find_byc(char *buf, size_t len)
 {
-	svc_t *svc, *iter = NULL;
 	char *input;
 
 	input = sanitize(buf, len);
@@ -215,17 +214,7 @@ static svc_t *do_find_byc(char *buf, size_t len)
 		return NULL;
 	}
 
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		char cond[MAX_COND_LEN];
-
-		mkcond(svc, cond, sizeof(cond));
-		_d("Comparing input %s with cond %s", input, cond);
-		if (string_compare(cond, input))
-			return svc;
-	}
-
-	_d("None found");
-	return NULL;
+	return svc_find_by_cond(input);
 }
 
 static void bypass_shutdown(void *);
