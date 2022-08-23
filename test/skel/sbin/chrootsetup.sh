@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 set -eu
-export PATH=$PATH:/usr/bin:/usr/sbin
+export PATH="$PATH":/usr/bin:/usr/sbin
 
 # It would have been nice to mount /dev as devtmpfs, but unfortunately
 # that's not possible if you're not privileged. For now tmpfs will
