@@ -488,10 +488,6 @@ These script actions *must terminate*, so they have a default execution
 time of 3 seconds before they are SIGKILLed, this can be adjusted using
 the above `kill:SEC` syntax.
 
-> **Note:** the `pre:script` _must_ be idempotent, because a service
->           can transition between READY and HALTED states any number
->           of times before going to RUNNING.
-
 
 ### Run-parts Scripts
 

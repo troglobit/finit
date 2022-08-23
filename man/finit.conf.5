@@ -382,13 +382,6 @@ The scripts have a default execution time of 3 seconds before they are
 SIGKILLed, this can be adjusted using the
 .Cm kill:SEC
 modifier syntax.
-.Pp
-.Sy Note:
-the
-.Cm pre:script
-.Em must
-be idempotent, because a service can transition between READY and HALTED
-states any number of times before going to RUNNING.
 .It Cm runparts Aq DIR
 Call
 .Xr run-parts 8
