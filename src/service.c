@@ -1266,6 +1266,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *name = NULL, *halt = NULL, *delay = NULL;
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
+	char *ready_script = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
 	int respawn = 0;
@@ -1361,6 +1362,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			pre_script = arg;
 		else if (MATCH_CMD(cmd, "post:", arg))
 			post_script = arg;
+		else if (MATCH_CMD(cmd, "ready:", arg))
+			ready_script = arg;
 		else if (MATCH_CMD(cmd, "env:", arg))
 			env = arg;
 		else if (MATCH_CMD(cmd, "cgroup:", arg))
@@ -1516,6 +1519,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_script("pre", pre_script, svc->pre_script, sizeof(svc->pre_script));
 	if (post_script)
 		parse_script("post", post_script, svc->post_script, sizeof(svc->post_script));
+	if (ready_script)
+		parse_script("ready", ready_script, svc->ready_script, sizeof(svc->ready_script));
 	if (log)
 		parse_log(svc, log);
 	if (desc)
@@ -1607,7 +1612,8 @@ void service_monitor(pid_t lost, int status)
 
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
-		_d("collected unknown PID %d", lost);
+		if (service_script_del(lost))
+			_d("collected unknown PID %d", lost);
 		return;
 	}
 
@@ -1803,6 +1809,43 @@ static void service_post_script(svc_t *svc)
 
 	/* Short hard-coded timeout to prevent locking up Finit */
 	service_timeout_after(svc, svc->killdelay, service_kill_script);
+}
+
+void service_ready_script(svc_t *svc)
+{
+	pid_t pid;
+
+	if (access(svc->ready_script, X_OK))
+		return;
+
+	pid = service_fork(svc);
+	if (pid < 0) {
+		_pe("Failed forking off %s ready-script %s", svc_ident(svc, NULL, 0), svc->ready_script);
+		return;
+	}
+
+	if (pid == 0) {
+		char buf[CMD_SIZE];
+		char *argv[4] = {
+			"sh",
+			"-ac",
+			buf,
+			NULL
+		};
+		char *env_file;
+
+		env_file = svc_getenv(svc);
+		if (env_file)
+			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->ready_script);
+		else
+			strlcpy(buf, svc->ready_script, sizeof(buf));
+
+		set_pre_post_envs(svc, "ready");
+		execvp(_PATH_BSHELL, argv);
+		_exit(EX_OSERR);
+	}
+
+	service_script_add(svc, pid);
 }
 
 static void service_retry(svc_t *svc)

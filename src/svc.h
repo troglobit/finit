@@ -183,6 +183,7 @@ typedef struct svc {
 	char	       env[MAX_ARG_LEN];
 	char	       pre_script[MAX_ARG_LEN];
 	char	       post_script[MAX_ARG_LEN];
+	char	       ready_script[MAX_ARG_LEN];
 
 	/*
 	 * Used to forcefully kill services that won't shutdown on
@@ -239,6 +240,7 @@ static inline int svc_nohup        (svc_t *svc) { return svc &&  (0 == svc->sigh
 static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && svc->pidfile[0] != 0 && svc->pidfile[0] != '!'; }
 static inline int svc_has_pre      (svc_t *svc) { return svc->pre_script[0];  }
 static inline int svc_has_post     (svc_t *svc) { return svc->post_script[0]; }
+static inline int svc_has_ready    (svc_t *svc) { return svc->ready_script[0];}
 
 static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;       }
 static inline void svc_started     (svc_t *svc) { if (svc) svc->starting = 0;       }

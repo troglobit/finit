@@ -35,6 +35,8 @@ void      service_runtask_clean  (void);
 void      service_reload_dynamic (void);
 void      service_update_rdeps   (void);
 
+void      service_ready_script   (svc_t *svc); /* XXX: only for pidfile plugin before notify framework */
+
 int       service_timeout_after  (svc_t *svc, int timeout, void (*cb)(svc_t *svc));
 int       service_timeout_cancel (svc_t *svc);
 
