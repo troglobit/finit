@@ -234,9 +234,9 @@ static void pidfile_reconf(void *arg)
 	}
 
 	/*
-	 * This will call service_step(), which in turn will schedule itself
-	 * as long as stepped services change state.  Services going from
-	 * WAITING to RUNNING will reassert their conditions in that loop,
+	 * This calls service_step(), which in turn schedules itself as
+	 * long as stepped services change state.  Services going from
+	 * PAUSED to RUNNING reassert their conditions in that loop,
 	 * which in turn may unlock other services, and so on.
 	 */
 	service_step_all(SVC_TYPE_SERVICE | SVC_TYPE_RUNTASK);
@@ -283,9 +283,9 @@ static void pidfile_init(void *arg)
  *
  *     service <net/iface/lo> /sbin/dropbear ...
  *
- * Which provides the <pid/dropbear> condition, will not be set by
- * pidfile.so during `initctl reload` because dropbear is still
- * SIGSTP:ed waiting for <net/iface/lo>.
+ * This service provides the <pid/dropbear> condition, which will not be
+ * set by pidfile.so during `initctl reload` because dropbear is still
+ * SIGSTP:ed (in state PAUSED) waiting for <net/iface/lo>.
  */
 static plugin_t plugin = {
 	.name = __FILE__,

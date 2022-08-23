@@ -1993,14 +1993,14 @@ restart:
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
 		if (enabled)
-			svc_set_state(svc, SVC_READY_STATE);
+			svc_set_state(svc, SVC_WAITING_STATE);
 		break;
 
 	case SVC_DONE_STATE:
 		if (svc_is_changed(svc))
 			svc_set_state(svc, SVC_HALTED_STATE);
 		if (svc_is_runtask(svc) && svc_is_manual(svc) && enabled)
-			svc_set_state(svc, SVC_READY_STATE);
+			svc_set_state(svc, SVC_WAITING_STATE);
 		break;
 
 	case SVC_STOPPING_STATE:
@@ -2046,7 +2046,7 @@ restart:
 			svc_set_state(svc, SVC_STARTING_STATE);
 		break;
 
-	case SVC_READY_STATE:
+	case SVC_WAITING_STATE:
 		if (!enabled) {
 			svc_set_state(svc, SVC_HALTED_STATE);
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
@@ -2125,7 +2125,7 @@ restart:
 
 		case COND_FLUX:
 			kill(svc->pid, SIGSTOP);
-			svc_set_state(svc, SVC_WAITING_STATE);
+			svc_set_state(svc, SVC_PAUSED_STATE);
 			break;
 
 		case COND_ON:
@@ -2148,7 +2148,7 @@ restart:
 		}
 		break;
 
-	case SVC_WAITING_STATE:
+	case SVC_PAUSED_STATE:
 		if (!enabled) {
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
@@ -2157,7 +2157,7 @@ restart:
 
 		if (!svc->pid) {
 			(*restart_cnt)++;
-			svc_set_state(svc, SVC_READY_STATE);
+			svc_set_state(svc, SVC_WAITING_STATE);
 			break;
 		}
 

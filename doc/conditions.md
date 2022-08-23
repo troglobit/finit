@@ -169,7 +169,7 @@ Debugging
 If a service is not being started as it should, the problem might be
 that one of its conditions is not in the expected state.  Use the
 command `initctl status` to inspect service status.  Services in the
-`ready` state are pending a condition.
+`waiting` state are pending a condition.
 
 In that situation, running `initctl cond show` reveals which of the
 conditions that are not satisfied.  Listed as `off` below.

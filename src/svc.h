@@ -61,8 +61,8 @@ typedef enum {
 	SVC_STOPPING_STATE,	/* Waiting to collect the child process */
 	SVC_CLEANUP_STATE,	/* Running post: script */
 	SVC_SETUP_STATE,	/* Running pre: script */
-	SVC_WAITING_STATE,	/* Condition is in flux, process SIGSTOPed */
-	SVC_READY_STATE,	/* Enabled but condition not satisfied */
+	SVC_PAUSED_STATE,	/* Condition is in flux, process SIGSTOPed */
+	SVC_WAITING_STATE,	/* Enabled but condition not satisfied */
 	SVC_STARTING_STATE,	/* Conditions OK and pre: script done, start */
 	SVC_RUNNING_STATE,	/* Process running */
 } svc_state_t;
@@ -353,8 +353,8 @@ static inline char *svc_status(svc_t *svc)
 			return "stopping";
 		}
 
-	case SVC_WAITING_STATE:
-		return "waiting";
+	case SVC_PAUSED_STATE:
+		return "paused";
 
 	case SVC_CLEANUP_STATE:
 		return "cleanup";
@@ -362,8 +362,8 @@ static inline char *svc_status(svc_t *svc)
 	case SVC_SETUP_STATE:
 		return "setup";
 
-	case SVC_READY_STATE:
-		return "ready";
+	case SVC_WAITING_STATE:
+		return "waiting";
 
 	case SVC_RUNNING_STATE:
 		return "running";
