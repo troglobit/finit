@@ -102,6 +102,12 @@ namespace.  The `sys` and `usr` plugins monitor are passive condition
 monitors where the action is provided by `keventd`, signal handlers,
 and in the case of `usr`, the end-user via the `initctl` tool
 
+Additionally, the various states of a run/task/sysv/service can also be
+used as conditions, the image above shows the state names.  The syntax
+for a `service` type process: `<service/foo/STATE>`.  The other types,
+in particular run/task/sysv, there are the additional states `success`
+and `failure`.
+
 With the example listed above, finit does not start the `/sbin/netd`
 daemon until `setupd` and `zebra` has started *and* created their PID
 files.  Which they do when they have completed their initial set up and
@@ -119,6 +125,8 @@ Built-in conditions:
 - `net/<IFNAME>/exist`
 - `net/<IFNAME>/up`
 - `net/<IFNAME>/running`
+- `service/<NAME[:ID]>/<STATE>`
+- `{run, task, sysv}/<NAME[:ID]>/{<STATE>, success, failure}`
 - `sys/pwr/ac`
 - `sys/pwr/fail`
 - `sys/key/ctrlaltdel`
