@@ -2,6 +2,7 @@ Configuration
 =============
 
 * [Introduction](#introduction)
+  * [Environment Variables](#environment-variables)
 * [Service Environment](#service-environment)
 * [Service Wrapper Scripts](#service-wrapper-scripts)
 * [Cgroups](#cgroups)
