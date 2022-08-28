@@ -151,7 +151,7 @@ error:
 	return NULL;
 }
 
-svc_t *do_cmd(int cmd, const char *arg)
+static svc_t *do_cmd(int cmd, const char *arg)
 {
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
