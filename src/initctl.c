@@ -29,6 +29,7 @@
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <time.h>
 #include <utmp.h>
 #include <arpa/inet.h>

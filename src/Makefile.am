@@ -67,6 +67,7 @@ endif
 pkginclude_HEADERS = cgroup.h cond.h conf.h finit.h helpers.h log.h \
 		     plugin.h svc.h service.h
 
+finit_CPPFLAGS     = $(AM_CPPFLAGS) -D__FINIT__
 finit_CFLAGS       = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 finit_CFLAGS      += $(lite_CFLAGS) $(uev_CFLAGS)
 finit_LDADD        = $(lite_LIBS) $(uev_LIBS)
@@ -78,7 +79,7 @@ endif
 
 initctl_SOURCES    = initctl.c initctl.h cgutil.c cgutil.h		\
 		     client.c client.h cond.c cond.h reboot.c		\
-		     serv.c serv.h svc.h util.c util.h
+		     serv.c serv.h svc.h util.c util.h log.h
 initctl_CFLAGS     = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 initctl_CFLAGS    += $(lite_CFLAGS) $(uev_CFLAGS)
 initctl_LDADD      = $(lite_LIBS) $(uev_LIBS)

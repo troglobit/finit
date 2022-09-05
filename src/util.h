@@ -28,7 +28,6 @@
 #ifdef HAVE_TERMIOS_H
 #include <poll.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <sys/reboot.h>
 #include <termios.h>
 #endif
@@ -86,18 +85,6 @@ int     ttcooked   (void);
 #define ttraw()    0
 #define ttcooked() 0
 #endif
-
-static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
-{
-	va_list ap;
-
-	if (!debug)
-		return;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
 
 static inline char *strterm(char *str, size_t len)
 {

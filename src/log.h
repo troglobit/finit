@@ -31,6 +31,35 @@
 #define LOG_CONSOLE  (14<<3)
 #endif
 
+#ifndef __FINIT__
+#include <err.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+extern int debug;
+
+static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
+{
+	va_list ap;
+
+	if (!debug)
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+#else
+/*
+ * General log macros, similar to those used by initctl.  Initially intended
+ * only for bridging client.c in Finit and initctl.
+ */
+#define dbg(fmt, args...)      logit(LOG_DEBUG,   fmt, ##args)
+#define warnx(fmt, args...)    logit(LOG_WARNING, fmt, ##args)
+#define warn(fmt, args...)     logit(LOG_WARNING, fmt ": %s", ##args, strerror(errno))
+#define errx(rc, fmt, args...) logit(LOG_ERR,     fmt, ##args)
+#define err(rc, fmt, args...)  logit(LOG_ERR,     fmt ": %s", ##args, strerror(errno))
+
 /*
  * Developer error and debug messages, otherwise --> use logit() <--
  *                                                   ~~~~~~~~~~~
@@ -52,5 +81,6 @@ void    log_debug       (void);
 
 void    logit           (int prio, const char *fmt, ...)   __attribute__ ((format (printf, 2, 3)));
 void    flog            (char *file, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+#endif
 
 #endif /* FINIT_LOG_H_ */

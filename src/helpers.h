@@ -89,7 +89,7 @@ int     run_parts       (char *dir, char *cmd);
 static inline int create(char *path, mode_t mode, uid_t uid, gid_t gid)
 {
 	if (touch(path) || chmod(path, mode) || chown(path, uid, gid)) {
-		_w("Failed creating %s properly.", path);
+		warnx("Failed creating %s properly.", path);
 		return -1;
 	}
 

@@ -38,6 +38,7 @@
 
 #include "cgutil.h"
 #include "initctl.h"
+#include "log.h"
 
 #define CDIM plain ? "" : "\e[2m"
 #define CRST plain ? "" : "\e[0m"

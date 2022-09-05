@@ -66,7 +66,7 @@ static inline char *pid_runpath(const char *file, char *path, size_t len)
 
 	rc = paste(path, len, prefix, file);
 	if (rc < 0 || (size_t)rc >= len)
-		_e("File path '%s' truncated, should end with '%s'", path, file);
+		err(1, "File path '%s' truncated, should end with '%s'", path, file);
 
 	return path;
 }

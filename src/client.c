@@ -27,7 +27,7 @@
 #include <sys/un.h>
 
 #include "client.h"
-#include "initctl.h"
+#include "log.h"
 
 static int sd = -1;
 
@@ -40,13 +40,13 @@ int client_connect(void)
 
 	sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 	if (-1 == sd) {
-		WARN("Failed creating UNIX domain socket");
+		warn("Failed creating UNIX domain socket");
 		return -1;
 	}
 
 	if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
 		if (errno != ENOENT)
-			WARNX("Failed connecting to finit");
+			warnx("Failed connecting to finit");
 		close(sd);
 		return -1;
 	}
@@ -81,13 +81,13 @@ int client_send(struct init_request *rq, ssize_t len)
 	pfd.fd     = sd;
 	pfd.events = POLLOUT;
 	if (poll(&pfd, 1, 2000) <= 0) {
-		WARN("Timed out waiting for Finit, errno %d", errno);
-		goto exit;
+		warn("Timed out waiting for Finit, errno %d", errno);
+		return -1;
 	}
 
 	if (write(sd, rq, len) != len) {
-		WARN("Failed communicating with Finit, errno %d", errno);
-		goto exit;
+		warn("Failed communicating with Finit, errno %d", errno);
+		return -1;
 	}
 
 	pfd.fd = sd;
@@ -95,16 +95,16 @@ int client_send(struct init_request *rq, ssize_t len)
 	if ((rc = poll(&pfd, 1, 2000)) <= 0) {
 		if (rc) {
 			if (errno == EINTR) /* shutdown/reboot */
-				goto exit;
-			WARN("poll(), errno %d", errno);
+				return -1;
+			warn("poll(), errno %d", errno);
 		} else
-			WARNX("Timed out waiting for reply from Finit.");
-		goto exit;
+			warnx("Timed out waiting for reply from Finit.");
+		return -1;
 	}
 
 	if (read(sd, rq, len) != len) {
-		WARN("Failed reading reply from Finit, errno %d", errno);
-		goto exit;
+		warn("Failed reading reply from Finit, errno %d", errno);
+		return -1;
 	}
 
 	if (rq->cmd == INIT_CMD_NACK)
@@ -144,7 +144,7 @@ svc_t *client_svc_iterator(int first)
 
 	return &svc;
 error:
-	WARN("Failed communicating with finit, error %d", errno);
+	warn("Failed communicating with finit, error %d", errno);
 	client_disconnect();
 	sd = -1;
 
@@ -175,7 +175,7 @@ static svc_t *do_cmd(int cmd, const char *arg)
 	return &svc;
 error:
 	client_disconnect();
-	WARN("Failed communicating with finit, error %d", errno);
+	warn("Failed communicating with finit, error %d", errno);
 
 	return NULL;
 }
