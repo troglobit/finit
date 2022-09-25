@@ -55,20 +55,20 @@ $(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).sha256
 		if [ -d $(CACHE) ]; then					\
 			echo "Cannot find $(BBBIN), checking $(CACHE) ...";	\
 			cd $(CACHE);						\
-			cp $(DEST)/bin/$(BBBIN).sha256 .;			\
+			cp -v $(DEST)/bin/$(BBBIN).sha256 .;			\
 			if ! sha256sum --status -c $(BBBIN).sha256; then	\
 				echo "No $(BBBIN), downloading $(BBURL) ...";	\
-				wget -o $@ $(BBURL);				\
+				wget -O $(BBBIN) $(BBURL);			\
 			else							\
 				echo "Found valid $(BBBIN) in cache!";		\
-				cp $(BBBIN) $@;					\
 			fi;							\
+			cp $(BBBIN) $@;						\
+			cd $(dir $@);						\
 		else								\
 			echo "Cannot find $(BBBIN), downloading ...";		\
 			wget -O $@ $(BBURL);					\
 		fi;								\
-		cd $(dir $@);							\
-		sha256sum -c $(BBBIN).sha256;					\
+		sha256sum -c $(BBBIN).sha256 || (rm $@; false);			\
 	fi)
 	@chmod +x $@
 
