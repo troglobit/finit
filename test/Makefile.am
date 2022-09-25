@@ -67,7 +67,7 @@ check-recursive: setup-chroot
 
 .PHONY: setup-chroot
 setup-chroot:
-	@TENV_ROOT='$(abs_builddir)/tenv-root/' srcdir=$(srcdir) top_builddir=$(top_builddir) ./setup-root.sh
+	@TENV_ROOT='$(abs_builddir)/tenv-root/' srcdir=$(srcdir) top_builddir=$(top_builddir) $(srcdir)/setup-root.sh
 
 clean-local:
 	-rm -rf $(builddir)/tenv-root/
