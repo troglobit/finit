@@ -152,7 +152,7 @@ static void init(void)
 
 	for (i = 0; i < (int)NELEMS(cond_dirs); i++) {
 		if (mkpath(cond_dirs[i], 0755) && errno != EEXIST) {
-			_pe("Failed creating %s condition directory, %s", COND_SYS,
+			warn("Failed creating %s condition directory, %s", COND_SYS,
 			    cond_dirs[i]);
 			return;
 		}
