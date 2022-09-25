@@ -62,7 +62,7 @@ jobs:
         run: |
           ver=$(/tmp/sbin/initctl -V | awk '/Finit.*/ {print $2;}')
           dir=finit-$ver/_build/sub
-          make -j1 distcheck || (cat $dir/test/setup-root.log; cat $dir/test/test-suite.log; false)
+          make distcheck || (cat $dir/test/setup-root.log; cat $dir/test/test-suite.log; false)
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
