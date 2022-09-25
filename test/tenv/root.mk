@@ -29,10 +29,10 @@ ARCH           ?= x86_64
 
 FINITBIN       ?= ./sbin/finit
 
-BBVER          ?= 1.31.0
+BBVER          ?= 1_35_0
 BBBIN           = busybox-$(ARCH)
-BBHOME         ?= https://www.busybox.net/downloads/binaries
-BBURL          ?= $(BBHOME)/$(BBVER)-defconfig-multiarch-musl/$(BBBIN)
+BBHOME         ?= https://github.com/troglobit/busybox-builder/releases/download
+BBURL          ?= $(BBHOME)/$(BBVER)/$(BBBIN)
 
 _libs_src       = $(shell ldd $(FINITBIN) | grep -Eo '/[^ ]+')
 libs            = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
@@ -43,35 +43,35 @@ all: $(libs) $(DEST)/bin/$(BBBIN)
 		ln -sf /bin/$(BBBIN) $$prg;		\
 	done)
 
-$(DEST)/bin/$(BBBIN).md5:
+$(DEST)/bin/$(BBBIN).sha256:
 	@mkdir -p $(DEST)
 	@cp -a $(SKEL)/* $(DEST)/
 	@chmod -R u+w $(DEST)/
 	@find $(DEST) -name .empty -delete
 
-$(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).md5
+$(DEST)/bin/$(BBBIN): $(DEST)/bin/$(BBBIN).sha256
 	@(cd $(dir $@);								\
-	if ! md5sum --status -c $(BBBIN).md5 2>/dev/null; then			\
+	if ! sha256sum --status -c $(BBBIN).sha256 2>/dev/null; then		\
 		if [ -d $(CACHE) ]; then					\
 			echo "Cannot find $(BBBIN), checking $(CACHE) ...";	\
 			cd $(CACHE);						\
-			cp $(DEST)/bin/$(BBBIN).md5 .;				\
-			if ! md5sum --status -c $(BBBIN).md5; then		\
-				echo "No $(BBBIN) available downloading ...";	\
-				wget $(BBURL);					\
+			cp $(DEST)/bin/$(BBBIN).sha256 .;			\
+			if ! sha256sum --status -c $(BBBIN).sha256; then	\
+				echo "No $(BBBIN), downloading $(BBURL) ...";	\
+				wget -o $@ $(BBURL);				\
 			else							\
 				echo "Found valid $(BBBIN) in cache!";		\
+				cp $(BBBIN) $@;					\
 			fi;							\
-			cp $(BBBIN) $@;						\
 		else								\
 			echo "Cannot find $(BBBIN), downloading ...";		\
 			wget -O $@ $(BBURL);					\
 		fi;								\
 		cd $(dir $@);							\
-		md5sum -c $(BBBIN).md5;						\
+		sha256sum -c $(BBBIN).sha256;					\
 	fi)
 	@chmod +x $@
 
-$(libs): $(DEST)/bin/$(BBBIN).md5
+$(libs): $(DEST)/bin/$(BBBIN).sha256
 	mkdir -p $(dir $@)
 	cp $(patsubst $(abspath $(DEST))%,%,$@) $@

@@ -1,20 +1,20 @@
 SUBDIRS                  = common tenv
 
-EXTRA_DIST		 = skel/bin/busybox-x86_64.md5 skel/sbin/service.sh skel/bin/slay  \
-			   skel/etc/env skel/bin/pre.sh skel/bin/post.sh skel/sbin/task.sh \
-			   skel/cdrom/.empty skel/dev/shm/.empty skel/dev/pts/.empty	   \
-			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		   \
-			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	   \
-			   skel/etc/finit.d/.empty skel/etc/init.d/S01-service.sh 	   \
-			   skel/etc/init.d/S02-serv.sh					   \
-			   skel/proc/.empty skel/root/.empty skel/run/.empty		   \
-			   skel/sbin/chrootsetup.sh skel/srv/.empty skel/sys/.empty	   \
-			   skel/usr/bin/.empty skel/usr/lib/.empty skel/usr/sbin/.empty	   \
-			   skel/home/.empty skel/usr/games/.empty skel/usr/src/.empty	   \
-			   skel/usr/share/.empty skel/usr/include/.empty		   \
-			   skel/usr/local/games/.empty skel/usr/local/sbin/.empty	   \
-			   skel/usr/local/share/.empty skel/usr/local/src/.empty	   \
-			   skel/usr/local/lib/.empty skel/usr/local/bin/.empty		   \
+EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/bin/slay \
+			   skel/etc/env skel/bin/pre.sh skel/bin/post.sh skel/sbin/task.sh   \
+			   skel/cdrom/.empty skel/dev/shm/.empty skel/dev/pts/.empty	     \
+			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		     \
+			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	     \
+			   skel/etc/finit.d/.empty skel/etc/init.d/S01-service.sh 	     \
+			   skel/etc/init.d/S02-serv.sh					     \
+			   skel/proc/.empty skel/root/.empty skel/run/.empty		     \
+			   skel/sbin/chrootsetup.sh skel/srv/.empty skel/sys/.empty	     \
+			   skel/usr/bin/.empty skel/usr/lib/.empty skel/usr/sbin/.empty	     \
+			   skel/home/.empty skel/usr/games/.empty skel/usr/src/.empty	     \
+			   skel/usr/share/.empty skel/usr/include/.empty		     \
+			   skel/usr/local/games/.empty skel/usr/local/sbin/.empty	     \
+			   skel/usr/local/share/.empty skel/usr/local/src/.empty	     \
+			   skel/usr/local/lib/.empty skel/usr/local/bin/.empty		     \
 			   skel/usr/local/etc/.empty skel/var/.empty
 
 EXTRA_DIST		+= setup-root.sh
