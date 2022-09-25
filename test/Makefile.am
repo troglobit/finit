@@ -47,7 +47,6 @@ checkself.sh:
 
 TEST_EXTENSIONS		 = .sh
 TESTS			 = checkself.sh
-TESTS			+= setup-root.sh
 TESTS			+= add-remove-dynamic-service.sh
 TESTS			+= add-remove-dynamic-service-sub-config.sh
 TESTS			+= cond-start-task.sh
@@ -63,6 +62,12 @@ TESTS			+= start-kill-service.sh
 TESTS			+= start-stop-sysv.sh
 TESTS			+= start-stop-serv.sh
 TESTS			+= signal-service.sh
+
+check-recursive: setup-chroot
+
+.PHONY: setup-chroot
+setup-chroot:
+	@TENV_ROOT='$(abs_builddir)/tenv-root/' srcdir=$(srcdir) top_builddir=$(top_builddir) ./setup-root.sh
 
 clean-local:
 	-rm -rf $(builddir)/tenv-root/
