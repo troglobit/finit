@@ -208,8 +208,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!ident)
-		ident = getenv("LOGNAME") ?: getenv("USER");
+	if (!ident) {
+		ident = getenv("LOGNAME");
+		if (!ident)
+			ident = getenv("USER");
+		if (!ident)
+			ident = PACKAGE_NAME;
+	}
 
 	if (optind < argc) {
 		size_t pos = 0, len = sizeof(buf);
