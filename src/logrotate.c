@@ -97,8 +97,7 @@ int logrotate(char *file, int num, off_t sz)
 		} else {
 		fallback:
 			if (truncate(file, 0))
-				syslog(LOG_ERR, "Failed truncating %s during logrotate: %s",
-				       file, strerror(errno));
+				syslog(LOG_ERR, "Failed truncating %s: %s", file, strerror(errno));
 		}
 	}
 
