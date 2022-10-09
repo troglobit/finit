@@ -54,20 +54,15 @@ static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
  * General log macros, similar to those used by initctl.  Initially intended
  * only for bridging client.c in Finit and initctl.
  */
-#define dbg(fmt, args...)      logit(LOG_DEBUG,   fmt, ##args)
-#define warnx(fmt, args...)    logit(LOG_WARNING, fmt, ##args)
-#define warn(fmt, args...)     logit(LOG_WARNING, fmt ": %s", ##args, strerror(errno))
-#define errx(rc, fmt, args...) logit(LOG_ERR,     fmt, ##args)
-#define err(rc, fmt, args...)  logit(LOG_ERR,     fmt ": %s", ##args, strerror(errno))
+#define dbg(fmt, args...)      logit(LOG_DEBUG,   "%s():" fmt, __func__, ##args)
+#define warnx(fmt, args...)    logit(LOG_WARNING, "%s():" fmt, __func__, ##args)
+#define warn(fmt, args...)     logit(LOG_WARNING, "%s():" fmt ": %s", __func__, ##args, strerror(errno))
+#define errx(rc, fmt, args...) logit(LOG_ERR,     "%s():" fmt, __func__, ##args)
+#define err(rc, fmt, args...)  logit(LOG_ERR,     "%s():" fmt ": %s", __func__, ##args, strerror(errno))
 
 /*
- * Developer error and debug messages, otherwise --> use logit() <--
- *                                                   ~~~~~~~~~~~
- * All of these prepend the function, so only use for critical warnings
- * errors and debug messages.  For all other user messages, see logit()
- *
- * The default log level is LOG_NOTICE.  To toggle LOG_DEBUG messages,
- * use `initctl debug` or add `debug` to the kernel cmdline.
+ * DEPRECATED developer error and debug messages, please migrate to above!
+ * Will be removed without further warning in a future Finit release.
  */
 #define  _d(fmt, args...) logit(LOG_DEBUG,   "%s():" fmt, __func__, ##args)
 #define  _w(fmt, args...) logit(LOG_WARNING, "%s():" fmt, __func__, ##args)
