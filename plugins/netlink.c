@@ -62,7 +62,7 @@ static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 	int la;
 
 	if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof(struct rtmsg))) {
-		_e("Packet too small or truncated!");
+		errx(1, "Packet too small or truncated!");
 		return;
 	}
 
@@ -70,7 +70,7 @@ static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 	a  = RTM_RTA(r);
 	la = RTM_PAYLOAD(nlmsg);
 	if (la >= len) {
-		_e("Packet too large!");
+		errx(1, "Packet too large!");
 		return;
 	}
 
@@ -80,18 +80,18 @@ static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 		switch (a->rta_type) {
 		case RTA_GATEWAY:
 			gw = *((int *)data);
-			//_d("GW: 0x%04x", gw);
+			//dbg("GW: 0x%04x", gw);
 			break;
 
 		case RTA_DST:
 			dst = *((int *)data);
 			plen = r->rtm_dst_len;
-			//_d("Prefix LEN: 0x%04x", plen);
+			//dbg("Prefix LEN: 0x%04x", plen);
 			break;
 
 		case RTA_OIF:
 			idx = *((int *)data);
-			//_d("IDX: 0x%04x", idx);
+			//dbg("IDX: 0x%04x", idx);
 			break;
 		}
 
@@ -102,7 +102,7 @@ static void nl_route(struct nlmsghdr *nlmsg, ssize_t len)
 	ing.s_addr = gw;
 	inet_ntop(AF_INET, &ind, daddr, sizeof(daddr));
 	inet_ntop(AF_INET, &ing, gaddr, sizeof(gaddr));
-	_d("Got gw %s dst/len %s/%d ifindex %d", gaddr, daddr, plen, idx);
+	dbg("Got gw %s dst/len %s/%d ifindex %d", gaddr, daddr, plen, idx);
 
 	if ((!dst && !plen) && (gw || idx)) {
 		if (nlmsg->nlmsg_type == RTM_DELROUTE) {
@@ -167,7 +167,7 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 	int la;
 
 	if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof(struct ifinfomsg))) {
-		_e("Packet too small or truncated!");
+		errx(1, "Packet too small or truncated!");
 		return;
 	}
 
@@ -175,7 +175,7 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 	a  = (struct rtattr *)((char *)i + NLMSG_ALIGN(sizeof(struct ifinfomsg)));
 	la = NLMSG_PAYLOAD(nlmsg, sizeof(struct ifinfomsg));
 	if (la >= len) {
-		_e("Packet too large!");
+		errx(1, "Packet too large!");
 		return;
 	}
 
@@ -185,7 +185,7 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 
 		strlcpy(ifname, RTA_DATA(a), sizeof(ifname));
 		if (validate_ifname(ifname)) {
-			_d("Invalid interface name '%s', skipping ...", ifname);
+			dbg("Invalid interface name '%s', skipping ...", ifname);
 			continue;
 		}
 
@@ -195,7 +195,7 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 			 * New interface has appeared, or interface flags has changed.
 			 * Check ifi_flags here to see if the interface is UP/DOWN
 			 */
-			_d("%s: New link, flags 0x%x, change 0x%x", ifname, i->ifi_flags, i->ifi_change);
+			dbg("%s: New link, flags 0x%x, change 0x%x", ifname, i->ifi_flags, i->ifi_change);
 			net_cond_set(ifname, "exist",   1);
 			net_cond_set(ifname, "up",      i->ifi_flags & IFF_UP);
 			net_cond_set(ifname, "running", i->ifi_flags & IFF_RUNNING);
@@ -205,7 +205,7 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 
 		case RTM_DELLINK:
 			/* NOTE: Interface has disappeared, not link down ... */
-			_d("%s: Delete link", ifname);
+			dbg("%s: Delete link", ifname);
 			net_cond_set(ifname, "exist",   0);
 			net_cond_set(ifname, "up",      0);
 			net_cond_set(ifname, "running", 0);
@@ -213,15 +213,15 @@ static void nl_link(struct nlmsghdr *nlmsg, ssize_t len)
 			break;
 
 		case RTM_NEWADDR:
-			_d("%s: New Address", ifname);
+			dbg("%s: New Address", ifname);
 			break;
 
 		case RTM_DELADDR:
-			_d("%s: Deconfig Address", ifname);
+			dbg("%s: Deconfig Address", ifname);
 			break;
 
 		default:
-			_d("%s: Msg 0x%x", ifname, nlmsg->nlmsg_type);
+			dbg("%s: Msg 0x%x", ifname, nlmsg->nlmsg_type);
 			break;
 		}
 	}
@@ -246,46 +246,46 @@ static int nl_parse(int sd)
 				break;
 
 			default:
-				_pe("recv()");
+				err(1, "recv()");
 				break;
 			}
 
 			return -1;
 		}
 
-//		_d("recv %zd bytes", len);
+//		dbg("recv %zd bytes", len);
 		l = (size_t)len;
 		for (nh = (struct nlmsghdr *)nl_buf; NLMSG_OK(nh, l); nh = NLMSG_NEXT(nh, l)) {
 			struct nlmsgerr *nle;
 
 			switch (nh->nlmsg_type) {
 			case NLMSG_DONE:
-//				_d("Done with netlink messages.");
+//				dbg("Done with netlink messages.");
 				return 0;
 
 			case NLMSG_ERROR:
-//				_d("Kernel netlink comm. error.");
+//				dbg("Kernel netlink comm. error.");
 				nle = NLMSG_DATA(nh);
 				if (nle) {
 					errno = -nle->error;
-					_pe("Kernel netlink error %d", errno);
+					err(1, "Kernel netlink error %d", errno);
 				}
 				return -1;
 
 			case RTM_NEWROUTE:
 			case RTM_DELROUTE:
-//				_d("Netlink route ...");
+//				dbg("Netlink route ...");
 				nl_route(nh, len);
 				break;
 
 			case RTM_NEWLINK:
 			case RTM_DELLINK:
-//				_d("Netlink link ...");
+//				dbg("Netlink link ...");
 				nl_link(nh, len);
 				break;
 
 			default:
-				_w("unhandled netlink message, type %d", nh->nlmsg_type);
+				warnx("unhandled netlink message, type %d", nh->nlmsg_type);
 				break;
 			}
 		}
@@ -304,21 +304,21 @@ static int nl_request(int sd, unsigned int seq, int type)
 
 	switch (type) {
 	case RTM_GETROUTE:
-//		_d("RTM_GETROUTE");
+//		dbg("RTM_GETROUTE");
 		nlr->rtm.rtm_family = AF_INET;
 		nlr->rtm.rtm_table  = RT_TABLE_MAIN;
 		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg));
 		break;
 
 	case RTM_GETLINK:
-//		_d("RTM_GETLINK");
+//		dbg("RTM_GETLINK");
 		nlr->ifi.ifi_family = AF_UNSPEC;
 		nlr->ifi.ifi_change = 0xFFFFFFFF;
 		nlr->nh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifinfomsg));
 		break;
 
 	default:
-		_w("Cannot resync, unhandled message type %d", type);
+		warnx("Cannot resync, unhandled message type %d", type);
 		return -1;
 	}
 
@@ -331,13 +331,13 @@ static int nl_request(int sd, unsigned int seq, int type)
 static void nl_resync_routes(int sd, unsigned int seq)
 {
 	if (nl_request(sd, seq, RTM_GETROUTE))
-		_pe("Failed netlink route request");
+		err(1, "Failed netlink route request");
 }
 
 static void nl_resync_ifaces(int sd, unsigned int seq)
 {
 	if (nl_request(sd, seq, RTM_GETLINK))
-		_pe("Failed netlink link request");
+		err(1, "Failed netlink link request");
 }
 
 /*
@@ -350,12 +350,12 @@ static void nl_resync(int all)
 
 	sd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 	if (sd < 0) {
-		_pe("netlink socket");
+		err(1, "netlink socket");
 		return;
 	}
 
 	if (all) {
-		_d("============================ RESYNC =================================");
+		dbg("============================ RESYNC =================================");
 		/* this doesn't update conditions, and thus does not stop services */
 		cond_deassert("net/");
 
@@ -364,7 +364,7 @@ static void nl_resync(int all)
 
 		/* delayed update after we've corrected things */
 		service_step_all(SVC_TYPE_ANY);
-		_d("=========================== RESYNCED ================================");
+		dbg("=========================== RESYNCED ================================");
 	} else
 		nl_resync_routes(sd, seq++);
 
@@ -375,7 +375,7 @@ static void nl_callback(void *arg, int sd, int events)
 {
 	if (nl_parse(sd) < 0) {
 		if (errno == ENOBUFS) {	/* netlink(7) */
-			_w("busy system, resynchronizing with kernel.");
+			warnx("busy system, resynchronizing with kernel.");
 			nl_resync(1);
 			return;
 		}
@@ -386,7 +386,7 @@ static void nl_callback(void *arg, int sd, int events)
 	 * we need to check ourselves, e.g. for loss of default route.
 	 */
 	if (nl_ifdown) {
-		_d("interface down, checking default route.");
+		dbg("interface down, checking default route.");
 		if (nl_defidx > 0) {
 			nl_defidx = 0;
 			nl_resync(0);
@@ -421,7 +421,7 @@ PLUGIN_INIT(plugin_init)
 
 	sd = socket(AF_NETLINK, SOCK_RAW | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_ROUTE);
 	if (sd < 0) {
-		_pe("socket()");
+		err(1, "socket()");
 		return;
 	}
 
@@ -431,14 +431,14 @@ PLUGIN_INIT(plugin_init)
 	sa.nl_pid    = getpid();
 
 	if (bind(sd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		_pe("bind()");
+		err(1, "bind()");
 		close(sd);
 		return;
 	}
 
 	nl_buf = malloc(NL_BUFSZ);
 	if (!nl_buf) {
-		_pe("malloc()");
+		err(1, "malloc()");
 		close(sd);
 		return;
 	}

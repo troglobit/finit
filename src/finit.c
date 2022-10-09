@@ -204,17 +204,17 @@ static int fsck(int pass)
 
 	fp = setmntent(fstab, "r");
 	if (!fp) {
-		_pe("Failed opening fstab: %s", fstab);
+		err(1, "Failed opening fstab: %s", fstab);
 		sulogin(1);
 	}
-	_d("Opened %s, pass %d", fstab, pass);
+	dbg("Opened %s, pass %d", fstab, pass);
 	while ((mnt = getmntent_r(fp, &mount, buf, sizeof(buf)))) {
 		int fsck_rc = 0;
 		struct stat st;
 		char cmd[256];
 		char *dev;
 
-		_d("got: fsname '%s' dir '%s' type '%s' opts '%s' freq '%d' passno '%d'",
+		dbg("got: fsname '%s' dir '%s' type '%s' opts '%s' freq '%d' passno '%d'",
 		   mnt->mnt_fsname, mnt->mnt_dir, mnt->mnt_type, mnt->mnt_opts,
 		   mnt->mnt_freq, mnt->mnt_passno);
 
@@ -244,13 +244,13 @@ static int fsck(int pass)
 			}
 
 			if (skip) {
-				_d("Cannot fsck %s, not a block device: %s", dev, strerror(errno));
+				dbg("Cannot fsck %s, not a block device: %s", dev, strerror(errno));
 				continue;
 			}
 		}
 
 		if (ismnt("/proc/mounts", mnt->mnt_dir, "rw")) {
-			_d("Skipping fsck of %s, already mounted rw on %s.", dev, mnt->mnt_dir);
+			dbg("Skipping fsck of %s, already mounted rw on %s.", dev, mnt->mnt_dir);
 			continue;
 		}
 
@@ -259,7 +259,7 @@ static int fsck(int pass)
 #else
 		snprintf(cmd, sizeof(cmd), "fsck -a %s", dev);
 #endif
-		_d("Running pass %d fsck command %s", pass, cmd);
+		dbg("Running pass %d fsck command %s", pass, cmd);
 		fsck_rc = run_interactive(cmd, "Checking filesystem %s", dev);
 		/*
 		 * "failure" is defined as exiting with a return code of
@@ -302,7 +302,7 @@ static void fs_mount(const char *src, const char *tgt, const char *fstype,
 
 	rc = mount(src, tgt, fstype, flags, data);
 	if (rc && errno != EBUSY)
-		_pe("Failed %s %s on %s", msg, src, tgt);
+		err(1, "Failed %s %s on %s", msg, src, tgt);
 }
 
 #ifndef SYSROOT
@@ -456,7 +456,7 @@ static void fs_mount_all(void)
 	if (!rescue)
 		fs_remount_root(fsck_all());
 
-	_d("Root FS up, calling hooks ...");
+	dbg("Root FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_ROOTFS_UP);
 
 	if (fstab && strcmp(fstab, "/etc/fstab"))
@@ -465,13 +465,13 @@ static void fs_mount_all(void)
 	if (run_interactive(cmd, "Mounting filesystems from %s", fstab))
 		plugin_run_hooks(HOOK_MOUNT_ERROR);
 
-	_d("Calling extra mount hook, after mount -a ...");
+	dbg("Calling extra mount hook, after mount -a ...");
 	plugin_run_hooks(HOOK_MOUNT_POST);
 
-	_d("Enable any swap ...");
+	dbg("Enable any swap ...");
 	fs_swapon(cmd, sizeof(cmd));
 
-	_d("Finalize, ensure common file systems are available ...");
+	dbg("Finalize, ensure common file systems are available ...");
 	fs_finalize();
 }
 
@@ -527,11 +527,11 @@ static void fs_init(void)
 static void finalize(void *unused)
 {
 	/* Clean up bootstrap-only tasks/services that never started */
-	_d("Clean up all bootstrap-only tasks/services ...");
+	dbg("Clean up all bootstrap-only tasks/services ...");
 	svc_prune_bootstrap();
 
 	/* All services/tasks/etc. in configure runlevel have started */
-	_d("Running svc up hooks ...");
+	dbg("Running svc up hooks ...");
 	plugin_run_hooks(HOOK_SVC_UP);
 	service_step_all(SVC_TYPE_ANY);
 
@@ -540,7 +540,7 @@ static void finalize(void *unused)
 		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
 
 	/* Hooks that should run at the very end */
-	_d("Calling all system up hooks ...");
+	dbg("Calling all system up hooks ...");
 	plugin_run_hooks(HOOK_SYSTEM_UP);
 	service_step_all(SVC_TYPE_ANY);
 
@@ -591,21 +591,21 @@ static void bootstrap_worker(void *work)
 	 */
 	service_init();
 
-	_d("Step all services ...");
+	dbg("Step all services ...");
 	service_step_all(SVC_TYPE_ANY);
 
 	if (cnt-- > 0 && !service_completed()) {
-		_d("Not all bootstrap run/tasks have completed yet ... %d", cnt);
+		dbg("Not all bootstrap run/tasks have completed yet ... %d", cnt);
 		schedule_work(work);
 		return;
 	}
 
 	if (cnt > 0)
-		_d("All run/task have completed, resuming bootstrap.");
+		dbg("All run/task have completed, resuming bootstrap.");
 	else
-		_d("Timeout, resuming bootstrap.");
+		dbg("Timeout, resuming bootstrap.");
 
-	_d("Starting runlevel change finalize ...");
+	dbg("Starting runlevel change finalize ...");
 	schedule_work(&final);
 
 	/*
@@ -620,10 +620,10 @@ static void bootstrap_worker(void *work)
 	 * into the runlevel selected from the command line.
 	 */
 	if (cmdlevel) {
-		_d("Runlevel %d requested from command line, starting all services ...", cmdlevel);
+		dbg("Runlevel %d requested from command line, starting all services ...", cmdlevel);
 		level = cmdlevel;
 	} else
-		_d("Change to default runlevel(%d), starting all services ...", cfglevel);
+		dbg("Change to default runlevel(%d), starting all services ...", cfglevel);
 
 	service_runlevel(level);
 }
@@ -756,7 +756,7 @@ int main(int argc, char *argv[])
 	conf_reset_env();
 
 	if (chdir("/"))
-		_pe("Failed cd /");
+		err(1, "Failed cd /");
 
 	/*
 	 * In case of emergency.
@@ -829,22 +829,22 @@ int main(int argc, char *argv[])
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
 
-	_d("Base FS up, calling hooks ...");
+	dbg("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
-	_d("Starting initctl API responder ...");
+	dbg("Starting initctl API responder ...");
 	api_init(&loop);
 
-	_d("Starting the big state machine ...");
+	dbg("Starting the big state machine ...");
 	schedule_work(&crank_work);
 
-	_d("Starting bootstrap finalize timer ...");
+	dbg("Starting bootstrap finalize timer ...");
 	schedule_work(&bootstrap_work);
 
 	/*
 	 * Enter main loop to monitor /dev/initctl and services
 	 */
-	_d("Entering main loop ...");
+	dbg("Entering main loop ...");
 	return uev_run(&loop, 0);
 }
 

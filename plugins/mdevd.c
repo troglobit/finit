@@ -61,13 +61,13 @@ static void setup(void *arg)
 	FILE *fp;
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 
 	cmd = which(MDEVD_DAEMON);
 	if (!cmd) {
-		_d("Skipping plugin, %s is not installed.", MDEVD_DAEMON);
+		dbg("Skipping plugin, %s is not installed.", MDEVD_DAEMON);
 		return;
 	}
 
@@ -91,7 +91,7 @@ static void setup(void *arg)
 		snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
 			 MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONGROUP, cmd, MDEVD_ARGS, MDEVD_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		_pe("Failed registering %s", MDEVD_DAEMON);
+		err(1, "Failed registering %s", MDEVD_DAEMON);
 	free(cmd);
 
 	umask(prev);

@@ -52,7 +52,7 @@ static int pidfile_add_path(struct iwatch *iw, char *path)
 			ptr = slash++;
 			slash = strchr(ptr, '/');
 			if (slash) {
-				_d("Path too deep, skipping.");
+				dbg("Path too deep, skipping.");
 				return -1;
 			}
 		}
@@ -71,21 +71,21 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	if (fnmatch("*\\.pid", fn, 0) && fnmatch("*/pid", fn, 0))
 		return;
 
-	_d("path: %s, mask: %08x", fn, mask);
+	dbg("path: %s, mask: %08x", fn, mask);
 
 	svc = svc_find_by_pidfile(fn);
 	if (!svc) {
-		_d("No matching svc for %s", fn);
+		dbg("No matching svc for %s", fn);
 		return;
 	}
 
-	_d("Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
+	dbg("Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
 
 	mkcond(svc, cond, sizeof(cond));
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
 		svc_started(svc);
 		if (!svc_has_pidfile(svc)) {
-			_d("Setting %s PID file to %s", svc->name, fn);
+			dbg("Setting %s PID file to %s", svc->name, fn);
 			pid_file_set(svc, fn, 1);
 		}
 
@@ -102,7 +102,7 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 			service_forked(svc);
 
 			if (pid != svc->pid) {
-				_d("Forking service %s (cmd %s) changed PID from %d to %d",
+				dbg("Forking service %s (cmd %s) changed PID from %d to %d",
 				   svc_ident(svc, NULL, 0), svc->cmd, svc->pid, pid);
 				svc->pid = pid;
 
@@ -135,7 +135,7 @@ static void pidfile_scandir(struct iwatch *iw, char *dir, int len)
 		return;
 
 	for (i = 0; i < gl.gl_pathc; i++) {
-		_d("scan found %s", gl.gl_pathv[i]);
+		dbg("scan found %s", gl.gl_pathv[i]);
 		pidfile_update_conds(dir, gl.gl_pathv[i], IN_CREATE);
 	}
 	globfree(&gl);
@@ -150,7 +150,7 @@ static void pidfile_handle_dir(struct iwatch *iw, char *dir, char *name, int mas
 	struct iwatch_path *iwp;
 
 	paste(path, sizeof(path), dir, name);
-	_d("path: %s", path);
+	dbg("path: %s", path);
 
 	iwp = iwatch_find_by_path(iw, path);
 
@@ -174,7 +174,7 @@ static void pidfile_callback(void *arg, int fd, int events)
 
 	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
-		_pe("invalid inotify event");
+		err(1, "invalid inotify event");
 		return;
 	}
 	ev_buf[sz] = 0;
@@ -248,7 +248,7 @@ static void pidfile_init(void *arg)
 	char *path;
 
 	if (mkpath(pid_runpath(_PATH_CONDPID, piddir, sizeof(piddir)), 0755) && errno != EEXIST) {
-		_pe("Failed creating %s condition directory, %s", COND_PID, _PATH_CONDPID);
+		err(1, "Failed creating %s condition directory, %s", COND_PID, _PATH_CONDPID);
 		return;
 	}
 
@@ -259,10 +259,10 @@ static void pidfile_init(void *arg)
 	 */
 	path = realpath(_PATH_VARRUN, NULL);
 	if (!path) {
-		_d("Failed querying realpath(%s): %s", _PATH_VARRUN, strerror(errno));
+		dbg("Failed querying realpath(%s): %s", _PATH_VARRUN, strerror(errno));
 		path = realpath("/run", NULL);
 		if (!path) {
-			_e("System does not have %s or /run, aborting.", _PATH_VARRUN);
+			errx(1, "System does not have %s or /run, aborting.", _PATH_VARRUN);
 			return;
 		}
 	}

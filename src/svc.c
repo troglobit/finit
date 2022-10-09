@@ -70,12 +70,12 @@ static void maybe_clear_cond(svc_t *svc)
 		if (!string_compare(cond, c))
 			continue;
 
-		_d("Not clearing cond %s from gc svc %s, provided by new active service %s",
+		dbg("Not clearing cond %s from gc svc %s, provided by new active service %s",
 		   cond, ident, svc_ident(s, NULL, 0));
 		return;
 	}
 
-	_d("Cleaning out %s, clearing any conditions ...", svc->name);
+	dbg("Cleaning out %s, clearing any conditions ...", svc->name);
 	cond_clear(mkcond(svc, cond, sizeof(cond)));
 }
 
@@ -657,17 +657,17 @@ int svc_parse_jobstr(char *str, size_t len, void *user_data, int (*found)(svc_t 
 	char *input, *token;
 	int result = 0;
 
-	_d("Got str:'%s'", str);
+	dbg("Got str:'%s'", str);
 	input = tokstr(str, len);
 	while (input) {
 		char *id = NULL;
 		svc_t *svc, *iter = NULL;
 		char *ptr;
 
-		_d("Got token:'%s'", input);
+		dbg("Got token:'%s'", input);
 		token = sanitize(input, strlen(input) + 1);
 		if (!token) {
-			_d("Sanitation of token:'%s' failed", input);
+			dbg("Sanitation of token:'%s' failed", input);
 			goto next;
 		}
 		ptr = strchr(token, ':');

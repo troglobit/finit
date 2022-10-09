@@ -95,7 +95,7 @@ int plugin_register(plugin_t *plugin)
 
 	/* Already registered? */
 	if (plugin_find(plugin->name)) {
-		_d("... %s already loaded", plugin->name);
+		dbg("... %s already loaded", plugin->name);
 		free(plugin->name);
 
 		return 0;
@@ -120,10 +120,10 @@ int plugin_unregister(plugin_t *plugin)
 #ifndef ENABLE_STATIC
 	TAILQ_REMOVE(&plugins, plugin, link);
 
-	_d("%s exiting ...", plugin->name);
+	dbg("%s exiting ...", plugin->name);
 	free(plugin->name);
 #else
-	_d("Finit built statically, cannot unload %s ...", plugin->name);
+	dbg("Finit built statically, cannot unload %s ...", plugin->name);
 #endif
 
 	return 0;
@@ -202,7 +202,7 @@ void plugin_run_hook(hook_point_t no, void *arg)
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
-			_d("Calling %s hook n:o %d (arg: %p) ...", basename(p->name), no, arg ?: "NIL");
+			dbg("Calling %s hook n:o %d (arg: %p) ...", basename(p->name), no, arg ?: "NIL");
 			p->hook[no].cb(arg ? arg : p->hook[no].arg);
 		}
 	}
@@ -235,7 +235,7 @@ static void generic_io_cb(uev_t *w, void *arg, int events)
 		/* Stop watcher, callback may close descriptor on us ... */
 		uev_io_stop(w);
 
-		_d("Calling I/O %s from runloop...", basename(p->name));
+		dbg("Calling I/O %s from runloop...", basename(p->name));
 		p->io.cb(p->io.arg, w->fd, events);
 
 		/* Update fd, may be changed by plugin callback, e.g., if FIFO */
@@ -248,9 +248,9 @@ int plugin_io_init(plugin_t *p)
 	if (!is_io_plugin(p))
 		return 0;
 
-	_d("Initializing plugin %s for I/O", basename(p->name));
+	dbg("Initializing plugin %s for I/O", basename(p->name));
 	if (uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags)) {
-		_e("Failed setting up I/O plugin %s", basename(p->name));
+		warn("Failed setting up I/O plugin %s", basename(p->name));
 		return 1;
 	}
 
@@ -302,16 +302,18 @@ static int load_one(char *path, char *name)
 	noext = strcmp(name + strlen(name) - 3, ".so");
 	snprintf(sofile, sizeof(sofile), "%s/%s%s", path, name, noext ? ".so" : "");
 
-	_d("Loading plugin %s ...", sofile);
+	dbg("Loading plugin %s ...", sofile);
 	handle = dlopen(sofile, RTLD_LAZY | RTLD_LOCAL);
 	if (!handle) {
-		_e("Failed loading plugin %s: %s", sofile, dlerror());
+		char *error = dlerror();
+
+		warn("Failed loading plugin %s: %s", sofile, error ? error : "unknown error");
 		return 1;
 	}
 
 	plugin = TAILQ_LAST(&plugins, plugin_head);
 	if (!plugin) {
-		_e("Plugin %s failed to register, unloading from memory", sofile);
+		warn("Plugin %s failed to register, unloading from memory", sofile);
 		dlclose(handle);
 		return 1;
 	}
@@ -338,9 +340,9 @@ static void check_plugin_depends(plugin_t *plugin)
 	int i;
 
 	for (i = 0; i < PLUGIN_DEP_MAX && plugin->depends[i]; i++) {
-//		_d("Plugin %s depends on %s ...", plugin->name, plugin->depends[i]);
+//		dbg("Plugin %s depends on %s ...", plugin->name, plugin->depends[i]);
 		if (plugin_find(plugin->depends[i])) {
-//			_d("OK plugin %s was already loaded.", plugin->depends[i]);
+//			dbg("OK plugin %s was already loaded.", plugin->depends[i]);
 			continue;
 		}
 
@@ -358,7 +360,7 @@ static int load_plugins(char *path)
 	if (!dp) {
 		if (errno == ENOENT)
 			return 0;
-		_e("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
+		warn("Failed, cannot open plugin directory %s: %s", path, strerror(errno));
 		return 1;
 	}
 	plugpath = path;
@@ -434,7 +436,7 @@ int plugin_init(uev_ctx_t *ctx)
 	char *path;
 
 	if (paths) {
-		_d("Loading external plugins from %s ...", paths);
+		dbg("Loading external plugins from %s ...", paths);
 		path = strtok(paths, ":");
 		while (path) {
 			load_plugins(path);
@@ -453,8 +455,10 @@ void plugin_exit(void)
 	plugin_t *p, *tmp;
 
         PLUGIN_ITERATOR(p, tmp) {
-                if (dlclose(p->handle))
-                        _e("Failed: unloading plugin %s: %s", p->name, dlerror());
+                if (dlclose(p->handle)) {
+			char *error = dlerror();
+                        warn("Failed unloading plugin %s: %s", p->name, error ? error : "unknown error");
+		}
         }
 #endif
 }

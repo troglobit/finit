@@ -60,7 +60,7 @@ void cond_boot_parse(char *arg)
 
 	node = malloc(sizeof(*node));
 	if (!node) {
-		_pe("Out of memory cannot track boot conditions");
+		err(1, "Out of memory cannot track boot conditions");
 		return;
 	}
 
@@ -172,7 +172,7 @@ static void cond_bump_reconf(void)
 	rgen++;
 
 	if (cond_set_gen(_PATH_RECONF, rgen))
-		_pe("Failed setting %s to gen %d", _PATH_RECONF, rgen);
+		err(1, "Failed setting %s to gen %d", _PATH_RECONF, rgen);
 }
 
 static int cond_checkpath(const char *path)
@@ -182,12 +182,12 @@ static int cond_checkpath(const char *path)
 	strlcpy(buf, path, sizeof(buf));
 	dir = dirname(buf);
 	if (!dir) {
-		_e("Invalid path '%s' for condition", path);
+		errx(1, "Invalid path '%s' for condition", path);
 		return 1;
 	}
 
 	if (mkpath(dir, 0755) && errno != EEXIST) {
-		_pe("Failed creating dir '%s' for condition '%s'", dir, path);
+		err(1, "Failed creating dir '%s' for condition '%s'", dir, path);
 		return 1;
 	}
 
@@ -211,12 +211,12 @@ static void cond_delpath(const char *path)
 
 		paste(fn, sizeof(fn), path, d->d_name);
 		if (remove(fn))
-			_pe("Failed removing condition path, file %s", fn);
+			err(1, "Failed removing condition path, file %s", fn);
 	}
 	closedir(dir);
 
 	if (unlink(path) && errno != EISDIR)
-		_pe("Failed removing condition path %s", fn);
+		err(1, "Failed removing condition path %s", fn);
 }
 
 int cond_set_path(const char *path, enum cond_state next)
@@ -224,11 +224,11 @@ int cond_set_path(const char *path, enum cond_state next)
 	enum cond_state prev;
 	unsigned int rgen;
 
-	_d("%s <= %d", path, next);
+	dbg("%s <= %d", path, next);
 
 	rgen = cond_get_gen(_PATH_RECONF);
 	if (!rgen) {
-		_e("Unable to read configuration generation (%s)", path);
+		errx(1, "Unable to read configuration generation (%s)", path);
 		return -1;
 	}
 
@@ -250,14 +250,14 @@ int cond_set_path(const char *path, enum cond_state next)
 				cond_delpath(path);
 				break;
 			default:
-				_pe("Failed removing condition '%s'", path);
+				err(1, "Failed removing condition '%s'", path);
 				break;
 			}
 		}
 		break;
 
 	default:
-		_e("Invalid condition state");
+		errx(1, "Invalid condition state");
 		return 0;
 	}
 
@@ -270,13 +270,13 @@ int cond_update(const char *name)
 	svc_t *svc, *iter = NULL;
 	int affects = 0;
 
-	_d("%s", name);
+	dbg("%s", name);
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
 			continue;
 
 		affects++;
-		_d("%s: match <%s> %s(%s)", name ?: "nil", svc->cond, svc->desc, svc->cmd);
+		dbg("%s: match <%s> %s(%s)", name ?: "nil", svc->cond, svc->desc, svc->cmd);
 		service_step(svc);
 	}
 
@@ -285,7 +285,7 @@ int cond_update(const char *name)
 
 int cond_set_noupdate(const char *name)
 {
-	_d("%s", name);
+	dbg("%s", name);
 	if (string_compare(name, "nop"))
 		return 1;
 
@@ -299,7 +299,7 @@ void cond_set(const char *name)
 {
 	svc_t *svc;
 
-	_d("%s", name);
+	dbg("%s", name);
 	if (cond_set_noupdate(name))
 		return;
 
@@ -319,13 +319,13 @@ int cond_set_oneshot_noupdate(const char *name)
 		return 1;
 
 	path = cond_path(name);
-	_d("%s => %s", name, path);
+	dbg("%s => %s", name, path);
 
 	if (cond_checkpath(path))
 		return 1;
 
 	if (symlink(_PATH_RECONF, path) && errno != EEXIST) {
-		_pe("Failed creating onshot cond %s", name);
+		err(1, "Failed creating onshot cond %s", name);
 		return 1;
 	}
 
@@ -334,7 +334,7 @@ int cond_set_oneshot_noupdate(const char *name)
 
 void cond_set_oneshot(const char *name)
 {
-	_d("%s", name);
+	dbg("%s", name);
 	if (cond_set_oneshot_noupdate(name))
 		return;
 
@@ -343,7 +343,7 @@ void cond_set_oneshot(const char *name)
 
 int cond_clear_noupdate(const char *name)
 {
-	_d("%s", name);
+	dbg("%s", name);
 	if (string_compare(name, "nop"))
 		return 1;
 
@@ -355,7 +355,7 @@ int cond_clear_noupdate(const char *name)
 
 void cond_clear(const char *name)
 {
-	_d("%s", name);
+	dbg("%s", name);
 	if (cond_clear_noupdate(name))
 		return;
 
@@ -364,7 +364,7 @@ void cond_clear(const char *name)
 
 void cond_reload(void)
 {
-	_d("");
+	dbg("");
 
 	cond_bump_reconf();
 }
@@ -381,12 +381,12 @@ static int do_assert(const char *fpath, const struct stat *sb, int tflg, struct 
 
 	nm = strstr((char *)fpath, COND_BASE);
 	if (!nm) {
-		_e("Incorrect condition path %s, cannot %sassert", fpath, set ? "re" : "de");
+		errx(1, "Incorrect condition path %s, cannot %sassert", fpath, set ? "re" : "de");
 		return 1;
 	}
 
 	nm += strlen(COND_BASE);
-	_d("%sasserting %s => %s", set ? "Re" : "De", fpath, nm);
+	dbg("%sasserting %s => %s", set ? "Re" : "De", fpath, nm);
 	if (set)
 		cond_set(nm);
 	else
@@ -411,7 +411,7 @@ static int deassert(const char *fpath, const struct stat *sb, int tflg, struct F
  */
 void cond_reassert(const char *pat)
 {
-	_d("%s", pat);
+	dbg("%s", pat);
 	nftw(cond_path(pat), reassert, 20, FTW_DEPTH);
 }
 
@@ -420,7 +420,7 @@ void cond_reassert(const char *pat)
  */
 void cond_deassert(const char *pat)
 {
-	_d("%s", pat);
+	dbg("%s", pat);
 	nftw(cond_path(pat), deassert, 20, FTW_DEPTH);
 }
 
@@ -429,7 +429,7 @@ void cond_init(void)
 	char path[MAX_ARG_LEN];
 
 	if (mkpath(pid_runpath(_PATH_COND, path, sizeof(path)), 0755) && errno != EEXIST) {
-		_pe("Failed creating condition base directory '%s'", _PATH_COND);
+		err(1, "Failed creating condition base directory '%s'", _PATH_COND);
 		return;
 	}
 

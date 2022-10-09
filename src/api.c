@@ -210,7 +210,7 @@ static svc_t *do_find_byc(char *buf, size_t len)
 
 	input = sanitize(buf, len);
 	if (!input) {
-		_d("Invalid input");
+		dbg("Invalid input");
 		return NULL;
 	}
 
@@ -257,25 +257,25 @@ static int do_reboot(int cmd, int timeout, char *buf, size_t len)
 
 	switch (cmd) {
 	case INIT_CMD_REBOOT:
-		_d("reboot");
+		dbg("reboot");
 		halt = SHUT_REBOOT;
 		service_runlevel(6);
 		break;
 
 	case INIT_CMD_HALT:
-		_d("halt");
+		dbg("halt");
 		halt = SHUT_HALT;
 		service_runlevel(0);
 		break;
 
 	case INIT_CMD_POWEROFF:
-		_d("poweroff");
+		dbg("poweroff");
 		halt = SHUT_OFF;
 		service_runlevel(0);
 		break;
 
 	case INIT_CMD_SUSPEND:
-		_d("suspend");
+		dbg("suspend");
 		sync();
 		rc = suspend();
 		if (rc) {
@@ -316,7 +316,7 @@ static void send_svc(int sd, svc_t *svc)
 
 	len = write(sd, svc, sizeof(*svc));
 	if (len != sizeof(*svc))
-		_d("Failed sending svc_t to client");
+		dbg("Failed sending svc_t to client");
 }
 
 static void api_cb(uev_t *w, void *arg, int events)
@@ -328,7 +328,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
-		_pe("Failed serving API request");
+		err(1, "Failed serving API request");
 		goto error;
 	}
 
@@ -349,14 +349,14 @@ static void api_cb(uev_t *w, void *arg, int events)
 				if (ECONNRESET == errno)
 					break;
 
-				_e("Failed reading initctl request, error %d: %s", errno, strerror(errno));
+				errx(1, "Failed reading initctl request, error %d: %s", errno, strerror(errno));
 			}
 
 			break;
 		}
 
 		if (rq.magic != INIT_MAGIC || len != sizeof(rq)) {
-			_e("Invalid initctl request");
+			errx(1, "Invalid initctl request");
 			break;
 		}
 
@@ -369,7 +369,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 				/* fallthrough */
 
 			case '0'...'9':
-				_d("Setting new runlevel %c", rq.runlevel);
+				dbg("Setting new runlevel %c", rq.runlevel);
 				lvl = rq.runlevel - '0';
 				if (lvl == 0)
 					halt = SHUT_OFF;
@@ -379,41 +379,41 @@ static void api_cb(uev_t *w, void *arg, int events)
 				break;
 
 			default:
-				_d("Unsupported runlevel: %d", rq.runlevel);
+				dbg("Unsupported runlevel: %d", rq.runlevel);
 				break;
 			}
 			break;
 
 		case INIT_CMD_DEBUG:
-			_d("debug");
+			dbg("debug");
 			log_debug();
 			break;
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */
-			_d("reload");
+			dbg("reload");
 			service_reload_dynamic();
 			break;
 
 		case INIT_CMD_START_SVC:
-			_d("start %s", rq.data);
+			dbg("start %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_start(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RESTART_SVC:
-			_d("restart %s", rq.data);
+			dbg("restart %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_restart(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_STOP_SVC:
-			_d("stop %s", rq.data);
+			dbg("stop %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_stop(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_RELOAD_SVC:
-			_d("reload %s", rq.data);
+			dbg("reload %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_reload(rq.data, sizeof(rq.data));
 			break;
@@ -427,7 +427,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_GET_RUNLEVEL:
-			_d("get runlevel");
+			dbg("get runlevel");
 			rq.runlevel  = runlevel;
 			rq.sleeptime = prevlevel;
 			break;
@@ -440,17 +440,17 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_ACK:
-			_d("Client failed reading ACK");
+			dbg("Client failed reading ACK");
 			goto leave;
 
 		case INIT_CMD_WDOG_HELLO:
-			_d("wdog hello");
+			dbg("wdog hello");
 			if (rq.runlevel <= 0) {
 				result = 1;
 				break;
 			}
 
-			_d("Request to hand-over wdog ... to PID %d", rq.runlevel);
+			dbg("Request to hand-over wdog ... to PID %d", rq.runlevel);
 			svc = svc_find_by_pid(rq.runlevel);
 			if (!svc) {
 				logit(LOG_ERR, "Cannot find PID %d, not registered.", rq.runlevel);
@@ -474,7 +474,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 			break;
 
 		case INIT_CMD_SVC_ITER:
-//			_d("svc iter, first: %d", rq.runlevel);
+//			dbg("svc iter, first: %d", rq.runlevel);
 			/*
 			 * XXX: This severely limits the number of
 			 * simultaneous client connections, but will
@@ -485,32 +485,32 @@ static void api_cb(uev_t *w, void *arg, int events)
 			goto leave;
 
 		case INIT_CMD_SVC_QUERY:
-			_d("svc query: %s", rq.data);
+			dbg("svc query: %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_query(rq.data, sizeof(rq.data));
 			break;
 
 		case INIT_CMD_SVC_FIND:
-			_d("svc find: %s", rq.data);
+			dbg("svc find: %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			send_svc(sd, do_find(rq.data, sizeof(rq.data)));
 			goto leave;
 
 		case INIT_CMD_SVC_FIND_BYC:
-			_d("svc find by cond: %s", rq.data);
+			dbg("svc find by cond: %s", rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			send_svc(sd, do_find_byc(rq.data, sizeof(rq.data)));
 			goto leave;
 
 		case INIT_CMD_SIGNAL:
 			/* runlevel is reused for signal */
-			_d("svc signal %d: %s", rq.runlevel, rq.data);
+			dbg("svc signal %d: %s", rq.runlevel, rq.data);
 			strterm(rq.data, sizeof(rq.data));
 			result = do_signal(rq.data, sizeof(rq.data), rq.runlevel);
 			break;
 
 		default:
-			_d("Unsupported cmd: %d", rq.cmd);
+			dbg("Unsupported cmd: %d", rq.cmd);
 			break;
 		}
 
@@ -520,7 +520,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 			rq.cmd = INIT_CMD_ACK;
 		len = write(sd, &rq, sizeof(rq));
 		if (len != sizeof(rq))
-			_d("Failed sending ACK/NACK back to client");
+			dbg("Failed sending ACK/NACK back to client");
 	}
 
 leave:
@@ -531,7 +531,7 @@ leave:
 error:
 	api_exit();
 	if (api_init(w->ctx))
-		_e("Unrecoverable error on API socket");
+		errx(1, "Unrecoverable error on API socket");
 }
 
 int api_init(uev_ctx_t *ctx)
@@ -544,10 +544,10 @@ int api_init(uev_ctx_t *ctx)
 	int uid, gid;
 	int sd;
 
-	_d("Setting up external API socket ...");
+	dbg("Setting up external API socket ...");
 	sd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
 	if (-1 == sd) {
-		_pe("Failed starting external API socket");
+		err(1, "Failed starting external API socket");
 		return 1;
 	}
 
@@ -563,14 +563,14 @@ int api_init(uev_ctx_t *ctx)
 		goto error;
 
 	if (chown(INIT_SOCKET, uid, gid))
-		_pe("Failed setting group %s on %s", DEFGROUP, INIT_SOCKET);
+		err(1, "Failed setting group %s on %s", DEFGROUP, INIT_SOCKET);
 
 	umask(oldmask);
 	if (!uev_io_init(ctx, &api_watcher, api_cb, NULL, sd, UEV_READ))
 		return 0;
 
 error:
-	_pe("Failed initializing API socket");
+	err(1, "Failed initializing API socket");
 	umask(oldmask);
 	close(sd);
 	return 1;

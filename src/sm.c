@@ -116,12 +116,12 @@ void sm_step(sm_t *sm)
 restart:
 	old_state = sm->state;
 
-	_d("state: %s, runlevel: %d, newlevel: %d, teardown: %d, reload: %d",
+	dbg("state: %s, runlevel: %d, newlevel: %d, teardown: %d, reload: %d",
 	   sm_status(sm->state), runlevel, sm->newlevel, sm->in_teardown, sm->reload);
 
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
-		_d("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
+		dbg("Bootstrapping all services in runlevel S from %s", FINIT_CONF);
 		service_step_all(SVC_TYPE_RUNTASK | SVC_TYPE_SERVICE);
 		sm->state = SM_RUNNING_STATE;
 		break;
@@ -154,7 +154,7 @@ restart:
 			plugin_run_hooks(HOOK_SHUTDOWN);
 		}
 
-		_d("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
+		dbg("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
 		if (osheading)
 			logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %d", osheading, runlevel);
 		else
@@ -173,7 +173,7 @@ restart:
 		/* Reset once flag of runtasks */
 		service_runtask_clean();
 
-		_d("Stopping services not allowed in new runlevel ...");
+		dbg("Stopping services not allowed in new runlevel ...");
 		sm->in_teardown = 1;
 		service_step_all(SVC_TYPE_ANY);
 
@@ -187,15 +187,15 @@ restart:
 		 */
 		svc = svc_stop_completed();
 		if (svc) {
-			_d("Waiting to collect %s, cmd %s(%d) ...", svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
+			dbg("Waiting to collect %s, cmd %s(%d) ...", svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
 			break;
 		}
 
 		/* Prev runlevel services stopped, call hooks before starting new runlevel ... */
-		_d("All services have been stopped, calling runlevel change hooks ...");
+		dbg("All services have been stopped, calling runlevel change hooks ...");
 		plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
 
-		_d("Starting services new to this runlevel ...");
+		dbg("Starting services new to this runlevel ...");
 		sm->in_teardown = 0;
 		service_step_all(SVC_TYPE_ANY);
 
@@ -225,7 +225,7 @@ restart:
 		 * Then, mark all affected service conditions as in-flux and
 		 * let all affected services move to WAITING/HALTED
 		 */
-		_d("Stopping services not allowed after reconf ...");
+		dbg("Stopping services not allowed after reconf ...");
 		sm->in_teardown = 1;
 		cond_reload();
 		service_step_all(SVC_TYPE_ANY);
@@ -240,23 +240,23 @@ restart:
 		 */
 		svc = svc_stop_completed();
 		if (svc) {
-			_d("Waiting to collect %s, cmd %s(%d) ...", svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
+			dbg("Waiting to collect %s, cmd %s(%d) ...", svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
 			break;
 		}
 
 		sm->in_teardown = 0;
 
-		_d("Starting services after reconf ...");
+		dbg("Starting services after reconf ...");
 		service_step_all(SVC_TYPE_ANY);
 
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 
-		_d("Calling reconf hooks ...");
+		dbg("Calling reconf hooks ...");
 		plugin_run_hooks(HOOK_SVC_RECONF);
 
 		service_step_all(SVC_TYPE_ANY);
-		_d("Reconfiguration done");
+		dbg("Reconfiguration done");
 
 		sm->state = SM_RUNNING_STATE;
 		break;

@@ -89,7 +89,7 @@ static void rtc_save(void *arg)
 	char tz[128];
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 
@@ -131,7 +131,7 @@ static void rtc_restore(void *arg)
 	char tz[128];
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 

@@ -231,12 +231,12 @@ void do_iterate_proc(int (*cb)(int, void *), void *data)
 
 			if (fgets(file, sizeof(file), fp)) {
 				if (strstr(file, "gdbserver"))
-					_d("Skipping %s ...", file);
+					dbg("Skipping %s ...", file);
 				else if (file[0] == '@')
-					_d("Skipping %s ...", &file[1]);
+					dbg("Skipping %s ...", &file[1]);
 				else
 					if (cb(pid, data)) {
-						_d("PID %d is still alive (%s)", pid, file);
+						dbg("PID %d is still alive (%s)", pid, file);
 						fclose(fp);
 						break;
 					}
@@ -382,15 +382,15 @@ void do_shutdown(shutop_t op)
 				do_sleep(1);
 		}
 
-		_d("Rebooting ...");
+		dbg("Rebooting ...");
 		reboot(RB_AUTOBOOT);
 	} else if (op == SHUT_OFF) {
-		_d("Powering down ...");
+		dbg("Powering down ...");
 		reboot(RB_POWER_OFF);
 	}
 
 	/* Also fallback if any of the other two fails */
-	_d("Halting ...");
+	dbg("Halting ...");
 	reboot(RB_HALT_SYSTEM);
 }
 
@@ -399,9 +399,9 @@ void do_shutdown(shutop_t op)
  */
 static void sighup_cb(uev_t *w, void *arg, int events)
 {
-	_d("...");
+	dbg("...");
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -420,9 +420,9 @@ static void sighup_cb(uev_t *w, void *arg, int events)
  */
 static void sigint_cb(uev_t *w, void *arg, int events)
 {
-	_d("...");
+	dbg("...");
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -436,9 +436,9 @@ static void sigint_cb(uev_t *w, void *arg, int events)
  */
 static void sigpwr_cb(uev_t *w, void *arg, int events)
 {
-	_d("...");
+	dbg("...");
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -450,9 +450,9 @@ static void sigpwr_cb(uev_t *w, void *arg, int events)
  */
 static void sigusr1_cb(uev_t *w, void *arg, int events)
 {
-	_d("...");
+	dbg("...");
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -466,9 +466,9 @@ static void sigusr1_cb(uev_t *w, void *arg, int events)
  */
 static void sigusr2_cb(uev_t *w, void *arg, int events)
 {
-	_d("...");
+	dbg("...");
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -481,9 +481,9 @@ static void sigusr2_cb(uev_t *w, void *arg, int events)
  */
 static void sigterm_cb(uev_t *w, void *arg, int events)
 {
-	_d("...");
+	dbg("...");
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -500,7 +500,7 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 	pid_t pid;
 
 	if (UEV_ERROR == events) {
-		_e("Unrecoverable error in signal watcher");
+		errx(1, "Unrecoverable error in signal watcher");
 		return;
 	}
 
@@ -513,7 +513,7 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 			break;
 		}
 
-		_d("Collected child %d", pid);
+		dbg("Collected child %d", pid);
 		service_monitor(pid, status);
 	}
 }
@@ -603,7 +603,7 @@ void sig_setup(uev_ctx_t *ctx)
 {
 	struct sigaction sa;
 
-	_d("Setup signals");
+	dbg("Setup signals");
 
 	/*
 	 * Standard SysV init calls ctrl-alt-delete handler

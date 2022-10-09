@@ -37,7 +37,7 @@
  */
 static void setup(void *arg)
 {
-	_d("Setting up the resolver ...");
+	dbg("Setting up the resolver ...");
 	mkpath("/etc/resolvconf",               0755);
 	mkpath("/etc/resolvconf/run",           0755);
 	mkpath("/var/run/resolvconf",           0755);

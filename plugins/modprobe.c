@@ -71,14 +71,14 @@ static int modprobe(char *alias)
 	pid = fork();
 	switch (pid) {
 	case -1:
-		_pe("Failed forking modprobe child");
+		err(1, "Failed forking modprobe child");
 		return 1;
 	case 0:
 		execvp(args[0], args);
 		break;
 	default:
 		if (!complete(args[0], pid))
-			_d("Successful modprobe of %s", alias);
+			dbg("Successful modprobe of %s", alias);
 		break;
 	}
 

@@ -35,7 +35,7 @@ static void setup(void *arg)
 	char *path;
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 
@@ -64,7 +64,7 @@ static void setup(void *arg)
 		snprintf(cmd, sizeof(cmd), "[S12345789] cgroup.system pid:udevd name:udevd log %s "
 			 "-- Device event managing daemon", path);
 		if (service_register(SVC_TYPE_SERVICE, cmd, global_rlimit, NULL)) {
-			_pe("Failed registering %s", path);
+			err(1, "Failed registering %s", path);
 		} else {
 			snprintf(cmd, sizeof(cmd), "cgroup.init :1 [S] <pid/udevd> log "
 				 "udevadm trigger -c add -t devices "

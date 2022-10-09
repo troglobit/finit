@@ -59,11 +59,11 @@ int complete(char *cmd, int pid)
 
 	if (waitpid(pid, &status, 0) == -1) {
 		if (errno == EINTR)
-			_e("Caught unblocked signal waiting for %s, aborting", cmd);
+			errx(1, "Caught unblocked signal waiting for %s, aborting", cmd);
 		else if (errno == ECHILD)
-			_e("Caught SIGCHLD waiting for %s, aborting", cmd);
+			errx(1, "Caught SIGCHLD waiting for %s, aborting", cmd);
 		else
-			_e("Failed starting %s, error %d: %s", cmd, errno, strerror (errno));
+			errx(1, "Failed starting %s, error %d: %s", cmd, errno, strerror (errno));
 
 		return -1;
 	}
@@ -131,7 +131,7 @@ int run(char *cmd, char *log)
 		args[i] = NULL;
 
 		if (i == NUM_ARGS && arg) {
-			_e("Command too long: %s", cmd);
+			errx(1, "Command too long: %s", cmd);
 			free(backup);
 			errno = EOVERFLOW;
 			return 1;
@@ -166,7 +166,7 @@ int run(char *cmd, char *log)
 
 		_exit(rc);
 	} else if (-1 == pid) {
-		_pe("%s", !log ? args[0] : cmd);
+		err(1, "%s", !log ? args[0] : cmd);
 		if (backup)
 			free(backup);
 
@@ -182,9 +182,9 @@ int run(char *cmd, char *log)
 
 	result = WEXITSTATUS(status);
 	if (WIFEXITED(status)) {
-		_d("Started '%s' and exit without signal, status: %d", cmd, result);
+		dbg("Started '%s' and exit without signal, status: %d", cmd, result);
 	} else if (WIFSIGNALED(status)) {
-		_d("Process '%s' terminated by signal %d", cmd, WTERMSIG(status));
+		dbg("Process '%s' terminated by signal %d", cmd, WTERMSIG(status));
 		if (!result)
 			result = 1; /* Must alert callee that the command did complete successfully.
 				     * This is necessary since not all programs trap signals and
@@ -277,7 +277,7 @@ int exec_runtask(char *cmd, char *args[])
 		strlcat(buf, args[i], sizeof(buf));
 	}
 	logit(LOG_DEBUG, "Calling %s %s", _PATH_BSHELL, buf);
-	_d("Calling %s %s", _PATH_BSHELL, buf);
+	dbg("Calling %s %s", _PATH_BSHELL, buf);
 
 	return execvp(_PATH_BSHELL, argv);
 }
@@ -448,7 +448,7 @@ int run_parts(char *dir, char *cmd)
 
 	num = scandir(dir, &e, NULL, alphasort);
 	if (num < 0) {
-		_d("No files found in %s, skipping ...", dir);
+		dbg("No files found in %s, skipping ...", dir);
 		return -1;
 	}
 
@@ -468,19 +468,19 @@ int run_parts(char *dir, char *cmd)
 
 		paste(path, sizeof(path), dir, name);
 		if (stat(path, &st)) {
-			_d("Failed stat(%s): %s", path, strerror(errno));
+			dbg("Failed stat(%s): %s", path, strerror(errno));
 			continue;
 		}
 
 		if (!S_ISEXEC(st.st_mode) || S_ISDIR(st.st_mode)) {
-			_d("Skipping %s ...", path);
+			dbg("Skipping %s ...", path);
 			continue;
 		}
 
 		/* If the callee didn't supply a run_parts() argument */
 		if (!cmd) {
 			/* Check if S<NUM>service or K<NUM>service notation is used */
-			_d("Checking if %s is a sysvinit startstop script ...", name);
+			dbg("Checking if %s is a sysvinit startstop script ...", name);
 			if (name[0] == 'S' && isdigit(name[1]))
 				strlcat(path, " start", sizeof(path));
 			else if (name[0] == 'K' && isdigit(name[1]))
@@ -499,9 +499,9 @@ int run_parts(char *dir, char *cmd)
 		status = complete(path, pid);
 		exit_status = WEXITSTATUS(status);
 		if (WIFEXITED(status) && exit_status)
-			_w("%s exited with status %d", path, exit_status);
+			warnx("%s exited with status %d", path, exit_status);
 		else if (WIFSIGNALED(status))
-			_w("%s terminated by signad %d", path, WTERMSIG(status));
+			warnx("%s terminated by signad %d", path, WTERMSIG(status));
 		print_result(status);
 	}
 

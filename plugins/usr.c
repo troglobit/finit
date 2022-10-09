@@ -52,7 +52,7 @@ static void usr_callback(void *arg, int fd, int events)
 
 	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
-		_pe("invalid inotify event");
+		err(1, "invalid inotify event");
 		return;
 	}
 	ev_buf[sz] = 0;
@@ -65,7 +65,7 @@ static void usr_callback(void *arg, int fd, int events)
 		if (off + sizeof(*ev) + ev->len > (size_t)sz)
 			break;
 
-		_d("name %s, event: 0x%08x", ev->name, ev->mask);
+		dbg("name %s, event: 0x%08x", ev->name, ev->mask);
 		if (!ev->mask)
 			continue;
 
@@ -85,13 +85,13 @@ static void usr_init(void *arg)
 	char *path;
 
 	if (mkpath(pid_runpath(_PATH_CONDUSR, usrdir, sizeof(usrdir)), 0755) && errno != EEXIST) {
-		_pe("Failed creating %s condition directory, %s", COND_USR, _PATH_CONDUSR);
+		err(1, "Failed creating %s condition directory, %s", COND_USR, _PATH_CONDUSR);
 		return;
 	}
 
 	path = realpath(_PATH_CONDUSR, NULL);
 	if (!path) {
-		_pe("Cannot figure out real path to %s, aborting", _PATH_CONDUSR);
+		err(1, "Cannot figure out real path to %s, aborting", _PATH_CONDUSR);
 		return;
 	}
 

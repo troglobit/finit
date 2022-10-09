@@ -58,19 +58,19 @@ static void setup(void *arg)
 	char *cmd;
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 
 	cmd = which(DBUS_DAEMON);
 	if (!cmd) {
-		_d("Skipping plugin, %s is not installed.", DBUS_DAEMON);
+		dbg("Skipping plugin, %s is not installed.", DBUS_DAEMON);
 		return;
 	}
 
 	prev =umask(0);
 
-	_d("Creating D-Bus Required Directories ...");
+	dbg("Creating D-Bus Required Directories ...");
 	mksubsys("/var/run/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
 	mksubsys("/var/run/lock/subsys", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
 	mksubsys("/var/lib/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
@@ -87,7 +87,7 @@ static void setup(void *arg)
 	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
 		 DBUS_DAEMONPIDFILE, DBUS_DAEMONUSER, DBUS_DAEMONGROUP, cmd, DBUS_ARGS, DBUS_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		_pe("Failed registering %s", DBUS_DAEMON);
+		err(1, "Failed registering %s", DBUS_DAEMON);
 	free(cmd);
 
 	umask(prev);

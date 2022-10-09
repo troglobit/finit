@@ -142,7 +142,7 @@ static void load(void *arg)
 	int index = 1;
 	int i, num;
 
-	_d("Scanning " MODULES_LOAD_PATH " for config files ...");
+	dbg("Scanning " MODULES_LOAD_PATH " for config files ...");
 	num = scandir(MODULES_LOAD_PATH, &dentry, module_filter, alphasort);
 	if (num > 0) {
 		for (i = 0; i < num; i++) {

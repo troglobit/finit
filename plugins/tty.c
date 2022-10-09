@@ -55,7 +55,7 @@ static void setup(void)
 
 	plugin.io.fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 	if (-1 == plugin.io.fd || inotify_add_watch(plugin.io.fd, "/dev", IN_CREATE | IN_DELETE) < 0)
-		_pe("Failed starting TTY watcher");
+		err(1, "Failed starting TTY watcher");
 }
 
 static void do_tty(char *tty, size_t len, int creat)
@@ -67,10 +67,10 @@ static void do_tty(char *tty, size_t len, int creat)
 	svc = svc_find_by_tty(name);
 	if (svc) {
 		if (svc_is_blocked(svc) && creat) {
-			_d("%s: blocked, re-enabling", svc_ident(svc, NULL, 0));
+			dbg("%s: blocked, re-enabling", svc_ident(svc, NULL, 0));
 			svc_start(svc);
 		} else if (svc->pid) {
-			_d("%s: missing ...", svc_ident(svc, NULL, 0));
+			dbg("%s: missing ...", svc_ident(svc, NULL, 0));
 			svc_missing(svc);
 		}
 
@@ -87,7 +87,7 @@ static void tty_watcher(void *arg, int fd, int events)
 
 	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
-		_pe("invalid inotify event");
+		err(1, "invalid inotify event");
 		return;
 	}
 	ev_buf[sz] = 0;
@@ -103,7 +103,7 @@ static void tty_watcher(void *arg, int fd, int events)
 		if (!ev->mask)
 			continue;
 
-		_d("tty %s, event: 0x%08x", ev->name, ev->mask);
+		dbg("tty %s, event: 0x%08x", ev->name, ev->mask);
 		do_tty(ev->name, ev->len, ev->mask & IN_CREATE);
 	}
 }

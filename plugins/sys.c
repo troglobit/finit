@@ -63,7 +63,7 @@ static void sys_update_conds(char *dir, char *name, uint32_t mask)
 		return;
 
 	cond += strlen(COND_BASE) + 1;
-	_d("cond: %s set: %d", cond, mask & IN_CREATE ? 1 : 0);
+	dbg("cond: %s set: %d", cond, mask & IN_CREATE ? 1 : 0);
 	if (!cond_update(cond))
 		unlink(path);
 }
@@ -82,7 +82,7 @@ static void sys_scandir(struct iwatch *iw, char *dir, int len)
 		return;
 
 	for (i = 0; i < gl.gl_pathc; i++) {
-		_d("scan found %s", gl.gl_pathv[i]);
+		dbg("scan found %s", gl.gl_pathv[i]);
 		sys_update_conds(dir, gl.gl_pathv[i], IN_CREATE);
 	}
 	globfree(&gl);
@@ -97,7 +97,7 @@ static void sys_handle_dir(struct iwatch *iw, char *dir, char *name, int mask)
 	struct iwatch_path *iwp;
 
 	paste(path, sizeof(path), dir, name);
-	_d("path: %s", path);
+	dbg("path: %s", path);
 
 	iwp = iwatch_find_by_path(iw, path);
 
@@ -121,7 +121,7 @@ static void sys_callback(void *arg, int fd, int events)
 
 	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
-		_pe("invalid inotify event");
+		err(1, "invalid inotify event");
 		return;
 	}
 	ev_buf[sz] = 0;
@@ -136,7 +136,7 @@ static void sys_callback(void *arg, int fd, int events)
 		if (off + sizeof(*ev) + ev->len > (size_t)sz)
 			break;
 
-		_d("name %s, event: 0x%08x", ev->name, ev->mask);
+		dbg("name %s, event: 0x%08x", ev->name, ev->mask);
 		if (!ev->mask)
 			continue;
 
@@ -161,13 +161,13 @@ static void sys_init(void *arg)
 	char *path;
 
 	if (mkpath(pid_runpath(_PATH_CONDSYS, sysdir, sizeof(sysdir)), 0755) && errno != EEXIST) {
-		_pe("Failed creating %s condition directory, %s", COND_SYS, _PATH_CONDSYS);
+		err(1, "Failed creating %s condition directory, %s", COND_SYS, _PATH_CONDSYS);
 		return;
 	}
 
 	path = realpath(_PATH_CONDSYS, NULL);
 	if (!path) {
-		_pe("Cannot figure out real path to %s, aborting", _PATH_CONDSYS);
+		err(1, "Cannot figure out real path to %s, aborting", _PATH_CONDSYS);
 		return;
 	}
 

@@ -60,7 +60,7 @@ char *tty_canonicalize(char *dev)
 	if (stat(path, &st)) {
 		if (!strncmp(path, _PATH_DEV, strlen(_PATH_DEV))) {
 		unavailable:
-			_d("TTY %s not available at the moment, registering anyway.", path);
+			dbg("TTY %s not available at the moment, registering anyway.", path);
 			return path;
 		}
 
@@ -99,14 +99,14 @@ char *tty_atcon(void)
 
 		fp = fopen("/sys/class/tty/console/active", "r");
 		if (!fp) {
-			_e("Cannot find system console, is sysfs not mounted?");
+			errx(1, "Cannot find system console, is sysfs not mounted?");
 			errno = ENOENT;
 			return NULL;
 		}
 
 		buf = malloc(512);
 		if (!buf) {
-			_pe("Failed allocating memory for @console");
+			err(1, "Failed allocating memory for @console");
 			fclose(fp);
 			return NULL;
 		}
@@ -118,7 +118,7 @@ char *tty_atcon(void)
 		fclose(fp);
 
 		ptr = chomp(buf);
-		_d("consoles: %s", ptr);
+		dbg("consoles: %s", ptr);
 	}
 
 	dev = strtok_r(ptr, " \t", &save);
@@ -223,11 +223,11 @@ int tty_parse_args(char *cmd, struct tty *tty)
 
 	tty->dev = tty_canonicalize(dev);
 	if (!tty->dev) {
-		_e("Incomplete or non-existing TTY device given, cannot register.");
+		errx(1, "Incomplete or non-existing TTY device given, cannot register.");
 		return errno = EINVAL;
 	}
 
-	_d("Registering %s getty on TTY %s at %s baud with term %s", tty->cmd ? "external" : "built-in",
+	dbg("Registering %s getty on TTY %s at %s baud with term %s", tty->cmd ? "external" : "built-in",
 	   tty->dev, tty->baud ?: "0", tty->term ?: "N/A");
 
 	/* Built-in getty now comes as standalone program */
@@ -291,21 +291,21 @@ int tty_exec(svc_t *svc)
 
 	dev = tty_canonicalize(svc->dev);
 	if (!dev) {
-		_d("%s: Cannot find TTY device: %s", svc->dev, strerror(errno));
+		dbg("%s: Cannot find TTY device: %s", svc->dev, strerror(errno));
 		return EX_CONFIG;
 	}
 
 	if (!tty_exists(dev)) {
-		_d("%s: Not a valid TTY: %s", dev, strerror(errno));
+		dbg("%s: Not a valid TTY: %s", dev, strerror(errno));
 		return EX_OSFILE;
 	}
 
 	if (svc->nologin) {
-		_d("%s: Starting /bin/sh ...", dev);
+		dbg("%s: Starting /bin/sh ...", dev);
 		return run_sh(dev, svc->noclear, svc->nowait, svc->rlimit);
 	}
 
-	_d("%s: Starting %s ...", dev, svc->cmd);
+	dbg("%s: Starting %s ...", dev, svc->cmd);
 	for (i = 1, j = 0; i < MAX_NUM_SVC_ARGS; i++) {
 		if (!svc->args[i][0])
 			break;

@@ -120,7 +120,7 @@ static void parse_finit_opts(char *opt)
 
 	if (string_compare(opt, "status_style")) {
 		if (!arg) {
-			_e("status_style option requires an argument, skipping.");
+			errx(1, "status_style option requires an argument, skipping.");
 			return;
 		}
 
@@ -157,7 +157,7 @@ static int parse_runlevel(char *arg)
 
 	num = strtonum(arg, 1, 9, &err);
 	if (err || num == 6) {
-		_d("Not a valid runlevel (%s), valid levels are [1-9], excluding 6, skipping.", arg);
+		dbg("Not a valid runlevel (%s), valid levels are [1-9], excluding 6, skipping.", arg);
 		return 0;
 	}
 
@@ -210,7 +210,7 @@ static void parse_kernel_cmdline(void)
 	}
 
 	cmdline = chomp(line);
-	_d("%s", cmdline);
+	dbg("%s", cmdline);
 
 	while ((tok = strtok(cmdline, " \t"))) {
 		cmdline = NULL;
@@ -239,7 +239,7 @@ static void parse_kernel_loglevel(void)
 	fclose(fp);
 
 	ptr = chomp(line);
-	_d("%s", ptr);
+	dbg("%s", ptr);
 	val = atoi(ptr);
 	if (val >= 7)
 		kerndebug = 1;
@@ -342,7 +342,7 @@ static void parse_env(char *line)
 
 	node = malloc(sizeof(*node));
 	if (!node) {
-		_pe("Out of memory cannot track env vars");
+		err(1, "Out of memory cannot track env vars");
 		return;
 	}
 	node->name = strdup(key);
@@ -434,7 +434,7 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	char *ptr;
 
 	if (!svc) {
-		_e("Invalid service pointer");
+		errx(1, "Invalid service pointer");
 		return;
 	}
 
@@ -665,7 +665,7 @@ static int parse_static(char *line, int is_rcsd)
 
 		strlcpy(cmd, file, sizeof(cmd));
 		if (!fexist(cmd)) {
-			_e("Cannot find include file %s, absolute path required!", x);
+			errx(1, "Cannot find include file %s, absolute path required!", x);
 			return 1;
 		}
 
@@ -811,7 +811,7 @@ static int parse_conf(char *file, int is_rcsd)
 		cgroup_current[0] = 0;
 	}
 
-	_d("*** Parsing %s", file);
+	dbg("*** Parsing %s", file);
 	while (!feof(fp)) {
 		char *x;
 
@@ -820,7 +820,7 @@ static int parse_conf(char *file, int is_rcsd)
 
 		chomp(line);
 		tabstospaces(line);
-//DEV		_d("%s", line);
+//DEV		dbg("%s", line);
 
 		/* Skip comments, i.e. lines beginning with # */
 		if (MATCH_CMD(line, "#", x))
@@ -850,7 +850,7 @@ int conf_reload(void)
 
 	/* Set time according to current time zone */
 	tzset();
-	_d("Set time  daylight: %d  timezone: %ld  tzname: %s %s",
+	dbg("Set time  daylight: %d  timezone: %ld  tzname: %s %s",
 	   daylight, timezone, tzname[0], tzname[1]);
 
 	/* Mark and sweep */
@@ -898,13 +898,13 @@ int conf_reload(void)
 
 		/* Check that it's an actual file ... beyond any symlinks */
 		if (lstat(path, &st)) {
-			_d("Skipping %s, cannot access: %s", path, strerror(errno));
+			dbg("Skipping %s, cannot access: %s", path, strerror(errno));
 			continue;
 		}
 
 		/* Skip directories */
 		if (S_ISDIR(st.st_mode)) {
-			_d("Skipping directory %s", path);
+			dbg("Skipping directory %s", path);
 			continue;
 		}
 
@@ -920,7 +920,7 @@ int conf_reload(void)
 		/* Check that file ends with '.conf' */
 		len = strlen(path);
 		if (len < 6 || strcmp(&path[len - 5], ".conf"))
-			_d("Skipping %s, not a Finit .conf file ... ", path);
+			dbg("Skipping %s, not a Finit .conf file ... ", path);
 		else
 			parse_conf(path, 1);
 
@@ -992,7 +992,7 @@ static int do_change(char *dir, char *name, uint32_t mask)
 	struct conf_change *node;
 
 	paste(fn, sizeof(fn), dir, name);
-	_d("path: %s mask: %08x", fn, mask);
+	dbg("path: %s mask: %08x", fn, mask);
 
 	node = conf_find(fn);
 	if (mask & (IN_DELETE | IN_MOVED_FROM)) {
@@ -1001,7 +1001,7 @@ static int do_change(char *dir, char *name, uint32_t mask)
 	}
 
 	if (node) {
-		_d("Event already registered for %s ...", name);
+		dbg("Event already registered for %s ...", name);
 		return 0;
 	}
 
@@ -1015,7 +1015,7 @@ static int do_change(char *dir, char *name, uint32_t mask)
 		return 1;
 	}
 
-	_d("Event registered for %s, mask 0x%x", fn, mask);
+	dbg("Event registered for %s, mask 0x%x", fn, mask);
 	TAILQ_INSERT_HEAD(&conf_change_list, node, link);
 
 	return 0;
@@ -1057,7 +1057,7 @@ static void conf_cb(uev_t *w, void *arg, int events)
 
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
-		_pe("invalid inotify event");
+		err(1, "invalid inotify event");
 		return;
 	}
 	ev_buf[sz] = 0;
@@ -1075,7 +1075,7 @@ static void conf_cb(uev_t *w, void *arg, int events)
 		if (!ev->mask)
 			continue;
 
-		_d("name %s, event: 0x%08x", ev->name, ev->mask);
+		dbg("name %s, event: 0x%08x", ev->name, ev->mask);
 
 		/* Find base path for this event */
 		iwp = iwatch_find_by_wd(&iw_conf, ev->wd);
@@ -1083,7 +1083,7 @@ static void conf_cb(uev_t *w, void *arg, int events)
 			continue;
 
 		if (do_change(iwp->path, ev->name, ev->mask)) {
-			_pe(" Out of memory");
+			err(1, " Out of memory");
 			break;
 		}
 	}
@@ -1159,7 +1159,7 @@ int conf_init(uev_ctx_t *ctx)
 		return 1;
 
 	if (uev_io_init(ctx, &etcw, conf_cb, NULL, fd, UEV_READ)) {
-		_pe("Failed setting up I/O callback for /etc watcher");
+		err(1, "Failed setting up I/O callback for /etc watcher");
 		close(fd);
 		return 1;
 	}

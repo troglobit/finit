@@ -80,7 +80,7 @@ static int bootclean(const char *fpath, const struct stat *sb, int tflag, struct
 	if (ftw->level == 0)
 		return 1;
 
-	_d("Removing %s ...", fpath);
+	dbg("Removing %s ...", fpath);
 	(void)remove(fpath);
 
 	return 0;
@@ -113,7 +113,7 @@ static void clean(void *arg)
 static void ln(const char *target, const char *linkpath)
 {
 	if (symlink(target, linkpath) && errno != EEXIST)
-		_pe("Failed creating %s -> %s symlink", target, linkpath);
+		err(1, "Failed creating %s -> %s symlink", target, linkpath);
 }
 
 /* Kernel defines the following compulsory and recommended links
@@ -164,7 +164,7 @@ static void setup(void *arg)
 
 	prev = umask(0);
 
-	_d("Setting up FHS structure in /var ...");
+	dbg("Setting up FHS structure in /var ...");
 	makedir("/var/cache",      0755);
 	makedir("/var/db",         0755); /* _PATH_VARDB on some systems */
 	makedir("/var/games",      0755);
@@ -173,7 +173,7 @@ static void setup(void *arg)
 	makedir("/var/lib/alarm",  0755);
 	makedir("/var/lib/urandom",0755);
 	if (fisdir("/run")) {
-		_d("System with new /run tmpfs ...");
+		dbg("System with new /run tmpfs ...");
 		if (!fisdir("/run/lock"))
 			makedir("/run/lock", 1777);
 		ln("/run/lock", "/var/lock");
@@ -203,7 +203,7 @@ static void setup(void *arg)
 		 * If /etc/group or "utmp" group is missing, default to
 		 * "root", or "wheel", group.
 		 */
-		_d("Setting up necessary UTMP files ...");
+		dbg("Setting up necessary UTMP files ...");
 		gid = getgroup("utmp");
 		if (gid < 0)
 			gid = 0;
@@ -223,7 +223,7 @@ static void setup(void *arg)
 	erase("/etc/network/run/ifstate");
 #endif
 
-	_d("Setting up misc files ...");
+	dbg("Setting up misc files ...");
 	makedir("/var/run/network",0755); /* Needed by Debian/Ubuntu ifupdown */
 	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
 	makedir("/var/run/pluto",  0755); /* Needed by Openswan */

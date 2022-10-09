@@ -149,7 +149,7 @@ static int service_script_add(svc_t *svc, pid_t pid)
 	struct assoc *ptr = malloc(sizeof(*ptr));
 
 	if (!ptr) {
-		_pe("Failed starting service script timer");
+		err(1, "Failed starting service script timer");
 		return 1;
 	}
 
@@ -487,12 +487,12 @@ static pid_t service_fork(svc_t *svc)
 		/* Set desired user+group */
 		if (gid >= 0) {
 			if (setgid(gid))
-				_pe("%s: failed setgid(%d)", svc_ident(svc, NULL, 0), gid);
+				err(1, "%s: failed setgid(%d)", svc_ident(svc, NULL, 0), gid);
 		}
 
 		if (uid >= 0) {
 			if (setuid(uid))
-				_pe("%s: failed setuid(%d)", svc_ident(svc, NULL, 0), uid);
+				err(1, "%s: failed setuid(%d)", svc_ident(svc, NULL, 0), uid);
 
 			/* Set default path for regular users */
 			if (uid > 0)
@@ -501,7 +501,7 @@ static pid_t service_fork(svc_t *svc)
 				setenv("HOME", home, 1);
 				if (chdir(home)) {
 					if (chdir("/"))
-						_pe("%s: failed chdir(%s) and chdir(/)", svc_ident(svc, NULL, 0), home);
+						err(1, "%s: failed chdir(%s) and chdir(/)", svc_ident(svc, NULL, 0), home);
 				}
 			}
 		}
@@ -554,7 +554,7 @@ static int service_start(svc_t *svc)
 		char *dev = tty_canonicalize(svc->dev);
 
 		if (!dev || !tty_exists(dev)) {
-			_d("TTY %s missing or invalid, halting service.", svc->dev);
+			dbg("TTY %s missing or invalid, halting service.", svc->dev);
 			svc_missing(svc);
 			return 1;
 		}
@@ -598,7 +598,7 @@ static int service_start(svc_t *svc)
 			int rc;
 
 			if ((rc = wordexp(svc->cmd, &we, 0))) {
-				_e("%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), svc->cmd, rc);
+				errx(1, "%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), svc->cmd, rc);
 			nomem:
 				wordfree(&we);
 				_exit(1);
@@ -626,7 +626,7 @@ static int service_start(svc_t *svc)
 				strlcat(str, arg, sizeof(str));
 
 				if ((rc = wordexp(str, &we, WRDE_APPEND))) {
-					_e("%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), str, rc);
+					errx(1, "%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), str, rc);
 					goto nomem;
 				}
 			}
@@ -691,7 +691,7 @@ static int service_start(svc_t *svc)
 
 		_exit(status);
 	} else if (debug) {
-		_d("Starting %s", cmdline);
+		dbg("Starting %s", cmdline);
 	}
 
 	if (svc_is_tty(svc))
@@ -747,11 +747,11 @@ static void service_kill(svc_t *svc)
 
 	if (svc->pid <= 1) {
 		/* Avoid killing ourselves or all processes ... */
-		_d("%s: Aborting SIGKILL, already terminated.", svc_ident(svc, NULL, 0));
+		dbg("%s: Aborting SIGKILL, already terminated.", svc_ident(svc, NULL, 0));
 		return;
 	}
 
-	_d("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
+	dbg("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
 	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending SIGKILL ...",
 	      svc_ident(svc, NULL, 0), svc->pid);
 	if (runlevel != 1)
@@ -817,7 +817,7 @@ int service_stop(svc_t *svc)
 		if (svc->pid <= 1)
 			return 1;
 
-		_d("Sending %s to pid:%d name:%s", sig_name(svc->sighalt),
+		dbg("Sending %s to pid:%d name:%s", sig_name(svc->sighalt),
 		   svc->pid, pid_get_name(svc->pid, NULL, 0));
 		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...",
 		      svc_ident(svc, NULL, 0), svc->pid, sig_name(svc->sighalt));
@@ -850,7 +850,7 @@ int service_stop(svc_t *svc)
 		if (svc->pid > 1) {
 			/* Kill all children in the same proess group, e.g. logit */
 			rc = kill(-svc->pid, svc->sighalt);
-			_d("kill(-%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
+			dbg("kill(-%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
 			/* PID lost or forking process never really started */
 			if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
 				service_cleanup(svc);
@@ -885,7 +885,7 @@ int service_stop(svc_t *svc)
 			_exit(0);
 			break;
 		case -1:
-			_pe("Failed fork() to call sysv script '%s stop'", cmdline);
+			err(1, "Failed fork() to call sysv script '%s stop'", cmdline);
 			rc = 1;
 			break;
 		default:
@@ -924,7 +924,7 @@ static int service_restart(svc_t *svc)
 		return 1;
 
 	if (svc->pid <= 1) {
-		_d("%s: bad PID %d for %s, SIGHUP", svc_ident(svc, NULL, 0), svc->pid, svc->cmd);
+		dbg("%s: bad PID %d for %s, SIGHUP", svc_ident(svc, NULL, 0), svc->pid, svc->cmd);
 		svc->start_time = svc->pid = 0;
 		return 1;
 	}
@@ -936,7 +936,7 @@ static int service_restart(svc_t *svc)
 	if (do_progress)
 		print_desc("Restarting ", svc->desc);
 
-	_d("Sending SIGHUP to PID %d", svc->pid);
+	dbg("Sending SIGHUP to PID %d", svc->pid);
 	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s[%d], sending SIGHUP ...",
 	      svc_ident(svc, NULL, 0), svc->pid);
 	rc = kill(svc->pid, SIGHUP);
@@ -1027,7 +1027,7 @@ static void parse_env(svc_t *svc, char *env)
 		return;
 
 	if (strlen(env) >= sizeof(svc->env)) {
-		_e("%s: env file is too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->env));
+		errx(1, "%s: env file is too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->env));
 		return;
 	}
 
@@ -1051,7 +1051,7 @@ static void parse_cgroup(svc_t *svc, char *cgroup)
 	}
 
 	if (strlen(ptr) >= sizeof(svc->cgroup)) {
-		_e("%s: cgroup settings too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->cgroup));
+		errx(1, "%s: cgroup settings too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->cgroup));
 		return;
 	}
 
@@ -1076,7 +1076,7 @@ static void parse_killdelay(svc_t *svc, char *delay)
 
 	sec = strtonum(delay, 1, 60, &errstr);
 	if (errstr) {
-		_e("%s: killdelay %s is %s (1-60)", svc_ident(svc, NULL, 0), delay, errstr);
+		errx(1, "%s: killdelay %s is %s (1-60)", svc_ident(svc, NULL, 0), delay, errstr);
 		return;
 	}
 
@@ -1200,7 +1200,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	diff += conf_changed(svc_getenv(svc));
 
 	if (diff)
-		_d("Modified args for %s detected", cmd);
+		dbg("Modified args for %s detected", cmd);
 	svc->args_dirty = (diff > 0);
 }
 
@@ -1279,7 +1279,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	svc_t *svc;
 
 	if (!cfg) {
-		_e("Invalid input argument");
+		errx(1, "Invalid input argument");
 		return errno = EINVAL;
 	}
 
@@ -1308,7 +1308,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	cmd = strtok(line, " \t");
 	if (!cmd) {
 	incomplete:
-		_e("Incomplete service '%s', cannot register", cfg);
+		errx(1, "Incomplete service '%s', cannot register", cfg);
 		return errno = ENOENT;
 	}
 
@@ -1381,7 +1381,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel > 0 && !ISOTHER(levels, 0)) {
-		_d("Skipping %s, bootstrap is completed.", cmd);
+		dbg("Skipping %s, bootstrap is completed.", cmd);
 		return 0;
 	}
 
@@ -1430,17 +1430,17 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc = svc_find(name, id);
 
 	if (!svc) {
-		_d("Creating new svc for %s name %s id %s type %d", cmd, name, id, type);
+		dbg("Creating new svc for %s name %s id %s type %d", cmd, name, id, type);
 		svc = svc_new(cmd, name, id, type);
 		if (!svc) {
-			_e("Out of memory, cannot register service %s", cmd);
+			errx(1, "Out of memory, cannot register service %s", cmd);
 			return errno = ENOMEM;
 		}
 
 		if (manual)
 			svc_stop(svc);
 	} else {
-		_d("Found existing svc for %s name %s id %s type %d", cmd, name, id, type);
+		dbg("Found existing svc for %s name %s id %s type %d", cmd, name, id, type);
 
 		/* update type, may have changed from service -> task */
 		svc->type = type;
@@ -1467,7 +1467,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	svc->runlevels = levels;
-	_d("Service %s runlevel 0x%02x", svc_ident(svc, NULL, 0), svc->runlevels);
+	dbg("Service %s runlevel 0x%02x", svc_ident(svc, NULL, 0), svc->runlevels);
 
 	conf_parse_cond(svc, cond);
 
@@ -1613,21 +1613,21 @@ void service_monitor(pid_t lost, int status)
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
 		if (service_script_del(lost))
-			_d("collected unknown PID %d", lost);
+			dbg("collected unknown PID %d", lost);
 		return;
 	}
 
 	switch (svc->state) {
 	case SVC_CLEANUP_STATE:
 	case SVC_SETUP_STATE:
-		_d("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
+		dbg("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
 		   svc->state == SVC_CLEANUP_STATE ? svc->post_script : svc->pre_script,
 		   lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
 		kill(-svc->pid, SIGKILL);
 		goto done;
 
 	default:
-		_d("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
+		dbg("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
 		   svc_ident(svc, NULL, 0), lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
 		svc->status = status;
 		break;
@@ -1666,7 +1666,7 @@ cont:
 	if (!service_step(svc)) {
 		/* Clean out any bootstrap tasks, they've had their time in the sun. */
 		if (svc_clean_bootstrap(svc))
-			_d("collected bootstrap task %s(%d), removing.", svc_ident(svc, NULL, 0), lost);
+			dbg("collected bootstrap task %s(%d), removing.", svc_ident(svc, NULL, 0), lost);
 	}
 
 	sm_step(&sm);
@@ -1734,7 +1734,7 @@ static void service_pre_script(svc_t *svc)
 {
 	svc->pid = service_fork(svc);
 	if (svc->pid < 0) {
-		_pe("Failed forking off %s pre-script %s", svc_ident(svc, NULL, 0), svc->pre_script);
+		err(1, "Failed forking off %s pre-script %s", svc_ident(svc, NULL, 0), svc->pre_script);
 		return;
 	}
 
@@ -1767,7 +1767,7 @@ static void service_post_script(svc_t *svc)
 {
 	svc->pid = service_fork(svc);
 	if (svc->pid < 0) {
-		_pe("Failed forking off %s post-script %s", svc_ident(svc, NULL, 0), svc->post_script);
+		err(1, "Failed forking off %s post-script %s", svc_ident(svc, NULL, 0), svc->post_script);
 		return;
 	}
 
@@ -1820,7 +1820,7 @@ void service_ready_script(svc_t *svc)
 
 	pid = service_fork(svc);
 	if (pid < 0) {
-		_pe("Failed forking off %s ready-script %s", svc_ident(svc, NULL, 0), svc->ready_script);
+		err(1, "Failed forking off %s ready-script %s", svc_ident(svc, NULL, 0), svc->ready_script);
 		return;
 	}
 
@@ -1855,7 +1855,7 @@ static void service_retry(svc_t *svc)
 
 	service_timeout_cancel(svc);
 	if (svc->respawn) {
-		_d("%s crashed/exited, respawning ...", svc_ident(svc, NULL, 0));
+		dbg("%s crashed/exited, respawning ...", svc_ident(svc, NULL, 0));
 		svc_unblock(svc);
 		service_step(svc);
 		return;
@@ -1886,7 +1886,7 @@ static void service_retry(svc_t *svc)
 
 	(*restart_cnt)++;
 
-	_d("%s crashed, trying to start it again, attempt %d", svc_ident(svc, NULL, 0), *restart_cnt);
+	dbg("%s crashed, trying to start it again, attempt %d", svc_ident(svc, NULL, 0), *restart_cnt);
 	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
 	      svc_ident(svc, NULL, 0), svc->oldpid, *restart_cnt, svc->restart_max);
 	svc_unblock(svc);
@@ -1907,7 +1907,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new)
 
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
 	if (*state == SVC_STOPPING_STATE) {
-		_d("%s is stopping, wait %d sec before sending SIGKILL ...",
+		dbg("%s is stopping, wait %d sec before sending SIGKILL ...",
 		   svc_ident(svc, NULL, 0), svc->killdelay / 1000);
 		service_timeout_cancel(svc);
 		service_timeout_after(svc, svc->killdelay, service_kill);
@@ -1986,7 +1986,7 @@ restart:
 	old_state = svc->state;
 	enabled = svc_enabled(svc);
 
-	_d("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc_ident(svc, NULL, 0), svc->pid,
+	dbg("%20s(%4d): %8s %3sabled/%-7s cond:%-4s", svc_ident(svc, NULL, 0), svc->pid,
 	   svc_status(svc), enabled ? "en" : "dis", svc_dirtystr(svc),
 	   condstr(cond_get_agg(svc->cond)));
 
@@ -2007,7 +2007,7 @@ restart:
 		if (!svc->pid) {
 			char condstr[MAX_COND_LEN];
 
-			_d("%s: stopped, cleaning up timers and conditions ...", svc_ident(svc, NULL, 0));
+			dbg("%s: stopped, cleaning up timers and conditions ...", svc_ident(svc, NULL, 0));
 			service_timeout_cancel(svc);
 			cond_clear(mkcond(svc, condstr, sizeof(condstr)));
 
@@ -2030,7 +2030,7 @@ restart:
 				break;
 
 			default:
-				_e("unknown service type %d", svc->type);
+				errx(1, "unknown service type %d", svc->type);
 				break;
 			}
 		}
@@ -2101,7 +2101,7 @@ restart:
 				 * file.  In both cases, after that, retry after 2 sec
 				 */
 				if (!svc->respawn)
-					_d("delayed restart of %s", svc_ident(svc, NULL, 0));
+					dbg("delayed restart of %s", svc_ident(svc, NULL, 0));
 				if (svc_is_forking(svc))
 					service_timeout_after(svc, 2000, service_retry);
 				else
@@ -2171,13 +2171,13 @@ restart:
 				char name[MAX_COND_LEN];
 
 				mkcond(svc, name, sizeof(name));
-				_d("Reassert condition %s", name);
+				dbg("Reassert condition %s", name);
 				cond_set_path(cond_path(name), COND_ON);
 			}
 			break;
 
 		case COND_OFF:
-			_d("Condition for %s is off, sending SIGCONT + SIGTERM", svc->name);
+			dbg("Condition for %s is off, sending SIGCONT + SIGTERM", svc->name);
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
 			break;
@@ -2189,7 +2189,7 @@ restart:
 	}
 
 	if (svc->state != old_state) {
-		_d("%20s(%4d): -> %8s", svc_ident(svc, NULL, 0), svc->pid, svc_status(svc));
+		dbg("%20s(%4d): -> %8s", svc_ident(svc, NULL, 0), svc->pid, svc_status(svc));
 		changed++;
 		goto restart;
 	}
@@ -2260,15 +2260,15 @@ int service_completed(void)
 
 		if (strstr(svc->cond, plugin_hook_str(HOOK_SVC_UP)) ||
 		    strstr(svc->cond, plugin_hook_str(HOOK_SYSTEM_UP))) {
-			_d("Skipping %s(%s), post-strap hook", svc->desc, svc_ident(svc, NULL, 0));
+			dbg("Skipping %s(%s), post-strap hook", svc->desc, svc_ident(svc, NULL, 0));
 			continue;
 		}
 
 		if (!svc->once) {
-			_d("%s has not yet completed ...", svc_ident(svc, NULL, 0));
+			dbg("%s has not yet completed ...", svc_ident(svc, NULL, 0));
 			return 0;
 		}
-		_d("%s has completed ...", svc_ident(svc, NULL, 0));
+		dbg("%s has completed ...", svc_ident(svc, NULL, 0));
 	}
 
 	return 1;

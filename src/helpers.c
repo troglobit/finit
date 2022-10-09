@@ -42,6 +42,7 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "log.h"
 #include "private.h"
 #include "sig.h"
 #include "util.h"
@@ -444,7 +445,7 @@ int mksubsys(const char *dir, mode_t mode, char *user, char *group)
 
 		rc = makedir(dir, mode);
 		if (chown(dir, uid, gid))
-			_pe("Failed chown(%s, %d, %d)", dir, uid, gid);
+			err(1, "Failed chown(%s, %d, %d)", dir, uid, gid);
 	}
 
 	umask(omask);
@@ -482,7 +483,7 @@ void set_hostname(char **hostname)
 done:
 	if (*hostname) {
 		if (sethostname(*hostname, strlen(*hostname)))
-			_pe("Failed sethostnaem(%s)", *hostname);
+			err(1, "Failed sethostname(%s)", *hostname);
 	}
 }
 
@@ -496,9 +497,9 @@ void networking(int updown)
 		return;
 
 	if (updown)
-		_d("Setting up networking ...");
+		dbg("Setting up networking ...");
 	else
-		_d("Taking down networking ...");
+		dbg("Taking down networking ...");
 
 	/* Run user network start script if enabled */
 	if (updown && network) {
@@ -557,7 +558,7 @@ done:
 
 	/* Hooks that rely on loopback, or basic networking being up. */
 	if (updown) {
-		_d("Calling all network up hooks ...");
+		dbg("Calling all network up hooks ...");
 		plugin_run_hooks(HOOK_NETWORK_UP);
 	}
 }

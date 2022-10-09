@@ -63,16 +63,16 @@ static void cgset(const char *path, char *ctrl, char *prop)
 {
 	char *val;
 
-	_d("path %s, ctrl %s, prop %s", path ?: "NIL", ctrl ?: "NIL", prop ?: "NIL");
+	dbg("path %s, ctrl %s, prop %s", path ?: "NIL", ctrl ?: "NIL", prop ?: "NIL");
 	if (!path || !ctrl) {
-		_e("Missing path or controller, skipping!");
+		errx(1, "Missing path or controller, skipping!");
 		return;
 	}
 
 	if (!prop) {
 		prop = strchr(ctrl, '.');
 		if (!prop) {
-			_e("Invalid cgroup ctrl syntax: %s", ctrl);
+			errx(1, "Invalid cgroup ctrl syntax: %s", ctrl);
 			return;
 		}
 
@@ -81,20 +81,20 @@ static void cgset(const char *path, char *ctrl, char *prop)
 
 	val = strchr(prop, ':');
 	if (!val) {
-		_e("Missing cgroup ctrl value, prop %s", prop);
+		errx(1, "Missing cgroup ctrl value, prop %s", prop);
 		return;
 	}
 	*val++ = 0;
 
 	/* disallow sneaky relative paths */
 	if (strstr(ctrl, "..") || strstr(prop, "..")) {
-		_e("Possible security violation; '..' not allowed in cgroup config!");
+		errx(1, "Possible security violation; '..' not allowed in cgroup config!");
 		return;
 	}
 
-	_d("%s/%s.%s <= %s", path, ctrl, prop, val);
+	dbg("%s/%s.%s <= %s", path, ctrl, prop, val);
 	if (fnwrite(val, "%s/%s.%s", path, ctrl, prop))
-		_pe("Failed setting %s/%s.%s = %s", path, ctrl, prop, val);
+		err(1, "Failed setting %s/%s.%s = %s", path, ctrl, prop, val);
 }
 
 /*
@@ -106,16 +106,16 @@ static void group_init(char *path, int leaf, const char *cfg)
 {
 	char *ptr, *s;
 
-	_d("path %s, leaf %d, cfg %s", path, leaf, cfg ?: "NIL");
+	dbg("path %s, leaf %d, cfg %s", path, leaf, cfg ?: "NIL");
 	if (!fisdir(path)) {
 		if (mkdir(path, 0755)) {
-			_pe("Failed creating cgroup %s", path);
+			err(1, "Failed creating cgroup %s", path);
 			return;
 		}
 
 		/* enable detected controllers on domain groups */
 		if (!leaf && fnwrite(controllers, "%s/cgroup.subtree_control", path))
-			_pe("Failed enabling %s for %s", controllers, path);
+			err(1, "Failed enabling %s for %s", controllers, path);
 	}
 
 	if (!cfg || !cfg[0])
@@ -123,14 +123,14 @@ static void group_init(char *path, int leaf, const char *cfg)
 
 	s = strdupa(cfg);
 	if (!s) {
-		_pe("Failed activating cgroup cfg for %s", path);
+		err(1, "Failed activating cgroup cfg for %s", path);
 		return;
 	}
 
-	_d("%s <=> %s", path, s);
+	dbg("%s <=> %s", path, s);
 	ptr = strtok(s, ",");
 	while (ptr) {
-		_d("ptr: %s", ptr);
+		dbg("ptr: %s", ptr);
 		if (!strncmp("mem.", ptr, 4))
 			cgset(path, "memory", &ptr[4]);
 		else
@@ -144,7 +144,7 @@ static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
 {
 	char path[256];
 
-	_d("group %s, name %s, pid %d, cfg %s", group, name, pid, cfg ?: "NIL");
+	dbg("group %s, name %s, pid %d, cfg %s", group, name, pid, cfg ?: "NIL");
 	if (pid < 0 || pid == 1) {
 		errno = EINVAL;
 		return 1;
@@ -156,7 +156,7 @@ static int cgroup_leaf_init(char *group, char *name, int pid, const char *cfg)
 
 	/* move process to new group */
 	if (fnwrite(str("%d", pid), "%s/cgroup.procs", path))
-		_pe("Failed moving pid %d to group %s", pid, path);
+		err(1, "Failed moving pid %d to group %s", pid, path);
 
 	strlcat(path, "/cgroup.events", sizeof(path));
 
@@ -211,13 +211,13 @@ static void cgroup_handle_event(char *event, uint32_t mask)
 	char *ptr;
 	FILE *fp;
 
-	_d("event: '%s', mask: %08x", event, mask);
+	dbg("event: '%s', mask: %08x", event, mask);
 	if (!(mask & IN_MODIFY))
 		return;
 
 	fp = fopen(event, "r");
 	if (!fp) {
-		_d("Failed opening %s, skipping ...", event);
+		dbg("Failed opening %s, skipping ...", event);
 		return;
 	}
 
@@ -261,7 +261,7 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
-		_pe("invalid inotify event");
+		err(1, "invalid inotify event");
 		return;
 	}
 	ev_buf[sz] = 0;
@@ -364,12 +364,12 @@ int cgroup_add(char *name, char *cfg, int is_protected)
 	if (!cg) {
 		cg = malloc(sizeof(struct cg));
 		if (!cg) {
-			_pe("Failed allocating 'struct cg' for %s", name);
+			err(1, "Failed allocating 'struct cg' for %s", name);
 			return -1;
 		}
 		cg->name = strdup(name);
 		if (!cg->name) {
-			_pe("Failed setting cgroup name %s", name);
+			err(1, "Failed setting cgroup name %s", name);
 			free(cg);
 			return -1;
 		}
@@ -379,7 +379,7 @@ int cgroup_add(char *name, char *cfg, int is_protected)
 
 	cg->cfg = strdup(cfg);
 	if (!cg->cfg) {
-		_pe("Failed add/update of cgroup %s", name);
+		err(1, "Failed add/update of cgroup %s", name);
 		TAILQ_REMOVE(&cgroups, cg, link);
 		free(cg->name);
 		free(cg);
@@ -414,7 +414,7 @@ int cgroup_del(char *dir)
 	}
 
 	if (rmdir(dir) && errno != ENOENT) {
-		_d("Failed removing %s: %s", dir, strerror(errno));
+		dbg("Failed removing %s: %s", dir, strerror(errno));
 		return -1;
 	}
 
@@ -469,7 +469,7 @@ void cgroup_init(uev_ctx_t *ctx)
 		else if (errno == EPERM) /* Probably inside an unpriviliged container */
 			logit(LOG_INFO, "Not allowed to mount cgroups v2, disabling.");
 		else
-			_pe("Failed mounting cgroup v2");
+			err(1, "Failed mounting cgroup v2");
 		avail = 0;
 		return;
 	}
@@ -478,7 +478,7 @@ void cgroup_init(uev_ctx_t *ctx)
 	/* Find available controllers */
 	fp = fopen(FINIT_CGPATH "/cgroup.controllers", "r");
 	if (!fp) {
-		_pe("Failed opening %s", FINIT_CGPATH "/cgroup.controllers");
+		err(1, "Failed opening %s", FINIT_CGPATH "/cgroup.controllers");
 	abort:
 		umount(FINIT_CGPATH);
 		avail = 0;
@@ -505,7 +505,7 @@ void cgroup_init(uev_ctx_t *ctx)
 
 	/* Enable all controllers */
 	if (fnwrite(controllers, FINIT_CGPATH "/cgroup.subtree_control")) {
-		_pe("Failed enabling %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
+		err(1, "Failed enabling %s for %s", controllers, FINIT_CGPATH "/cgroup.subtree_control");
 		goto abort;
 	}
 
@@ -515,7 +515,7 @@ void cgroup_init(uev_ctx_t *ctx)
 		goto abort;
 
 	if (uev_io_init(ctx, &cgw, cgroup_events_cb, NULL, fd, UEV_READ)) {
-		_pe("Failed setting up cgroup.events watcher");
+		err(1, "Failed setting up cgroup.events watcher");
 		iwatch_exit(&iw_cgroup);
 		close(fd);
 		goto abort;
@@ -529,7 +529,7 @@ void cgroup_init(uev_ctx_t *ctx)
 
 	/* Move ourselves to init (best effort, otherwise run in 'root' group */
 	if (fnwrite("1", FINIT_CGPATH "/init/cgroup.procs")) {
-		_pe("Failed moving PID 1 to cgroup %s", FINIT_CGPATH "/init");
+		err(1, "Failed moving PID 1 to cgroup %s", FINIT_CGPATH "/init");
 		uev_io_stop(&cgw);
 		iwatch_exit(&iw_cgroup);
 		close(fd);

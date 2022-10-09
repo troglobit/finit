@@ -51,7 +51,7 @@ static void setup(void *arg)
 	int fd, err;
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 
@@ -144,7 +144,7 @@ static void save(void *arg)
 	mode_t prev;
 
 	if (rescue) {
-		_d("Skipping %s plugin in rescue mode.", __FILE__);
+		dbg("Skipping %s plugin in rescue mode.", __FILE__);
 		return;
 	}
 
