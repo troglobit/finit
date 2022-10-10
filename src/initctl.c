@@ -98,8 +98,8 @@ static void col_widths(void)
 	}
 
 	/* adjust for min col width */
-	if (iw < 5)
-		iw = 5;
+	if (iw < 6)
+		iw = 6;
 	if (pw < 3)
 		pw = 3;
 }
