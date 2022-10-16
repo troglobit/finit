@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sysexits.h>
 
 #define PROGNM "serv"
 #define log warnx
@@ -115,9 +116,10 @@ static int usage(int rc)
 	fprintf(fp,
 		"%s [-nhp] [-P FILE]\n"
 		"\n"
-		" -h       Show help text (this)\n"
+		" -c       Crash (exit) immediately\n"
 		" -e K:V   Verify K environment variable is V value\n"
 		" -E K     Verify K is not set in the environment\n"
+		" -h       Show help text (this)\n"
 		" -n       Run in foreground\n"
 		" -N SOCK  Send 'READY=1\\n' on $NOTIFY_SOCKET or SOCK\n"
 		" -p       Create PID file despite running in foreground\n"
@@ -142,20 +144,24 @@ int main(int argc, char *argv[])
 	int do_pidfile = 1;
 	int do_restart = 0;
 	int do_notify = 0;
+	int do_crash = 0;
 	char *pidfn = NULL;
 	char cmd[80];
 	int c;
 
-	while ((c = getopt(argc, argv, "e:E:hnN:pP:r:")) != EOF) {
+	while ((c = getopt(argc, argv, "ce:E:hnN:pP:r:")) != EOF) {
 		switch (c) {
-		case 'h':
-			return usage(0);
+		case 'c':
+			do_crash = 1;
+			break;
 		case 'e':
 			verify_env(optarg);
 			break;
 		case 'E':
 			verify_noenv(optarg);
 			break;
+		case 'h':
+			return usage(0);
 		case 'n':
 			do_background = 0;
 			do_pidfile--;
@@ -200,6 +206,9 @@ int main(int argc, char *argv[])
 		if (sock)
 			do_notify = atoi(sock);
 	}
+
+	if (do_crash)
+		exit(EX_SOFTWARE);
 
 	log("Entering while(1) loop");
 	while (running) {
