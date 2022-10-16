@@ -69,13 +69,13 @@ static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
 #define  _e(fmt, args...) logit(LOG_ERR,     "%s():" fmt, __func__, ##args)
 #define _pe(fmt, args...) logit(LOG_ERR,     "%s():" fmt ": %s", __func__, ##args, strerror(errno))
 
-void    log_init        (void);
-void    log_exit        (void);
+void    log_init (void);
+void    log_exit (void);
 
-void    log_debug       (void);
+void    log_debug(void);
 
-void    logit           (int prio, const char *fmt, ...)   __attribute__ ((format (printf, 2, 3)));
-void    flog            (char *file, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void    logit    (int prio, const char *fmt, ...)   __attribute__ ((format (printf, 2, 3)));
+void    flog     (char *file, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 #endif
 
 #endif /* FINIT_LOG_H_ */
