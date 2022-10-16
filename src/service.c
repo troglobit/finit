@@ -40,6 +40,7 @@
 #include <wordexp.h>
 
 #include "cgroup.h"
+#include "client.h"
 #include "conf.h"
 #include "cond.h"
 #include "finit.h"
@@ -589,13 +590,36 @@ static int service_start(svc_t *svc)
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
 	pid = service_fork(svc);
-	if (pid == 0) {
+	if (pid < 0) {
+		result = -1;
+		goto fail;
+	}
+	if (pid > 1) {
+		svc->pid = pid;
+		svc->start_time = jiffies();
+	} else if (pid == 0) {
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		int status;
+
+		if (!svc_is_tty(svc))
+			redirect(svc);
 
 		if (!svc_is_sysv(svc)) {
 			wordexp_t we = { 0 };
 			int rc;
+
+			if (svc->notify) {
+				if (client_command(INIT_CMD_NOTIFY_SOCKET)) {
+					err(1, "%s: failed creating notify socket", svc_ident(svc, NULL, 0));
+					client_disconnect();
+					svc->notify = 0; /* does not change parent, restarting may work. */
+				} else {
+					char val[20];
+
+					snprintf(val, sizeof(val), "%d", client_socket());
+					setenv("NOTIFY_SOCKET", val, 1);
+				}
+			}
 
 			if ((rc = wordexp(svc->cmd, &we, 0))) {
 				errx(1, "%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), svc->cmd, rc);
@@ -612,6 +636,19 @@ static int service_start(svc_t *svc)
 
 				if (len == 0)
 					break;
+
+				if (svc->notify) {
+					char *ptr = strstr(arg, "%n");
+
+					if (ptr) {
+						len = snprintf(str, sizeof(str), "%d", client_socket());
+						if (len > 0 && len <= 2) {
+							ptr[0] = ' ';
+							ptr[1] = ' ';
+							memcpy(ptr, str, len);
+						}
+					}
+				}
 
 				/*
 				 * Escape forbidden characters in wordexp()
@@ -678,8 +715,6 @@ static int service_start(svc_t *svc)
 		if (pid < 1)
 			logit(LOG_ERR, "failed setsid(), pid %d: %s", pid, strerror(errno));
 
-		if (!svc_is_tty(svc))
-			redirect(svc);
 		sig_unblock();
 
 		if (svc_is_runtask(svc))
@@ -701,9 +736,6 @@ static int service_start(svc_t *svc)
 
 	if (!svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
-
-	svc->pid = pid;
-	svc->start_time = jiffies();
 
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
@@ -728,6 +760,7 @@ static int service_start(svc_t *svc)
 		break;
 	}
 
+fail:
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (do_progress)
 		print_result(result);
@@ -778,6 +811,13 @@ static void service_cleanup(svc_t *svc)
 	if (fn && remove(fn) && errno != ENOENT)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      svc_ident(svc, NULL, 0), fn);
+
+	/* Ensure we don't have any notify socket lingering */
+	if (svc->notify && svc->notify_watcher.fd > 0) {
+		uev_io_stop(&svc->notify_watcher);
+		close(svc->notify_watcher.fd);
+		svc->notify_watcher.fd = 0;
+	}
 
 	/* No longer running, update books. */
 	if (svc_is_tty(svc) && svc->pid > 1)
@@ -1019,6 +1059,15 @@ static void parse_log(svc_t *svc, char *arg)
 
 		tok = strtok(NULL, ":=, ");
 	}
+}
+
+static int parse_notify(char *arg)
+{
+	if (!strcmp(arg, "systemd"))
+		return 1;
+	if (!strcmp(arg, "s6"))
+		return 2;
+	return 0;		/* unsupported/disabled */
 }
 
 static void parse_env(svc_t *svc, char *env)
@@ -1267,6 +1316,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL;
+	char *notify = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
 	int respawn = 0;
@@ -1332,6 +1382,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			pid = cmd;
 		else if (MATCH_CMD(cmd, "name:", arg))
 			name = cmd;
+		else if (MATCH_CMD(cmd, "notify:", arg))
+			notify = arg;
 		else if (MATCH_CMD(cmd, "type:forking", arg))
 			forking = 1;
 		else if (MATCH_CMD(cmd, "manual:yes", arg))
@@ -1523,6 +1575,17 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_script("ready", ready_script, svc->ready_script, sizeof(svc->ready_script));
 	if (log)
 		parse_log(svc, log);
+	if (notify) {
+		int type = parse_notify(notify);
+
+		if (type <= 0)
+			goto disable_notify;
+		svc->notify = type;
+	} else if (svc->notify) {
+	disable_notify:
+		/* XXX: close existing socket */
+		svc->notify = 0;
+	}
 	if (desc)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
 	else if (type == SVC_TYPE_TTY)
@@ -2008,6 +2071,12 @@ restart:
 			char condstr[MAX_COND_LEN];
 
 			dbg("%s: stopped, cleaning up timers and conditions ...", svc_ident(svc, NULL, 0));
+			if (svc->notify && svc->notify_watcher.fd > 0) {
+				uev_io_stop(&svc->notify_watcher);
+				close(svc->notify_watcher.fd);
+				svc->notify_watcher.fd = 0;
+			}
+
 			service_timeout_cancel(svc);
 			cond_clear(mkcond(svc, condstr, sizeof(condstr)));
 
@@ -2144,6 +2213,11 @@ restart:
 
 				svc_mark_clean(svc);
 			}
+			if (svc->notify == 2 && svc->notify_watcher.fd == 0) {
+				char buf[120];
+				snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
+				cond_set(buf);
+			}
 			break;
 		}
 		break;
@@ -2272,6 +2346,43 @@ int service_completed(void)
 	}
 
 	return 1;
+}
+
+/*
+ * Called when a service sends readiness notification, or when
+ * the service closes its end of the IPC connection.
+ */
+void service_notify_cb(uev_t *w, void *arg, int events)
+{
+	svc_t *svc = (svc_t *)arg;
+	char buf[120];
+	ssize_t len;
+
+	if (UEV_ERROR == events) {
+		warn("Spurious problem with %s notify callback, restarting.", svc_ident(svc, NULL, 0));
+		uev_io_start(w);
+		return;
+	}
+
+	len = read(w->fd, buf, sizeof(buf) - 1);
+	if (len == -1) {
+		warn("Failed reading notification from %s", svc_ident(svc, NULL, 0));
+		return;
+	}
+
+	buf[len] = 0;
+
+	/* systemd and s6, respectively.  The latter then closes the socket */
+	if (!strcmp(buf, "READY=1\n") || !strcmp(buf, "\n")) {
+		snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
+		cond_set(buf);
+		/* s6 applications close their socket after notification */
+		if (svc->notify == 2) {
+			uev_io_stop(w);
+			close(w->fd);
+			w->fd = 0;
+		}
+	}
 }
 
 /*

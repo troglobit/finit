@@ -29,8 +29,12 @@
 
 int    client_connect          (void);
 int    client_disconnect       (void);
+int    client_socket           (void);
 
+int    client_request          (struct init_request *rq, ssize_t len);
 int    client_send             (struct init_request *rq, ssize_t len);
+int    client_command          (int cmd);
+
 svc_t *client_svc_iterator     (int first);
 svc_t *client_svc_find         (const char *arg);
 svc_t *client_svc_find_by_cond (const char *arg);

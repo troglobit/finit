@@ -509,6 +509,20 @@ static void api_cb(uev_t *w, void *arg, int events)
 			result = do_signal(rq.data, sizeof(rq.data), rq.runlevel);
 			break;
 
+		case INIT_CMD_NOTIFY_SOCKET:
+			svc = svc_find_by_pid(rq.runlevel);
+			if (!svc) {
+				errx(1, "Unknown PID, cannot register notify socket");
+				result = 1;
+				break;
+			}
+
+			if (uev_io_init(ctx, &svc->notify_watcher, service_notify_cb, svc, sd, UEV_READ)) {
+				err(1, "Falied initializing %s readiness notifier", svc_ident(svc, NULL, 0));
+				break;
+			}
+			return;	/* Don't close sd, used for notify */
+
 		default:
 			dbg("Unsupported cmd: %d", rq.cmd);
 			break;

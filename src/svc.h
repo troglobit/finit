@@ -192,6 +192,12 @@ typedef struct svc {
 	uev_t          timer;
 	void           (*timer_cb)(struct svc *svc);
 
+	/*
+	 * Readiness notification socket: systemd, s6
+	 */
+	int	       notify;	       /* 0: none, 1: systemd, 2: s6 */
+	uev_t	       notify_watcher; /* i/o watcher */
+
 	/* time at svc_del(), used by gc timer */
 	struct timespec gc;
 } svc_t;

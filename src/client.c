@@ -69,10 +69,15 @@ int client_disconnect(void)
 	return rc;
 }
 
-int client_send(struct init_request *rq, ssize_t len)
+/* Only valid after client_connect() */
+int client_socket(void)
+{
+	return sd;
+}
+
+int client_request(struct init_request *rq, ssize_t len)
 {
 	struct pollfd pfd = { 0 };
-	int result = 255;
 	int rc;
 
 	if (client_connect() == -1)
@@ -88,6 +93,16 @@ int client_send(struct init_request *rq, ssize_t len)
 	if (write(sd, rq, len) != len) {
 		warn("Failed communicating with Finit, errno %d", errno);
 		return -1;
+	}
+
+	/*
+	 * Exception, only command that don't need to wait for a
+	 * response from Finit.  Registers the client socket as a
+	 * readiness notification socket with Finit
+	 */
+	if (rq->cmd == INIT_CMD_NOTIFY_SOCKET) {
+		rq->cmd = INIT_CMD_ACK;
+		return 0;
 	}
 
 	pfd.fd = sd;
@@ -108,13 +123,32 @@ int client_send(struct init_request *rq, ssize_t len)
 	}
 
 	if (rq->cmd == INIT_CMD_NACK)
-		result = 1;
-	else
-		result = 0;
-exit:
+		return -1;
+
+	return 0;
+}
+
+int client_send(struct init_request *rq, ssize_t len)
+{
+	int rc = 0;
+
+	if (client_request(rq, len))
+		rc = 255;
+
 	client_disconnect();
 
-	return result;
+	return rc;
+}
+
+int client_command(int cmd)
+{
+	struct init_request rq = {
+		.magic = INIT_MAGIC,
+		.runlevel = getpid(),
+		.cmd = cmd,
+	};
+
+	return client_request(&rq, sizeof(rq));
 }
 
 svc_t *client_svc_iterator(int first)
@@ -151,7 +185,7 @@ error:
 	return NULL;
 }
 
-static svc_t *do_cmd(int cmd, const char *arg)
+static svc_t *do_find(int cmd, const char *arg)
 {
 	struct init_request rq = {
 		.magic = INIT_MAGIC,
@@ -182,13 +216,12 @@ error:
 
 svc_t *client_svc_find(const char *arg)
 {
-	return do_cmd(INIT_CMD_SVC_FIND, arg);
+	return do_find(INIT_CMD_SVC_FIND, arg);
 }
-
 
 svc_t *client_svc_find_by_cond(const char *arg)
 {
-	return do_cmd(INIT_CMD_SVC_FIND_BYC, arg);
+	return do_find(INIT_CMD_SVC_FIND_BYC, arg);
 }
 
 /**

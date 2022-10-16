@@ -132,6 +132,67 @@ the `ps` command we can see that the process is started with:
 > `-` is used, a missing environment file does *not* block the start.
 
 
+Service Synchronization
+-----------------------
+
+Finit was created for fast booting systems.  Faster than a regular SysV
+Init based system at the time.  Early on the need for a guaranteed start
+order of services (daemons) arose.  I.e., service `A` must be guaranteed
+to have started (and be ready!) before `B`.  The model that was chosen
+to determine this was very simple: PID files.
+
+Early on in UNIX daemons were controlled with basic IPC like signals,
+and the way for a user to know that a daemon was ready to respond to
+signals (minimally having set up its signal handler), was to tell the
+user;
+
+> "Hey, you can send signals to me using the PID in this file:
+> `/var/run/daemon.pid`".
+
+Since most systems run fairly unchanged after boot, Finit could rely on
+the PID file for `A` being created before launching `B`.  This method
+has worked well for a long time, and for systems based on Open Source it
+was easy to either add PID file support to a daemon without support for
+it, or fix ordering issues (PID file created before signal handler is
+set up) in existing daemons.
+
+However, with the advent of other Init systems (Finit is rather old),
+most notably systemd and s6, other methods for signaling "readiness"
+arrived and daemons were adapted to these new schemes to a larger
+extent.
+
+As of Finit v4.4 partial support for systemd and s6 is available.  The
+native PID file mode of operation is still default, the other's can be
+defined per service, like this:
+
+    service notify:systemd foo
+    service notify:s6      bar
+
+To synchronize two services the following condition can be used:
+
+    service notify:systemd    A
+    service <service/A/ready> B
+
+For details on the syntax and options, see below.
+
+> **Note:** on `initctl reload` conditions are normally set in "flux",
+> while figuring out which to stop, start or restart.  Services that
+> need to be restarted have their `ready` condition removed prior to
+> Finit sending them SIGHUP (if they support that), or stop-starting
+> them.  A daemon is expected to reassert its readiness, e.g. systemd
+> style daemons to write `READY=1\n`.
+>
+> However, the s6 notify mode does not support this because in s6 you
+> are expected to close your notify descriptor after having written
+> `\n`.  This means s6 style daemons currently must be stop-started.
+> (Declare the service with `<!>` in its condition statement.)
+>
+> For native PID file style readiness notification a daemon is expected
+> to either create its PID file, if it does not exist yet, or touch it
+> using `utimensat()` or similar.  This triggers both the `<pid/>` and
+> `<.../ready>` conditions.
+
+
 Service Wrapper Scripts
 -----------------------
 
@@ -424,6 +485,35 @@ For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`,
 that PID file will, not only be created and removed automatically, but
 also be used by the Finit condition subsystem.  So a service/run/task
 can depend on `<pid/bar>`.
+
+As an alternative "readiness" notification, Finit supports both systemd
+and s6 style notification.  This can be enabled by using the `notify`
+option:
+
+  * `notify:systemd` -- tells Finit the service uses the `sd_notify()`
+    API to signal PID 1 when it has completed its startup and is ready
+    to service events.  The [sd_notify()][] API expects `NOTIFY_SOCKET`
+    to be set to the socket where the application can send `"READY=1\n"`
+    when it is starting up or has processed a `SIGHUP`.
+  * `notify:s6` -- puts Finit in s6 compatibility mode.  Compared to the
+    systemd notification, [s6 expect][] compliant daemons to send `"\n"`
+    and then close their socket.  Finit takes care of "hard-wiring" the
+    READY state as long as the application is running, events across any
+    `SIGHUP`.  Since s6 can give its applications the descriptor number
+    (must be >3) on then command line, Finit provides the following
+    syntax (`%n` is replaced by Finit with then descriptor number):
+
+        service notify:s6 mdevd -C -O 4 -D %n
+
+[sd_notify)]: https://www.freedesktop.org/software/systemd/man/sd_notify.html
+[s6 expect]:  https://skarnet.org/software/s6/notifywhenup.html
+
+When a service is ready, either by Finit detecting its PID file, or
+their respective readiness mechanism has been triggered, Finit creates
+then service's ready condition which other services can depend on:
+
+    $ initctl -v cond get service/mdevd/ready
+    on
 
 >  For a detailed description of conditions, and how to debug them,
 >  see the [Finit Conditions](conditions.md) document.

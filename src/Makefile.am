@@ -42,6 +42,7 @@ logit_CFLAGS        += $(lite_CFLAGS)
 logit_LDADD          = $(lite_LIBS)
 
 finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
+		     client.c	client.h			\
 		     cond.c	cond-w.c	cond.h		\
 		     conf.c	conf.h				\
 		     exec.c	finit.c		finit.h		\
