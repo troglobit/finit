@@ -92,9 +92,11 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		if (svc_is_forking(svc)) {
 			pid_t pid;
 
-			pid = pid_file_read(pid_file(svc));
+			pid = pid_file_read(fn);
 			if (pid == -1) {
-				cond_clear(cond);
+				/* handle case when service dies immediately */
+				if (!fexist(fn))
+				    cond_clear(cond);
 				return;
 			}
 
