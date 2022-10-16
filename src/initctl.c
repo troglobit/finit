@@ -864,13 +864,12 @@ static int show_status(char *arg)
 			ERRX(69, "no such task or service(s): %s", arg);
 
 		if (quiet) {
-			if (svc_is_runtask(svc))
+			if (svc_is_runtask(svc)) {
 				if (svc->started)
 					return 0;
-				else
-					return 1;
-			else
-				return svc->state != SVC_RUNNING_STATE;
+				return 1;
+			}
+			return svc->state != SVC_RUNNING_STATE;
 		}
 
 		pidfn = svc->pidfile;
