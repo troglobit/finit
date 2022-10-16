@@ -1,5 +1,5 @@
 #!/bin/sh
-# Verify what happesn when sysv scripts start services that keep
+# Verify what happens when sysv scripts start services that keep
 # crashing -- hint: crashing sysv services should be detected by
 # Finit just like regular services.
 set -eu
