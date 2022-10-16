@@ -2038,10 +2038,13 @@ void service_forked(svc_t *svc)
 	svc_set_state(svc, SVC_RUNNING_STATE);
 }
 
-/* Set service/foo/ready condition and call optional ready:script */
+/* Set service/foo/ready condition for services and call optional ready:script */
 void service_ready(svc_t *svc)
 {
 	char buf[MAX_COND_LEN];
+
+	if (!svc_is_daemon(svc))
+		return;
 
 	snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
 	cond_set(buf);
