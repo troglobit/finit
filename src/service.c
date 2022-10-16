@@ -1403,6 +1403,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else if (MATCH_CMD(cmd, "oncrash:", arg)) {
 			if (MATCH_CMD(arg, "reboot", arg))
 				oncrash_action = SVC_ONCRASH_REBOOT;
+			if (MATCH_CMD(arg, "script", arg))
+				oncrash_action = SVC_ONCRASH_SCRIPT;
 		}
 		else if (MATCH_CMD(cmd, "respawn", arg))
 			respawn = 1;
@@ -1868,6 +1870,9 @@ static void service_post_script(svc_t *svc)
 			setenv("EXIT_STATUS", sig2str(sig), 1);
 		}
 
+		if (svc_is_crashing(svc))
+			setenv("EXIT_CODE", "crashed", 1);
+
 		execvp(_PATH_BSHELL, argv);
 		_exit(EX_OSERR);
 	}
@@ -1945,10 +1950,20 @@ static void service_retry(svc_t *svc)
 		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);
 		*restart_cnt = 0;
-		if (svc->oncrash_action == SVC_ONCRASH_REBOOT) {
+		switch (svc->oncrash_action) {
+		case SVC_ONCRASH_REBOOT:
 			logit(LOG_ERR, "%s issuing reboot", svc_ident(svc, NULL, 0));
 			sync();
 			kill(1, SIGTERM);
+			break;
+		case SVC_ONCRASH_SCRIPT:
+			if (svc_has_post(svc)) {
+				dbg("calling post:script %s, crashing.", svc->post_script);
+				service_post_script(svc);
+			}
+			break;
+		default:
+			break;
 		}
 		service_step(svc);
 		return;

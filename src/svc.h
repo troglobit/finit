@@ -78,7 +78,8 @@ typedef enum {
 
 typedef enum {
 	SVC_ONCRASH_IGNORE = 0,
-	SVC_ONCRASH_REBOOT = 1,
+	SVC_ONCRASH_REBOOT,
+	SVC_ONCRASH_SCRIPT,
 } svc_oncrash_action_t;
 
 #define MAX_ID_LEN       16
@@ -260,6 +261,7 @@ static inline int  svc_is_updated  (svc_t *svc) { return svc &&  1 == svc->dirty
 static inline int  svc_is_blocked  (svc_t *svc) { return svc && svc->block != SVC_BLOCK_NONE; }
 static inline int  svc_is_busy     (svc_t *svc) { return svc && svc->block == SVC_BLOCK_BUSY; }
 static inline int  svc_is_missing  (svc_t *svc) { return svc && svc->block == SVC_BLOCK_MISSING; }
+static inline int  svc_is_crashing (svc_t *svc) { return svc && svc->block == SVC_BLOCK_CRASHING; }
 
 static inline void svc_unblock     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_NONE;       }
 #define            svc_start(svc)  svc_unblock(svc)

@@ -549,7 +549,8 @@ configurable with the following options:
     was originally designed for so not the default behavior
   * `oncrash:reboot` -- when all retries have failed, and the service
     has *crashed*, if this option is set the system is rebooted.
-    Note, future releases may include other `oncrash:` actions
+  * `oncrash:script` -- similarly, but instead of rebooting, call the
+    `post:script` action if set, see below.
 
 When stopping a service (run/task/sysv/service), either manually or
 when moving to another runlevel, Finit starts by sending `SIGTERM`, to

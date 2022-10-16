@@ -366,10 +366,21 @@ was originally designed for so not the default behavior.
 when all retries have failed, and the service
 has
 .Em crashed ,
-if this option is set the system is rebooted.  Note, future releases
-may include other
-.Cm oncrash:
-actions.
+if this option is set the system is rebooted.
+.It Cm oncrash:script
+Similar to
+.Cm oncrash:reboot ,
+but instead of rebooting this action calls the
+.Cm post:script
+(see below) to let the operator decide the best course of action.  If
+the post:script option is not set, this is a no-op.
+.Pp
+The post:script is called with the same environment variables
+.Sy except
+for the
+.Cm EXIT_CODE
+variable which is set to
+.Cm "crashed" .
 .El
 .Pp
 When stopping a service (run/task/sysv/service), either manually or when
@@ -412,11 +423,13 @@ or any unique identifier specified in the .conf file.  The
 .Cm post:script
 is called with an additional set of environment variables:
 .Bl -tag -offset indent -width 1n
-.It Cm EXIT_CODE=[exited,signal]
+.It Cm EXIT_CODE=[exited,signal,crashed]
 set to one of
-.Cm exited
+.Cm exited ,
+.Cm signal ,
 or
-.Cm signal
+.Cm crashed
+(see above).
 .It Cm EXIT_STATUS=[num,SIGNAME]
 set to one of exit status code from the program, if it exited normally,
 or the signal name (HUP, TERM, etc.) if it exited due to signal
