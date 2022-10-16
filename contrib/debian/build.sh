@@ -59,6 +59,3 @@ else
     echo "*** Use 'sudo contrib/debian/install.sh' later to install Finit"
     echo
 fi
-
-
-    

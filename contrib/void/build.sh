@@ -18,7 +18,7 @@ PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig ./configure	\
 		 --sysconfdir=/etc              --localstatedir=/var		\
                  --enable-dbus-plugin           --enable-x11-common-plugin	\
 		 --enable-alsa-utils-plugin	--with-watchdog			\
-		 --with-keventd
+		 --with-keventd			--with-sulogin
 
 echo
 echo "*** Building ..."
@@ -35,4 +35,3 @@ fi
 echo
 echo "*** Done"
 echo
-

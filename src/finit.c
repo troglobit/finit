@@ -114,8 +114,8 @@ static int sulogin(int do_reboot)
 {
 	int rc = EX_OSFILE;
 	char *cmd[] = {
-		_PATH_SULOGIN,
 		"sulogin",
+		_PATH_SULOGIN,
 	};
 	size_t i;
 
