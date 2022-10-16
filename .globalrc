@@ -1,0 +1,7 @@
+# GNU Global .conf file, see /etc/gtags/gtags.conf for details.
+default:\
+	:tc=default@/etc/gtags/gtags.conf:\
+	:tc=common:
+
+common:\
+	:skip=tags,TAGS,ID,y.tab.c,y.tab.h,gtags.files,cscope.files,cscope.out,cscope.po.out,cscope.in.out,,{arch}/,autom4te.cache/,*.orig,*.rej,*.bak,*~,#*#,*.swp,*.tmp,*_flymake.*,*_flymake,*.o,*.a,*.so,*.lo,*.zip,*.gz,*.bz2,*.xz,*.lzh,*.Z,*.tgz,*.min.js,*min.css,tenv-root/:
