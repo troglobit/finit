@@ -63,7 +63,6 @@ static int pidfile_add_path(struct iwatch *iw, char *path)
 
 static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 {
-	char ready[MAX_COND_LEN];
 	char cond[MAX_COND_LEN];
 	char fn[PATH_MAX];
 	svc_t *svc;
@@ -81,7 +80,6 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	}
 
 	dbg("Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
-	snprintf(ready, sizeof(ready), "service/%s/ready", svc_ident(svc, NULL, 0));
 	mkcond(svc, cond, sizeof(cond));
 
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
@@ -117,11 +115,11 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 
 		cond_set(cond);
 		if (!svc->notify)
-			cond_set(ready);
+			service_ready(svc);
 	} else if (mask & IN_DELETE) {
 		cond_clear(cond);
 		if (!svc->notify)
-			cond_set(ready);
+			service_ready(svc);
 	}
 }
 

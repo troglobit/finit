@@ -1,12 +1,12 @@
 SUBDIRS                  = common tenv
 
-EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/bin/slay \
-			   skel/etc/env skel/bin/pre.sh skel/bin/post.sh skel/sbin/task.sh   \
+EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/etc/env  \
+			   skel/bin/pre.sh skel/bin/post.sh skel/bin/ready.sh skel/bin/slay  \
 			   skel/cdrom/.empty skel/dev/shm/.empty skel/dev/pts/.empty	     \
 			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		     \
 			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	     \
-			   skel/etc/finit.d/.empty skel/etc/init.d/S01-service.sh 	     \
-			   skel/etc/init.d/S02-serv.sh					     \
+			   skel/etc/finit.d/.empty skel/sbin/task.sh 	                     \
+			   skel/etc/init.d/S01-service.sh skel/etc/init.d/S02-serv.sh	     \
 			   skel/proc/.empty skel/root/.empty skel/run/.empty		     \
 			   skel/sbin/chrootsetup.sh skel/srv/.empty skel/sys/.empty	     \
 			   skel/usr/bin/.empty skel/usr/lib/.empty skel/usr/sbin/.empty	     \
@@ -26,6 +26,7 @@ EXTRA_DIST		+= global-envs.sh
 EXTRA_DIST		+= initctl-status-subset.sh
 EXTRA_DIST		+= notify.sh
 EXTRA_DIST		+= pre-post-serv.sh
+EXTRA_DIST		+= ready-serv.sh
 EXTRA_DIST		+= restart-self.sh
 EXTRA_DIST		+= runlevel.sh
 EXTRA_DIST		+= start-stop-service.sh
@@ -56,6 +57,7 @@ TESTS			+= global-envs.sh
 TESTS			+= initctl-status-subset.sh
 TESTS			+= notify.sh
 TESTS			+= pre-post-serv.sh
+TESTS			+= ready-serv.sh
 TESTS			+= restart-self.sh
 TESTS			+= runlevel.sh
 TESTS			+= start-stop-service.sh

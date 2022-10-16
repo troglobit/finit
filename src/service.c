@@ -1797,7 +1797,7 @@ static void service_pre_script(svc_t *svc)
 {
 	svc->pid = service_fork(svc);
 	if (svc->pid < 0) {
-		err(1, "Failed forking off %s pre-script %s", svc_ident(svc, NULL, 0), svc->pre_script);
+		err(1, "Failed forking off %s pre:script %s", svc_ident(svc, NULL, 0), svc->pre_script);
 		return;
 	}
 
@@ -1822,6 +1822,8 @@ static void service_pre_script(svc_t *svc)
 		_exit(EX_OSERR);
 	}
 
+	dbg("%s: pre:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->pre_script, svc->pid);
+
 	/* Short hard-coded timeout to prevent locking up Finit */
 	service_timeout_after(svc, svc->killdelay, service_kill_script);
 }
@@ -1830,7 +1832,7 @@ static void service_post_script(svc_t *svc)
 {
 	svc->pid = service_fork(svc);
 	if (svc->pid < 0) {
-		err(1, "Failed forking off %s post-script %s", svc_ident(svc, NULL, 0), svc->post_script);
+		err(1, "Failed forking off %s post:script %s", svc_ident(svc, NULL, 0), svc->post_script);
 		return;
 	}
 
@@ -1870,6 +1872,8 @@ static void service_post_script(svc_t *svc)
 		_exit(EX_OSERR);
 	}
 
+	dbg("%s: post:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->post_script, svc->pid);
+
 	/* Short hard-coded timeout to prevent locking up Finit */
 	service_timeout_after(svc, svc->killdelay, service_kill_script);
 }
@@ -1908,6 +1912,9 @@ void service_ready_script(svc_t *svc)
 		_exit(EX_OSERR);
 	}
 
+	dbg("%s: ready:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->ready_script, pid);
+
+	/* Short hard-coded timeout to prevent locking up Finit */
 	service_script_add(svc, pid);
 }
 
@@ -2029,6 +2036,18 @@ void service_forked(svc_t *svc)
 	/* Not crashing, restore RUNNING state */
 	svc_unblock(svc);
 	svc_set_state(svc, SVC_RUNNING_STATE);
+}
+
+/* Set service/foo/ready condition and call optional ready:script */
+void service_ready(svc_t *svc)
+{
+	char buf[MAX_COND_LEN];
+
+	snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
+	cond_set(buf);
+
+	if (svc_has_ready(svc))
+		service_ready_script(svc);
 }
 
 /*
@@ -2213,11 +2232,8 @@ restart:
 
 				svc_mark_clean(svc);
 			}
-			if (svc->notify == 2 && svc->notify_watcher.fd == 0) {
-				char buf[120];
-				snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
-				cond_set(buf);
-			}
+			if (svc->notify == 2 && svc->notify_watcher.fd == 0)
+				service_ready(svc);
 			break;
 		}
 		break;
@@ -2355,7 +2371,7 @@ int service_completed(void)
 void service_notify_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = (svc_t *)arg;
-	char buf[120];
+	char buf[32];
 	ssize_t len;
 
 	if (UEV_ERROR == events) {
@@ -2374,8 +2390,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 
 	/* systemd and s6, respectively.  The latter then closes the socket */
 	if (!strcmp(buf, "READY=1\n") || !strcmp(buf, "\n")) {
-		snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
-		cond_set(buf);
+		service_ready(svc);
 		/* s6 applications close their socket after notification */
 		if (svc->notify == 2) {
 			uev_io_stop(w);

@@ -297,16 +297,9 @@ int cond_set_noupdate(const char *name)
 
 void cond_set(const char *name)
 {
-	svc_t *svc;
-
 	dbg("%s", name);
 	if (cond_set_noupdate(name))
 		return;
-
-	/* XXX: refactor when new notify framework is in place */
-	svc = svc_find_by_cond(name);
-	if (svc && svc_has_ready(svc))
-		service_ready_script(svc);
 
 	cond_update(name);
 }
