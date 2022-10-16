@@ -24,6 +24,7 @@ EXTRA_DIST		+= cond-start-task.sh
 EXTRA_DIST		+= failing-sysv.sh
 EXTRA_DIST		+= global-envs.sh
 EXTRA_DIST		+= initctl-status-subset.sh
+EXTRA_DIST		+= notify.sh
 EXTRA_DIST		+= pre-post-serv.sh
 EXTRA_DIST		+= restart-self.sh
 EXTRA_DIST		+= runlevel.sh
