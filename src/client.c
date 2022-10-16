@@ -48,7 +48,7 @@ int client_connect(void)
 		if (errno != ENOENT)
 			warnx("Failed connecting to finit");
 		close(sd);
-		return -1;
+		sd = -1;
 	}
 
 	return sd;
