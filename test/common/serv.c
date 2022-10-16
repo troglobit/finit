@@ -14,6 +14,10 @@
 #include <unistd.h>
 
 #define PROGNM "serv"
+#define log warnx
+
+volatile sig_atomic_t reloading = 1;
+volatile sig_atomic_t running   = 1;
 
 static void verify_env(char *arg)
 {
@@ -71,8 +75,17 @@ static void inc_restarts(void)
 
 static void sig(int signo)
 {
-	warnx("We got signal %d ...", signo);
-	exit(0);
+	log("Got signal %d ...", signo);
+
+	switch (signo) {
+	case SIGHUP:
+		reloading = 1;
+		break;
+
+	case SIGTERM:
+		running = 0;
+		break;
+	}
 }
 
 static void pidfile(char *pidfn)
@@ -86,7 +99,7 @@ static void pidfile(char *pidfn)
 		pidfn = fn;
 	}
 	pid = getpid();
-	warnx("Creating PID file %s with %d", pidfn, pid);
+	log("Creating PID file %s with %d", pidfn, pid);
 
 	fp = fopen(pidfn, "w");
 	if (!fp)
@@ -106,6 +119,7 @@ static int usage(int rc)
 		" -e K:V   Verify K environment variable is V value\n"
 		" -E K     Verify K is not set in the environment\n"
 		" -n       Run in foreground\n"
+		" -N SOCK  Send 'READY=1\\n' on $NOTIFY_SOCKET or SOCK\n"
 		" -p       Create PID file despite running in foreground\n"
 		" -P FILE  Create PID file using FILE\n"
 		" -r SVC   Call initctl to restart service SVC (self)\n"
@@ -119,16 +133,20 @@ static int usage(int rc)
 	return rc;
 }
 
+#include <sys/socket.h>
+
 int main(int argc, char *argv[])
 {
 	int do_background = 1;
+	int notify_s6 = 0;
 	int do_pidfile = 1;
 	int do_restart = 0;
+	int do_notify = 0;
 	char *pidfn = NULL;
 	char cmd[80];
 	int c;
 
-	while ((c = getopt(argc, argv, "e:E:hnpP:r:")) != EOF) {
+	while ((c = getopt(argc, argv, "e:E:hnN:pP:r:")) != EOF) {
 		switch (c) {
 		case 'h':
 			return usage(0);
@@ -141,6 +159,10 @@ int main(int argc, char *argv[])
 		case 'n':
 			do_background = 0;
 			do_pidfile--;
+			break;
+		case 'N':
+			do_notify = atoi(optarg);
+			notify_s6 = 1;
 			break;
 		case 'p':
 			do_pidfile++;
@@ -165,13 +187,36 @@ int main(int argc, char *argv[])
 
 	/* Signal handlers first *then* PID file */
 	signal(SIGTERM, sig);
+	signal(SIGHUP, sig);
 
 	/* Tell world where we are, but not if bg w/o pid file */
 	if (do_pidfile == 1)
 		pidfile(pidfn);
 
-	warnx("Entering while(1) loop");
-	while (1) {
+	if (!do_notify) {
+		const char *sock = getenv("NOTIFY_SOCKET");
+
+		/* systemd style */
+		if (sock)
+			do_notify = atoi(sock);
+	}
+
+	log("Entering while(1) loop");
+	while (running) {
+		if (reloading) {
+			if (do_notify > 0) {
+				log("Notifying Finit on socket %d, READY=1", do_notify);
+				if (write(do_notify, "READY=1\n", 8) == -1)
+					err(1, "Failed sending ready notification to Finit");
+				if (notify_s6) {
+					log("s6 notify, closing socket %d ...", do_notify);
+					close(do_notify);
+					do_notify = 0;
+				}
+			}
+			reloading = 0;
+		}
+
 		sleep(1);
 		if (do_restart) {
 			inc_restarts();
@@ -181,6 +226,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	warnx("Leaving ...");
+	log("Leaving ...");
 	return 0;
 }

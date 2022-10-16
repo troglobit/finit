@@ -52,6 +52,25 @@ assert_desc()
 	assert "Service description == $1" "$(texec initctl status "$2" | grep 'Description' | sed 's/Description : //')" = "$1"
 }
 
+assert_status()
+{
+	service=$1
+	status=$2
+	assert "Service $service $status" "$(texec initctl -p status "$service" | awk '/Status/{print $3}')" = "$status"
+}
+
+assert_cond()
+{
+	cond=$1
+	assert "Condition $cond asserted" "$(texec initctl -v cond get "$cond")" = "on"
+}
+
+assert_nocond()
+{
+	cond=$1
+	assert "Condition $cond cleared" "$(texec initctl -v cond get "$cond")" = "off"
+}
+
 # shellcheck disable=SC2086
 assert_pidfile()
 {
@@ -98,6 +117,7 @@ assert()
 	fi
 
 	log "$fg_green" ✔ "$__assert_msg"
+	return 0
 }
 
 retry()

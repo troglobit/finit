@@ -53,6 +53,7 @@ TESTS			+= cond-start-task.sh
 TESTS			+= failing-sysv.sh
 TESTS			+= global-envs.sh
 TESTS			+= initctl-status-subset.sh
+TESTS			+= notify.sh
 TESTS			+= pre-post-serv.sh
 TESTS			+= restart-self.sh
 TESTS			+= runlevel.sh
