@@ -45,6 +45,11 @@ Sourcing environment files
 .It
 Conditions for network/process/custom dependencies
 .It
+Process readiness notification for synchronizing system startup as well
+as reconfiguration at runtime.  Natively PID files are used, but systemd
+.Cm sd_notify()
+and s6 notification is also supported.
+.It
 Pre/Post script actions
 .It
 Tooling to enable/disable services
@@ -192,7 +197,7 @@ file removed, service B is also stopped.
 .Pp
 The following condition families are available today:
 .Pp
-.Bl -tag -width pid -offset indent
+.Bl -tag -width service -offset indent
 .It Cm net
 Linux netlink events, e.g. net/route/default, net/eth0/up, and
 net/et0/running
@@ -200,6 +205,14 @@ net/et0/running
 PID files basd on the service declaration
 .Cm name:id ,
 gives the condition pid/name:id
+.It Cm service
+Tracks run/task/service state stansitions, including readiness.  E.g.,
+.Cm service/foo/ready
+can be used as a condition for service
+.Cm bar ,
+provided
+.Cm foo
+properly signals its readiness to Finit.
 .It Cm sys
 System conditions, e.g. sys/key/ctrlaltdel and sys/pwr/fail
 .It Cm usr

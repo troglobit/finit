@@ -37,6 +37,8 @@ Features include:
   * Process supervision similar to [systemd][]
   * Sourcing environment files
   * Conditions for network/process/custom dependencies
+  * Readiness notification; PID files (native) for synchronizing system
+    startup, support for systemd [sd_notify()][], or [s6 style][] too
   * Pre/Post script actions
   * Tooling to enable/disable services
   * Built-in getty
@@ -620,6 +622,8 @@ and proposed extensions.
 [upstart]:          https://upstart.ubuntu.com/
 [systemd]:          https://www.freedesktop.org/wiki/Software/systemd/
 [openrc]:           https://www.gentoo.org/proj/en/base/openrc/
+[sd_notify()]:      https://www.freedesktop.org/software/systemd/man/sd_notify.html
+[s6 style]:         https://skarnet.org/software/s6/notifywhenup.html
 [run-parts(8)]:     https://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process

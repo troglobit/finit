@@ -275,6 +275,50 @@ can depend on the
 .Cm <pid/bar>
 condition.
 .Pp
+As an alternative "readiness" notification, Finit supports both systemd
+and s6 style notification.  This can be enabled by using the `notify`
+option:
+.Bl -tag -width 1n
+.It Cm notify:systemd
+tells Finit the service uses the
+.Cm sd_notify()
+API to signal PID 1 when it has completed its startup and is ready
+to service events.  This API expects
+the environment variable
+.Cm NOTIFY_SOCKET
+to be set to the socket where the application can send
+.Cm "READY=1\n"
+when it is starting up or has processed a
+.Cm SIGHUP .
+For details, see:
+.Pp
+.Lk https://www.freedesktop.org/software/systemd/man/sd_notify.html
+.It Cm notify:s6
+puts Finit in s6 compatibility mode.  Compared to the systemd
+notification, s6 expect compliant daemons to send
+.Cm "\\n"
+and then close their socket.  For details, see:
+.Pp
+.Lk https://skarnet.org/software/s6/notifywhenup.html
+.Pp
+Finit takes care of "hard-wiring" the READY state as long as the
+application is running, events across any `SIGHUP`.  Since s6 can give
+its applications the descriptor number (must be >3) on then command
+line, Finit provides the following syntax (
+.Cm %n
+is replaced by Finit with then descriptor number):
+.Bd -unfilled -offset indent
+service notify:s6 mdevd -C -O 4 -D %n
+.Ed
+.Pp
+When a service is ready, either by Finit detecting its PID file, or
+their respective readiness mechanism has been triggered, Finit creates
+then service's ready condition which other services can depend on:
+
+    $ initctl -v cond get service/mdevd/ready
+    on
+.El
+.Pp
 If a service should not be automatically started, it can be configured
 as manual with the
 .Cm manual:yes

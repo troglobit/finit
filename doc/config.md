@@ -505,8 +505,8 @@ option:
 
         service notify:s6 mdevd -C -O 4 -D %n
 
-[sd_notify)]: https://www.freedesktop.org/software/systemd/man/sd_notify.html
-[s6 expect]:  https://skarnet.org/software/s6/notifywhenup.html
+[sd_notify()]: https://www.freedesktop.org/software/systemd/man/sd_notify.html
+[s6 expect]:   https://skarnet.org/software/s6/notifywhenup.html
 
 When a service is ready, either by Finit detecting its PID file, or
 their respective readiness mechanism has been triggered, Finit creates
