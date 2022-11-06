@@ -28,10 +28,16 @@ if [ -f oldpid ]; then
 	fi
 fi
 
-if [ "$pid" -le 1 ]; then
-	sleep 3
+timeout=50
+while [ "$pid" -le 1 ]; do
+	sleep 0.1
 	pid=$(getpid "$nm")
 	if [ "$pid" -le 1 ]; then
+		timeout=$((timeout - 1))
+		if [ "$timeout" -gt 0 ]; then
+			continue
+		fi
+
 		echo "Got a bad PID: $pid, aborting ..."
 		ps
 		sleep 1
@@ -39,7 +45,8 @@ if [ "$pid" -le 1 ]; then
 		ps
 		exit 1
 	fi
-fi
+	break
+done
 
 echo "$pid" > oldpid
 
