@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 #else
@@ -99,6 +100,21 @@ void log_debug(void)
 	logit(LOG_NOTICE, "Debug mode %s", debug ? "enabled" : "disabled");
 }
 
+static const char *l2s(int prio)
+{
+	int level = prio & ~LOG_CONSOLE;
+
+        switch (level) {
+        case LOG_ERR:     return "ERR";
+        case LOG_WARNING: return "WRN";
+        case LOG_NOTICE:  return "NOT";
+        case LOG_INFO:    return "NFO";
+        case LOG_DEBUG:   return "DBG";
+        default:          break;
+        }
+        return "UNK";
+}
+
 /*
  * Log to /dev/kmsg until syslogd has started, then openlog()
  * and continue logging as a regular daemon.
@@ -119,8 +135,16 @@ void logit(int prio, const char *fmt, ...)
 		goto done;
 
 	if (in_container() || !(fp = fopen("/dev/kmsg", "w"))) {
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
+		static char buf[512];
+		time_t now;
+		size_t pos;
+
+		now = time(NULL);
+		pos = (int)strftime(buf, sizeof(buf), "%FT%T", localtime(&now));
+		pos += snprintf(&buf[pos], sizeof(buf) - pos, " [%s]: ", l2s(prio));
+		vsnprintf(&buf[pos], sizeof(buf) - pos, fmt, ap);
+		strlcat(buf, "\n", sizeof(buf));
+		fputs(buf, stderr);
 		goto done;
 	}
 
