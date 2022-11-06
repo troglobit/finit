@@ -139,6 +139,7 @@ static void service_script_kill(svc_t *svc)
 		if (ptr->svc != svc || ptr->pid <= 1)
 			continue;
 
+		dbg("Killing service %s script PID %d.", svc_ident(svc, NULL, 0), ptr->pid);
 		kill(-ptr->pid, SIGKILL);
 		TAILQ_REMOVE(&svc_assoc_list, ptr, link);
 		free(ptr);
@@ -171,6 +172,7 @@ static int service_script_del(pid_t pid)
 		if (ptr->pid != pid)
 			continue;
 
+		dbg("Collected service %s script PID %d.", svc_ident(ptr->svc, NULL, 0), pid);
 		service_timeout_cancel(ptr->svc);
 		kill(-ptr->pid, SIGKILL);
 		TAILQ_REMOVE(&svc_assoc_list, ptr, link);
@@ -726,7 +728,7 @@ static int service_start(svc_t *svc)
 
 		_exit(status);
 	} else if (debug) {
-		dbg("Starting %s", cmdline);
+		dbg("Starting PID %d: %s", svc->pid, cmdline);
 	}
 
 	if (svc_is_tty(svc))
