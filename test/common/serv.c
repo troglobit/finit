@@ -207,8 +207,10 @@ int main(int argc, char *argv[])
 			do_notify = atoi(sock);
 	}
 
-	if (do_crash)
+	if (do_crash) {
+		log("Simulating crash, exiting with code %d", EX_SOFTWARE);
 		exit(EX_SOFTWARE);
+	}
 
 	log("Entering while(1) loop");
 	while (running) {
