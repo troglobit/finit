@@ -1621,6 +1621,13 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		if (svc->pidfile[0] == '!')
 			svc->forking = 1;
+
+		if (svc->restart_tmo == 0) {
+			if (svc_is_forking(svc))
+				svc->restart_tmo = 2000;
+			else
+				svc->restart_tmo = 1;
+		}
 	}
 
 	/* Set configured limits */
@@ -1940,6 +1947,7 @@ static void service_retry(svc_t *svc)
 
 	if (svc->state != SVC_HALTED_STATE ||
 	    svc->block != SVC_BLOCK_RESTARTING) {
+		svc->restart_tmo = svc->restart_saved;
 		svc_set_state(svc, SVC_RUNNING_STATE);
 		logit(LOG_CONSOLE | LOG_NOTICE, "Successfully restarted crashing service %s.",
 		      svc_ident(svc, NULL, 0));
@@ -1952,6 +1960,7 @@ static void service_retry(svc_t *svc)
 		      svc_ident(svc, NULL, 0));
 		svc_crashing(svc);
 		*restart_cnt = 0;
+		svc->restart_tmo = svc->restart_saved;
 		switch (svc->oncrash_action) {
 		case SVC_ONCRASH_REBOOT:
 			logit(LOG_ERR, "%s issuing reboot", svc_ident(svc, NULL, 0));
@@ -1974,16 +1983,19 @@ static void service_retry(svc_t *svc)
 	(*restart_cnt)++;
 
 	dbg("%s crashed, trying to start it again, attempt %d", svc_ident(svc, NULL, 0), *restart_cnt);
-	logit(LOG_CONSOLE | LOG_WARNING, "Service %s[%d] died, restarting (%d/%d)",
-	      svc_ident(svc, NULL, 0), svc->oldpid, *restart_cnt, svc->restart_max);
-	svc_unblock(svc);
-	service_step(svc);
-
+	if ((*restart_cnt) == 1)
+		svc->restart_saved = svc->restart_tmo;
 	/* Wait 2s for the first 5 respawns, then back off to 5s */
 	timeout = ((*restart_cnt) <= (svc->restart_max / 2)) ? 2000 : 5000;
 	/* If a longer timeout was specified in the conf, use that instead. */
-	timeout = max(svc->restart_tmo, timeout);
-	service_timeout_after(svc, timeout, service_retry);
+	svc->restart_tmo = max(svc->restart_tmo, timeout);
+	logit(LOG_CONSOLE|LOG_WARNING, "Service %s[%d] died, restarting in %d msec (%d/%d)",
+	      svc_ident(svc, NULL, 0), svc->oldpid, svc->restart_tmo, *restart_cnt, svc->restart_max);
+
+	svc_unblock(svc);
+	service_step(svc);
+
+	service_timeout_after(svc, svc->restart_tmo, service_retry);
 }
 
 static void svc_set_state(svc_t *svc, svc_state_t new)
@@ -2200,7 +2212,7 @@ restart:
 
 		if (!svc->pid) {
 			if (svc_is_daemon(svc) || svc_is_sysv(svc) || svc_is_tty(svc)) {
-				svc_restarting(svc);
+				svc_restarting(svc); /* BLOCK_RESTARTING */
 				svc_set_state(svc, SVC_HALTED_STATE);
 
 				/*
@@ -2210,11 +2222,8 @@ restart:
 				 */
 				if (!svc->respawn)
 					dbg("delayed restart of %s", svc_ident(svc, NULL, 0));
-				if (svc_is_forking(svc))
-					service_timeout_after(svc, 2000, service_retry);
-				else
-					service_timeout_after(svc, 1, service_retry);
-				break;
+				service_timeout_after(svc, svc->restart_tmo, service_retry);
+				goto done;
 			}
 
 			if (svc_is_runtask(svc)) { /* only run/task, not sysv here */
@@ -2304,6 +2313,7 @@ restart:
 		goto restart;
 	}
 
+done:
 	/*
 	 * When a run/task/service changes state, e.g. transitioning from
 	 * waiting to running, other services may need to change state too.
