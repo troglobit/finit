@@ -35,10 +35,19 @@ For your convenience a set of *optional* plugins are available:
   _Optional plugin._
 
 * *hook-scripts.so*: Trigger the execution of scripts from plugin hook
-  points (see [Hooks](#hooks)).  Scripts are located in
-  `/libexec/finit/hook` by default, this can be build-time customized
-  by using the `--with-hook-scripts-path=PATH` argument to
-  `configure`.  _Optional plugin._
+  points (see [Hooks](#hooks)).  _Optional plugin._
+
+  This plugin is particularly useful for early boot debugging that needs
+  to take place before regular services are available.
+
+  For example, say that you want to enable some kernel tracing before
+  modules are loaded. With hook scripts, you can just drop in a shell
+  script in `/libexec/finit/hook/mount/all/` that will poke the right
+  control files in tracefs.
+
+  Scripts are located in `/libexec/finit/hook` by default, this can be
+  customized at build-time using the `--with-hook-scripts-path=PATH`
+  argument to `configure`.
 
 * *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
   available.  Enabled by default.
@@ -94,43 +103,52 @@ state, etc.  Available hook points are:
 Hooks
 -----
 
+In the below listings, the first label is the hook point for a C plugin,
+the second is the condition name and hook script path.
+
 ### Bootstrap Hooks
 
-* `HOOK_BANNER`: The very first point at which a plugin can run.
-  Intended to be used as a banner replacement.  Essentially this runs
-  just before entering runlevel S.  Assume nothing is available, so
-  be prepared to use absolute paths, etc.
+* `HOOK_BANNER`, `hook/sys/banner`: The very first point at which a
+  plugin can run.  Intended to be used as a banner replacement.
+  Essentially this runs just before entering runlevel S.  Assume nothing
+  is available, so be prepared to use absolute paths, etc.
 
-* `HOOK_ROOTFS_UP`: When `finit.conf` has been read and `/` has is
-  mounted — very early
+* `HOOK_ROOTFS_UP`, `hook/mount/root`: When `finit.conf` has been read
+  and `/` has is mounted — very early
 
-* `HOOK_BASEFS_UP`: All of `/etc/fstab` is mounted, swap is available
-  and default init signals are setup
+* `HOOK_MOUNT_ERROR`, `hook/mount/error`: executed if `mount -a` fails
 
-* `HOOK_NETWORK_UP`: System bootstrap, runlevel S, has completed and
-  networking is up (`lo` is up and the `network` script has run)
+* `HOOK_MOUNT_POST`, `hook/mount/post`: always executed after `mount -a`
 
-* `HOOK_SVC_UP`: All services in the active runlevel has been launched
+* `HOOK_BASEFS_UP`, `hook/mount/all`: All of `/etc/fstab` is mounted,
+  swap is available and default init signals are setup
 
-* `HOOK_SYSTEM_UP`: All services *and* everything in `/etc/finit.d`
-  has been launched
+* `HOOK_NETWORK_UP`, `hook/net/up`: System bootstrap, runlevel S, has
+  completed and networking is up (`lo` is up and the `network` script
+  has run)
+
+* `HOOK_SVC_UP`, `hook/svc/up`: All services in the active runlevel have
+  been launched
+
+* `HOOK_SYSTEM_UP`, `hook/sys/up`: All services *and* everything in
+  `/etc/finit.d` has been launched
 
 ### Runtime Hooks
 
-* `HOOK_SVC_RECONF`: Called when the user has changed something in the
-  `/etc/finit.d` directory and issued `SIGHUP`.  The hook is called when
-  all modified/removed services have been stopped.  When the hook has
-  completed, Finit continues to start all modified and new services.
+* `HOOK_SVC_RECONF`, N/A: Called when the user has changed something in
+  the `/etc/finit.d` directory and issued `SIGHUP`.  The hook is called
+  when all modified/removed services have been stopped.  When the hook
+  has completed, Finit continues to start all modified and new services.
 
-* `HOOK_RUNLEVEL_CHANGE`: Called when the user has issued a runlevel
-  change.  The hook is called when services not matching the new
-  runlevel have been been stopped.  When the hook has completed, Finit
-  continues to start all services in the new runlevel.
+* `HOOK_RUNLEVEL_CHANGE`, N/A: Called when the user has issued a
+  runlevel change.  The hook is called when services not matching the
+  new runlevel have been been stopped.  When the hook has completed,
+  Finit continues to start all services in the new runlevel.
 
 ### Shutdown Hooks
 
-* `HOOK_SHUTDOWN`: Called at shutdown/reboot, right before all
-  services are sent `SIGTERM`
+* `HOOK_SHUTDOWN`, `hook/sys/shutdown`: Called at shutdown/reboot, right
+  before all services are sent `SIGTERM`
 
 Plugins like `tty.so` extend finit by acting on events, they are called
 I/O plugins and are called from the finit main loop when `poll()`
