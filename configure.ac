@@ -252,7 +252,7 @@ AS_IF([test "x$with_watchdog" != "xno"], [
         AC_DEFINE_UNQUOTED(WDT_DEVNODE, "$watchdog", [Built-in watchdog device node])], [
 	watchdog=])
 
-AS_IF([test "x$enable_hook_scripts_plugin" = "xyes" -a "x$with_hook_scripts_path" != "xno"], [
+AS_IF([test "x$enable_hook_scripts_plugin" != "xno"], [
 	AS_IF([test "x$hook_scripts_path" = "xyes"], [hook_scripts_path=$libexecdir/finit/hook])
 	AC_EXPAND_DIR(hook_scripts_path, "$hook_scripts_path")
 	AC_DEFINE_UNQUOTED(PLUGIN_HOOK_SCRIPTS_PATH, "$hook_scripts_path", [Built-in default: $libexecdir/finit])])

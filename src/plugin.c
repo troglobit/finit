@@ -195,7 +195,7 @@ int plugin_exists(hook_point_t no)
 	return 0;
 }
 
-#ifdef HAVE_HOOK_SCRIPTS_PLUGIN
+#if defined(HAVE_HOOK_SCRIPTS_PLUGIN) && defined(PLUGIN_HOOK_SCRIPTS_PATH)
 #define CHOOSE(x, y) y
 static const char *hscript_paths[] = HOOK_TYPES;
 #undef CHOOSE
