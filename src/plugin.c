@@ -195,10 +195,39 @@ int plugin_exists(hook_point_t no)
 	return 0;
 }
 
+#ifdef HAVE_HOOK_SCRIPTS_PLUGIN
+#define CHOOSE(x, y) y
+static const char *hscript_paths[] = HOOK_TYPES;
+#undef CHOOSE
+
+void plugin_script_run(hook_point_t no)
+{
+	char path[CMD_SIZE] = "";
+
+	strlcat(path, PLUGIN_HOOK_SCRIPTS_PATH, sizeof(path));
+	strlcat(path, hscript_paths[no] + 4, sizeof(path));
+
+	run_parts(path, NULL);
+}
+#else
+void plugin_script_run(hook_point_t no)
+{
+	(void)no;
+}
+#endif
+
 /* Some hooks are called with a fixed argument */
 void plugin_run_hook(hook_point_t no, void *arg)
 {
 	plugin_t *p, *tmp;
+
+	if (!cond_is_available()) {
+#ifdef HAVE_HOOK_SCRIPTS_PLUGIN
+		warnx("conditions not available, calling script script based hooks only!");
+		plugin_script_run(no);
+#endif
+		return;
+	}
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {

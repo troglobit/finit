@@ -82,6 +82,8 @@
 								\
 	/* Shutdown hooks, runlevel [06] */			\
 	CHOOSE(HOOK_SHUTDOWN,        "hook/sys/shutdown"),	\
+	CHOOSE(HOOK_SVC_DN,          "hook/svc/down"),		\
+	CHOOSE(HOOK_SYS_DN,          "hook/sys/down"),		\
 	CHOOSE(HOOK_MAX_NUM,         "nop")			\
 }
 

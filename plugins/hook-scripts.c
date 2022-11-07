@@ -26,18 +26,11 @@
 #include "plugin.h"
 #include "config.h"
 
-#define CHOOSE(x, y) y
-static const char *hscript_paths[] = HOOK_TYPES;
-#undef CHOOSE
+extern void plugin_script_run(hook_point_t no);
 
-static void hscript_run_parts(hook_point_t hook)
+static void hscript_run_parts(hook_point_t no)
 {
-	char path[CMD_SIZE] = "";
-
-	strlcat(path, PLUGIN_HOOK_SCRIPTS_PATH, sizeof(path));
-	strlcat(path, hscript_paths[hook] + 4, sizeof(path));
-
-	run_parts(path, NULL);
+	plugin_script_run(no);
 }
 
 static void hscript_banner(void *arg)
@@ -96,6 +89,14 @@ static plugin_t plugin = {
 	.hook[HOOK_SVC_UP]      = { .cb  = hscript_svc_up      },
 	.hook[HOOK_SYSTEM_UP]   = { .cb  = hscript_system_up   },
 	.hook[HOOK_SHUTDOWN]    = { .cb  = hscript_shutdown    },
+/*
+ * We have exited here, so these are handled a bit differently by Finit,
+ * when hook scripts are enabled, just to provide the user with the same
+ * interface:
+ *
+ *	.hook[HOOK_SVC_DN]      = { .cb  = hscript_svc_down    },
+ *	.hook[HOOK_SYS_DN]      = { .cb  = hscript_system_down },
+ */
 };
 
 PLUGIN_INIT(plugin_init)

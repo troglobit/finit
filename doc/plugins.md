@@ -104,7 +104,23 @@ Hooks
 -----
 
 In the below listings, the first label is the hook point for a C plugin,
-the second is the condition name and hook script path.
+the second is the condition name and hook script path.  A hook script is
+a plain shell script, or program, that does a very small dedicated job
+at the below hook points.
+
+**Example:**
+
+    $ mkdir -p /libexec/finit/hook/sys/down
+    $ cat <<EOF >/libexec/finit/hook/sys/foo.sh
+    #!/bin/sh
+    echo 'I run just before the reboot() syscall at shutdown/reboot'
+    echo 'I have access to /dev since devtmpfs is exempt from umount'
+    exit 0
+    EOF
+    $ chmod +x /libexec/finit/hook/sys/foo.sh
+
+> **Note:** to use hook scripts, even for pre-bootstrap and pre-shutdown
+> tasks, you must build with `configure --enable-hook-scripts-plugin`.
 
 ### Bootstrap Hooks
 
@@ -149,6 +165,15 @@ the second is the condition name and hook script path.
 
 * `HOOK_SHUTDOWN`, `hook/sys/shutdown`: Called at shutdown/reboot, right
   before all services are sent `SIGTERM`
+
+* `HOOK_SVC_DN`, `hook/svc/down`: In shutdown/reboot, all services and
+  non-reserved processes have been killed.  **Note:** only hook scripts
+  can run here!
+
+* `HOOK_SYSTEM_DN`, `hook/sys/down`: In shutdown/reboot, called after
+  all non-reserved file systems have been unmounted, just before Finit
+  tells the kernel to reboot or shut down.  **Note:** only hook scripts
+  can run here!
 
 Plugins like `tty.so` extend finit by acting on events, they are called
 I/O plugins and are called from the finit main loop when `poll()`

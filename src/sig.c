@@ -329,6 +329,9 @@ void do_shutdown(shutop_t op)
 	while (waitpid(-1, NULL, WNOHANG) > 0)
 		;
 
+	/* All services and (non-critical) processes have stopped. */
+	plugin_run_hooks(HOOK_SVC_DN);
+
 	if (in_cont) {
 		if (osheading)
 			logit(LOG_CONSOLE | LOG_NOTICE, "%s, shutting down container.", osheading);
@@ -373,6 +376,9 @@ void do_shutdown(shutop_t op)
 
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
+
+	/* Last chance to run scripts (all .so plugins have exited already) */
+	plugin_run_hooks(HOOK_SYS_DN);
 
 	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
