@@ -410,6 +410,15 @@ void cond_deassert(const char *pat)
 	nftw(cond_path(pat), deassert, 20, FTW_DEPTH);
 }
 
+/*
+ * Check if we have bootstrapped enough of the system to use conditions.
+ * Will answer 'No' before bootstrap done *and* at shutdown/reboot.
+ */
+int cond_is_available(void)
+{
+	return fisdir(_PATH_COND);
+}
+
 void cond_init(void)
 {
 	char path[MAX_ARG_LEN];
@@ -421,6 +430,11 @@ void cond_init(void)
 
 	cond_bump_reconf();
 	cond_boot_strap();
+}
+
+void cond_exit(void)
+{
+	cond_delpath(_PATH_COND);
 }
 
 /**

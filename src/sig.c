@@ -322,6 +322,9 @@ void do_shutdown(shutop_t op)
 	plugin_exit();
 	api_exit();
 
+	/* We can no longer act on conditions, activate script runner */
+	cond_exit();
+
 	/* Reap 'em */
 	while (waitpid(-1, NULL, WNOHANG) > 0)
 		;

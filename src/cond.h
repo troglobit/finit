@@ -46,7 +46,10 @@ int  cond_clear_noupdate(const char *name);
 void cond_reassert    (const char *pat);
 void cond_deassert    (const char *pat);
 
+int  cond_is_available(void);
+
 void cond_init        (void);
+void cond_exit        (void);
 
 #endif	/* FINIT_COND_H_ */
 
