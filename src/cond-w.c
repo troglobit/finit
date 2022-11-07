@@ -194,29 +194,22 @@ static int cond_checkpath(const char *path)
 	return 0;
 }
 
-/* Intended for 'service/foo/`, nothing else */
+static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftw)
+{
+	if (ftw->level == 0)
+		return 1;
+
+	if (remove(fpath))
+		err(1, "Failed removing condition %s", fpath);
+
+	return 0;
+}
+
 static void cond_delpath(const char *path)
 {
-	char fn[PATH_MAX];
-	struct dirent *d;
-	DIR *dir;
-
-	dir = opendir(path);
-	if (!dir)
-		return;
-
-	while ((d = readdir(dir))) {
-		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
-			continue;
-
-		paste(fn, sizeof(fn), path, d->d_name);
-		if (remove(fn))
-			err(1, "Failed removing condition path, file %s", fn);
-	}
-	closedir(dir);
-
-	if (unlink(path) && errno != EISDIR)
-		err(1, "Failed removing condition path %s", fn);
+	nftw(path, do_delete, 20, FTW_DEPTH);
+	if (remove(path))
+		err(1, "Failed removing condition path %s", path);
 }
 
 int cond_set_path(const char *path, enum cond_state next)
