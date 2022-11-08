@@ -738,15 +738,21 @@ static char *svc_environ(svc_t *svc, char *buf, size_t len)
 static char *exit_status(svc_t *svc, char *buf, size_t len)
 {
 	int rc, sig;
+	char *str;
 
 	rc = WEXITSTATUS(svc->status);
 	sig = WTERMSIG(svc->status);
 
-	if (WIFEXITED(svc->status))
-		snprintf(buf, len, " (code=exited, status=%d%s%s)", rc, code2str(rc),
+	if (WIFEXITED(svc->status)) {
+		str = code2str(rc);
+		snprintf(buf, len, " (code=exited, status=%d%s%s%s)", rc,
+			 str[0] ? "/" : "", str,
 			 svc->manual ? ", manual=yes" : "");
-	else if (WIFSIGNALED(svc->status))
-		snprintf(buf, len, " (code=signal, status=%d%s)", sig, sig2str(sig));
+	}
+	else if (WIFSIGNALED(svc->status)) {
+		str = sig2str(sig);
+		snprintf(buf, len, " (code=signal, status=%d%s%s)", sig, str[0] ? "/" : "", str);
+	}
 
 	return buf;
 }

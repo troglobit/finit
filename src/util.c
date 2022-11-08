@@ -304,13 +304,10 @@ int strtobytes(char *arg)
 
 char *sig2str(int signo)
 {
-	static char signame[8];
-
 	if (signo < 1 || signo >= (int)NELEMS(signames))
 		return "";
 
-	snprintf(signame, sizeof(signame), "/%s", signames[signo]);
-	return signame;
+	return signames[signo];
 }
 
 /**
@@ -337,13 +334,10 @@ int str2sig(char *sig)
 
 char *code2str(int code)
 {
-	static char codename[20];
-
 	if (code < 0 || code >= (int)NELEMS(exitcodes))
 		return "";
 
-	snprintf(codename, sizeof(codename), "/%s", exitcodes[code]);
-	return codename;
+	return exitcodes[code];
 }
 
 
