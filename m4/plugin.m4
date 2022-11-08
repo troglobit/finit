@@ -29,8 +29,8 @@ Optional Plugins:])
              enable_plugin="$enable_all_plugins"
     fi])
     if test "x$enable_plugin" = "xyes"; then
-       	    AC_DEFINE([HAVE_]PLUGGY[_PLUGIN], 1, [Define to 1 if the $1 plugin is enabled.])
-	    plugins="$1 $plugins"
+            AC_DEFINE([HAVE_]PLUGGY[_PLUGIN], 1, [Define to 1 if the $1 plugin is enabled.])
+            plugins="$1 $plugins"
     fi
     AM_CONDITIONAL([BUILD_]PLUGGY[_PLUGIN], test "x$enable_plugin" = "xyes")
     enable_pluggy="$enable_plugin"])
