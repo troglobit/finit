@@ -221,13 +221,12 @@ void plugin_run_hook(hook_point_t no, void *arg)
 {
 	plugin_t *p, *tmp;
 
-	if (!cond_is_available()) {
 #ifdef HAVE_HOOK_SCRIPTS_PLUGIN
-		warnx("conditions not available, calling script script based hooks only!");
+	if (!cond_is_available()) {
+		dbg("conditions not available, calling script script based hooks only!");
 		plugin_script_run(no);
-#endif
-		return;
 	}
+#endif
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
