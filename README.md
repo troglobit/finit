@@ -348,6 +348,33 @@ in [doc/plugins.md](doc/plugins.md#hooks), and about the system bootstrap
 in [doc/bootstrap.md](doc/bootstrap.md).
 
 
+### Limitations
+
+It is not possible to call Finit via signals or use `initctl` in any
+runparts or `/etc/rc.local` script.  This because Finit is single
+threaded and is calling these scripts in a blocking fashion at the end
+of runlevel S, at which point the event loop has not yet been started.
+
+The event loop is the whole thing which Finit is built around, except
+for runlevel S, which remains a slow procession through a lot of set up,
+with a few hooks and blocking call outs to external scripts.
+
+However, not all `initctl` commands are prohibited, supported commands:
+are:
+
+ - `inictl cond`: only operate of files in `/run/finit/cond`
+ - `initctl enable/disable`: enabled run/task/service is activated on
+   the runlevel change from S to 2
+ - `initctl touch/show/create/delete/list`: `create`, provided the
+   non-interactive mode is used, again changes take effect in the
+   runlevel change directly after bootstrap
+ - `initctl -f reboot/poweroff/halt`: provided the `-f` flag is used to
+   force direct kernel commands
+
+**Example:** you can set a `usr/` condition in `/etc/rc.local` and have
+a service/task in runlevel 2 depend on it to execute.
+
+
 Runlevels
 ---------
 
@@ -440,6 +467,7 @@ Options:
   -c, --create              Create missing paths (and files) as needed
   -f, --force               Ignore missing files and arguments, never prompt
   -h, --help                This help text
+  -j, --json                JSON output in 'status' and 'cond' commands
   -1, --once                Only one lap in commands like 'top'
   -p, --plain               Use plain table headings, no ctrl chars
   -q, --quiet               Silent, only return status of command
@@ -483,6 +511,8 @@ Commands:
   cgroup                    List cgroup config overview
   ps                        List processes based on cgroups
   top                       Show top-like listing based on cgroups
+
+  plugins                   List installed plugins
 
   runlevel [0-9]            Show or set runlevel: 0 halt, 6 reboot
   reboot                    Reboot system
