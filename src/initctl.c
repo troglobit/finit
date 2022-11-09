@@ -1214,6 +1214,7 @@ static int usage(int rc)
 		"  -c, --create              Create missing paths (and files) as needed\n"
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
 		"  -h, --help                This help text\n"
+		"  -j, --json                JSON output in 'status' and 'cond' commands\n"
 		"  -1, --once                Only one lap in commands like 'top'\n"
 		"  -p, --plain               Use plain table headings, no ctrl chars\n"
 		"  -q, --quiet               Silent, only return status of command\n"

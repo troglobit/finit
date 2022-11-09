@@ -11,7 +11,7 @@
 .Nd Control tool for Finit
 .Sh SYNOPSIS
 .Nm /sbin/initctl
-.Op Fl bcfhlpqtvV
+.Op Fl bcfhjlpqtvV
 .Op COMMAND
 .Sh DESCRIPTION
 .Nm
@@ -33,6 +33,12 @@ command.
 Ignore missing files and arguments, never prompt.
 .It Fl h, -help
 Show built-in help text.
+.It Fl j, -json
+JSON output in
+.Ar status
+and
+.Ar cond
+commands.
 .It Fl 1, -once
 Only one lap in commands like top.
 .It Fl p, -plain
@@ -144,16 +150,21 @@ Clear (deassert) user-defined condition,
 .It Nm Ar cond status
 Show condition status, default
 .Cm cond
-command.
+command.  Also supports the
+.Fl j
+option for detailed JSON output.
 .It Nm Ar cond dump Op Cm TYPE
-Dump all, or a given type of, conditions and their status
+Dump all, or a given type of, conditions and their status.  Also
+supports the
+.Fl j
+option for detailed JSON output.
 .It Nm Ar ident Op Cm NAME
 Display indentities of all run/task/services, or only instances
 matching
 .Cm NAME .
 A partial string, e.g.,
 .Cm NAM ,
-will not match anything
+will not match anything.
 .It Nm Ar log Op Cm NAME
 Show ten last Finit, or
 .Cm NAME ,
@@ -194,8 +205,26 @@ Show service status, by name.  If only
 is given and multiple instances exits, a summary of all matching
 instances are shown.  Only an exact match displays the detailed status
 for a particular instance
+.Pp
+When the
+.Fl q
+option is used with this command, and the selection only matches one
+run/task/service, nothing is output and the return code of
+.Nm
+is non-zero if there is a problem.  Zero is returned if a run/task has
+run (at least) once in the current runlevel, and also when a service
+is running (as expected).  For more detailed status, see the
+.Fl j
+option for detailed JSON output.
+.Pp
+.Sy Tip:
+the
+.Xr jq 1
+is a very useful tool in combination with the JSON output.
 .It Nm Ar status
-Show status of all services, default command
+Show status of all services, default command.  Also supports the
+.Fl j
+option for detailed JSON output.
 .It Nm Ar cgroup
 List cgroup config overview
 .It Nm Ar ps
