@@ -61,6 +61,7 @@ int iforce   = 0;
 int ionce    = 0;
 int debug    = 0;
 int heading  = 1;
+int json     = 0;
 int verbose  = 0;
 int plain    = 0;
 int quiet    = 0;
@@ -433,7 +434,7 @@ static int do_cond_get(char *arg) { return do_cond_act(arg, COND_GET); }
 static int do_cond_set(char *arg) { return do_cond_act(arg, COND_SET); }
 static int do_cond_clr(char *arg) { return do_cond_act(arg, COND_CLR); }
 
-static char *svc_cond(svc_t *svc, char *buf, size_t len)
+static char *svc_cond(svc_t *svc, char *buf, size_t len, int ansi)
 {
 	char *cond, *conds;
 
@@ -446,11 +447,18 @@ static char *svc_cond(svc_t *svc, char *buf, size_t len)
 	if (!conds)
 		return buf;
 
-	strlcat(buf, "<", len);
+	if (json)
+		strlcat(buf, "[ ", len);
 
 	for (cond = strtok(conds, ","); cond; cond = strtok(NULL, ",")) {
-		if (cond != conds)
+		if (cond != conds) {
 			strlcat(buf, ",", len);
+			if (json)
+				strlcat(buf, " ", len);
+		}
+
+		if (json)
+			strlcat(buf, "\"", len);
 
 		switch (cond_get(cond)) {
 		case COND_ON:
@@ -459,26 +467,30 @@ static char *svc_cond(svc_t *svc, char *buf, size_t len)
 			break;
 
 		case COND_FLUX:
-			if (!plain)
+			if (ansi)
 				strlcat(buf, "\e[1m", len);
 			strlcat(buf, "~", len);
 			strlcat(buf, cond, len);
-			if (!plain)
+			if (ansi)
 				strlcat(buf, "\e[0m", len);
 			break;
 
 		case COND_OFF:
-			if (!plain)
+			if (ansi)
 				strlcat(buf, "\e[1m", len);
 			strlcat(buf, "-", len);
 			strlcat(buf, cond, len);
-			if (!plain)
+			if (ansi)
 				strlcat(buf, "\e[0m", len);
 			break;
 		}
+
+		if (json)
+			strlcat(buf, "\"", len);
 	}
 
-	strlcat(buf, ">", len);
+	if (json)
+		strlcat(buf, " ]", len);
 
 	return buf;
 }
@@ -508,7 +520,10 @@ static int do_cond_show(char *arg)
 		else
 			printf("\e[1m%-6.6s\e[0m  ", condstr(cond));
 
-		puts(svc_cond(svc, buf, sizeof(buf)));
+		svc_cond(svc, buf, sizeof(buf), !plain);
+		if (buf[0])
+			printf("<%s>", buf);
+		puts("");
 	}
 
 	return 0;
@@ -654,8 +669,8 @@ static int plugins_list(char *arg)
  */
 char *runlevel_string(int currlevel, int levels)
 {
-	int i, pos = 1;
 	static char lvl[21];
+	int i, pos = 1;
 
 	memset(lvl, 0, sizeof(lvl));
 	lvl[0] = '[';
@@ -683,6 +698,26 @@ char *runlevel_string(int currlevel, int levels)
 	return lvl;
 }
 
+char *runlevel_arr(int levels)
+{
+	static char lvl[42];
+	int p = 2, s = 0;
+
+	strlcpy(lvl, "[ ", sizeof(lvl));
+	for (int i = 0; i < 10; i++) {
+		if (ISSET(levels, i)) {
+			if (i == 0)
+				p += snprintf(&lvl[p], sizeof(lvl) - p, "%s\"S\"", s ? ", " : "");
+			else
+				p += snprintf(&lvl[p], sizeof(lvl) - p, "%s%c", s ? ", " : "", '0' + i);
+			s++;
+		}
+	}
+	strlcat(lvl, " ]", sizeof(lvl));
+
+	return lvl;
+}
+
 static int missing(svc_t *svc)
 {
 	if (svc->state == SVC_HALTED_STATE && svc_is_missing(svc))
@@ -691,11 +726,11 @@ static int missing(svc_t *svc)
 	return 0;
 }
 
-static char *svc_command(svc_t *svc, char *buf, size_t len)
+static char *svc_command(svc_t *svc, char *buf, size_t len, int ansi)
 {
-	int bold = missing(svc);
+	int bold = missing(svc) && ansi;
 
-	if (plain || whichp(svc->cmd))
+	if (whichp(svc->cmd))
 		bold = 0;
 
 	strlcpy(buf, bold ? "\e[1m" : "", len);
@@ -721,11 +756,11 @@ static char *svc_command(svc_t *svc, char *buf, size_t len)
 	return buf;
 }
 
-static char *svc_environ(svc_t *svc, char *buf, size_t len)
+static char *svc_environ(svc_t *svc, char *buf, size_t len, int ansi)
 {
 	int bold = missing(svc);
 
-	if (plain || svc_checkenv(svc) || svc->env[0] == '-')
+	if (!ansi || svc_checkenv(svc) || svc->env[0] == '-')
 		bold = 0;
 
 	strlcpy(buf, bold ? "\e[1m" : "", len);
@@ -845,6 +880,80 @@ static int svc_compare(svc_t *svc, char *arg)
 	return 0;
 }
 
+static int json_status_one(FILE *fp, svc_t *svc, char *indent, int prev)
+{
+	long now = jiffies();
+	char *pidfn = NULL;
+	char buf[512];
+
+	pidfn = svc->pidfile;
+	if (pidfn[0] == '!')
+		pidfn++;
+	else if (pidfn[0] == 0)
+		pidfn = "none";
+
+	fprintf(fp,
+		"%s"
+		"%s{\n"
+		"%s  \"identity\": \"%s\",\n"
+		"%s  \"description\": \"%s\",\n"
+		"%s  \"status\": \"%s\",\n",
+		prev ? ",\n" : indent, prev ? indent : "",
+		indent, svc_ident(svc, NULL, 0),
+		indent, svc->desc,
+		indent, svc_status(svc));
+	if (svc->state != SVC_RUNNING_STATE) {
+		int rc, sig;
+
+		rc = WEXITSTATUS(svc->status);
+		sig = WTERMSIG(svc->status);
+
+		if (WIFEXITED(svc->status))
+			fprintf(fp,
+				"%s  \"exit\": { \"%s\": %d },\n",
+				indent, "code", rc);
+		else if (WIFSIGNALED(svc->status))
+			fprintf(fp,
+				"%s  \"exit\": { \"%s\": %d },\n",
+				indent, "signal", sig);
+	}
+	fprintf(fp,
+		"%s  \"origin\": \"%s\",\n"
+		"%s  \"command\": \"%s\",\n",
+		indent, svc->file[0] ? svc->file : "built-in",
+		indent, svc_command(svc, buf, sizeof(buf), 0));
+	svc_environ(svc, buf, sizeof(buf), 0);
+	if (buf[0])
+		fprintf(fp,
+			"%s  \"environment\": \"%s\",\n", indent, buf);
+	svc_cond(svc, buf, sizeof(buf), 0);
+	if (buf[0])
+		fprintf(fp,
+			"%s  \"condition\": %s,\n", indent, buf);
+	if (svc->manual)
+		fprintf(fp,
+			"%s  \"starts\": %d,\n", indent, svc->once);
+	fprintf(fp,
+		"%s  \"restarts\": %d,\n", indent, svc->restart_tot); /* XXX: add restart_cnt and restart_max */
+	fprintf(fp,
+		"%s  \"pidfile\": \"%s\",\n"
+		"%s  \"pid\": %d,\n"
+		"%s  \"user\": \"%s\",\n"
+		"%s  \"group\": \"%s\",\n"
+		"%s  \"uptime\": %ld,\n"
+		"%s  \"runlevels\": %s\n"
+		"%s}",
+		indent, pidfn,
+		indent, svc->pid,
+		indent, svc->username,
+		indent, svc->group,
+		indent, svc->pid ? now - svc->start_time : 0,
+		indent, runlevel_arr(svc->runlevels),
+		indent);
+
+	return 0;
+}
+
 static int show_status(char *arg)
 {
 	char ident[MAX_IDENT_LEN];
@@ -878,6 +987,14 @@ static int show_status(char *arg)
 			return svc->state != SVC_RUNNING_STATE;
 		}
 
+		if (json) {
+			int rc;
+
+			rc = json_status_one(stdout, svc, "", 0);
+			puts("");
+			return rc;
+		}
+
 		pidfn = svc->pidfile;
 		if (pidfn[0] == '!')
 			pidfn++;
@@ -888,9 +1005,13 @@ static int show_status(char *arg)
 		printf("   Identity : %s\n", svc_ident(svc, ident, sizeof(ident)));
 		printf("Description : %s\n", svc->desc);
 		printf("     Origin : %s\n", svc->file[0] ? svc->file : "built-in");
-		printf("Environment : %s\n", svc_environ(svc, buf, sizeof(buf)));
-		printf("Condition(s): %s\n", svc_cond(svc, buf, sizeof(buf)));
-		printf("    Command : %s\n", svc_command(svc, buf, sizeof(buf)));
+		svc_environ(svc, buf, sizeof(buf), !plain);
+		if (buf[0])
+			printf("Environment : %s\n", buf);
+		svc_cond(svc, buf, sizeof(buf), !plain);
+		if (buf[0])
+			printf("Condition(s): <%s>\n", buf);
+		printf("    Command : %s\n", svc_command(svc, buf, sizeof(buf), !plain));
 		printf("   PID file : %s\n", pidfn);
 		printf("        PID : %d\n", svc->pid);
 		printf("       User : %s\n", svc->username);
@@ -922,6 +1043,24 @@ static int show_status(char *arg)
 		printf("\n");
 
 		return do_log(svc, "| tail -10");
+	}
+
+	if (json) {
+		int prev = 0;
+
+		for (svc = client_svc_iterator(1); svc; svc = client_svc_iterator(0)) {
+			svc_ident(svc, ident, sizeof(ident));
+			if (num && !svc_compare(svc, arg))
+				continue;
+
+			if (!prev)
+				fputs("[\n", stdout);
+			json_status_one(stdout, svc, "  ", prev++);
+		}
+		if (prev)
+			fputs("\n]\n", stdout);
+
+		return 0;
 	}
 
 	col_widths();
@@ -957,7 +1096,7 @@ static int show_status(char *arg)
 		if (!verbose)
 			puts(svc->desc);
 		else
-			puts(svc_command(svc, buf, sizeof(buf)));
+			puts(svc_command(svc, buf, sizeof(buf), !plain));
 	}
 
 	return 0;
@@ -1181,6 +1320,7 @@ int main(int argc, char *argv[])
 		{ "debug",      0, NULL, 'd' },
 		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
+		{ "json",       0, NULL, 'j' },
 		{ "once",       0, NULL, '1' },
 		{ "plain",      0, NULL, 'p' },
 		{ "quiet",      0, NULL, 'q' },
@@ -1250,7 +1390,7 @@ int main(int argc, char *argv[])
 	cgrp = cgroup_avail();
 	utmp = has_utmp();
 
-	while ((c = getopt_long(argc, argv, "1bcdfh?pqtvV", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "1bcdfh?jpqtvV", long_options, NULL)) != EOF) {
 		switch(c) {
 		case '1':
 			ionce = 1;
@@ -1275,6 +1415,10 @@ int main(int argc, char *argv[])
 		case 'h':
 		case '?':
 			return usage(0);
+
+		case 'j':
+			json = 1;
+			break;
 
 		case 'p':
 			plain = 1;
