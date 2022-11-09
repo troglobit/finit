@@ -2076,7 +2076,10 @@ void service_ready(svc_t *svc)
 		return;
 
 	snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
-	cond_set(buf);
+	if (svc->notify == 2)
+		cond_set_oneshot(buf); /* exception for s6 */
+	else
+		cond_set(buf);
 
 	if (svc_has_ready(svc))
 		service_ready_script(svc);
