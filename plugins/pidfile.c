@@ -233,6 +233,9 @@ static void pidfile_reconf(void *arg)
 		if (svc_is_changed(svc) || svc_is_starting(svc))
 			continue;
 
+		if (!svc->notify)
+			service_ready(svc);
+
 		mkcond(svc, cond, sizeof(cond));
 		if (cond_get(cond) == COND_ON)
 			continue;
