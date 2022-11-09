@@ -325,6 +325,7 @@ int do_signal(int argc, char *argv[])
 	return client_send(&rq, sizeof(rq));
 }
 
+int dump_once;
 char *dump_filter;
 static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf)
 {
@@ -363,7 +364,22 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 		pid = 1;
 	}
 
-	printf("%-*d  %-*s  %-6s  <%s>\n", pw, pid, iw, nm, asserted, cond);
+	if (json) {
+		if (!dump_once)
+			puts("[");
+
+		printf("%s  {\n"
+		       "    \"pid\": %d,\n"
+		       "    \"identity\": \"%s\",\n"
+		       "    \"status\": \"%s\",\n"
+		       "    \"condition\": \"%s\"\n"
+		       "  }",
+		       dump_once ? ",\n" : "",
+		       pid, nm, asserted, cond);
+
+		dump_once++;
+	} else
+		printf("%-*d  %-*s  %-6s  <%s>\n", pw, pid, iw, nm, asserted, cond);
 
 	return 0;
 }
@@ -371,15 +387,18 @@ static int dump_one_cond(const char *fpath, const struct stat *sb, int tflag, st
 static int do_cond_dump(char *arg)
 {
 	col_widths();
-	if (heading)
+	if (heading && !json)
 		print_header("%-*s  %-*s  %-6s  %s", pw, "PID", iw, "IDENT",
 			     "STATUS", "CONDITION");
 
+	dump_once = 0;
 	dump_filter = arg;
 	if (nftw(_PATH_COND, dump_one_cond, 20, 0) == -1) {
 		WARNX("Failed parsing %s", _PATH_COND);
 		return 1;
 	}
+	if (dump_once)
+		puts("\n]");
 
 	return 0;
 }
@@ -499,10 +518,11 @@ static int do_cond_show(char *arg)
 {
 	enum cond_state cond;
 	char buf[512];
+	int once = 0;
 	svc_t *svc;
 
 	col_widths();
-	if (heading)
+	if (heading && !json)
 		print_header("%-*s  %-*s  %-6s  %s", pw, "PID", iw, "IDENT",
 			     "STATUS", "CONDITION (+ ON, ~ FLUX, - OFF)");
 
@@ -511,8 +531,28 @@ static int do_cond_show(char *arg)
 			continue;
 
 		cond = cond_get_agg(svc->cond);
-
 		svc_ident(svc, buf, sizeof(buf));
+
+		if (json) {
+			if (!once)
+				puts("[");
+
+			printf("%s  {\n"
+			       "    \"pid\": %d,\n"
+			       "    \"identity\": \"%s\",\n"
+			       "    \"status\": \"%s\",\n",
+			       once ? ",\n" : "",
+			       svc->pid,
+			       buf,
+			       condstr(cond));
+			svc_cond(svc, buf, sizeof(buf), !plain);
+			printf("    \"condition\": %s\n"
+			       "  }", buf);
+
+			once++;
+			continue;
+		}
+
 		printf("%-*d  %-*s  ", pw, svc->pid, iw, buf);
 
 		if (cond == COND_ON)
@@ -525,6 +565,9 @@ static int do_cond_show(char *arg)
 			printf("<%s>", buf);
 		puts("");
 	}
+
+	if (json && once)
+		puts("\n]");
 
 	return 0;
 }
