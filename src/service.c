@@ -2223,10 +2223,15 @@ restart:
 				 * which we need to wait for the forked-off child to create its pid
 				 * file.  In both cases, after that, retry after 2 sec
 				 */
-				if (!svc->respawn)
+				if (!svc->respawn) {
 					dbg("delayed restart of %s", svc_ident(svc, NULL, 0));
-				service_timeout_after(svc, svc->restart_tmo, service_retry);
-				goto done;
+					service_timeout_after(svc, svc->restart_tmo, service_retry);
+					goto done;
+				}
+
+				dbg("respawning %s", svc_ident(svc, NULL, 0));
+				svc_unblock(svc);
+				break;
 			}
 
 			if (svc_is_runtask(svc)) { /* only run/task, not sysv here */
