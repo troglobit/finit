@@ -242,6 +242,43 @@ other init, e.g. <kbd>init 4</kbd>, but also using the more advanced
 `intictl` tool.
 
 
+**Conditions**
+
+As mentioned previously, Finit has an advanced dependency system to
+handle synchronization, called [conditions](doc/conditions.md).  It can
+be used in many ways; depend on another service, network availability,
+etc.
+
+One *really cool* example useful for embedded systems is to run certain
+scripts if a board has a certain feature encoded in its device tree.  At
+bootstrap we run the following `ident` script:
+
+```sh
+#!/bin/sh
+conddir=/var/run/finit/cond/hw/model
+dtmodel=/sys/firmware/devicetree/base/model
+
+if ! test -e $dtmodel; then
+    exit 0
+fi
+
+model=$(cat $dtmodel | tr "[A-Z] " "[a-z]-")
+mkdir -p $conddir && ln -s ../../reconf $conddir/$model
+```
+
+Provided the device tree node exists, and is a string, we can then use
+the condition `<hw/model/foo>` when starting other scripts.  Here is an
+example:
+
+```
+run  [S]                /path/to/ident    --
+task [2] <hw/model/foo> /path/to/foo-init -- Initializing Foo board
+```
+
+> Notice the trick with an empty description to hide the call to `ident`
+> in the Finit progress output.
+
+
 **Plugins**
 
 Plugins can *extend* the functionality of Finit and *hook into* the
