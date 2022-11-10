@@ -56,6 +56,9 @@ struct cmd {
 	int        (*cb_multiarg)(int argc, char **argv);
 };
 
+char *finit_conf = NULL;
+char *finit_rcsd = NULL;
+
 int icreate  = 0;
 int iforce   = 0;
 int ionce    = 0;
@@ -1187,9 +1190,9 @@ static int transform(char *nm)
 
 static int has_conf(char *path, size_t len, char *name)
 {
-	paste(path, len, FINIT_RCSD, name);
+	paste(path, len, finit_rcsd, name);
 	if (!fisdir(path)) {
-		strlcpy(path, FINIT_RCSD, len);
+		strlcpy(path, finit_rcsd, len);
 		return 0;
 	}
 
@@ -1198,7 +1201,7 @@ static int has_conf(char *path, size_t len, char *name)
 
 static int usage(int rc)
 {
-	int has_rcsd = fisdir(FINIT_RCSD);
+	int has_rcsd = fisdir(finit_rcsd);
 	int has_ena;
 	char avail[256];
 	char ena[256];
@@ -1230,16 +1233,16 @@ static int usage(int rc)
 
 	if (has_rcsd)
 		fprintf(stderr,
-			"  ls | list                 List all .conf in " FINIT_RCSD "\n"
+			"  ls | list                 List all .conf in %s\n"
 			"  create   <CONF>           Create   .conf in %s\n"
 			"  delete   <CONF>           Delete   .conf in %s\n"
 			"  show     <CONF>           Show     .conf in %s\n"
 			"  edit     <CONF>           Edit     .conf in %s\n"
 			"  touch    <CONF>           Change   .conf in %s\n",
-			avail, avail, avail, avail, avail);
+			finit_rcsd, avail, avail, avail, avail, avail);
 	else
 		fprintf(stderr,
-			"  show                      Show     %s\n", FINIT_CONF);
+			"  show                      Show     %s\n", finit_conf);
 
 	if (has_ena)
 		fprintf(stderr,
@@ -1249,10 +1252,10 @@ static int usage(int rc)
 			"  disable  <CONF>           Disable  .conf in %s\n", ena);
 	if (has_rcsd)
 		fprintf(stderr,
-			"  reload                    Reload  *.conf in " FINIT_RCSD " (activate changes)\n");
+			"  reload                    Reload  *.conf in %s (activate changes)\n", finit_rcsd);
 	else
 		fprintf(stderr,
-			"  reload                    Reload   " FINIT_CONF " (activate changes)\n");
+			"  reload                    Reload   %s (activate changes)\n", finit_conf);
 
 	fprintf(stderr,
 		"\n"
@@ -1356,6 +1359,69 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 	return command[0].cb(NULL); /* default cmd */
 }
 
+static char *fgetval(char *line, const char *key, char *sep)
+{
+	char *ptr, *str, *copy;
+	size_t len;
+
+	str = copy = strdup(line);
+	if (!copy)
+		return NULL;
+
+	ptr = strsep(&str, sep);
+	if (ptr && strcmp(ptr, key)) {
+	fail:
+		free(copy);
+		return NULL;
+	}
+
+	ptr = strsep(&str, sep);
+	if (!ptr)
+		goto fail;
+
+	len = strlen(ptr) + 1;
+	memmove(copy, ptr, len);
+
+	return realloc(copy, len);
+}
+
+static void cleanup(void)
+{
+	if (finit_conf)
+		free(finit_conf);
+	if (finit_rcsd)
+		free(finit_rcsd);
+}
+
+static void sourcerc(void)
+{
+	char *line;
+	FILE *fp;
+
+	fp = fopen(_PATH_VARRUN "finit/.initrc", "r");
+	if (!fp)
+		goto fallback;
+
+	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
+		char *val;
+
+		if ((val = fgetval(line, "FINIT_CONF", "=")))
+			finit_conf = val;
+		if ((val = fgetval(line, "FINIT_RCSD", "=")))
+			finit_rcsd = val;
+
+		free(line);
+	}
+
+fallback:
+	if (!finit_conf)
+		finit_conf = strdup(FINIT_CONF);
+	if (!finit_rcsd)
+		finit_rcsd = strdup(FINIT_RCSD);
+
+	atexit(cleanup);
+}
+
 int main(int argc, char *argv[])
 {
 	struct option long_options[] = {
@@ -1431,6 +1497,7 @@ int main(int argc, char *argv[])
 		return reboot_main(argc, argv);
 
 	/* Enable functionality depending on system capabilities */
+	sourcerc();
 	cgrp = cgroup_avail();
 	utmp = has_utmp();
 

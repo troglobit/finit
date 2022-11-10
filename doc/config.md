@@ -10,6 +10,7 @@ Configuration
   * [Hostname](#hostname)
   * [Kernel Modules](#kernel-modules)
   * [Networking](#networking)
+  * [Alternate rcS.d/](#alternate-rcs-d-)
   * [Resource Limits](#resource-limits)
   * [Runlevels](#runlevels)
   * [One-shot Commands (sequence)](#one-shot-commands--sequence-)
@@ -39,6 +40,13 @@ Linux distributions -- each package can provide its own "script" file.
 
 - `/etc/finit.conf`: main configuration file
 - `/etc/finit.d/*.conf`: snippets, usually one service per file
+
+> **Note:** the above .conf file name and rcS.d directory name are the
+> defaults.  They can be changed at compile-time with two `configure`
+> options: `--with-config=FOO` and `--with-rcsd=BAR`.
+>
+> They can also be overridden from the command line `finit.config=BAZ`
+> and the top-level configuration directive `rcsd /path/to/finit.d`.
 
 Not all configuration directives are available in `/etc/finit.d/*.conf`
 and some directives are only available at [bootstrap][], runlevel `S`,
@@ -331,6 +339,27 @@ Debian, Ubuntu, Linux Mint, or an embedded BusyBox system.
 
 > **Note:** only read and executed in runlevel S ([bootstrap][]).
 
+
+### Alternate finit.d/
+
+**Syntax:** `rcsd /path/to/finit.d`
+
+The Finit rcS.d directory is set at compile time with:
+
+    ./configure --with-rcsd=/etc/finit.d
+
+A system with multiple use-cases may be bootstrapped with different
+configurations, starting with the kernel command line option:
+
+    -- finit.config=/etc/factory.conf
+
+This file in turn can use the `rcsd` directive to tell Finit to use
+another set of .conf files, e.g.:
+
+    rcsd /etc/factory.d
+
+> **Note:** this directive is only available from the top-level
+> bootstrap .conf file.
 
 ### Resource Limits
 

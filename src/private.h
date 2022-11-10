@@ -32,6 +32,9 @@
 #define MATCH_CMD(l, c, x) \
 	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
+extern char *finit_conf;
+extern char *finit_rcsd;
+
 extern int service_interval;
 
 int       api_init         (uev_ctx_t *ctx);

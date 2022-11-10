@@ -153,7 +153,7 @@ int serv_list(char *arg)
 	char path[256];
 
 	if (arg && arg[0]) {
-		paste(path, sizeof(path), FINIT_RCSD, arg);
+		paste(path, sizeof(path), finit_rcsd, arg);
 		if (fisdir(path)) {
 			do_list(path);
 			return 0;
@@ -161,19 +161,19 @@ int serv_list(char *arg)
 		/* fall back to list all */
 	}
 
-	paste(path, sizeof(path), FINIT_RCSD, "available");
+	paste(path, sizeof(path), finit_rcsd, "available");
 	if (fisdir(path))
 		do_list(path);
 
-	paste(path, sizeof(path), FINIT_RCSD, "enabled");
+	paste(path, sizeof(path), finit_rcsd, "enabled");
 	if (fisdir(path))
 		do_list(path);
 
-	if (fisdir(FINIT_RCSD))
-		do_list(FINIT_RCSD);
+	if (fisdir(finit_rcsd))
+		do_list(finit_rcsd);
 
-	if (fexist(FINIT_CONF))
-		do_list(FINIT_CONF);
+	if (fexist(finit_conf))
+		do_list(finit_conf);
 
 	return 0;
 }
@@ -197,7 +197,7 @@ static char *conf(char *path, size_t len, char *name, int creat)
 	char corr[40];
 
 	if (!name || !name[0] || !strcmp(name, "finit") || !strcmp(name, "finit.conf")) {
-		strlcpy(path, FINIT_CONF, len);
+		strlcpy(path, finit_conf, len);
 		return path;
 	}
 
@@ -206,21 +206,21 @@ static char *conf(char *path, size_t len, char *name, int creat)
 		name = corr;
 	}
 
-	if (!fisdir(FINIT_RCSD))
+	if (!fisdir(finit_rcsd))
 		return NULL;
 
-	paste(path, len, FINIT_RCSD, "available/");
+	paste(path, len, finit_rcsd, "available/");
 	if (!fisdir(path)) {
 		if (creat && mkdir(path, 0755) && errno != EEXIST)
 			return NULL;
 		else
-			paste(path, len, FINIT_RCSD, name);
+			paste(path, len, finit_rcsd, name);
 	} else
 		strlcat(path, name, len);
 
 	/* fall back to static service unless edit/create */
 	if (!creat && !fexist(path))
-		paste(path, len, FINIT_RCSD, name);
+		paste(path, len, finit_rcsd, name);
 
 	return path;
 }
@@ -241,11 +241,11 @@ int serv_enable(char *arg)
 		arg = corr;
 	}
 
-	if (chdir(FINIT_RCSD))
-		ERR(72, "failed cd %s", FINIT_RCSD);
+	if (chdir(finit_rcsd))
+		ERR(72, "failed cd %s", finit_rcsd);
 
 	if (icreate && mkdir("enabled", 0755) && EEXIST != errno)
-		ERR(73, "failed creating %s/enabled directory", FINIT_RCSD);
+		ERR(73, "failed creating %s/enabled directory", finit_rcsd);
 	ena = !chdir("enabled");   /* System *may* have enabled/ dir. */
 
 	snprintf(path, sizeof(path), "%savailable/%s", ena ? "../" : "", arg);
@@ -273,10 +273,10 @@ int do_disable(char *arg, int check)
 		arg = corr;
 	}
 
-	if (chdir(FINIT_RCSD))
-		ERR(72, "failed cd %s", FINIT_RCSD);
+	if (chdir(finit_rcsd))
+		ERR(72, "failed cd %s", finit_rcsd);
 	if (chdir("enabled"))	   /* System *may* have enabled/ dir. */
-		dbg("Failed changing to %s/enabled/: %s", FINIT_RCSD, strerror(errno));
+		dbg("Failed changing to %s/enabled/: %s", finit_rcsd, strerror(errno));
 
 	if (check && stat(arg, &st))
 		ERRX(6, "%s not (an) enabled (service).", arg);
@@ -309,7 +309,7 @@ int serv_touch(char *arg)
 		if (is_builtin(arg))
 			ERRX(4, "%s is a built-in service.", arg);
 
-		strlcpy(path, FINIT_CONF, sizeof(path));
+		strlcpy(path, finit_conf, sizeof(path));
 		fn = path;
 	}
 
@@ -391,7 +391,7 @@ static int do_edit(char *arg, int creat)
 int serv_edit(char *arg)
 {
 	if (!arg || !arg[0]) {
-		if (!yorn("Do you want to edit %s (y/N)? ", FINIT_CONF))
+		if (!yorn("Do you want to edit %s (y/N)? ", finit_conf))
 			return 0;
 		arg = "";
 	}
@@ -449,7 +449,7 @@ int serv_delete(char *arg)
 	if (!fn) {
 		if (is_builtin(arg))
 			ERRX(4, "%s is a built-in service.", arg);
-		ERRX(72, FINIT_RCSD " missing on system.");
+		ERRX(72, "%s missing on system.", finit_rcsd);
 	}
 
 	if (!fexist(fn))

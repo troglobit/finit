@@ -69,11 +69,12 @@ int   rescue    = 0;		/* rescue mode from kernel cmdline */
 int   single    = 0;		/* single user mode from kernel cmdline */
 int   bootstrap = 1;		/* set while bootrapping (for TTYs) */
 int   kerndebug = 0;		/* set if /proc/sys/kernel/printk > 7 */
-char *fstab     = FINIT_FSTAB;
+char *finit_conf= NULL;
+char *finit_rcsd= NULL;
+char *fstab     = NULL;
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
-char *rcsd      = FINIT_RCSD;
 char *runparts  = NULL;
 char *osheading = NULL;
 
@@ -808,9 +809,11 @@ int main(int argc, char *argv[])
 	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
 
 	/*
-	 * Initialize .conf system and load static /etc/finit.conf.
+	 * Initialize .conf system and load static /etc/finit.conf then
+	 * tell the world what we used.
 	 */
 	conf_init(&loop);
+	conf_saverc();
 
 	/*
 	 * Start built-in watchdogd as soon as possible, if enabled

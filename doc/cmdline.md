@@ -23,6 +23,16 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 
   > Note: `<boot/...>` conditions cannot be cleared with `initctl`!
 
+* `finit.config=/path/to/alternative/finit.conf`: override the
+  compile-time bootstrap config file, default:
+
+        ./configure --with-config=/etc/finit.conf
+
+   Useful when starting up in various rescue mode, factory, or
+   production test setups.  Use the top-level configuration file
+   directive `rcsd /path/to/finit.d` to override the default
+   rcS.d directory.
+
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
 	independently of the kernel `debug` setting.  New as of Finit v4.
 

@@ -122,7 +122,6 @@ extern char  *fstab;
 extern char  *sdown;
 extern char  *network;
 extern char  *hostname;
-extern char  *rcsd;
 extern char  *runparts;
 extern char  *osheading;
 extern uev_ctx_t *ctx;

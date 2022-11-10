@@ -90,6 +90,7 @@ fallback:
 }
 
 /*
+ * finit.config = /path/to/etc/alt-finit.conf
  * finit.debug  = [on,off]
  * finit.fstab  = /path/to/etc/fstab.aternative
  * finit.status = [on,off]     (compat finit.show_status)
@@ -103,18 +104,27 @@ static void parse_finit_opts(char *opt)
 	if (arg)
 		*arg++ = 0;
 
+	if (string_compare(opt, "cond")) {
+		cond_boot_parse(arg);
+		return;
+	}
+
+	if (string_compare(opt, "config")) {
+		if (finit_conf)
+			free(finit_conf);
+		finit_conf = strdup(arg);
+		return;
+	}
+
 	if (string_compare(opt, "debug")) {
 		debug = get_bool(arg, 1);
 		return;
 	}
 
 	if (string_compare(opt, "fstab")) {
-		fstab = arg;
-		return;
-	}
-
-	if (string_compare(opt, "cond")) {
-		cond_boot_parse(arg);
+		if (fstab)
+			free(fstab);
+		fstab = strdup(arg);
 		return;
 	}
 
@@ -250,6 +260,11 @@ static void parse_kernel_loglevel(void)
  */
 void conf_parse_cmdline(int argc, char *argv[])
 {
+	/* Set up defaults */
+	fstab      = strdup(FINIT_FSTAB);
+	finit_conf = strdup(FINIT_CONF);
+	finit_rcsd = strdup(FINIT_RCSD);
+
 	for (int i = 1; i < argc; i++)
 		parse_arg(argv[i]);
 
@@ -278,6 +293,28 @@ void conf_reset_env(void)
 	setenv("SHELL", _PATH_BSHELL, 1);
 	setenv("LOGNAME", "root", 1);
 	setenv("USER", "root", 1);
+}
+
+/*
+ * Sourced mainly by initctl and other Finit helper tools
+ */
+void conf_saverc(void)
+{
+	FILE *fp;
+
+	fp = fopen(_PATH_VARRUN "finit/.initrc", "w");
+	if (!fp) {
+		err(1, "failed creating .finitrc");
+		return;
+	}
+
+	fprintf(fp, "FINIT_CONF=%s\n", finit_conf);
+	fprintf(fp, "FINIT_RCSD=%s\n", finit_rcsd);
+	fprintf(fp, "FINIT_CGPATH=%s\n", FINIT_CGPATH);
+	fprintf(fp, "INIT_SOCKET=%s\n", INIT_SOCKET);
+	fprintf(fp, "INIT_MAGIC=0x%08x\n", INIT_MAGIC);
+
+	fclose(fp);
 }
 
 /*
@@ -654,6 +691,12 @@ static int parse_static(char *line, int is_rcsd)
 		return 0;
 	}
 
+	if (BOOTSTRAP && MATCH_CMD(line, "rcsd ", x)) {
+		if (finit_rcsd) free(finit_rcsd);
+		finit_rcsd = strdup(strip_line(x));
+		return 0;
+	}
+
 	if (BOOTSTRAP && MATCH_CMD(line, "runparts ", x)) {
 		if (runparts) free(runparts);
 		runparts = strdup(strip_line(x));
@@ -845,6 +888,7 @@ static int parse_conf(char *file, int is_rcsd)
  */
 int conf_reload(void)
 {
+	char path[strlen(finit_rcsd) + 16];
 	size_t i;
 	glob_t gl;
 
@@ -877,7 +921,7 @@ int conf_reload(void)
 	}
 
 	/* First, read /etc/finit.conf */
-	parse_conf(FINIT_CONF, 0);
+	parse_conf(finit_conf, 0);
 
 	/* Set global limits */
 	for (int i = 0; i < RLIMIT_NLIMITS; i++) {
@@ -887,8 +931,10 @@ int conf_reload(void)
 	}
 
 	/* Next, read all *.conf in /etc/finit.d/ */
-	glob(FINIT_RCSD "/*.conf", 0, NULL, &gl);
-	glob(FINIT_RCSD "/enabled/*.conf", GLOB_APPEND, NULL, &gl);
+	snprintf(path, sizeof(path), "%s/*.conf", finit_rcsd);
+	glob(path, 0, NULL, &gl);
+	snprintf(path, sizeof(path), "%s/enabled/*.conf", finit_rcsd);
+	glob(path, GLOB_APPEND, NULL, &gl);
 
 	for (i = 0; i < gl.gl_pathc; i++) {
 		char *path = gl.gl_pathv[i];
@@ -1099,6 +1145,7 @@ static void conf_cb(uev_t *w, void *arg, int events)
  */
 int conf_monitor(void)
 {
+	char path[strlen(finit_rcsd) + 16];
 	int rc = 0;
 
 	/*
@@ -1107,10 +1154,12 @@ int conf_monitor(void)
 	 * have or not have symlinks in place.  We need to monitor for
 	 * changes to either symlink or target.
 	 */
-	rc += iwatch_add(&iw_conf, FINIT_RCSD, IN_ONLYDIR);
-	rc += iwatch_add(&iw_conf, FINIT_RCSD "/available/", IN_ONLYDIR | IN_DONT_FOLLOW);
-	rc += iwatch_add(&iw_conf, FINIT_RCSD "/enabled/",   IN_ONLYDIR | IN_DONT_FOLLOW);
-	rc += iwatch_add(&iw_conf, FINIT_CONF, 0);
+	rc += iwatch_add(&iw_conf, finit_rcsd, IN_ONLYDIR);
+	snprintf(path, sizeof(path), "%s/available/", finit_rcsd);
+	rc += iwatch_add(&iw_conf, path, IN_ONLYDIR | IN_DONT_FOLLOW);
+	snprintf(path, sizeof(path), "%s/enabled/", finit_rcsd);
+	rc += iwatch_add(&iw_conf, path, IN_ONLYDIR | IN_DONT_FOLLOW);
+	rc += iwatch_add(&iw_conf, finit_conf, 0);
 
 	/*
 	 * Systems with /etc/default, /etc/conf.d, or similar, can also
@@ -1151,7 +1200,7 @@ int conf_init(uev_ctx_t *ctx)
 	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
 
 	/* Read global rlimits and global cgroup setup from /etc/finit.conf */
-	parse_conf(FINIT_CONF, 0);
+	parse_conf(finit_conf, 0);
 
 	/* prepare /etc watcher */
 	fd = iwatch_init(&iw_conf);

@@ -29,6 +29,9 @@
 #include "finit.h"
 #include "util.h"
 
+extern char *finit_conf;
+extern char *finit_rcsd;
+
 extern int icreate;			/* initctl -c */
 extern int iforce;			/* initctl -f */
 extern int ionce;			/* initctl -1 */
