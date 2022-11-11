@@ -943,10 +943,14 @@ static int json_status_one(FILE *fp, svc_t *svc, char *indent, int prev)
 		"%s{\n"
 		"%s  \"identity\": \"%s\",\n"
 		"%s  \"description\": \"%s\",\n"
+		"%s  \"type\": \"%s\",\n"
+		"%s  \"forking\": %s,\n"
 		"%s  \"status\": \"%s\",\n",
 		prev ? ",\n" : indent, prev ? indent : "",
 		indent, svc_ident(svc, NULL, 0),
 		indent, svc->desc,
+		indent, svc_typestr(svc),
+		indent, svc->forking ? "true" : "false",
 		indent, svc_status(svc));
 	if (svc->state != SVC_RUNNING_STATE) {
 		int rc, sig;
