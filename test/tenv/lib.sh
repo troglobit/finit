@@ -106,6 +106,31 @@ log()
 	printf "\e[2m[%s]\e[0m %b%b%b %s\n" "$test" "$1" "$2" "$color_reset" "$3"
 }
 
+say()
+{
+	log "$fg_yellow" • "$@"
+}
+
+skip()
+{
+	log "$fg_yellow" − "$*"
+	exit 77
+}
+
+fail()
+{
+	log "$fg_red" ✘ "$*"
+	exit 99
+}
+
+# shellcheck disable=SC2068
+check_dep()
+{
+	if ! command -v "$1"; then
+		skip "Cannot find $1, skipping test."
+	fi
+}
+
 assert()
 {
 	__assert_msg=$1
@@ -153,11 +178,6 @@ retry()
 	return "$__retry_cmd_exit"
 }
 
-say()
-{
-	log "$fg_yellow" • "$@"
-}
-
 teardown()
 {
 	test_status="$?"
@@ -169,6 +189,8 @@ teardown()
 	log "$color_reset" '--' ''
 	if [ "$test_status" -eq 0 ]; then
 		log "$fg_green" 'TEST PASS' ''
+	elif [ "$test_status" -eq 77 ]; then
+		log "$fg_yellow" 'TEST SKIP' ''
 	else
 		log "$fg_red" 'TEST FAIL' ''
 	fi
@@ -179,6 +201,7 @@ teardown()
 	wait
 
 	rm -f "$TENV_ROOT"/running_test.pid
+	exit $test_status
 }
 
 trap teardown EXIT
