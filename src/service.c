@@ -1619,7 +1619,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		if (pid && pid_file_parse(svc, pid))
 			logit(LOG_WARNING, "%s: service has invalid 'pid:' config: %s", svc->name, pid);
 
-		if (svc->pidfile[0] == '!')
+		/* only set forking based on pidfile if user supplied pid: option */
+		if (pid && svc->pidfile[0] == '!')
 			svc->forking = 1;
 
 		if (svc->restart_tmo == 0) {
