@@ -23,8 +23,6 @@ test_teardown()
 
 say "Check deps ..."
 check_dep jq
-check_dep fozza
-
 
 say "Test start $(date)"
 rm -f "$TENV_ROOT"/oldpid
