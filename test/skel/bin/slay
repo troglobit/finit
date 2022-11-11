@@ -48,7 +48,7 @@ while [ "$pid" -le 1 ]; do
 	break
 done
 
-echo "$pid" > oldpid
+echo "$pid" > /tmp/oldpid
 
 #echo "PID $pid, kill -9 ..."
 kill -9 "$pid"
