@@ -21,11 +21,12 @@ say "Test start $(date)"
 rm -f "$TENV_ROOT"/oldpid
 
 say "Add service stanza in $FINIT_CONF"
-texec sh -c "echo 'service [2345] respawn log service.sh -- Test service' > $FINIT_CONF"
+texec sh -c "echo 'service [2345] respawn log:stderr service.sh -- Test service' > $FINIT_CONF"
 
 say 'Reload Finit'
 texec sh -c "initctl reload"
 #texec sh -c "initctl status"
+#texec sh -c "initctl debug"
 
 retry 'assert_num_children 1 service.sh'
 texec sh -c "initctl status service.sh"
