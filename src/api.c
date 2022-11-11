@@ -63,6 +63,7 @@ static int stop(svc_t *svc, void *user_data)
 	if (!svc)
 		return 1;
 
+	service_timeout_cancel(svc);
 	svc_stop(svc);
 	service_step(svc);
 
@@ -74,6 +75,7 @@ static int start(svc_t *svc, void *user_data)
 	if (!svc)
 		return 1;
 
+	service_timeout_cancel(svc);
 	svc_start(svc);
 	service_step(svc);
 
@@ -93,6 +95,7 @@ static int restart(svc_t *svc, void *user_data)
 	if (!svc_is_running(svc))
 		return start(svc, user_data);
 
+	service_timeout_cancel(svc);
 	service_stop(svc);
 	service_step(svc);
 
@@ -106,6 +109,8 @@ static int reload(svc_t *svc, void *user_data)
 
 	if (svc_is_blocked(svc))
 		svc_start(svc);
+	else
+		service_timeout_cancel(svc);
 
 	svc_mark_dirty(svc);
 	service_step(svc);
