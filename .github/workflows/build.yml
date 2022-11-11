@@ -70,4 +70,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: finit-test-${{ matrix.compiler }}
-          path: test/*
+          path: test/*.log
