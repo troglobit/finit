@@ -2,6 +2,7 @@
 tmpfs		/tmp		tmpfs	mode=1777		0	0
 mkdir#-p#-m0755	/tmp/etc.u	helper	none			0	0
 mkdir#-p#-m0755	/tmp/etc.w	helper	none			0	0
+tmpfs		/run		tmpfs	mode=0755,nosuid,nodev	0	0
 
 # Each test needs a dedicated /etc for finit.conf etc.
 etc /etc overlay lowerdir=/etc,upperdir=/tmp/etc.u,workdir=/tmp/etc.w	0	0
