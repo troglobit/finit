@@ -36,6 +36,16 @@ assert_num_services()
 	assert "$1 services are loaded" "$(texec initctl -t status "$2" | wc -l)" -eq "$1"
 }
 
+assert_forking()
+{
+	assert "service $1 forking:$2" "$(texec initctl -j status "$1" | jq -M .forking)" = "$2"
+}
+
+assert_nopid()
+{
+	assert "service $1 pid:0" "$(texec initctl -j status "$1" | jq -M .pid)" -eq 0
+}
+
 # shellcheck disable=SC2086
 assert_new_pid()
 {

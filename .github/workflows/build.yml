@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install pkg-config tree
+          sudo apt-get -y install pkg-config tree jq
           wget https://github.com/troglobit/libuev/releases/download/v2.3.2/libuev-2.3.2.tar.xz
           wget https://github.com/troglobit/libite/releases/download/v2.5.2/libite-2.5.2.tar.gz
           tar xf libuev-2.3.2.tar.xz
