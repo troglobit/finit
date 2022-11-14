@@ -6,6 +6,7 @@
  */
 
 #include <err.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
@@ -13,12 +14,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <sysexits.h>
+#include <sys/stat.h>
 
 #define PROGNM "serv"
 #define log warnx
 
 volatile sig_atomic_t reloading = 1;
 volatile sig_atomic_t running   = 1;
+static char fn[80];
 
 static void verify_env(char *arg)
 {
@@ -74,6 +77,11 @@ static void inc_restarts(void)
 	fclose(fp);
 }
 
+static void cleanup(void)
+{
+	remove(fn);
+}
+
 static void sig(int signo)
 {
 	log("Got signal %d ...", signo);
@@ -91,22 +99,28 @@ static void sig(int signo)
 
 static void pidfile(char *pidfn)
 {
-	char fn[80];
-	pid_t pid;
-	FILE *fp;
-
-	if (!pidfn) {
+	if (!pidfn && fn[0] == 0) {
 		snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, PROGNM);
 		pidfn = fn;
 	}
-	pid = getpid();
-	log("Creating PID file %s with %d", pidfn, pid);
 
-	fp = fopen(pidfn, "w");
-	if (!fp)
-		exit(1);
-	fprintf(fp, "%d\n", pid);
-	fclose(fp);
+	if (access(fn, R_OK)) {
+		pid_t pid;
+		FILE *fp;
+
+		pid = getpid();
+		log("Creating PID file %s with %d", pidfn, pid);
+
+		fp = fopen(pidfn, "w");
+		if (!fp)
+			exit(1);
+		fprintf(fp, "%d\n", pid);
+		fclose(fp);
+		atexit(cleanup);
+	} else {
+		log("Touching PID file %s", pidfn);
+		utimensat(0, fn, NULL, 0);
+	}
 }
 
 static int usage(int rc)
@@ -226,6 +240,8 @@ int main(int argc, char *argv[])
 					do_notify = 0;
 				}
 			}
+			if (do_pidfile)
+				pidfile(NULL);
 			reloading = 0;
 		}
 
