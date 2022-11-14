@@ -93,6 +93,11 @@ texec()
 	"$TEST_DIR/tenv/exec.sh" "$finit_pid" "$@"
 }
 
+run()
+{
+	texec sh -c "$@"
+}
+
 pause()
 {
 	echo "Press any key to continue... "
