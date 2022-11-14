@@ -270,6 +270,12 @@ int cond_update(const char *name)
 
 		affects++;
 		dbg("%s: match <%s> %s(%s)", name ?: "nil", svc->cond, svc->desc, svc->cmd);
+		/* Fix bug #314: race condition between crashing services and conditions */
+		if (svc_is_restart(svc) && cond_get_agg(svc->cond) == COND_OFF) {
+			dbg("%s: cancel timer & unblock => WAITING state.", name ?: "nil");
+			service_timeout_cancel(svc);
+			svc_unblock(svc);
+		}
 		service_step(svc);
 	}
 

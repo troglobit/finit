@@ -263,6 +263,7 @@ static inline int  svc_is_blocked  (svc_t *svc) { return svc && svc->block != SV
 static inline int  svc_is_busy     (svc_t *svc) { return svc && svc->block == SVC_BLOCK_BUSY; }
 static inline int  svc_is_missing  (svc_t *svc) { return svc && svc->block == SVC_BLOCK_MISSING; }
 static inline int  svc_is_crashing (svc_t *svc) { return svc && svc->block == SVC_BLOCK_CRASHING; }
+static inline int  svc_is_restart  (svc_t *svc) { return svc && svc->block == SVC_BLOCK_RESTARTING; }
 
 static inline void svc_unblock     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_NONE;       }
 #define            svc_start(svc)  svc_unblock(svc)
