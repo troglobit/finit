@@ -30,21 +30,21 @@ test_teardown()
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-texec sh -c "initctl debug"
+#run "initctl debug"
+#run "ls -l /run/finit/cond/pid/ /lib/finit/plugins/"
 
-texec sh -c "ls -l /run/finit/cond/pid/ /lib/finit/plugins/"
-texec sh -c "echo service log:stderr name:foo serv -n -P /run/foo.pid > $FINIT_CONF"
-texec sh -c "echo service log:stderr name:bar \<pid/foo\> serv -n -P /run/bar.pid >> $FINIT_CONF"
-texec sh -c "cat $FINIT_CONF"
+run "echo service log:stderr name:foo             serv -np -i foo -f /tmp/arrakis  > $FINIT_CONF"
+run "echo service log:stderr name:bar \<pid/foo\> serv -np -i bar -F /tmp/arrakis >> $FINIT_CONF"
+run "cat $FINIT_CONF"
 
 say 'Reload Finit'
-texec sh -c "initctl reload"
+run "initctl reload"
 
 assert_status "foo" "running"
 assert_cond   "pid/foo"
 assert_status "bar" "running"
 
-texec sh -c "initctl stop foo"
+#run "initctl status bar"
+sleep 3
+run "initctl stop foo"
 assert_status "bar" "waiting"
-
-
