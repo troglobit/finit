@@ -175,6 +175,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'P':
 			pidfn = optarg;
+			do_pidfile++;
 			break;
 		case 'r':
 			snprintf(cmd, sizeof(cmd), "initctl restart %s", optarg);
