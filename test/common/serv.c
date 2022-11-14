@@ -5,7 +5,7 @@
  * in foregrund it does not create a PID file by default.
  */
 
-#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
@@ -14,13 +14,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <sysexits.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 
 #define PROGNM "serv"
-#define log warnx
+
+#define err(rc, fmt, args...)  do {fprintf(stderr, "%s: " fmt ": %s\n", ident, ##args, strerror(errno)); exit(rc);} while(0)
+#define errx(rc, fmt, args...) do {fprintf(stderr, "%s: " fmt "\n", ident, ##args); exit(rc);} while(0)
+#define log(fmt, args...)      do {fprintf(stderr, "%s: " fmt "\n", ident, ##args);} while(0)
 
 volatile sig_atomic_t reloading = 1;
 volatile sig_atomic_t running   = 1;
+static char *ident = PROGNM;
 static char fn[80];
 
 static void verify_env(char *arg)
@@ -97,25 +102,42 @@ static void sig(int signo)
 	}
 }
 
+static void writefn(char *fn, int val)
+{
+	FILE *fp;
+
+	fp = fopen(fn, "w");
+	if (!fp)
+		err(1, "failed creating file %s", fn);
+	fprintf(fp, "%d\n", val);
+	fclose(fp);
+}
+
+static int checkfn(char *fn)
+{
+	return !access(fn, R_OK);
+}
+
+static void mine(char *fn)
+{
+	log("Mining for spice in %s", fn);
+	writefn(fn, 4711);
+}
+
 static void pidfile(char *pidfn)
 {
-	if (!pidfn && fn[0] == 0) {
-		snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, PROGNM);
+	if (!pidfn) {
+		if (fn[0] == 0)
+			snprintf(fn, sizeof(fn), "%s%s.pid", _PATH_VARRUN, ident);
 		pidfn = fn;
 	}
 
-	if (access(fn, R_OK)) {
+	if (!checkfn(pidfn)) {
 		pid_t pid;
-		FILE *fp;
 
 		pid = getpid();
 		log("Creating PID file %s with %d", pidfn, pid);
-
-		fp = fopen(pidfn, "w");
-		if (!fp)
-			exit(1);
-		fprintf(fp, "%d\n", pid);
-		fclose(fp);
+		writefn(pidfn, pid);
 		atexit(cleanup);
 	} else {
 		log("Touching PID file %s", pidfn);
@@ -133,7 +155,10 @@ static int usage(int rc)
 		" -c       Crash (exit) immediately\n"
 		" -e K:V   Verify K environment variable is V value\n"
 		" -E K     Verify K is not set in the environment\n"
+		" -f FILE  Container file to keep the Melange in\n"
+		" -F FILE  Where to look spice ...\n"
 		" -h       Show help text (this)\n"
+		" -i IDENT Change process identity, incl. logs, pidfile, etc.\n"
 		" -n       Run in foreground\n"
 		" -N SOCK  Send 'READY=1\\n' on $NOTIFY_SOCKET or SOCK\n"
 		" -p       Create PID file despite running in foreground\n"
@@ -143,13 +168,14 @@ static int usage(int rc)
 		"By default this program daemonizes itself to the background, and,\n"
 		"when it's done setting up its signal handler(s), creates a PID file\n"
 		"to let the rest of the system know it's done.  When the program runs\n"
-		"in the foreground it does not create a PID file by default.\n",
-		PROGNM);
+		"in the foreground it does not create a PID file by default.\n"
+		"\n"
+		"Regardless of how This daemon is started it provides a single service\n"
+		"to others, spice ... guarded by sandworms",
+		ident);
 
 	return rc;
 }
-
-#include <sys/socket.h>
 
 int main(int argc, char *argv[])
 {
@@ -159,11 +185,14 @@ int main(int argc, char *argv[])
 	int do_restart = 0;
 	int do_notify = 0;
 	int do_crash = 0;
+	int vanish = 0;
 	char *pidfn = NULL;
+	char *melange = NULL;
+	char *spice = NULL;
 	char cmd[80];
 	int c;
 
-	while ((c = getopt(argc, argv, "ce:E:hnN:pP:r:")) != EOF) {
+	while ((c = getopt(argc, argv, "ce:E:f:F:hi:nN:pP:r:")) != EOF) {
 		switch (c) {
 		case 'c':
 			do_crash = 1;
@@ -174,8 +203,17 @@ int main(int argc, char *argv[])
 		case 'E':
 			verify_noenv(optarg);
 			break;
+		case 'f':
+			melange = optarg;
+			break;
+		case 'F':
+			spice = optarg;
+			break;
 		case 'h':
 			return usage(0);
+		case 'i':
+			ident = optarg;
+			break;
 		case 'n':
 			do_background = 0;
 			do_pidfile--;
@@ -210,6 +248,10 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, sig);
 	signal(SIGHUP, sig);
 
+	/* This is our only service to the world */
+	if (melange)
+		mine(melange);
+
 	/* Tell world where we are, but not if bg w/o pid file */
 	if (do_pidfile == 1)
 		pidfile(pidfn);
@@ -229,6 +271,12 @@ int main(int argc, char *argv[])
 
 	log("Entering while(1) loop");
 	while (running) {
+		if (spice) {
+			log("Checking for spice in %s ...", spice);
+			if (!checkfn(spice))
+				err(1, "Melange");
+		}
+
 		if (reloading) {
 			if (do_notify > 0) {
 				log("Notifying Finit on socket %d, READY=1", do_notify);
@@ -251,6 +299,13 @@ int main(int argc, char *argv[])
 			if (system(cmd))
 				return 1;
 			break;
+		}
+
+		if (melange && vanish++ > 0) {
+			if (checkfn(melange)) {
+				log("Oh no, sandworms! Harvest interrupted ...");
+				remove(melange);
+			}
 		}
 	}
 
