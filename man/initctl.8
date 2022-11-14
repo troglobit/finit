@@ -203,24 +203,24 @@ Restart (stop/start) service by name
 Show service status, by name.  If only
 .Cm NAME
 is given and multiple instances exits, a summary of all matching
-instances are shown.  Only an exact match displays the detailed status
-for a particular instance
+instances are shown.  Only an exact match displays detailed status
+for a given instance.
 .Pp
-When the
+With the
 .Fl q
-option is used with this command, and the selection only matches one
-run/task/service, nothing is output and the return code of
+option this command is silent, provided the
+.Ar NAME[:ID]
+selection matches a single run/task/service. The exit code of
 .Nm
 is non-zero if there is a problem.  Zero is returned if a run/task has
-run (at least) once in the current runlevel, and also when a service
-is running (as expected).  For more detailed status, see the
+run (at least) once in the current runlevel, and when a service is running
+(as expected).  See the
 .Fl j
-option for detailed JSON output.
+option for detailed JSON output suitable for machine parsing.
 .Pp
 .Sy Tip:
-the
 .Xr jq 1
-is a very useful tool in combination with the JSON output.
+is a useful scripting tool in combination with JSON output.
 .It Nm Ar status
 Show status of all services, default command.  Also supports the
 .Fl j
