@@ -60,9 +60,9 @@ Toggle
 (daemon) debug to
 .Pa /dev/console
 .It Nm Ar help
-Show built-in help text
+Show built-in help text.
 .It Nm Ar version
-Show program version
+Show program version.
 .It Nm Ar ls | list
 List all
 .Cm *.conf
@@ -121,12 +121,12 @@ Disable
 .Cm .conf
 in
 .Pa /etc/finit.d/enabled ,
-i.e., removes symlink
+i.e., removes symlink.
 .It Nm Ar reload
 Reload
 .Cm *.conf in
 .Pa /etc/finit.d ,
-i.e., activates changes
+i.e., activates changes.
 .It Nm Ar cond set Ar COND
 Set (assert) user-defined condition,
 .Cm +usr/COND
@@ -168,12 +168,12 @@ will not match anything.
 .It Nm Ar log Op Cm NAME
 Show ten last Finit, or
 .Cm NAME ,
-messages from syslog
+messages from syslog.
 .It Nm Ar start Cm NAME[:ID]
 Start service by name, with optional ID, e.g.,
 .Cm initctl start tty:1
 .It Nm Ar stop Cm NAME[:ID]
-Stop/Pause a running service by name
+Stop/Pause a running service by name.
 .It Nm Ar reload Cm NAME[:ID]
 Reload service as if its configuration had changed.  Internally,
 .Nm finit
@@ -191,14 +191,14 @@ Except for two things:
 if the service supports HUP, it's signaled instead of stop-started, and
 .It
 it allows restarting run/task in the same runlevel -- which is otherwise
-restricted
+restricted.
 .El
 .It Nm Ar signal Cm NAME:[ID] S
 Send signal S to service, by name.
 .Cm S
 may be a complete signal name such as SIGHUP, or short name such as HUP, or the signal number such as 1 (SIGHUP).
 .It Nm Ar restart Cm NAME[:ID]
-Restart (stop/start) service by name
+Restart (stop/start) service by name.
 .It Nm Ar status Cm NAME[:ID]
 Show service status, by name.  If only
 .Cm NAME
@@ -226,37 +226,37 @@ Show status of all services, default command.  Also supports the
 .Fl j
 option for detailed JSON output.
 .It Nm Ar cgroup
-List cgroup config overview
+List cgroup config overview.
 .It Nm Ar ps
-List processes based on cgroups
+List processes based on cgroups.
 .It Nm Ar top
-Show top-like listing based on cgroups
+Show top-like listing based on cgroups.
 .It Nm Ar plugins
-List installed plugins
+List installed plugins.
 .It Nm Ar runlevel Op Ar 0-9
-Show or set runlevel: 0 halt, 6 reboot
+Show or set runlevel: 0 halt, 6 reboot.
 .It Nm Ar reboot
 Reboot system, default if
 .Cm reboot
 is symlinked to
-.Nm
+.Nm .
 .It Nm Ar halt
 Halt system, default if
 .Cm halt
 is symlinked to
-.Nm
+.Nm .
 .It Nm Ar poweroff
 Power-off system, default if
 .Cm poweroff
 is symlinked to
-.Nm
+.Nm .
 .It Nm Ar suspend
 Suspend system, default if
 .Cm suspend
 is symlinked to
-.Nm
+.Nm .
 .It Nm Ar utmp show
-Raw dump of UTMP/WTMP db
+Raw dump of UTMP/WTMP db.
 .El
 .Sh SEE ALSO
 .Xr finit.conf 5
