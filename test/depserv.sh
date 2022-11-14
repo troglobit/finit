@@ -39,12 +39,13 @@ run "cat $FINIT_CONF"
 
 say 'Reload Finit'
 run "initctl reload"
+run "initctl debug"
 
 assert_status "foo" "running"
 assert_cond   "pid/foo"
 assert_status "bar" "running"
 
-#run "initctl status bar"
 sleep 3
 run "initctl stop foo"
+#run "initctl status bar"
 assert_status "bar" "waiting"
