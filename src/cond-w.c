@@ -196,11 +196,22 @@ static int cond_checkpath(const char *path)
 
 static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftw)
 {
+	const char *cond, *ptr;
+
 	if (ftw->level == 0)
 		return 1;
 
+	ptr = strstr(fpath, COND_BASE);
+	if (!ptr) {
+		warnx("%s does not seem to be a Finit condition, skipping", fpath);
+		return 0;
+	}
+
 	if (remove(fpath))
 		err(1, "Failed removing condition %s", fpath);
+
+	cond = ptr + strlen(COND_BASE) + 1;
+	cond_update(cond);
 
 	return 0;
 }
@@ -208,7 +219,7 @@ static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct
 static void cond_delpath(const char *path)
 {
 	nftw(path, do_delete, 20, FTW_DEPTH);
-	if (remove(path))
+	if (remove(path) && errno != ENOENT)
 		err(1, "Failed removing condition path %s", path);
 }
 
