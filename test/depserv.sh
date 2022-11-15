@@ -33,19 +33,37 @@ test_teardown()
 #run "initctl debug"
 #run "ls -l /run/finit/cond/pid/ /lib/finit/plugins/"
 
-run "echo service log:stderr name:foo             serv -np -i foo -f /tmp/arrakis  > $FINIT_CONF"
-run "echo service log:stderr name:bar \<pid/foo\> serv -np -i bar -F /tmp/arrakis >> $FINIT_CONF"
-run "cat $FINIT_CONF"
+test_one()
+{
+	cond=$1
+	say "Verifying foo -> <$cond> bar ..."
+	run "echo service log:stderr name:foo            serv -np -i foo -f /tmp/arrakis  > $FINIT_CONF"
+	run "echo service log:stderr name:bar \<!$cond\> serv -np -i bar -F /tmp/arrakis >> $FINIT_CONF"
+	run "cat $FINIT_CONF"
 
-say 'Reload Finit'
-run "initctl reload"
-run "initctl debug"
+	say 'Reload Finit'
+	run "initctl reload"
+#	run "initctl debug"
 
-assert_status "foo" "running"
-assert_cond   "pid/foo"
-assert_status "bar" "running"
+	assert_status "foo" "running"
+	assert_cond   "$cond"
+	assert_status "bar" "running"
 
-sleep 3
-run "initctl stop foo"
-#run "initctl status bar"
-assert_status "bar" "waiting"
+	say "Verify bar is restarted with foo is ..."
+	pid=$(texec initctl |grep bar | awk '{print $1;}')
+	texec initctl restart foo
+	assert "bar is restarted" "$(texec initctl |grep bar | awk '{print $1;}')" != "$pid"
+
+	# Wait for spice to be stolen by the Harkonnen
+	sleep 3
+	# bar should now have detected the loss of spice and be in restart
+	assert_status "bar" "restart"
+	# verify bar is stopped->waiting and no longer in restart after stopping foo
+	run "initctl stop foo"
+	#run "initctl status bar"
+	assert_status "bar" "waiting"
+}
+
+test_one "pid/foo"
+#run "initctl debug"
+test_one "service/foo/running"
