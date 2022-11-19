@@ -74,6 +74,12 @@ files in `/etc/finit.d`.  Available, but not yet enabled, services can
 be placed in `/etc/finit.d/available` and enabled by an operator using
 the [initctl](#commands--status) tool.
 
+> **Note:** as of Finit v4.4, .conf lines can be broken up using the
+> standard UNIX continuation character (`\`), also trailing comments are
+> now supported.  The latter means you need to escape any hashes used in
+> directives and descriptions (`\#`).  For more on this and examples,
+> see the finit.conf(5) manual or [doc/config.md](doc/config.md).
+
 ```ApacheConf
 # Fallback if /etc/hostname is missing
 host default

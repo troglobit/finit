@@ -841,7 +841,6 @@ static int parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 static int parse_conf(char *file, int is_rcsd)
 {
 	struct rlimit rlimit[RLIMIT_NLIMITS];
-	char line[LINE_SIZE] = "";
 	FILE *fp;
 
 	fp = fopen(file, "r");
@@ -856,26 +855,25 @@ static int parse_conf(char *file, int is_rcsd)
 
 	dbg("*** Parsing %s", file);
 	while (!feof(fp)) {
-		char *x;
+		char *line;
 
-		if (!fgets(line, sizeof(line), fp))
+		line = fparseln(fp, NULL, NULL, NULL, FPARSELN_UNESCCOMM);
+		if (!line) {
+			warn("Reading %s", file);
 			continue;
+		}
 
-		chomp(line);
 		tabstospaces(line);
-//DEV		dbg("%s", line);
-
-		/* Skip comments, i.e. lines beginning with # */
-		if (MATCH_CMD(line, "#", x))
-			continue;
+		dbg("%s", line);
 
 		if (!parse_static(line, is_rcsd))
-			continue;
-		if (!parse_dynamic(line, is_rcsd ? rlimit : global_rlimit, file))
-			continue;
+			;
+		else if (!parse_dynamic(line, is_rcsd ? rlimit : global_rlimit, file))
+			;
+		else
+			parse_env(line);
 
-		/* Not static or dynamic conf, check if it is a global env. */
-		parse_env(line);
+		free(line);
 	}
 
 	fclose(fp);

@@ -4,6 +4,24 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.4][UNRELEASED]
+-----------------
+
+> **Note:** this release contains changes to the `.conf` parser.  If you
+> have .conf file statements with comment character (`#`) in the command
+> options or description, you must now escape them (`\#`).
+
+### Changes
+* Support for line continuation character `\` in .conf files, issue #186
+
+        service name:sysklogd [S123456789]   \
+            env:-/etc/default/sysklogd       \
+            syslogd -F $SYSLOGD_ARGS         \
+            -- System log daemon
+
+### Fixes
+
+
 [4.3][] - 2022-05-15
 --------------------
 
@@ -1152,7 +1170,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.2...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.3...HEAD
 [4.3]: https://github.com/troglobit/finit/compare/4.2...4.3
 [4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
 [4.1]: https://github.com/troglobit/finit/compare/4.0...4.1

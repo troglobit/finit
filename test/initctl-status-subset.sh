@@ -37,9 +37,9 @@ test_add_one()
 
 test_init
 
-test_add_one "task manual:yes name:foo :1 serv -- Foo #1"
-test_add_one "task manual:yes name:foo :2 serv -- Foo #2"
-test_add_one "task manual:yes name:foo :3 serv -- Foo #3"
+test_add_one "task manual:yes name:foo :1 serv -- Foo \#1"
+test_add_one "task manual:yes name:foo :2 serv -- Foo \#2"
+test_add_one "task manual:yes name:foo :3 serv -- Foo \#3"
 test_add_one "task manual:yes name:foobar serv -- Foobar"
 
 say 'Reload Finit'

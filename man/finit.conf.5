@@ -47,13 +47,20 @@ Available services
 Enabled services, symlinks from available
 .El
 .Sh FILE FORMAT
-Lines starting with `#' are ignored. Note that end-of-line comments are
-NOT supported, comments must be on a line of their own.
+The file format is line based, empty lines and comments, lines starting
+with `#', are ignored.  A configuration directive starts with a keyword
+followed by a space and the rest of the line is treated as the value.
 .Pp
-A configuration stanza must be on a single (long) line and
-.Em cannot
-be broken up in multiple lines by use of a backslash as the last
-character.
+As of Finit v4.4, configuration directives can be broken up in multiple
+lines using the continuation character `\\', and trailing comments are
+also allowed.  Example:
+.Bd -unfilled -offset indent
+# Escape \\# chars if you want them literal in, e.g., descriptions
+service name:sysklogd [S123456789]   \\
+    env:-/etc/default/sysklogd       \\
+    syslogd -F $SYSLOGD_ARGS         \\
+    -- System log daemon \\# 1   # Comments allowed now
+.Ed
 .Sh DIRECTIVES
 This section lists all supported configuration directives.  There also exist
 deprecated directives, see the Markdown documentation for details on these.
