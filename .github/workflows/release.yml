@@ -53,7 +53,7 @@ jobs:
       - name: Creating Makefiles
         run: |
           ./autogen.sh
-          ./configure --prefix= --enable-x11-common-plugin --with-watchdog --with-keventd
+          ./configure  --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var --enable-x11-common-plugin --with-watchdog --with-keventd
       - name: Building release
         run: |
           make release
