@@ -54,7 +54,8 @@ Features include:
 
 Focus is on small and embedded systems, although Finit is fully usable
 on server and desktop systems as well.  For working examples, see the
-[contrib/](contrib/) section with tutorials for:
+[contrib/](contrib/) section with tutorials for the following Linux
+distributions:
 
   * [Void Linux](contrib/void/),
   * [Alpine Linux](contrib/alpine/), and
@@ -72,13 +73,14 @@ Example
 This example `/etc/finit.conf` can also be split up in multiple `.conf`
 files in `/etc/finit.d`.  Available, but not yet enabled, services can
 be placed in `/etc/finit.d/available` and enabled by an operator using
-the [initctl](#commands--status) tool.
+the [initctl](#commands--status) tool.  See the above mentioned Linux
+distributions, or [myLinux][].
 
 > **Note:** as of Finit v4.4, .conf lines can be broken up using the
 > standard UNIX continuation character (`\`), also trailing comments are
 > now supported.  The latter means you need to escape any hashes used in
 > directives and descriptions (`\#`).  For more on this and examples,
-> see the finit.conf(5) manual or [doc/config.md](doc/config.md).
+> see the [finit.conf(5)][] manual or [doc/config.md](doc/config.md).
 
 ```ApacheConf
 # Fallback if /etc/hostname is missing
@@ -702,6 +704,7 @@ and proposed extensions.
 [EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
 [Joachim Wiberg]:   https://troglobit.com
+[finit.conf(5)]:    https://man.troglobit.com/man5/finit.conf.5.html
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
 [myLinux]:          https://github.com/troglobit/myLinux/
