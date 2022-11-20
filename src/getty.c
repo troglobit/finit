@@ -34,6 +34,7 @@
 #include <sys/utsname.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>		/* sysconf() */
 
 #include "finit.h"
@@ -48,8 +49,81 @@
 #define LOGIN_NAME_MIN 64
 #endif
 
+struct osrel {
+	char name[32];
+	char pretty[64];
+	char id[32];
+	char version[32];
+	char version_id[32];
+	char home_url[128];
+	char doc_url[128];
+	char bug_url[128];
+	char support_url[128];
+};
+
 static long logname_len = 32;	/* useradd(1) limit at 32 chars */
 static int  passenv     = 0;	/* Set /bin/login -p or not     */
+
+/*
+ * Parse os-release
+ */
+static int osrel(struct osrel *rel)
+{
+	char codename[30];
+	char *line;
+	FILE *fp;
+
+	fp = fopen("/etc/os-release", "r");
+	if (!fp) {
+		fp = fopen("/usr/lib/os-release", "r");
+		if (!fp)
+			return -1;
+	}
+
+	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
+		char *val;
+
+		if ((val = fgetval(line, "NAME", "=")))
+			strlcpy(rel->name, val, sizeof(rel->name));
+		if ((val = fgetval(line, "PRETTY_NAME", "=")))
+			strlcpy(rel->pretty, val, sizeof(rel->pretty));
+		if ((val = fgetval(line, "ID", "=")))
+			strlcpy(rel->id, val, sizeof(rel->id));
+		if ((val = fgetval(line, "VERSION", "=")))
+			strlcpy(rel->version, val, sizeof(rel->version));
+		if ((val = fgetval(line, "VERSION_ID", "=")))
+			strlcpy(rel->version_id, val, sizeof(rel->version_id));
+		if ((val = fgetval(line, "VERSION_CODENAME", "=")))
+			strlcpy(codename, val, sizeof(codename));
+		if ((val = fgetval(line, "HOME_URL", "=")))
+			strlcpy(rel->home_url, val, sizeof(rel->home_url));
+		if ((val = fgetval(line, "DOCUMENTATION_URL", "=")))
+			strlcpy(rel->doc_url, val, sizeof(rel->doc_url));
+		if ((val = fgetval(line, "SUPPORT_URL", "=")))
+			strlcpy(rel->support_url, val, sizeof(rel->support_url));
+		if ((val = fgetval(line, "BUG_REPORT_URL", "=")))
+			strlcpy(rel->bug_url, val, sizeof(rel->bug_url));
+
+		if (val)
+			free(val);
+		free(line);
+	}
+	fclose(fp);
+
+	/*
+	 * Many distros don't set VERSION or VERSION_ID for their
+	 * rolling, or unstable, branches.  However, most set the
+	 * version code name, so we use that as VERSION.
+	 */
+	if (!rel->version[0] && codename[0]) {
+		if (codename[0] == '(')
+			strlcpy(rel->version, codename, sizeof(rel->version));
+		else
+			snprintf(rel->version, sizeof(rel->version), "(%s)", codename);
+	}
+
+	return 0;
+}
 
 /*
  * Read one character from stdin.
@@ -68,10 +142,19 @@ static int readch(void)
 
 /*
  * Parse and display a line from /etc/issue
+ *
+ * Includes Finit-specific extensions to display information from
+ * /etc/os-release instead of relying on legacy uname.  Activated
+ * only if /etc/os-release or /usr/lib/os-release exist.
+ *
+ * https://www.unix.com/man-page/Linux/8/getty/
+ * https://www.systutorials.com/docs/linux/man/8-mingetty/
  */
-static void do_parse(char *line, struct utsname *uts, char *tty)
+static void parseln(char *line, struct utsname *uts, struct osrel *rel, char *tty, int compat)
 {
+	char buf[32] = { 0 };
 	char *s, *s0;
+	time_t now;
 
 	s0 = line;
 	for (s = line; *s != 0; s++) {
@@ -80,11 +163,31 @@ static void do_parse(char *line, struct utsname *uts, char *tty)
 				dprint(STDOUT_FILENO, s0, s - s0);
 			s0 = s + 2;
 			switch (*++s) {
+			case 'B':
+				if (!compat)
+					dprint(STDOUT_FILENO, rel->bug_url, 0);
+				break;
+			case 'D':
+				if (!compat)
+					dprint(STDOUT_FILENO, rel->doc_url, 0);
+				break;
+			case 'H':
+				if (!compat)
+					dprint(STDOUT_FILENO, rel->home_url, 0);
+				break;
+			case 'I':
+				if (!compat)
+					dprint(STDOUT_FILENO, rel->id, 0);
+				break;
 			case 'l':
 				dprint(STDOUT_FILENO, tty, 0);
 				break;
 			case 'm':
 				dprint(STDOUT_FILENO, uts->machine, 0);
+				break;
+			case 'N':
+				if (!compat)
+					dprint(STDOUT_FILENO, rel->name, 0);
 				break;
 			case 'n':
 				dprint(STDOUT_FILENO, uts->nodename, 0);
@@ -95,13 +198,31 @@ static void do_parse(char *line, struct utsname *uts, char *tty)
 				break;
 #endif
 			case 'r':
-				dprint(STDOUT_FILENO, uts->release, 0);
+				if (compat)
+					dprint(STDOUT_FILENO, uts->release, 0);
+				else
+					dprint(STDOUT_FILENO, rel->version_id, 0);
+				break;
+			case 'S':
+				if (!compat)
+					dprint(STDOUT_FILENO, rel->support_url, 0);
 				break;
 			case 's':
-				dprint(STDOUT_FILENO, uts->sysname, 0);
+				if (compat)
+					dprint(STDOUT_FILENO, uts->sysname, 0);
+				else
+					dprint(STDOUT_FILENO, rel->pretty, 0);
+				break;
+			case 't':
+				now = time(NULL);
+				ctime_r(&now, buf);
+				dprint(STDOUT_FILENO, chomp(buf), 0);
 				break;
 			case 'v':
-				dprint(STDOUT_FILENO, uts->version, 0);
+				if (compat)
+					dprint(STDOUT_FILENO, uts->version, 0);
+				else
+					dprint(STDOUT_FILENO, rel->version, 0);
 				break;
 			case 0:
 				goto leave;
@@ -119,28 +240,31 @@ leave:
 /*
  * Parse and display /etc/issue
  */
-static void do_issue(char *tty)
+static void issue(char *tty)
 {
-	FILE *fp;
 	char buf[BUFSIZ] = "Welcome to \\s \\v \\n \\l\n\n";
 	struct utsname uts;
+	struct osrel rel;
+	int compat;
+	FILE *fp;
 
 	/*
 	 * Get data about this machine.
 	 */
 	uname(&uts);
+	compat = osrel(&rel);
 
 	fp = fopen("/etc/issue", "r");
 	if (fp) {
 		while (fgets(buf, sizeof(buf), fp))
-			do_parse(buf, &uts, tty);
+			parseln(buf, &uts, &rel, tty, compat);
 
 		fclose(fp);
 	} else {
-		do_parse(buf, &uts, tty);
+		parseln(buf, &uts, &rel, tty, compat);
 	}
 
-	do_parse("\\n login: ", &uts, tty);
+	parseln("\\n login: ", &uts, &rel, tty, compat);
 }
 
 /*
@@ -157,7 +281,7 @@ static int get_logname(char *tty, char *name, size_t len)
 	ch = ' ';
 	*name = '\0';
 	while (ch != '\n') {
-		do_issue(tty);
+		issue(tty);
 
 		np = name;
 		while ((ch = readch()) != '\n') {
@@ -178,11 +302,10 @@ static int get_logname(char *tty, char *name, size_t len)
 }
 
 /*
- * Execute the login(1) command with the current
- * username as its argument. It will reply to the
- * calling user by typing "Password: "...
+ * Start login(1) with the current username as its argument.  It replies
+ * to the calling user by typing "Password: " ...
  */
-static int do_login(char *name)
+static int exec_login(char *name)
 {
 	struct stat st;
 
@@ -242,7 +365,7 @@ restart:
 	if (term && term[0])
 		setenv("TERM", term, 1);
 
-	return do_login(name);
+	return exec_login(name);
 }
 
 static int usage(int rc)
