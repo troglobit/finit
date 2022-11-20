@@ -25,7 +25,9 @@
 #ifndef FINIT_HELPERS_H_
 #define FINIT_HELPERS_H_
 
+#include <ctype.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/ttydefaults.h>	/* Not included by default in musl libc */
@@ -112,6 +114,45 @@ static inline int dprint(int fd, const char *s, size_t len)
 	}
 
 	return rc;
+}
+
+static inline char *fgetval(char *line, const char *key, char *sep)
+{
+	char *ptr, *str, *copy;
+	size_t len;
+
+	str = copy = strdup(line);
+	if (!copy)
+		return NULL;
+
+	ptr = strsep(&str, sep);
+	if (ptr && strcmp(ptr, key)) {
+	fail:
+		free(copy);
+		return NULL;
+	}
+
+	ptr = strsep(&str, sep);
+	if (!ptr)
+		goto fail;
+
+	if (*ptr == '"' || *ptr == '\'') {
+		char *end = &ptr[strlen(ptr) - 1];
+		char q = *ptr;
+
+		while (end > ptr && isspace(*end))
+			*end-- = 0;
+
+		if (*end == q) {
+			*end = 0;
+			ptr++;
+		}
+	}
+
+	len = strlen(ptr) + 1;
+	memmove(copy, ptr, len);
+
+	return realloc(copy, len);
 }
 
 #endif /* FINIT_HELPERS_H_ */

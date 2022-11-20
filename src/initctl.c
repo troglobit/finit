@@ -1363,32 +1363,6 @@ static int cmd_parse(int argc, char *argv[], struct cmd *command)
 	return command[0].cb(NULL); /* default cmd */
 }
 
-static char *fgetval(char *line, const char *key, char *sep)
-{
-	char *ptr, *str, *copy;
-	size_t len;
-
-	str = copy = strdup(line);
-	if (!copy)
-		return NULL;
-
-	ptr = strsep(&str, sep);
-	if (ptr && strcmp(ptr, key)) {
-	fail:
-		free(copy);
-		return NULL;
-	}
-
-	ptr = strsep(&str, sep);
-	if (!ptr)
-		goto fail;
-
-	len = strlen(ptr) + 1;
-	memmove(copy, ptr, len);
-
-	return realloc(copy, len);
-}
-
 static void cleanup(void)
 {
 	if (finit_conf)
