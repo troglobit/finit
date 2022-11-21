@@ -81,6 +81,7 @@
 	CHOOSE(HOOK_RUNLEVEL_CHANGE, "nop"),			\
 								\
 	/* Shutdown hooks, runlevel [06] */			\
+	CHOOSE(HOOK_NETWORK_DN,      "hook/net/down"),		\
 	CHOOSE(HOOK_SHUTDOWN,        "hook/sys/shutdown"),	\
 	CHOOSE(HOOK_SVC_DN,          "hook/svc/down"),		\
 	CHOOSE(HOOK_SYS_DN,          "hook/sys/down"),		\

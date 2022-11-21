@@ -560,6 +560,9 @@ done:
 	if (updown) {
 		dbg("Calling all network up hooks ...");
 		plugin_run_hooks(HOOK_NETWORK_UP);
+	} else {
+		dbg("Calling all network down hooks ...");
+		plugin_run_hooks(HOOK_NETWORK_DN);
 	}
 }
 

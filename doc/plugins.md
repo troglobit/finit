@@ -166,6 +166,9 @@ requirements, and possibilities, of hook scripts.
 
 ### Shutdown Hooks
 
+* `HOOK_NETWORK_DN`, `hook/net/down`: Called right after having changed
+  to runlevel 6, or 0, when all services have received their 'stop' signal.
+
 * `HOOK_SHUTDOWN`, `hook/sys/shutdown`: Called at shutdown/reboot, right
   before all services are sent `SIGTERM`
 
