@@ -638,9 +638,16 @@ files, or scripts, in the directory are called, in alphabetic order.
 The scripts in this directory are executed at the very end of runlevel
 `S`, [bootstrap][].
 
-It can be beneficial to use `S01name`, `S02othername`, etc. if there
-is a dependency order between the scripts.  Symlinks to existing
-daemons can talso be used, but make sure they daemonize by default.
+It can be beneficial to use `01-name`, `02-othername`, etc., to ensure
+the scripts are started in that order, e.g., if there is a dependency
+order between scripts.  Symlinks to existing daemons can talso be used,
+but make sure they daemonize (background) themselves properly, otherwise
+Finit will lock up.
+
+If `S[0-9]foo` and `K[0-9]bar` style naming is used, the executable will
+be called with an extra argument, `start` and `stop`, respectively.
+E.g., `S01foo` will be called as `S01foo start`.  Of course, `S01foo`
+and `K01foo` may be a symlink to to `another/directory/foo`.
 
 Similar to the `/etc/rc.local` shell script, make sure that all your
 services and programs either terminate or start in the background or
@@ -878,9 +885,9 @@ There is, however, nothing preventing you from having all configuration
 settings in `/etc/finit.conf`.
 
 > **Note:** The `/etc/finit.d` directory was previously the default
->          Finit [runparts](#run-parts-scripts) directory.  Finit no
->          longer has a default `runparts`, make sure to update your
->          setup, or the finit configuration, accordingly.
+>          Finit [runparts](#run-parts-scripts) directory.  Finit >=v4.0
+>          no longer has a default `runparts` directory, make sure to
+>          update your setup, or the finit configuration, accordingly.
 
 
 Watchdog

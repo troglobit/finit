@@ -108,6 +108,9 @@ the second is the condition name and hook script path.  A hook script is
 a plain shell script, or program, that does a very small dedicated job
 at the below hook points.
 
+See [Run-parts Scripts](config.md#run-parts-scripts) for details on the
+requirements, and possibilities, of hook scripts.
+
 **Example:**
 
     $ mkdir -p /libexec/finit/hook/sys/down
