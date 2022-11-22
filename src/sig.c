@@ -318,9 +318,8 @@ void do_shutdown(shutop_t op)
 		do_iterate_proc(kill_cb, &signo);
 	}
 
-	/* Exit plugins and API gracefully */
+	/* Exit plugins gracefully */
 	plugin_exit();
-	api_exit();
 
 	/* We can no longer act on conditions, activate script runner */
 	cond_exit();

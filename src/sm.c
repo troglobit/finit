@@ -150,6 +150,7 @@ restart:
 
 		/* Restore terse mode and run hooks before shutdown */
 		if (runlevel == 0 || runlevel == 6) {
+			api_exit();
 			log_exit();
 			plugin_run_hooks(HOOK_SHUTDOWN);
 		}
