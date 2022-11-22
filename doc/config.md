@@ -638,6 +638,33 @@ files, or scripts, in the directory are called, in alphabetic order.
 The scripts in this directory are executed at the very end of runlevel
 `S`, [bootstrap][].
 
+**Limitations:**
+
+Scripts called from `runparts`, or hook scripts (see below), are limited
+in what they can do and expect from Finit:
+
+  1. Finit is single threaded and all scripts executed from these two
+     mechanisms are limited to file system operations (early or late
+	 hooks may not have write access!) and standard UNIX programs.
+  2. Thus, it is *not possible* to call `initctl` to query status of
+     services since that calls Finit over the `/run/finit/socket`.
+  3. Confusingly enough, there are some commands to `initctl` that are
+     available; `ls`, `enable`, `disable`, `touch`, `create`, `delete`,
+     and all the `cond` commands.  Because all these are basically just
+     wrappers for manipulating files (again, write access for early/late
+     hooks may not be available.)
+
+Also, similar to the `/etc/rc.local` shell script, make sure that all
+your services and programs either terminate or start in the background
+or you will block Finit.
+
+> **Note:** `runparts` scrips are only read and executed in runlevel S
+> ([bootstrap][]).  See [hook scripts](plugins.md#hooks) for other ways
+> to run scripts at certain points during the complete lifetime of the
+> system.
+
+**Recommendataions:**
+
 It can be beneficial to use `01-name`, `02-othername`, etc., to ensure
 the scripts are started in that order, e.g., if there is a dependency
 order between scripts.  Symlinks to existing daemons can talso be used,
@@ -648,12 +675,6 @@ If `S[0-9]foo` and `K[0-9]bar` style naming is used, the executable will
 be called with an extra argument, `start` and `stop`, respectively.
 E.g., `S01foo` will be called as `S01foo start`.  Of course, `S01foo`
 and `K01foo` may be a symlink to to `another/directory/foo`.
-
-Similar to the `/etc/rc.local` shell script, make sure that all your
-services and programs either terminate or start in the background or
-you will block Finit.
-
-> **Note:** only read and executed in runlevel S ([bootstrap][]).
 
 [run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
 

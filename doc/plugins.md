@@ -8,7 +8,8 @@ Hooks & Plugins
   * [Shutdown Hooks](#shutdown-hooks)
 
 Finit can be extended to add general functionality in the form of I/O
-monitors, or hook plugins.
+monitors, or hook plugins.  It is even possible to run scripts at these
+hook points, see below.
 
 The following sections detail existing plugins and hook points.  For
 more information, see the plugins listed below.
@@ -109,7 +110,7 @@ a plain shell script, or program, that does a very small dedicated job
 at the below hook points.
 
 See [Run-parts Scripts](config.md#run-parts-scripts) for details on the
-requirements, and possibilities, of hook scripts.
+requirements, possibilities, and *limitations* of hook scripts.
 
 **Example:**
 
