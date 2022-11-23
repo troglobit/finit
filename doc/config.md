@@ -663,7 +663,7 @@ or you will block Finit.
 > to run scripts at certain points during the complete lifetime of the
 > system.
 
-**Recommendataions:**
+**Recommendations:**
 
 It can be beneficial to use `01-name`, `02-othername`, etc., to ensure
 the scripts are started in that order, e.g., if there is a dependency
