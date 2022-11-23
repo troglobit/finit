@@ -473,14 +473,15 @@ int run_parts(char *dir, char *cmd)
 		}
 
 		if (!S_ISEXEC(st.st_mode) || S_ISDIR(st.st_mode)) {
-			dbg("Skipping %s ...", path);
+			if (strcmp(name, ".") && strcmp(name, ".."))
+				dbg("Skipping %s ...", path);
 			continue;
 		}
 
 		/* If the callee didn't supply a run_parts() argument */
 		if (!cmd) {
 			/* Check if S<NUM>service or K<NUM>service notation is used */
-			dbg("Checking if %s is a sysvinit startstop script ...", name);
+//			dbg("Checking if %s is a sysvinit startstop script ...", name);
 			if (name[0] == 'S' && isdigit(name[1]))
 				strlcat(path, " start", sizeof(path));
 			else if (name[0] == 'K' && isdigit(name[1]))
