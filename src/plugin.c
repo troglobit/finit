@@ -50,7 +50,8 @@
 			return p;					\
 	}
 
-static char *plugpath = NULL; /* Set by first load. */
+static int plugloaded = 0;	/* Set while plugins are loaded */
+static char *plugpath = NULL;	/* Set by first load. */
 static TAILQ_HEAD(plugin_head, plugin) plugins  = TAILQ_HEAD_INITIALIZER(plugins);
 
 #ifndef ENABLE_STATIC
@@ -222,8 +223,8 @@ void plugin_run_hook(hook_point_t no, void *arg)
 	plugin_t *p, *tmp;
 
 #ifdef HAVE_HOOK_SCRIPTS_PLUGIN
-	if (!cond_is_available()) {
-		dbg("conditions not available, calling script script based hooks only!");
+	if (!cond_is_available() && !plugloaded) {
+		dbg("conditions not available, calling script based hooks only!");
 		plugin_script_run(no);
 	}
 #endif
@@ -238,7 +239,7 @@ void plugin_run_hook(hook_point_t no, void *arg)
 	/* Conditions are stored in /run, so don't try to signal
 	 * conditions for any hooks before filesystems have been
 	 * mounted. */
-	if (no >= HOOK_MOUNT_ERROR)
+	if (no >= HOOK_MOUNT_ERROR && no <= HOOK_SHUTDOWN)
 		cond_set_oneshot(hook_cond[no]);
 
 	service_step_all(SVC_TYPE_RUNTASK);
@@ -472,6 +473,8 @@ int plugin_init(uev_ctx_t *ctx)
 		}
 		free(paths);
 	}
+
+	plugloaded = 1;
 #endif
 
 	return init_plugins(ctx);
@@ -488,6 +491,8 @@ void plugin_exit(void)
                         warn("Failed unloading plugin %s: %s", p->name, error ? error : "unknown error");
 		}
         }
+
+	plugloaded = 0;
 #endif
 }
 
