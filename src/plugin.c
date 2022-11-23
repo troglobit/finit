@@ -42,6 +42,7 @@
 #include "plugin.h"
 #include "private.h"
 #include "service.h"
+#include "sig.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd > 0)
 #define SEARCH_PLUGIN(str)						\
@@ -203,12 +204,33 @@ static const char *hscript_paths[] = HOOK_TYPES;
 
 void plugin_script_run(hook_point_t no)
 {
+	const char *hook_name = hscript_paths[no];
+	const char *env[] = {
+		"FINIT_HOOK_NAME", hook_name,
+		"FINIT_SHUTDOWN", NULL,
+		NULL,
+	};
 	char path[CMD_SIZE] = "";
 
 	strlcat(path, PLUGIN_HOOK_SCRIPTS_PATH, sizeof(path));
-	strlcat(path, hscript_paths[no] + 4, sizeof(path));
+	strlcat(path, hook_name + 4, sizeof(path));
 
-	run_parts(path, NULL, 0);
+	if (no >= HOOK_SHUTDOWN) {
+		switch (halt) {
+		case SHUT_OFF:
+			env[3] = "poweroff";
+			break;
+		case SHUT_HALT:
+			env[3] = "halt";
+			break;
+		case SHUT_REBOOT:
+			env[3] = "reboot";
+			break;
+		}
+	} else
+		env[2] = NULL;
+
+	run_parts(path, NULL, env, 0);
 }
 #else
 void plugin_script_run(hook_point_t no)

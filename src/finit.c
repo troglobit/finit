@@ -602,7 +602,7 @@ static void bootstrap_worker(void *work)
 	 * Run startup scripts in the runparts directory, if any.
 	 */
 	if (runparts && fisdir(runparts) && !rescue)
-		run_parts(runparts, NULL, 1);
+		run_parts(runparts, NULL, NULL, 1);
 
 
 	/*

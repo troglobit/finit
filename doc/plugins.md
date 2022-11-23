@@ -112,6 +112,14 @@ at the below hook points.
 See [Run-parts Scripts](config.md#run-parts-scripts) for details on the
 requirements, possibilities, and *limitations* of hook scripts.
 
+All hook scripts are called with at least one environment variable set,
+the hook name, useful when reusing the same hook script for multiple
+hook points:
+
+  - `FINIT_HOOK_NAME`: set to the second label, e.g., `hook/net/up`
+  - `FINIT_SHUTDOWN`: set for `hook/sys/shutdown` and later to one
+    of `halt`, `poweroff`, or `reboot`.
+
 **Example:**
 
     $ mkdir -p /libexec/finit/hook/sys/down
@@ -119,6 +127,10 @@ requirements, possibilities, and *limitations* of hook scripts.
     #!/bin/sh
     echo 'I run just before the reboot() syscall at shutdown/reboot'
     echo 'I have access to /dev since devtmpfs is exempt from umount'
+    echo "FINIT_HOOK_NAME: $FINIT_HOOK_NAME"
+    if [ -n "$FINIT_SHUTDOWN" ]; then
+            echo "FINIT_SHUTDOWN:  $FINIT_SHUTDOWN"
+    fi
     exit 0
     EOF
     $ chmod +x /libexec/finit/hook/sys/foo.sh

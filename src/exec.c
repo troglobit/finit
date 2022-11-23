@@ -441,7 +441,25 @@ pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])
 	return rc;
 }
 
-int run_parts(char *dir, char *cmd, int progress)
+static void run_env(const char *env[])
+{
+	size_t i = 0;
+
+	if (!env)
+		return;
+
+	while (env[i]) {
+		size_t j = i + 1;
+
+		if (!env[j])
+			break;
+
+		setenv(env[i], env[j], 1);
+		i += 2;
+	}
+}
+
+int run_parts(char *dir, char *cmd, const char *env[], int progress)
 {
 	struct dirent **e;
 	int i, num;
@@ -495,6 +513,8 @@ int run_parts(char *dir, char *cmd, int progress)
 		pid = fork();
 		if (!pid) {
 			sig_unblock();
+			run_env(env);
+
 			return execvp(_PATH_BSHELL, argv);
 		}
 

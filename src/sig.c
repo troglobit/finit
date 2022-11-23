@@ -302,6 +302,7 @@ void do_shutdown(shutop_t op)
 		sched_setscheduler(1, SCHED_RR, &sched_param);
 	}
 
+	halt = op;
 	if (sdown)
 		run_interactive(sdown, "Calling shutdown hook: %s", sdown);
 

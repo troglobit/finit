@@ -86,7 +86,7 @@ int     run_interactive (char *cmd, char *fmt, ...) __attribute__ ((format (prin
 int     exec_runtask    (char *cmd, char *args[]);
 pid_t   run_getty       (char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[]);
 pid_t   run_sh          (char *tty, int noclear, int nowait, struct rlimit rlimit[]);
-int     run_parts       (char *dir, char *cmd, int progress);
+int     run_parts       (char *dir, char *cmd, const char *env[], int progress);
 
 static inline int create(char *path, mode_t mode, uid_t uid, gid_t gid)
 {
