@@ -858,13 +858,11 @@ static int parse_conf(char *file, int is_rcsd)
 		char *line;
 
 		line = fparseln(fp, NULL, NULL, NULL, FPARSELN_UNESCCOMM);
-		if (!line) {
-			warn("Reading %s", file);
+		if (!line)
 			continue;
-		}
 
 		tabstospaces(line);
-		dbg("%s", line);
+//		dbg("%s", line);
 
 		if (!parse_static(line, is_rcsd))
 			;
