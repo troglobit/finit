@@ -441,7 +441,7 @@ pid_t run_sh(char *tty, int noclear, int nowait, struct rlimit rlimit[])
 	return rc;
 }
 
-int run_parts(char *dir, char *cmd)
+int run_parts(char *dir, char *cmd, int progress)
 {
 	struct dirent **e;
 	int i, num;
@@ -490,7 +490,8 @@ int run_parts(char *dir, char *cmd)
 			strlcat(path, cmd, sizeof(path));
 		}
 
-		print_desc("Calling ", path);
+		if (progress)
+			print_desc("Calling ", path);
 		pid = fork();
 		if (!pid) {
 			sig_unblock();
@@ -503,7 +504,8 @@ int run_parts(char *dir, char *cmd)
 			warnx("%s exited with status %d", path, exit_status);
 		else if (WIFSIGNALED(status))
 			warnx("%s terminated by signad %d", path, WTERMSIG(status));
-		print_result(status);
+		if (progress)
+			print_result(status);
 	}
 
 	while (num--)

@@ -45,7 +45,7 @@ static void setup(void *arg)
 
 	touch("/etc/resolvconf/run/enable-updates");
 	chdir("/etc/resolvconf/run/interface");
-	run_parts("/etc/resolvconf/update.d", "-i");
+	run_parts("/etc/resolvconf/update.d", "-i", 0);
 	chdir("/");
 }
 

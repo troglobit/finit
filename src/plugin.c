@@ -208,7 +208,7 @@ void plugin_script_run(hook_point_t no)
 	strlcat(path, PLUGIN_HOOK_SCRIPTS_PATH, sizeof(path));
 	strlcat(path, hscript_paths[no] + 4, sizeof(path));
 
-	run_parts(path, NULL);
+	run_parts(path, NULL, 0);
 }
 #else
 void plugin_script_run(hook_point_t no)
