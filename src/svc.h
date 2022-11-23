@@ -363,17 +363,20 @@ static inline char *svc_status(svc_t *svc)
 			return "stopping";
 		}
 
-	case SVC_PAUSED_STATE:
-		return "paused";
-
 	case SVC_CLEANUP_STATE:
 		return "cleanup";
 
 	case SVC_SETUP_STATE:
 		return "setup";
 
+	case SVC_PAUSED_STATE:
+		return "paused";
+
 	case SVC_WAITING_STATE:
 		return "waiting";
+
+	case SVC_STARTING_STATE:
+		return "starting";
 
 	case SVC_RUNNING_STATE:
 		return "running";
