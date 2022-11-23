@@ -581,17 +581,6 @@ static void bootstrap_worker(void *work)
 	static int cnt = 120 * 10;	/* We run with 100ms period */
 	int level = cfglevel;
 
-	/*
-	 * Set up inotify watcher for /etc/finit.conf, /etc/finit.d, and
-	 * their deps, to figure out how to bootstrap the system.
-	 */
-	conf_monitor();
-
-	/*
-	 * Background service tasks
-	 */
-	service_init();
-
 	dbg("Step all services ...");
 	service_step_all(SVC_TYPE_ANY);
 
@@ -835,6 +824,12 @@ int main(int argc, char *argv[])
 	dbg("Base FS up, calling hooks ...");
 	plugin_run_hooks(HOOK_BASEFS_UP);
 
+	/*
+	 * Set up inotify watcher for /etc/finit.conf, /etc/finit.d, and
+	 * their deps, to figure out how to bootstrap the system.
+	 */
+	conf_monitor();
+
 	dbg("Starting initctl API responder ...");
 	api_init(&loop);
 
@@ -843,6 +838,11 @@ int main(int argc, char *argv[])
 
 	dbg("Starting bootstrap finalize timer ...");
 	schedule_work(&bootstrap_work);
+
+	/*
+	 * Background service tasks
+	 */
+	service_init();
 
 	/*
 	 * Enter main loop to monitor /dev/initctl and services
