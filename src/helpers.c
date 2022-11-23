@@ -537,7 +537,7 @@ void networking(int updown)
 				char buf[256];
 
 				while (fgets(buf, sizeof(buf), pp))
-					logit(LOG_NOTICE, "network: %s", buf);
+					logit(LOG_NOTICE, "network: %s", chomp(buf));
 
 				rc = pclose(pp);
 			}
