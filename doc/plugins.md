@@ -62,7 +62,7 @@ For your convenience a set of *optional* plugins are available:
 * *modules-load.so*: Scans `/etc/modules-load.d/*.conf` for modules to
   load using `modprobe`.  Each file can contain multiple lines with the
   name of the module to load.  Any line starting with the standard UNIX
-  comment character, `#`, is skipped.
+  comment character, `#`, or `;`, is skipped.
   
   Modules are loaded when entering runlevel `[2345]` using the `task`
   stanza.  Each module gets a unique `name:modprobe.foo`, and
@@ -71,11 +71,20 @@ For your convenience a set of *optional* plugins are available:
 
         set noindex
 
+  To change the index used by the plugin:
+
+        set index 1234
+
   **Note:** unlike the traditional .conf `module` directive, which load
-  any listed module immediately, this plugin creates standard `taks`
-  directives which load the module(s) in the background.  As long as
-  the `modprobe` program is found in the path, these tasks will always
-  return `[ OK ]` at boot.  Check the actual status using `initctl`.
+  any listed module immediately, this plugin creates a background `task`
+  which load the module(s) in the background.  The program is modprobe,
+  `/sbin/modprobe`, which you can override per .conf file:
+
+        set modprobe /path/to/maybe-a-modprobe-wrapper
+
+  Since these tasks run in the background, they usually return `[ OK ]`
+  at boot, unless the modprobe tool does not exist.  Check syslog for
+  warnings and the actual status of the operation using `initctl`.
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor

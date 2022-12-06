@@ -62,62 +62,104 @@
 #ifndef MODULES_LOAD_PATH
 #define MODULES_LOAD_PATH "/etc/modules-load.d"
 #endif
+#define MODPROBE_PATH     "/sbin/modprobe"
 #define SERVICE_LINE \
-	"cgroup.init name:modprobe.%s :%d [2345] /sbin/modprobe %s %s -- Kernel module: %s"
+	"cgroup.init name:modprobe.%s :%d [2345] %s %s %s -- Kernel module: %s"
 #define SERVICE_LINE_NOINDEX \
-	"cgroup.init name:modprobe.%s [2345] /sbin/modprobe %s %s -- Kernel module: %s"
+	"cgroup.init name:modprobe.%s [2345] %s %s %s -- Kernel module: %s"
 
-static int load_file(const char *file, int index)
+static int modules_load(const char *file, int index)
 {
 	char module_path[PATH_MAX];
-	char line[256];
+	char *modprobe_path;
 	int num = 0;
+	char *line;
 	FILE *fp;
 
 	strlcpy(module_path, MODULES_LOAD_PATH "/", sizeof(module_path));
 	strlcat(module_path, file, sizeof(module_path));
 
 	fp = fopen(module_path, "r");
-	if (!fp)
+	if (!fp) {
+		warnx("failed opening %s for reading, skipping ...", module_path);
 		return 0;
+	}
 
-	while (fgets(line, sizeof(line), fp)) {
-		char cmd[CMD_SIZE], *mod, *args;
+	modprobe_path = strdup(MODPROBE_PATH);
+	if (!modprobe_path) {
+		warnx("failed allocating memory in modules-load plugin.");
+		fclose(fp);
+		return -1;
+	}
 
-		chomp(line);
+	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
+		char cmd[CMD_SIZE * 2], *mod, *args, *set;
 
+		/*
+		 * fparseln() skips regular UNIX comments only.
+		 * This is for modules-load.d(5) compat.
+		 */
+		if (line[0] == ';')
+			goto next;
+
+		/* trim whitespace */
 		mod = strip_line(line);
 		if (!mod[0])
-			continue;
+			goto next;
 
-		if (mod[0] == '#' || mod[0] == ';')
-			continue;
+		/* Finit extension 'set foo bar' */
+		if ((set = fgetval(mod, "set", "= \t"))) {
+			char *val = mod;
 
-		if (!strcmp(mod, "set noindex")) {
-			index = 0;
-			continue;
-		}
-		if (!strncmp(mod, "set index", 9)) {
-			mod += 9;
-			args = strchr(mod, '=');
-			if (args) /* optional */
-				mod = args + 1;
-			index = atoi(mod);
-			continue;
+			if (!strcmp(set, "noindex")) {
+				index = 0;
+				free(set);
+				goto next;
+			}
+
+			if ((val = fgetval(set, "index", "= \t"))) {
+				index = atoi(val);
+				free(set);
+				free(val);
+				goto next;
+			}
+
+			if ((val = fgetval(set, "modprobe", "= \t"))) {
+				if (access(val, X_OK)) {
+					warn("%s: cannot use %s", module_path, val);
+					free(set);
+					free(val);
+					free(line);
+					goto skip;
+				} else {
+					free(modprobe_path);
+					modprobe_path = val;
+				}
+				free(set);
+				goto next;
+			}
+
+			/* unknown 'set' command, ignore. */
+			goto next;
 		}
 
 		mod = strtok_r(mod, " ", &args);
 		if (!mod)
-			continue;
+			goto next;
 
 		if (!index)
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, modprobe_path, mod, args, mod);
 		else
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, modprobe_path, mod, args, mod);
 
+		dbg("task %s", cmd);
 		service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
 		num++;
+	next:
+		free(line);
 	}
+skip:
+	free(modprobe_path);
 	fclose(fp);
 
 	return num;
@@ -146,7 +188,7 @@ static void load(void *arg)
 	num = scandir(MODULES_LOAD_PATH, &dentry, module_filter, alphasort);
 	if (num > 0) {
 		for (i = 0; i < num; i++) {
-			index += load_file(dentry[i]->d_name, index);
+			index += modules_load(dentry[i]->d_name, index);
 			free(dentry[i]);
 		}
 		free(dentry);
