@@ -132,9 +132,16 @@ static inline char *fgetval(char *line, const char *key, char *sep)
 		return NULL;
 	}
 
-	ptr = strsep(&str, sep);
-	if (!ptr)
-		goto fail;
+	/*
+	 * Check if we should strip optional separator, e.g.,
+	 * 'foo = bar' => '= bar' should be stripped to 'bar'
+	 */
+	while (str && strchr(sep, str[0])) {
+		ptr = strsep(&str, sep);
+		if (!ptr)
+			goto fail;
+	}
+	ptr = str;
 
 	if (*ptr == '"' || *ptr == '\'') {
 		char *end = &ptr[strlen(ptr) - 1];
