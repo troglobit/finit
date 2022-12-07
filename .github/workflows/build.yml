@@ -43,7 +43,8 @@ jobs:
           make V=1
       - name: Regular Finit
         run: |
-          ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var --enable-x11-common-plugin --with-watchdog --with-keventd
+          ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var \
+                      --enable-x11-common-plugin --with-watchdog --with-keventd
           make clean
           make V=1
       - name: Install to ~/tmp
