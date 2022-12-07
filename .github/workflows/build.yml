@@ -28,11 +28,11 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install pkg-config tree jq
-          wget https://github.com/troglobit/libuev/releases/download/v2.3.2/libuev-2.3.2.tar.xz
+          wget https://github.com/troglobit/libuev/releases/download/v2.4.0/libuev-2.4.0.tar.xz
           wget https://github.com/troglobit/libite/releases/download/v2.5.2/libite-2.5.2.tar.gz
-          tar xf libuev-2.3.2.tar.xz
+          tar xf libuev-2.4.0.tar.xz
           tar xf libite-2.5.2.tar.gz
-          (cd libuev-2.3.2 && ./configure --prefix=/usr && make && sudo make install-strip)
+          (cd libuev-2.4.0 && ./configure --prefix=/usr && make && sudo make install-strip)
           (cd libite-2.5.2 && ./configure --prefix=/usr && make && sudo make install-strip)
           sudo ldconfig
       - uses: actions/checkout@v3
