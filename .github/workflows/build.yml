@@ -46,16 +46,20 @@ jobs:
           ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var --enable-x11-common-plugin --with-watchdog --with-keventd
           make clean
           make V=1
-      - name: Install to ~/tmp and Inspect
+      - name: Install to ~/tmp
         run: |
           DESTDIR=/tmp make install-strip
           tree /tmp
+      - name: Check dependencies
+        run: |
           ldd  /tmp/sbin/finit
           size /tmp/sbin/finit
           ldd  /tmp/sbin/initctl
           size /tmp/sbin/initctl
           ldd  /tmp/sbin/reboot
           size /tmp/sbin/reboot
+      - name: Verify starting and showing usage text
+        run: |
           /tmp/sbin/finit -h
           /tmp/sbin/initctl -h
       - name: Run Unit Tests
