@@ -209,13 +209,20 @@ teardown()
 	else
 		log "$fg_red" 'TEST FAIL' ''
 	fi
+
+	say "Telling Finit to shut down ..."
 	if [ -n "${finit_pid+x}" ]; then
 		texec kill -SIGUSR2 1
 	fi
 
+	say "Waiting for Finit to shut down ..."
 	wait
 
+	say "Final cleanup ..."
 	rm -f "$TENV_ROOT"/running_test.pid
+
+
+	say "EXIT: $test_status"
 	exit $test_status
 }
 
