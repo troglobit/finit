@@ -211,6 +211,7 @@ teardown()
 	fi
 
 	say "Telling Finit to shut down (set -$-) ..."
+	set +e
 	if [ -n "${finit_pid+x}" ]; then
 		texec kill -SIGUSR2 1
 	fi
