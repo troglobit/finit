@@ -49,7 +49,7 @@ jobs:
       - name: Install to ~/tmp
         run: |
           DESTDIR=/tmp make install-strip
-          tree /tmp
+          tree /tmp || true
       - name: Check dependencies
         run: |
           ldd  /tmp/sbin/finit
