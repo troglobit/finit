@@ -64,9 +64,9 @@
 #endif
 #define MODPROBE_PATH     "/sbin/modprobe"
 #define SERVICE_LINE \
-	"cgroup.init name:modprobe.%s :%d [2345] %s %s %s -- Kernel module: %s"
+	"cgroup.init name:modprobe.%s :%d [%s] %s %s %s -- Loading module %s"
 #define SERVICE_LINE_NOINDEX \
-	"cgroup.init name:modprobe.%s [2345] %s %s %s -- Kernel module: %s"
+	"cgroup.init name:modprobe.%s [%s] %s %s %s -- Loading module %s"
 
 static int modules_load(const char *file, int index)
 {
@@ -74,6 +74,7 @@ static int modules_load(const char *file, int index)
 	char *modprobe_path;
 	int num = 0;
 	char *line;
+	char *lvl;
 	FILE *fp;
 
 	strlcpy(module_path, MODULES_LOAD_PATH "/", sizeof(module_path));
@@ -87,9 +88,16 @@ static int modules_load(const char *file, int index)
 
 	modprobe_path = strdup(MODPROBE_PATH);
 	if (!modprobe_path) {
+	fail:
 		warnx("failed allocating memory in modules-load plugin.");
 		fclose(fp);
 		return -1;
+	}
+
+	lvl = strdup("S");
+	if (!lvl) {
+		free(modprobe_path);
+		goto fail;
 	}
 
 	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
@@ -124,6 +132,13 @@ static int modules_load(const char *file, int index)
 				goto next;
 			}
 
+			if ((val = fgetval(set, "runlevel", "= \t"))) {
+				free(lvl);
+				lvl = val;
+				free(set);
+				goto next;
+			}
+
 			if ((val = fgetval(set, "modprobe", "= \t"))) {
 				if (access(val, X_OK)) {
 					warn("%s: cannot use %s", module_path, val);
@@ -148,9 +163,9 @@ static int modules_load(const char *file, int index)
 			goto next;
 
 		if (!index)
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, modprobe_path, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, lvl, modprobe_path, mod, args, mod);
 		else
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, modprobe_path, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, lvl, modprobe_path, mod, args, mod);
 
 		dbg("task %s", cmd);
 		service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
@@ -160,6 +175,7 @@ static int modules_load(const char *file, int index)
 	}
 skip:
 	free(modprobe_path);
+	free(lvl);
 	fclose(fp);
 
 	return num;
