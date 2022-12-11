@@ -12,6 +12,21 @@ All relevant changes are documented in this file.
 > options or description, you must now escape them (`\#`).
 
 ### Changes
+* Support for overriding `/etc/finit.conf` using `finit.config=PATH`
+  from the kernel command line
+* Support for overriding `/etc/finit.d` from the alternate `finit.conf`
+  with a new `rcsd /path/to/dot.d/` .conf file directive
+* `initctl` JSON output support for status and conditions
+* The `modules-load` plugin now default to runlevel `[S]`, in previous
+  releases it was `[2345]`.  This breaking change is to align it more
+  with what users mostly want (modules loaded before services start) and
+  can be changed back to the old behavior with a per-file setting:
+
+        set runlevel 2345
+
+* The `modules-load` plugin now adds silent tasks for modprobe.  This to
+  prevent confusing `[ OK ]` boot messages when in fact modprobe failed.
+* The `modules-load` plugin now support `set modprobe /path/to/modprobe`
 * Support for line continuation character `\` in .conf files, issue #186
 
         service name:sysklogd [S123456789]   \
@@ -19,7 +34,13 @@ All relevant changes are documented in this file.
             syslogd -F $SYSLOGD_ARGS         \
             -- System log daemon
 
+* Add missing `HOOK_NETWORK_DN`, called after change to runlevel 6 or 0
+
 ### Fixes
+* Fix #314: skip run/task/service restart if conditions are lost
+* Fix #320: the API/IPC socket is closed immediately at shutdown/reboot
+  to prevent against hook scripts or services calling initctl.  There is
+  no way to service these requests safely.
 
 
 [4.3][] - 2022-05-15
