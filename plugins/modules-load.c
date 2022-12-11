@@ -64,9 +64,9 @@
 #endif
 #define MODPROBE_PATH     "/sbin/modprobe"
 #define SERVICE_LINE \
-	"cgroup.init name:modprobe.%s :%d [%s] %s %s %s -- Loading module %s"
+	"cgroup.init name:modprobe.%s :%d [%s] %s %s %s --"
 #define SERVICE_LINE_NOINDEX \
-	"cgroup.init name:modprobe.%s [%s] %s %s %s -- Loading module %s"
+	"cgroup.init name:modprobe.%s [%s] %s %s %s --"
 
 static int modules_load(const char *file, int index)
 {
