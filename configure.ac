@@ -1,10 +1,10 @@
-AC_INIT(Finit, 4.4-dev, https://github.com/troglobit/finit/issues, finit, https://troglobit.com/projects/finit/)
+AC_INIT([Finit],[4.4-dev],[https://github.com/troglobit/finit/issues],[finit],[https://troglobit.com/projects/finit/])
 AC_CONFIG_AUX_DIR(aux)
 AM_INIT_AUTOMAKE([1.11 foreign dist-xz subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_SRCDIR([src/finit.c])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 	contrib/Makefile
 	contrib/alpine/Makefile contrib/alpine/finit.d/Makefile contrib/alpine/finit.d/available/Makefile
@@ -32,7 +32,6 @@ AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
 # Configuration.
-AC_HEADER_STDC
 AC_CHECK_HEADERS([termios.h sys/ioctl.h mntent.h sys/sysmacros.h])
 AC_CHECK_FUNCS([strstr getopt getmntent getmntent_r])
 
