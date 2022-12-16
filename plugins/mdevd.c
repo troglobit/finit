@@ -38,7 +38,7 @@
 
 #define MDEVD_DAEMON "mdevd"
 /* Rebroadcast events onto nlgroup 4 */
-#define MDEVD_ARGS   "-C -O 4"
+#define MDEVD_ARGS   "-C -O 4 -D %n"
 #define MDEVD_DESC   "MDEVD Extended Hotplug Daemon"
 
 #ifndef MDEVD_DAEMONUSER
@@ -85,10 +85,10 @@ static void setup(void *arg)
 
 	/* Register service with Finit */
 	if (debug)
-		snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s -v3 %s -- %s",
+		snprintf(line, sizeof(line), "[S12345789] cgroup.system notify:s6 pid:!%s @%s:%s %s -v3 %s -- %s",
 			 MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONGROUP, cmd, MDEVD_ARGS, MDEVD_DESC);
 	else
-		snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
+		snprintf(line, sizeof(line), "[S12345789] cgroup.system notify:s6 pid:!%s @%s:%s %s %s -- %s",
 			 MDEVD_DAEMONPIDFILE, MDEVD_DAEMONUSER, MDEVD_DAEMONGROUP, cmd, MDEVD_ARGS, MDEVD_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
 		err(1, "Failed registering %s", MDEVD_DAEMON);

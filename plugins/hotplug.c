@@ -46,7 +46,9 @@ static void setup(void *arg)
 	if (plugin_find("mdevd")) {
 		path = which("mdevd-coldplug");
 		if (path) {
-			run_interactive(path, "Populating device tree");
+			snprintf(cmd, sizeof(cmd), "cgroup.system [S] <service/mdevd/ready> log %s "
+				 " -- Populating device tree", path);
+			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
 			free(path);
 		}
 		return;
