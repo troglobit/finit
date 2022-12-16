@@ -357,6 +357,7 @@ void do_shutdown(shutop_t op)
 	}
 
 	/* Unmount any tmpfs before unmounting swap ... */
+	print(0, "Unmounting filesystems ...");
 	unmount_tmpfs();
 	fs_swapoff();
 
@@ -378,10 +379,12 @@ void do_shutdown(shutop_t op)
 	mdadm_wait();
 
 	/* Last chance to run scripts (all .so plugins have exited already) */
+	print(0, "Calling hook/svc/down scripts ...");
 	plugin_run_hooks(HOOK_SYS_DN);
 
 	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
+		print(0, "Rebooting ...");
 		if (wdog && wdog->pid > 1) {
 			int timeout = 10;
 
@@ -394,12 +397,12 @@ void do_shutdown(shutop_t op)
 		dbg("Rebooting ...");
 		reboot(RB_AUTOBOOT);
 	} else if (op == SHUT_OFF) {
-		dbg("Powering down ...");
+		print(0, "Powering down ...");
 		reboot(RB_POWER_OFF);
 	}
 
 	/* Also fallback if any of the other two fails */
-	dbg("Halting ...");
+	print(0, "Halting ...");
 	reboot(RB_HALT_SYSTEM);
 }
 

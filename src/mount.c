@@ -97,13 +97,14 @@ static int unmount(const char *target)
 {
 	int rc;
 
+	dbg("Unmounting %s", target);
+
 	rc = umount(target);
 	if (rc) {
 		if (errno != EBUSY)
 			print(2, "Failed unmounting %s, error %d: %s", target, errno, strerror(errno));
 		return rc;
 	}
-	print(0, "Unmounting %s", target);
 
 	return 0;
 }
