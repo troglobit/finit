@@ -112,7 +112,7 @@ enum cond_state cond_get_agg(const char *names)
 
 int cond_affects(const char *name, const char *names)
 {
-	static char conds[MAX_COND_LEN];
+	char conds[MAX_COND_LEN];
 	char *cond;
 
 	if (!name || !names)
