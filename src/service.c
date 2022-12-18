@@ -702,6 +702,27 @@ static int service_start(svc_t *svc)
 		}
 		args[i] = NULL;
 
+#ifdef DEBUG_COMMAND_ARGS
+		char buf[PATH_MAX] = "";
+
+		for (i = 0; args[i]; i++) {
+			strlcat(buf, args[i], sizeof(buf));
+			strlcat(buf, " ", sizeof(buf));
+		}
+		logit(LOG_DEBUG, "DEBUG starting %s", buf);
+
+		buf[0] = 0;
+		strlcat(buf, svc->cmd, sizeof(buf));
+		strlcat(buf, " ", sizeof(buf));
+		for (i = 1; i < MAX_NUM_SVC_ARGS; i++) {
+			if (!strlen(svc->args[i]))
+				break;
+			strlcat(buf, svc->args[i], sizeof(buf));
+			strlcat(buf, " ", sizeof(buf));
+		}
+		logit(LOG_DEBUG, "DEBUG starting args %s", buf);
+#endif
+
 		/*
 		 * The setsid() call takes care to detach the process
 		 * from its controlling terminal, preventing daemons
