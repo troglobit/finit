@@ -1245,8 +1245,17 @@ static void parse_cmdline_args(svc_t *svc, char *cmd, char **args)
 	 */
 	diff += conf_changed(svc_getenv(svc));
 
-	if (diff)
-		dbg("Modified args for %s detected", cmd);
+	if (diff) {
+		char buf[256];
+
+		for (buf[0] = 0, i = 0; i < MAX_NUM_SVC_ARGS; i++) {
+			if (!strlen(svc->args[i]))
+				break;
+			strlcat(buf, " ", sizeof(buf));
+			strlcat(buf, svc->args[i], sizeof(buf));
+		}
+		dbg("Modified args for %s detected: %s", cmd, buf);
+	}
 	svc->args_dirty = (diff > 0);
 }
 
