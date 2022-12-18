@@ -87,7 +87,7 @@ void iwatch_exit(struct iwatch *iw)
 	initialized = 0;
 }
 
-int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
+int iwatch_add1(struct iwatch *iw, char *file, uint32_t mask)
 {
 	struct iwatch_path *iwp;
 	char *path;
@@ -108,7 +108,7 @@ int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
 		return -1;
 	}
 
-	wd = inotify_add_watch(iw->fd, path, IWATCH_MASK | mask);
+	wd = inotify_add_watch(iw->fd, path, mask);
 	if (wd < 0) {
 		switch (errno) {
 		case EEXIST:
@@ -145,6 +145,11 @@ int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
 	TAILQ_INSERT_HEAD(&iw->iwp_list, iwp, link);
 
 	return 0;
+}
+
+int iwatch_add(struct iwatch *iw, char *file, uint32_t mask)
+{
+	return iwatch_add1(iw, file, IWATCH_MASK | mask);
 }
 
 int iwatch_del(struct iwatch *iw, struct iwatch_path *iwp)

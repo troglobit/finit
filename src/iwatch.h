@@ -59,6 +59,7 @@ struct iwatch {
 int  iwatch_init (struct iwatch *iw);
 void iwatch_exit (struct iwatch *iw);
 
+int  iwatch_add1 (struct iwatch *iw, char *file, uint32_t mask);
 int  iwatch_add  (struct iwatch *iw, char *file, uint32_t mask);
 int  iwatch_del  (struct iwatch *iw, struct iwatch_path *iwp);
 
