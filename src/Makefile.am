@@ -45,6 +45,7 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     client.c	client.h			\
 		     cond.c	cond-w.c	cond.h		\
 		     conf.c	conf.h				\
+		     devmon.c   devmon.h			\
 		     exec.c	finit.c		finit.h		\
 		     		stty.c				\
 		     helpers.c	helpers.h			\

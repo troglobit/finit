@@ -48,6 +48,7 @@
 #include "cgroup.h"
 #include "cond.h"
 #include "conf.h"
+#include "devmon.h"
 #include "helpers.h"
 #include "private.h"
 #include "plugin.h"
@@ -801,6 +802,7 @@ int main(int argc, char *argv[])
 	 * Initialize .conf system and load static /etc/finit.conf then
 	 * tell the world what we used.
 	 */
+	devmon_init();
 	conf_init(&loop);
 	conf_saverc();
 

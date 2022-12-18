@@ -43,6 +43,7 @@
 #include "client.h"
 #include "conf.h"
 #include "cond.h"
+#include "devmon.h"
 #include "finit.h"
 #include "helpers.h"
 #include "pid.h"
@@ -1696,10 +1697,16 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
  */
 void service_unregister(svc_t *svc)
 {
+	char *c;
+
 	if (!svc)
 		return;
 
 	service_stop(svc);
+
+	for (c = strtok(svc->cond, ","); c; c = strtok(NULL, ","))
+		devmon_del_cond(c);
+
 	svc_del(svc);
 }
 

@@ -40,6 +40,7 @@
 
 #include "finit.h"
 #include "cond.h"
+#include "devmon.h"
 #include "iwatch.h"
 #include "private.h"
 #include "service.h"
@@ -469,6 +470,7 @@ void conf_parse_cond(svc_t *svc, char *cond)
 {
 	size_t i = 0;
 	char *ptr;
+	char *c;
 
 	if (!svc) {
 		errx(1, "Invalid service pointer");
@@ -496,16 +498,17 @@ void conf_parse_cond(svc_t *svc, char *cond)
 	ptr[i] = 0;
 
 	if (i >= sizeof(svc->cond)) {
-		logit(LOG_WARNING, "Too long event list in declaration of %s: %s", svc_ident(svc, NULL, 0), ptr);
+		logit(LOG_WARNING, "%s: too long list of conditions: %s", svc_ident(svc, NULL, 0), ptr);
 		return;
 	}
 
-	if (!strncmp(ptr, "svc/", 4)) {
-		logit(LOG_ERR, "Unsupported cond syntax for %s: <%s", svc_ident(svc, NULL, 0), ptr);
-		return;
+	svc->cond[0] = 0;
+	for (i = 0, c = strtok(ptr, ","); c; c = strtok(NULL, ","), i++) {
+		devmon_add_cond(c);
+		if (i)
+			strlcat(svc->cond, ",", sizeof(svc->cond));
+		strlcat(svc->cond, c, sizeof(svc->cond));
 	}
-
-	strlcpy(svc->cond, ptr, sizeof(svc->cond));
 }
 
 struct rlimit_name {
