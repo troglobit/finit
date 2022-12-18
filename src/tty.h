@@ -48,7 +48,7 @@ char	*tty_canonicalize (char *dev);
 int	 tty_isatcon      (char *dev);
 char	*tty_atcon	  (void);
 
-int	 tty_parse_args   (char *cmdline, struct tty *tty);
+int	 tty_parse_args   (struct tty *tty, char *cmd, char **args);
 
 int	 tty_exists	  (char *dev);
 int	 tty_exec	  (svc_t *tty);

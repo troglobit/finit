@@ -133,7 +133,9 @@ char *tty_atcon(void)
 
 /**
  * tty_parse_args - Parse cmdline args for a tty
- * @cmd: command or tty
+ * @tty:  service tty
+ * @cmd:  command or tty
+ * @args: args from strtok_r()
  *
  * A Finit tty line can use the internal getty implementation or an
  * external one, like the BusyBox getty for instance.  This function
@@ -151,7 +153,7 @@ char *tty_atcon(void)
  * Different getty implementations prefer the TTY device argument in
  * different order, so take care to investigate this first.
  */
-int tty_parse_args(char *cmd, struct tty *tty)
+int tty_parse_args(struct tty *tty, char *cmd, char **args)
 {
 	char  *dev = NULL;
 	int passenv = 0;
@@ -175,7 +177,7 @@ int tty_parse_args(char *cmd, struct tty *tty)
 		else
 			tty->args[tty->num++] = cmd;
 
-		cmd = strtok(NULL, " ");
+		cmd = strtok_r(NULL, " ", args);
 	} while (cmd && tty->num < NELEMS(tty->args));
 
 	/* rescue shells are always notty */

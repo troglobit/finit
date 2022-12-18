@@ -1175,13 +1175,8 @@ static char *parse_name(char *cmd, char *arg)
 
 /*
  * Update the command line args in the svc struct
- *
- * strtok internal pointer must be positioned at first command line arg
- * when this function is called.
- *
- * Side effect: strtok internal pointer will be modified.
  */
-static void parse_cmdline_args(svc_t *svc, char *cmd)
+static void parse_cmdline_args(svc_t *svc, char *cmd, char **args)
 {
 	int diff = 0;
 	char sep = 0;
@@ -1196,7 +1191,7 @@ static void parse_cmdline_args(svc_t *svc, char *cmd)
 	 * Copy supplied args. Stop at MAX_NUM_SVC_ARGS-1 to allow the args
 	 * array to be zero-terminated.
 	 */
-	while ((arg = strtok(NULL, " ")) && i < (MAX_NUM_SVC_ARGS - 1)) {
+	while ((arg = strtok_r(NULL, " ", args)) && i < (MAX_NUM_SVC_ARGS - 1)) {
 		char prev[sizeof(svc->args[0])] = { 0 };
 		char ch = arg[0];
 		size_t len;
@@ -1327,7 +1322,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	int restart_max = SVC_RESPAWN_MAX;
 	int restart_tmo = 0;
 	unsigned oncrash_action = SVC_ONCRASH_IGNORE;
-	char *line;
+	char *line, *args;
 	svc_t *svc;
 
 	if (!cfg) {
@@ -1357,7 +1352,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		}
 	}
 
-	cmd = strtok(line, " \t");
+	cmd = strtok_r(line, " \t", &args);
 	if (!cmd) {
 	incomplete:
 		errx(1, "Incomplete service '%s', cannot register", cfg);
@@ -1430,7 +1425,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			break;
 
 		/* Check if valid command follows... */
-		cmd = strtok(NULL, " ");
+		cmd = strtok_r(NULL, " ", &args);
 		if (!cmd)
 			goto incomplete;
 	}
@@ -1448,7 +1443,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (type == SVC_TYPE_TTY) {
 		size_t i, len = 0;
 
-		if (tty_parse_args(cmd, &tty))
+		if (tty_parse_args(&tty, cmd, &args))
 			return errno;
 
 		if (tty.cmd)
@@ -1469,7 +1464,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			strlcat(line, tty.args[i], len);
 		}
 
-		cmd = strtok(line, " \t");
+		cmd = strtok_r(line, " \t", &args);
 		if (!cmd)
 			return errno;
 
@@ -1559,7 +1554,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->id, id, sizeof(svc->id));
 	}
 
-	parse_cmdline_args(svc, cmd);
+	parse_cmdline_args(svc, cmd, &args);
 
 	/*
 	 * Warn if svc generates same condition (based on name:id)
