@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# Verify device monitor (built-in plugin)
+#
+
+set -eu
+
+TEST_DIR=$(dirname "$0")
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/tenv/lib.sh"
+
+test_setup()
+{
+	say "Test start $(date)"
+}
+
+test_teardown()
+{
+	say "Test done $(date)"
+	say "Running test teardown."
+
+	texec rm -f "$FINIT_CONF" "/tmp/post"
+}
+
+# Cannot run mknod as non-root even in a chroot
+# touch is close enough for our needs
+mkdev()
+{
+	dir=$(dirname "$1")
+	run "mkdir -p $dir"
+	run "touch $1"
+}
+
+rmdev()
+{
+	run "rm $1"
+}
+
+test_one()
+{
+	cond="$1"
+	node="/$cond"
+
+	say "Checking cond $cond and device $node ..."
+	run "echo service log:null \<$cond\> serv -np >> $FINIT_CONF"
+	run "cat $FINIT_CONF"
+	run "initctl reload"
+
+	assert_status "serv" "waiting"
+
+	mkdev "$node"
+	assert_status "serv" "running"
+
+	rmdev "$node"
+	assert_status "serv" "waiting"
+
+	say "Cleaning up ..."
+	run "rm $FINIT_CONF"
+	run "initctl reload"
+}
+
+sep
+test_one "dev/fbsplash"
+sep
+test_one "dev/subdir/42"
+sep
