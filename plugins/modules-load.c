@@ -163,9 +163,9 @@ static int modules_load(const char *file, int index)
 			goto next;
 
 		if (!index)
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, lvl, modprobe_path, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE_NOINDEX, mod, lvl, modprobe_path, mod, args);
 		else
-			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, lvl, modprobe_path, mod, args, mod);
+			snprintf(cmd, sizeof(cmd), SERVICE_LINE, mod, index++, lvl, modprobe_path, mod, args);
 
 		dbg("task %s", cmd);
 		service_register(SVC_TYPE_TASK, cmd, global_rlimit, NULL);
