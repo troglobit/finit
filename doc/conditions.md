@@ -13,9 +13,9 @@ Finit Conditions
 Introduction
 ------------
 
-Conditions are a new addition to Finit, introduced in v3, with the
-intention of providing a mechanism for common synchronization problems.
-For example:
+Conditions are a relatively new addition to Finit, introduced in v3,
+with the intention of providing a mechanism for common synchronization
+problems.  For example:
 
 - *"wait for service A to start before starting service B"*, or
 - *"wait for basic network access to be available"*
@@ -35,7 +35,7 @@ service to run.
 In this example the Network monitor daemon `netd` is not started until
 both the `pid/setupd` *and* `pid/zebra` conditions are satisfied.  A
 `pid/` condition is satisfied by the corresponding service's PID file
-being created.
+being created, i.e., the service's default readiness notification.
 
 **NOTE:** Conditions also stop services when a condition is no longer
   asserted.  I.e., if the Zebra process above stops or restarts, netd
@@ -49,11 +49,11 @@ Conditions are mainly triggered (asserted) by built-in plugins, e.g.,
 
   - `netlink.so`: provides `<net/...>`
   - `pidfile.so`: provides `<pid/...>`
-  - Cmdline `finit.cond=arg`: provides `<boot/arg`
+  - Cmdline `finit.cond=arg`: provides `<boot/arg>`
 
 See below for built-in conditions.  Finit also supports user-defined
 conditions, sometimes referred to as static or one-shot conditions.
-They live in the `<usr/...` namespace and are constrained to a flat
+They live in the `<usr/...>` namespace and are constrained to a flat
 hierarchy without any sub-directories, unlike the pidfile plugin, for
 instance.
 
@@ -92,15 +92,29 @@ Static (one-shot) conditions, like `usr/`, never enter the `flux` state.
 Built-in Conditions
 -------------------
 
-Finit comes with a set of plugins for conditions: `pidfile`, `netlink`,
-`sys`, and `usr`.  The `pidfile` plugin (recursively) watches `/run/`
-(recursively) for PID files created by the monitored services, and sets
-a corresponding condition in the `pid/` namespace.  Similarly, the
-`netlink` plugin provides basic conditions for when an interface is
-brought up/down and when a default route (gateway) is set, in the `net/`
-namespace.  The `sys` and `usr` plugins monitor are passive condition
-monitors where the action is provided by `keventd`, signal handlers,
-and in the case of `usr`, the end-user via the `initctl` tool
+Finit comes with a set of plugins for conditions:
+
+ - `devmon` (built-in)
+ - `netlink`
+ - `pidfile`
+ - `sys`
+ - `usr`
+
+The `devmon` (built-in) plugin monitors `/dev` and `/dev/dir` for device
+nodes being created and removed.  It is active only when a run, task, or
+service has declared a `<dev/foo>` or `<dev/dir/bar>` condition.
+
+The `pidfile` plugin (recursively) watches `/run/` (recursively) for PID
+files created by the monitored services, and sets a corresponding
+condition in the `pid/` namespace.
+
+Similarly, the `netlink` plugin provides basic conditions for when an
+interface is brought up/down and when a default route (gateway) is set,
+in the `net/` namespace.
+
+The `sys` and `usr` plugins monitor are passive condition monitors where
+the action is provided by `keventd`, signal handlers, and in the case of
+`usr`, the end-user via the `initctl` tool.
 
 Additionally, the various states of a run/task/sysv/service can also be
 used as conditions, the image above shows the state names.  The syntax
@@ -132,6 +146,7 @@ Built-in conditions:
 - `sys/key/ctrlaltdel`
 - `usr/foo`
 - `boot/arg`
+- `dev/node` and `dev/dir/node`
 
 **Note:** `up` means administratively up, the interface flag `IFF_UP`.
   `running` is the `IFF_RUNNING` flag, meaning operatively up.  The
