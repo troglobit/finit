@@ -86,7 +86,6 @@ AC_ARG_ENABLE(all_plugins,
 	enable_all_plugins=$enableval, enable_all_plugins=auto)
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],          [no],  [Setup and start system message bus, D-Bus])
-AC_PLUGIN([mdevd],         [no],  [Setup and start system hotplug helper mdevd])
 AC_PLUGIN([modules-load],  [no],  [Scans /etc/modules-load.d for modules to load])
 AC_PLUGIN([modprobe],      [yes], [Coldplug modules using modalias magic])
 AC_PLUGIN([resolvconf],    [no],  [Setup necessary files for resolvconf])

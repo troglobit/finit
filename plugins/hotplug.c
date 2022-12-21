@@ -40,21 +40,6 @@ static void setup(void *arg)
 	}
 
 	/*
-	 * If the mdevd plugin is enabled and loaded we assume this
-	 * system is mdevd based, skipping below udev/mdev checks.
-	 */
-	if (plugin_find("mdevd")) {
-		path = which("mdevd-coldplug");
-		if (path) {
-			snprintf(cmd, sizeof(cmd), "cgroup.system [S] <service/mdevd/ready> log %s "
-				 " -- Populating device tree", path);
-			service_register(SVC_TYPE_RUN, cmd, global_rlimit, NULL);
-			free(path);
-		}
-		return;
-	}
-
-	/*
 	 * Populate /dev and prepare for runtime events from kernel.
 	 * Prefer udev if mdev is also available on the system.
 	 */
@@ -105,13 +90,12 @@ static void setup(void *arg)
 	}
 }
 
-/* mdevd optional, if installed & loaded changes behavior of setup() */
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP] = {
 		.cb  = setup
 	},
-	.depends = { "bootmisc", "mdevd", "modprobe" },
+	.depends = { "bootmisc", "modprobe" },
 };
 
 PLUGIN_INIT(plugin_init)

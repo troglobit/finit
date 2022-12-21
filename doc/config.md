@@ -551,7 +551,7 @@ option:
     (must be >3) on then command line, Finit provides the following
     syntax (`%n` is replaced by Finit with then descriptor number):
 
-        service notify:s6 mdevd -C -O 4 -D %n
+        service [S12345789] notify:s6 mdevd -O 4 -D %n
 
 [sd_notify()]: https://www.freedesktop.org/software/systemd/man/sd_notify.html
 [s6 expect]:   https://skarnet.org/software/s6/notifywhenup.html
@@ -562,6 +562,16 @@ then service's ready condition which other services can depend on:
 
     $ initctl -v cond get service/mdevd/ready
     on
+
+This can be used to synchronize the start of another run/task/service:
+
+    task [S] <service/mdevd/ready> @root:root mdevd-coldplug
+
+Finit waits for `mdevd` to notify it, before starting `mdevd-coldplug`.
+Notice how both start in runlevel S, and the coldplug task only runs in
+S.  When the system moves to runlevel 2 (the default), coldplug is no
+longer part of the running configuration (`initctl show`), this is to
+ensure that coldplug is not called more than once.
 
 >  For a detailed description of conditions, and how to debug them,
 >  see the [Finit Conditions](conditions.md) document.

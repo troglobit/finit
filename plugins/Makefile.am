@@ -21,10 +21,6 @@ if BUILD_HOTPLUG_PLUGIN
 libplug_la_SOURCES += hotplug.c
 endif
 
-if BUILD_MDEVD_PLUGIN
-libplug_la_SOURCES += mdevd.c
-endif
-
 if BUILD_MODULES_LOAD_PLUGIN
 libplug_la_SOURCES += modules-load.c
 endif
@@ -74,10 +70,6 @@ endif
 
 if BUILD_HOTPLUG_PLUGIN
 pkglib_LTLIBRARIES += hotplug.la
-endif
-
-if BUILD_MDEVD_PLUGIN
-pkglib_LTLIBRARIES += mdevd.la
 endif
 
 if BUILD_MODULES_LOAD_PLUGIN

@@ -52,9 +52,9 @@ For your convenience a set of *optional* plugins are available:
 
 * *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
   available.  Enabled by default.
-
-* *mdevd.so*: Set up and start mdevd (mdev replacement).  Enabling this
-  also changes how `hotplug.so` plugin operates.  _Optional plugin._
+  
+  > See the [Services](config.md#services) section in the configuration
+  > guide for an example how to run `mdevd`, alternative to plain mdev.
 
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
   Enabled by default.
