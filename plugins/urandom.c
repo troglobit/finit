@@ -81,7 +81,7 @@ static void setup(void *arg)
 		umask(prev);
 	}
 
-	print_desc("Initializing random number generator", NULL);
+	print_desc("Seeding random number generator", NULL);
 
 	/*
 	 * Simply copying our saved entropy to /dev/urandom doesn't
