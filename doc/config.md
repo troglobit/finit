@@ -529,10 +529,17 @@ modified with an optional `pid:`-argument:
 
     pid[:[/path/to/]filename[.pid]]
 
-For example, by adding `pid:/run/foo.pid` to the service `/sbin/bar`,
+For example, by adding `pid:/run/bar.pid` to the service `/sbin/bar`,
 that PID file will, not only be created and removed automatically, but
 also be used by the Finit condition subsystem.  So a service/run/task
-can depend on `<pid/bar>`.
+can depend on `<pid/bar>`, like this foo will not be started until bar
+has started:
+
+    service pid:/run/bar.pid bar -- Bar Service
+    service <pid/bar> foo -- Foo Service
+
+Needless to say, it is better if `bar` creates its own PID file when it
+has completed starting up and is ready for service.
 
 As an alternative "readiness" notification, Finit supports both systemd
 and s6 style notification.  This can be enabled by using the `notify`
