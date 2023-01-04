@@ -1133,7 +1133,7 @@ static void conf_cb(uev_t *w, void *arg, int events)
 		}
 	}
 
-#ifdef ENABLE_AUTO_RELOAD
+#ifdef AUTO_RELOAD
 	if (conf_any_change())
 		service_reload_dynamic();
 #endif
