@@ -375,6 +375,19 @@ void do_shutdown(shutop_t op)
 	run("mount -n -o remount,ro dummydev /", NULL);
 	run("mount -n -o remount,ro /", "mount");
 
+	/* Note that filesystems like ubifs might still have kernel threads
+	 * running after a successful dismount (e.g. wear-leveling). 
+	 * Give them time to finish before rebooting.
+	 * 
+	 * From the sync(8) manpage:
+	 * On Linux, sync is only guaranteed to schedule the dirty blocks for writing; 
+	 * it can actually take a short time before all the blocks are finally written. 
+	 * The reboot(8) and halt(8) commands take this into account by sleeping for a
+	 * few seconds after calling sync(2).
+	 */
+	sync();
+	do_sleep(1);
+
 	/* Call mdadm to mark any RAID array(s) as clean before halting. */
 	mdadm_wait();
 
