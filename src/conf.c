@@ -303,6 +303,7 @@ void conf_saverc(void)
 {
 	FILE *fp;
 
+	mkpath(_PATH_VARRUN "finit", 0755);
 	fp = fopen(_PATH_VARRUN "finit/.initrc", "w");
 	if (!fp) {
 		err(1, "failed creating .finitrc");
