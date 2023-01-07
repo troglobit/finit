@@ -287,7 +287,7 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 		cgroup_handle_event(iwp->path, ev->mask);
 	}
 
-#ifdef ENABLE_AUTO_RELOAD
+#ifdef AUTO_RELOAD
 	if (conf_any_change())
 		service_reload_dynamic();
 #endif
