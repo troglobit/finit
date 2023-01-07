@@ -475,6 +475,9 @@ static void fs_mount_all(void)
 
 	dbg("Finalize, ensure common file systems are available ...");
 	fs_finalize();
+
+	dbg("Base FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_BASEFS_UP);
 }
 
 /*
@@ -822,9 +825,6 @@ int main(int argc, char *argv[])
 
 	/* Base FS up, enable standard SysV init signals */
 	sig_setup(&loop);
-
-	dbg("Base FS up, calling hooks ...");
-	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
 	 * Set up inotify watcher for /etc/finit.conf, /etc/finit.d, and
