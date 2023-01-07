@@ -1,0 +1,47 @@
+name: Weekly Distcheck
+
+# Verify that `make distcheck` works as intended: all tests pass, and
+# any new files are distributed in the tarballs
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  schedule:
+    runs-son: ubuntu-latest
+    steps:
+      - name: Create cache file
+        run: |
+          mkdir weekly
+          echo ${{ github.sha }} > weekly/sha.txt
+
+      - name: Check SHA
+        id: sha
+        uses: actions/cache@v3
+        with:
+          path: weekly/sha.txt
+          key: weekly-sha-${{ github.sha }}
+
+  distcheck:
+    needs: schedule
+    if: ${{ needs.schedule.sha.outputs.cache-hit != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install pkg-config jq libuev-dev libite-dev
+      - uses: actions/checkout@v3
+      - name: Base run
+        run: |
+          ./autogen.sh
+          ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var
+          make -j9 V=1
+      - name: Install to /tmp
+        run: |
+          DESTDIR=/tmp make install-strip
+      - name: Check dist tarball
+        run: |
+          ver=$(/tmp/sbin/initctl -V | awk '/Finit.*/ {print $2;}')
+          dir=finit-$ver/_build/sub
+          make -j1 distcheck || (cat $dir/test/test-suite.log; false)

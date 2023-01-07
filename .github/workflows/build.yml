@@ -40,7 +40,7 @@ jobs:
                       --enable-x11-common-plugin --with-watchdog --with-keventd
           make clean
           make V=1
-      - name: Install to ~/tmp
+      - name: Install to /tmp
         run: |
           DESTDIR=/tmp make install-strip
           tree /tmp || true
@@ -59,11 +59,6 @@ jobs:
       - name: Run Unit Tests
         run: |
           make check || (cat test/test-suite.log; false)
-      - name: Check dist tarball
-        run: |
-          ver=$(/tmp/sbin/initctl -V | awk '/Finit.*/ {print $2;}')
-          dir=finit-$ver/_build/sub
-          make -j1 distcheck || (cat $dir/test/test-suite.log; false)
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
