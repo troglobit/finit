@@ -9,7 +9,7 @@ on:
 
 jobs:
   schedule:
-    runs-son: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Create cache file
         run: |
