@@ -84,6 +84,7 @@ static void usr_init(void *arg)
 	char usrdir[MAX_ARG_LEN];
 	char *path;
 
+	mkpath(_PATH_COND, 0755);
 	if (mkpath(pid_runpath(_PATH_CONDUSR, usrdir, sizeof(usrdir)), 0755) && errno != EEXIST) {
 		err(1, "Failed creating %s condition directory, %s", COND_USR, _PATH_CONDUSR);
 		return;

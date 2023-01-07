@@ -160,6 +160,7 @@ static void sys_init(void *arg)
 	char sysdir[MAX_ARG_LEN];
 	char *path;
 
+	mkpath(_PATH_COND, 0755);
 	if (mkpath(pid_runpath(_PATH_CONDSYS, sysdir, sizeof(sysdir)), 0755) && errno != EEXIST) {
 		err(1, "Failed creating %s condition directory, %s", COND_SYS, _PATH_CONDSYS);
 		return;
