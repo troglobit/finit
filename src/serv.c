@@ -227,9 +227,8 @@ static char *conf(char *path, size_t len, char *name, int creat)
 
 int serv_enable(char *arg)
 {
+	size_t arglen, len;
 	char corr[40];
-	char path[256];
-	int ena;
 
 	if (!arg || !arg[0]) {
 		WARNX("missing argument to enable, may be one of:");
@@ -246,16 +245,21 @@ int serv_enable(char *arg)
 
 	if (icreate && mkdir("enabled", 0755) && EEXIST != errno)
 		ERR(73, "failed creating %s/enabled directory", finit_rcsd);
-	ena = !chdir("enabled");   /* System *may* have enabled/ dir. */
 
-	snprintf(path, sizeof(path), "%savailable/%s", ena ? "../" : "", arg);
+	len    = snprintf(NULL, 0, "%s/available/%s", finit_rcsd, arg);
+	arglen = snprintf(NULL, 0, "%s/enabled/%s", finit_rcsd, arg);
+	char argpath[arglen + 1], path[len + 1];
+
+	snprintf(path, sizeof(path), "%s/available/%s", finit_rcsd, arg);
+
 	if (!fexist(path))
 		ERRX(72, "cannot find %s", conf(path, sizeof(path), arg, 0));
 
-	if (fexist(arg))
+	snprintf(argpath, sizeof(argpath), "%s/enabled/%s", finit_rcsd, arg);
+	if (fexist(argpath))
 		ERRX(1, "%s already enabled", arg);
 
-	return symlink(path, arg) != 0;
+	return symlink(path, argpath) != 0;
 }
 
 int do_disable(char *arg, int check)
