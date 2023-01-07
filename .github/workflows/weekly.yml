@@ -17,7 +17,7 @@ jobs:
       - name: Check for any commits since last week
         id: check
         run: |
-          echo '::set-output name=run::'$(test -n "$(git log --format=%H --since=1 week ago')" && echo 'true' || echo 'false')
+          echo '::set-output name=run::'$(test -n "$(git log --format=%H --since='1 week ago')" && echo 'true' || echo 'false')
 
   distcheck:
     needs: schedule
