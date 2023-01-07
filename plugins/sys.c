@@ -179,6 +179,7 @@ static void sys_init(void *arg)
 static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP]  = { .cb = sys_init },
+	.depends = { "bootmisc", },
 };
 
 PLUGIN_INIT(plugin_init)
