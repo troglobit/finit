@@ -1040,11 +1040,6 @@ static int do_change(char *dir, char *name, uint32_t mask)
 	dbg("path: %s mask: %08x", fn, mask);
 
 	node = conf_find(fn);
-	if (mask & (IN_DELETE | IN_MOVED_FROM)) {
-		drop_change(node);
-		return 0;
-	}
-
 	if (node) {
 		dbg("Event already registered for %s ...", name);
 		return 0;
