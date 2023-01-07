@@ -66,7 +66,7 @@ static int calc_width(char *arr[], size_t len)
 	return width;
 }
 
-static void do_list(const char *path)
+static void do_list(const char *path, char *title, int comma)
 {
 	static int once = 0;
 	int width, num, prev;
@@ -78,6 +78,7 @@ static void do_list(const char *path)
 
 		if (!fexist(path))
 			return;
+
 		dir = strdupa(path);
 		if (!dir)
 			return;
@@ -87,6 +88,11 @@ static void do_list(const char *path)
 			*ptr++ = 0;
 		else
 			ptr = dir;
+
+		if (json) {
+			printf("%s\"%s\": \"%s\"", comma ? "," :"", title, path);
+			return;
+		}
 
 		if (heading)
 			print_header("%s%s ", once ? "\n" : "", dir);
@@ -101,7 +107,7 @@ static void do_list(const char *path)
 	if (gl.gl_pathc <= 0)
 		goto done;
 
-	if (plain) {
+	if (plain && !json) {
 		if (heading)
 			print_header("%s%s ", once ? "\n" : "", path);
 		once++;
@@ -119,8 +125,10 @@ static void do_list(const char *path)
 		goto done;
 	}
 
-	if (heading)
+	if (heading && !json)
 		print_header("%s ", path);
+	if (json)
+		printf("%s\"%s\": [", comma ? "," : "", title);
 
 	width = calc_width(gl.gl_pathv, gl.gl_pathc);
 	if (width <= 0)
@@ -132,17 +140,24 @@ static void do_list(const char *path)
 
 	prev = 0;
 	for (i = 0; i < gl.gl_pathc; i++) {
-		if (i > 0 && !(i % num)) {
+		if (i > 0 && !(i % num) && !json) {
 			puts("");
 			prev = 0;
 		}
 
 		if (prev)
-			printf("  ");
-		printf("%-*s", width, gl.gl_pathv[i]);
+			printf("%s", json ? "," : "  ");
+		if (json)
+			printf("\"%s\"", gl.gl_pathv[i]);
+		else
+			printf("%-*s", width, gl.gl_pathv[i]);
 		prev++;
 	}
-	puts("\n");
+
+	if (json)
+		fputs("]", stdout);
+	else
+		puts("\n");
 
 done:
 	globfree(&gl);
@@ -151,29 +166,40 @@ done:
 int serv_list(char *arg)
 {
 	char path[256];
+	int pre = 0;
 
 	if (arg && arg[0]) {
 		paste(path, sizeof(path), finit_rcsd, arg);
 		if (fisdir(path)) {
-			do_list(path);
+			if (json)
+				fputs("[", stdout);
+			do_list(path, NULL, 0);
+			if (json)
+				fputs("]\n", stdout);
 			return 0;
 		}
 		/* fall back to list all */
 	}
 
+	if (json)
+		fputs("{", stdout);
+
 	paste(path, sizeof(path), finit_rcsd, "available");
 	if (fisdir(path))
-		do_list(path);
+		do_list(path, "available", pre++);
 
 	paste(path, sizeof(path), finit_rcsd, "enabled");
 	if (fisdir(path))
-		do_list(path);
+		do_list(path, "enabled", pre++);
 
 	if (fisdir(finit_rcsd))
-		do_list(finit_rcsd);
+		do_list(finit_rcsd, "static", pre++);
 
 	if (fexist(finit_conf))
-		do_list(finit_conf);
+		do_list(finit_conf, "finit.conf", pre++);
+
+	if (json)
+		fputs("}\n", stdout);
 
 	return 0;
 }
