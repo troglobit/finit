@@ -408,45 +408,56 @@ static int do_cond_dump(char *arg)
 
 typedef enum { COND_CLR, COND_SET, COND_GET } condop_t;
 
-static int do_cond_act(char *arg, condop_t op)
+/*
+ * cond get allows only one argument
+ * cond set|clr iterate over multiple args
+ */
+static int do_cond_act(char *args, condop_t op)
 {
 	char path[256];
-	size_t off;
+	char *arg;
 
-	if (arg && strncmp(arg, COND_USR, strlen(COND_USR)) == 0)
-		arg += strlen(COND_USR);
-
-	if (!arg || !arg[0])
+	if (!args || !args[0])
 		ERRX(2, "Invalid condition (empty)");
 
-	/* allowed to read any condition, but not set/clr */
-	if (op != COND_GET) {
+	arg = strtok(args, " \t");
+	while (arg) {
+		size_t off;
+
+		if (strncmp(arg, COND_USR, strlen(COND_USR)) == 0)
+			arg += strlen(COND_USR);
+
+		/* allowed to read any condition, but not set/clr */
+		if (op != COND_GET) {
+			if (strchr(arg, '/'))
+				ERRX(2, "Invalid condition (slashes)");
+			if (strchr(arg, '.'))
+				ERRX(2, "Invalid condition (periods)");
+		}
+
 		if (strchr(arg, '/'))
-			ERRX(2, "Invalid condition (slashes)");
-		if (strchr(arg, '.'))
-			ERRX(2, "Invalid condition (periods)");
-	}
+			snprintf(path, sizeof(path), _PATH_COND "%s", arg);
+		else
+			snprintf(path, sizeof(path), _PATH_CONDUSR "%s", arg);
+		off = strlen(_PATH_COND);
 
-	if (strchr(arg, '/'))
-		snprintf(path, sizeof(path), _PATH_COND "%s", arg);
-	else
-		snprintf(path, sizeof(path), _PATH_CONDUSR "%s", arg);
-	off = strlen(_PATH_COND);
+		switch (op) {
+		case COND_GET:
+			off = !fexist(path);
+			if (verbose)
+				puts(off ? "off" : "on");
+			return off;
+		case COND_SET:
+			if (symlink(_PATH_RECONF, path) && errno != EEXIST)
+				ERR(73, "Failed asserting condition <%s>", &path[off]);
+			break;
+		case COND_CLR:
+			if (erase(path) && errno != ENOENT)
+				ERR(73, "Failed deasserting condition <%s>", &path[off]);
+			break;
+		}
 
-	switch (op) {
-	case COND_GET:
-		off = !fexist(path);
-		if (verbose)
-			puts(off ? "off" : "on");
-		return off;
-	case COND_SET:
-		if (symlink(_PATH_RECONF, path) && errno != EEXIST)
-			ERR(73, "Failed asserting condition <%s>", &path[off]);
-		break;
-	case COND_CLR:
-		if (erase(path) && errno != ENOENT)
-			ERR(73, "Failed deasserting condition <%s>", &path[off]);
-		break;
+		arg = strtok(NULL, " \t");
 	}
 
 	return 0;
@@ -1263,9 +1274,9 @@ static int usage(int rc)
 
 	fprintf(stderr,
 		"\n"
-		"  cond     set   <COND>     Set (assert) user-defined condition     +usr/COND\n"
+		"  cond     set   <COND>     Set (assert) user-defined conditions     +usr/COND\n"
 		"  cond     get   <COND>     Get status of user-defined condition, see $? and -v\n"
-		"  cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND\n"
+		"  cond     clear <COND>     Clear (deassert) user-defined conditions -usr/COND\n"
 		"  cond     status           Show condition status, default cond command\n"
 		"  cond     dump  [TYPE]     Dump all, or a type of, conditions and their status\n"
 		"\n"

@@ -535,9 +535,9 @@ Commands:
   disable  <CONF>           Disable  .conf in /etc/finit.d/enabled
   reload                    Reload  *.conf in /etc/finit.d (activate changes)
 
-  cond     set   <COND>     Set (assert) user-defined condition     +usr/COND
+  cond     set   <COND>     Set (assert) user-defined conditions     +usr/COND
   cond     get   <COND>     Get status of user-defined condition, see $? and -v
-  cond     clear <COND>     Clear (deassert) user-defined condition -usr/COND
+  cond     clear <COND>     Clear (deassert) user-defined conditions -usr/COND
   cond     status           Show condition status, default cond command
   cond     dump  [TYPE]     Dump all, or a type of, conditions and their status
 

@@ -127,7 +127,7 @@ Reload
 .Cm *.conf in
 .Pa /etc/finit.d ,
 i.e., activates changes.
-.It Nm Ar cond set Ar COND
+.It Nm Ar cond set Ar COND Op COND ...
 Set (assert) user-defined condition,
 .Cm +usr/COND
 .It Nm Ar cond get Ar COND
@@ -144,7 +144,7 @@ status of the condition, or give
 the
 .Fl v
 option for a more verbose output.
-.It Nm Ar cond clr | clear Ar COND
+.It Nm Ar cond clr | clear Ar COND Op COND ...
 Clear (deassert) user-defined condition,
 .Cm -usr/COND
 .It Nm Ar cond status
