@@ -862,7 +862,7 @@ the only known filesystems affected are: ubifs, jffs2.
 
 *Default:* 0 (disabled)
 
-When enabled (non-zeoro), this delay runs after file systems have been
+When enabled (non-zero), this delay runs after file systems have been
 unmounted and the root filesystem has been remounted read-only, and
 sync(2) has been called, twice.
 
