@@ -2,8 +2,12 @@ Finit Configuration
 ===================
 
 * [Introduction](#introduction)
+  * [Configuration Overview](#configuration-overview)
+  * [Runlevels](#runlevels)
+  * [Managing Services](#managing-services)
   * [Environment Variables](#environment-variables)
 * [Service Environment](#service-environment)
+* [Service Synchronization](#service-synchronization)
 * [Service Wrapper Scripts](#service-wrapper-scripts)
 * [Cgroups](#cgroups)
 * [Configuration File Syntax](#configuration-file-syntax)
@@ -34,36 +38,91 @@ Finit Configuration
 Introduction
 ------------
 
-Finit can be configured using only the original `/etc/finit.conf` file
-or in combination with `/etc/finit.d/*.conf`.  Useful for package-based
-Linux distributions -- each package can provide its own "script" file.
+Finit is a process starter and service monitor designed to run as PID 1
+on Linux.  It consists of plugins and configuration files.  Plugins
+start at [hook points](plugins.md) and can run various set up or install
+event handlers that later provide runtime services, e.g. PID file
+monitoring.
 
-- `/etc/finit.conf`: main configuration file
-- `/etc/finit.d/*.conf`: snippets, usually one service per file
 
-> **Note:** the above .conf file name and rcS.d directory name are the
-> defaults.  They can be changed at compile-time with two `configure`
-> options: `--with-config=FOO` and `--with-rcsd=BAR`.
+### Configuration Overview
+
+Originally Finit was configured using a single file, `/etc/finit.conf`.
+Although still possible, today we recommended using the Apache-style
+`available/*.conf` and `enabled/*.conf` layaout.  These are called
+dynamic services, in contrast to static -- the only difference being
+where they are installed and if the `initctl` tool can manage them.
+
+    /etc/
+	  |- finit.d/
+	  |   | -available/
+	  |   |   `- my-service.conf
+	  :   |- enabled/
+	  :   |   `- my-service.conf -> ../available/my-service.conf
+	  :   :
+	  :   |- static-service.conf
+	  :   `- another-static.conf  # eg. bootstrap run/task commands
+	  :
+      `- finit.conf               # global settings
+
+At bootstrap, and `initctl reload`, all .conf files are read, starting
+with `finit.conf`, then, in alphabetical order, all `finit.d/*.conf`
+files, and finally (still in alphabetical order) all `enabled/*.conf`
+files.
+
+> **Note:** the `finit.conf` and `finit.d/` names are only defaults.
+> They can be changed at compile-time with two `configure` options:
+> `--with-config=/etc/foo.conf` and `--with-rcsd=/var/foo.d`.
 >
-> They can also be overridden from the command line `finit.config=BAZ`
-> and the top-level configuration directive `rcsd /path/to/finit.d`.
+> They can also be overridden from the [kernel command line](cmdline.md)
+> using: `-- finit.config=/etc/bar.conf` and in that file use the
+> top-level configuration directive `rcsd /path/to/finit.d`.
 
-Not all configuration directives are available in `/etc/finit.d/*.conf`
-and some directives are only available at [bootstrap][], runlevel `S`,
-see the section [Limitations](#limitations) below for details.
 
-To add a new service, drop a `.conf` file in `/etc/finit.d` and run
-`initctl reload`.  (It is also possible to `SIGHUP` to PID 1, or call
+### Runlevels
+
+Runlevels are declared per service/run/task/sysv command.  Starting in
+runlevel S ([bootStrap](bootstrap.md)), usually only for tasks supposed
+to run once at boot, and services like `syslogd`, which you need to
+start and run throughout the whole time your system is up.  Before `S`
+is started, however, Finit performs a lot of housekeeping tasks like
+mounting all filesystems, calling `fsck` if needed, and making sure the
+everything is OK.
+
+    task [S] /lib/console-setup/console-setup.sh
+    service [S12345] env:-/etc/default/rsyslog rsyslogd -n $RSYSLOGD_ARGS
+
+After runlevel S, Finit proceeds to runlevel 2.  (This can be changed in
+`/etc/finit.conf` using the `runlevel N` directive.)  Before starting
+the services in runlevel 2, Finit first stops everything that is not
+allowed to run in 2, and then brings up networking.  Networking is
+expected to be available in all runlevels except: S, 1 (single user
+level), 6, and 0.  Networking is enabled either by the `network script`
+directive, or if you have an `/etc/network/interfaces` file, Finit calls
+`ifup -a` -- at the very least the loopback interface is brought up.
+
+> **Note:** when moving from runlevel S to 2, all run/task/services that
+> were constrained to runlevel S only are dropped from bookkeeping.  So
+> when reaching the prompt, `initctl` will not show these run/tasks.
+> This is a safety mechanism to prevent bootstrap-only tasks from
+> accidentally being run again.  E.g., `console-setup.sh` above.
+
+
+### Managing Services
+
+Using `initctl disable my-service` the symlink (above) is removed and
+the service is queued for removal.  Several changes can be made to the
+system, but it is not until `initctl reload` is called that the changes
+are activated.
+
+To add a new static service, drop a `.conf` file in `/etc/finit.d/` and
+run `initctl reload`.  (It is also possible to `SIGHUP` PID 1, or call
 `finit q`, but that has been deprecated with the `initctl` tool).  Finit
 monitors all known active `.conf` files, so if you want to force a
 restart of any service you can touch its corresponding `.conf` file in
-`/etc/finit.d` and call `initctl reload`.  Finit handle any and all
-conditions and dependencies between services automatically.
-
-It is also possible to drop `.conf` files in `/etc/finit.d/available/`
-and use `initctl enable` to enable a service `.conf` file.  This may be
-useful in particular to Linux distributions that may want to install all
-files for a package and let the user decide when to enable a service.
+`/etc/finit.d` and call `initctl reload`.  Finit handles all conditions
+and dependencies between services automatically, see below section on
+[Service Synchronization](#service-synchronization) for more details.
 
 On `initctl reload` the following is checked for all services:
 
@@ -76,10 +135,6 @@ On `initctl reload` the following is checked for all services:
 
 For more info on the different states of a service, see the separate
 document [Finit Services](service.md).
-
-> When running <kbd>make install</kbd> no default `/etc/finit.conf` is
-> installed since system requirements differ too much.  There are some
-> examples in the `contrib/` directory, which can be used as a base.
 
 
 ### Environment Variables
@@ -315,6 +370,12 @@ service name:sysklogd [S123456789]   \
 
 The .conf files `/etc/finit.conf` and `/etc/finit.d/*` support the
 following directives:
+
+
+> **Note:** not all directives are available in `/etc/finit.d/*.conf`
+> and some directives are only available at [bootstrap][], runlevel `S`,
+> see [Limitations](#limitations) below for details.
+
 
 ### Hostname
 
