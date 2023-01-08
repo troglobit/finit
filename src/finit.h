@@ -118,6 +118,7 @@ extern int    rescue;
 extern int    single;
 extern int    bootstrap;
 extern int    kerndebug;
+extern int    syncsec;
 extern char  *fstab;
 extern char  *sdown;
 extern char  *network;

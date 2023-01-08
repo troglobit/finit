@@ -70,6 +70,7 @@ int   rescue    = 0;		/* rescue mode from kernel cmdline */
 int   single    = 0;		/* single user mode from kernel cmdline */
 int   bootstrap = 1;		/* set while bootrapping (for TTYs) */
 int   kerndebug = 0;		/* set if /proc/sys/kernel/printk > 7 */
+int   syncsec   = 0;		/* reboot delay */
 char *finit_conf= NULL;
 char *finit_rcsd= NULL;
 char *fstab     = NULL;
