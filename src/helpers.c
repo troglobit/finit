@@ -367,7 +367,8 @@ int print_result(int fail)
 int getuser(char *username, char **home)
 {
 #ifdef ENABLE_STATIC
-	*home = "/";		/* XXX: Fixme */
+	if (home)
+		*home = "/";	/* XXX: Fixme */
 	return fgetint("/etc/passwd", "x:\n", username);
 #else
 	struct passwd *usr;
