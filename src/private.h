@@ -35,23 +35,23 @@
 extern char *finit_conf;
 extern char *finit_rcsd;
 
-extern int service_interval;
+extern int   service_interval;
 
-int       api_init         (uev_ctx_t *ctx);
-int       api_exit         (void);
+int          api_init         (uev_ctx_t *ctx);
+int          api_exit         (void);
 
-void      service_monitor  (pid_t lost, int status);
-void      service_notify_cb(uev_t *w, void *arg, int events);
+void         service_monitor  (pid_t lost, int status);
+void         service_notify_cb(uev_t *w, void *arg, int events);
 
-const char *plugin_hook_str(hook_point_t no);
-int       plugin_exists    (hook_point_t no);
+const char  *plugin_hook_str  (hook_point_t no);
+int          plugin_exists    (hook_point_t no);
 
-void      plugin_run_hook  (hook_point_t no, void *arg);
-void      plugin_run_hooks (hook_point_t no);
-void      plugin_script_run(hook_point_t no);
+void         plugin_run_hook  (hook_point_t no, void *arg);
+void         plugin_run_hooks (hook_point_t no);
+void         plugin_script_run(hook_point_t no);
 
-int       plugin_init      (uev_ctx_t *ctx);
-void      plugin_exit      (void);
+int          plugin_init      (uev_ctx_t *ctx);
+void         plugin_exit      (void);
 
 #endif /* FINIT_PRIVATE_H_ */
 
