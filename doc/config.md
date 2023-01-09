@@ -54,15 +54,15 @@ dynamic services, in contrast to static -- the only difference being
 where they are installed and if the `initctl` tool can manage them.
 
     /etc/
-	  |- finit.d/
-	  |   | -available/
-	  |   |   `- my-service.conf
-	  :   |- enabled/
-	  :   |   `- my-service.conf -> ../available/my-service.conf
-	  :   :
-	  :   |- static-service.conf
-	  :   `- another-static.conf  # eg. bootstrap run/task commands
-	  :
+      |- finit.d/
+      |   |- available/
+      |   |   `- my-service.conf
+      :   |- enabled/
+      :   |   `- my-service.conf -> ../available/my-service.conf
+      :   :
+      :   |- static-service.conf
+      :   `- another-static.conf  # eg. bootstrap run/task commands
+      :
       `- finit.conf               # global settings
 
 At bootstrap, and `initctl reload`, all .conf files are read, starting
@@ -85,33 +85,37 @@ Finit is most comfortable with a traditional style Linux filesystem
 layout, as specified in the [FHS][]:
 
     /.
-	 |- bin/
-	 |- dev/          # Mounted automatically if devtmpfs is available
-	 |   |- pts/      # Mounted automatically by Finit if it exists
-	 |   `- shm/      # Mounted automatically by Finit if it exists
-	 |- etc/
-	 |- home/
-	 |- lib/
-	 |- libexec/
-	 |- mnt/
-	 |- proc/         # Mounted automatically by Finit if it exists
-	 |- root/
-	 |- run/          # Mounted automatically by Finit if it exists
-	 |   `- lock/     # Created automatically if Finit mounts /run
-	 |- sbin/
-	 |- sys/          # Mounted automatically by Finit if it exists
-	 |- tmp/          # Mounted automatically by Finit if it exists
-	 |- usr/
-	 `- var/
-	     |- cache/
-	     |- db/
-	     |- lib/
-	     |   `- misc/
-	     |- lock/
-	     |- log/
-	     |- run -> ../run
-	     |- spool/
-	     `- tmp/
+     |- bin/
+     |- dev/          # Mounted automatically if devtmpfs is available
+     |   |- pts/      # Mounted automatically by Finit if it exists
+     |   `- shm/      # Mounted automatically by Finit if it exists
+     |- etc/
+     |   |- finit.d/
+     |   |   |- available/
+     |   |   `- enabled/
+     |    `- finit.conf
+     |- home/
+     |- lib/
+     |- libexec/
+     |- mnt/
+     |- proc/         # Mounted automatically by Finit if it exists
+     |- root/
+     |- run/          # Mounted automatically by Finit if it exists
+     |   `- lock/     # Created automatically if Finit mounts /run
+     |- sbin/
+     |- sys/          # Mounted automatically by Finit if it exists
+     |- tmp/          # Mounted automatically by Finit if it exists
+     |- usr/
+     `- var/
+         |- cache/
+         |- db/
+         |- lib/
+         |   `- misc/
+         |- lock/
+         |- log/
+         |- run -> ../run
+         |- spool/
+         `- tmp/
 
 Finit starts (very early) by mounting `/dev`, `/proc/`, and `/sys`,
 unless they (i.e., `/dev`) are already mounted.  When all plugins and
