@@ -911,6 +911,27 @@ Log rotation is controlled using the global `log` setting.
     service log:prio:user.warn,tag:ntpd /sbin/ntpd pool.ntp.org -- NTP daemon
 
 
+### Misc Settings
+
+**Syntax:** `reboot-delay <0-60>`
+
+Optional delay at reboot (or shutdown or halt) to allow kernel
+filesystem threads to complete after calling `sync(2)` before
+rebooting.  This applies primarily to filesystems that do not
+have a reboot notifier implemented.  At the point of writing,
+the only known filesystems affected are: ubifs, jffs2.
+
+*Default:* 0 (disabled)
+
+When enabled (non-zero), this delay runs after file systems have been
+unmounted and the root filesystem has been remounted read-only, and
+sync(2) has been called, twice.
+
+> "On Linux, sync is only guaranteed to schedule the dirty blocks for
+> writing; it can actually take a short time before all the blocks are
+> finally written.
+
+
 Rescue Mode
 -----------
 

@@ -764,6 +764,11 @@ static int parse_static(char *line, int is_rcsd)
 		return 0;
 	}
 
+	if (MATCH_CMD(line, "reboot-delay ", x)) {
+		syncsec = strtonum(strip_line(x), 0, 60, NULL);
+		return 0;
+	}
+
 	/*
 	 * Periodic check and instability index leveler, seconds
 	 */

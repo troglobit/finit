@@ -382,6 +382,20 @@ void do_shutdown(shutop_t op)
 	print(0, "Calling hook/svc/down scripts ...");
 	plugin_run_hooks(HOOK_SYS_DN);
 
+	/*
+	 * Optional reboot-delay, needed on systems running ubifs, jffs,
+	 * or similar.  From fileutils-4.0, sync(8); "On Linux, sync is
+	 * only guaranteed to schedule the dirty blocks for writing; it
+	 * can actually take a short time before all the blocks are
+	 * finally written." -- https://linux.die.net/man/8/sync
+	 */
+	sync();
+	if (syncsec > 0) {
+		print(-1, "Reboot delay, waiting for filesystem sync, %d sec", syncsec);
+		do_sleep(syncsec);
+		print(0, NULL);
+	}
+
 	/* Reboot via watchdog or kernel, or shutdown? */
 	if (op == SHUT_REBOOT) {
 		print(0, "Rebooting ...");
