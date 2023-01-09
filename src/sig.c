@@ -330,7 +330,7 @@ void do_shutdown(shutop_t op)
 		;
 
 	/* All services and (non-critical) processes have stopped. */
-	plugin_run_hooks(HOOK_SVC_DN);
+	plugin_script_run(HOOK_SVC_DN);
 
 	if (in_cont) {
 		if (osheading)
@@ -380,7 +380,7 @@ void do_shutdown(shutop_t op)
 
 	/* Last chance to run scripts (all .so plugins have exited already) */
 	print(0, "Calling hook/svc/down scripts ...");
-	plugin_run_hooks(HOOK_SYS_DN);
+	plugin_script_run(HOOK_SYS_DN);
 
 	/*
 	 * Optional reboot-delay, needed on systems running ubifs, jffs,
