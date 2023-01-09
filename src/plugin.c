@@ -263,7 +263,7 @@ void plugin_run_hook(hook_point_t no, void *arg)
 	 * conditions for any hooks before filesystems have been
 	 * mounted.
 	 */
-	if (cond_is_available() && no >= HOOK_MOUNT_BASEFS_UP && no <= HOOK_SHUTDOWN)
+	if (cond_is_available() && no >= HOOK_BASEFS_UP && no <= HOOK_SHUTDOWN)
 		cond_set_oneshot(hook_cond[no]);
 
 	service_step_all(SVC_TYPE_RUNTASK);
