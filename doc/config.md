@@ -2,7 +2,7 @@ Finit Configuration
 ===================
 
 * [Introduction](#introduction)
-  * [Configuration Overview](#configuration-overview)
+  * [Configuration Files](#configuration-files)
   * [Runlevels](#runlevels)
   * [Managing Services](#managing-services)
   * [Environment Variables](#environment-variables)
@@ -39,13 +39,13 @@ Introduction
 ------------
 
 Finit is a process starter and service monitor designed to run as PID 1
-on Linux.  It consists of plugins and configuration files.  Plugins
-start at [hook points](plugins.md) and can run various set up or install
-event handlers that later provide runtime services, e.g. PID file
-monitoring.
+on Linux.  It consists of [plugins](plugins.md) and configuration files.
+Plugins start at [hook points](plugins.md#hooks) and can run various set
+up, or install event handlers that later provide runtime services, e.g.,
+PID file monitoring, or [conditions](conditions.md).
 
 
-### Configuration Overview
+### Configuration Files
 
 Originally Finit was configured using a single file, `/etc/finit.conf`.
 Although still possible, today we recommended using the Apache-style
@@ -80,6 +80,13 @@ files.
 
 
 ### Runlevels
+
+ - `  S`: bootStrap
+ - `  1`: Single user mode
+ - `2-5`: traditional multi-user mode
+ - `  6`: reboot
+ - `7-9`: multi-user mode (extra)
+ - `  0`: shutdown
 
 Runlevels are declared per service/run/task/sysv command.  Starting in
 runlevel S ([bootStrap](bootstrap.md)), usually only for tasks supposed
