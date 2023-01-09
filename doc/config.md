@@ -79,6 +79,58 @@ files.
 > top-level configuration directive `rcsd /path/to/finit.d`.
 
 
+### Filesystem Layout
+
+Finit is most comfortable with a traditional style Linux filesystem
+layout, as specified in the [FHS][]:
+
+    /.
+	 |- bin/
+	 |- dev/          # Mounted automatically if devtmpfs is available
+	 |   |- pts/      # Mounted automatically by Finit if it exists
+	 |   `- shm/      # Mounted automatically by Finit if it exists
+	 |- etc/
+	 |- home/
+	 |- lib/
+	 |- libexec/
+	 |- mnt/
+	 |- proc/         # Mounted automatically by Finit if it exists
+	 |- root/
+	 |- run/          # Mounted automatically by Finit if it exists
+	 |   `- lock/     # Created automatically if Finit mounts /run
+	 |- sbin/
+	 |- sys/          # Mounted automatically by Finit if it exists
+	 |- tmp/          # Mounted automatically by Finit if it exists
+	 |- usr/
+	 `- var/
+	     |- cache/
+	     |- db/
+	     |- lib/
+	     |   `- misc/
+	     |- lock/
+	     |- log/
+	     |- run -> ../run
+	     |- spool/
+	     `- tmp/
+
+Finit starts (very early) by mounting `/dev`, `/proc/`, and `/sys`,
+unless they (i.e., `/dev`) are already mounted.  When all plugins and
+other, core Finit functions, have been set up, all relevant filesystems
+(`PASS > 0`) are checked and mounted from the selected `fstab`, either
+the default `/etc/fstab`, or any custom one selected from the command
+line, or at build time.
+
+Any file system not listed `fstab` are automatically mounted by Finit,
+as listed above, provided their respective mount point exists.
+
+With all filesystems mounted, Finit calls `swapon`.
+
+At shutdown, and after having stopped all services and other lingering
+processes killed, filesystems are unmounted in the reverse order, and
+`swapoff` is called.
+
+[FHS]: https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html
+
 ### Runlevels
 
  - `  S`: bootStrap
