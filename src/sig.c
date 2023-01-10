@@ -431,6 +431,11 @@ static void sighup_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
+	if (runlevel == 0 || runlevel == 6) {
+		warnx("SIGHUP ignored in runlevel S and 6.");
+		return;
+	}
+
 	/* Restart initctl API domain socket, similar to systemd/SysV init */
 	api_exit();
 	api_init(w->ctx);
@@ -482,6 +487,11 @@ static void sigusr1_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
+	if (runlevel == 0 || runlevel == 6) {
+		warnx("SIGUSR1 ignored in runlevel S and 6.");
+		return;
+	}
+
 	/* Restart initctl API domain socket, similar to systemd/SysV init */
 	api_exit();
 	api_init(w->ctx);
@@ -498,6 +508,11 @@ static void sigusr2_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
+	if (runlevel == 0 || runlevel == 6) {
+		warnx("SIGUSR2 ignored in runlevel S and 6.");
+		return;
+	}
+
 	halt = SHUT_OFF;
 	service_runlevel(0);
 }
@@ -510,6 +525,11 @@ static void sigterm_cb(uev_t *w, void *arg, int events)
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
+		return;
+	}
+
+	if (runlevel == 0 || runlevel == 6) {
+		warnx("SIGTERM ignored in runlevel S and 6.");
 		return;
 	}
 

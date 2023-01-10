@@ -367,6 +367,25 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		switch (rq.cmd) {
 		case INIT_CMD_RUNLVL:
+		case INIT_CMD_RELOAD:
+		case INIT_CMD_START_SVC:
+		case INIT_CMD_RESTART_SVC:
+		case INIT_CMD_STOP_SVC:
+		case INIT_CMD_RELOAD_SVC:
+		case INIT_CMD_REBOOT:
+		case INIT_CMD_HALT:
+		case INIT_CMD_POWEROFF:
+		case INIT_CMD_SUSPEND:
+			if (runlevel == 0 || runlevel == 6) {
+				warnx("Unsupported command in runlevel S and 6.");
+				return;
+			}
+		default:
+			break;
+		}
+
+		switch (rq.cmd) {
+		case INIT_CMD_RUNLVL:
 			switch (rq.runlevel) {
 			case 's':
 			case 'S':
