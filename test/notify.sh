@@ -48,6 +48,13 @@ test_one()
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
+    say "Verify 'ready' is reasserted if service crashes and is restarted ..."
+    texec sh -c "initctl signal serv 9"
+    sleep 2
+    assert_status "serv" "running"
+    assert_cond "service/serv/ready"
+
+    say "Verify 'ready' is deasserted on stop ..."
     texec sh -c "initctl stop serv"
     sleep 1
     assert_status "serv" "stopped"
