@@ -1464,6 +1464,7 @@ int main(int argc, char *argv[])
 		{ "stop",     NULL, do_stop,      NULL, NULL  },
 		{ "restart",  NULL, do_restart,   NULL, NULL  },
 		{ "signal",   NULL, NULL,         NULL, do_signal  },
+		{ "kill",     NULL, NULL,         NULL, do_signal  }, /* alias */
 
 		{ "cgroup",   NULL, show_cgroup, &cgrp, NULL  },
 		{ "ps",       NULL, show_cgps,   &cgrp, NULL  },
