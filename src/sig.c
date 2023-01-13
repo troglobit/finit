@@ -559,7 +559,7 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 			break;
 		}
 
-		dbg("Collected child %d, status: %d", pid, status);
+		dbg("Collected child PID %d, status: %d", pid, status);
 		service_monitor(pid, status);
 	}
 }
