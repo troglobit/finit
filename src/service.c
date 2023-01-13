@@ -2035,15 +2035,17 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 {
 	svc_state_t *state = (svc_state_t *)&svc->state;
 
-	*state = new_state;
-
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
-	if (*state == SVC_STOPPING_STATE) {
+	if (new_state == SVC_STOPPING_STATE) {
 		dbg("%s is stopping, wait %d sec before sending SIGKILL ...",
 		   svc_ident(svc, NULL, 0), svc->killdelay / 1000);
 		service_timeout_cancel(svc);
 		service_timeout_after(svc, svc->killdelay, service_kill);
 	}
+
+	if (svc->state == new_state)
+		return;
+	*state = new_state;
 
 	if (svc_is_runtask(svc)) {
 		char success[MAX_COND_LEN], failure[MAX_COND_LEN];
