@@ -61,7 +61,7 @@ static struct wq work = {
 };
 int service_interval = SERVICE_INTERVAL_DEFAULT;
 
-static void svc_set_state(svc_t *svc, svc_state_t new);
+static void svc_set_state(svc_t *svc, svc_state_t new_state);
 
 /**
  * service_timeout_cb - libuev callback wrapper for service timeouts
@@ -2031,11 +2031,11 @@ static void service_retry(svc_t *svc)
 	service_timeout_after(svc, svc->restart_tmo, service_retry);
 }
 
-static void svc_set_state(svc_t *svc, svc_state_t new)
+static void svc_set_state(svc_t *svc, svc_state_t new_state)
 {
 	svc_state_t *state = (svc_state_t *)&svc->state;
 
-	*state = new;
+	*state = new_state;
 
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
 	if (*state == SVC_STOPPING_STATE) {
