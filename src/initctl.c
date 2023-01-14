@@ -408,6 +408,26 @@ static int do_cond_dump(char *arg)
 
 typedef enum { COND_CLR, COND_SET, COND_GET } condop_t;
 
+static int cond_read(char *path)
+{
+	int now, gen;
+
+	if (fngetint(path, &gen) == -1)
+		return 0;
+
+	/*
+	 * if we cannot read the reconf generation, then either sth is
+	 * very wrong, or we are called very early/late boot/shutdown.
+	 */
+	if (fngetint(_PATH_RECONF, &now) == -1)
+		return 255;	/* classify as flux */
+
+	if (now != gen)
+		return 255;
+
+	return 1;
+}
+
 /*
  * cond get allows only one argument
  * cond set|clr iterate over multiple args
@@ -416,6 +436,7 @@ static int do_cond_act(char *args, condop_t op)
 {
 	char path[256];
 	char *arg;
+	int rc;
 
 	if (!args || !args[0])
 		ERRX(2, "Invalid condition (empty)");
@@ -443,10 +464,17 @@ static int do_cond_act(char *args, condop_t op)
 
 		switch (op) {
 		case COND_GET:
-			off = !fexist(path);
-			if (verbose)
-				puts(off ? "off" : "on");
-			return off;
+			rc = cond_read(path);
+			if (verbose) {
+				if (rc == 255)
+					puts("flux");
+				else if (rc == 0)
+					puts("off");
+				else
+					puts("on");
+			}
+			return rc;
+
 		case COND_SET:
 			if (symlink(_PATH_RECONF, path) && errno != EEXIST)
 				ERR(73, "Failed asserting condition <%s>", &path[off]);
