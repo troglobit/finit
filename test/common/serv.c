@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 		mine(melange);
 
 	/* Tell world where we are, but not if bg w/o pid file */
-	if (do_pidfile == 1)
+	if (do_pidfile > 0)
 		pidfile(pidfn);
 
 	if (!do_notify) {
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 					do_notify = 0;
 				}
 			}
-			if (do_pidfile)
+			if (do_pidfile > 0)
 				pidfile(NULL);
 			reloading = 0;
 		}
