@@ -1480,6 +1480,7 @@ int main(int argc, char *argv[])
 		{ "disable",  NULL, serv_disable, NULL, NULL  },
 		{ "touch",    NULL, serv_touch,   NULL, NULL  },
 		{ "show",     NULL, serv_show,    NULL, NULL  },
+		{ "cat",      NULL, serv_show,    NULL, NULL  }, /* alias */
 		{ "edit",     NULL, serv_edit,    NULL, NULL  },
 		{ "create",   NULL, serv_creat,   NULL, NULL  },
 		{ "delete",   NULL, serv_delete,  NULL, NULL  },
