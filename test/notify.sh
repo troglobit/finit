@@ -73,6 +73,10 @@ test_one()
     assert_status "serv" "stopped"
     assert_nocond "service/serv/ready"
 
+    say "Cleaning up after test."
+    texec sh -c "rm $FINIT_CONF"
+    texec sh -c "initctl reload"
+
     # sleep 2
     # num=$(texec sh -c "find /proc/1/fd |wc -l")
     # say "finit: number of open file descriptors after test: $num"
@@ -83,18 +87,6 @@ test_one()
 . "$TEST_DIR/tenv/lib.sh"
 
 texec sh -c "initctl debug"
-
-test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
-test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
-
-test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
-test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
-
-test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
-test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
 
 test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
 test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
