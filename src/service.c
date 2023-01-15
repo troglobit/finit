@@ -242,6 +242,7 @@ static void fallback_logger(char *ident, char *prio)
  */
 static int lredirect(svc_t *svc)
 {
+	static int have_sysklogd = -1;
 	pid_t pid;
 	int fd;
 
@@ -258,6 +259,31 @@ static int lredirect(svc_t *svc)
 		close(fd);
 		svc->log.enabled = 0;
 		return -1;
+	}
+
+	/*
+	 * First time, check if we have sysklogd logger tool.
+	 * It supports logging the actual PID of the service.
+	 */
+	if (have_sysklogd == -1) {
+		FILE *pp;
+
+		pp = popen("logger -h 2>/dev/null", "r");
+		if (pp) {
+			char buf[128];
+
+			have_sysklogd = 0;
+			while (fgets(buf, sizeof(buf), pp)) {
+				if (strstr(buf, "-I PID")) {
+					have_sysklogd = 1;
+					break;
+				}
+			}
+
+			pclose(pp);
+		} else {
+			have_sysklogd = 0;
+		}
 	}
 
 	pid = fork();
@@ -281,19 +307,27 @@ static int lredirect(svc_t *svc)
 		/* Default syslog identity name[:id] */
 		tag = svc_ident(svc, buf, sizeof(buf));
 
-		if (!whichp(_PATH_LOGIT)) {
+		if (!have_sysklogd && !whichp(_PATH_LOGIT)) {
 			logit(LOG_INFO, _PATH_LOGIT " missing, using syslog for %s instead", svc->name);
 			fallback_logger(tag, prio);
 			_exit(0);
 		}
 
 		if (svc->log.file[0] == '/') {
-			char sz[20], num[3];
+			if (have_sysklogd) {
+				char rot[25], pid[16];
 
-			snprintf(sz, sizeof(sz), "%d", logfile_size_max);
-			snprintf(num, sizeof(num), "%d", logfile_count_max);
+				snprintf(rot, sizeof(rot), "%d:%d", logfile_size_max, logfile_count_max);
+				snprintf(pid, sizeof(pid), "%d", getppid());
+				execlp("logger", "logger", "-f", svc->log.file, "-b", "-t", tag, "-p", prio, "-I", pid, "-r", rot, NULL);
+			} else {
+				char sz[20], num[3];
 
-			execlp(_PATH_LOGIT, "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+				snprintf(sz, sizeof(sz), "%d", logfile_size_max);
+				snprintf(num, sizeof(num), "%d", logfile_count_max);
+
+				execlp(_PATH_LOGIT, "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+			}
 			_exit(1);
 		}
 
@@ -302,7 +336,14 @@ static int lredirect(svc_t *svc)
 		if (svc->log.prio[0])
 			prio = svc->log.prio;
 
-		execlp(_PATH_LOGIT, "logit", "-t", tag, "-p", prio, NULL);
+		if (have_sysklogd) {
+			char pid[16];
+
+			snprintf(pid, sizeof(pid), "%d", getppid());
+			execlp("logger", "logger", "-t", tag, "-p", prio, "-I", pid, NULL);
+		} else {
+			execlp(_PATH_LOGIT, "logit", "-t", tag, "-p", prio, NULL);
+		}
 		_exit(1);
 	}
 
