@@ -25,8 +25,10 @@ test_one()
     type=$1
     service=$2
 
-    num=$(texec sh -c "find /proc/1/fd |wc -l")
-    say "finit: number of open file descriptors before test: $num"
+    sep
+
+#    num=$(texec sh -c "find /proc/1/fd |wc -l")
+#    say "finit: number of open file descriptors before test: $num"
 
     say "Add $type stanza to $FINIT_CONF"
     texec sh -c "echo $service > $FINIT_CONF"
@@ -35,11 +37,11 @@ test_one()
     texec sh -c "initctl reload"
 
     sleep 1
-    texec sh -c "initctl status serv"
+#    texec sh -c "initctl status serv"
     assert_status "serv" "running"
 
     sleep 2
-    texec sh -c "initctl cond dump"
+#    texec sh -c "initctl cond dump"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is set after SIGHUP ..."
@@ -49,6 +51,7 @@ test_one()
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is reasserted if service crashes and is restarted ..."
+#    texec sh -c "initctl status serv"
     texec sh -c "initctl signal serv 9"
     sleep 2
     assert_status "serv" "running"
@@ -63,7 +66,7 @@ test_one()
     say "Verify 'ready' is reasserted on 'initctl reload' ..."
     texec sh -c "initctl reload"
     sleep 1
-    texec sh -c "initctl; initctl cond dump"
+#    texec sh -c "initctl; initctl cond dump"
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
@@ -80,13 +83,12 @@ test_one()
     # sleep 2
     # num=$(texec sh -c "find /proc/1/fd |wc -l")
     # say "finit: number of open file descriptors after test: $num"
-    
 }
 
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-texec sh -c "initctl debug"
+#texec sh -c "initctl debug"
 
 test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
 test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
