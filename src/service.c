@@ -2438,6 +2438,29 @@ int service_completed(void)
 }
 
 /*
+ * Called in SM_RELOAD_WAIT_STATE to update unmodified non-native
+ * services' READY condition to the current generation.  Similar
+ * to the pidfile_reconf() function for native services.
+ */
+void service_notify_reconf(void)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (!svc->notify)
+			continue; /* managed by pidfile plugin */
+
+		if (svc->state != SVC_RUNNING_STATE)
+			continue;
+
+		if (svc_is_changed(svc) || svc_is_starting(svc))
+			continue;
+
+		service_ready(svc);
+	}
+}
+
+/*
  * Called when a service sends readiness notification, or when
  * the service closes its end of the IPC connection.
  */
@@ -2463,7 +2486,19 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 
 	/* systemd and s6, respectively.  The latter then closes the socket */
 	if (!strcmp(buf, "READY=1\n") || !strcmp(buf, "\n")) {
+		/*
+		 * native (pidfile) services are marked as started by
+		 * the pidfile plugin.
+		 */
+		svc_started(svc);
+
+		/*
+		 * On reload, and this svc is unmodified, it is up to
+		 * the service_notify_reconf() function to step the
+		 * generation of the READY condition.
+		 */
 		service_ready(svc);
+
 		/* s6 applications close their socket after notification */
 		if (svc->notify == 2) {
 			uev_io_stop(w);

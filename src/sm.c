@@ -256,6 +256,9 @@ restart:
 		dbg("Calling reconf hooks ...");
 		plugin_run_hooks(HOOK_SVC_RECONF);
 
+		dbg("Update configuration generation of unmodified non-native services ...");
+		service_notify_reconf();
+
 		service_step_all(SVC_TYPE_ANY);
 		dbg("Reconfiguration done");
 

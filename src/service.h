@@ -49,6 +49,7 @@ void      service_step_all       (int types);
 void      service_worker         (void *unused);
 
 int       service_completed      (void);
+void      service_notify_reconf  (void);
 
 void      service_init           (void);
 
