@@ -9,7 +9,7 @@ TEST_DIR=$(dirname "$0")
 test_setup()
 {
 	say "Test start $(date)"
-	texec sh -c "mkdir -p /etc/default"
+	run "mkdir -p /etc/default"
 }
 
 test_teardown()
@@ -17,7 +17,7 @@ test_teardown()
 	say "Test done $(date)"
 	say "Running test teardown."
 
-	texec rm -f "$FINIT_CONF"
+	run "rm -f $FINIT_CONF"
 }
 
 test_one()
@@ -27,68 +27,68 @@ test_one()
 
     sep
 
-#    num=$(texec sh -c "find /proc/1/fd |wc -l")
+#    num=$(run "find /proc/1/fd |wc -l")
 #    say "finit: number of open file descriptors before test: $num"
 
     say "Add $type stanza to $FINIT_CONF"
-    texec sh -c "echo $service > $FINIT_CONF"
+    run "echo $service > $FINIT_CONF"
 
     say 'Reload Finit'
-    texec sh -c "initctl reload"
+    run "initctl reload"
 
     sleep 1
-#    texec sh -c "initctl status serv"
+#    run "initctl status serv"
     assert_status "serv" "running"
 
     sleep 2
-#    texec sh -c "initctl cond dump"
+#    run "initctl cond dump"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is set after SIGHUP ..."
-    texec sh -c "initctl reload serv"
+    run "initctl reload serv"
     sleep 2
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is reasserted if service crashes and is restarted ..."
-#    texec sh -c "initctl status serv"
-    texec sh -c "initctl signal serv 9"
+#    run "initctl status serv"
+    run "initctl signal serv 9"
     sleep 2
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is reasserted on 'initctl restart serv' ..."
-    texec sh -c "initctl restart serv"
+    run "initctl restart serv"
     sleep 1
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is reasserted on 'initctl reload' ..."
-    texec sh -c "initctl reload"
+    run "initctl reload"
     sleep 1
-#    texec sh -c "initctl; initctl cond dump"
+#    run "initctl; initctl cond dump"
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is deasserted on stop ..."
-    texec sh -c "initctl stop serv"
+    run "initctl stop serv"
     sleep 1
     assert_status "serv" "stopped"
     assert_nocond "service/serv/ready"
 
     say "Cleaning up after test."
-    texec sh -c "rm $FINIT_CONF"
-    texec sh -c "initctl reload"
+    run "rm -f $FINIT_CONF"
+    run "initctl reload"
 
     # sleep 2
-    # num=$(texec sh -c "find /proc/1/fd |wc -l")
+    # num=$(run "find /proc/1/fd |wc -l")
     # say "finit: number of open file descriptors after test: $num"
 }
 
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-#texec sh -c "initctl debug"
+#run "initctl debug"
 
 test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
 test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
