@@ -84,16 +84,16 @@ test_one()
 
 texec sh -c "initctl debug"
 
-test_one "s6"      "service log:stdout notify:s6      serv -np -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -np       -- systemd readiness"
+test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
+test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
 
-test_one "s6"      "service log:stdout notify:s6      serv -np -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -np       -- systemd readiness"
+test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
+test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
 
-test_one "s6"      "service log:stdout notify:s6      serv -np -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -np       -- systemd readiness"
+test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
+test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
 
-test_one "s6"      "service log:stdout notify:s6      serv -np -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -np       -- systemd readiness"
+test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
+test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
 
 return 0
