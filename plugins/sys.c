@@ -63,7 +63,7 @@ static void sys_update_conds(char *dir, char *name, uint32_t mask)
 		return;
 
 	cond += strlen(COND_BASE) + 1;
-	dbg("cond: %s set: %d", cond, mask & IN_CREATE ? 1 : 0);
+	dbg("cond: %s set: %d", cond, (mask & IN_CREATE) ? 1 : 0);
 	if (!cond_update(cond))
 		unlink(path);
 }
