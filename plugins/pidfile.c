@@ -83,7 +83,14 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	mkcond(svc, cond, sizeof(cond));
 
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
-		svc_started(svc);
+		/*
+		 * only mark native services as started, the s6 and
+		 * systemd style services rely on their respective
+		 * readiness notification.  Issue #343
+		 */
+		if (!svc->notify)
+			svc_started(svc);
+
 		if (!svc_has_pidfile(svc)) {
 			dbg("Setting %s PID file to %s", svc->name, fn);
 			pid_file_set(svc, fn, 1);
