@@ -30,7 +30,7 @@ test_one()
 #    num=$(run "find /proc/1/fd |wc -l")
 #    say "finit: number of open file descriptors before test: $num"
 
-    say "Add $type stanza to $FINIT_CONF"
+    say "Testing $(echo "$service" | sed -n -e 's/^.*-- //p')"
     run "echo $service > $FINIT_CONF"
 
     say 'Reload Finit'
@@ -50,18 +50,19 @@ test_one()
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
+    # Issue #343
     say "Verify 'ready' is reasserted if service crashes and is restarted ..."
 #    run "initctl status serv"
     run "initctl signal serv 9"
-    sleep 2
-    assert_status "serv" "running"
-    assert_cond "service/serv/ready"
+    retry 'assert_status "serv" "running"' 2 1
+    retry 'assert_cond "service/serv/ready"' 3 1
 
+    # Issue #343
     say "Verify 'ready' is reasserted on 'initctl restart serv' ..."
     run "initctl restart serv"
     sleep 1
-    assert_status "serv" "running"
-    assert_cond "service/serv/ready"
+    retry 'assert_status "serv" "running"'
+    retry 'assert_cond "service/serv/ready"' 5 0.5
 
     say "Verify 'ready' is reasserted on 'initctl reload' ..."
     run "initctl reload"
@@ -69,6 +70,18 @@ test_one()
 #    run "initctl; initctl cond dump"
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
+
+    # Issue #343; pidfile.so inadvertedly marked systemd services as
+    # 'started' when they created their PID file.  The serv test daemon
+    # waits 3 sec between pidfile and notify to trigger this bug.
+    if [ "$type" != "native" ]; then
+	    say "Verify 'ready' is *not* asserted immediately on restart + reload"
+	    run "initctl restart serv"
+	    run "initctl reload"
+	    sleep 1
+	    assert_nocond "service/serv/ready"
+	    retry 'assert_cond "service/serv/ready"' 5 0.5
+    fi
 
     say "Verify 'ready' is deasserted on stop ..."
     run "initctl stop serv"
@@ -90,8 +103,11 @@ test_one()
 
 #run "initctl debug"
 
-test_one "native"  "service log:stdout                serv -np      -- pid file readiness"
-test_one "s6"      "service log:stdout notify:s6      serv -n -N %n -- s6 readiness"
-test_one "systemd" "service log:stdout notify:systemd serv -n       -- systemd readiness"
+test_one "native"  "service log:stdout                serv -np       -- pid file readiness"
+test_one "s6"      "service log:stdout notify:s6      serv -n -N %n  -- s6 readiness"
+test_one "systemd" "service log:stdout notify:systemd serv -n        -- systemd readiness"
+
+test_one "s6"      "service log:stdout notify:s6      serv -np -N %n -- s6 readiness with pidfile"
+test_one "systemd" "service log:stdout notify:systemd serv -np       -- systemd readiness with pidfile"
 
 return 0

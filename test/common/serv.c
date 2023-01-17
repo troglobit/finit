@@ -279,6 +279,8 @@ int main(int argc, char *argv[])
 
 		if (reloading) {
 			if (do_notify > 0) {
+				log("Delaying notify by 3 seconds for notify.sh ...");
+				sleep(3);
 				log("Notifying Finit on socket %d, READY=1", do_notify);
 				if (write(do_notify, "READY=1\n", 8) == -1)
 					err(1, "Failed sending ready notification to Finit");
