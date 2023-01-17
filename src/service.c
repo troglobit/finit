@@ -2152,10 +2152,7 @@ void service_ready(svc_t *svc)
 		return;
 
 	snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
-	if (svc->notify == 2)
-		cond_set_oneshot(buf); /* exception for s6 */
-	else
-		cond_set(buf);
+	cond_set(buf);
 
 	if (svc_has_ready(svc))
 		service_ready_script(svc);
@@ -2345,8 +2342,6 @@ restart:
 
 				svc_mark_clean(svc);
 			}
-			if (svc->notify == 2 && svc->notify_watcher.fd == 0)
-				service_ready(svc);
 			break;
 		}
 		break;
