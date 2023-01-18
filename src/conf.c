@@ -1040,30 +1040,40 @@ static void drop_changes(void)
 static int do_change(char *dir, char *name, uint32_t mask)
 {
 	char fn[strlen(dir) + strlen(name) + 2];
+	char *rp;
 	struct conf_change *node;
 
 	paste(fn, sizeof(fn), dir, name);
 	dbg("path: %s mask: %08x", fn, mask);
 
-	node = conf_find(fn);
+	rp = realpath(fn, NULL);
+	if (!rp)
+		return 0;
+
+	node = conf_find(rp);
 	if (node) {
 		dbg("Event already registered for %s ...", name);
+		free(rp);
 		return 0;
 	}
 
 	node = malloc(sizeof(*node));
-	if (!node)
-		return 1;
-
-	node->name = strdup(fn);
-	if (!node->name) {
-		free(node);
+	if (!node) {
+		free(rp);
 		return 1;
 	}
 
-	dbg("Event registered for %s, mask 0x%x", fn, mask);
+	node->name = strdup(rp);
+	if (!node->name) {
+		free(node);
+		free(rp);
+		return 1;
+	}
+
+	dbg("Event registered for %s, mask 0x%x", rp, mask);
 	TAILQ_INSERT_HEAD(&conf_change_list, node, link);
 
+	free(rp);
 	return 0;
 }
 
