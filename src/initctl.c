@@ -65,6 +65,7 @@ int ionce    = 0;
 int debug    = 0;
 int heading  = 1;
 int json     = 0;
+int noerr    = 0;
 int verbose  = 0;
 int plain    = 0;
 int quiet    = 0;
@@ -192,7 +193,7 @@ static int show_log(char *arg)
 	if (arg) {
 		svc = client_svc_find(arg);
 		if (!svc)
-			ERRX(69, "no such task or service(s): %s", arg);
+			ERRX(noerr ? 0 : 69, "no such task or service(s): %s", arg);
 	}
 
 	return do_log(svc, "");
@@ -261,7 +262,7 @@ static int do_startstop(int cmd, char *arg)
 
 	strlcpy(rq.data, arg, sizeof(rq.data));
 	if (client_send(&rq, sizeof(rq)))
-		ERRX(69, "no such task or service(s): %s", arg);
+		ERRX(noerr ? 0 : 69, "no such task or service(s): %s", arg);
 
 	return do_svc(cmd, arg);
 }
@@ -280,7 +281,7 @@ static int do_reload (char *arg)
 static int do_restart(char *arg)
 {
 	if (do_startstop(INIT_CMD_RESTART_SVC, arg))
-		ERRX(7, "failed restarting %s", arg);
+		ERRX(noerr ? 0 : 7, "failed restarting %s", arg);
 
 	return 0;
 }
@@ -308,7 +309,7 @@ int do_signal(int argc, char *argv[])
 
 	strlcpy(rq.data, argv[0], sizeof(rq.data));
 	if (client_send(&rq, sizeof(rq)))
-		ERRX(69, "no such task or service(s): %s", argv[0]);
+		ERRX(noerr ? 0 : 69, "no such task or service(s): %s", argv[0]);
 
 	signo = str2sig(argv[1]);
 	if (signo == -1) {
@@ -1065,7 +1066,7 @@ static int show_status(char *arg)
 
 		svc = client_svc_find(arg);
 		if (!svc)
-			ERRX(69, "no such task or service(s): %s", arg);
+			ERRX(noerr ? 0 : 69, "no such task or service(s): %s", arg);
 
 		if (quiet) {
 			if (svc_is_runtask(svc)) {
@@ -1261,6 +1262,7 @@ static int usage(int rc)
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
 		"  -h, --help                This help text\n"
 		"  -j, --json                JSON output in 'status' and 'cond' commands\n"
+		"  -n, --noerr               Ignore error for non-existent services\n"
 		"  -1, --once                Only one lap in commands like 'top'\n"
 		"  -p, --plain               Use plain table headings, no ctrl chars\n"
 		"  -q, --quiet               Silent, only return status of command\n"
@@ -1448,6 +1450,7 @@ int main(int argc, char *argv[])
 		{ "force",      0, NULL, 'f' },
 		{ "help",       0, NULL, 'h' },
 		{ "json",       0, NULL, 'j' },
+		{ "noerr",      0, NULL, 'n' },
 		{ "once",       0, NULL, '1' },
 		{ "plain",      0, NULL, 'p' },
 		{ "quiet",      0, NULL, 'q' },
@@ -1520,7 +1523,7 @@ int main(int argc, char *argv[])
 	cgrp = cgroup_avail();
 	utmp = has_utmp();
 
-	while ((c = getopt_long(argc, argv, "1bcdfh?jpqtvV", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "1bcdfh?jnpqtvV", long_options, NULL)) != EOF) {
 		switch(c) {
 		case '1':
 			ionce = 1;
@@ -1548,6 +1551,10 @@ int main(int argc, char *argv[])
 
 		case 'j':
 			json = 1;
+			break;
+
+		case 'n':
+			noerr = 1;
 			break;
 
 		case 'p':

@@ -39,6 +39,12 @@ JSON output in
 and
 .Ar cond
 commands.
+.It Fl n, -noerr
+When scripting
+.Nm
+to stop, start, restart, or signal a task or service, this option can be
+used to ignore error 69 (no such task or service) and instead return 0
+(OK).
 .It Fl 1, -once
 Only one lap in commands like top.
 .It Fl p, -plain
