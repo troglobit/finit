@@ -47,13 +47,58 @@
 #define DBUS_DAEMONGROUP "messagebus"
 #endif
 
-#ifndef DBUS_DAEMONPIDFILE
-#define DBUS_DAEMONPIDFILE "/var/run/dbus/pid"
-#endif
+/*
+ * Dumnpster diving for the D-Bus main configuration file
+ * where <pidfile> is defined.
+ */
+static char *dbus_pidfn(void)
+{
+	char *alt[] = {
+		"/usr/share/dbus-1/system.conf",
+		"/etc/dbus-1/system.conf",
+		NULL
+	};
+	int i;
+
+	for (i = 0; alt[i]; i++) {
+		char *fn = alt[i];
+		char buf[256];
+		FILE *fp;
+
+		fp = fopen(fn, "r");
+		if (!fp)
+			continue;
+
+		fn = NULL;
+		while (fgets(buf, sizeof(buf), fp)) {
+			char *pos;
+
+			pos = strstr(buf, "<pidfile>");
+			if (!pos)
+				continue;
+			fn = pos + strlen("<pidfile>");
+			pos = strstr(fn, "</pidfile>");
+			if (!pos) {
+				fn = NULL;
+				break;
+			}
+			*pos = 0;
+		}
+
+		fclose(fp);
+		if (fn)
+			return strdup(fn);
+	}
+
+	return NULL;
+}
 
 static void setup(void *arg)
 {
+	char *group = DBUS_DAEMONGROUP;
+	char *user = DBUS_DAEMONUSER;
 	char line[256];
+	char *pidfn;
 	mode_t prev;
 	char *cmd;
 
@@ -68,29 +113,53 @@ static void setup(void *arg)
 		return;
 	}
 
-	prev =umask(0);
+	if (getuser(user, NULL) == -1) {
+		if (getuser("dbus", NULL) == -1)
+			user = "root"; /* fallback */
+		else
+			user = "dbus"; /* e.g., Buildroot */
+	}
+
+	if (getgroup(group) == -1) {
+		if (getgroup("dbus") == -1)
+			group = "root"; /* fallback */
+		else
+			group = "dbus"; /* e.g., Buildroot */
+	}
+
+	/* Clean up from any previous pre-bootstrap run */
+	pidfn = dbus_pidfn();
+	if (pidfn)
+		remove(pidfn);
 
 	dbg("Creating D-Bus Required Directories ...");
-	mksubsys("/var/run/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
-	mksubsys("/var/run/lock/subsys", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
-	mksubsys("/var/lib/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
-	mksubsys("/tmp/dbus", 0755, DBUS_DAEMONUSER, DBUS_DAEMONGROUP);
+	prev = umask(0);
+	mksubsys("/var/run/dbus", 0755, user, group);
+	mksubsys("/var/run/lock/subsys", 0755, user, group);
+	mksubsys("/var/lib/dbus", 0755, user, group);
+	mksubsys("/tmp/dbus", 0755, user, group);
+	umask(prev);
 
 	/* Generate machine id for dbus */
 	if (whichp("dbus-uuidgen"))
 		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
 
-	/* Clean up from any previous pre-bootstrap run */
-	remove(DBUS_DAEMONPIDFILE);
+	/*
+	 * Register service with Finit
+	 * Note: dbus drops privs after starting up.
+	 */
+	if (pidfn) {
+		snprintf(line, sizeof(line), "[123456789] cgroup.system name:dbus pid:!%s %s %s -- %s",
+			 pidfn, cmd, DBUS_ARGS, DBUS_DESC);
+		free(pidfn);
+	} else
+		snprintf(line, sizeof(line), "[123456789] cgroup.system name:dbus %s %s -- %s",
+			 cmd, DBUS_ARGS, DBUS_DESC);
 
-	/* Register service with Finit */
-	snprintf(line, sizeof(line), "[S12345789] cgroup.system pid:!%s @%s:%s %s %s -- %s",
-		 DBUS_DAEMONPIDFILE, DBUS_DAEMONUSER, DBUS_DAEMONGROUP, cmd, DBUS_ARGS, DBUS_DESC);
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
 		err(1, "Failed registering %s", DBUS_DAEMON);
-	free(cmd);
 
-	umask(prev);
+	free(cmd);
 }
 
 static plugin_t plugin = {
