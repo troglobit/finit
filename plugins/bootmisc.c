@@ -227,6 +227,7 @@ static void setup(void *arg)
 	makedir("/var/run/network",0755); /* Needed by Debian/Ubuntu ifupdown */
 	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
 	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
+	mksubsys("/var/run/dnsmasq", 0755, "nobody", "nobody");
 	mksubsys("/var/run/quagga", 0755, "quagga", "quagga");
 	mksubsys("/var/log/quagga", 0755, "quagga", "quagga");
 	mksubsys("/var/run/frr",    0755, "frr", "frr");
