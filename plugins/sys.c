@@ -174,6 +174,8 @@ static void sys_init(void *arg)
 
 	if (iwatch_add(&iw_sys, path, IN_ONLYDIR))
 		iwatch_exit(&iw_sys);
+
+	free(path);
 }
 
 static plugin_t plugin = {
