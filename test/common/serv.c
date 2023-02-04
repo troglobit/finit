@@ -171,7 +171,7 @@ static int usage(int rc)
 		"in the foreground it does not create a PID file by default.\n"
 		"\n"
 		"Regardless of how This daemon is started it provides a single service\n"
-		"to others, spice ... guarded by sandworms",
+		"to others, spice ... guarded by sandworms.\n",
 		ident);
 
 	return rc;
