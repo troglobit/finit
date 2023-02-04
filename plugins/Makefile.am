@@ -41,6 +41,10 @@ if BUILD_RTC_PLUGIN
 libplug_la_SOURCES += rtc.c
 endif
 
+if BUILD_TESTSERV_PLUGIN
+libplug_la_SOURCES += testserv.c
+endif
+
 if BUILD_TTY_PLUGIN
 libplug_la_SOURCES += tty.c
 endif
@@ -90,6 +94,10 @@ endif
 
 if BUILD_RTC_PLUGIN
 pkglib_LTLIBRARIES += rtc.la
+endif
+
+if BUILD_TESTSERV_PLUGIN
+pkglib_LTLIBRARIES += testserv.la
 endif
 
 if BUILD_TTY_PLUGIN

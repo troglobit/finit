@@ -96,6 +96,7 @@ AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
 AC_PLUGIN([rtc],           [yes], [Save and restore RTC using hwclock])
 AC_PLUGIN([tty],           [yes], [Automatically activate new TTYs, e.g. USB-to-serial])
 AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
+AC_PLUGIN([testserv],      [no],  [Test plugin to start test serv daemon])
 
 # Check for extra arguments or packages
 AC_ARG_WITH(fstab,
