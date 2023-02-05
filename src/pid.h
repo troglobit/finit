@@ -51,6 +51,7 @@ static inline char *pid_runpath(const char *file, char *path, size_t len)
 {
 	static char *prefix = "/var/run";
 	static int unknown = 1;
+	char *ptr;
 	int rc;
 
 	if (unknown) {
@@ -59,10 +60,9 @@ static inline char *pid_runpath(const char *file, char *path, size_t len)
 		unknown = 0;
 	}
 
-	if (!strncmp(file, "/var/run/", 9))
-		file += 9;
-	else if (!strncmp(file, "/run/", 5))
-		file += 5;
+	ptr = strstr(file, "/run/");
+	if (ptr)
+		file = ptr + 5;
 
 	rc = paste(path, len, prefix, file);
 	if (rc < 0 || (size_t)rc >= len)

@@ -149,6 +149,8 @@ int pid_file_create(svc_t *svc)
 
 int pid_file_set(svc_t *svc, char *file, int not)
 {
+	char buf[sizeof(svc->pidfile)];
+
 	if (!file) {
 		file = pid_file(svc);
 		if (!file)
@@ -165,7 +167,9 @@ int pid_file_set(svc_t *svc, char *file, int not)
 		not = 1;
 	}
 
-	pid_runpath(file, &svc->pidfile[not], sizeof(svc->pidfile) - not);
+	de_dotdot(file);
+	pid_runpath(file, buf, sizeof(buf));
+	strlcpy(&svc->pidfile[not], buf, sizeof(svc->pidfile) - not);
 	if (not)
 		svc->pidfile[0] = '!';
 

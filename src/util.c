@@ -467,6 +467,47 @@ char *sanitize(char *arg, size_t len)
 	return arg;
 }
 
+void de_dotdot(char *file)
+{
+        char *cp, *cp2;
+        int l;
+
+        /* Remove leading ./ and any /./ sequences. */
+        while (strncmp(file, "./", 2) == 0)
+                memmove(file, file + 2, strlen(file) - 1);
+        while ((cp = strstr(file, "/./")))
+                memmove(cp, cp + 2, strlen(cp) - 1);
+
+        /* Alternate between removing leading ../ and removing xxx/../ */
+        for (;;) {
+                while (strncmp(file, "../", 3) == 0)
+                        memmove(file, file + 3, strlen(file) - 2);
+                cp = strstr(file, "/../");
+                if (!cp)
+                        break;
+
+                for (cp2 = cp - 1; cp2 >= file && *cp2 != '/'; --cp2)
+                        continue;
+
+                memmove(cp2 + 1, cp + 4, strlen(cp + 3));
+        }
+
+        /* Also elide any xxx/.. at the end. */
+        while ((l = strlen(file)) > 3 && strcmp((cp = file + l - 3), "/..") == 0) {
+                for (cp2 = cp - 1; cp2 >= file && *cp2 != '/'; --cp2)
+                        continue;
+                if (cp2 < file)
+                        break;
+                *cp2 = '\0';
+        }
+
+        /* Collapse any multiple / sequences. */
+        while ((cp = strstr(file, "//"))) {
+                cp2 = cp + 1;
+                memmove(cp, cp2, strlen(cp2) + 1);
+        }
+}
+
 static int hasopt(char *opts, char *opt)
 {
 	char buf[strlen(opts) + 1];

@@ -72,6 +72,7 @@ char *uptime       (long secs, char *buf, size_t len);
 char *memsz        (uint64_t sz, char *buf, size_t len);
 
 char *sanitize     (char *arg, size_t len);
+void  de_dotdot    (char *file);
 
 int   ismnt        (char *file, char *dir, char *mode);
 int   fismnt       (char *dir);

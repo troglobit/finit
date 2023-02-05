@@ -1,4 +1,4 @@
-* TODO fix pid parser, //run/foo.pid -> /var/run///run/foo.pid
+* DONE fix pid parser, //run/foo.pid -> /var/run///run/foo.pid
 ** DONE test framework refactor 'texec sh -c ...' -> 'run ...'
 * TODO Clean up tests a bit
 * TODO Drop tenv or common and rename tenv-root
