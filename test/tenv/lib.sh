@@ -86,6 +86,11 @@ assert_nocond()
 	assert "Condition $cond cleared" "$(texec initctl -v cond get "$cond")" = "off"
 }
 
+assert_is_pidfile()
+{
+	assert "Process has PID file: $2" "$(texec initctl -p status "$1" | awk '/PID file/{print $4}')" = "$2"
+}
+
 # shellcheck disable=SC2086
 assert_has_pidfile()
 {
