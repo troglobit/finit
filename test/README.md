@@ -16,7 +16,7 @@ Running tests
 
 To run the test suite, first [build](../doc/build.md) Finit, e.g:
 
-    ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var
+    ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var --enable-testserv-plugin
     make -j9 clean all
 
 Then run (parallel does not work atm):

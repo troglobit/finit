@@ -39,6 +39,7 @@ EXTRA_DIST		+= start-kill-stop.sh
 EXTRA_DIST		+= start-stop-sysv.sh
 EXTRA_DIST		+= start-stop-serv.sh
 EXTRA_DIST		+= signal-service.sh
+EXTRA_DIST		+= testserv.sh
 
 AM_TESTS_ENVIRONMENT	 = TENV_ROOT='$(abs_builddir)/tenv-root/';
 AM_TESTS_ENVIRONMENT	+= export TENV_ROOT;
@@ -74,6 +75,9 @@ TESTS			+= start-kill-stop.sh
 TESTS			+= start-stop-sysv.sh
 TESTS			+= start-stop-serv.sh
 TESTS			+= signal-service.sh
+if TESTSERV
+TESTS			+= testserv.sh
+endif
 
 check-recursive: setup-chroot
 

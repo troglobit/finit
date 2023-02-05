@@ -268,6 +268,7 @@ AM_CONDITIONAL(SULOGIN,   [test "x$with_sulogin"  != "xno"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
 AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
+AM_CONDITIONAL(TESTSERV,  [test "x$enable_testserv_plugin" = "xyes"])
 
 # Override default libdir, used for plugins and rescue.conf
 pkglibdir=$libdir/finit
