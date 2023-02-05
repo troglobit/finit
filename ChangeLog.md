@@ -12,6 +12,9 @@ All relevant changes are documented in this file.
 > options or description, you must now escape them (`\#`).
 
 ### Changes
+* `HOOK_BASEFS_UP` has been moved!  External plugins that need to call
+  `service_register()`, please use `HOOK_SVC_PLUGIN` from now on.  
+  Apologies for any inconveniences this might cause!
 * Support for overriding `/etc/finit.conf` using `finit.config=PATH`
   from the kernel command line
 * Support for overriding `/etc/finit.d` from the alternate `finit.conf`
@@ -35,12 +38,29 @@ All relevant changes are documented in this file.
             -- System log daemon
 
 * Add missing `HOOK_NETWORK_DN`, called after change to runlevel 6 or 0
+* If the sysklogd `logger` tool is available, use that instead of the
+  Finit `logit` too for log redirection, issue #344
+* Add `initctl` aliases: `cat -> show`, `kill -> signal`
+* Add `initctl -n,--noerr` to return OK(0) if services do not exist, for
+  integration with openresolv and scripts with similar requirements
 
 ### Fixes
 * Fix #314: skip run/task/service restart if conditions are lost
 * Fix #320: the API/IPC socket is closed immediately at shutdown/reboot
   to prevent against hook scripts or services calling initctl.  There is
-  no way to service these requests safely.
+  no way to service these requests safely
+* Fix #329: add support for multiple args to `initctl cond set/clr`
+* Fix #338: ensure shutdown hooks are called properly; `hook/sys/down`
+  and `hook/svc/down` hook scripts, found and fixed by Jack Newman
+* Fix #339: use absolute path in `/etc/finit.d/enabled/` symlinks, for
+  use-cases when `/etc` is read-only and `/etc/finit.d/enabled ->
+  /mnt/finit.d/enabled`, reported by Jack Newman
+* Fix #340: Finit ignores deleted/moved `.conf` file sin `/etc/finit.d`
+* Fix #342: in runlevel S (bootstrap), not all `initctl` commands can be
+  supported, block the following: runlevel, reload, start/stop, restart,
+  reload, halt, poweroff, suspend.  Also, prevent `SIGHUP` and `SIGUSR1`
+  signals when in shutdown or reboot
+* Ensure `initctl cond get` support the flux state
 
 
 [4.3][] - 2022-05-15
