@@ -1,4 +1,4 @@
-SUBDIRS                  = common tenv
+SUBDIRS                  = lib src
 
 EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/etc/env  \
 			   skel/bin/pre.sh skel/bin/post.sh skel/bin/ready.sh skel/bin/slay  \
@@ -17,7 +17,7 @@ EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/etc/env 
 			   skel/usr/local/lib/.empty skel/usr/local/bin/.empty		     \
 			   skel/usr/local/etc/.empty skel/var/.empty
 
-EXTRA_DIST		+= setup-root.sh
+EXTRA_DIST		+= setup-sysroot.sh
 EXTRA_DIST		+= add-remove-dynamic-service.sh
 EXTRA_DIST		+= add-remove-dynamic-service-sub-config.sh
 EXTRA_DIST		+= cond-start-task.sh
@@ -85,7 +85,7 @@ check-recursive: setup-chroot
 
 .PHONY: setup-chroot
 setup-chroot:
-	@SYSROOT='$(abs_builddir)/sysroot/' srcdir=$(srcdir) top_builddir=$(top_builddir) $(srcdir)/setup-root.sh
+	@SYSROOT='$(abs_builddir)/sysroot/' srcdir=$(srcdir) top_builddir=$(top_builddir) $(srcdir)/setup-sysroot.sh
 
 clean-local:
 	-rm -rf $(builddir)/sysroot/

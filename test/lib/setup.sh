@@ -100,7 +100,7 @@ assert_has_pidfile()
 # shellcheck disable=SC2154
 texec()
 {
-	"$TEST_DIR/tenv/exec.sh" "$finit_pid" "$@"
+	"$TEST_DIR/lib/exec.sh" "$finit_pid" "$@"
 }
 
 run()
@@ -263,11 +263,11 @@ else
 fi
 
 # shellcheck disable=2086
-"$TEST_DIR/tenv/start.sh" finit ${FINIT_ARGS:-} &
+"$TEST_DIR/lib/start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
 echo "$finit_ppid" > "$SYSROOT"/running_test.pid
 
-#>&2 echo "Hint: Execute 'SYSROOT=$SYSROOT $TEST_DIR/tenv/enter.sh' to enter the test namespace"
+#>&2 echo "Hint: Execute 'SYSROOT=$SYSROOT $TEST_DIR/lib/enter.sh' to enter the test namespace"
 log "$color_reset" 'Setup of test environment done, waiting for Finit ...' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")

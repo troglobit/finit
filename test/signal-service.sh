@@ -5,9 +5,6 @@ set -eu
 
 TEST_DIR=$(dirname "$0")
 
-# shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
-
 test_teardown()
 {
 	say "Test done $(date)"
@@ -15,6 +12,9 @@ test_teardown()
 	say "Running test teardown."
 	run "rm -f $FINIT_CONF"
 }
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/lib/setup.sh"
 
 say "Test start $(date)"
 

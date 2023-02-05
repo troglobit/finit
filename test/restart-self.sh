@@ -25,7 +25,7 @@ check_restarts()
 
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 say "Add stanza to $FINIT_CONF"
 run "echo 'service serv -np -r serv -- Restart self' > $FINIT_CONF"

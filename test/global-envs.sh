@@ -17,7 +17,7 @@ test_teardown()
 }
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 #run "initctl debug"
 say "Add custom envs to $FINIT_CONF ..."

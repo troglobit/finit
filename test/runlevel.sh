@@ -18,7 +18,7 @@ test_teardown()
 }
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 say 'Check runlevel'
 lvl=$(run "initctl runlevel | awk '{print \$2;}'")

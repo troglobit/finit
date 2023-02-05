@@ -10,7 +10,7 @@ FINIT_ARGS="finit.cond=testserv"
 TEST_DIR=$(dirname "$0")
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 run "initctl"
 run "initctl status testserv"

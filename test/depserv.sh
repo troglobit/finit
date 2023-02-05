@@ -28,7 +28,7 @@ test_teardown()
 }
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 #run "initctl debug"
 #run "ls -l /run/finit/cond/pid/ /lib/finit/plugins/"

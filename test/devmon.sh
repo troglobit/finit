@@ -7,9 +7,6 @@ set -eu
 
 TEST_DIR=$(dirname "$0")
 
-# shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
-
 test_setup()
 {
 	say "Test start $(date)"
@@ -59,6 +56,9 @@ test_one()
 	run "rm $FINIT_CONF"
 	run "initctl reload"
 }
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/lib/setup.sh"
 
 sep
 test_one "dev/fbsplash"

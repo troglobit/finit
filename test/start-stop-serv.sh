@@ -53,7 +53,7 @@ test_one()
 }
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 test_one "/run/serv.pid"  "service pid:!/run/serv.pid serv -- Forking service, type 1"
 test_one "/run/serv.pid"  "service type:forking       serv -- Forking service, type 2"

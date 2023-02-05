@@ -21,7 +21,7 @@ test_teardown()
 }
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 # This instructs serv to check the environment, and exit
 # if it cannot find "xyzzy", thus triggering a premature

@@ -7,12 +7,6 @@ set -eu
 
 TEST_DIR=$(dirname "$0")
 
-# shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
-
-TEST_CONF=$FINIT_RCSD/cond.conf
-
-
 test_setup()
 {
 	say "Test start $(date)"
@@ -87,5 +81,11 @@ test_one()
 	run "rm $TEST_CONF"
 	run "initctl reload"
 }
+
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/lib/setup.sh"
+
+TEST_CONF=$FINIT_RCSD/cond.conf
 
 test_one "hello" "task <usr/hello> task.sh -- Hello task"

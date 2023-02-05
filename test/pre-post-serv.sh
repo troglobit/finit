@@ -51,7 +51,7 @@ test_one()
 }
 
 # shellcheck source=/dev/null
-. "$TEST_DIR/tenv/lib.sh"
+. "$TEST_DIR/lib/setup.sh"
 
 #run "initctl debug"
 
