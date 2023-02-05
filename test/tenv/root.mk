@@ -22,7 +22,7 @@
 
 srcdir         ?= ../
 SKEL           ?= $(srcdir)/skel
-DEST           ?= ../tenv-root
+DEST           ?= ../sysroot
 
 CACHE          ?= ~/.cache
 ARCH           ?= x86_64

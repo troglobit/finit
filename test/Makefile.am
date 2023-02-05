@@ -42,8 +42,8 @@ EXTRA_DIST		+= start-stop-serv.sh
 EXTRA_DIST		+= signal-service.sh
 EXTRA_DIST		+= testserv.sh
 
-AM_TESTS_ENVIRONMENT	 = TENV_ROOT='$(abs_builddir)/tenv-root/';
-AM_TESTS_ENVIRONMENT	+= export TENV_ROOT;
+AM_TESTS_ENVIRONMENT	 = SYSROOT='$(abs_builddir)/sysroot/';
+AM_TESTS_ENVIRONMENT	+= export SYSROOT;
 AM_TESTS_ENVIRONMENT	+= export LD_LIBRARY_PATH;
 AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
 AM_TESTS_ENVIRONMENT	+= export top_builddir;
@@ -85,8 +85,8 @@ check-recursive: setup-chroot
 
 .PHONY: setup-chroot
 setup-chroot:
-	@TENV_ROOT='$(abs_builddir)/tenv-root/' srcdir=$(srcdir) top_builddir=$(top_builddir) $(srcdir)/setup-root.sh
+	@SYSROOT='$(abs_builddir)/sysroot/' srcdir=$(srcdir) top_builddir=$(top_builddir) $(srcdir)/setup-root.sh
 
 clean-local:
-	-rm -rf $(builddir)/tenv-root/
+	-rm -rf $(builddir)/sysroot/
 	-rm -f checkself.sh

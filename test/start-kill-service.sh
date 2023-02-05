@@ -18,7 +18,7 @@ test_teardown()
 }
 
 say "Test start $(date)"
-rm -f "$TENV_ROOT"/oldpid
+rm -f "$SYSROOT"/oldpid
 
 say "Add service stanza in $FINIT_CONF"
 run "echo 'service [2345] respawn log:stderr service.sh -- Test service' > $FINIT_CONF"

@@ -235,7 +235,7 @@ teardown()
 	wait
 
 	say "Final cleanup ..."
-	rm -f "$TENV_ROOT"/running_test.pid
+	rm -f "$SYSROOT"/running_test.pid
 
 
 	say "EXIT: $test_status"
@@ -244,11 +244,11 @@ teardown()
 
 trap teardown EXIT
 
-TENV_ROOT="${TENV_ROOT:-$(pwd)/${TEST_DIR}/tenv-root}"
-export TENV_ROOT
+SYSROOT="${SYSROOT:-$(pwd)/${TEST_DIR}/sysroot}"
+export SYSROOT
 
 # shellcheck source=/dev/null
-. "$TENV_ROOT/../test.env"
+. "$SYSROOT/../test.env"
 
 # Setup test environment
 if [ -n "${DEBUG:-}" ]; then
@@ -265,9 +265,9 @@ fi
 # shellcheck disable=2086
 "$TEST_DIR/tenv/start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
-echo "$finit_ppid" > "$TENV_ROOT"/running_test.pid
+echo "$finit_ppid" > "$SYSROOT"/running_test.pid
 
-#>&2 echo "Hint: Execute 'TENV_ROOT=$TENV_ROOT $TEST_DIR/tenv/enter.sh' to enter the test namespace"
+#>&2 echo "Hint: Execute 'SYSROOT=$SYSROOT $TEST_DIR/tenv/enter.sh' to enter the test namespace"
 log "$color_reset" 'Setup of test environment done, waiting for Finit ...' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
