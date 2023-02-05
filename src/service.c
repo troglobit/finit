@@ -1636,16 +1636,28 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 	if (halt)
 		parse_sighalt(svc, halt);
+	else
+		svc->sighalt = svc_is_tty(svc) ? SIGHUP : SIGTERM;
 	if (delay)
 		parse_killdelay(svc, delay);
+	else
+		svc->killdelay = SVC_TERM_TIMEOUT;
 	if (pre_script)
 		parse_script("pre", pre_script, svc->pre_script, sizeof(svc->pre_script));
+	else
+		memset(svc->pre_script, 0, sizeof(svc->pre_script));
 	if (post_script)
 		parse_script("post", post_script, svc->post_script, sizeof(svc->post_script));
+	else
+		memset(svc->post_script, 0, sizeof(svc->post_script));
 	if (ready_script)
 		parse_script("ready", ready_script, svc->ready_script, sizeof(svc->ready_script));
+	else
+		memset(svc->ready_script, 0, sizeof(svc->ready_script));
 	if (log)
 		parse_log(svc, log);
+	else
+		svc->log.enabled = 0;
 	if (notify) {
 		int type = parse_notify(notify);
 
@@ -1663,6 +1675,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		snprintf(svc->desc, sizeof(svc->desc), "Getty on %s", svc->dev);
 	if (env)
 		parse_env(svc, env);
+	else
+		memset(svc->env, 0, sizeof(svc->env));
 	if (file)
 		strlcpy(svc->file, file, sizeof(svc->file));
 	svc->manual  = manual;
