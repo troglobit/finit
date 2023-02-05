@@ -36,7 +36,7 @@
 #include "conf.h"
 
 #define SERV_DAEMON "serv"
-#define SERV_ARGS   "-n -p"
+#define SERV_ARGS   "-n -p -i testserv"
 #define SERV_DESC   "Test serv daemon"
 
 static void setup(void *arg)
@@ -66,7 +66,7 @@ static void setup(void *arg)
 	mksubsys("/tmp/serv", 0755, "root", "root");
 	umask(prev);
 
-	snprintf(line, sizeof(line), "[S123456789] pid:!/run/serv.pid cgroup.system %s %s -- %s",
+	snprintf(line, sizeof(line), "[S123456789] name:testserv pid:!/run/testserv.pid <boot/testserv> cgroup.system %s %s -- %s",
 		 cmd, SERV_ARGS, SERV_DESC);
 
 	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
