@@ -10,25 +10,25 @@ TEST_DIR=$(dirname "$0")
 test_teardown()
 {
 	say "Test done $(date)"
-	say "Running test teardown."
 
-	texec rm -f "$FINIT_CONF"
+	say "Running test teardown."
+	run "rm -f $FINIT_CONF"
 }
 
 say "Test start $(date)"
 
 say "Add a dynamic service in $FINIT_CONF"
-texec sh -c "echo 'service [2345] kill:20 log service.sh -- Dyn service' > $FINIT_CONF"
+run "echo 'service [2345] kill:20 log service.sh -- Dyn service' > $FINIT_CONF"
 
 say 'Reload Finit'
-texec sh -c "initctl reload"
+run "initctl reload"
 
 retry 'assert_num_children 1 service.sh'
 
 say 'Remove the dynamic service from /etc/finit.conf'
-texec sh -c "echo > $FINIT_CONF"
+run "echo > $FINIT_CONF"
 
 say 'Reload Finit'
-texec sh -c "initctl reload"
+run "initctl reload"
 
 retry 'assert_num_children 0 service.sh'

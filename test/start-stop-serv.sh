@@ -11,9 +11,9 @@ test_setup()
 test_teardown()
 {
 	say "Test done $(date)"
-	say "Running test teardown."
 
-	texec rm -f "$FINIT_CONF"
+	say "Running test teardown."
+	run "rm -f $FINIT_CONF"
 }
 
 test_one()
@@ -22,34 +22,34 @@ test_one()
 	service=$2
 
 	say "Add service stanza '$service' to $FINIT_CONF ..."
-	texec sh -c "echo '$service' > $FINIT_CONF"
+	run "echo '$service' > $FINIT_CONF"
 
 	say 'Reload Finit'
-	#texec sh -c "initctl debug"
-	texec sh -c "initctl reload"
-	#texec sh -c "initctl status"
-	#texec sh -c "ps"
+	#run "initctl debug"
+	run "initctl reload"
+	#run "initctl status"
+	#run "ps"
 
-	#texec sh -c "initctl status"
-	#texec sh -c "ps"
-	#texec sh -c "initctl status serv"
+	#run "initctl status"
+	#run "ps"
+	#run "initctl status serv"
 
 	retry 'assert_num_children 1 serv'
 	retry "assert_pidfile $pidfn" 1
 
 	say 'Stop the service'
-	texec sh -c "initctl stop serv"
+	run "initctl stop serv"
 
 	retry 'assert_num_children 0 serv'
 
 	say 'Start the service again'
-	texec sh -c "initctl start serv"
+	run "initctl start serv"
 
 	retry 'assert_num_children 1 serv'
 
 	say "Done, drop service from $FINIT_CONF ..."
-	texec sh -c "rm $FINIT_CONF"
-	texec sh -c "initctl reload"
+	run "rm $FINIT_CONF"
+	run "initctl reload"
 }
 
 # shellcheck source=/dev/null

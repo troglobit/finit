@@ -24,7 +24,7 @@ test_teardown()
 	say "Test done $(date)"
 	say "Running test teardown."
 
-	texec rm -f "$FINIT_CONF" "/tmp/post"
+	run "rm -f $FINIT_CONF" "/tmp/post"
 }
 
 # shellcheck source=/dev/null
@@ -51,7 +51,7 @@ test_one()
 
 	say "Verify bar is restarted with foo is ..."
 	pid=$(texec initctl |grep bar | awk '{print $1;}')
-	texec initctl restart foo
+	run "initctl restart foo"
 	assert "bar is restarted" "$(texec initctl |grep bar | awk '{print $1;}')" != "$pid"
 
 	# Wait for spice to be stolen by the Harkonnen

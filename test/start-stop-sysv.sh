@@ -9,29 +9,29 @@ TEST_DIR=$(dirname "$0")
 
 test_teardown()
 {
-    say "Test done $(date)"
-    say "Running test teardown."
+	say "Test done $(date)"
 
-    texec rm -f "$FINIT_CONF"
+	say "Running test teardown."
+	run "rm -f $FINIT_CONF"
 }
 
 say "Test start $(date)"
 
 say "Add sysv stanza in $FINIT_CONF"
-texec sh -c "echo 'sysv [2345] pid:!/run/service.pid name:service.sh /etc/init.d/S01-service.sh -- SysV test service' > $FINIT_CONF"
+run "echo 'sysv [2345] pid:!/run/service.pid name:service.sh /etc/init.d/S01-service.sh -- SysV test service' > $FINIT_CONF"
 
 say 'Reload Finit'
-texec sh -c "initctl reload"
+run "initctl reload"
 
 retry 'assert_num_children 1 service.sh'
 
 say 'Stop the sysv service'
-texec sh -c "initctl stop service.sh"
+run "initctl stop service.sh"
 
 retry 'assert_num_children 0 service.sh'
 
 say 'Start the sysv service again'
-texec sh -c "initctl start service.sh"
+run "initctl start service.sh"
 
 retry 'assert_num_children 1 service.sh'
 

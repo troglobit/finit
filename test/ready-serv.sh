@@ -13,7 +13,8 @@ test_teardown()
 {
 	say "Test done $(date)"
 
-	texec rm -f "$FINIT_CONF"
+	say "Running test teardown."
+	run "rm -f $FINIT_CONF"
 }
 
 test_one()
@@ -22,28 +23,28 @@ test_one()
 	file=/tmp/ready
 
 	say "Add service stanza '$service' to $FINIT_CONF ..."
-	texec sh -c "echo '$service' > $FINIT_CONF"
+	run "echo '$service' > $FINIT_CONF"
 
 	say 'Reload Finit'
-	texec sh -c "initctl reload"
+	run "initctl reload"
 
 	retry 'assert_num_children 1 serv'
 	assert_file_contains "$file" "READY"
-	texec sh -c "rm -f $file"
+	run "rm -f $file"
 
 	say 'Stop the service'
-	texec sh -c "initctl stop serv"
+	run "initctl stop serv"
 	retry 'assert_num_children 0 serv'
 
 	say "Done, drop service from $FINIT_CONF ..."
-	texec sh -c "rm $FINIT_CONF"
-	texec sh -c "initctl reload"
+	run "rm $FINIT_CONF"
+	run "initctl reload"
 }
 
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-#texec sh -c "initctl debug"
+#run "initctl debug"
 
 test_one "service                ready:/bin/ready.sh serv -np       -- Native style notification"
 test_one "service notify:s6      ready:/bin/ready.sh serv -np -N %n -- s6 style notification"

@@ -10,30 +10,30 @@ TEST_DIR=$(dirname "$0")
 test_teardown()
 {
 	say "Test done $(date)"
-	say "Running test teardown."
 
-	texec rm -f "$FINIT_RCSD/service.conf"
+	say "Running test teardown."
+	run "rm -f $FINIT_RCSD/service.conf"
 }
 
 say "Test start $(date)"
 
 say "Add service stanza in $FINIT_RCSD/service.conf"
-texec sh -c "echo 'service [2345] kill:20 log service.sh -- Subserv' > $FINIT_RCSD/service.conf"
+run "echo 'service [2345] kill:20 log service.sh -- Subserv' > $FINIT_RCSD/service.conf"
 
 say 'Reload Finit'
-texec sh -c "initctl reload"
+run "initctl reload"
 
 sleep 2
-texec sh -c "ps"
+run "ps"
 
 retry 'assert_num_children 1 service.sh'
 
 say 'Stop the service'
-texec sh -c "initctl stop service.sh"
+run "initctl stop service.sh"
 
 retry 'assert_num_children 0 service.sh'
 
 say 'Start the service again'
-texec sh -c "initctl start service.sh"
+run "initctl start service.sh"
 
 retry 'assert_num_children 1 service.sh'

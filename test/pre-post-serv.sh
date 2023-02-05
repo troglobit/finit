@@ -12,7 +12,8 @@ test_teardown()
 {
 	say "Test done $(date)"
 
-	texec rm -f "$FINIT_CONF"
+	say "Running test teardown."
+	run "rm -f $FINIT_CONF"
 }
 
 test_one()
@@ -24,35 +25,35 @@ test_one()
 	postcont=$5
 
 	say "Add service stanza '$service' to $FINIT_CONF ..."
-	texec sh -c "echo '$service' > $FINIT_CONF"
+	run "echo '$service' > $FINIT_CONF"
 
 	say 'Reload Finit'
-	texec sh -c "initctl reload"
+	run "initctl reload"
 
 	retry 'assert_num_children 1 serv'
 	if [ -n "$pre" ]; then
 		assert_file_contains "$pre" "$precont"
-		texec sh -c "rm -f $pre"
+		run "rm -f $pre"
 	fi
 
 	say 'Stop the service'
-	texec sh -c "initctl stop serv"
+	run "initctl stop serv"
 
 	retry 'assert_num_children 0 serv'
 	if [ -n "$post" ]; then
 		assert_file_contains "$post" "$postcont"
-		texec sh -c "rm -f $post"
+		run "rm -f $post"
 	fi
 
 	say "Done, drop service from $FINIT_CONF ..."
-	texec sh -c "rm $FINIT_CONF"
-	texec sh -c "initctl reload"
+	run "rm $FINIT_CONF"
+	run "initctl reload"
 }
 
 # shellcheck source=/dev/null
 . "$TEST_DIR/tenv/lib.sh"
 
-#texec sh -c "initctl debug"
+#run "initctl debug"
 
 test_one ""       ""  "service                   serv -np -- Regular fg service, no pre/post scripts" "" ""
 test_one ""       ""  "service env:/etc/env      serv -np -e foo:bar -- serv + env, no pre/post scripts" "" ""

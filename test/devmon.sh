@@ -20,7 +20,7 @@ test_teardown()
 	say "Test done $(date)"
 	say "Running test teardown."
 
-	texec rm -f "$FINIT_CONF" "/tmp/post"
+	run "rm -f $FINIT_CONF /tmp/post"
 }
 
 # Cannot run mknod as non-root even in a chroot

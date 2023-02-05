@@ -16,12 +16,13 @@ test_teardown()
 {
 	say "Test done $(date)"
 
-	texec rm -f "$FINIT_CONF"
+	say "Running test teardown."
+	run "rm -f $FINIT_CONF"
 }
 
 test_init()
 {
-	texec sh -c "echo '# Three foo and one bar enter Finit' > $FINIT_CONF"
+	run "echo '# Three foo and one bar enter Finit' > $FINIT_CONF"
 }
 
 test_add_one()
@@ -29,7 +30,7 @@ test_add_one()
 	service=$1
 
 	say "Add service stanza '$service' to $FINIT_CONF ..."
-	texec sh -c "echo '$service' >> $FINIT_CONF"
+	run "echo '$service' >> $FINIT_CONF"
 }
 
 # shellcheck source=/dev/null
@@ -43,13 +44,13 @@ test_add_one "task manual:yes name:foo :3 serv -- Foo \#3"
 test_add_one "task manual:yes name:foobar serv -- Foobar"
 
 say 'Reload Finit'
-#texec sh -c "initctl debug"
-texec sh -c "initctl reload"
-texec sh -c "initctl status"
+#run "initctl debug"
+run "initctl reload"
+run "initctl status"
 
-#texec sh -c "initctl status"
-#texec sh -c "ps"
-#texec sh -c "initctl status serv"
+#run "initctl status"
+#run "ps"
+#run "initctl status serv"
 
 assert_num_services 3 foo
 assert_desc "Foobar" foobar

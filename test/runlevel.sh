@@ -21,7 +21,7 @@ test_teardown()
 . "$TEST_DIR/tenv/lib.sh"
 
 say 'Check runlevel'
-lvl=$(texec sh -c "initctl runlevel | awk '{print \$2;}'")
+lvl=$(run "initctl runlevel | awk '{print \$2;}'")
 if [ "$lvl" -eq "9" ]; then
 	return 0
 fi
