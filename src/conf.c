@@ -91,6 +91,7 @@ fallback:
 }
 
 /*
+ * finit.cond   = foo          (=> <boot/foo>)
  * finit.config = /path/to/etc/alt-finit.conf
  * finit.debug  = [on,off]
  * finit.fstab  = /path/to/etc/fstab.aternative
