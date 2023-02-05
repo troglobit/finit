@@ -59,7 +59,6 @@
 #include "util.h"
 #include "utmp-api.h"
 #include "schedule.h"
-#include "watchdog.h"
 
 int   runlevel  = 0;		/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */

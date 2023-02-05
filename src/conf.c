@@ -1212,11 +1212,12 @@ int conf_init(uev_ctx_t *ctx)
 	/*
 	 * Start built-in watchdogd as soon as possible, if enabled
 	 */
+#ifdef WDT_DEVNODE
 	if (whichp(FINIT_LIBPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
 		service_register(SVC_TYPE_SERVICE, "[S123456789] cgroup.init name:watchdog :finit " FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
 		wdog = svc_find("watchdog", "finit");
 	}
-
+#endif
 	/*
 	 * Start kernel event daemon as soon as possible, if enabled
 	 */
