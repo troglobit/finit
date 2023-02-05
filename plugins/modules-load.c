@@ -212,10 +212,8 @@ static void load(void *arg)
 }
 
 static plugin_t plugin = {
-	.name = __FILE__,
-	.hook[HOOK_BASEFS_UP] = {
-		.cb  = load
-	},
+	.name                  = __FILE__,
+	.hook[HOOK_SVC_PLUGIN] = { .cb  = load },
 };
 
 PLUGIN_INIT(plugin_init)

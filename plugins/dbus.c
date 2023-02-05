@@ -163,11 +163,8 @@ static void setup(void *arg)
 }
 
 static plugin_t plugin = {
-	.name = __FILE__,
-	.hook[HOOK_BASEFS_UP] = {
-		.cb  = setup
-	},
-	.depends = { "bootmisc", },
+	.name                  = __FILE__,
+	.hook[HOOK_SVC_PLUGIN] = { .cb  = setup },
 };
 
 PLUGIN_INIT(plugin_init)

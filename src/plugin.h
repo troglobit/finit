@@ -72,6 +72,7 @@
 	CHOOSE(HOOK_MOUNT_ERROR,     "hook/mount/error"),	\
 	CHOOSE(HOOK_MOUNT_POST,      "hook/mount/post"),	\
 	CHOOSE(HOOK_BASEFS_UP,       "hook/mount/all"),		\
+	CHOOSE(HOOK_SVC_PLUGIN,      "hook/svc/plugin"),	\
 	CHOOSE(HOOK_NETWORK_UP,      "hook/net/up"),		\
 	CHOOSE(HOOK_SVC_UP,          "hook/svc/up"),		\
 	CHOOSE(HOOK_SYSTEM_UP,       "hook/sys/up"),		\

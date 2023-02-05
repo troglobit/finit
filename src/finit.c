@@ -476,6 +476,9 @@ static void fs_mount_all(void)
 
 	dbg("Finalize, ensure common file systems are available ...");
 	fs_finalize();
+
+	dbg("Base FS up, calling hooks ...");
+	plugin_run_hooks(HOOK_BASEFS_UP);
 }
 
 /*
@@ -789,7 +792,11 @@ int main(int argc, char *argv[])
 	 */
 	fs_mount_all();
 
-	/* Bootstrap conditions, needed for hooks */
+	/*
+	 * Base FS up, enable standard SysV init signals and
+	 * Bootstrap conditions, needed for hooks
+	 */
+	sig_setup(&loop);
 	cond_init();
 
 	/*
@@ -820,12 +827,6 @@ int main(int argc, char *argv[])
 	 */
 	if (whichp(FINIT_LIBPATH_ "/keventd"))
 		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init " FINIT_LIBPATH_ "/keventd -- Finit kernel event daemon", global_rlimit, NULL);
-
-	/* Base FS up, enable standard SysV init signals */
-	sig_setup(&loop);
-
-	dbg("Base FS up, calling hooks ...");
-	plugin_run_hooks(HOOK_BASEFS_UP);
 
 	/*
 	 * Set up inotify watcher for /etc/finit.conf, /etc/finit.d, and

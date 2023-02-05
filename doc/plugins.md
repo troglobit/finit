@@ -168,6 +168,12 @@ hook points:
 * `HOOK_BASEFS_UP`, `hook/mount/all`: All of `/etc/fstab` is mounted,
   swap is available and default init signals are setup
 
+* `HOOK_SVC_PLUGIN`, `hook/svc/plugin`: Called in `conf_init()` right
+  before loading `/etc/finit.conf`.  For plugins to register any early
+  run/task/services, please do NOT use any earlier hook point.  That
+  will cause uninitialized rlimits that lead to unpredictable results
+  when Finit later tries to start the run/task/service.
+
 * `HOOK_NETWORK_UP`, `hook/net/up`: System bootstrap, runlevel S, has
   completed and networking is up (`lo` is up and the `network` script
   has run)
