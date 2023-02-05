@@ -1209,6 +1209,20 @@ int conf_init(uev_ctx_t *ctx)
 	/* Initialize global rlimits, e.g. for built-in services */
 	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
 
+	/*
+	 * Start built-in watchdogd as soon as possible, if enabled
+	 */
+	if (whichp(FINIT_LIBPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
+		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init name:watchdog :finit " FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
+		wdog = svc_find("watchdog", "finit");
+	}
+
+	/*
+	 * Start kernel event daemon as soon as possible, if enabled
+	 */
+	if (whichp(FINIT_LIBPATH_ "/keventd"))
+		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init " FINIT_LIBPATH_ "/keventd -- Finit kernel event daemon", global_rlimit, NULL);
+
 	dbg("Allow plugins to register early runlevel 1 run/task/services ...");
 	plugin_run_hooks(HOOK_SVC_PLUGIN);
 

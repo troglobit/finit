@@ -97,8 +97,6 @@
 #include "util.h"
 #include "utmp-api.h"
 
-extern svc_t *wdog;
-
 /*
  * Old-style SysV shutdown sends a setenv cmd INIT_HALT with "=HALT",
  * "=POWERDOWN", or "" to cancel shutdown, before requesting change to

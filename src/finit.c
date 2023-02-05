@@ -815,20 +815,6 @@ int main(int argc, char *argv[])
 	conf_saverc();
 
 	/*
-	 * Start built-in watchdogd as soon as possible, if enabled
-	 */
-	if (whichp(FINIT_LIBPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
-		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init name:watchdog :finit " FINIT_LIBPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
-		wdog = svc_find("watchdog", "finit");
-	}
-
-	/*
-	 * Start kernel event daemon as soon as possible, if enabled
-	 */
-	if (whichp(FINIT_LIBPATH_ "/keventd"))
-		service_register(SVC_TYPE_SERVICE, "[123456789] cgroup.init " FINIT_LIBPATH_ "/keventd -- Finit kernel event daemon", global_rlimit, NULL);
-
-	/*
 	 * Set up inotify watcher for /etc/finit.conf, /etc/finit.d, and
 	 * their deps, to figure out how to bootstrap the system.
 	 */

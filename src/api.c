@@ -50,7 +50,6 @@
 #include "sig.h"
 #include "util.h"
 
-extern svc_t *wdog;
 static uev_t api_watcher;
 
 static int call(int (*action)(svc_t *, void *), char *buf, size_t len)

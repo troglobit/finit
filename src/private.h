@@ -34,7 +34,7 @@
 
 extern char *finit_conf;
 extern char *finit_rcsd;
-
+extern svc_t *wdog;
 extern int   service_interval;
 
 int          api_init         (uev_ctx_t *ctx);
