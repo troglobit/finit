@@ -87,7 +87,7 @@ assert_nocond()
 }
 
 # shellcheck disable=SC2086
-assert_pidfile()
+assert_has_pidfile()
 {
 	assert "Process has PID file" "$(texec find $1 2>/dev/null)"
 }

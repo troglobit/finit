@@ -35,7 +35,7 @@ test_one()
 	#run "initctl status serv"
 
 	retry 'assert_num_children 1 serv'
-	retry "assert_pidfile $pidfn" 1
+	retry "assert_has_pidfile $pidfn" 1
 
 	say 'Stop the service'
 	run "initctl stop serv"
