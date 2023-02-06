@@ -1654,10 +1654,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_script("ready", ready_script, svc->ready_script, sizeof(svc->ready_script));
 	else
 		memset(svc->ready_script, 0, sizeof(svc->ready_script));
-	if (log)
-		parse_log(svc, log);
-	else
-		svc->log.enabled = 0;
+	if (!svc_is_tty(svc)) {
+		if (log)
+			parse_log(svc, log);
+		else
+			svc->log.enabled = 0;
+	}
 	if (notify) {
 		int type = parse_notify(notify);
 
