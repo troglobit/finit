@@ -409,24 +409,24 @@ static int do_cond_dump(char *arg)
 
 typedef enum { COND_CLR, COND_SET, COND_GET } condop_t;
 
-static int cond_read(char *path)
+static cond_state_t cond_read(char *path)
 {
 	int now, gen;
 
 	if (fngetint(path, &gen) == -1)
-		return 0;
+		return COND_OFF;
 
 	/*
 	 * if we cannot read the reconf generation, then either sth is
 	 * very wrong, or we are called very early/late boot/shutdown.
 	 */
 	if (fngetint(_PATH_RECONF, &now) == -1)
-		return 255;	/* classify as flux */
+		return COND_FLUX;	/* classify as flux */
 
 	if (now != gen)
-		return 255;
+		return COND_FLUX;
 
-	return 1;
+	return COND_ON;
 }
 
 /*
@@ -435,9 +435,9 @@ static int cond_read(char *path)
  */
 static int do_cond_act(char *args, condop_t op)
 {
+	cond_state_t cstate;
 	char path[256];
 	char *arg;
-	int rc;
 
 	if (!args || !args[0])
 		ERRX(2, "Invalid condition (empty)");
@@ -465,16 +465,20 @@ static int do_cond_act(char *args, condop_t op)
 
 		switch (op) {
 		case COND_GET:
-			rc = cond_read(path);
-			if (verbose) {
-				if (rc == 255)
-					puts("flux");
-				else if (rc == 0)
-					puts("off");
-				else
-					puts("on");
+			cstate = cond_read(path);
+			if (verbose)
+				puts(condstr(cstate));
+
+			switch (cstate) {
+			case COND_ON:
+				return 0;
+			case COND_OFF:
+				return 1;
+			case COND_FLUX:
+			default:
+				break;
 			}
-			return rc;
+			return 255;
 
 		case COND_SET:
 			if (symlink(_PATH_RECONF, path) && errno != EEXIST)
