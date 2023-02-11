@@ -805,6 +805,9 @@ static int service_start(svc_t *svc)
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
 		svc->status = complete(svc->cmd, pid);
+		dbg("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
+		   svc_ident(svc, NULL, 0), pid, WIFEXITED(svc->status),
+		    WIFSIGNALED(svc->status), WEXITSTATUS(svc->status));
 		if (WIFEXITED(svc->status) && !WEXITSTATUS(svc->status)) {
 			svc->started = 1;
 			result = 0;
