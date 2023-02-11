@@ -236,7 +236,7 @@ teardown()
 
 	say "Final cleanup ..."
 	rm -f "$SYSROOT"/running_test.pid
-
+	rm -f "$SYSROOT$FINIT_CONF"
 
 	say "EXIT: $test_status"
 	exit $test_status
@@ -262,6 +262,13 @@ else
 	FINIT_RUNLEVEL=2
 fi
 
+set +u
+if [ -n "$BOOTSTRAP" ]; then
+	say "Setting up bootstrap tasks ..."
+	echo "$BOOTSTRAP" > "$SYSROOT$FINIT_CONF"
+fi
+set -u
+
 # shellcheck disable=2086
 "$TEST_DIR/lib/start.sh" finit ${FINIT_ARGS:-} &
 finit_ppid=$!
@@ -271,21 +278,23 @@ echo "$finit_ppid" > "$SYSROOT"/running_test.pid
 log "$color_reset" 'Setup of test environment done, waiting for Finit ...' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
-
+echo "Finit running as $finit_pid"
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
 
 # Allow Finit to start up properly before launching the test
 i=0
-while [ $i -lt 10 ]; do
+set +u
+while [ -z "$BOOTSTRAP" ] && [ $i -lt 10 ]; do
 	lvl=$(texec sh -c "initctl runlevel | awk '{print \$2;}'")
-	if [ "$lvl" -eq "$FINIT_RUNLEVEL" ]; then
-#		say "Reached runlevel $FINIT_RUNLEVEL, releasing test."
+	if [ "$lvl" = "$FINIT_RUNLEVEL" ]; then
+		say "Reached runlevel $FINIT_RUNLEVEL, releasing test."
 		break;
 	fi
 	i=$((i + 1))
 	sleep 1
 done
+set -u
 
 if type test_setup > /dev/null 2>&1 ; then
 	test_setup
