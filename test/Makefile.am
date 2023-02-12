@@ -51,7 +51,7 @@ AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
 checkself.sh:
 	@echo '#!/bin/sh' > $@
-	@echo shellcheck $(addprefix '"$$srcdir"'/,$(filter %.sh,$(filter-out $@, $(EXTRA_DIST)))) >> $@
+	@echo shellcheck $(addprefix '"$$srcdir"'/,$(filter %.sh,$(filter-out $@, $(TESTS)))) >> $@
 	@chmod +x $@
 
 TEST_EXTENSIONS		 = .sh
