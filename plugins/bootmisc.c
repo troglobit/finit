@@ -246,6 +246,10 @@ static void setup(void *arg)
 	if (whichp("restorecon"))
 		run("restorecon /var/run/sudo /var/run/sudo/ts", "restorecon");
 
+	/* XXX: temporary workaround pending new tmpfiles.so plugin */
+	mksubsys("/var/cache/nxinx", 0755, "www-data", "www-data");
+	makedir("/var/run/clixon",  0755);
+
 	/* Kernel symlinks, e.g. /proc/self/fd -> /dev/fd */
 	kernel_links();
 
