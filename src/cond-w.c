@@ -85,7 +85,10 @@ static void cond_boot_strap(void)
 			while (ptr) {
 				char cond[strlen(ptr) + 6];
 
-				snprintf(cond, sizeof(cond), "boot/%s", ptr);
+				if (strncmp(ptr, "boot/", 5))
+					snprintf(cond, sizeof(cond), "boot/%s", ptr);
+				else
+					snprintf(cond, sizeof(cond), "%s", ptr);
 				cond_set_oneshot_noupdate(cond);
 
 				ptr = strtok(NULL, ",");
