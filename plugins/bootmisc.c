@@ -197,21 +197,11 @@ static void setup(void *arg)
 	 * UTMP actually needs multiple db files
 	 */
 	if (has_utmp()) {
-		int gid;
-
-		/*
-		 * If /etc/group or "utmp" group is missing, default to
-		 * "root", or "wheel", group.
-		 */
 		dbg("Setting up necessary UTMP files ...");
-		gid = getgroup("utmp");
-		if (gid < 0)
-			gid = 0;
-
-		create("/var/run/utmp",    0644, 0, gid); /* Currently logged in */
-		create("/var/log/wtmp",    0644, 0, gid); /* Login history       */
-		create("/var/log/btmp",    0600, 0, gid); /* Failed logins       */
-		create("/var/log/lastlog", 0644, 0, gid);
+		create("/var/run/utmp",    0644, "root", "utmp"); /* Currently logged in */
+		create("/var/log/wtmp",    0644, "root", "utmp"); /* Login history       */
+		create("/var/log/btmp",    0600, "root", "utmp"); /* Failed logins       */
+		create("/var/log/lastlog", 0644, "root", "utmp");
 	}
 
 	/* Set BOOT_TIME UTMP entry */
