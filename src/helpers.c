@@ -445,6 +445,8 @@ int mksubsys(const char *dir, mode_t mode, char *user, char *group)
 			gid = 0;
 
 		rc = makedir(dir, mode);
+		if (rc && errno == EEXIST)
+			rc = chmod(dir, mode);
 		if (chown(dir, uid, gid))
 			err(1, "Failed chown(%s, %d, %d)", dir, uid, gid);
 	}
