@@ -207,12 +207,6 @@ static void setup(void *arg)
 	/* Set BOOT_TIME UTMP entry */
 	utmp_set_boot();
 
-#ifdef TOUCH_ETC_NETWORK_RUN_IFSTATE
-	touch("/etc/network/run/ifstate");
-#else
-	erase("/etc/network/run/ifstate");
-#endif
-
 	dbg("Setting up misc files ...");
 	makedir("/var/run/network",0755); /* Needed by Debian/Ubuntu ifupdown */
 	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
