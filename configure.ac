@@ -14,6 +14,7 @@ AC_CONFIG_FILES([Makefile
 	man/Makefile
 	plugins/Makefile
 	src/Makefile
+	tmpfiles.d/Makefile
 	test/test.env test/Makefile
 	test/lib/Makefile test/src/Makefile])
 
@@ -279,6 +280,10 @@ AC_DEFINE_UNQUOTED(FINIT_LIBPATH_, "$pkglibexecdir", [Finit libexec path])
 AC_EXPAND_DIR(plugin_path, "$libdir/finit/plugins")
 AC_SUBST(plugin_path)
 AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])
+
+AC_EXPAND_DIR(tmpfiles_path, "$libdir/tmpfiles.d")
+AC_SUBST(tmpfiles_path)
+AC_DEFINE_UNQUOTED(TMPFILES_PATH, "$tmpfiles_path", [Main tmpfiles.d/, override in /etc])
 
 AC_EXPAND_DIR(rescue_conf, "$libdir/finit/rescue.conf")
 AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])

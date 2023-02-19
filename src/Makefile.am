@@ -59,6 +59,7 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     sig.c	sig.h				\
 		     sm.c	sm.h				\
 		     svc.c	svc.h				\
+		     tmpfiles.c	tmpfiles.h			\
 		     tty.c	tty.h				\
 		     util.c	util.h				\
 		     utmp-api.c	utmp-api.h

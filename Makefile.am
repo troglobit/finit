@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS    = -I m4
-SUBDIRS            = man plugins src test
+SUBDIRS            = man plugins src test tmpfiles.d
 doc_DATA           = README.md LICENSE contrib/finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
 

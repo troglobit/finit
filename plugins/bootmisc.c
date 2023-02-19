@@ -38,6 +38,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "tmpfiles.h"
 #include "util.h"
 #include "utmp-api.h"
 
@@ -158,78 +159,23 @@ static void setup(void *arg)
 
 	prev = umask(0);
 
-	dbg("Setting up FHS structure in /var ...");
-	makedir("/var/cache",      0755);
-	makedir("/var/db",         0755); /* _PATH_VARDB on some systems */
-	makedir("/var/games",      0755);
-	makedir("/var/lib",        0755);
-	makedir("/var/lib/misc",   0755); /* _PATH_VARDB on some systems */
-	makedir("/var/lib/alarm",  0755);
-	makedir("/var/lib/urandom",0755);
-	if (fisdir("/run")) {
-		dbg("System with new /run tmpfs ...");
-		if (!fisdir("/run/lock"))
-			makedir("/run/lock", 01777);
-		ln("/run/lock", "/var/lock");
-		ln("/dev/shm", "/run/shm");
-
-		/* compat only, should really be set up by OS/dist */
-		ln("/run", "/var/run");
-	} else {
-		makedir("/var/lock", 01777);
-		makedir("/var/run", 0755);
-	}
-	makedir("/var/log",        0755);
-	makedir("/var/mail",       0755);
-	makedir("/var/opt",        0755);
-	makedir("/var/spool",      0755);
-	makedir("/var/spool/cron", 0755);
-	makedir("/var/tmp",        0755);
-	makedir("/var/empty",      0755);
-
 	/*
-	 * UTMP actually needs multiple db files
+	 * REQUIRED for compatibility with, e.g. _PATH_VARRUN!
+	 * Should be set up by OS/dist, this is a fallback.
 	 */
-	if (has_utmp()) {
-		dbg("Setting up necessary UTMP files ...");
-		create("/var/run/utmp",    0644, "root", "utmp"); /* Currently logged in */
-		create("/var/log/wtmp",    0644, "root", "utmp"); /* Login history       */
-		create("/var/log/btmp",    0600, "root", "utmp"); /* Failed logins       */
-		create("/var/log/lastlog", 0644, "root", "utmp");
+	if (fismnt("/run")) {
+		rmdir("/var/run");
+		ln("../run", "/var/run");
 	}
-
-	/* Set BOOT_TIME UTMP entry */
-	utmp_set_boot();
-
-	dbg("Setting up misc files ...");
-	makedir("/var/run/network",0755); /* Needed by Debian/Ubuntu ifupdown */
-	makedir("/var/run/lldpd",  0755); /* Needed by lldpd */
-	makedir("/var/run/pluto",  0755); /* Needed by Openswan */
-	mksubsys("/var/run/dnsmasq", 0755, "nobody", "nobody");
-	mksubsys("/var/run/quagga", 0755, "quagga", "quagga");
-	mksubsys("/var/log/quagga", 0755, "quagga", "quagga");
-	mksubsys("/var/run/frr",    0755, "frr", "frr");
-	mksubsys("/var/log/frr",    0755, "frr", "frr");
-	makedir("/var/run/sshd",  01755); /* OpenSSH  */
-
-	if (!fexist("/etc/mtab"))
-		ln("../proc/self/mounts", "/etc/mtab");
-
-	/* Void Linux has a uuidd that runs as uuid:uuid and needs /run/uuid */
-	mksubsys("/var/run/uuidd", 0755, "uuidd", "uuidd");
-
-	/* Debian has /run/sudo, ensure correct perms and SELinux label */
-	mksubsys("/var/run/sudo", 0711, "root", "root");
-	mksubsys("/var/run/sudo/ts", 0700, "root", "root");
-	if (whichp("restorecon"))
-		run("restorecon /var/run/sudo /var/run/sudo/ts", "restorecon");
-
-	/* XXX: temporary workaround pending new tmpfiles.so plugin */
-	mksubsys("/var/cache/nginx", 0755, "www-data", "www-data");
-	makedir("/var/run/clixon",  0755);
 
 	/* Kernel symlinks, e.g. /proc/self/fd -> /dev/fd */
 	kernel_links();
+
+	/* Create all system tmpfiles.d(5) */
+	tmpfilesd();
+
+	/* Set BOOT_TIME UTMP entry */
+	utmp_set_boot();
 
 	umask(prev);
 }

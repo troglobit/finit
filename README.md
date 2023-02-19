@@ -39,6 +39,7 @@ Features include:
   * Conditions for network/process/custom dependencies
   * Readiness notification; PID files (native) for synchronizing system
     startup, support for systemd [sd_notify()][], or [s6 style][] too
+  * Limited support for [tmpfiles.d(5)][] (no aging, attributes, or subvolumes)
   * Pre/Post script actions
   * Tooling to enable/disable services
   * Built-in getty
@@ -700,6 +701,7 @@ and proposed extensions.
 [sd_notify()]:      https://www.freedesktop.org/software/systemd/man/sd_notify.html
 [s6 style]:         https://skarnet.org/software/s6/notifywhenup.html
 [run-parts(8)]:     https://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
+[tmpfiles.d(5)]:    https://www.freedesktop.org/software/systemd/man/tmpfiles.d.html
 [original finit]:   http://helllabs.org/finit/
 [EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka

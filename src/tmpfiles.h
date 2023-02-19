@@ -1,6 +1,6 @@
-/* Console setup (for X)
+/* Limited tmpfiles.d implementation
  *
- * Copyright (c) 2012-2022  Joachim Wiberg <troglobit@gmail.com>
+ * Copyright (c) 2023  Joachim Wiberg <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,51 +21,22 @@
  * THE SOFTWARE.
  */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#ifndef TMPFILES_H_
+#define TMPFILES_H_
+
+#include <dirent.h>
+#include <ftw.h>
+#include <glob.h>
+#include <libgen.h>
+
+#include <stdlib.h>
+#include <string.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 #else
 # include <lite/lite.h>
 #endif
 
-#include "finit.h"
-#include "helpers.h"
-#include "plugin.h"
+void tmpfilesd(void);
 
-static void setup(void *arg)
-{
-	if (rescue) {
-		dbg("Skipping %s plugin in rescue mode.", __FILE__);
-		return;
-	}
-
-	if (fexist("/var/run/console/console.lock"))
-		run("pam_console_apply", "pam-console");
-}
-
-static plugin_t plugin = {
-	.name = __FILE__,
-	.hook[HOOK_NETWORK_UP] = {
-		.cb  = setup
-	},
-	.depends = { "bootmisc", }
-};
-
-PLUGIN_INIT(plugin_init)
-{
-	plugin_register(&plugin);
-}
-
-PLUGIN_EXIT(plugin_exit)
-{
-	plugin_unregister(&plugin);
-}
-
-/**
- * Local Variables:
- *  indent-tabs-mode: t
- *  c-file-style: "linux"
- * End:
- */
+#endif /* TMPFILES_H_ */

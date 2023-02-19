@@ -50,6 +50,10 @@ as reconfiguration at runtime.  Natively PID files are used, but systemd
 .Cm sd_notify()
 and s6 notification is also supported.
 .It
+Limited support for
+.Xr tmpfiles.d 5 ,
+no aging, attributes, or subvolumes
+.It
 Pre/Post script actions
 .It
 Tooling to enable/disable services
@@ -268,6 +272,7 @@ Runtime files, including the condition subsystem
 .Sh SEE ALSO
 .Xr finit.conf 5
 .Xr initctl 8
+.Xr tmpfiles.d 5
 .Sh AUTHORS
 .Nm
 was conceived and reverse engineered by Claudio Matsuoka.  Since v1.0,
