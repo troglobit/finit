@@ -110,12 +110,6 @@ static void clean(void *arg)
 	}
 }
 
-static void ln(const char *target, const char *linkpath)
-{
-	if (symlink(target, linkpath) && errno != EEXIST)
-		err(1, "Failed creating %s -> %s symlink", target, linkpath);
-}
-
 /* Kernel defines the following compulsory and recommended links
  * https://github.com/torvalds/linux/blob/v5.18/Documentation/admin-guide/devices.rst#compulsory-links
  */

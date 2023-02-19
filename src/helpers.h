@@ -125,6 +125,21 @@ static inline int create(char *path, mode_t mode, char *user, char *group)
 	return 0;
 }
 
+static inline int ln(const char *target, const char *linkpath)
+{
+	if (!target || !linkpath) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (symlink(target, linkpath)) {
+		if (errno != EEXIST)
+			warn("Failed creating %s -> %s symlink", target, linkpath);
+		return -1;
+	}
+
+	return 0;
+}
 static inline int dprint(int fd, const char *s, size_t len)
 {
 	size_t loop = 3;
