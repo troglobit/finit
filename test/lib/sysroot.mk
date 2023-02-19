@@ -40,7 +40,14 @@ libs            = $(foreach path,$(_libs_src),$(abspath $(DEST))$(path))
 all: $(libs) $(DEST)/bin/$(BBBIN)
 	@(cd $(DEST);					\
 	for prg in `./bin/$(BBBIN) --list-full`; do 	\
-		ln -sf /bin/$(BBBIN) $$prg;		\
+	    case $$prg in				\
+	        usr/bin/* | usr/sbin/*)			\
+		    ln -sf ../../bin/$(BBBIN) $$prg;;	\
+                bin/* | sbin/*)				\
+                    ln -sf ../bin/$(BBBIN) $$prg;;	\
+                *)					\
+                    ln -sf bin/$(BBBIN) $$prg;;		\
+	    esac;					\
 	done)
 
 $(DEST)/bin/$(BBBIN).sha256:
