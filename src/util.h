@@ -101,7 +101,8 @@ static inline int paste(char *buf, size_t len, const char *dir, const char *file
 	if (!file)
 		file = "";
 
-	return snprintf(buf, len, "%s%s%s", dir, fisslashdir(dir) ? "" : "/", file);
+	return snprintf(buf, len, "%s%s%s", dir,
+			fisslashdir(dir) ? "" : file[0] == '/' ? "" : "/", file);
 }
 
 #endif /* FINIT_UTIL_H_ */
