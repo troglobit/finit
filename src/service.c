@@ -1244,6 +1244,7 @@ static char *parse_name(char *cmd, char *arg)
  */
 static void parse_cmdline_args(svc_t *svc, char *cmd, char **args)
 {
+	char prev[MAX_ARG_LEN];
 	int diff = 0;
 	char sep = 0;
 	char *arg;
@@ -1258,7 +1259,6 @@ static void parse_cmdline_args(svc_t *svc, char *cmd, char **args)
 	 * array to be zero-terminated.
 	 */
 	while ((arg = strtok_r(NULL, " ", args)) && i < (MAX_NUM_SVC_ARGS - 1)) {
-		char prev[sizeof(svc->args[0])] = { 0 };
 		char ch = arg[0];
 		size_t len;
 
