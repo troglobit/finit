@@ -708,6 +708,11 @@ static int parse_static(char *line, int is_rcsd)
 		return 0;
 	}
 
+	if (BOOTSTRAP && MATCH_CMD(line, "set ", x)) {
+		parse_env(x);
+		return 0;
+	}
+
 	if (MATCH_CMD(line, "include ", x)) {
 		char *file = strip_line(x);
 

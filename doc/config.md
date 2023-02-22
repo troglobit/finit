@@ -207,10 +207,12 @@ and any `*.conf`, was added.  It is worth noting that these are global
 and *shared with all* services -- the only way to have service-local
 environment is detailed in the next section.
 
-The syntax for global environment variables is straight forward:
+The syntax for global environment variables is straight forward.  In
+Finit v4.4 the `set` keyword was added for completeness, but the old
+syntax (without the `set ` prefix) is still honored:
 
-    foo=bar
-    baz="qux"
+    set foo=bar
+    set baz="qux"
 
 On reload of .conf files, all tracked environment variables are cleared
 so if `foo=bar` is removed from `finit.conf`, or any `finit.d/*.conf`
