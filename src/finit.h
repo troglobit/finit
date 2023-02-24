@@ -54,10 +54,10 @@
 #define FINIT_CGPATH            "/sys/fs/cgroup"
 #endif
 
-/* To use these, include config.h, or define FINIT_LIBPATH_ */
-#define _PATH_LOGIT             FINIT_LIBPATH_ "/logit"
-#define _PATH_SULOGIN           FINIT_LIBPATH_ "/sulogin"
-#define _PATH_GETTY             FINIT_LIBPATH_ "/getty"
+/* To use these, include config.h, or define FINIT_EXECPATH_ */
+#define _PATH_LOGIT             FINIT_EXECPATH_ "/logit"
+#define _PATH_SULOGIN           FINIT_EXECPATH_ "/sulogin"
+#define _PATH_GETTY             FINIT_EXECPATH_ "/getty"
 
 #define CMD_SIZE                256
 #define LINE_SIZE               1024

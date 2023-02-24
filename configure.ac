@@ -275,7 +275,7 @@ AM_CONDITIONAL(TESTSERV,  [test "x$enable_testserv_plugin" = "xyes"])
 pkglibdir=$libdir/finit
 AC_SUBST(pkglibexecdir)
 AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
-AC_DEFINE_UNQUOTED(FINIT_LIBPATH_, "$pkglibexecdir", [Finit libexec path])
+AC_DEFINE_UNQUOTED(FINIT_EXECPATH_, "$pkglibexecdir", [Finit libexec path])
 
 AC_EXPAND_DIR(plugin_path, "$libdir/finit/plugins")
 AC_SUBST(plugin_path)
