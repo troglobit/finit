@@ -277,7 +277,7 @@ AC_SUBST(pkglibexecdir)
 AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
 AC_DEFINE_UNQUOTED(FINIT_EXECPATH_, "$pkglibexecdir", [Finit libexec path])
 
-AC_EXPAND_DIR(plugin_path, "$libdir/finit/plugins")
+AC_EXPAND_DIR(plugin_path, "$pkglibdir/plugins")
 AC_SUBST(plugin_path)
 AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])
 
@@ -285,9 +285,9 @@ AC_EXPAND_DIR(tmpfiles_path, "$libdir/tmpfiles.d")
 AC_SUBST(tmpfiles_path)
 AC_DEFINE_UNQUOTED(TMPFILES_PATH, "$tmpfiles_path", [Main tmpfiles.d/, override in /etc])
 
-AC_EXPAND_DIR(rescue_conf, "$libdir/finit/rescue.conf")
+AC_EXPAND_DIR(rescue_conf, "$pkglibdir/rescue.conf")
 AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
-AC_EXPAND_DIR(sample_conf, "$libdir/finit/sample.conf")
+AC_EXPAND_DIR(sample_conf, "$pkglibdir/sample.conf")
 AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl create])
 
 AS_IF([test "$heading" = ""],   [heading="<DEFAULT>"])
