@@ -1393,7 +1393,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *dev = NULL;
 	int respawn = 0;
 	int levels = 0;
-	int forking = 0, manual = 0;
+	int forking = 0, manual = 0, nowarn = 0;
 	int restart_max = SVC_RESPAWN_MAX;
 	int restart_tmo = 0;
 	unsigned oncrash_action = SVC_ONCRASH_IGNORE;
@@ -1472,6 +1472,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			restart_tmo = atoi(arg) * 1000;
 		else if (MATCH_CMD(cmd, "norestart", arg))
 			restart_max = 0;
+		else if (MATCH_CMD(cmd, "nowarn", arg))
+			nowarn = 1;
 		else if (MATCH_CMD(cmd, "oncrash:", arg)) {
 			if (MATCH_CMD(arg, "reboot", arg))
 				oncrash_action = SVC_ONCRASH_REBOOT;
@@ -1556,6 +1558,14 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		svc = svc_find(name, id);
 
 	if (!svc) {
+		if (!whichp(cmd)) {
+			if (nowarn)
+				return 0;
+
+			warn("%s: skipping %s", file ? file : "static", cmd);
+			return errno;
+		}
+
 		dbg("Creating new svc for %s name %s id %s type %d", cmd, name, id, type);
 		svc = svc_new(cmd, name, id, type);
 		if (!svc) {
