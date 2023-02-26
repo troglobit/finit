@@ -605,6 +605,13 @@ static int service_start(svc_t *svc)
 		}
 	}
 
+	/* Don't start if it conflicts with something else already started */
+	if (svc_conflicts(svc)) {
+		logit(LOG_INFO, "Not starting %s, conflicts with %s",
+		      svc_ident(svc, NULL, 0), svc->conflict);
+		return 1;
+	}
+
 	compose_cmdline(svc, cmdline, sizeof(cmdline));
 	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", cmdline);
@@ -1387,7 +1394,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *name = NULL, *halt = NULL, *delay = NULL;
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
-	char *ready_script = NULL;
+	char *ready_script = NULL, *conflict = NULL;
 	char *notify = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
@@ -1498,6 +1505,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			cgroup = arg; /* only settings */
 		else if (MATCH_CMD(cmd, "cgroup.", arg))
 			cgroup = arg; /* with group */
+		else if (MATCH_CMD(cmd, "conflict:", arg))
+			conflict = arg;
 		else
 			break;
 
@@ -1696,6 +1705,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->file, file, sizeof(svc->file));
 	else
 		memset(svc->file, 0, sizeof(svc->file));
+	if (conflict)
+		strlcpy(svc->conflict, conflict, sizeof(svc->conflict));
+	else
+		memset(svc->conflict, 0, sizeof(svc->conflict));
 	svc->manual  = manual;
 	svc->respawn = respawn;
 	svc->forking = forking;
@@ -2486,6 +2499,9 @@ int service_completed(void)
 			continue;
 
 		if (!svc_enabled(svc))
+			continue;
+
+		if (svc_conflicts(svc))
 			continue;
 
 		if (strstr(svc->cond, plugin_hook_str(HOOK_SVC_UP)) ||

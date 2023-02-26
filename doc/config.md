@@ -721,6 +721,24 @@ optional `name` argument:
 
     name:<service-name>
 
+If multiple instances of a service, with the same `name`, exist.  Set
+the identifier `:ID` to prevent Finit from replacing previous instances:
+
+    service :eth1 ssdpd eth1 -- Windows discovery on eth1
+    service :eth2 ssdpd eth2 -- Windows discovery on eth2
+
+If you have conflicting services and want to prevent them from starting,
+use the `conflict:` argument:
+
+    service [S12345789] udevd -- Device event management daemon
+	run [S] conflict:udevd mdev -s -- Populating device tree
+
+Multiple conflicting services can be separated using `,`:
+
+    service :1 abc
+    service :2 abc
+	service conflict:abc:1,abc:2 cde
+
 As mentioned previously, services are automatically restarted, this is
 configurable with the following options:
 

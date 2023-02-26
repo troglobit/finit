@@ -181,6 +181,7 @@ typedef struct svc {
 	char	       cmd[MAX_ARG_LEN];
 	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
 	int            args_dirty;
+	char           conflict[MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
 	char	       env[MAX_ARG_LEN];
 	char	       pre_script[MAX_ARG_LEN];
@@ -233,6 +234,7 @@ void	    svc_prune_bootstrap	   (void);
 
 void        svc_enable             (svc_t *svc);
 int         svc_enabled            (svc_t *svc);
+int         svc_conflicts          (svc_t *svc);
 
 int         svc_parse_jobstr       (char *str, size_t len, void *user_data, int (*found)(svc_t *, void *), int (not_found)(char *, char *, void *));
 

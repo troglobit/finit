@@ -619,6 +619,51 @@ int svc_enabled(svc_t *svc)
 	return 1;
 }
 
+/**
+ * svc_conflicts - Check if svc conflicts with any other running svc
+ * @svc:
+ *
+ * Returns:
+ * %TRUE(1) or %FALSE(0)
+ */
+int svc_conflicts(svc_t *svc)
+{
+	char *ptr, *nm;
+	int rc = 0;
+
+	if (!svc->conflict[0])
+		return 0;
+
+	ptr = strdup(svc->conflict);
+	if (!ptr)
+		return 0;
+
+	nm = strtok(ptr, ",");
+	while (nm) {
+		char *name, *id;
+		svc_t *s;
+
+		name = strdupa(nm);
+		id = strchr(name, ':');
+		if (id)
+			id++ = 0;
+		else
+			id = "";
+
+		s = svc_find(name, id);
+		if (s) {
+			if (s->state >= SVC_STOPPING_STATE)
+				rc = 1;
+			break;
+		}
+
+		nm = strtok(NULL, ",");
+	}
+
+	free(ptr);
+	return rc;
+}
+
 /* break up "job:id job:id job:id ..." into several "job:id" tokens */
 static char *tokstr(char *str, size_t len)
 {
