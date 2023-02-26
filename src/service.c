@@ -1684,6 +1684,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		memset(svc->env, 0, sizeof(svc->env));
 	if (file)
 		strlcpy(svc->file, file, sizeof(svc->file));
+	else
+		memset(svc->file, 0, sizeof(svc->file));
 	svc->manual  = manual;
 	svc->respawn = respawn;
 	svc->forking = forking;
