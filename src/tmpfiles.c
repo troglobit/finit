@@ -238,11 +238,11 @@ static void tmpfiles(char *line)
 {
 	char *type, *path, *token, *user, *group, *age, *arg;
 	char *dst = NULL, *opts = "";
+	struct stat st, ast;
 	int major, minor;
 	int strc, rc = 0;
 	mode_t mode = 0;
 	FILE *fp = NULL;
-	struct stat st;
 	char buf[1024];
 	glob_t gl;
 
@@ -333,8 +333,6 @@ static void tmpfiles(char *line)
 		rc = rsync(arg, path, LITE_FOPT_KEEP_MTIME, NULL);
 		if (rc && errno == ENOENT)
 			rc = 0;
-		if (dst)
-			free(dst);
 		break;
 	case 'd':
 	case 'D':
@@ -369,11 +367,31 @@ static void tmpfiles(char *line)
 			rc = fclose(fp);
 		}
 		break;
+	case 'l': /* Finit extension, like 'L' but only if target exists */
+		if (!arg) {
+			paste(buf, sizeof(buf), "/usr/share/factory", path);
+			if (stat(buf, &ast))
+				break;
+		} else if (arg[0] != '/') {
+			char *tmp;
+
+			tmp = dirname(strdupa(path));
+			paste(buf, sizeof(buf), tmp, arg);
+			dst = realpath(buf, NULL);
+			if (!dst)
+				break;
+			if (stat(dst, &ast))
+				break;
+		} else {
+			if (stat(arg, &ast))
+				break;
+		}
+		/* fallthrough */
 	case 'L':
 		if (!strc) {
 			if (type[1] != '+')
 				break;
-			erase(path);
+			rmrf(path);
 		}
 		mkparent(path, 0755);
 		if (!arg) {
@@ -434,6 +452,9 @@ static void tmpfiles(char *line)
 		errx(1, "Unsupported tmpfiles command '%s'", type);
 		return;
 	}
+
+	if (dst)
+		free(dst);
 
 	if (rc)
 		warn("Failed %s operation on path %s", type, path);
