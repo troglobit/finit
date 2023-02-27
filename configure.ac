@@ -285,6 +285,10 @@ AC_EXPAND_DIR(tmpfiles_path, "$libdir/tmpfiles.d")
 AC_SUBST(tmpfiles_path)
 AC_DEFINE_UNQUOTED(TMPFILES_PATH, "$tmpfiles_path", [Main tmpfiles.d/, override in /etc])
 
+AC_EXPAND_DIR(finit_tmpfiles, "$pkglibdir/tmpfiles.d")
+AC_SUBST(finit_tmpfiles)
+AC_DEFINE_UNQUOTED(FINIT_TMPFILES, "$finit_tmpfiles", [Finit tmpfiles.d/ .conf path])
+
 AC_EXPAND_DIR(rescue_conf, "$pkglibdir/rescue.conf")
 AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
 AC_EXPAND_DIR(sample_conf, "$pkglibdir/sample.conf")

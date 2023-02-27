@@ -159,15 +159,6 @@ static void setup(void *arg)
 
 	prev = umask(0);
 
-	/*
-	 * REQUIRED for compatibility with, e.g. _PATH_VARRUN!
-	 * Should be set up by OS/dist, this is a fallback.
-	 */
-	if (fismnt("/run")) {
-		rmdir("/var/run");
-		ln("../run", "/var/run");
-	}
-
 	/* Kernel symlinks, e.g. /proc/self/fd -> /dev/fd */
 	kernel_links();
 

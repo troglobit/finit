@@ -439,11 +439,18 @@ static void tmpfiles(char *line)
 		warn("Failed %s operation on path %s", type, path);
 }
 
+/*
+ * Only the three last tmpfiles.d/ directories are defined in
+ * tmpfiles.d(5) as system search paths.  Finit adds two more
+ * before that to have Finit specific ones sorted first, and
+ * a configure prefix specific one after that for user needs.
+ */
 void tmpfilesd(void)
 {
 	/* in priority order */
 	char *dir[] = {
-		TMPFILES_PATH "/*.conf",  /* Finit specific, not in tmpfiles.d(5) */
+		FINIT_TMPFILES "/*.conf",
+		TMPFILES_PATH "/*.conf",
 		"/usr/lib/tmpfiles.d/*.conf",
 		"/run/tmpfiles.d/*.conf",
 		"/etc/tmpfiles.d/*.conf", /* local admin overrides */
@@ -477,6 +484,7 @@ void tmpfilesd(void)
 		if (!fp)
 			continue;
 
+//		info("Parsing %s ...", fn);
 		while (!feof(fp)) {
 			char *line;
 
