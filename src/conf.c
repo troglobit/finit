@@ -941,9 +941,17 @@ int conf_reload(void)
 			      rlim2str(i), lim2str(&global_rlimit[i]));
 	}
 
-	/* Next, read all *.conf in /etc/finit.d/ */
+	/*
+	 * Next, read all *.conf in /lib/finit/system and /etc/finit.d/
+	 * The system files were previously created at runtime by plugins
+	 * but are now regular files that can be overridden by files in
+	 * /etc/finit.d -- similar to how tmfiles.d(5) work.  E.g., add
+	 * an override .conf, or an ignore by symlinking to /dev/null
+	 */
 	snprintf(path, sizeof(path), "%s/*.conf", finit_rcsd);
 	glob(path, 0, NULL, &gl);
+	snprintf(path, sizeof(path), "%s/*.conf", FINIT_SYSPATH);
+	glob(path, GLOB_APPEND, NULL, &gl);
 	snprintf(path, sizeof(path), "%s/enabled/*.conf", finit_rcsd);
 	glob(path, GLOB_APPEND, NULL, &gl);
 
@@ -951,7 +959,20 @@ int conf_reload(void)
 		char *path = gl.gl_pathv[i];
 		char *rp = NULL;
 		struct stat st;
-		size_t len;
+		size_t j, len;
+
+		/* check for FINIT_SYSPATH overrides */
+		for (j = i + 1; j < gl.gl_pathc; j++) {
+			if (strncmp(path, FINIT_SYSPATH, strlen(FINIT_SYSPATH)))
+				continue;
+			if (strcmp(basename(path), basename(gl.gl_pathv[j])))
+				continue;
+			path = NULL; /* replacement later in list, skip this */
+			break;
+		}
+
+		if (!path)
+			continue; /* skip, override exists */
 
 		/* Check that it's an actual file ... beyond any symlinks */
 		if (lstat(path, &st)) {
