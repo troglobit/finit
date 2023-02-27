@@ -17,10 +17,6 @@ if BUILD_DBUS_PLUGIN
 libplug_la_SOURCES += dbus.c
 endif
 
-if BUILD_HOTPLUG_PLUGIN
-libplug_la_SOURCES += hotplug.c
-endif
-
 if BUILD_MODULES_LOAD_PLUGIN
 libplug_la_SOURCES += modules-load.c
 endif
@@ -66,10 +62,6 @@ endif
 
 if BUILD_HOOK_SCRIPTS_PLUGIN
 pkglib_LTLIBRARIES += hook-scripts.la
-endif
-
-if BUILD_HOTPLUG_PLUGIN
-pkglib_LTLIBRARIES += hotplug.la
 endif
 
 if BUILD_MODULES_LOAD_PLUGIN
