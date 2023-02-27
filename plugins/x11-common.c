@@ -41,16 +41,13 @@ static void setup(void *arg)
 		return;
 	}
 
-	if (fexist("/var/run/console/console.lock"))
+	if (fexist("/var/run/console/console.lock") && which("pam_console_apply"))
 		run("pam_console_apply", "pam-console");
 }
 
 static plugin_t plugin = {
 	.name = __FILE__,
-	.hook[HOOK_NETWORK_UP] = {
-		.cb  = setup
-	},
-	.depends = { "bootmisc", }
+	.hook[HOOK_SVC_PLUGIN] = { .cb  = setup },
 };
 
 PLUGIN_INIT(plugin_init)
