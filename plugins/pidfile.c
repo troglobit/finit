@@ -308,7 +308,7 @@ static plugin_t plugin = {
 	.name = __FILE__,
 	.hook[HOOK_BASEFS_UP]  = { .cb = pidfile_init   },
 	.hook[HOOK_SVC_RECONF] = { .cb = pidfile_reconf },
-	.depends = { "netlink" },
+	.depends = { "netlink" }, /* bootmisc depends on us */
 };
 
 PLUGIN_INIT(plugin_init)
