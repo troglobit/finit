@@ -259,7 +259,7 @@ static int fsck(int pass)
 #ifdef FSCK_FIX
 		snprintf(cmd, sizeof(cmd), "fsck -yf %s", dev);
 #else
-		snprintf(cmd, sizeof(cmd), "fsck -a %s", dev);
+		snprintf(cmd, sizeof(cmd), "fsck %s %s %s", fsck_mode, fsck_repair, dev);
 #endif
 		dbg("Running pass %d fsck command %s", pass, cmd);
 		fsck_rc = run_interactive(cmd, "Checking filesystem %s", dev);
@@ -285,6 +285,9 @@ static int fsck_all(void)
 	int rc = 0;
 #ifndef FAST_BOOT
 	int pass;
+
+	if (!fsck_mode)
+		return 0;
 
 	for (pass = 1; pass < 10; pass++) {
 		rc = fsck(pass);

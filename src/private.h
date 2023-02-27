@@ -36,6 +36,8 @@ extern char *finit_conf;
 extern char *finit_rcsd;
 extern svc_t *wdog;
 extern int   service_interval;
+extern char *fsck_mode;
+extern char *fsck_repair;
 
 int          api_init         (uev_ctx_t *ctx);
 int          api_exit         (void);

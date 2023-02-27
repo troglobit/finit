@@ -62,6 +62,9 @@ static TAILQ_HEAD(, env_entry) env_list = TAILQ_HEAD_INITIALIZER(env_list);
 struct rlimit initial_rlimit[RLIMIT_NLIMITS];
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
 
+char *fsck_mode = "";
+char *fsck_repair = "-p";
+
 char cgroup_current[16]; /* cgroup.NAME sets current cgroup for a set of services */
 
 struct conf_change {
@@ -149,6 +152,37 @@ static void parse_finit_opts(char *opt)
 	}
 }
 
+static void parse_fsck_opts(char *opt)
+{
+	char *arg;
+
+	arg = strchr(opt, '=');
+	if (arg)
+		*arg++ = 0;
+
+	if (string_compare(opt, "mode")) {
+		if (!strcmp(arg, "skip"))
+			fsck_mode = NULL;
+		if (!strcmp(arg, "auto"))
+			fsck_mode = "";
+		if (!strcmp(arg, "force"))
+			fsck_mode = "-f";
+
+		return;
+	}
+
+	if (string_compare(opt, "repair")) {
+		if (!strcmp(arg, "no"))
+			fsck_repair = "-n";
+		if (!strcmp(arg, "preen"))
+			fsck_repair = "-p";
+		if (!strcmp(arg, "yes"))
+			fsck_repair = "-y";
+
+		return;
+	}
+}
+
 /*
  * When runlevel (single integer) is given on the command line,
  * it overrides the runlevel in finit.conf and the built-in
@@ -180,6 +214,11 @@ static void parse_arg(char *arg)
 {
 	if (!strncmp(arg, "finit.", 6)) {
 		parse_finit_opts(&arg[6]);
+		return;
+	}
+
+	if (!strncmp(arg, "fsck.", 5)) {
+		parse_fsck_opts(&arg[5]);
 		return;
 	}
 
