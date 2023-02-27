@@ -225,6 +225,7 @@ void        svc_foreach_type       (int types, int (*cb)(svc_t *));
 
 svc_t	   *svc_stop_completed	   (void);
 
+void	    svc_mark		   (svc_t *svc);
 void	    svc_mark_dynamic       (void);
 void	    svc_mark_dirty         (svc_t *svc);
 void	    svc_mark_clean         (svc_t *svc);

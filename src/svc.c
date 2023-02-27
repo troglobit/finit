@@ -500,6 +500,14 @@ svc_t *svc_find_by_pidfile(char *fn)
 	return NULL;
 }
 
+void svc_mark(svc_t *svc)
+{
+	if (!svc || svc->protect)
+		return;
+
+	*((int *)&svc->removed) = 1;
+}
+
 /**
  * svc_mark_dynamic - Mark dynamically loaded services for deletion.
  *
@@ -514,12 +522,8 @@ void svc_mark_dynamic(void)
 {
 	svc_t *svc, *iter = NULL;
 
-	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->protect)
-			continue;
-
-		*((int *)&svc->removed) = 1;
-	}
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0))
+		svc_mark(svc);
 }
 
 void svc_mark_dirty(svc_t *svc)
