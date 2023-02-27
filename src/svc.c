@@ -372,6 +372,32 @@ svc_t *svc_find(char *name, char *id)
 }
 
 /**
+ * svc_find_by_str - Find a service object by name:id
+ * @str: name[:id]
+ *
+ * Like svc_find() but takes 'name[:id]' argument
+ *
+ * Returns:
+ * A pointer to an &svc_t object, or %NULL if not found.
+ */
+svc_t *svc_find_by_str(const char *str)
+{
+	char *name, *id;
+
+	if (!str)
+		return NULL;
+
+	name = strdupa(str);
+	id = strchr(name, ':');
+	if (id)
+		*id++ = 0;
+	else
+		id = "";
+
+	return svc_find(name, id);
+}
+
+/**
  * svc_find_by_pid - Find a service object by its PID
  * @pid: Process ID to match
  *
@@ -644,17 +670,9 @@ int svc_conflicts(svc_t *svc)
 
 	nm = strtok(ptr, ",");
 	while (nm) {
-		char *name, *id;
 		svc_t *s;
 
-		name = strdupa(nm);
-		id = strchr(name, ':');
-		if (id)
-			id++ = 0;
-		else
-			id = "";
-
-		s = svc_find(name, id);
+		s = svc_find_by_str(nm);
 		if (s) {
 			if (s->state >= SVC_STOPPING_STATE)
 				rc = 1;
