@@ -34,6 +34,7 @@ void      service_unregister     (svc_t *svc);
 void      service_runtask_clean  (void);
 void      service_reload_dynamic (void);
 void      service_update_rdeps   (void);
+void      service_mark_unavail   (void);
 
 void      service_ready_script   (svc_t *svc); /* XXX: only for pidfile plugin before notify framework */
 

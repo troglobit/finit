@@ -1011,6 +1011,9 @@ int conf_reload(void)
 	/* Mark any reverse deps as chenaged. */
 	service_update_rdeps();
 
+	/* Prune according to ifdef:[!]ident */
+	service_mark_unavail();
+
 	/* Set up top-level cgroups */
 	cgroup_config();
 done:

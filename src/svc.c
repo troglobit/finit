@@ -686,6 +686,32 @@ int svc_conflicts(svc_t *svc)
 	return rc;
 }
 
+int svc_ifthen(const char *ident, const char *stmt)
+{
+	int not = 0;
+	svc_t *svc;
+
+	if (!stmt || !stmt[0])
+		return 1;
+
+	if (stmt[0] == '!') {
+		stmt++;
+		not++;
+	}
+
+	svc = svc_find_by_str(stmt);
+	if (not && svc) {
+		dbg("skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
+		return 0;
+	}
+	if (!not && !svc) {
+		dbg("skipping %s, %s not available.", ident, stmt);
+		return 0;
+	}
+
+	return 1;
+}
+
 /* break up "job:id job:id job:id ..." into several "job:id" tokens */
 static char *tokstr(char *str, size_t len)
 {

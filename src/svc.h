@@ -138,6 +138,7 @@ typedef struct svc {
 	int            job;	       /* For intenal use only, canonical ref is NAME:ID */
 	char           name[MAX_ARG_LEN];
 	char           id[MAX_ID_LEN]; /* :ID */
+	char           ifdef[MAX_IDENT_LEN];
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
@@ -237,6 +238,7 @@ void	    svc_prune_bootstrap	   (void);
 void        svc_enable             (svc_t *svc);
 int         svc_enabled            (svc_t *svc);
 int         svc_conflicts          (svc_t *svc);
+int         svc_ifthen             (const char *ident, const char *ifstm);
 
 int         svc_parse_jobstr       (char *str, size_t len, void *user_data, int (*found)(svc_t *, void *), int (not_found)(char *, char *, void *));
 

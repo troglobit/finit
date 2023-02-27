@@ -1395,6 +1395,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
+	char *ifdef = NULL, *ifident = NULL;
 	char *notify = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
@@ -1507,6 +1508,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			cgroup = arg; /* with group */
 		else if (MATCH_CMD(cmd, "conflict:", arg))
 			conflict = arg;
+		else if (MATCH_CMD(cmd, "if:", arg))
+			ifident = arg;
+		else if (MATCH_CMD(cmd, "ifdef:", arg))
+			ifdef = arg;
 		else
 			break;
 
@@ -1519,6 +1524,18 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	name = parse_name(cmd, name);
 	if (!id)
 		id = "";
+
+	if (ifident) {
+		char ident[MAX_IDENT_LEN];
+
+		if (id[0]) {
+			snprintf(ident, sizeof(ident), "%s:%s", name, id);
+		} else
+			strlcpy(ident, name, sizeof(ident));
+
+		if (!svc_ifthen(ident, ifident))
+			return 0;
+	}
 
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel > 0 && !ISOTHER(levels, 0)) {
@@ -1710,6 +1727,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->conflict, conflict, sizeof(svc->conflict));
 	else
 		memset(svc->conflict, 0, sizeof(svc->conflict));
+	if (ifdef)
+		strlcpy(svc->ifdef, ifdef, sizeof(svc->ifdef));
+	else
+		memset(svc->ifdef, 0, sizeof(svc->ifdef));
 	svc->manual  = manual;
 	svc->respawn = respawn;
 	svc->forking = forking;
@@ -1894,6 +1915,25 @@ void service_update_rdeps(void)
 			continue;
 
 		svc_mark_affected(mkcond(svc, cond, sizeof(cond)));
+	}
+}
+
+/*
+ * Drop services with 'if:otherserv' if otherserv does not exist.
+ * Drop services with 'if:!otherserv' if otherserv does exist.
+ */
+void service_mark_unavail(void)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		char buf[MAX_IDENT_LEN];
+
+		if (!svc->ifdef[0])
+			continue;
+
+		if (!svc_ifthen(svc_ident(svc, buf, sizeof(buf)), svc->ifdef))
+			svc_mark(svc);
 	}
 }
 
