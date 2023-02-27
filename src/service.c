@@ -1516,15 +1516,16 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			goto incomplete;
 	}
 
-	levels = conf_parse_runlevels(runlevels);
-	if (runlevel > 0 && !ISOTHER(levels, 0)) {
-		dbg("Skipping %s, bootstrap is completed.", cmd);
-		return 0;
-	}
-
 	name = parse_name(cmd, name);
 	if (!id)
 		id = "";
+
+	levels = conf_parse_runlevels(runlevels);
+	if (runlevel > 0 && !ISOTHER(levels, 0)) {
+		dbg("Skipping %s%s%s, bootstrap is completed.",
+		    name, id[0] ? ":" : "", id[0] ? id : "");
+		return 0;
+	}
 
 	if (type == SVC_TYPE_TTY) {
 		size_t i, len = 0;
