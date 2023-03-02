@@ -64,6 +64,16 @@ struct osrel {
 static long logname_len = 32;	/* useradd(1) limit at 32 chars */
 static int  passenv     = 0;	/* Set /bin/login -p or not     */
 
+static void get_val(char *line, const char *key, char *buf, size_t len)
+{
+	char *val;
+
+	if ((val = fgetval(line, key, "="))) {
+		strlcpy(buf, val, len);
+		free(val);
+	}
+}
+
 /*
  * Parse os-release
  */
@@ -80,32 +90,21 @@ static int osrel(struct osrel *rel)
 			return -1;
 	}
 
+	memset(rel->version, 0, sizeof(rel->version));
+	memset(codename, 0, sizeof(codename));
+
 	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
-		char *val;
+		get_val(line, "NAME", rel->name, sizeof(rel->name));
+		get_val(line, "PRETTY_NAME", rel->pretty, sizeof(rel->pretty));
+		get_val(line, "ID", rel->id, sizeof(rel->id));
+		get_val(line, "VERSION", rel->version, sizeof(rel->version));
+		get_val(line, "VERSION_ID", rel->version_id, sizeof(rel->version_id));
+		get_val(line, "VERSION_CODENAME", codename, sizeof(codename));
+		get_val(line, "HOME_URL", rel->home_url, sizeof(rel->home_url));
+		get_val(line, "DOCUMENTATION_URL", rel->doc_url, sizeof(rel->doc_url));
+		get_val(line, "SUPPORT_URL", rel->support_url, sizeof(rel->support_url));
+		get_val(line, "BUG_REPORT_URL", rel->bug_url, sizeof(rel->bug_url));
 
-		if ((val = fgetval(line, "NAME", "=")))
-			strlcpy(rel->name, val, sizeof(rel->name));
-		if ((val = fgetval(line, "PRETTY_NAME", "=")))
-			strlcpy(rel->pretty, val, sizeof(rel->pretty));
-		if ((val = fgetval(line, "ID", "=")))
-			strlcpy(rel->id, val, sizeof(rel->id));
-		if ((val = fgetval(line, "VERSION", "=")))
-			strlcpy(rel->version, val, sizeof(rel->version));
-		if ((val = fgetval(line, "VERSION_ID", "=")))
-			strlcpy(rel->version_id, val, sizeof(rel->version_id));
-		if ((val = fgetval(line, "VERSION_CODENAME", "=")))
-			strlcpy(codename, val, sizeof(codename));
-		if ((val = fgetval(line, "HOME_URL", "=")))
-			strlcpy(rel->home_url, val, sizeof(rel->home_url));
-		if ((val = fgetval(line, "DOCUMENTATION_URL", "=")))
-			strlcpy(rel->doc_url, val, sizeof(rel->doc_url));
-		if ((val = fgetval(line, "SUPPORT_URL", "=")))
-			strlcpy(rel->support_url, val, sizeof(rel->support_url));
-		if ((val = fgetval(line, "BUG_REPORT_URL", "=")))
-			strlcpy(rel->bug_url, val, sizeof(rel->bug_url));
-
-		if (val)
-			free(val);
 		free(line);
 	}
 	fclose(fp);
