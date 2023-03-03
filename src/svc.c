@@ -694,6 +694,32 @@ int svc_ifthen(const char *ident, const char *stmt)
 	if (!stmt || !stmt[0])
 		return 1;
 
+	if (stmt[0] == '<') {
+		enum cond_state cond;
+		char *ptr = ++stmt;
+		int i = 0;
+
+		if (stmt[0] == '!') {
+			stmt++;
+			not++;
+		}
+
+		while (ptr[i] != '>' && ptr[i] != 0)
+			i++;
+		ptr[i] = 0;
+
+		cond = cond_get(stmt);
+		if (not && cond == COND_ON) {
+			dbg("skipping %s, cond %s is on", ident, stmt);
+			return 0;
+		}
+		if (!not && cond == COND_OFF) {
+			dbg("skipping %s, cond %s is off", ident, stmt);
+			return 0;
+		}
+		return 1;
+	}
+
 	if (stmt[0] == '!') {
 		stmt++;
 		not++;

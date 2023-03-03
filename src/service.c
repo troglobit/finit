@@ -1395,7 +1395,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
-	char *ifdef = NULL, *ifident = NULL;
+	char *ifdef = NULL, *ifstmt = NULL;
 	char *notify = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
@@ -1509,7 +1509,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else if (MATCH_CMD(cmd, "conflict:", arg))
 			conflict = arg;
 		else if (MATCH_CMD(cmd, "if:", arg))
-			ifident = arg;
+			ifstmt = arg;
 		else if (MATCH_CMD(cmd, "ifdef:", arg))
 			ifdef = arg;
 		else
@@ -1525,7 +1525,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	if (!id)
 		id = "";
 
-	if (ifident) {
+	if (ifstmt) {
 		char ident[MAX_IDENT_LEN];
 
 		if (id[0]) {
@@ -1533,7 +1533,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		} else
 			strlcpy(ident, name, sizeof(ident));
 
-		if (!svc_ifthen(ident, ifident))
+		if (!svc_ifthen(ident, ifstmt))
 			return 0;
 	}
 
