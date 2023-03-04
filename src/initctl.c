@@ -717,7 +717,7 @@ static int plugins_list(char *arg)
 		.magic = INIT_MAGIC,
 		.cmd   = INIT_CMD_GET_PLUGINS,
 	};
-	char buf[sizeof(rq.data)];
+	char buf[sizeof(rq.data) + 1];
 	char *ptr;
 	int rc;
 
@@ -728,7 +728,8 @@ static int plugins_list(char *arg)
 		else
 			ERRX(69, "No such command");
 	}
-	memcpy(buf, rq.data, sizeof(buf));
+	memcpy(buf, rq.data, sizeof(buf) - 1);
+	buf[sizeof(rq.data)] = 0;
 
 	if (heading)
 		print_header("%-18s  %s", "PLUGIN", "DEPENDENCIES");
