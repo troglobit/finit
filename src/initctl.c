@@ -798,7 +798,7 @@ char *runlevel_arr(int levels)
 	for (int i = 0; i < 10; i++) {
 		if (ISSET(levels, i)) {
 			if (i == 0)
-				p += snprintf(&lvl[p], sizeof(lvl) - p, "%s\"S\"", s ? ", " : "");
+				p += snprintf(&lvl[p], sizeof(lvl) - p, "\"S\"");
 			else
 				p += snprintf(&lvl[p], sizeof(lvl) - p, "%s%c", s ? ", " : "", '0' + i);
 			s++;
