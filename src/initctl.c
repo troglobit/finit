@@ -1429,10 +1429,16 @@ static void sourcerc(void)
 	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
 		char *val;
 
-		if ((val = fgetval(line, "FINIT_CONF", "=")))
+		if ((val = fgetval(line, "FINIT_CONF", "="))) {
+			if (finit_conf)
+				free(finit_conf);
 			finit_conf = val;
-		if ((val = fgetval(line, "FINIT_RCSD", "=")))
+		}
+		if ((val = fgetval(line, "FINIT_RCSD", "="))) {
+			if (finit_rcsd)
+				free(finit_rcsd);
 			finit_rcsd = val;
+		}
 
 		free(line);
 	}
