@@ -419,8 +419,10 @@ int sh(char *tty)
 	/* Start /bin/sh as a login shell, i.e. with a prefix '-' */
 	len = strlen(_PATH_BSHELL) + 2;
 	arg0 = malloc(len);
-	if (!arg0)
+	if (!arg0) {
 		err(1, "Failed allocating memory");
+		return 1;
+	}
 	snprintf(arg0, len, "-%s", _PATH_BSHELL);
 	args[0] = arg0;
 
