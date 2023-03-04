@@ -80,7 +80,7 @@ static TAILQ_HEAD(, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_
 static int  parse_conf(char *file, int is_rcsd);
 static void drop_changes(void);
 
-int get_bool(char *arg, int default_value)
+static int get_bool(char *arg, int default_value)
 {
 	if (!arg)
 		goto fallback;
@@ -91,6 +91,16 @@ int get_bool(char *arg, int default_value)
 		return 0;
 fallback:
 	return default_value;
+}
+
+static int validate_arg(char *arg, const char *opt)
+{
+	if (!arg) {
+		errx(1, "option %s missing argument, skipping.", opt);
+		return 1;
+	}
+
+	return 0;
 }
 
 /*
@@ -110,11 +120,15 @@ static void parse_finit_opts(char *opt)
 		*arg++ = 0;
 
 	if (string_compare(opt, "cond")) {
+		if (validate_arg(arg, "finit.cond"))
+			return;
 		cond_boot_parse(arg);
 		return;
 	}
 
 	if (string_compare(opt, "config")) {
+		if (validate_arg(arg, "finit.config"))
+			return;
 		if (finit_conf)
 			free(finit_conf);
 		finit_conf = strdup(arg);
@@ -127,6 +141,8 @@ static void parse_finit_opts(char *opt)
 	}
 
 	if (string_compare(opt, "fstab")) {
+		if (validate_arg(arg, "finit.fstab"))
+			return;
 		if (fstab)
 			free(fstab);
 		fstab = strdup(arg);
@@ -134,10 +150,8 @@ static void parse_finit_opts(char *opt)
 	}
 
 	if (string_compare(opt, "status_style")) {
-		if (!arg) {
-			errx(1, "status_style option requires an argument, skipping.");
+		if (validate_arg(arg, "finit.status_style"))
 			return;
-		}
 
 		if (string_compare(arg, "old") || string_compare(arg, "classic"))
 			show_progress(PROGRESS_CLASSIC);
@@ -161,6 +175,9 @@ static void parse_fsck_opts(char *opt)
 		*arg++ = 0;
 
 	if (string_compare(opt, "mode")) {
+		if (validate_arg(arg, "fsck.mode"))
+			return;
+
 		if (!strcmp(arg, "skip"))
 			fsck_mode = NULL;
 		if (!strcmp(arg, "auto"))
@@ -172,6 +189,9 @@ static void parse_fsck_opts(char *opt)
 	}
 
 	if (string_compare(opt, "repair")) {
+		if (validate_arg(arg, "fsck.repair"))
+			return;
+
 		if (!strcmp(arg, "no"))
 			fsck_repair = "-n";
 		if (!strcmp(arg, "preen"))
