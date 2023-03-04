@@ -344,7 +344,7 @@ static void tmpfiles(char *line)
 			break;
 
 		for (size_t i = 0; i < gl.gl_pathc; i++)
-			mksubsys(gl.gl_pathv[i], mode ?: 0755, user, group);
+			rc += mksubsys(gl.gl_pathv[i], mode ?: 0755, user, group);
 		break;
 	case 'f':
 	case 'F':
