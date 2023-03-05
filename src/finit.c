@@ -700,12 +700,6 @@ static int telinit(int argc, char *argv[])
 			return systemf("initctl -b runlevel %c", req);
 	}
 
-	/* XXX: add non-pid1 process monitor here
-	 *
-	 *       finit -f ~/.config/finit.conf &
-	 *
-	 */
-
 	return usage(1);
 }
 
@@ -722,8 +716,18 @@ int main(int argc, char *argv[])
 	uev_ctx_t loop;
 
 	/* user calling telinit or init */
-	if (getpid() != 1)
-		return telinit(argc, argv);
+	if (getpid() != 1) {
+		if (geteuid() == 0)
+			return telinit(argc, argv);
+
+		/*
+		 * Issue #301: add non-pid1 process monitor here.
+		 * Default to read ~/.config/finit.conf with the
+		 * API socket in /run/user/$UID/.  Lot of things
+		 * to refactor before then though.
+		 */
+		return EX_NOPERM;
+	}
 
 	/*
 	 * Need /dev, /proc, and /sys for console=, remount and cgroups
