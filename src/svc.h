@@ -238,7 +238,7 @@ void	    svc_prune_bootstrap	   (void);
 void        svc_enable             (svc_t *svc);
 int         svc_enabled            (svc_t *svc);
 int         svc_conflicts          (svc_t *svc);
-int         svc_ifthen             (const char *ident, const char *ifstm);
+int         svc_ifthen             (const char *ident, char *ifstm);
 
 int         svc_parse_jobstr       (char *str, size_t len, void *user_data, int (*found)(svc_t *, void *), int (not_found)(char *, char *, void *));
 

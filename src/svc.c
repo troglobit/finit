@@ -686,7 +686,7 @@ int svc_conflicts(svc_t *svc)
 	return rc;
 }
 
-int svc_ifthen(const char *ident, const char *stmt)
+int svc_ifthen(const char *ident, char *stmt)
 {
 	int not = 0;
 	svc_t *svc;
