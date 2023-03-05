@@ -55,8 +55,8 @@ jobs:
           size /tmp/sbin/reboot
       - name: Verify starting and showing usage text
         run: |
-          /tmp/sbin/finit -h
-          /tmp/sbin/initctl -h
+          sudo /tmp/sbin/finit -h
+          sudo /tmp/sbin/initctl -h
       - name: Run Unit Tests
         run: |
           make check || (cat test/test-suite.log; false)
