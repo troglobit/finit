@@ -23,8 +23,11 @@ test_teardown()
 }
 
 say "Hello SMTP Spoken here"
-#sleep 1
+
+sleep 10
+say "We are done"
 #run initctl
 #run initctl status crasher.sh
 
 
+exit 0
