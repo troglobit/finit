@@ -1395,7 +1395,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
-	char *ifdef = NULL, *ifstmt = NULL;
+	char *ifstmt = NULL;
 	char *notify = NULL;
 	struct tty tty = { 0 };
 	char *dev = NULL;
@@ -1510,8 +1510,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			conflict = arg;
 		else if (MATCH_CMD(cmd, "if:", arg))
 			ifstmt = arg;
-		else if (MATCH_CMD(cmd, "ifdef:", arg))
-			ifdef = arg;
 		else
 			break;
 
@@ -1524,18 +1522,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	name = parse_name(cmd, name);
 	if (!id)
 		id = "";
-
-	if (ifstmt) {
-		char ident[MAX_IDENT_LEN];
-
-		if (id[0]) {
-			snprintf(ident, sizeof(ident), "%s:%s", name, id);
-		} else
-			strlcpy(ident, name, sizeof(ident));
-
-		if (!svc_ifthen(ident, ifstmt))
-			return 0;
-	}
 
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel > 0 && !ISOTHER(levels, 0)) {
@@ -1727,10 +1713,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcpy(svc->conflict, conflict, sizeof(svc->conflict));
 	else
 		memset(svc->conflict, 0, sizeof(svc->conflict));
-	if (ifdef)
-		strlcpy(svc->ifdef, ifdef, sizeof(svc->ifdef));
+	if (ifstmt)
+		strlcpy(svc->ifstmt, ifstmt, sizeof(svc->ifstmt));
 	else
-		memset(svc->ifdef, 0, sizeof(svc->ifdef));
+		memset(svc->ifstmt, 0, sizeof(svc->ifstmt));
 	svc->manual  = manual;
 	svc->respawn = respawn;
 	svc->forking = forking;
@@ -1929,10 +1915,10 @@ void service_mark_unavail(void)
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		char buf[MAX_IDENT_LEN];
 
-		if (!svc->ifdef[0])
+		if (!svc->ifstmt[0])
 			continue;
 
-		if (!svc_ifthen(svc_ident(svc, buf, sizeof(buf)), svc->ifdef))
+		if (!svc_ifthen(svc_ident(svc, buf, sizeof(buf)), svc->ifstmt))
 			svc_mark(svc);
 	}
 }

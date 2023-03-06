@@ -686,6 +686,14 @@ int svc_conflicts(svc_t *svc)
 	return rc;
 }
 
+/**
+ * svc_ifthen - Check if: statement in declaration
+ * @ident:   svc_t identififcation (name:id)
+ * @stmt:    if: statement from .conf file
+ *
+ * Returns:
+ * %TRUE(1) yes, use this svc_t, %FALSE(0) prune
+ */
 int svc_ifthen(const char *ident, char *stmt)
 {
 	int not = 0;
@@ -710,11 +718,11 @@ int svc_ifthen(const char *ident, char *stmt)
 
 		cond = cond_get(stmt);
 		if (not && cond == COND_ON) {
-			dbg("skipping %s, cond %s is on", ident, stmt);
+			logit(LOG_NOTICE, "skipping %s, cond %s is on.", ident, stmt);
 			return 0;
 		}
 		if (!not && cond == COND_OFF) {
-			dbg("skipping %s, cond %s is off", ident, stmt);
+			logit(LOG_NOTICE, "skipping %s, cond %s is off.", ident, stmt);
 			return 0;
 		}
 		return 1;
@@ -727,11 +735,11 @@ int svc_ifthen(const char *ident, char *stmt)
 
 	svc = svc_find_by_str(stmt);
 	if (not && svc) {
-		dbg("skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
+		logit(LOG_NOTICE, "skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
 		return 0;
 	}
 	if (!not && !svc) {
-		dbg("skipping %s, %s not available.", ident, stmt);
+		logit(LOG_NOTICE, "skipping %s, %s not available.", ident, stmt);
 		return 0;
 	}
 

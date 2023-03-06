@@ -1070,7 +1070,7 @@ int conf_reload(void)
 	/* Mark any reverse deps as chenaged. */
 	service_update_rdeps();
 
-	/* Prune according to ifdef:[!]ident */
+	/* Prune according to if:[!]ident or if:<[!]cond> */
 	service_mark_unavail();
 
 	/* Set up top-level cgroups */

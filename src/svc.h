@@ -138,7 +138,7 @@ typedef struct svc {
 	int            job;	       /* For intenal use only, canonical ref is NAME:ID */
 	char           name[MAX_ARG_LEN];
 	char           id[MAX_ID_LEN]; /* :ID */
-	char           ifdef[MAX_IDENT_LEN];
+	char           ifstmt[MAX_IDENT_LEN];
 
 	/* Counters */
 	char           once;	       /* run/task, (at least) once per runlevel */
