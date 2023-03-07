@@ -81,7 +81,7 @@ void devmon_add_cond(const char *cond)
 		return;
 	}
 
-	dbg("%s", cond);
+//	dbg("%s", cond);
 	node = find_node(cond);
 	if (node) {
 		node->refcnt++;
@@ -144,9 +144,9 @@ static void devmon_update_conds(char *dir, char *name, uint32_t mask)
 	paste(fn, sizeof(fn), dir, name);
 	cond = &fn[1];
 
-	dbg("path: %s, mask: %08x, cond: %s", fn, mask, cond);
+//	dbg("path: %s, mask: %08x, cond: %s", fn, mask, cond);
 	if (!find_node(cond)) {
-		dbg("unregistered, skipping %s", cond);
+//		dbg("unregistered, skipping %s", cond);
 		return;
 	}
 
@@ -170,7 +170,7 @@ static void devmon_scandir(struct iwatch *iw, char *dir, int len)
 		return;
 
 	for (i = 0; i < gl.gl_pathc; i++) {
-		dbg("scan found %s", gl.gl_pathv[i]);
+//		dbg("scan found %s", gl.gl_pathv[i]);
 		devmon_update_conds(dir, gl.gl_pathv[i], IN_CREATE);
 	}
 	globfree(&gl);
