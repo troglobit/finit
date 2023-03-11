@@ -277,9 +277,8 @@ int serv_enable(char *arg)
 	char argpath[arglen + 1], path[len + 1];
 
 	snprintf(path, sizeof(path), "%s/available/%s", finit_rcsd, arg);
-
 	if (!fexist(path))
-		ERRX(72, "cannot find %s", conf(path, sizeof(path), arg, 0));
+		ERRX(72, "cannot find %s", path);
 
 	snprintf(argpath, sizeof(argpath), "%s/enabled/%s", finit_rcsd, arg);
 	if (fexist(argpath))
