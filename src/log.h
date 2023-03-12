@@ -50,6 +50,7 @@ static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
 	va_end(ap);
 }
 #define info(fmt, args...) warnx(fmt, ##args)
+#define note(fmt, args...) warnx(fmt, ##args)
 #else
 /*
  * General log macros, similar to those used by initctl.  Initially intended
@@ -57,6 +58,7 @@ static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
  */
 #define dbg(fmt, args...)      logit(LOG_DEBUG,   "%s():" fmt, __func__, ##args)
 #define info(fmt, args...)     logit(LOG_INFO,    "%s():" fmt, __func__, ##args)
+#define note(fmt, args...)     logit(LOG_NOTICE,  "%s():" fmt, __func__, ##args)
 #define warnx(fmt, args...)    logit(LOG_WARNING, "%s():" fmt, __func__, ##args)
 #define warn(fmt, args...)     logit(LOG_WARNING, "%s():" fmt ": %s", __func__, ##args, strerror(errno))
 #define errx(rc, fmt, args...) logit(LOG_ERR,     "%s():" fmt, __func__, ##args)
