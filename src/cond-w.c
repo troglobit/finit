@@ -232,19 +232,18 @@ int cond_set_path(const char *path, enum cond_state next)
 	unsigned int rgen;
 
 	dbg("%s <= %d", path, next);
-
-	rgen = cond_get_gen(_PATH_RECONF);
-	if (!rgen) {
-		errx(1, "Unable to read configuration generation (%s)", path);
-		return -1;
-	}
-
 	prev = cond_get_path(path);
 
 	switch (next) {
 	case COND_ON:
 		if (cond_checkpath(path))
 		    return 0;
+
+		rgen = cond_get_gen(_PATH_RECONF);
+		if (!rgen) {
+			errx(1, "Unable to read configuration generation (%s)", path);
+			return -1;
+		}
 		cond_set_gen(path, rgen);
 		break;
 
