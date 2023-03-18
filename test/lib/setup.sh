@@ -208,10 +208,27 @@ retry()
 	return "$__retry_cmd_exit"
 }
 
+wdstart()
+{
+    (
+	sleep "$1"
+	if ps -p "$finit_pid" > /dev/null; then
+            kill -9 "$finit_pid" 2>/dev/null
+	fi
+    ) &
+    wdpid=$!
+}
+
+wdkill()
+{
+	kill -KILL $wdpid
+}
+
 teardown()
 {
 	test_status="$?"
 
+	wdkill
 	if type test_teardown > /dev/null 2>&1 ; then
 		test_teardown
 	fi
@@ -246,6 +263,8 @@ trap teardown EXIT
 
 SYSROOT="${SYSROOT:-$(pwd)/${TEST_DIR}/sysroot}"
 export SYSROOT
+
+TEST_TIMEOUT=300
 
 # shellcheck source=/dev/null
 . "$SYSROOT/../test.env"
@@ -299,3 +318,4 @@ set -u
 if type test_setup > /dev/null 2>&1 ; then
 	test_setup
 fi
+wdstart $TEST_TIMEOUT
