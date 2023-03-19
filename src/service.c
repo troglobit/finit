@@ -243,8 +243,11 @@ static void fallback_logger(char *ident, char *prio)
 static int lredirect(svc_t *svc)
 {
 	static int have_sysklogd = -1;
-	pid_t pid;
+	pid_t pid, svc_pid;
 	int fd;
+
+	svc_pid = getpid();
+	dbg("%s pid: %d", svc_ident(svc, NULL, 0), svc_pid);
 
 	/*
 	 * Open PTY to connect to logger.  A pty isn't buffered
@@ -268,21 +271,19 @@ static int lredirect(svc_t *svc)
 	if (have_sysklogd == -1) {
 		FILE *pp;
 
+		have_sysklogd = 0;
+
 		pp = popen("logger -h 2>/dev/null", "r");
 		if (pp) {
 			char buf[128];
 
-			have_sysklogd = 0;
 			while (fgets(buf, sizeof(buf), pp)) {
 				if (strstr(buf, "-I PID")) {
 					have_sysklogd = 1;
 					break;
 				}
 			}
-
 			pclose(pp);
-		} else {
-			have_sysklogd = 0;
 		}
 	}
 
@@ -318,7 +319,7 @@ static int lredirect(svc_t *svc)
 				char rot[25], pid[16];
 
 				snprintf(rot, sizeof(rot), "%d:%d", logfile_size_max, logfile_count_max);
-				snprintf(pid, sizeof(pid), "%d", getppid());
+				snprintf(pid, sizeof(pid), "%d", svc_pid);
 				execlp("logger", "logger", "-f", svc->log.file, "-b", "-t", tag, "-p", prio, "-I", pid, "-r", rot, NULL);
 			} else {
 				char sz[20], num[3];
@@ -339,7 +340,7 @@ static int lredirect(svc_t *svc)
 		if (have_sysklogd) {
 			char pid[16];
 
-			snprintf(pid, sizeof(pid), "%d", getppid());
+			snprintf(pid, sizeof(pid), "%d", svc_pid);
 			execlp("logger", "logger", "-t", tag, "-p", prio, "-I", pid, NULL);
 		} else {
 			execlp(_PATH_LOGIT, "logit", "-t", tag, "-p", prio, NULL);
