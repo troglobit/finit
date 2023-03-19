@@ -255,10 +255,12 @@ static int lredirect(svc_t *svc)
 	 */
 	fd = posix_openpt(O_RDWR);
 	if (fd == -1) {
+		dbg("Failed posix_openpt(), errno %d: %s", errno, strerror(errno));
 		svc->log.enabled = 0;
 		return -1;
 	}
 	if (grantpt(fd) == -1 || unlockpt(fd) == -1) {
+		dbg("Failed grantpt()|unlockpt(), errno %d: %s", errno, strerror(errno));
 		close(fd);
 		svc->log.enabled = 0;
 		return -1;
@@ -298,8 +300,10 @@ static int lredirect(svc_t *svc)
 
 		fds = open(ptsname(fd), O_RDONLY);
 		close(fd);
-		if (fds == -1)
+		if (fds == -1) {
+			logit(LOG_WARNING, "failed open() ptsname(%d), errno %d", fd, errno);
 			_exit(0);
+		}
 		dup2(fds, STDIN_FILENO);
 
 		/* Reset signals */
