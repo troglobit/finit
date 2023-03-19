@@ -1127,22 +1127,28 @@ static void drop_changes(void)
 		drop_change(node);
 }
 
-static int do_change(char *dir, char *name, uint32_t mask)
+static int conf_change_act(char *dir, char *name, uint32_t mask)
 {
 	char fn[strlen(dir) + strlen(name) + 2];
-	char *rp;
 	struct conf_change *node;
+	char *rp = NULL;
 
 	paste(fn, sizeof(fn), dir, name);
 	dbg("path: %s mask: %08x", fn, mask);
 
+	/* Handle disabling/removal of service */
 	rp = realpath(fn, NULL);
-	if (!rp)
-		return 0;
+	if (!rp) {
+		if (errno != ENOENT)
+			goto fail;
+		rp = strdup(fn);
+		if (!rp)
+			goto fail;
+	}
 
 	node = conf_find(rp);
 	if (node) {
-		dbg("Event already registered for %s ...", name);
+		dbg("event already registered for %s ...", name);
 		free(rp);
 		return 0;
 	}
@@ -1150,21 +1156,16 @@ static int do_change(char *dir, char *name, uint32_t mask)
 	node = malloc(sizeof(*node));
 	if (!node) {
 		free(rp);
-		return 1;
+		goto fail;
 	}
 
-	node->name = strdup(rp);
-	if (!node->name) {
-		free(node);
-		free(rp);
-		return 1;
-	}
-
-	dbg("Event registered for %s, mask 0x%x", rp, mask);
+	node->name = rp;
 	TAILQ_INSERT_HEAD(&conf_change_list, node, link);
-
-	free(rp);
+	dbg("event registered for %s, mask 0x%x", rp, mask);
 	return 0;
+fail:
+	warn("failed registering %s event", fn);
+	return 1;
 }
 
 int conf_any_change(void)
