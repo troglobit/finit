@@ -41,6 +41,7 @@ extern char *fsck_repair;
 
 int          api_init         (uev_ctx_t *ctx);
 int          api_exit         (void);
+void         conf_flush_events(void);
 
 void         service_monitor  (pid_t lost, int status);
 void         service_notify_cb(uev_t *w, void *arg, int events);

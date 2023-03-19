@@ -612,6 +612,9 @@ static void bootstrap_worker(void *work)
 		run_parts(runparts, NULL, NULL, 1);
 
 
+	dbg("Flushing pending .conf file events ...");
+	conf_flush_events();
+
 	/*
 	 * Start all tasks/services in the configured runlevel, or jump
 	 * into the runlevel selected from the command line.

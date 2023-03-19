@@ -73,6 +73,7 @@ struct conf_change {
 };
 
 static struct iwatch iw_conf;
+static int iwatch_fd;
 static uev_t etcw;
 
 static TAILQ_HEAD(, conf_change) conf_change_list = TAILQ_HEAD_INITIALIZER(conf_change_list);
@@ -1193,18 +1194,16 @@ int conf_changed(char *file)
 	return rc;
 }
 
-static void conf_cb(uev_t *w, void *arg, int events)
+static int conf_iwatch_read(int fd)
 {
 	static char ev_buf[8 *(sizeof(struct inotify_event) + NAME_MAX + 1) + 1];
 	struct inotify_event *ev;
 	ssize_t sz;
 	size_t off;
 
-	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
-	if (sz <= 0) {
-		err(1, "invalid inotify event");
-		return;
-	}
+	sz = read(fd, ev_buf, sizeof(ev_buf) - 1);
+	if (sz <= 0)
+		return -1;
 	ev_buf[sz] = 0;
 
 	for (off = 0; off < (size_t)sz; off += sizeof(*ev) + ev->len) {
@@ -1227,16 +1226,33 @@ static void conf_cb(uev_t *w, void *arg, int events)
 		if (!iwp)
 			continue;
 
-		if (do_change(iwp->path, ev->name, ev->mask)) {
+		if (conf_change_act(iwp->path, ev->name, ev->mask)) {
 			err(1, " Out of memory");
 			break;
 		}
 	}
 
+	return 0;
+}
+
+static void conf_cb(uev_t *w, void *arg, int events)
+{
+	if (conf_iwatch_read(w->fd)) {
+		err(1, "invalid inotify event");
+		return;
+	}
+
+
 #ifdef AUTO_RELOAD
 	if (conf_any_change())
 		service_reload_dynamic();
 #endif
+}
+
+void conf_flush_events(void)
+{
+	while (!conf_iwatch_read(iwatch_fd))
+		dbg("emptying inotify queue ...");
 }
 
 /*
@@ -1279,8 +1295,6 @@ int conf_monitor(void)
  */
 int conf_init(uev_ctx_t *ctx)
 {
-	int fd;
-
 	/* default hostname */
 	hostname = strdup(DEFHOST);
 
@@ -1320,13 +1334,13 @@ int conf_init(uev_ctx_t *ctx)
 	parse_conf(finit_conf, 0);
 
 	/* prepare /etc watcher */
-	fd = iwatch_init(&iw_conf);
-	if (fd < 0)
+	iwatch_fd = iwatch_init(&iw_conf);
+	if (iwatch_fd < 0)
 		return 1;
 
-	if (uev_io_init(ctx, &etcw, conf_cb, NULL, fd, UEV_READ)) {
+	if (uev_io_init(ctx, &etcw, conf_cb, NULL, iwatch_fd, UEV_READ)) {
 		err(1, "Failed setting up I/O callback for /etc watcher");
-		close(fd);
+		close(iwatch_fd);
 		return 1;
 	}
 
