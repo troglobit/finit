@@ -818,11 +818,11 @@ static int service_start(svc_t *svc)
 	case SVC_TYPE_RUN:
 		svc->status = complete(svc->cmd, pid);
 		dbg("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
-		   svc_ident(svc, NULL, 0), pid, WIFEXITED(svc->status),
+		    svc_ident(svc, NULL, 0), pid, WIFEXITED(svc->status),
 		    WIFSIGNALED(svc->status), WEXITSTATUS(svc->status));
-		if (WIFEXITED(svc->status) && !WEXITSTATUS(svc->status)) {
+		if (WIFEXITED(svc->status)) {
 			svc->started = 1;
-			result = 0;
+			result = WEXITSTATUS(svc->status);
 		} else {
 			svc->started = 0;
 			result = 1;
@@ -1858,7 +1858,7 @@ void service_monitor(pid_t lost, int status)
 		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
 		/* run/task should run at least once per runlevel */
-		if (WIFEXITED(status) && !WEXITSTATUS(status))
+		if (WIFEXITED(status))
 			svc->started = 1;
 		else
 			svc->started = 0;
@@ -2172,7 +2172,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 
 		/* create success/failure condition when entering SVC_DONE_STATE. */
 		if (*state == SVC_DONE_STATE) {
-			if (svc->started)
+			if (svc->started && !WEXITSTATUS(svc->status))
 				cond_set_oneshot(success);
 			else
 				cond_set_oneshot(failure);

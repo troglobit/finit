@@ -484,7 +484,6 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		};
 		pid_t pid = 0;
 		int status;
-		int exit_status;
 
 		paste(path, sizeof(path), dir, name);
 		if (stat(path, &st)) {
@@ -521,13 +520,12 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		}
 
 		status = complete(path, pid);
-		exit_status = WEXITSTATUS(status);
-		if (WIFEXITED(status) && exit_status)
-			warnx("%s exited with status %d", path, exit_status);
+		if (WIFEXITED(status))
+			warnx("%s exited with status %d", path, WEXITSTATUS(status));
 		else if (WIFSIGNALED(status))
 			warnx("%s terminated by signad %d", path, WTERMSIG(status));
 		if (progress)
-			print_result(status);
+			print_result(WEXITSTATUS(status));
 	}
 
 	while (num--)
