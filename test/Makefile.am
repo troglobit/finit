@@ -2,6 +2,7 @@ SUBDIRS                  = lib src
 
 EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/etc/env  \
 			   skel/bin/pre.sh skel/bin/post.sh skel/bin/ready.sh skel/bin/slay  \
+			   skel/sbin/fail.sh			     			     \
 			   skel/cdrom/.empty skel/dev/shm/.empty skel/dev/pts/.empty	     \
 			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		     \
 			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	     \
@@ -34,6 +35,7 @@ EXTRA_DIST		+= pre-post-serv.sh
 EXTRA_DIST		+= ready-serv.sh
 EXTRA_DIST		+= restart-self.sh
 EXTRA_DIST		+= runlevel.sh
+EXTRA_DIST		+= run-restart-forever.sh
 EXTRA_DIST		+= start-stop-service.sh
 EXTRA_DIST		+= start-stop-service-sub-config.sh
 EXTRA_DIST		+= start-kill-service.sh
@@ -71,6 +73,7 @@ TESTS			+= pre-post-serv.sh
 TESTS			+= ready-serv.sh
 TESTS			+= restart-self.sh
 TESTS			+= runlevel.sh
+TESTS			+= run-restart-forever.sh
 TESTS			+= start-stop-service.sh
 TESTS			+= start-stop-service-sub-config.sh
 TESTS			+= start-kill-service.sh

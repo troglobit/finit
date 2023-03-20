@@ -57,6 +57,11 @@ assert_restarts()
 	assert "Finit has registered restarts" "$(texec initctl status "$2" | awk '/Restarts/{print $3;}')" -ge "$1"
 }
 
+assert_restart_cnt()
+{
+	assert "Finit restart cnt $1" "$(texec initctl status "$2" | awk '/Restarts/{print $4;}')" = "($1)"
+}
+
 assert_norestart()
 {
 	assert "Service $1 is stable, no restarts" "$(texec initctl status "$1" | awk '/Restarts/{print $3;}')" -eq "0"
