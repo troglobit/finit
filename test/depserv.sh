@@ -43,27 +43,32 @@ test_one()
 
 	say 'Reload Finit'
 	run "initctl reload"
-#	run "initctl debug"
 
+	run "initctl status"
 	assert_status "foo" "running"
 	assert_cond   "$cond"
 	assert_status "bar" "running"
 
-	say "Verify bar is restarted with foo is ..."
+	say "Verify bar is restarted when foo is ..."
 	pid=$(texec initctl |grep bar | awk '{print $1;}')
 	run "initctl restart foo"
+	run "initctl status"
 	assert "bar is restarted" "$(texec initctl |grep bar | awk '{print $1;}')" != "$pid"
 
 	# Wait for spice to be stolen by the Harkonnen
 	sleep 3
 	# bar should now have detected the loss of spice and be in restart
+	run "initctl status"
 	assert_status "bar" "restart"
 	# verify bar is stopped->waiting and no longer in restart after stopping foo
 	run "initctl stop foo"
-	#run "initctl status bar"
+	run "initctl status"
+	run "initctl status bar"
 	assert_status "bar" "waiting"
 }
 
+sep
 test_one "pid/foo"
-#run "initctl debug"
+sep
+run "initctl debug"
 test_one "service/foo/running"
