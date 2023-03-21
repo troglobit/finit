@@ -657,8 +657,13 @@ static int service_start(svc_t *svc)
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		int status;
 
-		if (!svc_is_tty(svc))
+		pid = getpid();
+		if (svc_is_tty(svc)) {
+			cgroup_user("getty", pid);
+		} else {
+			cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
 			redirect(svc);
+		}
 
 		if (!svc_is_sysv(svc)) {
 			wordexp_t we = { 0 };
@@ -805,11 +810,6 @@ static int service_start(svc_t *svc)
 	} else if (debug) {
 		dbg("Starting PID %d: %s", svc->pid, cmdline);
 	}
-
-	if (svc_is_tty(svc))
-		cgroup_user("getty", pid);
-	else
-		cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
 
 	if (!svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Starting %s[%d]", svc_ident(svc, NULL, 0), pid);
