@@ -1164,9 +1164,14 @@ static void parse_env(svc_t *svc, char *env)
 	strlcpy(svc->env, env, sizeof(svc->env));
 }
 
+/*
+ * the @cgroup argument can be, e.g., .system:mem.max:1234 or just the
+ * default group with some cfg, e.g., :mem.max:1234 as a side effect,
+ * cgroupinit also work, selecting group init.
+ */
 static void parse_cgroup(svc_t *svc, char *cgroup)
 {
-	char *ptr = cgroup;
+	char *ptr = NULL;
 
 	if (!cgroup)
 		return;
@@ -1175,10 +1180,14 @@ static void parse_cgroup(svc_t *svc, char *cgroup)
 		ptr = strchr(cgroup, ':');
 		if (ptr)
 			*ptr++ = 0;
+	group:
 		strlcpy(svc->cgroup.name, &cgroup[1], sizeof(svc->cgroup.name));
 		if (!ptr)
 			return;
-	}
+	} else if (cgroup[0] == ':') {
+		ptr = &cgroup[1];
+	} else
+		goto group;
 
 	if (strlen(ptr) >= sizeof(svc->cgroup)) {
 		errx(1, "%s: cgroup settings too long (>%zu chars)", svc_ident(svc, NULL, 0), sizeof(svc->cgroup));
@@ -1508,10 +1517,9 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			ready_script = arg;
 		else if (MATCH_CMD(cmd, "env:", arg))
 			env = arg;
-		else if (MATCH_CMD(cmd, "cgroup:", arg))
-			cgroup = arg; /* only settings */
-		else if (MATCH_CMD(cmd, "cgroup.", arg))
-			cgroup = arg; /* with group */
+		/* catch both cgroup: and cgroup. handled in parse_cgroup() */
+		else if (MATCH_CMD(cmd, "cgroup", arg))
+			cgroup = arg;
 		else if (MATCH_CMD(cmd, "conflict:", arg))
 			conflict = arg;
 		else if (MATCH_CMD(cmd, "if:", arg))
