@@ -829,6 +829,7 @@ static int service_start(svc_t *svc)
 		}
 		svc->start_time = svc->pid = 0;
 		svc->once++;
+		svc_mark_clean(svc); /* done, regardless of exit status */
 		svc_set_state(svc, SVC_STOPPING_STATE);
 		break;
 
@@ -2351,7 +2352,6 @@ restart:
 			break;
 		}
 
-		/* Everything went fine, clean and set state */
 		svc_mark_clean(svc);
 		svc_set_state(svc, SVC_RUNNING_STATE);
 		break;
