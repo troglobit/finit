@@ -1,5 +1,2 @@
-* TODO drop noupdate changes to verify all tests pass
-* TODO add run task restart-forever test
-* TODO refactor cond foo noupdate() to update but put events on a queue
 * TODO sysv is not really a runtask, investigate implications before release
 
