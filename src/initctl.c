@@ -1267,7 +1267,7 @@ static int usage(int rc)
 		"  -f, --force               Ignore missing files and arguments, never prompt\n"
 		"  -h, --help                This help text\n"
 		"  -j, --json                JSON output in 'status' and 'cond' commands\n"
-		"  -n, --noerr               Ignore error for non-existent services\n"
+		"  -n, --noerr               Ignore error, e.g., already started/enabled/...\n"
 		"  -1, --once                Only one lap in commands like 'top'\n"
 		"  -p, --plain               Use plain table headings, no ctrl chars\n"
 		"  -q, --quiet               Silent, only return status of command\n"

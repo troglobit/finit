@@ -37,6 +37,7 @@ extern int iforce;			/* initctl -f */
 extern int ionce;			/* initctl -1 */
 extern int heading;			/* initctl -t */
 extern int json;			/* initctl -j */
+extern int noerr;			/* initctl -n */
 extern int verbose;			/* initctl -v */
 extern int plain;			/* initctl -p */
 extern int quiet;			/* initctl -q */

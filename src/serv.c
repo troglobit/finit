@@ -282,7 +282,7 @@ int serv_enable(char *arg)
 
 	snprintf(argpath, sizeof(argpath), "%s/enabled/%s", finit_rcsd, arg);
 	if (fexist(argpath))
-		ERRX(1, "%s already enabled", arg);
+		ERRX(noerr ? 0 : 1, "%s already enabled", arg);
 
 	return symlink(path, argpath) != 0;
 }
@@ -308,10 +308,10 @@ int do_disable(char *arg, int check)
 		dbg("Failed changing to %s/enabled/: %s", finit_rcsd, strerror(errno));
 
 	if (check && stat(arg, &st))
-		ERRX(6, "%s not (an) enabled (service).", arg);
+		ERRX(noerr ? 0 : 6, "%s not (an) enabled (service).", arg);
 
 	if (check && (st.st_mode & S_IFMT) == S_IFLNK)
-		ERRX(1, "cannot disable %s, not a symlink.", arg);
+		ERRX(noerr ? 0 : 1, "cannot disable %s, not a symlink.", arg);
 
 	return remove(arg) != 0;
 }
