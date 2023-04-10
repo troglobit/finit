@@ -159,6 +159,10 @@ AC_ARG_WITH(plugin-path,
         AS_HELP_STRING([--with-plugin-path=DIR], [Search path for external plugins, default /usr/lib/finit/plugins:/usr/local/lib/finit/plugins]),
 	[plugin_path=$withval], [plugin_path=yes])
 
+AC_ARG_WITH(rtc-date,
+	AS_HELP_STRING([--with-rtc-date=DATE], [If RTC date/time is too old, restore to DATE, format "YYYY-MM-DD HH:MM", default "2000-01-01 00:00"]),
+	[rtc_date=$withval], [rtc_date=no])
+
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defaults
@@ -242,6 +246,10 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 	AC_EXPAND_DIR(random_path, "$random_seed")
 	AC_DEFINE_UNQUOTED(RANDOMSEED, "$random_path", [Improve random at boot by seeding it with sth from before.])])
 
+AS_IF([test "x$rtc_date" != "xno"], [
+	AC_DEFINE(RTC_TIMESTAMP_CUSTOM, "$rtc_date", [Custom RTC restore date, default: 2000-01-01 00:00])], [
+	rtc_date=""])
+
 AS_IF([test "x$with_keventd" != "xno"], [with_keventd=yes])
 
 AS_IF([test "x$with_sulogin" != "xno"], [with_sulogin=yes])
@@ -302,6 +310,10 @@ AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl 
 AS_IF([test "$heading" = ""],   [heading="<DEFAULT>"])
 AS_IF([test "$heading" = "no"], [heading="<NONE>"])
 
+RTC_DATE=$rtc_date
+AS_IF([test "$rtc_date" = ""],   [RTC_DATE="<DEFAULT>"])
+AS_IF([test "$rtc_date" = "no"], [RTC_DATE="<DEFAULT>"])
+
 # Generate all files
 AC_OUTPUT
 
@@ -326,6 +338,7 @@ cat <<EOF
 Behavior:
   Boot heading..........: $heading
   Plugins...............: $plugins
+  RTC restore date......: $RTC_DATE
 
 Optional features:
   Install doc/..........: $enable_doc

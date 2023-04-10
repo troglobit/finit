@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <time.h>
 #include <sys/ioctl.h>
 #include <linux/rtc.h>
@@ -35,7 +37,13 @@
 #include "plugin.h"
 
 /* Kernel RTC driver validates against this date for sanity check */
-#define RTC_TIMESTAMP_BEGIN_2000        946684800LL /* 2000-01-01 00:00:00 */
+#define RTC_TIMESTAMP_BEGIN_2000 "2000-01-01 00:00:00"
+#ifdef  RTC_TIMESTAMP_CUSTOM
+static char  *rtc_timestamp     = RTC_TIMESTAMP_CUSTOM;
+#else
+static char  *rtc_timestamp     = RTC_TIMESTAMP_BEGIN_2000;
+#endif
+static time_t rtc_date_fallback = 946684800LL;
 
 static void tz_set(char *tz, size_t len)
 {
@@ -99,10 +107,10 @@ static void rtc_save(void *arg)
 
 	tz_set(tz, sizeof(tz));
 	rc = gettimeofday(&tv, NULL);
-	if (rc < 0 || tv.tv_sec < RTC_TIMESTAMP_BEGIN_2000) {
+	if (rc < 0 || tv.tv_sec < rtc_date_fallback) {
 		print_desc(NULL, "System clock invalid, not saving to RTC");
 	invalid:
-		logit(LOG_ERR, "System clock invalid, before 2000-01-01 00:00, not saving to RTC");
+		logit(LOG_ERR, "System clock invalid, before %s, not saving to RTC", rtc_timestamp);
 		rc = 2;
 		goto out;
 	}
@@ -136,8 +144,10 @@ static void rtc_restore(void *arg)
 	}
 
 	fd = rtc_open();
-	if (fd < 0)
+	if (fd < 0) {
+		logit(LOG_NOTICE, "System has no RTC (missing driver?), skipping restore.");
 		return;
+	}
 
 	tz_set(tz, sizeof(tz));
 	if (ioctl(fd, RTC_RD_TIME, &tm) < 0) {
@@ -151,7 +161,7 @@ static void rtc_restore(void *arg)
 	invalid:
 		logit(LOG_ERR, "Failed restoring system clock from RTC.");
 		if (EINVAL == errno)
-			logit(LOG_ERR, "RTC time is too old (before 2000-01-01 00:00)");
+			logit(LOG_ERR, "RTC time is too old (before %s)", rtc_timestamp);
 		else if (ENOENT == errno)
 			logit(LOG_ERR, "RTC has no previously saved (valid) time.");
 		else
@@ -162,18 +172,18 @@ static void rtc_restore(void *arg)
 			goto out;
 
 		/* Attempt to set RTC to a sane value ... */
-		tv.tv_sec = RTC_TIMESTAMP_BEGIN_2000;
+		tv.tv_sec = rtc_date_fallback;
 		if (!gmtime_r(&tv.tv_sec, &tm))
 			goto out;
 
-		logit(LOG_NOTICE, "Resetting RTC to kernel default, 2000-01-01 00:00.");
+		logit(LOG_NOTICE, "Resetting RTC to kernel default, %s.", rtc_timestamp);
 		rc = 2;
 	}
 
 	print_desc(NULL, "Restoring system clock (UTC) from RTC");
 	tm.tm_isdst = -1; /* Use tzdata to figure it out, please. */
 	tv.tv_sec = mktime(&tm);
-	if (tv.tv_sec < RTC_TIMESTAMP_BEGIN_2000) {
+	if (tv.tv_sec < rtc_date_fallback) {
 		errno = EINVAL;
 		goto invalid;
 	}
@@ -199,6 +209,13 @@ static plugin_t plugin = {
 
 PLUGIN_INIT(plugin_init)
 {
+	struct tm tm = { 0 };
+
+	if (!strptime(rtc_timestamp, "%Y-%m-%d %H:%M", &tm))
+		rtc_date_fallback = mktime(&tm);
+	else
+		rtc_timestamp = RTC_TIMESTAMP_BEGIN_2000;
+
 	plugin_register(&plugin);
 }
 
