@@ -1015,7 +1015,7 @@ int service_stop(svc_t *svc)
 		}
 	}
 
-	if (runlevel != 1)
+	if (runlevel != 1 && do_progress)
 		print_result(rc);
 
 	return rc;
