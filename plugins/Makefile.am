@@ -1,7 +1,7 @@
 pkglibdir           = $(plugin_path)
 AM_LDFLAGS          = -module -avoid-version -shared
 AM_CFLAGS           = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
-AM_CPPFLAGS         = -I$(top_srcdir)/src -U_FORTIFY_SOURCE
+AM_CPPFLAGS         = -I$(top_srcdir)/src
 AM_CPPFLAGS        += -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -D_DEFAULT_SOURCE
 AM_CPPFLAGS        += -D__FINIT__ $(lite_CFLAGS) $(uev_CFLAGS)
 
