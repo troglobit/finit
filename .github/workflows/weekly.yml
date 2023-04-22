@@ -15,18 +15,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check for any commits since last week
-        id: check
         run: |
           commits="$(git log --format=%H --since='1 week ago')"
           if [ -n "$commits" ]; then
-              echo run=true  >> $GITHUB_OUTPUT
+              echo "run=true"  >> $GITHUB_OUTPUT
           else
-              echo run=false >> $GITHUB_OUTPUT
+              echo "run=false" >> $GITHUB_OUTPUT
           fi
 
   distcheck:
     needs: schedule
-    if: ${{ needs.schedule.check.outputs.run == 'true' }}
+    if: ${{ needs.schedule.outputs.run == "true" }}
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
