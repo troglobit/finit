@@ -77,6 +77,13 @@ static char *sm_status(sm_state_t state)
 	}
 }
 
+static char sm_runlevel(int lvl)
+{
+	if (lvl == INIT_LEVEL)
+		return 'S';
+	return lvl + '0';
+}
+
 /*
  * Disable login in single user mode and shutdown/reboot
  *
@@ -116,8 +123,8 @@ void sm_step(sm_t *sm)
 restart:
 	old_state = sm->state;
 
-	dbg("state: %s, runlevel: %d, newlevel: %d, teardown: %d, reload: %d",
-	   sm_status(sm->state), runlevel, sm->newlevel, sm->in_teardown, sm->reload);
+	dbg("state: %s, runlevel: %c, newlevel: %d, teardown: %d, reload: %d",
+	    sm_status(sm->state), sm_runlevel(runlevel), sm->newlevel, sm->in_teardown, sm->reload);
 
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
@@ -155,11 +162,11 @@ restart:
 			plugin_run_hooks(HOOK_SHUTDOWN);
 		}
 
-		dbg("Setting new runlevel --> %d <-- previous %d", runlevel, prevlevel);
+		dbg("Setting new runlevel --> %c <-- previous %c", sm_runlevel(runlevel), sm_runlevel(prevlevel));
 		if (osheading)
-			logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %d", osheading, runlevel);
+			logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %c", osheading, sm_runlevel(runlevel));
 		else
-			logit(LOG_CONSOLE | LOG_NOTICE, "Entering runlevel %d", runlevel);
+			logit(LOG_CONSOLE | LOG_NOTICE, "Entering runlevel %c", sm_runlevel(runlevel));
 		runlevel_set(prevlevel, runlevel);
 
 		/* Disable login in single-user mode as well as shutdown/reboot */
