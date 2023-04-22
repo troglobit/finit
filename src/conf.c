@@ -48,7 +48,7 @@
 #include "helpers.h"
 #include "util.h"
 
-#define BOOTSTRAP (runlevel == 0)
+#define BOOTSTRAP (runlevel == INIT_LEVEL)
 
 int logfile_size_max = 200000;	/* 200 kB */
 int logfile_count_max = 5;
@@ -475,7 +475,7 @@ static void kmod_load(char *mod)
 	char module[64] = { 0 };
 	char cmd[CMD_SIZE];
 
-	if (runlevel != 0)
+	if (runlevel != INIT_LEVEL)
 		return;
 
 	/* Strip args for progress below and kmod_exists() */
@@ -508,15 +508,16 @@ int conf_parse_runlevels(char *runlevels)
 			break;
 		if ('!' == lvl) {
 			not = 1;
-			bitmask = 0x3FE;
+			bitmask = 0x7FE;
 			continue;
 		}
 
 		if ('s' == lvl || 'S' == lvl)
-			lvl = '0';
+			level = INIT_LEVEL;
+		else
+			level = lvl - '0';
 
-		level = lvl - '0';
-		if (level > 9 || level < 0)
+		if (level > INIT_LEVEL || level < 0)
 			continue;
 
 		if (not)

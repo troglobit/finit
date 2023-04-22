@@ -375,7 +375,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 		case INIT_CMD_HALT:
 		case INIT_CMD_POWEROFF:
 		case INIT_CMD_SUSPEND:
-			if (runlevel == 0 || runlevel == 6) {
+			if (IS_RESERVED_RUNLEVEL(runlevel)) {
 				warnx("Unsupported command in runlevel S and 6.");
 				goto leave;
 			}

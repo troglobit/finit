@@ -429,7 +429,7 @@ static void sighup_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	if (runlevel == 0 || runlevel == 6) {
+	if (IS_RESERVED_RUNLEVEL(runlevel)) {
 		warnx("SIGHUP ignored in runlevel S and 6.");
 		return;
 	}
@@ -485,7 +485,7 @@ static void sigusr1_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	if (runlevel == 0 || runlevel == 6) {
+	if (IS_RESERVED_RUNLEVEL(runlevel)) {
 		warnx("SIGUSR1 ignored in runlevel S and 6.");
 		return;
 	}
@@ -506,7 +506,7 @@ static void sigusr2_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	if (runlevel == 0 || runlevel == 6) {
+	if (IS_RESERVED_RUNLEVEL(runlevel)) {
 		warnx("SIGUSR2 ignored in runlevel S and 6.");
 		return;
 	}
@@ -526,7 +526,7 @@ static void sigterm_cb(uev_t *w, void *arg, int events)
 		return;
 	}
 
-	if (runlevel == 0 || runlevel == 6) {
+	if (IS_RESERVED_RUNLEVEL(runlevel)) {
 		warnx("SIGTERM ignored in runlevel S and 6.");
 		return;
 	}

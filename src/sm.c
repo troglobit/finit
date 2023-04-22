@@ -86,10 +86,10 @@ static char *sm_status(sm_state_t state)
  */
 static void nologin(void)
 {
-	if (runlevel == 1 || runlevel == 0 || runlevel == 6)
+	if (runlevel == 1 || IS_RESERVED_RUNLEVEL(runlevel))
 		touch(FINIT_NOLOGIN_PATH);
 
-	if (prevlevel == 1 || prevlevel == 0 || prevlevel == 6)
+	if (prevlevel == 1 || IS_RESERVED_RUNLEVEL(prevlevel))
 		erase(FINIT_NOLOGIN_PATH);
 }
 

@@ -32,6 +32,8 @@
 #define MATCH_CMD(l, c, x) \
 	(!strncasecmp(l, c, strlen(c)) && (x = (l) + strlen(c)))
 
+#define IS_RESERVED_RUNLEVEL(l) (l == 0 || l == 6 || l == INIT_LEVEL)
+
 extern char *finit_conf;
 extern char *finit_rcsd;
 extern svc_t *wdog;

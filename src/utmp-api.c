@@ -32,6 +32,7 @@
 # include <lite/lite.h>
 #endif
 
+#include "finit.h"
 #include "helpers.h"
 #include "util.h"
 #include "utmp-api.h"
@@ -174,7 +175,8 @@ int utmp_set_dead(int pid)
 
 static int encode(int lvl)
 {
-	if (!lvl) return 0;
+	if (lvl == INIT_LEVEL)
+		return 0;
 	return lvl + '0';
 }
 

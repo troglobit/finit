@@ -244,7 +244,7 @@ networking here.  The configured `runlevel NUM` from `/etc/finit.conf`
 is what Finit changes to after bootstrap, unless 'single' (or 'S') is
 given on the kernel cmdline, in which case runlevel 1 is started.
 
-All services in runlevel S(0) are started first, followed by the desired
+All services in runlevel S) are started first, followed by the desired
 run-time runlevel.  Run tasks in runlevel S can be started in sequence
 by using `run [S] cmd`.  Changing runlevels at runtime is done like any
 other init, e.g. <kbd>init 4</kbd>, but also using the more advanced
@@ -585,24 +585,24 @@ scripting and documentation:
 
 ```
 alpine:~# initctl -p
-PID   IDENT     STATUS   RUNLEVELS    DESCRIPTION
+PID   IDENT     STATUS   RUNLEVELS     DESCRIPTION
 ======================================================================
-1506  acpid     running  [--2345----] ACPI daemon
-1509  crond     running  [--2345----] Cron daemon
-1489  dropbear  running  [--2345----] Dropbear SSH daemon
-1511  klogd     running  [S12345----] Kernel log daemon
-1512  ntpd      running  [--2345----] NTP daemon
-1473  syslogd   running  [S12345----] Syslog daemon
+1506  acpid     running  [---2345----] ACPI daemon
+1509  crond     running  [---2345----] Cron daemon
+1489  dropbear  running  [---2345----] Dropbear SSH daemon
+1511  klogd     running  [S-12345----] Kernel log daemon
+1512  ntpd      running  [---2345----] NTP daemon
+1473  syslogd   running  [S-12345----] Syslog daemon
 
 alpine:~# initctl -pv
-PID   IDENT     STATUS   RUNLEVELS    COMMAND
+PID   IDENT     STATUS   RUNLEVELS     COMMAND
 ======================================================================
-1506  acpid     running  [--2345----] acpid -f
-1509  crond     running  [--2345----] crond -f -S $CRON_OPTS
-1489  dropbear  running  [--2345----] dropbear -R -F $DROPBEAR_OPTS
-1511  klogd     running  [S12345----] klogd -n $KLOGD_OPTS
-1512  ntpd      running  [--2345----] ntpd -n $NTPD_OPTS
-1473  syslogd   running  [S12345----] syslogd -n
+1506  acpid     running  [---2345----] acpid -f
+1509  crond     running  [---2345----] crond -f -S $CRON_OPTS
+1489  dropbear  running  [---2345----] dropbear -R -F $DROPBEAR_OPTS
+1511  klogd     running  [S-12345----] klogd -n $KLOGD_OPTS
+1512  ntpd      running  [---2345----] ntpd -n $NTPD_OPTS
+1473  syslogd   running  [S-12345----] syslogd -n
 ```
 
 The environment variables to each of the services above are read from,
@@ -627,7 +627,7 @@ Condition(s):
        User : root
       Group : root
      Uptime : 2 hour 46 min 56 sec
-  Runlevels : [--2345----]
+  Runlevels : [---2345----]
      Memory : 1.2M
      CGroup : /system/dropbear cpu 0 [100, max] mem [--.--, max]
               |- 1485 dropbear -R -F

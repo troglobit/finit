@@ -761,17 +761,18 @@ static int plugins_list(char *arg)
 char *runlevel_string(int currlevel, int levels)
 {
 	static char lvl[21];
-	int i, pos = 1;
+	int i = INIT_LEVEL;
+	int pos = 1;
 
 	memset(lvl, 0, sizeof(lvl));
 	lvl[0] = '[';
 
-	for (i = 0; i < 10; i++) {
+	do {
 		if (ISSET(levels, i)) {
 			if (!plain && currlevel == i)
 				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
 
-			if (i == 0)
+			if (i == INIT_LEVEL)
 				lvl[pos++] = 'S';
 			else
 				lvl[pos++] = '0' + i;
@@ -781,7 +782,14 @@ char *runlevel_string(int currlevel, int levels)
 		} else {
 			lvl[pos++] = '-';
 		}
-	}
+
+		/* XXX: ugly hack to get order right: S0123456789 */
+		if (i == INIT_LEVEL)
+			i = 0;
+		else
+			i++;
+	} while (i < INIT_LEVEL);
+
 
 	lvl[pos++] = ']';
 	lvl[pos]   = 0;
@@ -792,18 +800,24 @@ char *runlevel_string(int currlevel, int levels)
 char *runlevel_arr(int levels)
 {
 	static char lvl[42];
+	int i = INIT_LEVEL;
 	int p = 2, s = 0;
 
 	strlcpy(lvl, "[ ", sizeof(lvl));
-	for (int i = 0; i < 10; i++) {
+	do {
 		if (ISSET(levels, i)) {
-			if (i == 0)
+			if (i == INIT_LEVEL)
 				p += snprintf(&lvl[p], sizeof(lvl) - p, "\"S\"");
 			else
 				p += snprintf(&lvl[p], sizeof(lvl) - p, "%s%c", s ? ", " : "", '0' + i);
 			s++;
 		}
-	}
+		/* XXX: ugly hack to get order right: S0123456789 */
+		if (i == INIT_LEVEL)
+			i = 0;
+		else
+			i++;
+	} while (i < INIT_LEVEL);
 	strlcat(lvl, " ]", sizeof(lvl));
 
 	return lvl;
@@ -1162,7 +1176,7 @@ static int show_status(char *arg)
 	if (heading) {
 		char title[80];
 
-		snprintf(title, sizeof(title), "%-*s  %-*s  %-8s %-12s ",
+		snprintf(title, sizeof(title), "%-*s  %-*s  %-8s %-13s ",
 			 pw, "PID", iw, "IDENT", "STATUS", "RUNLEVELS");
 		if (!verbose)
 			strlcat(title, "DESCRIPTION", sizeof(title)); 
@@ -1184,9 +1198,9 @@ static int show_status(char *arg)
 
 		lvls = runlevel_string(runlevel, svc->runlevels);
 		if (strchr(lvls, '\e'))
-			printf("%-20.20s ", lvls);
+			printf("%-21.21s ", lvls);
 		else
-			printf("%-12.12s ", lvls);
+			printf("%-13.13s ", lvls);
 
 		if (!verbose)
 			puts(svc->desc);

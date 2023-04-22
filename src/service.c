@@ -1051,7 +1051,7 @@ static int service_restart(svc_t *svc)
 	}
 
 	/* Skip progress if desc disabled or bootstrap task */
-	if (!svc->desc[0] || svc_in_runlevel(svc, 0))
+	if (!svc->desc[0] || svc_in_runlevel(svc, INIT_LEVEL))
 		do_progress = 0;
 
 	if (do_progress)
@@ -1106,13 +1106,13 @@ void service_reload_dynamic(void)
  */
 void service_runlevel(int newlevel)
 {
-	if (!rescue && runlevel <= 1 && newlevel > 1)
+	if (!rescue && (runlevel == 1 || runlevel == INIT_LEVEL) && !IS_RESERVED_RUNLEVEL(newlevel))
 		networking(1);
 
 	sm_set_runlevel(&sm, newlevel);
 	sm_step(&sm);
 
-	if (!rescue && (runlevel <= 1 || runlevel == 6))
+	if (!rescue && IS_RESERVED_RUNLEVEL(runlevel))
 		networking(0);
 }
 
@@ -1538,7 +1538,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		id = "";
 
 	levels = conf_parse_runlevels(runlevels);
-	if (runlevel > 0 && !ISOTHER(levels, 0)) {
+	if (runlevel != INIT_LEVEL && !ISOTHER(levels, 0)) {
 		dbg("Skipping %s%s%s, bootstrap is completed.",
 		    name, id[0] ? ":" : "", id[0] ? id : "");
 		return 0;

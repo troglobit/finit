@@ -594,7 +594,7 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
  */
 int svc_clean_bootstrap(svc_t *svc)
 {
-	if (!ISOTHER(svc->runlevels, 0)) {
+	if (!ISOTHER(svc->runlevels, INIT_LEVEL)) {
 		svc->pid = 0;
 		svc_del(svc);
 		return 1;

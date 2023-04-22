@@ -60,7 +60,7 @@
 #include "utmp-api.h"
 #include "schedule.h"
 
-int   runlevel  = 0;		/* Bootstrap 'S' */
+int   runlevel  = INIT_LEVEL;	/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
 int   cmdlevel  = 0;		/* runlevel override from cmdline */
 int   prevlevel = -1;

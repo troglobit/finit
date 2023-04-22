@@ -63,10 +63,11 @@
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
 
-/* We extend the INIT_CMD_ range for the new initctl tool. */
 #define INIT_SOCKET             _PATH_VARRUN "finit/socket"
 #define INIT_MAGIC              0x03091969
+#define INIT_LEVEL              10
 
+/* We extend the INIT_CMD_ range for the new initctl tool. */
 #define INIT_CMD_START          0
 #define INIT_CMD_RUNLVL         1
 #define INIT_CMD_POWERFAIL      2
