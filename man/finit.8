@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd June 6, 2021
+.Dd Apr 22, 2023
 .\" Please adjust this date whenever revising the manpage.
 .Dt FINIT 8 SMM
 .Os Linux
@@ -148,6 +148,10 @@ the regular runlevel.  All services and TTYs in
 will be started, e.g., a
 .Cm tty [1] @console nologin
 configuration presents you with a root console without login.
+.Pp
+.Sy Note:
+by definition, single user mode does not have networking enabled.  This
+is also true for runlevel 1.
 .El
 .Sh BOOTING
 .Pp

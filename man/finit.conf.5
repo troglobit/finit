@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd Oct 17, 2020
+.Dd Apr 22, 2023
 .Dt FINIT.CONF 5 SMM
 .Os Linux
 .Sh NAME
@@ -114,6 +114,10 @@ The system runlevel to go to after bootstrap (S) has completed.
 is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
 halt.  All other can be used by operating system administrators.
 Default: 2
+.Pp
+It s recommended to keep runlevel 1 as single-user mode, because
+.Nm
+disables networking in this mode.
 .Pp
 .Sy Note:
 only read and executed in runlevel S (bootstrap).

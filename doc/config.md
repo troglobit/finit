@@ -541,6 +541,9 @@ The system runlevel to go to after [bootstrap][] (S) has completed.  `N`
 is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
 halt.
 
+It is recommended to keep runlevel 1 as single-user mode, because
+Finit disables networking in this mode.
+
 *Default:* 2
 
 > **Note:** only read and executed in runlevel S ([bootstrap][]).
