@@ -25,7 +25,7 @@ jobs:
 
   distcheck:
     needs: schedule
-    if: ${{ needs.schedule.outputs.run == "true" }}
+    if: ${{ needs.schedule.outputs.run == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
