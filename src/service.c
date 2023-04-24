@@ -1538,7 +1538,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		id = "";
 
 	levels = conf_parse_runlevels(runlevels);
-	if (runlevel != INIT_LEVEL && !ISOTHER(levels, 0)) {
+	if (runlevel != INIT_LEVEL && !ISOTHER(levels, INIT_LEVEL)) {
 		dbg("Skipping %s%s%s, bootstrap is completed.",
 		    name, id[0] ? ":" : "", id[0] ? id : "");
 		return 0;
