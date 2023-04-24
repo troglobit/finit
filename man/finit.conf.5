@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd Apr 22, 2023
+.Dd Apr 24, 2023
 .Dt FINIT.CONF 5 SMM
 .Os Linux
 .Sh NAME
@@ -325,9 +325,10 @@ service notify:s6 mdevd -C -O 4 -D %n
 When a service is ready, either by Finit detecting its PID file, or
 their respective readiness mechanism has been triggered, Finit creates
 then service's ready condition which other services can depend on:
-
-    $ initctl -v cond get service/mdevd/ready
-    on
+.Bd -unfilled -offset indent
+$ initctl -v cond get service/mdevd/ready
+on
+.Ed
 .El
 .Pp
 If a service should not be automatically started, it can be configured
@@ -818,6 +819,31 @@ the example sets
 to denote that it doesn't support SIGHUP.  That way Finit will
 stop/start the service instead of sending SIGHUP at restart/reload
 events.
+.Sh TEMPLATING
+Finit comes with rudimentary support for templating, similar to that of
+systemd.  Best illustrated with an example:
+.Bd -unfilled -offset indent
+$ initctl show avahi-autoipd@
+service :%i avahi-autoipd --syslog %i -- ZeroConf for %i
+.Ed
+.Pp
+To enable ZeroConf for, e.g.,
+.Cm eth0 ,
+use
+.Bd -unfilled -offset indent
+$ initctl enable avahi-autoipd@eth0.conf
+.Ed
+.Pp
+The enabled symlink will be set up to
+.Cm avahi-autoipd@.conf
+and every instance of
+.Cm %i
+will in the instantiated directive be replaced with
+.Cm eth0 .
+Inspect the result with:
+.Bd -unfilled -offset indent
+$ initctl status avahi-autoipd:eth0
+.Ed
 .Sh CGROUPS
 There are three major cgroup configuration directives:
 .Pp

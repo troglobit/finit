@@ -41,6 +41,7 @@ Features include:
     startup, support for systemd [sd_notify()][], or [s6 style][] too
   * Limited support for [tmpfiles.d(5)][] (no aging, attributes, or subvolumes)
   * Pre/Post script actions
+  * Rudimentary [templating support](doc/config.md#templating)
   * Tooling to enable/disable services
   * Built-in getty
   * Built-in watchdog, with support for hand-over to [watchdogd](https://troglobit.com/watchdogd.html)

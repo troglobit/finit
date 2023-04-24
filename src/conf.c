@@ -914,10 +914,78 @@ static int parse_dynamic(char *line, struct rlimit rlimit[], char *file)
 	return 1;
 }
 
+/*
+ * Very simple and crude implementation, only supports '%i'
+ */
+static char *instantiate(char *line, char *name)
+{
+	char *ptr, *end = strchr(line, 0);
+	char *pos = line;
+	size_t num = 0;
+
+	if (!name[0] || !end)
+		return line;
+
+	while ((ptr = strchr(pos, '%'))) {
+		num++;
+		pos++;
+	}
+
+	ptr = realloc(line, strlen(line) + num * strlen(name) + 1);
+	if (!ptr)
+		return line;
+
+	pos = line = ptr;
+	while ((ptr = strchr(pos, '%'))) {
+		if (!strncmp(ptr, "%i", 2)) {
+			char *rest = &ptr[2];
+			char *next = ptr + strlen(name);
+
+			memmove(next, rest, strlen(rest) + 1);
+			memcpy(ptr, name, strlen(name));
+
+			pos += strlen(name);
+		} else
+			pos++;
+	}
+
+	return line;
+}
+
+static int is_template(const char *file, char *name, size_t len)
+{
+	char *ptr, *nm;
+	size_t i = 0;
+
+	ptr = strchr(file, '@');
+	if (!ptr)
+		return 0;	/* not a template */
+
+	nm = ptr + 1;
+	ptr = strstr(nm, ".conf");
+	if (!strcmp(nm, ".conf") || !ptr)
+		return 1;	/* template itself or invalid */
+
+	while (nm < ptr && i < len - 1)
+		name[i++] = *nm++;
+	name[i] = 0;
+
+	return 1;		/* instantiated template */
+}
+
 static int parse_conf(char *file, int is_rcsd)
 {
 	struct rlimit rlimit[RLIMIT_NLIMITS];
+	char name[65] = { 0 };
 	FILE *fp;
+
+	if (is_template(file, name, sizeof(name))) {
+		if (!name[0]) {
+			dbg("*** Skipping template file %s", file);
+			return 0;
+		}
+		dbg("*** instantiating %s from %s ...", name, file);
+	}
 
 	fp = fopen(file, "r");
 	if (!fp)
@@ -938,7 +1006,9 @@ static int parse_conf(char *file, int is_rcsd)
 			continue;
 
 		tabstospaces(line);
-//		dbg("%s", line);
+//		dbg("raw: %s", line);
+		line = instantiate(line, name);
+//		dbg("ins: %s", line);
 
 		if (!parse_static(line, is_rcsd))
 			;
