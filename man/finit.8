@@ -12,10 +12,16 @@
 .Sh SYNOPSIS
 .Nm /sbin/finit
 .Op --
+.Op debug
+.Op finit.cond=foo[,bar[,baz]]
+.Op finit.config=/path/to/alt/finit.conf
 .Op finit.debug
 .Op finit.fstab=/etc/fstab.alt
 .Op finit.status=<on,off>
 .Op finit.status_style=<classic,modern>
+.Op loglevel=<0-7>
+.Op panic=SEC
+.Op quiet
 .Op rescue | recover
 .Op single | S
 .Nm /sbin/telinit
@@ -82,6 +88,38 @@ PID 1.  For more information on this, and available kernel command line
 options, see
 .Xr bootparam 7 .
 .Bl -tag -width pid -offset indent
+.It Cm debug
+Enable kernel debug.  Debug messages are printed to the console until
+Finit starts up, unless
+.Cm loglevel=7
+(below) is used.
+.It Cm finit.cond=foo[,bar[,baz]]
+set
+.Cm <boot/foo>
+condition, optionally multiple conditions can be set using the same
+option, separated with a comma.  Alternatively, multiple
+.Cm foo.cond=arg
+can be given.  Each will result in a
+.Cm <boot/arg>
+condition being set to control the rest of the system bootstrap.
+.Pp
+Very useful for selecting different boot modes, e.g. manufacturing test,
+firmware upgrade, or rescue mode.
+.Pp
+.Sy Note:
+.Cm <boot/...>
+conditions cannot be cleared with
+.Nm initctl !
+.It Cm finit.config=/path/to/alternative/finit.conf
+override the compile-time bootstrap config file, default:
+.Bd -unfilled -offset indent
+./configure --with-config=/etc/finit.conf
+.Ed
+Useful when starting up in various rescue mode, factory, or
+production test setups.  Use the top-level configuration file
+directive
+.Cm rcsd Ar /path/to/finit.d
+to override the default rcS.d directory.
 .It Cm finit.debug
 Enable Finit debug messages on system console and log.  Sometimes useful
 when doing board bringup.  Before the system log daemon has started,
@@ -130,6 +168,33 @@ Control finit boot progress, including banner.  This used to be called
 which still works but is deprecated.
 .It Cm finit.status_style=<classic,modern>
 Set Finit boot progress style, when enabled.
+.It Cm loglevel=<0-7>
+set the kernel's log level, which is more granular than
+.Cm debug .
+Also, when
+.Cm loglevel=7 ,
+Finit will
+.Em not disable
+kernel logs to the console.  This is very useful when debugging the
+kernel at system bring-up.  Since
+.Cm loglevel=7
+is the same as
+.Cm debug
+this means you have to use
+.Cm quiet
+for a quiet boot, until sysklogd takes over logging of kernel events.
+.It Cm panic=SEC
+By default the kernel does not reboot after a kernel panic.  This
+setting will cause a kernel reboot after
+.Ar SEC
+seconds.
+.It Cm quiet
+Suppress kernel logging to console, except for warnings and errors.
+Also, see
+.Cm loglevel
+and
+.Cm quiet
+above.
 .It Cm rescue | recover
 Start rescue/maintenance mode.  If your system comes with the bundled
 .Cm sulogin
