@@ -291,6 +291,11 @@ if [ -n "$BOOTSTRAP" ]; then
 	say "Setting up bootstrap tasks ..."
 	echo "$BOOTSTRAP" > "$SYSROOT$FINIT_CONF"
 fi
+if [ -n "$RCLOCAL" ]; then
+	say "Setting up /etc/rc.local ..."
+	echo "$RCLOCAL" > "$SYSROOT/etc/rc.local"
+	chmod +x "$SYSROOT/etc/rc.local"
+fi
 set -u
 
 # shellcheck disable=2086
