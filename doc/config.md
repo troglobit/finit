@@ -823,6 +823,11 @@ files, or scripts, in the directory are called, in alphabetic order.
 The scripts in this directory are executed at the very end of runlevel
 `S`, [bootstrap][].
 
+A common use-case for runparts scripts is to create and enable/disable
+services, which Finit will then apply when changing runlevel from S to
+whatever the next runlevel is set to be (default 2).  E.g., generate a
+`/etc/chrony.conf` and `initctl enable chronyd`.
+
 **Limitations:**
 
 Scripts called from `runparts`, or hook scripts (see below), are limited
@@ -837,7 +842,7 @@ in what they can do and expect from Finit:
      available; `ls`, `enable`, `disable`, `touch`, `create`, `delete`,
      and all the `cond` commands.  Because all these are basically just
      wrappers for manipulating files (again, write access for early/late
-     hooks may not be available.)
+     hooks may not be available).
 
 Also, similar to the `/etc/rc.local` shell script, make sure that all
 your services and programs either terminate or start in the background
