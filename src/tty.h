@@ -1,7 +1,7 @@
 /* Finit TTY handling
  *
  * Copyright (c) 2013       Mattias Walström <lazzer@gmail.com>
- * Copyright (c) 2013-2022  Joachim Wiberg <troglobit@gmail.com>
+ * Copyright (c) 2013-2023  Joachim Wiberg <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
