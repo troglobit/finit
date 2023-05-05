@@ -273,7 +273,7 @@ int serv_enable(char *arg)
 		ERR(73, "failed creating %s/enabled directory", finit_rcsd);
 
 	len    = snprintf(NULL, 0, "%s/available/%s", finit_rcsd, src);
-	arglen = snprintf(NULL, 0, "%s/enabled/%s", finit_rcsd, arg);
+	arglen = snprintf(NULL, 0, "%s/enabled/%s.conf", finit_rcsd, arg);
 	char argpath[arglen + 1], path[len + 1];
 
 	snprintf(path, sizeof(path), "%s/available/%s", finit_rcsd, src);
@@ -289,6 +289,8 @@ int serv_enable(char *arg)
 		ERRX(72, "cannot find %s%s", ptr ? "template ": "", path);
 
 	snprintf(argpath, sizeof(argpath), "%s/enabled/%s", finit_rcsd, arg);
+	if (!strstr(argpath, ".conf"))
+		strlcat(argpath, ".conf", sizeof(argpath));
 	if (fexist(argpath))
 		ERRX(noerr ? 0 : 1, "%s already enabled", arg);
 
