@@ -253,18 +253,23 @@ static char *conf(char *path, size_t len, char *name, int creat)
 
 int serv_enable(char *arg)
 {
-	char src[strlen(arg) + 6];
-	size_t arglen, len;
-	char *ptr;
+	char *serv, *ptr, *src, *dst;
+	size_t len;
+	int rc;
 
 	if (!arg || !arg[0]) {
 		WARNX("missing argument to enable, may be one of:");
 		return serv_list("available");
 	}
 
-	strlcpy(src, arg, sizeof(src));
-	if (!strstr(src, ".conf"))
-		strlcat(src, ".conf", sizeof(src));
+	len = strlen(arg);
+	serv = alloca(len + 6);
+	if (!serv)
+		ERR(71, "failed allocating stack");
+
+	strlcpy(serv, arg, len + 6);
+	if (len < 6 || strcmp(&serv[len - 5], ".conf"))
+		strlcat(serv, ".conf", len + 6);
 
 	if (chdir(finit_rcsd))
 		ERR(72, "failed cd %s", finit_rcsd);
@@ -272,58 +277,72 @@ int serv_enable(char *arg)
 	if (icreate && mkdir("enabled", 0755) && EEXIST != errno)
 		ERR(73, "failed creating %s/enabled directory", finit_rcsd);
 
-	len    = snprintf(NULL, 0, "%s/available/%s", finit_rcsd, src);
-	arglen = snprintf(NULL, 0, "%s/enabled/%s.conf", finit_rcsd, arg);
-	char argpath[arglen + 1], path[len + 1];
-
-	snprintf(path, sizeof(path), "%s/available/%s", finit_rcsd, src);
-
-	/* check for template instatiation */
-	ptr = strchr(path, '@');
-	if (ptr++) {
-		*ptr = 0;
-		strlcat(path, ".conf", sizeof(path));
+	if (asprintf(&src, "%s/available/%s", finit_rcsd, serv) == -1)
+		goto fail;
+	if (asprintf(&dst, "%s/enabled/%s", finit_rcsd, serv) == -1) {
+		free(src);
+	fail:
+		ERR(71, "failed allocating memory");
 	}
 
-	if (!fexist(path))
-		ERRX(72, "cannot find %s%s", ptr ? "template ": "", path);
+	if (fexist(dst)) {
+		WARNX("%s already enabled", arg);
+		rc = noerr ? 0 : 1;
+		goto done;
+	}
 
-	snprintf(argpath, sizeof(argpath), "%s/enabled/%s", finit_rcsd, arg);
-	if (!strstr(argpath, ".conf"))
-		strlcat(argpath, ".conf", sizeof(argpath));
-	if (fexist(argpath))
-		ERRX(noerr ? 0 : 1, "%s already enabled", arg);
+	/* check for template instantiation */
+	ptr = strchr(src, '@');
+	if (ptr)
+		strcpy(++ptr, ".conf");
 
-	return symlink(path, argpath) != 0;
+	if (!fexist(src)) {
+		WARNX("cannot find %s%s", ptr ? "template ": "", src);
+		rc = 72;
+		goto done;
+	}
+
+	rc = symlink(src, dst);
+	if (rc)
+		WARN("failed enabling %s", arg);
+done:
+	free(src);
+	free(dst);
+	return rc;
 }
 
 int do_disable(char *arg, int check)
 {
 	struct stat st;
-	char corr[40];
+	size_t len;
+	char *serv;
 
 	if (!arg || !arg[0]) {
 		WARNX("missing argument to disable, may be one of:");
 		return serv_list("enabled");
 	}
 
-	if (!strstr(arg, ".conf")) {
-		snprintf(corr, sizeof(corr), "%s.conf", arg);
-		arg = corr;
-	}
+	len = strlen(arg);
+	serv = alloca(len + 6);
+	if (!serv)
+		ERR(71, "failed allocating stack");
+
+	strlcpy(serv, arg, len + 6);
+	if (len < 6 || strcmp(&serv[len - 5], ".conf"))
+		strlcat(serv, ".conf", len + 6);
 
 	if (chdir(finit_rcsd))
 		ERR(72, "failed cd %s", finit_rcsd);
 	if (chdir("enabled"))	   /* System *may* have enabled/ dir. */
 		dbg("Failed changing to %s/enabled/: %s", finit_rcsd, strerror(errno));
 
-	if (check && stat(arg, &st))
-		ERRX(noerr ? 0 : 6, "%s not (an) enabled (service).", arg);
+	if (check && stat(serv, &st))
+		ERRX(noerr ? 0 : 6, "%s not (an) enabled (service).", serv);
 
 	if (check && (st.st_mode & S_IFMT) == S_IFLNK)
-		ERRX(noerr ? 0 : 1, "cannot disable %s, not a symlink.", arg);
+		ERRX(noerr ? 0 : 1, "cannot disable %s, not a symlink.", serv);
 
-	return remove(arg) != 0;
+	return remove(serv) != 0;
 }
 
 int serv_disable(char *arg)
