@@ -7,9 +7,16 @@ All relevant changes are documented in this file.
 [4.4][UNRELEASED]
 -----------------
 
-> **Note:** this release contains changes to the `.conf` parser.  If you
+> **Note 1:** this release contains changes to the `.conf` parser.  If you
 > have .conf file statements with comment character (`#`) in the command
 > options or description, you must now escape them (`\#`).
+>
+> **Note 2:** prior to this release, runlevel `S` and `0` were after
+> boot treated as the same runlevel.  This caused `task [06] ...`  to
+> also run at bootstrap instead of just at shutdown and reboot.  The
+> changes to Finit require you to update the allowed runlevels for
+> services that are allowed to continue running at shutdown.  I.e.,
+> change `[S123456789]` to `[S0123456789]` for, e.g., `sysklogd`.
 
 ### Changes
 * `HOOK_BASEFS_UP` has been moved!  External plugins that need to call
