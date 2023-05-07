@@ -15,7 +15,7 @@ jobs:
       - name: Installing dependencies ...
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install pkg-config tree jq libuev-dev libite-dev
+          sudo apt-get -y install pkg-config jq libuev-dev libite-dev
       - name: Creating Makefiles ...
         run: |
           ./autogen.sh
@@ -24,7 +24,7 @@ jobs:
                        --with-keventd
       - name: Build release ...
         run: |
-          make release
+          make release || (cat test/test-suite.log; false)
           ls -lF ../
           mkdir -p artifacts/
           mv ../*.tar.* artifacts/
