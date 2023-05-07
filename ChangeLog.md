@@ -9,25 +9,196 @@ All relevant changes are documented in this file.
 
 > **Note 1:** this release contains changes to the `.conf` parser.  If you
 > have .conf file statements with comment character (`#`) in the command
-> options or description, you must now escape them (`\#`).
+> options or description, you must now escape them (`\#`).  Issue #186
 >
 > **Note 2:** prior to this release, runlevel `S` and `0` were after
 > boot treated as the same runlevel.  This caused `task [06] ...`  to
 > also run at bootstrap instead of just at shutdown and reboot.  The
-> changes to Finit require you to update the allowed runlevels for
-> services that are allowed to continue running at shutdown.  I.e.,
-> change `[S123456789]` to `[S0123456789]` for, e.g., `sysklogd`.
+> changes made to Finit to separate `S` from `0` require you to update
+> the allowed runlevels for services that are allowed to continue
+> running at shutdown.  I.e., change `[S123456789]` to `[S0123456789]`
+> for, e.g., `sysklogd`.  Issue #352
 
 ### Changes
+* Add limited tmpfiles.d(5) support
+
+  This change adds very basic `tmpfiles.d/` support to Finit.  Most of
+  the basic types are supported, but not all, so for now, please check
+  the code and examples for details on what is working.
+
+* If a run/task/service command does not exist, skip registering it
+
+  This changes the semantics of Finit a bit by checking for the command
+  to run when registering it, skipping commands that cannot be found in
+  the absolute path provided in the command, or in `$PATH`
+
+  This change includes a new `nowarn` flag that can be used to prevent
+  Finit from warning for missing commands.  See below for an example.
+
+* Add run/task/service support for `conflict:foo` handling
+* Add run/task/service support for `if:[!]ident` and `if:<[!]cond>`
+
+  Conditional loading of stanza depending on ident is already loaded (or
+  not), or condition satisfied (or not).  E.g., do not run `mdev` if we
+  found and registered `udevd`, or load service only if `<boot/testing>`
+  condition is set.
+
+  The optional leading `!` negates the comparison, if NOT foo then ...
+
+* Add support for static services in `/lib/finit/system/*.conf`
+
+  Slowly migrating away from hard-coded services in plugins.  This way
+  it's possible for the user to both inspect and override as needed.
+
+* Migrate hotplug plugin to a conditional `/lib/finit/system/hotplug.conf`
+
+  This is the first example of the just minted advanced stanza syntax with
+  `if:`-statements, `conflict:` handling, and `nowarn` flags.
+
+* Initial support for template services, `foo@.conf`, similar to systemd
+
+        $ initctl show avahi-autoipd@
+        service :%i avahi-autoipd --syslog %i -- ZeroConf for %i
+
+  To enable ZeroConf for, e.g., `eth0`, use
+
+        $ initctl enable avahi-autoipd@eth0.conf
+
+  The enabled symlink will be set up to `avahi-autoipd@.conf` and every
+  instance of `%i` will in the instantiated directive be replaced with
+  `eth0`.  Inspect the result with:
+
+        $ initctl status avahi-autoipd:eth0
+
+* Add `devmon`, a `<dev/foo>` condition provider, issue #185
+* Support for line continuation character `\` in .conf files, issue #186
+
+        service name:sysklogd [S123456789]   \
+            env:-/etc/default/sysklogd       \
+            syslogd -F $SYSLOGD_ARGS         \
+            -- System log daemon
+
 * `HOOK_BASEFS_UP` has been moved!  External plugins that need to call
   `service_register()`, please use `HOOK_SVC_PLUGIN` from now on.  
   Apologies for any inconveniences this might cause!
-* New hook `HOOK_NETWORK_DN`, issue #319
-* Support for overriding `/etc/finit.conf` using `finit.config=PATH`
-  from the kernel command line
+* getty: add support for `/etc/os-release` to replace `uname` output  
+  This change, which has a fallback to `/usr/lib/os-release`, overrides
+  traditional modifiers with the os-release variant.  These values were
+  taken from `uname`, which on Linux systems are pretty useless since
+  they always return the kernel name and version instead of the
+  distro/OS values.
+
+  E.g., \s becomes `PRETTY_NAME` instead of 'Linux' and \v becomes the
+  pretty `VERSION`, while \r becomes `VERSION_ID`.
+* Support for overriding `/etc/finit.conf` and `/etc/finit.d` issue #235  
+  New (kernel) command line option `finit.config=PATH` which can be used
+  to redirect Finit to start up with, e.g., `/etc/factory.conf` instead of
+  `/etc/finit.conf`.
+
+  For the complete experience a new top-level configuration file directive
+  `rcsd PATH` has aslo been added.  It in turn can be used by `factory.conf`
+  as follows to override `/etc/finit.d`:
+
+        rcsd /etc/factory.d
+
 * Support for overriding `/etc/finit.d` from the alternate `finit.conf`
   with a new `rcsd /path/to/dot.d/` .conf file directive
-* `initctl` JSON output support for status and conditions
+* Support for `fsck_mode=[auto,skip,force]` + `fsck_repair=[preen,no,yes]`
+* Add `set` keyword for environment variables set in `/etc/finit.conf`
+* Support `finit.cond=foo` cmdline `<boot/foo>` conditions, issue #250
+* `initctl` JSON output support for status and conditions, issue #273  
+  Example:
+
+        root@infix:~$ initctl status -j resolvconf
+        {
+          "identity": "resolvconf",
+          "description": "Update DNS configuration",
+          "type": "task",
+          "forking": false,
+          "status": "done",
+          "exit": { "code": 0 },
+          "origin": "/etc/finit.d/enabled/sysrepo.conf",
+          "command": "resolvconf -u",
+          "restarts": 0,
+          "pidfile": "none",
+          "pid": 0,
+          "user": "root",
+          "group": "root",
+          "uptime": 0,
+          "runlevels": [ 1, 2, 3, 4, 5, 7, 8, 9 ]
+        }
+
+  The excellent tool `jq` can be used to extract parts of the output for
+  further scripting.  E.g. `initctl status -j foo | jq .exit.status`
+
+* Add JSON support to `initctl ls` command  
+
+  This allows for easy access to the *disabled* services:
+
+        root@anarchy:~# initctl ls --json |jq '.available - .enabled'
+        [
+          "chronyd.conf",
+          "dnsmasq.conf",
+          "gdbserver.conf",
+          "inadyn.conf",
+          "inetd.conf",
+          "isisd.conf",
+          "lldpd.conf",
+          "mstpd.conf",
+          "ntpd.conf",
+          "ospf6d.conf",
+          "ospfd.conf",
+          "querierd.conf",
+          "ripd.conf",
+          "ripng.conf",
+          "sshd.conf",
+          "syslogd.conf",
+          "telnetd.conf",
+          "uftpd.conf",
+          "wpa_supplicant.conf",
+          "zebra.conf"
+        ]
+
+* Allow `manual:yes` on sysv/service/run/task stanzas, issue #274
+* Add support for `oncrash:script` to call the `post:script` action, if
+  defined, for a crashing service.  The `EXIT_CODE` variable sent to the
+  script is set to `crashed`. Issue #282
+* Search for plugins in `/usr` and `/usr/local` as well, issue #284
+* tty: add support for `passenv` flag to `/bin/login`, issue #286
+* Add reboot/shutdown/poweroff timeout `-t SEC` to initctl, issue #295
+* Add support for s6 and systemd readiness notification, issue #299.  
+  Service readiness notification to support daemons employing systemd
+  and s6 notification.  Complementing the native Finit readiness support
+  using PID files that exist already.
+
+  The two have slightly different ways of implementing readiness:
+
+  - https://www.freedesktop.org/software/systemd/man/sd_notify.html
+  - https://skarnet.org/software/s6/notifywhenup.html
+
+  Finit now provides both a `NOTIFY_SOCKET` environment variable, for
+  systemd, and a way to start s6 daemons with a descriptor argument.
+
+  For details on the syntax, see the `service` documentation.
+
+  This change also renames internal states for run/task/services to
+  avoid any confusion with the introduction of `ready:scripts`:
+
+  - `WAITING -> PAUSED`
+  - `READY   -> WAITING`
+
+  A service condition that used, e.g., `<service/foo/ready>` should now
+  instead use `<service/foo/waiting>`
+
+* Add `ready:script` for services, called when daemon is ready, issue #300
+* Add support for running scripts at shutdown at two new hook points
+  during the shutdown process, issue #302. See doc/plugins.md for details:
+
+  - `HOOK_SVC_DN`: after all services and non-reserved processes have been
+    killed (and collected)
+  - `HOOK_SYS_DN`: after all file systems have been unmounted, *just prior*
+    to Finit calling `reboot()` to shut down or reboot the system
+
 * The `modules-load` plugin now default to runlevel `[S]`, in previous
   releases it was `[2345]`.  This breaking change is to align it more
   with what users mostly want (modules loaded before services start) and
@@ -38,26 +209,93 @@ All relevant changes are documented in this file.
 * The `modules-load` plugin now adds silent tasks for modprobe.  This to
   prevent confusing `[ OK ]` boot messages when in fact modprobe failed.
 * The `modules-load` plugin now support `set modprobe /path/to/modprobe`
-* Support for line continuation character `\` in .conf files, issue #186
+* The header files `finit/conf.h` and `finit/service.h` are now exported
+  for external plugins
+* Add support for multiple args to `initctl cond set/clr`, issue #329
+* Silence confusing `[ OK ]` progress from modules-load plugin, issue #332  
 
-        service name:sysklogd [S123456789]   \
-            env:-/etc/default/sysklogd       \
-            syslogd -F $SYSLOGD_ARGS         \
-            -- System log daemon
+  This change drops the confusing status progress output, which was always
+  OK since the actual modprobe operation runs in the background.  No need
+  to show status of the "added a task to finit, found modprobe" command.
 
-* Add missing `HOOK_NETWORK_DN`, called after change to runlevel 6 or 0
-* If the sysklogd `logger` tool is available, use that instead of the
-  Finit `logit` too for log redirection, issue #344
+* dbus plugin: adapt to other operating systems
+
+  Not all Linux systems are based on Debian, and even if they are inspired
+  by Debian (Buildroot), they do not necessarily use the same defaults.
+  Probes the system at runtime for:
+
+  - dbus user and group
+  - dbus PID file
+
+  If the user/group cannot be found we fall back to `root`, if the PID
+  file cannot be determined we ignore PID file readiness.
+
+* Improve documentation for runparts and hook scripts.  Issue #315, #320
+* Add `HOOK_NETWORK_DN`, called after change to runlevel 6 or 0, issue #319
+* Use sysklogd `logger` tool instead of legacy `logit` tool, issue #344
+
+  For log redirection Finit has the legacy `logit` tool.  This change
+  allows Finit to use the `sysklogd` project's extended `logger` tool
+  instead, when available.  Allowing logging with the process' PID.
+
 * Add `initctl` aliases: `cat -> show`, `kill -> signal`
 * Add `initctl -n,--noerr` to return OK(0) if services do not exist, for
   integration with openresolv and scripts with similar requirements
+* Add `initctl plugins`, list installed plugins
+* Add timestamp to log messages in fallback and logging to `stderr`.  
+  When there is no log daemon, and we are running in a container, or we
+  cannot log to the kernel ring buffer, then we log to `stderr`.  This
+  change improves log output by prefixing each message with a timestamp.
 
 ### Fixes
+* Fix #254: document limitations in `rc.local` and `runparts` scripts
+* Fix #269: add compulsory kernel symlinks in `/dev`
+* Fix #275: `initctl status foo` should list all instances, regression
+  introduced in v4.3
+* Fix #278: enforce conditions also for running `pre:` scripts
+* Fix #279: allow `restart:always`, of crashing services.  Similar to
+  `respawn` but honors `restart_sec`
+* Fix #280: allow calling `initctl restart foo` from within foo
+* Fix #283: too quick timeout at bootstrap of lingering tasks
+* Fix #285: `initctl restart` should start crashed service
+* Fix #288: enable built-in `sulogin` in Alpine and Void Linux builds
+* Fix #293: modprobe plugin: support for coldplugging more devices.  It
+  turns out, not all buses in Linux add `modalias` attributes to their
+  devices in sysfs.  One notable exception are MDIO buses.  The plugin's
+  scan routine would thus not pick them up.
+* Fix #294: `shutdown --help` mistakenly shuts down system
+* Fix #310: Always use configured restart delay for crashing services.
+  If no delay is configured, default to an initial 2000 msec for forking
+  daemons and start-stop scripts, and 1 msec for non-forking daemons
+* Fix #311: document how to combine device tree with conditions
+* Fix #312: restart services with respawn set, e.g. ttys, immediately
+* Fix #313: Cancel pending restart timer on stop/start/restart/reload
 * Fix #314: skip run/task/service restart if conditions are lost
+* Fix #315: add environment variables to hook scripts
+
+  All hook scripts are called with at least one environment variable
+  set, `FINIT_HOOK_NAME`, useful when reusing the same hook script for
+  multiple hook points.  It is set to the string name, also used by the
+  path, e.g., `hook/net/up`
+
+  For all hook points from hook/sys/shutdown and later, `FINIT_SHUTDOWN`
+  is also set, to one of: `halt`, `poweroff`, `reboot`
+
+* Fix #317: make sure hook scripts don't run twice, also fixes #316
+* Fix #318: only show `[ OK ] Calling foo` progress for `runparts ...`
 * Fix #320: the API/IPC socket is closed immediately at shutdown/reboot
   to protect hook scripts or services calling initctl.  There is no way
   to service these requests safely at that time
-* Fix #329: add support for multiple args to `initctl cond set/clr`
+* Fix #333: consider a service dirty if command line args have changed
+
+  This fixes `initctl reload` correctly restarting all daemons that have
+  new command line arguments.
+
+  Previously command line arguments changes were only acted upon if the
+  service was explicitly reloaded `initctl reload myservice`.
+
+  Found and fixed by Jack Newman
+
 * Fix #338: ensure shutdown hooks are called properly; `hook/sys/down`
   and `hook/svc/down` hook scripts, found and fixed by Jack Newman
 * Fix #339: use absolute path in `/etc/finit.d/enabled/` symlinks, for
@@ -68,7 +306,40 @@ All relevant changes are documented in this file.
   supported, block the following: runlevel, reload, start/stop, restart,
   reload, halt, poweroff, suspend.  Also, prevent `SIGHUP` and `SIGUSR1`
   signals when in shutdown or reboot
-* Ensure `initctl cond get` support the flux state
+* Fix #352: separate runlevel S from runlevel 0
+* Fix bootmisc plugin: octal permission on `/run/lock` and `/var/lock`
+
+* Ensure `initctl cond get` support the flux state (exit code 255)
+* Fix potential socket leak at bootstrap and shutdown
+* Fix potential NULL pointer deref in kernel command line parser
+* Fix lingering condition in service after reload of service with new
+  config that has no condition
+* Fix wrong path to command in service after reload, may have changed
+* `logit`: fall back to package name if `$LOGNAME` and `$USER` are
+  unset.  **Note:** you should probably not use `logit` in your own
+  scripts, it is only meant for internal use by Finit.  We recommend
+  using `logger` from the `bsdutils` or `sysklogd` packages instead
+* Fix issue where `env:`/`pre:`/`post:`/etc. is removed from a service
+
+  The trick is when reloading a service like this:
+
+        service env:/etc/env    serv -np -e foo:bar
+
+  into this:
+
+        service pre:/bin/pre.sh serv -np
+
+  In the second the `env:` has been removed and `pre:` added.  Prior to
+  this patch, `env:` was kept leading to unintended behavior.
+* Fix parse/diff of command line args, e.g., `nginx -g 'daemon off;'`
+
+  Starting a service like this works fine:
+
+        service [2345789] env:-/etc/default/nginx nginx -g 'daemon off;'
+
+  However, on `initctl reload` (and no change to .conf files) the arg
+  list was lost while parsing the .conf files.  Leading to a false
+  positive 'diff' in args causing nginx to be unnecessarily restarted.
 
 
 [4.3][] - 2022-05-15
