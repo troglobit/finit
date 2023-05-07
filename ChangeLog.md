@@ -22,6 +22,7 @@ All relevant changes are documented in this file.
 * `HOOK_BASEFS_UP` has been moved!  External plugins that need to call
   `service_register()`, please use `HOOK_SVC_PLUGIN` from now on.  
   Apologies for any inconveniences this might cause!
+* New hook `HOOK_NETWORK_DN`, issue #319
 * Support for overriding `/etc/finit.conf` using `finit.config=PATH`
   from the kernel command line
 * Support for overriding `/etc/finit.d` from the alternate `finit.conf`
@@ -54,8 +55,8 @@ All relevant changes are documented in this file.
 ### Fixes
 * Fix #314: skip run/task/service restart if conditions are lost
 * Fix #320: the API/IPC socket is closed immediately at shutdown/reboot
-  to prevent against hook scripts or services calling initctl.  There is
-  no way to service these requests safely
+  to protect hook scripts or services calling initctl.  There is no way
+  to service these requests safely at that time
 * Fix #329: add support for multiple args to `initctl cond set/clr`
 * Fix #338: ensure shutdown hooks are called properly; `hook/sys/down`
   and `hook/svc/down` hook scripts, found and fixed by Jack Newman

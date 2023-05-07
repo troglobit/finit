@@ -360,18 +360,18 @@ Templating
 Finit comes with rudimentary support for templating, similar to that of
 systemd.  Best illustrated with an example:
 
-      $ initctl show avahi-autoipd@
-      service :%i avahi-autoipd --syslog %i -- ZeroConf for %i
+    $ initctl show avahi-autoipd@
+    service :%i avahi-autoipd --syslog %i -- ZeroConf for %i
 
 To enable ZeroConf for, e.g., eth0, use
 
-      $ initctl enable avahi-autoipd@eth0.conf
+    $ initctl enable avahi-autoipd@eth0.conf
 
 The enabled symlink will be set up to avahi-autoipd@.conf and every in‐
 stance of %i will in the instantiated directive be replaced with eth0.
 Inspect the result with:
 
-      $ initctl status avahi-autoipd:eth0
+    $ initctl status avahi-autoipd:eth0
 
 
 Cgroups
