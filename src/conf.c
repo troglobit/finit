@@ -1025,14 +1025,37 @@ static int parse_conf(char *file, int is_rcsd)
 	return 0;
 }
 
+static void glob_append(glob_t *gl, int append, const char *fmt, ...)
+{
+	va_list ap;
+	size_t len;
+	char *path;
+
+	va_start(ap, fmt);
+	len = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+
+	path = alloca(++len);
+	if (!path) {
+		warn("failed alloca() in glob_append()");
+		return;
+	}
+
+	va_start(ap, fmt);
+	vsnprintf(path, len, fmt, ap);
+	va_end(ap);
+
+	dbg("conf_reload(): glob %s ...", path);
+	glob(path, append ? GLOB_APPEND : 0, NULL, gl);
+}
+
 /*
  * Reload /etc/finit.conf and all *.conf in /etc/finit.d/
  */
 int conf_reload(void)
 {
-	char path[strlen(finit_rcsd) + 16];
-	size_t i;
 	glob_t gl;
+	size_t i;
 
 	/* Set time according to current time zone */
 	tzset();
@@ -1079,12 +1102,9 @@ int conf_reload(void)
 	 * /etc/finit.d -- similar to how tmfiles.d(5) work.  E.g., add
 	 * an override .conf, or an ignore by symlinking to /dev/null
 	 */
-	snprintf(path, sizeof(path), "%s/*.conf", finit_rcsd);
-	glob(path, 0, NULL, &gl);
-	snprintf(path, sizeof(path), "%s/*.conf", FINIT_SYSPATH);
-	glob(path, GLOB_APPEND, NULL, &gl);
-	snprintf(path, sizeof(path), "%s/enabled/*.conf", finit_rcsd);
-	glob(path, GLOB_APPEND, NULL, &gl);
+	glob_append(&gl, 0, "%s/*.conf", finit_rcsd);
+	glob_append(&gl, 1, "%s/*.conf", FINIT_SYSPATH);
+	glob_append(&gl, 1, "%s/enabled/*.conf", finit_rcsd);
 
 	for (i = 0; i < gl.gl_pathc; i++) {
 		char *path = gl.gl_pathv[i];
