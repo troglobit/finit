@@ -1051,7 +1051,7 @@ int conf_reload(void)
 
 	if (rescue) {
 		int rc;
-		char line[80] = "tty [12345] rescue";
+		char line[80] = "tty [12345789] rescue";
 
 		/* If rescue.conf is missing, fall back to a root shell */
 		rc = parse_conf(RESCUE_CONF, 0);
@@ -1389,7 +1389,7 @@ int conf_init(uev_ctx_t *ctx)
 	 */
 #ifdef WDT_DEVNODE
 	if (whichp(FINIT_EXECPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
-		service_register(SVC_TYPE_SERVICE, "[S123456789] cgroup.init name:watchdog :finit " FINIT_EXECPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
+		service_register(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init name:watchdog :finit " FINIT_EXECPATH_ "/watchdogd -- Finit watchdog daemon", global_rlimit, NULL);
 		wdog = svc_find("watchdog", "finit");
 	}
 #endif
@@ -1397,7 +1397,7 @@ int conf_init(uev_ctx_t *ctx)
 	 * Start kernel event daemon as soon as possible, if enabled
 	 */
 	if (whichp(FINIT_EXECPATH_ "/keventd"))
-		service_register(SVC_TYPE_SERVICE, "[S123456789] cgroup.init " FINIT_EXECPATH_ "/keventd -- Finit kernel event daemon", global_rlimit, NULL);
+		service_register(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init " FINIT_EXECPATH_ "/keventd -- Finit kernel event daemon", global_rlimit, NULL);
 
 	dbg("Allow plugins to register early runlevel 1 run/task/services ...");
 	plugin_run_hooks(HOOK_SVC_PLUGIN);
