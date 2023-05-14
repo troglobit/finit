@@ -173,7 +173,7 @@ static int service_script_del(pid_t pid)
 		if (ptr->pid != pid)
 			continue;
 
-		dbg("Collected service %s script PID %d.", svc_ident(ptr->svc, NULL, 0), pid);
+		dbg("Collected service %s script PID %d, killing process group.", svc_ident(ptr->svc, NULL, 0), pid);
 		service_timeout_cancel(ptr->svc);
 		kill(-ptr->pid, SIGKILL);
 		TAILQ_REMOVE(&svc_assoc_list, ptr, link);
@@ -865,7 +865,7 @@ static void service_kill(svc_t *svc)
 		return;
 	}
 
-	dbg("%s: Sending SIGKILL to pid:%d", pid_get_name(svc->pid, NULL, 0), svc->pid);
+	dbg("%s: Sending SIGKILL to process group %d", pid_get_name(svc->pid, NULL, 0), svc->pid);
 	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending SIGKILL ...",
 	      svc_ident(svc, NULL, 0), svc->pid);
 	if (runlevel != 1)
@@ -969,9 +969,14 @@ int service_stop(svc_t *svc)
 
 	if (!svc_is_sysv(svc)) {
 		if (svc->pid > 1) {
-			/* Kill all children in the same proess group, e.g. logit */
-			rc = kill(-svc->pid, svc->sighalt);
-			dbg("kill(-%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
+			/*
+			 * Send SIGTERM to parent process of process group, not to the
+			 * entire group.  This gives the process time to properly stop
+			 * and/or forward TERM to its children.  If it does not respond
+			 * in within a reasonable timeout we SIGKILL the entire group.
+			 */
+			rc = kill(svc->pid, svc->sighalt);
+			dbg("kill(%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
 			/* PID lost or forking process never really started */
 			if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
 				service_cleanup(svc);
@@ -1837,6 +1842,8 @@ void service_monitor(pid_t lost, int status)
 		dbg("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
 		   svc->state == SVC_CLEANUP_STATE ? svc->post_script : svc->pre_script,
 		   lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+		/* Kill all children in the same proess group, e.g. logit */
+		dbg("Killing lingering children in same process group ...");
 		kill(-svc->pid, SIGKILL);
 		goto done;
 
@@ -1858,8 +1865,8 @@ void service_monitor(pid_t lost, int status)
 		logit(LOG_CONSOLE | LOG_NOTICE, "Stopped %s[%d]", svc_ident(svc, NULL, 0), lost);
 	}
 
-
 	/* Terminate any children in the same proess group, e.g. logit */
+	dbg("Killing lingering children in same process group ...");
 	kill(-svc->pid, SIGKILL);
 
 	/* Try removing PID file (in case service does not clean up after itself) */
