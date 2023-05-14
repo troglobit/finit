@@ -307,6 +307,23 @@ All relevant changes are documented in this file.
   reload, halt, poweroff, suspend.  Also, prevent `SIGHUP` and `SIGUSR1`
   signals when in shutdown or reboot
 * Fix #352: separate runlevel S from runlevel 0
+* Fix #355: regression in v3.2 stopping a process and its group
+
+  In Finit v3.2 a regression was introduced that affects the way Finit
+  stops a supervised process and its process group.
+
+  Instead of sending SIGTERM to the process, and thus delegating the
+  responsibility to that process to inform any children it may have, as
+  of commit 91a9c83 Finit sends SIGTERM to the entire process group.
+  For SIGKILL this is fine, SIGKILL only runs as cleanup and as a last
+  ditch effort if the process doesn't respond to SIGTERM.
+
+  This regression, introduced in v3.2, directly affects services like
+  `avahi-autoipd` that have forked off children that it needs to tell to
+  exit cleanly before it returns.  With the patch in question these
+  children are never allowed to complete, which in turn causes lingering
+  169.254 link-local addresses on interfaces.
+
 * Fix bootmisc plugin: octal permission on `/run/lock` and `/var/lock`
 
 * Ensure `initctl cond get` support the flux state (exit code 255)
