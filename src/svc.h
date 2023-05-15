@@ -74,6 +74,7 @@ typedef enum {
 	SVC_BLOCK_USER,
 	SVC_BLOCK_BUSY,
 	SVC_BLOCK_RESTARTING,
+	SVC_BLOCK_CONFLICT,
 } svc_block_t;
 
 typedef enum {
@@ -125,6 +126,7 @@ typedef struct svc {
 	svc_type_t     type;	       /* Service, run, task, ... */
 	char           protect;        /* Services like dbus-daemon & udev by Finit */
 	char           manual;	       /* run/task that require `initctl start foo` */
+	char           nowarn;	       /* Skip or log warning if cmd missing or conflicts */
 	const int      dirty;	       /* 0: unmodified, 1: modified */
 	const int      removed;
 	int            starting;       /* ... waiting for pidfile to be re-asserted */
@@ -270,6 +272,7 @@ static inline int  svc_is_busy     (svc_t *svc) { return svc && svc->block == SV
 static inline int  svc_is_missing  (svc_t *svc) { return svc && svc->block == SVC_BLOCK_MISSING; }
 static inline int  svc_is_crashing (svc_t *svc) { return svc && svc->block == SVC_BLOCK_CRASHING; }
 static inline int  svc_is_restart  (svc_t *svc) { return svc && svc->block == SVC_BLOCK_RESTARTING; }
+static inline int  svc_is_conflict (svc_t *svc) { return svc && svc->block == SVC_BLOCK_CONFLICT; }
 
 static inline void svc_unblock     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_NONE;       }
 #define            svc_start(svc)  svc_unblock(svc)
@@ -278,6 +281,7 @@ static inline void svc_busy        (svc_t *svc) { if (svc) svc->block = SVC_BLOC
 static inline void svc_missing     (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_MISSING; }
 static inline void svc_restarting  (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_RESTARTING; }
 static inline void svc_crashing    (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_CRASHING; }
+static inline void svc_conflict    (svc_t *svc) { if (svc) svc->block = SVC_BLOCK_CONFLICT; }
 
 /* Has condition in configuration and cond is allowed? */
 static inline int svc_has_cond(svc_t *svc)
@@ -350,6 +354,9 @@ static inline char *svc_status(svc_t *svc)
 
 		case SVC_BLOCK_RESTARTING:
 			return "restart";
+		case SVC_BLOCK_CONFLICT:
+			return "conflict";
+
 		}
 		return "unknown";
 

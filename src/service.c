@@ -610,13 +610,6 @@ static int service_start(svc_t *svc)
 		}
 	}
 
-	/* Don't start if it conflicts with something else already started */
-	if (svc_conflicts(svc)) {
-		logit(LOG_INFO, "Not starting %s, conflicts with %s",
-		      svc_ident(svc, NULL, 0), svc->conflict);
-		return 1;
-	}
-
 	compose_cmdline(svc, cmdline, sizeof(cmdline));
 	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", cmdline);
@@ -1737,6 +1730,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	else
 		memset(svc->ifstmt, 0, sizeof(svc->ifstmt));
 	svc->manual  = manual;
+	svc->nowarn  = nowarn;
 	svc->respawn = respawn;
 	svc->forking = forking;
 	svc->restart_max = restart_max;
@@ -2276,6 +2270,15 @@ restart:
 	case SVC_HALTED_STATE:
 		if (enabled)
 			svc_set_state(svc, SVC_WAITING_STATE);
+		else {
+			if (svc_is_conflict(svc)) {
+				logit(svc->nowarn ? LOG_DEBUG : LOG_INFO,
+				      "%s in conflict with %s, checking again ...",
+				      svc_ident(svc, NULL, 0), svc->conflict);
+				if (!svc_conflicts(svc))
+					svc_unblock(svc);
+			}
+		}
 		break;
 
 	case SVC_DONE_STATE:
@@ -2341,6 +2344,16 @@ restart:
 			/* wait until all processes have been stopped before continuing... */
 			if (sm_is_in_teardown(&sm))
 				break;
+
+			/* Don't start if it conflicts with something else already started */
+			if (svc_conflicts(svc)) {
+				logit(svc->nowarn ? LOG_DEBUG : LOG_INFO,
+				      "Not starting %s, conflicts with %s",
+				      svc_ident(svc, NULL, 0), svc->conflict);
+				svc_conflict(svc);
+				svc_set_state(svc, SVC_HALTED_STATE);
+				break;
+			}
 
 			if (svc_has_pre(svc)) {
 				svc_set_state(svc, SVC_SETUP_STATE);

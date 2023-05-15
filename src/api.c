@@ -65,6 +65,7 @@ static int stop(svc_t *svc, void *user_data)
 	service_timeout_cancel(svc);
 	svc_stop(svc);
 	service_step(svc);
+	service_step_all(SVC_TYPE_ANY);
 
 	return 0;
 }
@@ -77,6 +78,7 @@ static int start(svc_t *svc, void *user_data)
 	service_timeout_cancel(svc);
 	svc_start(svc);
 	service_step(svc);
+	service_step_all(SVC_TYPE_ANY);
 
 	return 0;
 }
