@@ -4,8 +4,8 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.4][UNRELEASED]
------------------
+[4.4][] - 2023-05-15
+--------------------
 
 > **Note 1:** this release contains changes to the `.conf` parser.  If you
 > have .conf file statements with comment character (`#`) in the command
@@ -357,6 +357,9 @@ All relevant changes are documented in this file.
   However, on `initctl reload` (and no change to .conf files) the arg
   list was lost while parsing the .conf files.  Leading to a false
   positive 'diff' in args causing nginx to be unnecessarily restarted.
+* Fix issue with disabled "linewrap" on the console TTY after login.
+  The root cause is `qemu-system-x86_64 -nographics` disabling it when
+  starting up.  The correct `\e[?7h` escape code is now used.
 
 
 [4.3][] - 2022-05-15
