@@ -132,7 +132,7 @@ void stty(int fd, speed_t speed)
 	dprint(fd, "\033[?25h", 6);
 
 	/* Enable line wrap, if disabled previously */
-	dprint(fd, "\033[7h", 4);
+	dprint(fd, "\033[?7h", 5);
 }
 
 /**

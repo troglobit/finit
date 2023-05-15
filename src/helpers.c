@@ -84,6 +84,9 @@ char *console(void)
 
 void console_init(void)
 {
+	/* Enable line wrap, if disabled previously, e.g., qemu */
+	dprint(STDOUT_FILENO, "\033[?7h", 5);
+
 	log_init();
 }
 
