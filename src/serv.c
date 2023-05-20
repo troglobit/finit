@@ -41,6 +41,10 @@ static int is_builtin(char *arg)
 {
 	svc_t *svc;
 
+	/* skip check, we may be in non-responsive bootstrap */
+	if (iforce)
+		return 0;
+
 	svc = client_svc_find(arg);
 	if (!svc)
 		return 0;
