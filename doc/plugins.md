@@ -136,7 +136,7 @@ hook points:
 **Example:**
 
     $ mkdir -p /libexec/finit/hook/sys/down
-    $ cat <<EOF >/libexec/finit/hook/sys/foo.sh
+    $ cat <<EOF >/libexec/finit/hook/sys/down/foo.sh
     #!/bin/sh
     echo 'I run just before the reboot() syscall at shutdown/reboot'
     echo 'I have access to /dev since devtmpfs is exempt from umount'
@@ -146,7 +146,7 @@ hook points:
     fi
     exit 0
     EOF
-    $ chmod +x /libexec/finit/hook/sys/foo.sh
+    $ chmod +x /libexec/finit/hook/sys/down/foo.sh
 
 > **Note:** to use hook scripts, even for pre-bootstrap and pre-shutdown
 > tasks, you must build with `configure --enable-hook-scripts-plugin`.
