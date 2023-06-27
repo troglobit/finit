@@ -850,17 +850,26 @@ fail:
  */
 static void service_kill(svc_t *svc)
 {
+	char *nm, *id = svc_ident(svc, NULL, 0);
+
 	service_timeout_cancel(svc);
 
 	if (svc->pid <= 1) {
 		/* Avoid killing ourselves or all processes ... */
-		dbg("%s: Aborting SIGKILL, already terminated.", svc_ident(svc, NULL, 0));
+		dbg("%s: Aborting SIGKILL, already terminated.", id);
 		return;
 	}
 
-	dbg("%s: Sending SIGKILL to process group %d", pid_get_name(svc->pid, NULL, 0), svc->pid);
-	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending SIGKILL ...",
-	      svc_ident(svc, NULL, 0), svc->pid);
+	nm = pid_get_name(svc->pid, NULL, 0);
+	if (!nm) {
+		/* PID possibly monitored by someone else? */
+		dbg("%s: Aborting SIGKILL, PID[%d] no longer exists.", id, svc->pid);
+		service_monitor(svc->pid, 0);
+		return;
+	}
+
+	dbg("%s: Sending SIGKILL to process group %d", nm, svc->pid);
+	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending SIGKILL ...", id, svc->pid);
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
