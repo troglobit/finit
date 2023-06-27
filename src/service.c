@@ -937,13 +937,21 @@ int service_stop(svc_t *svc)
 
 	compose_cmdline(svc, cmdline, sizeof(cmdline));
 	if (!svc_is_sysv(svc)) {
+		char *nm = pid_get_name(svc->pid, NULL, 0);
+		const char *sig = sig_name(svc->sighalt);
+		char *id = svc_ident(svc, NULL, 0);
+
 		if (svc->pid <= 1)
 			return 1;
+		if (!nm) {
+			dbg("Skipping stop (%s) of %s, PID[%d] no longer exists.", sig, id, svc->pid);
+			service_cleanup(svc);
+			svc_set_state(svc, SVC_HALTED_STATE);
+			return 0;
+		}
 
-		dbg("Sending %s to pid:%d name:%s", sig_name(svc->sighalt),
-		   svc->pid, pid_get_name(svc->pid, NULL, 0));
-		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...",
-		      svc_ident(svc, NULL, 0), svc->pid, sig_name(svc->sighalt));
+		dbg("Sending %s to pid:%d name:%s", sig, svc->pid, nm);
+		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...", id, svc->pid, sig);
 	} else {
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", cmdline);
 	}
