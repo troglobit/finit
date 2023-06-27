@@ -4,6 +4,20 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.5][UNRELEASED]
+--------------------
+
+### Changes
+- Add `initctl -f` to force-skip asking Finit for existing services
+  when creating new services during bootstrap, e.g. `/etc/rc.local`
+
+### Fixes
+- Fix #227: believed to have been fixed in [4.3][], the root cause was
+  actually that Finit was waiting for a process that was no longer in
+  the system.  The fix is to ask the kernel on process-stop-timeout and
+  replay the lost PID so that Finit can continue with reboot/shutdown.
+
+
 [4.4][] - 2023-05-15
 --------------------
 
@@ -1510,7 +1524,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.3...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.4...HEAD
 [4.4]: https://github.com/troglobit/finit/compare/4.3...4.4
 [4.3]: https://github.com/troglobit/finit/compare/4.2...4.3
 [4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
