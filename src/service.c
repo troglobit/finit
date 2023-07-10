@@ -790,7 +790,7 @@ static int service_start(svc_t *svc)
 		 */
 		pid = setsid();
 		if (pid < 1)
-			logit(LOG_ERR, "failed setsid(), pid %d: %s", pid, strerror(errno));
+			syslog(LOG_ERR, "failed setsid(), pid %d: %s", pid, strerror(errno));
 
 		sig_unblock();
 
@@ -801,6 +801,8 @@ static int service_start(svc_t *svc)
 		else
 			status = execvp(args[0], &args[1]);
 
+		syslog(LOG_ERR, "failed starting %s, exit code %d: %s", svc_ident(svc, NULL, 0),
+		       status, strerror(errno));
 		_exit(status);
 	} else if (debug) {
 		dbg("Starting PID %d: %s", svc->pid, cmdline);
