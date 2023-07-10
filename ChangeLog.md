@@ -10,12 +10,18 @@ All relevant changes are documented in this file.
 ### Changes
 - Add `initctl -f` to force-skip asking Finit for existing services
   when creating new services during bootstrap, e.g. `/etc/rc.local`
+- Improved logging on failure to `execvp()` a run/task/service, now
+  with `errno`, e.g., "No such file or directory" when the command
+  is missing from `$PATH`
 
 ### Fixes
 - Fix #227: believed to have been fixed in [4.3][], the root cause was
   actually that Finit was waiting for a process that was no longer in
   the system.  The fix is to ask the kernel on process-stop-timeout and
   replay the lost PID so that Finit can continue with reboot/shutdown.
+- Fix #361: cgroup move fail when starting a service as non-root.  This
+  was a regression in the [4.4][] release cycle while adding support for
+  pre:/post:/ready: scripts
 
 
 [4.4][] - 2023-05-15
