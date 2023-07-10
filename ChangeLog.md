@@ -19,9 +19,10 @@ All relevant changes are documented in this file.
   actually that Finit was waiting for a process that was no longer in
   the system.  The fix is to ask the kernel on process-stop-timeout and
   replay the lost PID so that Finit can continue with reboot/shutdown.
-- Fix #361: cgroup move fail when starting a service as non-root.  This
-  was a regression in the [4.4][] release cycle while adding support for
-  pre:/post:/ready: scripts
+- Fix #361: cgroup move fail if run/task/services start as non-root.
+  Regression in the [4.4][] release cycle while adding support for the
+  pre:/post:/ready: scripts.  Now the latter scripts also properly run
+  in their correct cgroup.
 
 
 [4.4][] - 2023-05-15
