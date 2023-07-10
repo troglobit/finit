@@ -560,6 +560,15 @@ static pid_t service_fork(svc_t *svc)
 		source_env(svc);
 	}
 
+	if (pid > 1) {
+		char grnam[80];
+
+		if (svc_is_tty(svc))
+			cgroup_user("getty", pid);
+		else
+			cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
+	}
+
 	return pid;
 }
 
@@ -643,16 +652,8 @@ static int service_start(svc_t *svc)
 		goto fail;
 	}
 	if (pid > 1) {
-		char grnam[80];
-
 		svc->pid = pid;
 		svc->start_time = jiffies();
-
-		if (svc_is_tty(svc))
-			cgroup_user("getty", pid);
-		else
-			cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
-
 	} else if (pid == 0) {
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		int status;
