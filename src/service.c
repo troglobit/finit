@@ -575,7 +575,6 @@ static int service_start(svc_t *svc)
 	int result = 0, do_progress = 1;
 	char cmdline[CMD_SIZE] = "";
 	sigset_t nmask, omask;
-	char grnam[80];
 	pid_t pid;
 	size_t i;
 
@@ -644,19 +643,22 @@ static int service_start(svc_t *svc)
 		goto fail;
 	}
 	if (pid > 1) {
+		char grnam[80];
+
 		svc->pid = pid;
 		svc->start_time = jiffies();
+
+		if (svc_is_tty(svc))
+			cgroup_user("getty", pid);
+		else
+			cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
+
 	} else if (pid == 0) {
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		int status;
 
-		pid = getpid();
-		if (svc_is_tty(svc)) {
-			cgroup_user("getty", pid);
-		} else {
-			cgroup_service(group_name(svc, grnam, sizeof(grnam)), pid, &svc->cgroup);
+		if (!svc_is_tty(svc))
 			redirect(svc);
-		}
 
 		if (!svc_is_sysv(svc)) {
 			wordexp_t we = { 0 };
