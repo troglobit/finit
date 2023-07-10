@@ -1235,7 +1235,10 @@ static int conf_change_act(char *dir, char *name, uint32_t mask)
 	struct conf_change *node;
 	char *rp = NULL;
 
-	paste(fn, sizeof(fn), dir, name);
+	if (name[0])
+		paste(fn, sizeof(fn), dir, name);
+	else
+		strlcpy(fn, dir, sizeof(fn));
 	dbg("path: %s mask: %08x", fn, mask);
 
 	/* Handle disabling/removal of service */
@@ -1266,7 +1269,7 @@ static int conf_change_act(char *dir, char *name, uint32_t mask)
 	dbg("event registered for %s, mask 0x%x", rp, mask);
 	return 0;
 fail:
-	warn("failed registering %s event", fn);
+	warn("failed registering %s event mask %08x", fn, mask);
 	return 1;
 }
 
@@ -1329,10 +1332,8 @@ static int conf_iwatch_read(int fd)
 		if (!iwp)
 			continue;
 
-		if (conf_change_act(iwp->path, ev->name, ev->mask)) {
-			err(1, " Out of memory");
+		if (conf_change_act(iwp->path, ev->name, ev->mask))
 			break;
-		}
 	}
 
 	return 0;
