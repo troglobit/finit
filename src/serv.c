@@ -266,6 +266,11 @@ int serv_enable(char *arg)
 		return serv_list("available");
 	}
 
+	if (arg[0] == '/') {
+		WARNX("absolute paths not supported, this command manages %s/available/");
+		return serv_list("available");
+	}
+
 	len = strlen(arg);
 	serv = alloca(len + 6);
 	if (!serv)
@@ -324,6 +329,11 @@ int do_disable(char *arg, int check)
 	if (!arg || !arg[0]) {
 		WARNX("missing argument to disable, may be one of:");
 		return serv_list("enabled");
+	}
+
+	if (arg[0] == '/') {
+		WARNX("absolute paths not supported, this command manages %s/enabled/");
+		return serv_list("available");
 	}
 
 	len = strlen(arg);
