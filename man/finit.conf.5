@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd Apr 24, 2023
+.Dd July 11, 2023
 .Dt FINIT.CONF 5 SMM
 .Os Linux
 .Sh NAME
@@ -12,40 +12,64 @@
 .Nm /etc/finit.conf
 .Nm /etc/finit.d/*.conf
 .Nm /etc/finit.d/available/*.conf
+.Nm /etc/finit.d/enabled/*.conf
 .Sh DESCRIPTION
-.Nm finit
-can be configured using only the original
-.Pa /etc/finit.conf
-file or in combination with
-.Pa /etc/finit.d/*.conf .
-Useful for package-based Linux distributions \(em each package can
-provide its own "script" file.
+.Nm Finit
+based systems can be set up with a single file:
+.Pa /etc/finit.conf .
+This is the traditional way of doing it which can be ideal for some
+setups since it gives a great overview of the system configuration.
 .Pp
-.Bl -tag -width /etc/finit.d/*.conf -offset indent -compact
-.It Pa /etc/finit.conf
-Main configuration file
-.It Pa /etc/finit.d/*.conf
-Snippets, usually one service per file
-.El
+More comprehensive setups, however, require more careful planning.
+The recommendation is per-package
+.Cm *.conf
+files in
+.Pa /etc/finit.d/available/ .
+This allows end users to enable and disable parts of the system
+configuration at runtime.  Finit tracks which tasks and services belong
+to a given file, so that when the user calls
+.Cm initctl reload
+to activate the changes they have made, only the affected tasks and
+services are stopped, started, or restarted.  Hence, this approach is
+useful for modern package-based Linux distributions.
 .Pp
-Not all configuration directives are available in
-.Pa /etc/finit.d/*.conf
-and some directives are only available at bootstrap, runlevel
-.Cm S ,
-see the section
-.Sx Limitations
-below for details.
+The following sections describe the more of this in detail, starting
+with files, the file format, and available directives.  Remember to
+also visit the other manual pages (references at the bottom).
 .Sh FILES
 .Bl -tag -width /etc/finit.d/available/*.conf -compact
 .It Pa /etc/finit.conf
-Main configuration file
+Main configuration file, optional
 .It Pa /etc/finit.d/*.conf
-Static service definitions
+Static (system) service definitions
 .It Pa /etc/finit.d/available/*.conf
-Available services
+Available (installed) services
 .It Pa /etc/finit.d/enabled/*.conf
-Enabled services, symlinks from available
+Enabled services (symlink back)
 .El
+.Pp
+Static services,
+.Cm .conf
+files in
+.Pa /etc/finit.d/ ,
+cannot be enabled or disabled using
+.Cm initctl [enable | disable] service[.conf] .
+An enabled service is a symlink back to the corresponding
+.Cm ../available/
+service
+.Cm .conf
+file.  Please use the
+.Cm initctl
+tool to manage these symlinks to ensure proper operation.
+.Pp
+.Sy NOTE:
+Previous versions of
+.Nm Finit
+created symlinks in
+.Pa /etc/finit.d/
+if
+.Pa /etc/finit.d/enabled/
+was missing, this is as of v4.4 not supported.
 .Sh FILE FORMAT
 The file format is line based, empty lines and comments, lines starting
 with `#', are ignored.  A configuration directive starts with a keyword
@@ -960,6 +984,6 @@ settings in
 .Xr finit 8 ,
 .Xr initctl 8
 .Sh AUTHORS
-.Nm finit
+.Nm Finit
 was conceived and reverse engineered by Claudio Matsuoka.  Since v1.0,
 maintained by Joachim Wiberg, with contributions by many others.
