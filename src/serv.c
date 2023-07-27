@@ -267,7 +267,7 @@ int serv_enable(char *arg)
 	}
 
 	if (arg[0] == '/') {
-		WARNX("absolute paths not supported, this command manages %s/available/");
+		WARNX("absolute paths not supported, this command manages %s/available/", finit_rcsd);
 		return serv_list("available");
 	}
 
@@ -332,7 +332,7 @@ int do_disable(char *arg, int check)
 	}
 
 	if (arg[0] == '/') {
-		WARNX("absolute paths not supported, this command manages %s/enabled/");
+		WARNX("absolute paths not supported, this command manages %s/enabled/", finit_rcsd);
 		return serv_list("available");
 	}
 
