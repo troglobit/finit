@@ -21,7 +21,7 @@
 
 #define err(rc, fmt, args...)  do {fprintf(stderr, "%s: " fmt ": %s\n", ident, ##args, strerror(errno)); exit(rc);} while(0)
 #define errx(rc, fmt, args...) do {fprintf(stderr, "%s: " fmt "\n", ident, ##args); exit(rc);} while(0)
-#define log(fmt, args...)      do {fprintf(stderr, "%s: " fmt "\n", ident, ##args);} while(0)
+#define inf(fmt, args...)      do {fprintf(stderr, "%s: " fmt "\n", ident, ##args);} while(0)
 
 volatile sig_atomic_t reloading = 1;
 volatile sig_atomic_t running   = 1;
@@ -89,7 +89,7 @@ static void cleanup(void)
 
 static void sig(int signo)
 {
-	log("Got signal %d ...", signo);
+	inf("Got signal %d ...", signo);
 
 	switch (signo) {
 	case SIGHUP:
@@ -120,7 +120,7 @@ static int checkfn(char *fn)
 
 static void mine(char *fn)
 {
-	log("Mining for spice in %s", fn);
+	inf("Mining for spice in %s", fn);
 	writefn(fn, 4711);
 }
 
@@ -136,11 +136,11 @@ static void pidfile(char *pidfn)
 		pid_t pid;
 
 		pid = getpid();
-		log("Creating PID file %s with %d", pidfn, pid);
+		inf("Creating PID file %s with %d", pidfn, pid);
 		writefn(pidfn, pid);
 		atexit(cleanup);
 	} else {
-		log("Touching PID file %s", pidfn);
+		inf("Touching PID file %s", pidfn);
 		utimensat(0, fn, NULL, 0);
 	}
 }
@@ -265,27 +265,27 @@ int main(int argc, char *argv[])
 	}
 
 	if (do_crash) {
-		log("Simulating crash, exiting with code %d", EX_SOFTWARE);
+		inf("Simulating crash, exiting with code %d", EX_SOFTWARE);
 		exit(EX_SOFTWARE);
 	}
 
-	log("Entering while(1) loop");
+	inf("Entering while(1) loop");
 	while (running) {
 		if (spice) {
-			log("Checking for spice in %s ...", spice);
+			inf("Checking for spice in %s ...", spice);
 			if (!checkfn(spice))
 				err(1, "Melange");
 		}
 
 		if (reloading) {
 			if (do_notify > 0) {
-				log("Delaying notify by 3 seconds for notify.sh ...");
+				inf("Delaying notify by 3 seconds for notify.sh ...");
 				sleep(3);
-				log("Notifying Finit on socket %d, READY=1", do_notify);
+				inf("Notifying Finit on socket %d, READY=1", do_notify);
 				if (write(do_notify, "READY=1\n", 8) == -1)
 					err(1, "Failed sending ready notification to Finit");
 				if (notify_s6) {
-					log("s6 notify, closing socket %d ...", do_notify);
+					inf("s6 notify, closing socket %d ...", do_notify);
 					close(do_notify);
 					do_notify = 0;
 				}
@@ -305,12 +305,12 @@ int main(int argc, char *argv[])
 
 		if (melange && vanish++ > 0) {
 			if (checkfn(melange)) {
-				log("Oh no, sandworms! Harvest interrupted ...");
+				inf("Oh no, sandworms! Harvest interrupted ...");
 				remove(melange);
 			}
 		}
 	}
 
-	log("Leaving ...");
+	inf("Leaving ...");
 	return 0;
 }
