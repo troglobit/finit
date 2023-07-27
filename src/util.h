@@ -42,7 +42,10 @@ extern int   ttcols;
 extern char *prognm;
 
 /* Define for printheader() from conio.h, used in initctl */
+#ifndef SCREEN_WIDTH
 #define SCREEN_WIDTH ttcols
+#endif
+
 #ifdef _LIBITE_LITE
 # include <libite/conio.h>
 # include <libite/lite.h>
