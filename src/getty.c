@@ -369,7 +369,7 @@ restart:
 
 static int usage(int rc)
 {
-	warnx("usage: getty [-h?] tty [speed [term]]");
+	warnx("usage: getty [-h?p] tty [speed [term]]");
 	return rc;
 }
 
