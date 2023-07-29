@@ -652,6 +652,7 @@ static int service_start(svc_t *svc)
 		goto fail;
 	}
 	if (pid > 1) {
+		dbg("Starting %s as PID %d", svc_ident(svc, NULL, 0), pid);
 		svc->pid = pid;
 		svc->start_time = jiffies();
 	} else if (pid == 0) {

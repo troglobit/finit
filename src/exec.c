@@ -59,11 +59,11 @@ int complete(char *cmd, int pid)
 
 	if (waitpid(pid, &status, 0) == -1) {
 		if (errno == EINTR)
-			errx(1, "Caught unblocked signal waiting for %s, aborting", cmd);
+			warnx("Caught unblocked signal waiting for %s, aborting", cmd);
 		else if (errno == ECHILD)
-			errx(1, "Caught SIGCHLD waiting for %s, aborting", cmd);
+			warnx("Caught SIGCHLD waiting for %s, aborting", cmd);
 		else
-			errx(1, "Failed starting %s, error %d: %s", cmd, errno, strerror (errno));
+			warnx("Failed starting %s, error %d: %s", cmd, errno, strerror(errno));
 
 		return -1;
 	}
@@ -186,7 +186,7 @@ int run(char *cmd, char *log)
 	} else if (WIFSIGNALED(status)) {
 		dbg("Process '%s' terminated by signal %d", cmd, WTERMSIG(status));
 		if (!result)
-			result = 1; /* Must alert callee that the command did complete successfully.
+			result = 1; /* Must alert callee the command did not complete successfully.
 				     * This is necessary since not all programs trap signals and
 				     * change their return code accordingly. --Jocke */
 	}
