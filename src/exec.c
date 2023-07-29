@@ -272,7 +272,7 @@ int exec_runtask(char *cmd, char *args[])
 	size_t i;
 
 	strlcat(buf, cmd, sizeof(buf));
-	for (i = 1; args[i]; i++) {
+	for (i = 1; args && args[i]; i++) {
 		strlcat(buf, " ", sizeof(buf));
 		strlcat(buf, args[i], sizeof(buf));
 	}
