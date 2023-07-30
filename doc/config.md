@@ -580,6 +580,12 @@ optional arguments and description.
 `run` commands are guaranteed to be completed before running the next
 command.  Highly useful if true serialization is needed.
 
+Please note, however, that `run` commands **block Finit**, meaning you
+cannot call `initctl` to start, stop, reload, or other such operations.
+The only `initctl` commands possible are those that enable and disable
+services and even then you should make sure to use the `--force` option
+since otherwise `initctl` will try to connect to Finit.
+
 > `<COND>` is described in the [Services](#services) section.
 
 
