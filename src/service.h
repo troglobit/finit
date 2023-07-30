@@ -52,7 +52,7 @@ void      service_worker         (void *unused);
 int       service_completed      (void);
 void      service_notify_reconf  (void);
 
-void      service_init           (void);
+void      service_init           (uev_ctx_t *ctx);
 
 #endif	/* FINIT_SERVICE_H_ */
 

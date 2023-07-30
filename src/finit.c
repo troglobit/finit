@@ -58,7 +58,6 @@
 #include "tty.h"
 #include "util.h"
 #include "utmp-api.h"
-#include "schedule.h"
 
 int   runlevel  = INIT_LEVEL;	/* Bootstrap 'S' */
 int   cfglevel  = RUNLEVEL;	/* Fallback if no configured runlevel */
@@ -521,113 +520,6 @@ static void fs_init(void)
 }
 
 
-/*
- * Handle bootstrap transition to configured runlevel, start TTYs
- *
- * This is the final stage of bootstrap.  It changes to the default
- * (configured) runlevel, calls all external start scripts and final
- * bootstrap hooks before bringing up TTYs.
- *
- * We must ensure that all declared `task [S]` and `run [S]` jobs in
- * finit.conf, or *.conf in finit.d/, run to completion before we
- * finalize the bootstrap process by calling this function.
- */
-static void finalize(void *unused)
-{
-	/* Clean up bootstrap-only tasks/services that never started */
-	dbg("Clean up all bootstrap-only tasks/services ...");
-	svc_prune_bootstrap();
-
-	/* All services/tasks/etc. in configure runlevel have started */
-	dbg("Running svc up hooks ...");
-	plugin_run_hooks(HOOK_SVC_UP);
-	service_step_all(SVC_TYPE_ANY);
-
-	/* Convenient SysV compat for when you just don't care ... */
-	if (!access(FINIT_RC_LOCAL, X_OK) && !rescue)
-		run_interactive(FINIT_RC_LOCAL, "Calling %s", FINIT_RC_LOCAL);
-
-	/* Hooks that should run at the very end */
-	dbg("Calling all system up hooks ...");
-	plugin_run_hooks(HOOK_SYSTEM_UP);
-	service_step_all(SVC_TYPE_ANY);
-
-	/* Disable progress output at normal runtime */
-	enable_progress(0);
-
-	/* System bootrapped, launch TTYs et al */
-	bootstrap = 0;
-	service_step_all(SVC_TYPE_RESPAWN);
-}
-
-/*
- * Start cranking the big state machine
- */
-static void crank_worker(void *unused)
-{
-	/*
-	 * Initialize state machine and start all bootstrap tasks
-	 * NOTE: no network available!
-	 */
-	sm_init(&sm);
-	sm_step(&sm);
-}
-
-/*
- * Wait for system bootstrap to complete, all SVC_TYPE_RUNTASK must be
- * allowed to complete their work in [S], or timeout, before we switch
- * to the configured runlevel and call finalize(), should not take more
- * than 120 sec.
- */
-static void bootstrap_worker(void *work)
-{
-	static struct wq final = {
-		.cb = finalize,
-		.delay = 10
-	};
-	static int cnt = 120 * 10;	/* We run with 100ms period */
-	int level = cfglevel;
-
-	dbg("Step all services ...");
-	service_step_all(SVC_TYPE_ANY);
-
-	if (cnt-- > 0 && !service_completed()) {
-		dbg("Not all bootstrap run/tasks have completed yet ... %d", cnt);
-		schedule_work(work);
-		return;
-	}
-
-	if (cnt > 0)
-		dbg("All run/task have completed, resuming bootstrap.");
-	else
-		dbg("Timeout, resuming bootstrap.");
-
-	dbg("Starting runlevel change finalize ...");
-	schedule_work(&final);
-
-	/*
-	 * Run startup scripts in the runparts directory, if any.
-	 */
-	if (runparts && fisdir(runparts) && !rescue)
-		run_parts(runparts, NULL, NULL, 1);
-
-
-	dbg("Flushing pending .conf file events ...");
-	conf_flush_events();
-
-	/*
-	 * Start all tasks/services in the configured runlevel, or jump
-	 * into the runlevel selected from the command line.
-	 */
-	if (cmdlevel) {
-		dbg("Runlevel %d requested from command line, starting all services ...", cmdlevel);
-		level = cmdlevel;
-	} else
-		dbg("Change to default runlevel(%d), starting all services ...", cfglevel);
-
-	service_runlevel(level);
-}
-
 static int version(int rc)
 {
 	puts(PACKAGE_STRING);
@@ -708,14 +600,6 @@ static int telinit(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	struct wq crank_work = {
-		.cb = crank_worker,
-		.delay = 10
-	};
-	struct wq bootstrap_work = {
-		.cb = bootstrap_worker,
-		.delay = 100
-	};
 	uev_ctx_t loop;
 
 	/* user calling telinit or init */
@@ -819,7 +703,7 @@ int main(int argc, char *argv[])
 	 * Initialize .conf system and load static /etc/finit.conf then
 	 * tell the world what we used.
 	 */
-	devmon_init();
+	devmon_init(&loop);
 	conf_init(&loop);
 	conf_saverc();
 
@@ -832,16 +716,15 @@ int main(int argc, char *argv[])
 	dbg("Starting initctl API responder ...");
 	api_init(&loop);
 
-	dbg("Starting the big state machine ...");
-	schedule_work(&crank_work);
-
-	dbg("Starting bootstrap finalize timer ...");
-	schedule_work(&bootstrap_work);
+	dbg("Starting service interval monitor ...");
+	service_init(&loop);
 
 	/*
-	 * Background service tasks
+	 * Initialize state machine and start all bootstrap tasks
+	 * NOTE: no network available!
 	 */
-	service_init();
+	sm_init(&sm);
+	sm_step(&sm);
 
 	/*
 	 * Enter main loop to monitor /dev/initctl and services

@@ -56,6 +56,7 @@
 
 /* To use these, include config.h, or define FINIT_EXECPATH_ */
 #define _PATH_LOGIT             FINIT_EXECPATH_ "/logit"
+#define _PATH_RUNPARTS          FINIT_EXECPATH_ "/runparts"
 #define _PATH_SULOGIN           FINIT_EXECPATH_ "/sulogin"
 #define _PATH_GETTY             FINIT_EXECPATH_ "/getty"
 

@@ -26,6 +26,7 @@
 
 typedef enum {
 	SM_BOOTSTRAP_STATE = 0,   /* Init state, bootstrap services */
+	SM_BOOTSTRAP_WAIT_STATE,  /* Waiting for bootstrap to complete */
 	SM_RUNNING_STATE,         /* Normal state, services running */
 	SM_RUNLEVEL_CHANGE_STATE, /* A runlevel change has occurred */
 	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped runlevel processes to be halted */

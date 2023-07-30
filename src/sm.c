@@ -31,6 +31,7 @@
 #include "conf.h"
 #include "helpers.h"
 #include "private.h"
+#include "schedule.h"
 #include "service.h"
 #include "sig.h"
 #include "tty.h"
@@ -43,12 +44,52 @@ sm_t sm;
 #define FINIT_NOLOGIN_PATH _PATH_NOLOGIN /* Stop user logging in. */
 #endif
 
-void sm_init(sm_t *sm)
+/*
+ * Wait for system bootstrap to complete, all SVC_TYPE_RUNTASK must be
+ * allowed to complete their work in [S], or timeout, before we switch
+ * to the configured runlevel and call finalize(), should not take more
+ * than 120 sec.
+ */
+static void sm_check_bootstrap(void *work)
 {
-	sm->state = SM_BOOTSTRAP_STATE;
-	sm->newlevel = -1;
-	sm->reload = 0;
-	sm->in_teardown = 0;
+	static int cnt = 120 * 10;	/* We run with 100ms period */
+        int level = cfglevel;
+
+	dbg("Step all services ...");
+	service_step_all(SVC_TYPE_ANY);
+
+	if (cnt-- > 0 && !service_completed()) {
+		dbg("Not all bootstrap run/tasks have completed yet ... %d", cnt);
+		return;
+	}
+
+	if (cnt > 0)
+		dbg("All run/task have completed, resuming bootstrap.");
+	else
+		dbg("Timeout, resuming bootstrap.");
+
+	dbg("Flushing pending .conf file events ...");
+	conf_flush_events();
+
+	/*
+	 * Start all tasks/services in the configured runlevel, or jump
+	 * into the runlevel selected from the command line.
+	 */
+	if (cmdlevel) {
+		dbg("Runlevel %d requested from command line, starting all services ...", cmdlevel);
+		level = cmdlevel;
+	} else
+		dbg("Change to default runlevel(%d), starting all services ...", cfglevel);
+
+	service_runlevel(level);
+
+	/* Clean up bootstrap-only tasks/services that never started */
+	dbg("Clean up all bootstrap-only tasks/services ...");
+	svc_prune_bootstrap();
+
+	/* All services/tasks/etc. in configure runlevel have started */
+	dbg("Running svc up hooks ...");
+	plugin_run_hooks(HOOK_SVC_UP);
 }
 
 static char *sm_status(sm_state_t state)
@@ -100,6 +141,22 @@ static void nologin(void)
 		erase(FINIT_NOLOGIN_PATH);
 }
 
+void sm_init(sm_t *sm)
+{
+	static struct wq work = {
+		.cb = sm_check_bootstrap,
+		.delay = 1000
+	};
+
+	sm->state = SM_BOOTSTRAP_STATE;
+	sm->newlevel = -1;
+	sm->reload = 0;
+	sm->in_teardown = 0;
+
+	dbg("Starting bootstrap finalize timer ...");
+	schedule_work(&work);
+}
+
 void sm_set_runlevel(sm_t *sm, int newlevel)
 {
 	sm->newlevel = newlevel;
@@ -117,8 +174,8 @@ int sm_is_in_teardown(sm_t *sm)
 
 void sm_step(sm_t *sm)
 {
-	svc_t *svc;
 	sm_state_t old_state;
+	svc_t *svc;
 
 restart:
 	old_state = sm->state;
@@ -130,10 +187,49 @@ restart:
 	case SM_BOOTSTRAP_STATE:
 		dbg("Bootstrapping all services in runlevel S from %s", finit_conf);
 		service_step_all(SVC_TYPE_RUNTASK | SVC_TYPE_SERVICE);
+
+		sm->state = SM_BOOTSTRAP_WAIT_STATE;
+		break;
+
+	/*
+	 * Handle bootstrap transition to configured runlevel, start TTYs
+	 *
+	 * This is the final stage of bootstrap.  It changes to the default
+	 * (configured) runlevel, calls all external start scripts and final
+	 * bootstrap hooks before bringing up TTYs.
+	 *
+	 * We must ensure that all declared `task [S]` and `run [S]` jobs in
+	 * finit.conf, or *.conf in finit.d/, run to completion before we
+	 * finalize the bootstrap process by calling this function.
+	 */
+	case SM_BOOTSTRAP_WAIT_STATE:
+		/* We come here from bootstrap, runlevel change and conf reload */
+		service_step_all(SVC_TYPE_ANY);
+
+		/* Allow runparts to start */
+		cond_set("int/bootstrap");
+
+		if (sm->newlevel == -1)
+			break;
+
+		/* Hooks that should run at the very end */
+		dbg("Calling all system up hooks ...");
+		plugin_run_hooks(HOOK_SYSTEM_UP);
+		service_step_all(SVC_TYPE_ANY);
+
+		/* Disable progress output at normal runtime */
+		enable_progress(0);
+
+		/* System bootrapped, launch TTYs et al */
+		bootstrap = 0;
+		service_step_all(SVC_TYPE_RESPAWN);
 		sm->state = SM_RUNNING_STATE;
 		break;
 
 	case SM_RUNNING_STATE:
+		/* We come here from bootstrap, runlevel change and conf reload */
+		service_step_all(SVC_TYPE_ANY);
+
 		/* runlevel changed? */
 		if (sm->newlevel >= 0 && sm->newlevel <= 9) {
 			if (runlevel == sm->newlevel) {
@@ -143,6 +239,7 @@ restart:
 			sm->state = SM_RUNLEVEL_CHANGE_STATE;
 			break;
 		}
+
 		/* reload ? */
 		if (sm->reload) {
 			sm->reload = 0;
@@ -210,17 +307,18 @@ restart:
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 
+		/* Compat SysV init */
+		if (prevlevel == INIT_LEVEL && !rescue)
+			run_bg(FINIT_RC_LOCAL, NULL);
+
 		/*
 		 * "I've seen things you people wouldn't believe.  Attack ships on fire off
 		 *  the shoulder of Orion.  I watched C-beams glitter in the dark near the
 		 *  Tannhäuser Gate.  All those .. moments .. will be lost in time, like
 		 *  tears ... in ... rain."
 		 */
-		if (runlevel == 0 || runlevel == 6) {
+		if (runlevel == 0 || runlevel == 6)
 			do_shutdown(halt);
-			sm->state = SM_RUNNING_STATE;
-			break;
-		}
 
 		sm->state = SM_RUNNING_STATE;
 		break;
@@ -266,9 +364,7 @@ restart:
 		dbg("Update configuration generation of unmodified non-native services ...");
 		service_notify_reconf();
 
-		service_step_all(SVC_TYPE_ANY);
 		dbg("Reconfiguration done");
-
 		sm->state = SM_RUNNING_STATE;
 		break;
 	}

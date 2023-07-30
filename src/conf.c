@@ -862,7 +862,7 @@ static int parse_static(char *line, int is_rcsd)
 
 			service_interval = val * 1000; /* to milliseconds */
 			if (disabled)
-				service_init();
+				service_init(NULL);
 		}
 		return 0;
 	}
@@ -1446,6 +1446,18 @@ int conf_init(uev_ctx_t *ctx)
 		err(1, "Failed setting up I/O callback for /etc watcher");
 		close(iwatch_fd);
 		return 1;
+	}
+
+	/*
+	 * Background startup scripts in the runparts directory, if any.
+	 */
+	if (runparts && fisdir(runparts) && !rescue) {
+		char conf[sizeof(_PATH_RUNPARTS) + strlen(runparts) + 100];
+
+		snprintf(conf, sizeof(conf), "[S] <int/bootstrap> %s %s"
+			 " -- Calling runparts %s in the background",
+			 _PATH_RUNPARTS, runparts, runparts);
+		service_register(SVC_TYPE_TASK, conf, global_rlimit, NULL);
 	}
 
 	return 0;

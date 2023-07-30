@@ -8,7 +8,7 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  = getty logit
+pkglibexec_PROGRAMS  = getty logit runparts
 if SULOGIN
 pkglibexec_PROGRAMS += sulogin
 endif
@@ -32,6 +32,11 @@ keventd_CFLAGS       = -W -Wall -Wextra -std=gnu99
 keventd_CFLAGS      += $(lite_CFLAGS)
 keventd_LDADD        = $(lite_LIBS)
 
+runparts_SOURCES     = runparts.c
+runparts_CFLAGS      = -W -Wall -Wextra -std=gnu99
+runparts_CFLAGS     += $(lite_CFLAGS)
+runparts_LDADD       = $(lite_LIBS)
+
 sulogin_SOURCES      = sulogin.c
 sulogin_CFLAGS       = -W -Wall -Wextra -std=gnu99
 sulogin_LDADD        = -lcrypt
@@ -54,7 +59,7 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     mdadm.c	mount.c				\
 		     pid.c      pid.h				\
 		     plugin.c	plugin.h	private.h	\
-		     schedule.c	schedule.h			\
+		     runparts.c schedule.c	schedule.h	\
 		     service.c	service.h			\
 		     sig.c	sig.h				\
 		     sm.c	sm.h				\

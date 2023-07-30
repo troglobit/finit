@@ -2714,23 +2714,24 @@ static void service_interval_cb(uev_t *w, void *arg, int events)
 		}
 	}
 
-	service_init();
+	service_init(NULL);
 }
 
 /*
  * The service_interval may change (conf) between invocations, so we
  * periodically reset the one-shot timer instead of using a periodic.
  */
-void service_init(void)
+void service_init(uev_ctx_t *ctx)
 {
 	static int initialized = 0;
 	static uev_t watcher;
 
-	if (!initialized) {
+	if (!initialized)
 		uev_timer_init(ctx, &watcher, service_interval_cb, NULL, service_interval, 0);
-		initialized = 1;
-	} else
+	else
 		uev_timer_set(&watcher, service_interval, 0);
+
+	initialized = 1;
 }
 
 /**

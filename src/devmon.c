@@ -243,7 +243,7 @@ static void devmon_cb(uev_t *w, void *arg, int events)
 	}
 }
 
-void devmon_init(void)
+void devmon_init(uev_ctx_t *ctx)
 {
 	char dir[MAX_ARG_LEN];
 
