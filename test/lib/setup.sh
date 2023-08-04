@@ -226,7 +226,8 @@ wdstart()
 
 wdkill()
 {
-	kill -KILL $wdpid
+    say "Stopping test watchdog, pid $wdpid"
+    kill -KILL $wdpid
 }
 
 teardown()
@@ -247,11 +248,15 @@ teardown()
 		log "$fg_red" 'TEST FAIL' ''
 	fi
 
-	say "Telling Finit to shut down (set -$-) ..."
 	set +e
-	if [ -n "${finit_pid+x}" ]; then
-		texec kill -SIGUSR2 1
-	fi
+	say "Telling Finit to shut down (set -$-) ..."
+	while [ -n "${finit_pid+x}" ]; do
+	    if ! kill -USR2 "${finit_pid}" 2>/dev/null; then
+		break
+	    fi
+	    say "Retrying shutdown ..."
+	    sleep 1
+	done
 
 	say "Waiting for Finit to shut down ..."
 	wait
