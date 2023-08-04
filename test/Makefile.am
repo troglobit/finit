@@ -61,6 +61,7 @@ TEST_EXTENSIONS		 = .sh
 TESTS			 = checkself.sh
 TESTS			+= add-remove-dynamic-service.sh
 TESTS			+= add-remove-dynamic-service-sub-config.sh
+TESTS			+= bootstrap-crash.sh
 TESTS			+= cond-start-task.sh
 TESTS			+= crashing.sh
 TESTS			+= depserv.sh
