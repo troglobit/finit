@@ -47,6 +47,7 @@ static __attribute__ ((format (printf, 1, 2))) inline void dbg(char *fmt, ...)
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
+	fputs("\n", stderr);
 	va_end(ap);
 }
 #define info(fmt, args...) warnx(fmt, ##args)
