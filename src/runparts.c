@@ -30,14 +30,14 @@ int debug;
 
 static void print_desc(const char *prefix, const char *msg)
 {
-	printf("\e[1m[\e[0m\e[1;33m ⋯  \e[0m\e[1m]\e[0m %s %s", prefix, msg);
+	fprintf(stderr, "\e[1m[\e[0m\e[1;33m ⋯  \e[0m\e[1m]\e[0m %s %s", prefix, msg);
 }
 static void print_result(int rc)
 {
 	if (rc)
-		puts("\r\e[1m[\e[0m\e[1;31mFAIL\e[0m\e[1m]\e[0m");
+		fputs("\r\e[1m[\e[0m\e[1;31mFAIL\e[0m\e[1m]\e[0m\n", stderr);
 	else
-		puts("\r\e[1m[\e[0m\e[1;32m OK \e[0m\e[1m]\e[0m");
+		fputs("\r\e[1m[\e[0m\e[1;32m OK \e[0m\e[1m]\e[0m\n", stderr);
 }
 
 void sig_unblock(void)
