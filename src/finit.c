@@ -550,7 +550,7 @@ static int usage(int rc)
 	       "  2-9      Change runlevel\n"
 	       "  q, Q     Reload /etc/finit.conf and/or any *.conf in /etc/finit.d/\n"
 	       "           if modified, same as initctl reload or SIGHUP to PID 1\n"
-	       "  1, s, S  Enter system rescue mode, runlevel 1\n"
+	       "  1, s, S  Enter single user mode, no networking, runlevel 1\n"
 	       "\n", prognm);
 
 	return rc;
