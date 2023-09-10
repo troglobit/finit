@@ -85,29 +85,34 @@ static void run_env(const char *env[])
 
 int run_parts(char *dir, char *cmd, const char *env[], int progress)
 {
-	struct dirent **e;
+	size_t cmdlen = cmd ? strlen(cmd) : strlen("start");
+	struct dirent **d;
 	int i, num;
 	int rc = 0;
 
-	num = scandir(dir, &e, NULL, alphasort);
+	num = scandir(dir, &d, NULL, alphasort);
 	if (num < 0) {
 		dbg("No files found in %s, skipping ...", dir);
 		return -1;
 	}
 
 	for (i = 0; i < num; i++) {
-		const char *name = e[i]->d_name;
-		char path[strlen(dir) + strlen(name) + 2];
-		struct stat st;
+		char path[strlen(dir) + strlen(d[i]->d_name) + 3 + cmdlen];
+		const char *name = d[i]->d_name;
 		char *argv[4] = {
 			"sh",
 			"-c",
 			path,
 			NULL
 		};
+		struct stat st;
 		int result = 0;
 		pid_t pid = 0;
 		int status;
+
+		/* skip backup files */
+		if (name[strlen(name) - 1] == '~')
+			continue;
 
 		/* cannot rely on d_type, not supported on all filesystems */
 		paste(path, sizeof(path), dir, name);
@@ -125,12 +130,12 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		/* If the callee didn't supply a run_parts() argument */
 		if (!cmd) {
 			/* Check if S<NUM>service or K<NUM>service notation is used */
-//			dbg("Checking if %s is a sysvinit startstop script ...", name);
 			if (name[0] == 'S' && isdigit(name[1]))
 				strlcat(path, " start", sizeof(path));
 			else if (name[0] == 'K' && isdigit(name[1]))
 				strlcat(path, " stop", sizeof(path));
 		} else {
+			strlcat(path, " ", sizeof(path));
 			strlcat(path, cmd, sizeof(path));
 		}
 
@@ -165,8 +170,8 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 	}
 
 	while (num--)
-		free(e[num]);
-	free(e);
+		free(d[num]);
+	free(d);
 
 	return rc;
 }

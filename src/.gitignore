@@ -5,6 +5,7 @@ initctl
 keventd
 logit
 reboot
+runparts
 sulogin
 watchdogd
 Makefile
