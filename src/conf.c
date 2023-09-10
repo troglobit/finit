@@ -1453,10 +1453,11 @@ int conf_init(uev_ctx_t *ctx)
 	 */
 	if (runparts && fisdir(runparts) && !rescue) {
 		char conf[sizeof(_PATH_RUNPARTS) + strlen(runparts) + 100];
+		char *args = debug ? "-d" : "-p";
 
-		snprintf(conf, sizeof(conf), "[S] <int/bootstrap> %s %s"
+		snprintf(conf, sizeof(conf), "[S] <int/bootstrap> log:console %s %s %s"
 			 " -- Calling runparts %s in the background",
-			 _PATH_RUNPARTS, runparts, runparts);
+			 _PATH_RUNPARTS, args, runparts, runparts);
 		service_register(SVC_TYPE_TASK, conf, global_rlimit, NULL);
 	}
 
