@@ -59,7 +59,7 @@ assert_restarts()
 
 assert_restart_cnt()
 {
-	assert "Finit restart cnt $1" "$(texec initctl status "$2" | awk '/Restarts/{print $4;}')" = "($1)"
+	assert "Finit restart total $1 cnt $2" "$(texec initctl status "$3" | awk '/Restarts/{print $3 $4;}')" = "$1($2)"
 }
 
 assert_norestart()

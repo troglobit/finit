@@ -56,6 +56,12 @@
 #include "utmp-api.h"
 #include "schedule.h"
 
+/*
+ * run tasks block other tasks/services from starting, we track the
+ * current run task here.  For service_step() and service_start().
+ */
+static pid_t run_block_pid;
+
 static struct wq work = {
 	.cb = service_worker,
 };
@@ -594,6 +600,10 @@ static int service_start(svc_t *svc)
 	if (is_norespawn())
 		return 1;
 
+	/* Waiting for a run task to complete */
+	if (run_block_pid)
+		return 1;
+
 	/* Don't try and start service if it doesn't exist. */
 	if (!whichp(svc->cmd)) {
 		logit(LOG_WARNING, "%s: missing %s or not in $PATH", svc_ident(svc, NULL, 0), svc->cmd);
@@ -815,27 +825,11 @@ static int service_start(svc_t *svc)
 
 	switch (svc->type) {
 	case SVC_TYPE_RUN:
-		svc->status = complete(svc->cmd, pid);
-		dbg("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
-		    svc_ident(svc, NULL, 0), pid, WIFEXITED(svc->status),
-		    WIFSIGNALED(svc->status), WEXITSTATUS(svc->status));
-		if (WIFEXITED(svc->status)) {
-			svc->started = 1;
-			result = WEXITSTATUS(svc->status);
-		} else {
-			svc->started = 0;
-			result = 1;
-		}
-		svc->start_time = svc->pid = 0;
-		svc->once++;
-		svc_mark_clean(svc); /* done, regardless of exit status */
-		svc_set_state(svc, SVC_STOPPING_STATE);
+		run_block_pid = pid;
 		break;
-
 	case SVC_TYPE_SERVICE:
 		pid_file_create(svc);
 		break;
-
 	default:
 		break;
 	}
@@ -1853,6 +1847,11 @@ void service_monitor(pid_t lost, int status)
 		return;
 	}
 
+	if (lost == run_block_pid) {
+		svc_mark_clean(svc); /* done, regardless of exit status */
+		run_block_pid = 0;
+	}
+
 	switch (svc->state) {
 	case SVC_CLEANUP_STATE:
 	case SVC_SETUP_STATE:
@@ -2274,11 +2273,11 @@ void service_ready(svc_t *svc)
  */
 int service_step(svc_t *svc)
 {
-	cond_state_t cond;
-	svc_state_t old_state;
-	svc_cmd_t enabled;
 	char *restart_cnt = (char *)&svc->restart_cnt;
-	int changed = 0;
+	int changed = 0, waiting = 0;
+	svc_state_t old_state;
+	cond_state_t cond;
+	svc_cmd_t enabled;
 	int err;
 
 restart:
@@ -2395,6 +2394,10 @@ restart:
 
 		err = service_start(svc);
 		if (err) {
+			/* Busy, waiting for run task, try again later */
+			if (run_block_pid)
+				break;
+
 			if (svc_is_missing(svc)) {
 				svc_set_state(svc, SVC_HALTED_STATE);
 				break;
@@ -2436,6 +2439,7 @@ restart:
 
 			if (svc_is_runtask(svc)) { /* only run/task, not sysv here */
 				svc_set_state(svc, SVC_STOPPING_STATE);
+				svc->restart_tot++;
 				svc->once++;
 				break;
 			}
@@ -2513,6 +2517,9 @@ restart:
 		break;
 	}
 
+	/* Are we waiting for a run task to complete? */
+	waiting = run_block_pid;
+
 	if (svc->state != old_state) {
 		dbg("%20s(%4d): -> %8s", svc_ident(svc, NULL, 0), svc->pid, svc_status(svc));
 		changed++;
@@ -2524,7 +2531,7 @@ done:
 	 * When a run/task/service changes state, e.g. transitioning from
 	 * waiting to running, other services may need to change state too.
 	 */
-	if (changed)
+	if (changed || waiting)
 		schedule_work(&work);
 
 	return 0;

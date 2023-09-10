@@ -22,12 +22,6 @@ test_teardown()
 	run "rm -f $FINIT_CONF"
 }
 
-check_restarts()
-{
-	assert "serv restarts" "$(texec cat "$1" | awk '{print $1;}')" -ge "$2"
-}
-
-
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
@@ -43,7 +37,7 @@ test_one()
     run "initctl reload"
 #    run "initctl status fail.sh"
 
-    assert_restart_cnt "$num/10" fail.sh
+    assert_restart_cnt "$num" "0/10" fail.sh
 }
 
 sep
