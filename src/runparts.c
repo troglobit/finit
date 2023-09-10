@@ -109,15 +109,16 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		pid_t pid = 0;
 		int status;
 
+		/* cannot rely on d_type, not supported on all filesystems */
 		paste(path, sizeof(path), dir, name);
 		if (stat(path, &st)) {
-			dbg("Failed stat(%s): %s", path, strerror(errno));
+			warn("failed stat(%s)", path);
 			continue;
 		}
 
+		/* skip non-executable files and directories */
 		if (!S_ISEXEC(st.st_mode) || S_ISDIR(st.st_mode)) {
-			if (strcmp(name, ".") && strcmp(name, ".."))
-				dbg("Skipping %s ...", path);
+			dbg("skipping %s not an executable or is a directory", path);
 			continue;
 		}
 
@@ -134,7 +135,8 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		}
 
 		if (progress)
-			print_desc("Calling ", path);
+			print_desc("Calling", path);
+
 		pid = fork();
 		if (!pid) {
 			sig_unblock();
@@ -149,7 +151,7 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		} else {
 			if (WIFEXITED(status)) {
 				result = WEXITSTATUS(status);
-				warnx("%s exited with status %d", path, result);
+				dbg("%s exited with status %d", path, result);
 			} else if (WIFSIGNALED(status)) {
 				warnx("%s terminated by signal %d", path, WTERMSIG(status));
 				result = 1;
