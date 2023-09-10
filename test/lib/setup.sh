@@ -269,6 +269,7 @@ teardown()
 	say "Final cleanup ..."
 	rm -f "$SYSROOT"/running_test.pid
 	rm -f "$SYSROOT$FINIT_CONF"
+	rm -f "$SYSROOT/etc/rc.local"
 
 	say "EXIT: $test_status"
 	exit $test_status
@@ -305,6 +306,10 @@ if [ -n "$BOOTSTRAP" ]; then
     echo "$BOOTSTRAP" >> "$SYSROOT$FINIT_CONF"
 fi
 if [ -n "$RCLOCAL" ]; then
+    while [ -f "$SYSROOT/etc/rc.local" ]; do
+	echo "$SYSROOT/etc/rc.local busy ... waiting ..."
+	sleep 1
+    done
     say "Setting up /etc/rc.local ..."
     echo "$RCLOCAL" > "$SYSROOT/etc/rc.local"
     chmod +x "$SYSROOT/etc/rc.local"

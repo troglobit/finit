@@ -18,7 +18,6 @@ test_setup()
 test_teardown()
 {
 	say "Test done $(date)"
-	run "rm -f $SYSROOT/etc/rc.local"
 }
 
 sleep 1
