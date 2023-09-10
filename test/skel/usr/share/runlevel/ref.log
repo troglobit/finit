@@ -1,0 +1,4 @@
+/etc/rc.d/S01abc.sh start
+/etc/rc.d/S02def.sh start
+/etc/rc.d/foo.sh
+/etc/rc.d/test.sh
