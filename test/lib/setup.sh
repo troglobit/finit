@@ -52,6 +52,11 @@ assert_new_pid()
 	assert "Finit has registered new PID" "$(texec initctl |grep $1 | awk '{print $1;}')" -eq "$(texec cat $2)"
 }
 
+assert_pidiff()
+{
+	assert "PID has changed (old PID $2)" "$(texec initctl |awk -v svc="$1" '$0 ~ svc {print $1}')" -ne "$2"
+}
+
 assert_restarts()
 {
 	assert "Finit has registered restarts" "$(texec initctl status "$2" | awk '/Restarts/{print $3;}')" -ge "$1"
@@ -292,14 +297,17 @@ else
 fi
 
 set +u
+rm -f "$SYSROOT$FINIT_CONF"
+touch "$SYSROOT$FINIT_CONF"
+
 if [ -n "$BOOTSTRAP" ]; then
-	say "Setting up bootstrap tasks ..."
-	echo "$BOOTSTRAP" > "$SYSROOT$FINIT_CONF"
+    say "Setting up bootstrap tasks ..."
+    echo "$BOOTSTRAP" >> "$SYSROOT$FINIT_CONF"
 fi
 if [ -n "$RCLOCAL" ]; then
-	say "Setting up /etc/rc.local ..."
-	echo "$RCLOCAL" > "$SYSROOT/etc/rc.local"
-	chmod +x "$SYSROOT/etc/rc.local"
+    say "Setting up /etc/rc.local ..."
+    echo "$RCLOCAL" > "$SYSROOT/etc/rc.local"
+    chmod +x "$SYSROOT/etc/rc.local"
 fi
 set -u
 
