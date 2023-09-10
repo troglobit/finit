@@ -209,19 +209,26 @@ static int do_runlevel(char *arg)
 	if (!arg) {
 		int prevlevel = 0;
 		int currlevel;
-		char prev;
+		char prev, curr;
 
 		currlevel = runlevel_get(&prevlevel);
-		if (255 == currlevel) {
+		switch (currlevel) {
+		case 255:
 			printf("unknown\n");
 			return 0;
+		case INIT_LEVEL:
+			curr = 'S';
+			break;
+		default:
+			curr = currlevel + '0';
+			break;
 		}
 
 		prev = prevlevel + '0';
 		if (prev <= '0' || prev > '9')
 			prev = 'N';
 
-		printf("%c %d\n", prev , currlevel);
+		printf("%c %c\n", prev , curr);
 		return 0;
 	}
 
