@@ -28,6 +28,7 @@ Finit Configuration
   * [TTYs and Consoles](#ttys-and-consoles)
   * [Non-privileged Services](#non-privileged-services)
   * [Redirecting Output](#redirecting-output)
+* [SysV Init Compatibility](#sysv-init-compatibility)
 * [Rescue Mode](#rescue-mode)
 * [Limitations](#limitations)
   * [/etc/finit.conf](#etcfinitconf)
@@ -45,14 +46,15 @@ Plugins start at [hook points](plugins.md#hooks) and can run various set
 up, or install event handlers that later provide runtime services, e.g.,
 PID file monitoring, or [conditions](conditions.md).
 
+> **Tip:** see [SysV Init Compatibility](#sysv-init-compatibility) for
+> help to quickly get going with an existing SysV or BusyBox init setup.
+
 
 ### Configuration Files
 
 Originally Finit was configured using a single file, `/etc/finit.conf`.
-Although still possible, today we recommended using the Apache-style
-`available/*.conf` and `enabled/*.conf` layaout.  These are called
-dynamic services, in contrast to static -- the only difference being
-where they are installed and if the `initctl` tool can manage them.
+Although still possible to use this single configuration file, today the
+following familiar layout is recommended:
 
     /etc/
       |- finit.d/
@@ -62,9 +64,15 @@ where they are installed and if the `initctl` tool can manage them.
       :   |   `- my-service.conf -> ../available/my-service.conf
       :   :
       :   |- static-service.conf
-      :   `- another-static.conf  # eg. bootstrap run/task commands
+      :   `- another-static.conf
       :
-      `- finit.conf               # global settings
+      `- finit.conf
+
+Services in the `available/` and `enabled/` sub-directories are called
+dynamic services, in contrast to static services -- the only difference
+being where they are installed and if the `initctl` tool can manage them
+with the `enable` and `disable` commands.  An administrator can always
+create files and symlinks manually.
 
 At bootstrap, and `initctl reload`, all .conf files are read, starting
 with `finit.conf`, then, in alphabetical order, all `finit.d/*.conf`
@@ -131,8 +139,8 @@ as listed above, provided their respective mount point exists.
 With all filesystems mounted, Finit calls `swapon`.
 
 At shutdown, and after having stopped all services and other lingering
-processes killed, filesystems are unmounted in the reverse order, and
-`swapoff` is called.
+processes have been killed, filesystems are unmounted in the reverse
+order, and `swapoff` is called.
 
 [FHS]: https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html
 
@@ -574,24 +582,36 @@ Finit disables networking in this mode.
 
 **Syntax:** `run [LVLS] <COND> /path/to/cmd ARGS -- Optional description`
 
-One-shot command to run in sequence when entering a runlevel, with
-optional arguments and description.
-  
-`run` commands are guaranteed to be completed before running the next
-command.  Highly useful if true serialization is needed.
-
-Please note, however, that `run` commands **block Finit**, meaning you
-cannot call `initctl` to start, stop, reload, or other such operations.
-The only `initctl` commands possible are those that enable and disable
-services and even then you should make sure to use the `--force` option
-since otherwise `initctl` will try to connect to Finit.
-
 > `<COND>` is described in the [Services](#services) section.
+
+One-shot command to run in sequence when entering a runlevel, with
+optional arguments and description.  `run` commands are guaranteed to be
+completed before running the next command.  Useful when serialization is
+required.
+
+> **Warning:** try to avoid the `run` command.  It blocks much of the
+> functionality in Finit, like (re)starting other (perhaps crashing)
+> services while a `run` task is executing.  Use other synchronization
+> mechanisms instead, like conditions.
+
+Incomplete list of unsupported `initctl` commands in `run` tasks:
+
+ - `initctl runlevel N`, setting runlevel
+ - `initctl reboot`
+ - `initctl halt`
+ - `initctl poweroff`
+ - `initctl suspend`
+
+To prevent `initctl` from calling Finit when enabling and disabling
+services from inside a `run` task, use the `--force` option.  See
+also the `--quiet` and `--batch` options.
 
 
 ### One-shot Commands (parallel)
 
 **Syntax:** `task [LVLS] <COND> /path/to/cmd ARGS -- Optional description`
+
+> `<COND>` is described in the [Services](#services) section.
 
 One-shot like 'run', but starts in parallel with the next command.
   
@@ -600,12 +620,12 @@ redirects can be freely used:
 
     task [s] echo "foo" | cat >/tmp/bar
 
-> `<COND>` is described in the [Services](#services) section.
-
 
 ### SysV Init Scripts
 
 **Syntax:** `sysv [LVLS] <COND> /path/to/init-script -- Optional description`
+
+> `<COND>` is described in the [Services](#services) section.
 
 Similar to `task` is the `sysv` stanza, which can be used to call SysV
 style scripts.  The primary intention for this command is to be able to
@@ -624,7 +644,7 @@ file, but rather watch that file for the resulting forked-off PID.  This
 syntax also works for forking daemons that do not have a command line
 option to run it in the foreground, more on this below in `service`.
 
-> `<COND>` is described in the [Services](#services) section.
+> **Tip:** see also [SysV Init Compatibility](#sysv-init-compatibility).
 
 
 ### Services
@@ -832,7 +852,7 @@ The scripts in this directory are executed at the very end of runlevel
 A common use-case for runparts scripts is to create and enable/disable
 services, which Finit will then apply when changing runlevel from S to
 whatever the next runlevel is set to be (default 2).  E.g., generate a
-`/etc/chrony.conf` and `initctl enable chronyd`.
+`/etc/chrony.conf` and call `initctl enable chronyd`.
 
 **Limitations:**
 
@@ -1048,6 +1068,70 @@ sync(2) has been called, twice.
 > "On Linux, sync is only guaranteed to schedule the dirty blocks for
 > writing; it can actually take a short time before all the blocks are
 > finally written.
+
+
+SysV Init Compatibility
+-----------------------
+
+Finit comes with a few SysV Init compatibility features to ease the
+transition from a serialized boot process.
+
+### `runparts DIRECTORY`
+
+For a directory with traditional start/stop scripts that should run, in
+order, at bootstrap, Finit provides the `runparts` directive.  It runs
+in runlevel S, at the very end of it (before calling `/etc/rc.local`)
+making it perfect for most scenarios.
+
+For syntax details, see [Run-parts Scripts](#run-parts-scripts) above.
+Here is an example take from a Debian installation:
+
+    runparts /etc/rc2.d
+
+Files in these directories are usually named `SNNfoo` and `KNNfoo`,
+which Finit knows about and automatically appends the correct argument:
+
+    /bin/sh -c /etc/rc2.d/S01openbsd-inetd start
+
+or
+
+    /bin/sh -c /etc/rc0.d/K01openbsd-inetd stop
+
+Files that do not match this pattern are started similarly but without
+the extra command line argument.
+
+
+### Start/Stop Scripts
+
+For syntax details, see [SysV Init Scripts](#sysv-init-scripts), above.
+Here follows an example taken from a Debian installation:
+
+    sysv [2345] <pid/syslogd> /etc/init.d/openbsd-inetd -- OpenBSD inet daemon
+
+The init script header could be parsed to extract `Default-Start:` and
+other parameters for the `sysv` command to Finit.  There is currently no
+way to detail a generic syslogd dependency in Finit, so `Should-Start:`
+in the header must be mapped to the condition system in Finit using an
+absolute reference, here we depend on the sysklogd project's syslogd.
+
+### `/etc/rc.local`
+
+One often requested feature, early on, was a way to run a site specific
+script to set up, e.g., static routes or firewall rules.  A user can add
+a `task` or `run` command in the Finit configuration for this, but for
+compatibility reasons the more widely know `/etc/rc.local` is used if
+it exists, and is executable.  It is called very late in the boot process
+when the system has left runlevel S, stopped all old and started all new
+services in the target runlevel (default 2).
+
+> In Finit releases before v4.5 this script blocked Finit execution and
+> made it as good as impossible to call `initctl` during that time.
+
+### `init q`
+
+When `/sbin/finit` is installed as `/sbin/init`, it is possible to use
+`init q` to reload the configuration.  This is the same as calling
+`initctl reload`.
 
 
 Rescue Mode
