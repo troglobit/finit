@@ -305,6 +305,15 @@ if [ -n "$BOOTSTRAP" ]; then
     say "Setting up bootstrap tasks ..."
     echo "$BOOTSTRAP" >> "$SYSROOT$FINIT_CONF"
 fi
+
+if [ -n "$RUNPARTS" ]; then
+    say "Setting up runparts task ..."
+    echo "runparts /etc/rc.d" >> "$SYSROOT$FINIT_CONF"
+    mkdir "$SYSROOT/etc/rc.d"
+    echo "$RUNPARTS" > "$SYSROOT/etc/rc.d/start.sh"
+    chmod +x "$SYSROOT/etc/rc.d/start.sh"
+fi
+
 if [ -n "$RCLOCAL" ]; then
     while [ -f "$SYSROOT/etc/rc.local" ]; do
 	echo "$SYSROOT/etc/rc.local busy ... waiting ..."
