@@ -1150,15 +1150,17 @@ The rescue mode comes in two flavors; *traditional* and *fallback*.
 ### Traditional
 
 This is what most users expect.  A very early maintenance login prompt,
-served by the bundled `/libexec/finit/sulogin` program, or the standard
-`sulogin` from util-linux or BusyBox is searched for in the UNIX default
-`$PATH`.  If a successful login is made, or the user exits (Ctrl-D), the
-rescue mode is ended and the system boots up normally.
+served by the system `sulogin` program from util-linux, or BusyBox.  If
+that is not found in `$PATH`, the bundled `/libexec/finit/sulogin`
+program is used instead.  If a successful login is made, or if the user
+exits (Ctrl-D), the rescue mode is ended and the system boots up
+normally.
 
-> **Note:** if the user (UID 0 and GID 0) does not have a password, or
-> __the account is locked__, the user is presented with a password-less
-> `"Press enter to enter maintenance mode."`, prompt which opens up a
-> root shell.
+> **Note:** the bundled sulogin in Finit can at configure time be given
+> another user than the default (root).  If the sulogin user does not
+> have a password, or __the account is locked__, the user is presented
+> with a password-less `"Press enter to enter maintenance mode."`,
+> prompt which opens up a root shell.
 
 
 ### Fallback
