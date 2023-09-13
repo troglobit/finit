@@ -60,6 +60,7 @@ static void sm_check_bootstrap(void *work)
 
 	if (cnt-- > 0 && !service_completed()) {
 		dbg("Not all bootstrap run/tasks have completed yet ... %d", cnt);
+		schedule_work(work);
 		return;
 	}
 
