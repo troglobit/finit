@@ -4,25 +4,43 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.5][UNRELEASED]
+[4.5][] - 2023-09-14
 --------------------
 
 ### Changes
+- Refactor `runparts` and `/etc/rc.local` to no longer block the main
+  loop, allowing these scripts to call `initctl` to interact with Finit.
+  Still in a limited way due to them being used at bootstrap, issue #356
+- Refactor the `run` stanza to no longer block the main loop, issue #362
+- Allow `sulogin` with a user different from `root`, issue #357
+- Allow disabling invocation of rescue mode from kernel command line
 - Add `initctl -f` to force-skip asking Finit for existing services
   when creating new services during bootstrap, e.g. `/etc/rc.local`
+- `initctl runlevel` now returns `N S` instead of `N 10` in bootstrap
 - Improved logging on failure to `execvp()` a run/task/service, now
   with `errno`, e.g., "No such file or directory" when the command
   is missing from `$PATH`
+- Add support for Bash completion to `initctl`, issue #360
+- Handle absolute path to `initctl [enable|disable]`, not supported
+- Update `finit.conf(5)` man page with the recommended directory
+  hierarchy in `/etc/finit.d/`
+- The `runparts` code has been split into `/libexec/finit/runparts`
+- Add SysV Init Compatibility section to documentation
 
 ### Fixes
 - Fix #227: believed to have been fixed in [4.3][], the root cause was
   actually that Finit was waiting for a process that was no longer in
   the system.  The fix is to ask the kernel on process-stop-timeout and
-  replay the lost PID so that Finit can continue with reboot/shutdown.
+  replay the lost PID so that Finit can continue with reboot/shutdown
+- Fix #358: fix inotify events for `/etc/finit.conf`, improved log
+  messages and error handling
 - Fix #361: cgroup move fail if run/task/services start as non-root.
   Regression in the [4.4][] release cycle while adding support for the
   pre:/post:/ready: scripts.  Now the latter scripts also properly run
-  in their correct cgroup.
+  in their correct cgroup
+- The `runparts` executor now skips backup files (`foo~`)
+- The `runparts` stanza now properly appends ` start` to scripts that
+  start with `S[0-9]+`.  This has been broken for a very long time.
 
 
 [4.4][] - 2023-05-15
@@ -1531,7 +1549,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.4...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.5...HEAD
+[4.5]: https://github.com/troglobit/finit/compare/4.4...4.5
 [4.4]: https://github.com/troglobit/finit/compare/4.3...4.4
 [4.3]: https://github.com/troglobit/finit/compare/4.2...4.3
 [4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
