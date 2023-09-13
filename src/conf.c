@@ -1085,6 +1085,14 @@ int conf_reload(void)
 	 */
 	memcpy(global_rlimit, initial_rlimit, sizeof(global_rlimit));
 
+	/*
+	 * When built with --disable-rescue mode many other 'if (rescue)'
+	 * code paths are #ifdeffed out.  This one, and the ones in the
+	 * plugins, are not because a hook or plugin can still trigger
+	 * the alternative rescue.conf instead of finit.conf.  This for
+	 * very advanced use-cases where files on /etc are generated at
+	 * bootstrap, including users and passwords, from other sources.
+	 */
 	if (rescue) {
 		int rc;
 		char line[80] = "tty [12345789] rescue";
