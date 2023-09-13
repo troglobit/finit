@@ -145,10 +145,10 @@ AC_ARG_WITH(keventd,
         AS_HELP_STRING([--with-keventd], [Enable built-in keventd, default: no]),, [with_keventd=no])
 
 AC_ARG_WITH(sulogin,
-        AS_HELP_STRING([--with-sulogin], [Enable built-in sulogin, default: no.]),, [with_sulogin=no])
+        AS_HELP_STRING([--with-sulogin@<:@=USER@:>@], [Enable built-in sulogin, optional USER to request password for (default root), default: no.]),[sulogin=$withval],[with_sulogin=no])
 
 AC_ARG_WITH(watchdog,
-        AS_HELP_STRING([--with-watchdog=[DEV]], [Enable built-in watchdog, default: /dev/watchdog]),
+        AS_HELP_STRING([--with-watchdog@<:@=DEV@:>@], [Enable built-in watchdog, default: /dev/watchdog]),
 	[watchdog=$withval], [with_watchdog=no watchdog=])
 
 AC_ARG_WITH(hook-scripts-path,
@@ -252,7 +252,12 @@ AS_IF([test "x$rtc_date" != "xno"], [
 
 AS_IF([test "x$with_keventd" != "xno"], [with_keventd=yes])
 
-AS_IF([test "x$with_sulogin" != "xno"], [with_sulogin=yes])
+AS_IF([test "x$with_sulogin" != "xno"], [
+	AS_IF([test "x$sulogin" = "xyes"], [
+		sulogin=root])
+	with_sulogin=yes
+        AC_DEFINE_UNQUOTED(SULOGIN_USER, "$sulogin", [Built-in sulogin user, default: root])], [
+	sulogin=])
 
 AS_IF([test "x$with_watchdog" != "xno"], [
 	AS_IF([test "x$watchdog" = "xyes"], [
@@ -344,7 +349,7 @@ Optional features:
   Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
   Built-in keventd......: $with_keventd
-  Built-in sulogin......: $with_sulogin
+  Built-in sulogin......: $with_sulogin $sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
   Skip fsck check.......: $enable_fastboot

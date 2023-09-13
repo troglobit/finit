@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <crypt.h>
 #include <err.h>
 #include <paths.h>
@@ -31,6 +33,10 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+
+#ifndef SULOGIN_USER
+#define SULOGIN_USER "root"
+#endif
 
 /* getpwnam() cannot be used when statically linked */
 static int get_passwd(struct passwd *pw)
@@ -44,13 +50,13 @@ static int get_passwd(struct passwd *pw)
 		return 1;
 
 	while ((tmp = fgets(buf, sizeof(buf), fp))) {
-		if (!strstr(buf, ":0:0:"))
-			continue;	/* not uid 0 */
-
 		ptr = strsep(&tmp, ":");
 		if (!ptr)
 			break;
+
 		pw->pw_name = strdup(ptr);
+		if (!pw->pw_name || strcmp(pw->pw_name, SULOGIN_USER))
+			continue;
 
 		ptr = strsep(&tmp, ":");
 		if (!ptr)
