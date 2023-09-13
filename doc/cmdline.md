@@ -89,10 +89,11 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
     **Note:** in this mode `initctl` will not work.  Correct the problem
     and use `reboot -f` to force reboot.
 
-* `single`, or `S`: Single user mode, runlevel 1, in Finit.  Useful to
-    debug problems with the regular runlevel.  All services and TTYs in
-    `[1]` will be started, so a `tty [1] @console nologin` configuration
-    presents you with a root console without login.
+* `single`, or `S`: Overrides the configured runlevel (default: 2) to go
+    to after bootstrap by forcing it to runlevel 1, this is also known
+    as single user mode.  Useful to debug startup problems.  All services
+    and TTYs in `[1]` will be started, so a `tty [1] @console nologin`
+    configuration presents you with a root console without login.
 
  * `1-9`, except `6`: override the configured `runlevel`.  Like the `S`
    and `rescue`, giving a single number on the kernel command line tells
