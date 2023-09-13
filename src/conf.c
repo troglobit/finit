@@ -246,10 +246,12 @@ static void parse_arg(char *arg)
 		return;
 	}
 
+#ifdef RESCUE_MODE
 	if (string_compare(arg, "rescue") || string_compare(arg, "recover")) {
 		rescue = 1;
 		return;
 	}
+#endif
 
 	if (string_compare(arg, "single") || string_compare(arg, "S")) {
 		single = 1;

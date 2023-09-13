@@ -1141,6 +1141,10 @@ Finit supports a rescue mode which is activated by the `rescue` option
 on the kernel command line.  See [cmdline docs](cmdline.md) for how to
 activate it.
 
+This rescue mode can be disabled at configure time using:
+
+    configure --without-rescue
+
 The rescue mode comes in two flavors; *traditional* and *fallback*.
 
 > **Note:** in this mode `initctl` will not work.  Use the `-f` flag to

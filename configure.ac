@@ -71,7 +71,7 @@ AC_ARG_ENABLE(redirect,
 	enable_redirect=yes])
 
 AC_ARG_ENABLE(logrotate,
-        AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp, default enabled]),,[
+        AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp]),,[
 	enable_logrotate=yes])
 
 AC_ARG_ENABLE(doc,
@@ -81,6 +81,10 @@ AC_ARG_ENABLE(doc,
 AC_ARG_ENABLE(contrib,
         AS_HELP_STRING([--disable-contrib], [Disable build and install of contrib section]),,[
 	enable_contrib=yes])
+
+AC_ARG_ENABLE([rescue],
+	AS_HELP_STRING([--disable-rescue], [Disable potentially unsafe rescue mode]),,
+	[enable_rescue=yes])
 
 # Check for extra plugins to enable
 AC_ARG_ENABLE(all_plugins,
@@ -184,6 +188,9 @@ AS_IF([test "x$enable_redirect" = "xyes"], [
 ### Disable features ###########################################################################
 AS_IF([test "x$enable_logrotate" != "xno"], [
 	AC_DEFINE(LOGROTATE_ENABLED, 1, [Enable built-in rotation of /var/log/wtmp et al.])])
+
+AS_IF([test "x$enable_rescue" != "xno"], [
+	AC_DEFINE([RESCUE_MODE], 1, [Define to enable support for rescue mode.])])
 
 AM_CONDITIONAL(LOGROTATE, [test "x$enable_logrotate" = "xyes"])
 
@@ -355,6 +362,7 @@ Optional features:
   Skip fsck check.......: $enable_fastboot
   Run fsck fix mode.....: $enable_fsckfix
   Redirect output.......: $enable_redirect
+  Rescue mode...........: $enable_rescue
   Default hostname......: $hostname
   Default group.........: $group
   Default runlevel......: $runlevel

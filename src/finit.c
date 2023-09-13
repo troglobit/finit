@@ -649,8 +649,10 @@ int main(int argc, char *argv[])
 	/*
 	 * In case of emergency.
 	 */
+#ifdef RESCUE_MODE
 	if (rescue)
 		rescue = sulogin(0);
+#endif
 
 	/*
 	 * Load plugins early, the first hook is in banner(), so we

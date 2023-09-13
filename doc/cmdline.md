@@ -86,6 +86,8 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
     the system booted in a limited fallback mode.  See [config.md][]
     for more information.
 
+    This option can be disabled with `configure --without-rescue`
+
     **Note:** in this mode `initctl` will not work.  Correct the problem
     and use `reboot -f` to force reboot.
 
