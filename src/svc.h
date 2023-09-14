@@ -85,6 +85,7 @@ typedef enum {
 
 #define MAX_ID_LEN       16
 #define MAX_ARG_LEN      64
+#define MAX_CMD_LEN      256
 #define MAX_IDENT_LEN    (MAX_ARG_LEN + MAX_ID_LEN + 1)
 #define MAX_STR_LEN      64
 #define MAX_COND_LEN     (MAX_ARG_LEN * 3)
@@ -118,7 +119,7 @@ typedef struct svc {
 	int            sighalt;        /* Signal to stop process, default: SIGTERM */
 	int            killdelay;      /* Delay in msec before sending SIGKILL */
 	pid_t          oldpid, pid;
-	char           pidfile[256];
+	char           pidfile[MAX_CMD_LEN];
 	long           start_time;     /* Start time, as seconds since boot, from sysinfo() */
 	int            started;	       /* Set for run/task/sysv to track if started */
 	int            status;	       /* From waitpid() when process is collected */
@@ -181,15 +182,15 @@ typedef struct svc {
 	char	       group[MAX_USER_LEN];
 
 	/* Command, arguments and service description */
-	char	       cmd[MAX_ARG_LEN];
-	char	       args[MAX_NUM_SVC_ARGS][MAX_ARG_LEN];
+	char	       cmd[MAX_CMD_LEN];
+	char	       args[MAX_NUM_SVC_ARGS][MAX_CMD_LEN];
 	int            args_dirty;
 	char           conflict[MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
-	char	       env[MAX_ARG_LEN];
-	char	       pre_script[MAX_ARG_LEN];
-	char	       post_script[MAX_ARG_LEN];
-	char	       ready_script[MAX_ARG_LEN];
+	char	       env[MAX_CMD_LEN];
+	char	       pre_script[MAX_CMD_LEN];
+	char	       post_script[MAX_CMD_LEN];
+	char	       ready_script[MAX_CMD_LEN];
 
 	/*
 	 * Used to forcefully kill services that won't shutdown on

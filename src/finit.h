@@ -60,7 +60,7 @@
 #define _PATH_SULOGIN           FINIT_EXECPATH_ "/sulogin"
 #define _PATH_GETTY             FINIT_EXECPATH_ "/getty"
 
-#define CMD_SIZE                256
+#define CMD_SIZE                1024
 #define LINE_SIZE               1024
 #define BUF_SIZE                4096
 

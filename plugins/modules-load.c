@@ -101,7 +101,7 @@ static int modules_load(const char *file, int index)
 	}
 
 	while ((line = fparseln(fp, NULL, NULL, NULL, 0))) {
-		char cmd[CMD_SIZE * 2], *mod, *args, *set;
+		char cmd[CMD_SIZE], *mod, *args, *set;
 
 		/*
 		 * fparseln() skips regular UNIX comments only.
