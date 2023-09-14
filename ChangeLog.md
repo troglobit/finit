@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.5][] - 2023-09-14
+[4.5][] - 2023-09-15
 --------------------
 
 ### Changes
@@ -26,6 +26,7 @@ All relevant changes are documented in this file.
   hierarchy in `/etc/finit.d/`
 - The `runparts` code has been split into `/libexec/finit/runparts`
 - Add SysV Init Compatibility section to documentation
+- Increased MAX path for commands, and arguments: 64 -> 256
 
 ### Fixes
 - Fix #227: believed to have been fixed in [4.3][], the root cause was
