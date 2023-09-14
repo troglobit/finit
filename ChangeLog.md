@@ -9,8 +9,7 @@ All relevant changes are documented in this file.
 
 ### Changes
 - Refactor `runparts` and `/etc/rc.local` to no longer block the main
-  loop, allowing these scripts to call `initctl` to interact with Finit.
-  Still in a limited way due to them being used at bootstrap, issue #356
+  loop, allowing `initctl` calls to interact with Finit.  Issue #356
 - Refactor the `run` stanza to no longer block the main loop, issue #362
 - Allow `sulogin` with a user different from `root`, issue #357
 - Allow disabling invocation of rescue mode from kernel command line
@@ -29,14 +28,14 @@ All relevant changes are documented in this file.
 - Increased MAX path for commands, and arguments: 64 -> 256
 
 ### Fixes
-- Fix #227: believed to have been fixed in [4.3][], the root cause was
+- Fix #227: believed to have been fixed in v4.3, the root cause was
   actually that Finit was waiting for a process that was no longer in
   the system.  The fix is to ask the kernel on process-stop-timeout and
   replay the lost PID so that Finit can continue with reboot/shutdown
 - Fix #358: fix inotify events for `/etc/finit.conf`, improved log
   messages and error handling
 - Fix #361: cgroup move fail if run/task/services start as non-root.
-  Regression in the [4.4][] release cycle while adding support for the
+  Regression in the v4.4 release cycle while adding support for the
   pre:/post:/ready: scripts.  Now the latter scripts also properly run
   in their correct cgroup
 - The `runparts` executor now skips backup files (`foo~`)
