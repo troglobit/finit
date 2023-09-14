@@ -334,7 +334,7 @@ echo "$finit_ppid" > "$SYSROOT"/running_test.pid
 log "$color_reset" 'Setup of test environment done, waiting for Finit ...' ''
 
 finit_pid=$(retry "pgrep -P $finit_ppid")
-echo "Finit running as $finit_pid"
+echo "Finit running as PID $finit_pid"
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
 
