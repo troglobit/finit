@@ -60,7 +60,6 @@ static int init(char *progname, char *devnode)
 	signal(SIGPWR,  sighandler);
 
 	openlog(&progname[1], LOG_CONS | LOG_PID, LOG_DAEMON);
-	syslog(LOG_INFO, "Finit v%s watchdog %s starting ...", VERSION, devnode);
 
 	fd = open(devnode, O_WRONLY);
 	if (fd == -1)
