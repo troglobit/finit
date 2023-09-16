@@ -17,7 +17,7 @@ PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig ./configure	\
 		 --prefix=/usr			--exec-prefix=			\
 		 --sysconfdir=/etc		--localstatedir=/var		\
 		 --enable-dbus-plugin		--enable-x11-common-plugin	\
-		 --enable-alsa-utils-plugin	--with-watchdog			\
+		 --enable-alsa-utils-plugin	--without-watchdog		\
 		 --with-keventd			--with-sulogin
 
 echo
