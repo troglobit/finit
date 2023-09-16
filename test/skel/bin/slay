@@ -2,50 +2,51 @@
 
 nm=$1
 
-# shellcheck disable=SC2046
 getpid()
 {
-	initctl status "$1" |awk '/PID :/{ print $3; }'
+    initctl status "$1" |awk '/PID :/{ print $3; }'
 }
 
 pid=$(getpid "$nm")
 if [ -f oldpid ]; then
-	oldpid=$(cat oldpid)
+    oldpid=$(cat oldpid)
+    if [ "$oldpid" = "$pid" ]; then
+	echo "Looks bad, wait for it ..."
+	sleep 3
+	pid=$(getpid "$nm")
 	if [ "$oldpid" = "$pid" ]; then
-		echo "Looks bad, wait for it ..."
-		sleep 3
-		pid=$(getpid "$nm")
-		if [ "$oldpid" = "$pid" ]; then
-			echo "Finit did not deregister old PID $oldpid vs $pid"
-			initctl status "$nm"
-			ps
-			echo "Reloading finit ..."
-			initctl reload
-			sleep 1
-			initctl status "$nm"
-			exit 1
-		fi
+	    echo "Finit did not deregister old PID $oldpid vs $pid"
+	    initctl status "$nm"
+	    ps
+	    echo "Reloading finit ..."
+	    initctl reload
+	    sleep 1
+	    initctl status "$nm"
+	    exit 1
 	fi
+    fi
 fi
 
 timeout=50
 while [ "$pid" -le 1 ]; do
-	sleep 0.1
-	pid=$(getpid "$nm")
-	if [ "$pid" -le 1 ]; then
-		timeout=$((timeout - 1))
-		if [ "$timeout" -gt 0 ]; then
-			continue
-		fi
-
-		echo "Got a bad PID: $pid, aborting ..."
-		ps
-		sleep 1
-		initctl status "$nm"
-		ps
-		exit 1
+    sleep 0.1
+    pid=$(getpid "$nm")
+    if [ "$pid" -le 1 ]; then
+	timeout=$((timeout - 1))
+	if [ "$timeout" -gt 0 ]; then
+	    continue
 	fi
-	break
+
+	if [ $pid -ne 0 ]; then
+	    echo "Got a bad PID: $pid, aborting ..."
+	    ps
+	    sleep 1
+	    initctl status "$nm"
+	    ps
+	fi
+	exit 1
+    fi
+    break
 done
 
 echo "$pid" > /tmp/oldpid
