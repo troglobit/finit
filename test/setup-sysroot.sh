@@ -13,11 +13,11 @@ FINITBIN="$(pwd)/$top_builddir/src/finit" DEST="$SYSROOT" make -f "$srcdir/lib/s
 
 # Drop plugins we don't need in test, only causes confusing FAIL in logs.
 for plugin in tty.so urandom.so rtc.so modprobe.so hotplug.so; do
-	find "$SYSROOT" -name $plugin -delete
+    find "$SYSROOT" -name $plugin -delete
 done
 
 # Drop system .conf files we don't need in test, same as above
 for conf in hotplug.conf; do
-	find "$SYSROOT" -name $conf -delete
+    find "$SYSROOT" -name $conf -delete
 done
 

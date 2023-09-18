@@ -9,52 +9,52 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
-	say "Running test teardown."
+    say "Test done $(date)"
+    say "Running test teardown."
 
-	run "rm -f $FINIT_CONF /tmp/post"
+    run "rm -f $FINIT_CONF /tmp/post"
 }
 
 # Cannot run mknod as non-root even in a chroot
 # touch is close enough for our needs
 mkdev()
 {
-	dir=$(dirname "$1")
-	run "mkdir -p $dir"
-	run "touch $1"
+    dir=$(dirname "$1")
+    run "mkdir -p $dir"
+    run "touch $1"
 }
 
 rmdev()
 {
-	run "rm $1"
+    run "rm $1"
 }
 
 test_one()
 {
-	cond="$1"
-	node="/$cond"
+    cond="$1"
+    node="/$cond"
 
-	say "Checking cond $cond and device $node ..."
-	run "echo service log:null \<$cond\> serv -np >> $FINIT_CONF"
-	run "cat $FINIT_CONF"
-	run "initctl reload"
+    say "Checking cond $cond and device $node ..."
+    run "echo service log:null \<$cond\> serv -np >> $FINIT_CONF"
+    run "cat $FINIT_CONF"
+    run "initctl reload"
 
-	assert_status "serv" "waiting"
+    assert_status "serv" "waiting"
 
-	mkdev "$node"
-	assert_status "serv" "running"
+    mkdev "$node"
+    assert_status "serv" "running"
 
-	rmdev "$node"
-	assert_status "serv" "waiting"
+    rmdev "$node"
+    assert_status "serv" "waiting"
 
-	say "Cleaning up ..."
-	run "rm $FINIT_CONF"
-	run "initctl reload"
+    say "Cleaning up ..."
+    run "rm $FINIT_CONF"
+    run "initctl reload"
 }
 
 # shellcheck source=/dev/null

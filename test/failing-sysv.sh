@@ -8,16 +8,16 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
-	run "mkdir -p /etc/default"
+    say "Test start $(date)"
+    run "mkdir -p /etc/default"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 
-	say "Running test teardown."
-	run "rm -f $FINIT_CONF"
+    say "Running test teardown."
+    run "rm -f $FINIT_CONF"
 }
 
 # shellcheck source=/dev/null

@@ -6,10 +6,10 @@ TEST_DIR=$(dirname "$0")
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 
-	say "Running test teardown."
-	run "rm -f $FINIT_RCSD/service.conf"
+    say "Running test teardown."
+    run "rm -f $FINIT_RCSD/service.conf"
 }
 
 # shellcheck source=/dev/null

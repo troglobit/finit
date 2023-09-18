@@ -8,10 +8,10 @@ TEST_DIR=$(dirname "$0")
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 
-	say "Running test teardown."
-	run "rm -f $FINIT_CONF"
+    say "Running test teardown."
+    run "rm -f $FINIT_CONF"
 }
 
 # shellcheck source=/dev/null
@@ -35,9 +35,9 @@ say 'Simulate service crash (kill -9 ..)'
 i=0
 laps=1000
 while [ $i -lt $laps ]; do
-	i=$((i + 1))
-	say "Lap $i/$laps, killing service ..." # we have this, no sleep needed
-	run "slay service.sh"
+    i=$((i + 1))
+    say "Lap $i/$laps, killing service ..." # we have this, no sleep needed
+    run "slay service.sh"
 done
 
 retry 'assert_new_pid service.sh /run/service.pid'

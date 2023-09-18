@@ -5,51 +5,51 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 
-	say "Running test teardown."
-	run "rm -f $FINIT_CONF"
+    say "Running test teardown."
+    run "rm -f $FINIT_CONF"
 }
 
 test_one()
 {
-	pidfn=$1
-	service=$2
+    pidfn=$1
+    service=$2
 
-	say "Add service stanza '$service' to $FINIT_CONF ..."
-	run "echo '$service' > $FINIT_CONF"
+    say "Add service stanza '$service' to $FINIT_CONF ..."
+    run "echo '$service' > $FINIT_CONF"
 
-	say 'Reload Finit'
-	#run "initctl debug"
-	run "initctl reload"
-	#run "initctl status"
-	#run "ps"
+    say 'Reload Finit'
+    #run "initctl debug"
+    run "initctl reload"
+    #run "initctl status"
+    #run "ps"
 
-	#run "initctl status"
-	#run "ps"
-	#run "initctl status serv"
+    #run "initctl status"
+    #run "ps"
+    #run "initctl status serv"
 
-	retry 'assert_num_children 1 serv'
-	retry "assert_has_pidfile $pidfn" 1
+    retry 'assert_num_children 1 serv'
+    retry "assert_has_pidfile $pidfn" 1
 
-	say 'Stop the service'
-	run "initctl stop serv"
+    say 'Stop the service'
+    run "initctl stop serv"
 
-	retry 'assert_num_children 0 serv'
+    retry 'assert_num_children 0 serv'
 
-	say 'Start the service again'
-	run "initctl start serv"
+    say 'Start the service again'
+    run "initctl start serv"
 
-	retry 'assert_num_children 1 serv'
+    retry 'assert_num_children 1 serv'
 
-	say "Done, drop service from $FINIT_CONF ..."
-	run "rm $FINIT_CONF"
-	run "initctl reload"
+    say "Done, drop service from $FINIT_CONF ..."
+    run "rm $FINIT_CONF"
+    run "initctl reload"
 }
 
 # shellcheck source=/dev/null

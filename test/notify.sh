@@ -8,16 +8,16 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
-	run "mkdir -p /etc/default"
+    say "Test start $(date)"
+    run "mkdir -p /etc/default"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
-	say "Running test teardown."
+    say "Test done $(date)"
+    say "Running test teardown."
 
-	run "rm -f $FINIT_CONF"
+    run "rm -f $FINIT_CONF"
 }
 
 test_one()
@@ -37,11 +37,11 @@ test_one()
     run "initctl reload"
 
     sleep 1
-#    run "initctl status serv"
+    #    run "initctl status serv"
     assert_status "serv" "running"
 
     sleep 2
-#    run "initctl cond dump"
+    #    run "initctl cond dump"
     assert_cond "service/serv/ready"
 
     say "Verify 'ready' is set after SIGHUP ..."
@@ -52,7 +52,7 @@ test_one()
 
     # Issue #343
     say "Verify 'ready' is reasserted if service crashes and is restarted ..."
-#    run "initctl status serv"
+    #    run "initctl status serv"
     run "initctl signal serv 9"
     retry 'assert_status "serv" "running"' 2 1
     retry 'assert_cond "service/serv/ready"' 3 1
@@ -67,7 +67,7 @@ test_one()
     say "Verify 'ready' is reasserted on 'initctl reload' ..."
     run "initctl reload"
     sleep 1
-#    run "initctl; initctl cond dump"
+    #    run "initctl; initctl cond dump"
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
@@ -75,12 +75,12 @@ test_one()
     # 'started' when they created their PID file.  The serv test daemon
     # waits 3 sec between pidfile and notify to trigger this bug.
     if [ "$type" != "native" ]; then
-	    say "Verify 'ready' is *not* asserted immediately on restart + reload"
-	    run "initctl restart serv"
-	    run "initctl reload"
-	    sleep 1
-	    assert_nocond "service/serv/ready"
-	    retry 'assert_cond "service/serv/ready"' 5 0.5
+	say "Verify 'ready' is *not* asserted immediately on restart + reload"
+	run "initctl restart serv"
+	run "initctl reload"
+	sleep 1
+	assert_nocond "service/serv/ready"
+	retry 'assert_cond "service/serv/ready"' 5 0.5
     fi
 
     say "Verify 'ready' is deasserted on stop ..."
@@ -93,9 +93,9 @@ test_one()
     run "rm -f $FINIT_CONF"
     run "initctl reload"
 
-    # sleep 2
-    # num=$(run "find /proc/1/fd |wc -l")
-    # say "finit: number of open file descriptors after test: $num"
+#    sleep 2
+#    num=$(run "find /proc/1/fd |wc -l")
+#    say "finit: number of open file descriptors after test: $num"
 }
 
 # shellcheck source=/dev/null

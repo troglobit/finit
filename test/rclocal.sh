@@ -12,12 +12,12 @@ RCLOCAL="echo 'KILROY WAS HERE' > /tmp/rclocal"
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 }
 
 sleep 1

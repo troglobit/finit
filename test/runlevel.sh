@@ -9,12 +9,12 @@ FINIT_RUNLEVEL=9
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 }
 
 # shellcheck source=/dev/null
@@ -23,7 +23,7 @@ test_teardown()
 say 'Check runlevel'
 lvl=$(run "initctl runlevel | awk '{print \$2;}'")
 if [ "$lvl" -eq "9" ]; then
-	return 0
+    return 0
 fi
 
 return 1

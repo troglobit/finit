@@ -6,39 +6,39 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 
-	say "Running test teardown."
-	run "rm -f $FINIT_CONF"
+    say "Running test teardown."
+    run "rm -f $FINIT_CONF"
 }
 
 test_one()
 {
-	service=$1
-	file=/tmp/ready
+    service=$1
+    file=/tmp/ready
 
-	say "Add service stanza '$service' to $FINIT_CONF ..."
-	run "echo '$service' > $FINIT_CONF"
+    say "Add service stanza '$service' to $FINIT_CONF ..."
+    run "echo '$service' > $FINIT_CONF"
 
-	say 'Reload Finit'
-	run "initctl reload"
+    say 'Reload Finit'
+    run "initctl reload"
 
-	retry 'assert_num_children 1 serv'
-	assert_file_contains "$file" "READY"
-	run "rm -f $file"
+    retry 'assert_num_children 1 serv'
+    assert_file_contains "$file" "READY"
+    run "rm -f $file"
 
-	say 'Stop the service'
-	run "initctl stop serv"
-	retry 'assert_num_children 0 serv'
+    say 'Stop the service'
+    run "initctl stop serv"
+    retry 'assert_num_children 0 serv'
 
-	say "Done, drop service from $FINIT_CONF ..."
-	run "rm $FINIT_CONF"
-	run "initctl reload"
+    say "Done, drop service from $FINIT_CONF ..."
+    run "rm $FINIT_CONF"
+    run "initctl reload"
 }
 
 # shellcheck source=/dev/null

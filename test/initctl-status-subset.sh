@@ -9,28 +9,28 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
+    say "Test done $(date)"
 
-	say "Running test teardown."
-	run "rm -f $FINIT_CONF"
+    say "Running test teardown."
+    run "rm -f $FINIT_CONF"
 }
 
 test_init()
 {
-	run "echo '# Three foo and one bar enter Finit' > $FINIT_CONF"
+    run "echo '# Three foo and one bar enter Finit' > $FINIT_CONF"
 }
 
 test_add_one()
 {
-	service=$1
+    service=$1
 
-	say "Add service stanza '$service' to $FINIT_CONF ..."
-	run "echo '$service' >> $FINIT_CONF"
+    say "Add service stanza '$service' to $FINIT_CONF ..."
+    run "echo '$service' >> $FINIT_CONF"
 }
 
 # shellcheck source=/dev/null

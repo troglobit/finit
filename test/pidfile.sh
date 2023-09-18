@@ -7,32 +7,32 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-	say "Test start $(date)"
+    say "Test start $(date)"
 }
 
 test_teardown()
 {
-	say "Test done $(date)"
-	say "Running test teardown."
+    say "Test done $(date)"
+    say "Running test teardown."
 
-	run "rm -f $FINIT_CONF" "/tmp/post"
+    run "rm -f $FINIT_CONF" "/tmp/post"
 }
 
 test_one()
 {
-	pidfn=$1
-	service=$2
+    pidfn=$1
+    service=$2
 
-	sep
-	say "Add service stanza '$service' to $FINIT_CONF ..."
-	run "echo '$service' > $FINIT_CONF"
-	run "initctl reload"
+    sep
+    say "Add service stanza '$service' to $FINIT_CONF ..."
+    run "echo '$service' > $FINIT_CONF"
+    run "initctl reload"
 
-	assert_is_pidfile "serv" "$pidfn"
+    assert_is_pidfile "serv" "$pidfn"
 
-	say "Done, drop service from $FINIT_CONF ..."
-	run "rm $FINIT_CONF"
-	run "initctl reload"
+    say "Done, drop service from $FINIT_CONF ..."
+    run "rm $FINIT_CONF"
+    run "initctl reload"
 }
 
 # shellcheck source=/dev/null

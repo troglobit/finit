@@ -342,17 +342,17 @@ echo "Finit running as PID $finit_pid"
 i=0
 set +u
 while [ -z "$BOOTSTRAP" ] && [ $i -lt 10 ]; do
-	lvl=$(texec sh -c "initctl runlevel | awk '{print \$2;}'")
-	if [ "$lvl" = "$FINIT_RUNLEVEL" ]; then
-		say "Reached runlevel $FINIT_RUNLEVEL, releasing test."
-		break;
-	fi
-	i=$((i + 1))
-	sleep 1
+    lvl=$(texec sh -c "initctl runlevel | awk '{print \$2;}'")
+    if [ "$lvl" = "$FINIT_RUNLEVEL" ]; then
+	say "Reached runlevel $FINIT_RUNLEVEL, releasing test."
+	break;
+    fi
+    i=$((i + 1))
+    sleep 1
 done
 set -u
 
 if type test_setup > /dev/null 2>&1 ; then
-	test_setup
+    test_setup
 fi
 wdstart $TEST_TIMEOUT
