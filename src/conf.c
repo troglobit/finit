@@ -62,8 +62,25 @@ static TAILQ_HEAD(, env_entry) env_list = TAILQ_HEAD_INITIALIZER(env_list);
 struct rlimit initial_rlimit[RLIMIT_NLIMITS];
 struct rlimit global_rlimit[RLIMIT_NLIMITS];
 
+/*
+ * --enable-fastboot => fsck_mode: NULL => no fsck by default
+ * --enable-fsckfix  => fsck_mode: "-f" + fsck_repair: "y"
+ */
+#ifdef FSCK_FIX
+# ifdef FAST_BOOT
+char *fsck_mode = NULL;
+# else
+char *fsck_mode = "-f";
+# endif
+char *fsck_repair = "-y";
+#else
+# ifdef FAST_BOOT
+char *fsck_mode = NULL;
+# else
 char *fsck_mode = "";
+# endif
 char *fsck_repair = "-p";
+#endif
 
 char cgroup_current[16]; /* cgroup.NAME sets current cgroup for a set of services */
 

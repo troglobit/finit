@@ -12,6 +12,15 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `debug`: Enable kernel debug.  Debug messages are printed to the
    console until Finit starts up, unless `loglevel=7` (below) is used.
 
+* `fsck.mode=<auto,force,skip>`, default: `auto`, unless built with
+  `configure --enable-fastboot`, in which case the default is `skip`
+
+* `fsck.repair=<preen,yes,no>`, default: `preen`, unless built with
+  `configure --enable-fsckfix`, in which case the default is `yes`.
+  This configure option also sets `fsck.mode=force`, unless fastboot
+  is selected at the same time.  I.e., the `--enable-fastboot` build
+  option overrides the `fsck.mode` default value.
+
 * `finit.cond=foo[,bar[,baz]]`: set `<boot/foo>` condition, optionally
   multiple conditions can be set using the same option, separated with a
   comma.  Alternatively, multiple `foo.cond=arg` can be given.  Each will
