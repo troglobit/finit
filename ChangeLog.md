@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.5][] - 2023-09-15
+[4.5][] - 2023-09-24
 --------------------
 
 ### Changes
@@ -24,8 +24,12 @@ All relevant changes are documented in this file.
 - Update `finit.conf(5)` man page with the recommended directory
   hierarchy in `/etc/finit.d/`
 - The `runparts` code has been split into `/libexec/finit/runparts`
+- The `runparts` command now takes two options: `sysv` and `progress`.
+  The former ensures only `SNNfoo` and `KNNfoo` scripts are run.
 - Add SysV Init Compatibility section to documentation
 - Increased MAX path for commands, and arguments: 64 -> 256
+- The bundled watchdog daemon no longer tries to log at startup, because
+  syslog is not available yet, any startup message leak to console
 
 ### Fixes
 - Fix #227: believed to have been fixed in v4.3, the root cause was
@@ -38,6 +42,9 @@ All relevant changes are documented in this file.
   Regression in the v4.4 release cycle while adding support for the
   pre:/post:/ready: scripts.  Now the latter scripts also properly run
   in their correct cgroup
+- Fix #366: document `fsck.*` kernel command line options and simplify
+  the configure flags `--enable-fsckfix` and `--enable-fastboot` to
+  only adjust the default values for the `fsck.*` options.
 - The `runparts` executor now skips backup files (`foo~`)
 - The `runparts` stanza now properly appends ` start` to scripts that
   start with `S[0-9]+`.  This has been broken for a very long time.
