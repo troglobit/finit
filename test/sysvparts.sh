@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Verifies basic runparts behavior: to run all scripts in a directory at
+# Verifies SysV runparts behavior: to run all scripts in a directory at
 # the end of system bootstrap, right before calling /etc/rc.local:
 #
-#  - only executable scripts should be called
+#  - only SNNfoo or KNNfoo executable scripts should be called
 #  - always in alphabetical order
 #  - SNNfoo should be called with a 'start' argument
 #  - KNNfoo should be called with a 'stop' argument
@@ -13,7 +13,7 @@ TEST_DIR=$(dirname "$0")
 #DEBUG=1
 
 # shellcheck disable=SC2034
-BOOTSTRAP="runparts /etc/rc.d"
+BOOTSTRAP="runparts sysv /etc/rcS.d"
 
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
@@ -37,5 +37,6 @@ while true; do
     sleep 1
 done
 
-texec diff -u /usr/share/runparts/ref.log /tmp/runparts.log
-texec cmp /usr/share/runparts/ref.log /tmp/runparts.log || fail "runparts in wrong order"
+texec cat /tmp/sysv.log
+texec diff -u /usr/share/runparts/sysv.log /tmp/sysv.log
+texec cmp /usr/share/runparts/sysv.log /tmp/sysv.log || fail "runparts sysv in wrong order"

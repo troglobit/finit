@@ -83,7 +83,7 @@ static void run_env(const char *env[])
 	}
 }
 
-int run_parts(char *dir, char *cmd, const char *env[], int progress)
+int run_parts(char *dir, char *cmd, const char *env[], int progress, int sysv)
 {
 	size_t cmdlen = cmd ? strlen(cmd) : strlen("start");
 	struct dirent **d;
@@ -124,6 +124,11 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 		/* skip non-executable files and directories */
 		if (!S_ISEXEC(st.st_mode) || S_ISDIR(st.st_mode)) {
 			dbg("skipping %s not an executable or is a directory", path);
+			continue;
+		}
+
+		if (sysv && name[0] != 'S' && name[0] != 'K') {
+			dbg("S-only flag set, skipping non-SysV script: %s", name);
 			continue;
 		}
 
@@ -179,16 +184,16 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress)
 #ifndef __FINIT__
 static int usage(int rc)
 {
-	warnx("usage: runparts [-dh?] DIRECTORY");
+	warnx("usage: runparts [-dhps?] DIRECTORY");
 	return rc;
 }
 
 int main(int argc, char *argv[])
 {
-	int rc, c, progress = 0;
+	int rc, c, progress = 0, sysv = 0;
 	char *dir;
 
-	while ((c = getopt(argc, argv, "dh?p")) != EOF) {
+	while ((c = getopt(argc, argv, "dh?ps")) != EOF) {
 		switch(c) {
 		case 'd':
 			debug = 1;
@@ -198,6 +203,9 @@ int main(int argc, char *argv[])
 			return usage(0);
 		case 'p':
 			progress = 1;
+			break;
+		case 's':
+			sysv = 1;
 			break;
 		default:
 			return usage(1);
@@ -213,7 +221,7 @@ int main(int argc, char *argv[])
 
 	prctl(PR_SET_CHILD_SUBREAPER, 1);
 
-	rc = run_parts(dir, NULL, NULL, progress);
+	rc = run_parts(dir, NULL, NULL, progress, sysv);
 	if (rc == -1)
 		err(1, "failed run-parts %s", dir);
 

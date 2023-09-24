@@ -82,6 +82,10 @@ char *fsck_mode = "";
 char *fsck_repair = "-p";
 #endif
 
+char *runparts = NULL;
+int   runparts_progress;
+int   runparts_sysv;
+
 char cgroup_current[16]; /* cgroup.NAME sets current cgroup for a set of services */
 
 struct conf_change {
@@ -795,6 +799,15 @@ static int parse_static(char *line, int is_rcsd)
 
 	if (BOOTSTRAP && MATCH_CMD(line, "runparts ", x)) {
 		if (runparts) free(runparts);
+		runparts_progress = runparts_sysv = 0;
+		while (x) {
+			if (MATCH_CMD(x, "progress", x))
+				runparts_progress = 1;
+			else if (MATCH_CMD(x, "sysv", x))
+				runparts_sysv = 1;
+			else
+				break;
+		}
 		runparts = strdup(strip_line(x));
 		return 0;
 	}
@@ -1480,7 +1493,14 @@ int conf_init(uev_ctx_t *ctx)
 	 */
 	if (runparts && fisdir(runparts) && !rescue) {
 		char conf[sizeof(_PATH_RUNPARTS) + strlen(runparts) + 100];
-		char *args = debug ? "-d" : "-p";
+		char args[10] = { 0 };
+
+		if (debug)
+			strlcat(args, "-d ", sizeof(args));
+		if (runparts_progress)
+			strlcat(args, "-p ", sizeof(args));
+		if (runparts_sysv)
+			strlcat(args, "-s ", sizeof(args));
 
 		snprintf(conf, sizeof(conf), "[S] <int/bootstrap> log:console %s %s %s"
 			 " -- Calling runparts %s in the background",

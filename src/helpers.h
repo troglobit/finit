@@ -89,7 +89,7 @@ int     exec_runtask    (char *cmd, char *args[]);
 pid_t   run_getty       (char *tty, char *cmd, char *args[], int noclear, int nowait, struct rlimit rlimit[]);
 pid_t   run_sh          (char *tty, int noclear, int nowait, struct rlimit rlimit[]);
 pid_t   run_bg          (char *cmd, char *args[]);
-int     run_parts       (char *dir, char *cmd, const char *env[], int progress);
+int     run_parts       (char *dir, char *cmd, const char *env[], int progress, int sysv);
 
 /*
  * Defaults to user "root" and group "wheel" (root) if:

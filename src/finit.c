@@ -75,7 +75,6 @@ char *fstab     = NULL;
 char *sdown     = NULL;
 char *network   = NULL;
 char *hostname  = NULL;
-char *runparts  = NULL;
 char *osheading = NULL;
 
 uev_ctx_t *ctx  = NULL;		/* Main loop context */

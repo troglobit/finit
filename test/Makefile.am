@@ -2,9 +2,12 @@ SUBDIRS                  = lib src
 
 EXTRA_DIST		 = skel/bin/busybox-x86_64.sha256 skel/sbin/service.sh skel/etc/env  \
 			   skel/bin/pre.sh skel/bin/post.sh skel/bin/ready.sh skel/bin/slay  \
-			   skel/sbin/fail.sh skel/usr/share/runlevel/ref.log		     \
+			   skel/sbin/fail.sh skel/usr/share/runparts/ref.log		     \
+			   skel/usr/share/runparts/sysv.log	     			     \
 			   skel/etc/rc.d/foo.sh skel/etc/rc.d/S01abc.sh			     \
 			   skel/etc/rc.d/test.sh skel/etc/rc.d/S02def.sh		     \
+			   skel/etc/rcS.d/foo.sh skel/etc/rcS.d/test.sh			     \
+			   skel/etc/rcS.d/S01abc.sh skel/etc/rcS.d/S02def.sh		     \
 			   skel/cdrom/.empty skel/dev/shm/.empty skel/dev/pts/.empty	     \
 			   skel/etc/inittab skel/etc/hostname skel/etc/fstab 		     \
 			   skel/etc/init.d/rcS skel/etc/init.d/rcK skel/tmp/.empty	     \
@@ -41,6 +44,7 @@ EXTRA_DIST		+= runlevel.sh
 EXTRA_DIST		+= run-restart-forever.sh
 EXTRA_DIST		+= run-task-tricks.sh
 EXTRA_DIST		+= runparts.sh
+EXTRA_DIST		+= sysvparts.sh
 EXTRA_DIST		+= start-stop-service.sh
 EXTRA_DIST		+= start-stop-service-sub-config.sh
 EXTRA_DIST		+= start-kill-service.sh
@@ -80,6 +84,7 @@ TESTS			+= rclocal.sh
 TESTS			+= ready-serv.sh
 TESTS			+= restart-self.sh
 TESTS			+= runlevel.sh
+TESTS			+= sysvparts.sh
 TESTS			+= run-restart-forever.sh
 TESTS			+= run-task-tricks.sh
 TESTS			+= runparts.sh

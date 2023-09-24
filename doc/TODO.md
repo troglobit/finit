@@ -9,16 +9,6 @@ value in the project turned out to be:
 > systems, container, and dedicated server applications.
 
 
-Before Next Release
--------------------
-
-* When did runparts +arg break?
-* Should we update the =runparts DIR= syntax to =runparts [progress] [debug] DIR=?
-* Add SNN-only option top runparts, for Buildroot
-* Calling `initctl runlevel` at bootstrap => N 10, what should it be?
-* Reindent all shell scripts in true emacs shell-script-mode (4 chars)
-
-
 Misc TODOs
 ----------
 

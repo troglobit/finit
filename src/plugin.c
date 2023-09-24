@@ -230,7 +230,7 @@ void plugin_script_run(hook_point_t no)
 	} else
 		env[2] = NULL;
 
-	run_parts(path, NULL, env, 0);
+	run_parts(path, NULL, env, 0, 0);
 }
 #else
 void plugin_script_run(hook_point_t no)

@@ -1,0 +1,2 @@
+/etc/rcS.d/S01abc.sh start
+/etc/rcS.d/S02def.sh start

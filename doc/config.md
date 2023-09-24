@@ -842,7 +842,7 @@ the above `kill:SEC` syntax.
 
 ### Run-parts Scripts
 
-**Syntax:** `runparts <DIR>`
+**Syntax:** `runparts [progress] [sysv] <DIR>`
 
 Call [run-parts(8)][] on `DIR` to run start scripts.  All executable
 files, or scripts, in the directory are called, in alphabetic order.
@@ -854,25 +854,23 @@ services, which Finit will then apply when changing runlevel from S to
 whatever the next runlevel is set to be (default 2).  E.g., generate a
 `/etc/chrony.conf` and call `initctl enable chronyd`.
 
+**Options:**
+
+ - `progress`: display the progress of each script being executed
+ - `sysv`: run only SysV style scripts, i.e., `SNNfoo`, or `KNNbar`,
+   where `NN` is a number (0-99).
+
+If global debug mode is enabled, the `runparts` program is also called
+with the debug flag.
+
 **Limitations:**
 
 Scripts called from `runparts`, or hook scripts (see below), are limited
-in what they can do and expect from Finit:
-
-  1. Finit is single threaded and all scripts executed from these two
-     mechanisms are limited to file system operations (early or late
-	 hooks may not have write access!) and standard UNIX programs.
-  2. Thus, it is *not possible* to call `initctl` to query status of
-     services since that calls Finit over the `/run/finit/socket`.
-  3. Confusingly enough, there are some commands to `initctl` that are
-     available; `ls`, `enable`, `disable`, `touch`, `create`, `delete`,
-     and all the `cond` commands.  Because all these are basically just
-     wrappers for manipulating files (again, write access for early/late
-     hooks may not be available).
-
-Also, similar to the `/etc/rc.local` shell script, make sure that all
-your services and programs either terminate or start in the background
-or you will block Finit.
+in their interaction with Finit.  Like the standalone `run` stanza and
+the `/etc/rc.local` shell script, Finit waits for their completion
+before continuing.  None of them can issue commands to start, stop, or
+restart other services.  Also, ensure all your services and programs
+either terminate or start in the background or you will block Finit.
 
 > **Note:** `runparts` scrips are only read and executed in runlevel S
 > ([bootstrap][]).  See [hook scripts](plugins.md#hooks) for other ways
@@ -1073,8 +1071,10 @@ sync(2) has been called, twice.
 SysV Init Compatibility
 -----------------------
 
-Finit comes with a few SysV Init compatibility features to ease the
-transition from a serialized boot process.
+It is not possible to run unmodified SysV init systems with Finit.  This
+was never the intention and is not the strength of Finit.  However, it
+comes with a few SysV Init compatibility features to ease the transition
+from a serialized boot process.
 
 ### `runparts DIRECTORY`
 
