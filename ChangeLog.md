@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.5][] - 2023-09-24
+[4.5][] - 2023-10-03
 --------------------
 
 ### Changes
@@ -16,6 +16,9 @@ All relevant changes are documented in this file.
 - Add `initctl -f` to force-skip asking Finit for existing services
   when creating new services during bootstrap, e.g. `/etc/rc.local`
 - `initctl runlevel` now returns `N S` instead of `N 10` in bootstrap
+- `initctl runlevel N` during bootstrap is now allowed.  It changes
+  the next runlevel to go to when bootstrap has completed.  Effectively
+  overriding the `runlevel N` statement in `/etc/finit.conf`
 - Improved logging on failure to `execvp()` a run/task/service, now
   with `errno`, e.g., "No such file or directory" when the command
   is missing from `$PATH`
@@ -30,6 +33,10 @@ All relevant changes are documented in this file.
 - Increased MAX path for commands, and arguments: 64 -> 256
 - The bundled watchdog daemon no longer tries to log at startup, because
   syslog is not available yet, any startup message leak to console
+- Extend `if:` option with runtime evaluation of conditions.  E.g., start
+  a task only `if:<run/foo/failure>` (here the run task 'foo' failed)
+- Document new `if:`, `conflict:`, `nowarn` options for run/task/service
+  first introduced in v4.4
 
 ### Fixes
 - Fix #227: believed to have been fixed in v4.3, the root cause was
