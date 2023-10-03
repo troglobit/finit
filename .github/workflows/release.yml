@@ -23,7 +23,7 @@ jobs:
         run: |
           ver=${GITHUB_REF#refs/tags/}
           echo "ver=${ver}" >> $GITHUB_OUTPUT
-          if echo $ver | grep -qE '[0-9.]+(-alpha|-beta|-rc)[0-9]*'; then
+          if echo $ver | grep -qE '^[0-9]+\.[0-9]+(\.[0-9]+)?(-alpha|-beta|-rc)[0-9]*$'; then
             echo "pre=true"  >> $GITHUB_OUTPUT
           else
             echo "pre=false" >> $GITHUB_OUTPUT
@@ -48,6 +48,6 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           name: Finit v${{ github.ref_name }}
-          prerelease: ${{ needs.build.outputs.pre }}
+          prerelease: ${{ steps.build.outputs.pre }}
           bodyFile: "release.md"
           artifacts: "artifacts/*"
