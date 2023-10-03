@@ -237,7 +237,7 @@ static void devmon_cb(uev_t *w, void *arg, int events)
 			continue;
 		}
 
-		dbg("Got %s", ev->name);
+//		dbg("Got %s", ev->name);
 		if (ev->mask & (IN_CREATE | IN_DELETE))
 			devmon_update_conds(iwp->path, ev->name, ev->mask);
 	}

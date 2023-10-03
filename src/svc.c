@@ -717,14 +717,10 @@ int svc_ifthen(const char *ident, char *stmt)
 		ptr[i] = 0;
 
 		cond = cond_get(stmt);
-		if (not && cond == COND_ON) {
-			logit(LOG_NOTICE, "skipping %s, cond %s is on.", ident, stmt);
+		if (not && cond == COND_ON)
 			return 0;
-		}
-		if (!not && cond == COND_OFF) {
-			logit(LOG_NOTICE, "skipping %s, cond %s is off.", ident, stmt);
+		if (!not && cond == COND_OFF)
 			return 0;
-		}
 		return 1;
 	}
 

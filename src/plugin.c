@@ -288,7 +288,7 @@ static void generic_io_cb(uev_t *w, void *arg, int events)
 		/* Stop watcher, callback may close descriptor on us ... */
 		uev_io_stop(w);
 
-		dbg("Calling I/O %s from runloop...", basename(p->name));
+//		dbg("Calling I/O %s from runloop...", basename(p->name));
 		p->io.cb(p->io.arg, w->fd, events);
 
 		/* Update fd, may be changed by plugin callback, e.g., if FIFO */

@@ -2294,9 +2294,11 @@ restart:
 			svc_set_state(svc, SVC_WAITING_STATE);
 		else {
 			if (svc_is_conflict(svc)) {
+#if 0
 				logit(svc->nowarn ? LOG_DEBUG : LOG_INFO,
 				      "%s in conflict with %s, checking again ...",
 				      svc_ident(svc, NULL, 0), svc->conflict);
+#endif
 				if (!svc_conflicts(svc))
 					svc_unblock(svc);
 			}
