@@ -836,7 +836,7 @@ static int service_start(svc_t *svc)
 
 fail:
 	sigprocmask(SIG_SETMASK, &omask, NULL);
-	if (do_progress)
+	if (do_progress && !run_block_pid)
 		print_result(result);
 
 	return result;
@@ -1847,11 +1847,6 @@ void service_monitor(pid_t lost, int status)
 		return;
 	}
 
-	if (lost == run_block_pid) {
-		svc_mark_clean(svc); /* done, regardless of exit status */
-		run_block_pid = 0;
-	}
-
 	switch (svc->state) {
 	case SVC_CLEANUP_STATE:
 	case SVC_SETUP_STATE:
@@ -1900,6 +1895,13 @@ done:
 	/* No longer running, update books. */
 	svc->start_time = svc->pid = 0;
 cont:
+	if (lost == run_block_pid) {
+		svc_mark_clean(svc); /* done, regardless of exit status */
+		run_block_pid = 0;
+		if (svc->desc[0])
+			print_result(WIFEXITED(status) ? WEXITSTATUS(status) : 1);
+	}
+
 	if (!service_step(svc)) {
 		/* Clean out any bootstrap tasks, they've had their time in the sun. */
 		if (svc_clean_bootstrap(svc))
