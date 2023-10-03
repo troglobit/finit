@@ -844,6 +844,71 @@ These script actions *must terminate*, so they have a default execution
 time of 3 seconds before they are SIGKILLed, this can be adjusted using
 the above `kill:SEC` syntax.
 
+#### Conditional Loading
+
+Finit support conditional loading of stanzas.  The following example is
+take from the `system/hotplug.conf` file in the Finit distribution.
+Here we only show a simplified subset.
+
+Starting with the `nowarn` option.
+
+    service nowarn name:udevd pid:udevd /lib/systemd/systemd-udevd
+    service nowarn name:udevd pid:udevd udevd
+
+When loading the .conf file Finit looks for `/lib/systemd/systemd-udevd`
+if that is not found Finit automatically logs a warning.  The `nowarn`
+option disables this warning so that the second line can be evaluated,
+which also provides a service named `udevd`.
+
+    run nowarn if:udevd <pid/udevd> udevadm settle -t 0
+
+This line is only loaded if we know of a service named `udevd`.  Again,
+we do not warn if `udevadm` is not found, Execution will also stop here
+until the PID condition is asserted, i.e., Finit detecting udevd has
+started.
+
+    run nowarn conflict:udevd [S] mdev -s -- Populating device tree
+
+If `udevd` is not available, we try to run `mdev`, but if that is not
+found, again we do not warn.
+
+Conditional loading statements can also be negated, so the previous stanza
+can also be written as:
+
+    run nowarn if:!udevd [S] mdev -s -- Populating device tree
+
+The reason for using `confict` in this example is that a conflict can be
+resolved.  Stanzas marked with `conflict:foo` are rechecked at runtime.
+
+#### Conditional Execution
+
+Similar to conditional loading of stanzas there is conditional runtime
+execution.  This can be confusing at first, since Finit already has a
+condition subsystem, but this is more akin to the qualification to a
+runlevel.  E.g., a `task [123]` is qualified to run only in runlevel 1,
+2, and 3.  It is not considered for other runlevels.
+
+Conditional execution qualify a run/task/service based on a condition.
+Consider this (simplified) example from the Infix operating system:
+
+    run [S]                       name:startup <pid/sysrepo> confd -b --load startup-config
+    run [S] if:<usr/fail-startup> name:failure <pid/sysrepo> confd    --load failure-config
+
+The two run statements reside in the same .conf file so Finit runs them
+in true sequence.  If loading the file `startup-config` fails confd sets
+the condition `usr/fail-startup`, thus allowing the next run statement
+to load `failure-config`.
+
+Notice critical the difference between `<pid/sysrepo>` condition and
+`if:<usr/fail-startup>`.  The former is a condition for starting and the
+latter is a condition to check if a run/task/service is qualified to
+even be considered.
+
+Conditional execution statements can also be negated, so provided the
+file loaded did the opposite, i.e., set a condition on success, the
+previous stanza can also be written as:
+
+    run [S] if:<!usr/startup-ok> name:failure <pid/sysrepo> confd ...
 
 ### Run-parts Scripts
 
