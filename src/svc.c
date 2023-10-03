@@ -634,20 +634,30 @@ int svc_enabled(svc_t *svc)
 	if (!svc)
 		return 0;
 
-	if (!svc_in_runlevel(svc, runlevel))
+	if (!svc_in_runlevel(svc, runlevel)) {
+//		dbg("Not in runlevel");
 		return 0;
+	}
 
-	if (svc_is_removed(svc) || svc_is_blocked(svc))
+	if (svc_is_removed(svc) || svc_is_blocked(svc)) {
+//		dbg("removed (%d) / blocked (%d)", svc->removed, svc->block);
 		return 0;
+	}
 
-	if (svc_is_missing(svc))
+	if (svc_is_missing(svc)) {
+//		dbg("missing");
 		return 0;
+	}
 
-	if (!svc_ifthen(0, NULL, svc->ifstmt))
+	if (!svc_ifthen(0, NULL, svc->ifstmt)) {
+//		dbg("ifthen:%s>", svc->ifstmt[0] ? svc->ifstmt : "<");
 		return 0;
+	}
 
-	if (svc_is_tty(svc) && bootstrap)
+	if (svc_is_tty(svc) && bootstrap) {
+//		dbg("is tty in bootstrap");
 		return 0;
+	}
 
 	return 1;
 }
