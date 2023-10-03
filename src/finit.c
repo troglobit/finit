@@ -204,7 +204,7 @@ static int fsck(int pass)
 
 	fp = setmntent(fstab, "r");
 	if (!fp) {
-		err(1, "Failed opening fstab: %s", fstab);
+		logit(LOG_CONSOLE | LOG_ALERT, "Failed opening fstab: %s", fstab);
 		sulogin(1);
 	}
 	dbg("Opened %s, pass %d", fstab, pass);
