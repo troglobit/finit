@@ -367,7 +367,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 		}
 
 		switch (rq.cmd) {
-		case INIT_CMD_RUNLVL:
 		case INIT_CMD_RELOAD:
 		case INIT_CMD_START_SVC:
 		case INIT_CMD_RESTART_SVC:
@@ -378,7 +377,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 		case INIT_CMD_POWEROFF:
 		case INIT_CMD_SUSPEND:
 			if (IS_RESERVED_RUNLEVEL(runlevel)) {
-				warnx("Unsupported command in runlevel S and 6.");
+				warnx("Unsupported command in runlevel S and 6/0.");
 				goto leave;
 			}
 		default:
@@ -387,6 +386,14 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		switch (rq.cmd) {
 		case INIT_CMD_RUNLVL:
+			/* Allow changing cfglevel in runlevel S */
+			if (IS_RESERVED_RUNLEVEL(runlevel)) {
+				if (runlevel != INIT_LEVEL) {
+					warnx("Cannot abort runlevel 6/0.");
+					break;
+				}
+			}
+
 			switch (rq.runlevel) {
 			case 's':
 			case 'S':
@@ -400,7 +407,12 @@ static void api_cb(uev_t *w, void *arg, int events)
 					halt = SHUT_OFF;
 				if (lvl == 6)
 					halt = SHUT_REBOOT;
-				service_runlevel(lvl);
+
+				/* User requested change in next runlevel */
+				if (runlevel == INIT_LEVEL)
+					cfglevel = lvl;
+				else
+					service_runlevel(lvl);
 				break;
 
 			default:

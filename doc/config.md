@@ -164,14 +164,19 @@ everything is OK.
     task [S] /lib/console-setup/console-setup.sh
     service [S12345] env:-/etc/default/rsyslog rsyslogd -n $RSYSLOGD_ARGS
 
-After runlevel S, Finit proceeds to runlevel 2.  (This can be changed in
-`/etc/finit.conf` using the `runlevel N` directive.)  Before starting
-the services in runlevel 2, Finit first stops everything that is not
-allowed to run in 2, and then brings up networking.  Networking is
-expected to be available in all runlevels except: S, 1 (single user
-level), 6, and 0.  Networking is enabled either by the `network script`
-directive, or if you have an `/etc/network/interfaces` file, Finit calls
-`ifup -a` -- at the very least the loopback interface is brought up.
+After runlevel S, Finit proceeds to runlevel 2.  This can be changed in
+`/etc/finit.conf` using the `runlevel N` directive, or by a script
+running in runlevel S that calls, e.g., `initctl runlevel 9`.  The
+latter is useful if startup scripts detect problems outside of Finit's
+control, e.g., critical services/devices missing or hardware problems.
+
+Before starting the services in runlevel 2, Finit first stops everything
+that is not allowed to run in 2, and then brings up networking.
+Networking is expected to be available in all runlevels except: S, 1
+(single user level), 6, and 0.  Networking is enabled either by the
+`network script` directive, or if you have an `/etc/network/interfaces`
+file, Finit calls `ifup -a` -- at the very least the loopback interface
+is brought up.
 
 > **Note:** when moving from runlevel S to 2, all run/task/services that
 > were constrained to runlevel S only are dropped from bookkeeping.  So

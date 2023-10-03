@@ -240,6 +240,11 @@ Show top-like listing based on cgroups.
 List installed plugins.
 .It Nm Ar runlevel Op Ar 0-9
 Show or set runlevel: 0 halt, 6 reboot.
+.Pp
+If called at boot (runlevel S) to set the runlevel, Finit only schedules
+the change, effectively overriding the configured runlevel from
+.Pa /etc/finit.conf .
+Useful to trigger a fail-safe mode, or similar.
 .It Nm Ar reboot
 Reboot system, default if
 .Cm reboot
