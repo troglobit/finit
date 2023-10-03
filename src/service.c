@@ -1955,7 +1955,7 @@ void service_mark_unavail(void)
 		if (!svc->ifstmt[0])
 			continue;
 
-		if (!svc_ifthen(svc_ident(svc, buf, sizeof(buf)), svc->ifstmt))
+		if (!svc_ifthen(1, svc_ident(svc, buf, sizeof(buf)), svc->ifstmt))
 			svc_mark(svc);
 	}
 }

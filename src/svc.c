@@ -643,6 +643,9 @@ int svc_enabled(svc_t *svc)
 	if (svc_is_missing(svc))
 		return 0;
 
+	if (!svc_ifthen(0, NULL, svc->ifstmt))
+		return 0;
+
 	if (svc_is_tty(svc) && bootstrap)
 		return 0;
 
@@ -688,13 +691,14 @@ int svc_conflicts(svc_t *svc)
 
 /**
  * svc_ifthen - Check if: statement in declaration
+ * @is_conf: Set when called by service_mark_unavail()
  * @ident:   svc_t identififcation (name:id)
  * @stmt:    if: statement from .conf file
  *
  * Returns:
  * %TRUE(1) yes, use this svc_t, %FALSE(0) prune
  */
-int svc_ifthen(const char *ident, char *stmt)
+int svc_ifthen(int is_conf, const char *ident, char *stmt)
 {
 	int not = 0;
 	svc_t *svc;
@@ -706,6 +710,9 @@ int svc_ifthen(const char *ident, char *stmt)
 		enum cond_state cond;
 		char *ptr = ++stmt;
 		int i = 0;
+
+		if (is_conf)
+			return 1;
 
 		if (stmt[0] == '!') {
 			stmt++;
@@ -723,6 +730,9 @@ int svc_ifthen(const char *ident, char *stmt)
 			return 0;
 		return 1;
 	}
+
+	if (!is_conf)
+		return 1;
 
 	if (stmt[0] == '!') {
 		stmt++;
