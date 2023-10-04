@@ -44,6 +44,7 @@ int  conf_monitor         (void);
 
 void conf_reset_env       (void);
 void conf_saverc          (void);
+void conf_save_exec_order (svc_t *svc, char *cmdline, int result);
 void conf_parse_cmdline   (int argc, char *argv[]);
 int  conf_parse_runlevels (char *runlevels);
 void conf_parse_cond      (svc_t *svc, char *cond);

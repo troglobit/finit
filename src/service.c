@@ -629,6 +629,9 @@ static int service_start(svc_t *svc)
 	}
 
 	compose_cmdline(svc, cmdline, sizeof(cmdline));
+	if (bootstrap)
+		conf_save_exec_order(svc, cmdline, -1);
+
 	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", cmdline);
 
@@ -838,6 +841,8 @@ fail:
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (do_progress && !run_block_pid)
 		print_result(result);
+	if (bootstrap && !run_block_pid)
+		conf_save_exec_order(svc, NULL, result);
 
 	return result;
 }
@@ -1896,10 +1901,14 @@ done:
 	svc->start_time = svc->pid = 0;
 cont:
 	if (lost == run_block_pid) {
+		int result = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+
 		svc_mark_clean(svc); /* done, regardless of exit status */
 		run_block_pid = 0;
 		if (svc->desc[0])
-			print_result(WIFEXITED(status) ? WEXITSTATUS(status) : 1);
+			print_result(result);
+		if (bootstrap)
+			conf_save_exec_order(svc, NULL, result);
 	}
 
 	if (!service_step(svc)) {

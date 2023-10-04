@@ -415,6 +415,54 @@ void conf_saverc(void)
 }
 
 /*
+ * Called at bootstrap to log execution order (for debug)
+ */
+void conf_save_exec_order(svc_t *svc, char *cmdline, int result)
+{
+	const char *fn = _PATH_VARRUN "finit/exec.order";
+	const char *ststr = !result ? "[ OK ]" : "[FAIL]";
+	static char *prepared = NULL;
+	int first = !fexist(fn);
+	FILE *fp;
+
+	fp = fopen(fn, "a+");
+	if (!fp) {
+		err(1, "failed writing to %s", fn);
+		return;
+	}
+
+	if (first) {
+		fprintf(fp, "# Execution order of run/task/services at bootstrap\n");
+		fprintf(fp, "# ST    TYPE     COMMAND LINE (DESC)\n");
+	}
+
+	if (result == -1) {
+		int len;
+
+		len = snprintf(NULL, 0, "        %-7s  %-64s (%s)", svc_typestr(svc), cmdline, svc->desc);
+		if (len > 0) {
+			if (prepared)
+				free(prepared);
+			prepared = malloc(++len);
+			if (!prepared)
+				return;
+			snprintf(prepared, len, "        %-7s  %-64s (%s)", svc_typestr(svc), cmdline, svc->desc);
+		}
+	} else {
+		if (prepared) {
+			memcpy(prepared, ststr, strlen(ststr));
+			fprintf(fp, "%s\n", prepared);
+			free(prepared);
+			prepared = NULL;
+		} else {
+			fprintf(fp, "%s  %-7s  %-64s (%s)\n", ststr, svc_typestr(svc), cmdline, svc->desc);
+		}
+	}
+
+	fclose(fp);
+}
+
+/*
  * Sets, and makes a note of, all KEY=VALUE lines in a given .conf line
  * from finit.conf, or other .conf file.  Note, PATH is always reset in
  * the conf_reset_env() function.
