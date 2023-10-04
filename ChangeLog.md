@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.5][] - 2023-10-03
+[4.5][] - 2023-10-04
 --------------------
 
 ### Changes
@@ -37,6 +37,12 @@ All relevant changes are documented in this file.
   a task only `if:<run/foo/failure>` (here the run task 'foo' failed)
 - Document new `if:`, `conflict:`, `nowarn` options for run/task/service
   first introduced in v4.4
+- Failure to open fstab should log to console, not just log to `/dev/kmsg`
+- Rename `/lib/finit/system/*.conf`, added numbered prefix to ensure
+  proper execution order, e.g., `udevd` should always run first
+- Plugins and bundled services: dbus, keventd, watchdogd, and runparts,
+  are now loaded *after* all services in `/lib/finit/system/`.  A new
+  runtime-only path (for inspection) in `/run/finit/system/` is used
 
 ### Fixes
 - Fix #227: believed to have been fixed in v4.3, the root cause was
@@ -52,6 +58,15 @@ All relevant changes are documented in this file.
 - Fix #366: document `fsck.*` kernel command line options and simplify
   the configure flags `--enable-fsckfix` and `--enable-fastboot` to
   only adjust the default values for the `fsck.*` options.
+- Fix #371: swap load order of `/lib/finit/system/*` vs `/etc/finit.d/*`
+  We must run `10-hotplug.conf` first to ensure devices and modules are
+  up and loaded before the user's run/task/services are called.  The order
+  at bootstrap is now saved in `/run/finit/conf.order` for inspection,
+  `/run/finit/exec.order` shows the start order of each process
+- Fix #372: lost `udevadm` calls due to overloading
+- Fixed dbus plugin, the function that located `<pidfile> ...` in the
+  `dbus/system.conf` caused spurious line breaks which led to the
+  service not being loaded properly
 - The `runparts` executor now skips backup files (`foo~`)
 - The `runparts` stanza now properly appends ` start` to scripts that
   start with `S[0-9]+`.  This has been broken for a very long time.
