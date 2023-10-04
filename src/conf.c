@@ -1169,6 +1169,21 @@ int conf_reload(void)
 	glob_append(&gl, 1, "%s/*.conf", finit_rcsd);
 	glob_append(&gl, 1, "%s/enabled/*.conf", finit_rcsd);
 
+	if (bootstrap) {
+		const char *fn = _PATH_VARRUN "finit/conf.order";
+		FILE *fp;
+
+		fp = fopen(fn, "w");
+		if (!fp) {
+			err(1, "failed creating %s", fn);
+		} else {
+			fprintf(fp, "# Evaluation & execution order of .conf files\n");
+			for (i = 0; i < gl.gl_pathc; i++)
+				fprintf(fp, "%s\n", gl.gl_pathv[i]);
+			fclose(fp);
+		}
+	}
+
 	for (i = 0; i < gl.gl_pathc; i++) {
 		char *path = gl.gl_pathv[i];
 		char *rp = NULL;
