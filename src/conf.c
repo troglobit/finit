@@ -471,6 +471,7 @@ void conf_save_service(int type, char *cfg, char *file)
 	svc_t foo;
 	FILE *fp;
 
+	mkpath(FINIT_RUNPATH_, 0755);
 	snprintf(fn, sizeof(fn), "%s/%s", FINIT_RUNPATH_, file);
 	if (fexist(fn))
 		warn("File %s already exists, overwriting.", fn);
