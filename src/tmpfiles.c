@@ -471,7 +471,7 @@ void tmpfilesd(void)
 	/* in priority order */
 	char *dir[] = {
 		FINIT_TMPFILES "/*.conf",
-		TMPFILES_PATH "/*.conf",
+		TMPFILES_PATH_ "/*.conf",
 		"/usr/lib/tmpfiles.d/*.conf",
 		"/run/tmpfiles.d/*.conf",
 		"/etc/tmpfiles.d/*.conf", /* local admin overrides */

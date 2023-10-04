@@ -305,7 +305,7 @@ AC_DEFINE_UNQUOTED(PLUGIN_PATH, "$plugin_path", [Finit plugin path])
 
 AC_EXPAND_DIR(tmpfiles_path, "$libdir/tmpfiles.d")
 AC_SUBST(tmpfiles_path)
-AC_DEFINE_UNQUOTED(TMPFILES_PATH, "$tmpfiles_path", [Main tmpfiles.d/, override in /etc])
+AC_DEFINE_UNQUOTED(TMPFILES_PATH_, "$tmpfiles_path", [Main tmpfiles.d/, override in /etc])
 
 AC_EXPAND_DIR(finit_tmpfiles, "$pkglibdir/tmpfiles.d")
 AC_SUBST(finit_tmpfiles)
