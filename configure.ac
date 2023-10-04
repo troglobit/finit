@@ -298,6 +298,7 @@ pkglibdir=$libdir/finit
 AC_SUBST(pkglibexecdir)
 AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
 AC_DEFINE_UNQUOTED(FINIT_EXECPATH_, "$pkglibexecdir", [Finit libexec path])
+AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "/run/finit/system", [Finit runtime dynamic system services])
 
 AC_EXPAND_DIR(plugin_path, "$pkglibdir/plugins")
 AC_SUBST(plugin_path)
@@ -313,7 +314,7 @@ AC_DEFINE_UNQUOTED(FINIT_TMPFILES, "$finit_tmpfiles", [Finit tmpfiles.d/ .conf p
 
 AC_EXPAND_DIR(system_path, "$pkglibdir/system")
 AC_SUBST(system_path)
-AC_DEFINE_UNQUOTED(FINIT_SYSPATH, "$system_path", [Static services, previously generated at runtime by plugins])
+AC_DEFINE_UNQUOTED(FINIT_SYSPATH_, "$system_path", [Static services, previously generated at runtime by plugins])
 
 AC_EXPAND_DIR(rescue_conf, "$pkglibdir/rescue.conf")
 AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])

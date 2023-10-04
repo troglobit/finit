@@ -68,10 +68,18 @@ the following layout is recommended:
     |  :   `- another-static.conf
     |  :
     |  `- finit.conf
-    `- lib/
+    |- lib
+    |   `- finit/
+    |       `- system/
+    |           |- 10-hotplug.conf
+    |           `- ...
+    `- run/
         `- finit/
             `- system/
-                |- 10-hotplug.conf
+                |- dbus.conf
+                |- keventd.conf
+                |- runparts.conf
+                |- watchdogd.conf
                 `- ...
 
 Configuration files in `/etc` are provided by the user, or projects like
@@ -84,6 +92,11 @@ bootstrap.  This system directory was introduced in Finit v4.4 to replace
 the hard-coded services provided by plugins before.  All .conf files in this
 directory be either replaced by a system administrator or overridden by a
 file with the same name in `/etc/finit.d/`.
+
+The files in `/run/finit/system/*.conf` are created by plugins and Finit
+bundled services like runparts, the [watchdog](#watchdog), and `keventd`
+if they are enabled.  Like `/lib/finit/system/*.conf`, these files can
+ be overridden by file with the same name in `/etc/finit.d/`.
 
 Services in the `available/` and `enabled/` sub-directories are called
 dynamic services, in contrast to static services -- the only difference
@@ -100,6 +113,8 @@ unique group, where files within each group are sorted alphabetically.
 
     /lib/finit/system/10-hotplug.conf
     /lib/finit/system/90-testserv.conf
+    /run/finit/system/dbus.conf
+    /run/finit/system/runparts.conf
     /etc/finit.d/10-abc.conf
     /etc/finit.d/20-abc.conf
     /etc/finit.d/enabled/1-aaa.conf

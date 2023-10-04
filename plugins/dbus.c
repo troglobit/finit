@@ -157,9 +157,7 @@ static void setup(void *arg)
 		snprintf(line, sizeof(line), "[S123456789] cgroup.system name:dbus %s %s -- %s",
 			 cmd, DBUS_ARGS, DBUS_DESC);
 
-	if (service_register(SVC_TYPE_SERVICE, line, global_rlimit, NULL))
-		err(1, "Failed registering %s", DBUS_DAEMON);
-
+	conf_save_service(SVC_TYPE_SERVICE, line, "dbus.conf");
 	free(cmd);
 }
 
