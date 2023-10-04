@@ -1152,9 +1152,21 @@ int conf_reload(void)
 	 * but are now regular files that can be overridden by files in
 	 * /etc/finit.d -- similar to how tmfiles.d(5) work.  E.g., add
 	 * an override .conf, or an ignore by symlinking to /dev/null
+	 *
+	 * The .conf files (and run/task/service stanzas) are parsed and
+	 * started in order.  Each directory is sorted alphanumerically
+	 * and then the result is appended to the overall order:
+	 *
+	 *     /lib/finit/system/10-hotplug.conf
+	 *     /lib/finit/system/90-testserv.conf
+	 *     /etc/finit.d/10-abc.conf
+	 *     /etc/finit.d/20-abc.conf
+	 *     /etc/finit.d/enabled/1-aaa.conf
+	 *     /etc/finit.d/enabled/1-abc.conf
+	 *     /etc/finit.d/enabled/2-aaa.conf
 	 */
-	glob_append(&gl, 0, "%s/*.conf", finit_rcsd);
-	glob_append(&gl, 1, "%s/*.conf", FINIT_SYSPATH);
+	glob_append(&gl, 0, "%s/*.conf", FINIT_SYSPATH);
+	glob_append(&gl, 1, "%s/*.conf", finit_rcsd);
 	glob_append(&gl, 1, "%s/enabled/*.conf", finit_rcsd);
 
 	for (i = 0; i < gl.gl_pathc; i++) {

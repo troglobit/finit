@@ -52,21 +52,38 @@ PID file monitoring, or [conditions](conditions.md).
 
 ### Configuration Files
 
-Originally Finit was configured using a single file, `/etc/finit.conf`.
-Although still possible to use this single configuration file, today the
-following familiar layout is recommended:
+Originally Finit was configured using a single file, `/etc/finit.conf`,
+and although still possible to use a single configuration file, today
+the following layout is recommended:
 
-    /etc/
-      |- finit.d/
-      |   |- available/
-      |   |   `- my-service.conf
-      :   |- enabled/
-      :   |   `- my-service.conf -> ../available/my-service.conf
-      :   :
-      :   |- static-service.conf
-      :   `- another-static.conf
-      :
-      `- finit.conf
+    /
+    |- etc/
+    |  |- finit.d/
+    |  |   |- available/
+    |  |   |  `- my-service.conf
+    |  :   |- enabled/
+    |  :   |  `- my-service.conf -> ../available/my-service.conf
+    |  :   :
+    |  :   |- static-service.conf
+    |  :   `- another-static.conf
+    |  :
+    |  `- finit.conf
+    `- lib/
+        `- finit/
+            `- system/
+                |- 10-hotplug.conf
+                `- ...
+
+Configuration files in `/etc` are provided by the user, or projects like
+[finit-skel](https://github.com/troglobit/finit-skel) and extended by
+the user.
+
+The files in `/lib/finit/system/*.conf` are system critical services and
+setup provided by Finit, e.g. udev/mdev that must run very early at system
+bootstrap.  This system directory was introduced in Finit v4.4 to replace
+the hard-coded services provided by plugins before.  All .conf files in this
+directory be either replaced by a system administrator or overridden by a
+file with the same name in `/etc/finit.d/`.
 
 Services in the `available/` and `enabled/` sub-directories are called
 dynamic services, in contrast to static services -- the only difference
@@ -75,9 +92,25 @@ with the `enable` and `disable` commands.  An administrator can always
 create files and symlinks manually.
 
 At bootstrap, and `initctl reload`, all .conf files are read, starting
-with `finit.conf`, then, in alphabetical order, all `finit.d/*.conf`
-files, and finally (still in alphabetical order) all `enabled/*.conf`
-files.
+with `finit.conf`, then `/lib/finit/system/*.conf`, `finit.d/*.conf`,
+and finally all `finit.d/enabled/*.conf` files.  Each directory is a
+unique group, where files within each group are sorted alphabetically.
+
+**Example:**
+
+    /lib/finit/system/10-hotplug.conf
+    /lib/finit/system/90-testserv.conf
+    /etc/finit.d/10-abc.conf
+    /etc/finit.d/20-abc.conf
+    /etc/finit.d/enabled/1-aaa.conf
+    /etc/finit.d/enabled/1-abc.conf
+
+The resulting combined configuration is read line by line, each `run`,
+`task`, and `service` added to an ordered list that ensures they are
+started in the same order.  This is important because of the blocking
+properties of the `run` statement.  For an example on the relation of
+`service` and `run` statements, and dependency handling between them,
+see [Conditional Loading](#conditional-loading), below.
 
 > **Note:** the `finit.conf` and `finit.d/` names are only defaults.
 > They can be changed at compile-time with two `configure` options:
@@ -860,7 +893,7 @@ if that is not found Finit automatically logs a warning.  The `nowarn`
 option disables this warning so that the second line can be evaluated,
 which also provides a service named `udevd`.
 
-    run nowarn if:udevd <pid/udevd> udevadm settle -t 0
+    run nowarn if:udevd <pid/udevd> :1 udevadm settle -t 0
 
 This line is only loaded if we know of a service named `udevd`.  Again,
 we do not warn if `udevadm` is not found, Execution will also stop here
