@@ -83,6 +83,7 @@ static char *dbus_pidfn(void)
 				break;
 			}
 			*pos = 0;
+			break;
 		}
 
 		fclose(fp);
