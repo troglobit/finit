@@ -648,6 +648,11 @@ int main(int argc, char *argv[])
 		rescue = sulogin(0);
 #endif
 
+	/* Set hostname as soon as possible, so it could be accessed
+	 * in plugins.
+	 */
+	set_hostname(&hostname);
+
 	/*
 	 * Load plugins early, the first hook is in banner(), so we
 	 * need plugins loaded before calling it.
