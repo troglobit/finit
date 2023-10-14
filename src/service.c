@@ -330,14 +330,14 @@ static int lredirect(svc_t *svc)
 
 				snprintf(rot, sizeof(rot), "%d:%d", logfile_size_max, logfile_count_max);
 				snprintf(pid, sizeof(pid), "%d", svc_pid);
-				execlp("logger", "logger", "-f", svc->log.file, "-b", "-t", tag, "-p", prio, "-I", pid, "-r", rot, NULL);
+				execlp("logger", "logger", "-f", svc->log.file, "-b", "-t", tag, "-p", prio, debug ? "-s" : "", "-I", pid, "-r", rot, NULL);
 			} else {
 				char sz[20], num[3];
 
 				snprintf(sz, sizeof(sz), "%d", logfile_size_max);
 				snprintf(num, sizeof(num), "%d", logfile_count_max);
 
-				execlp(_PATH_LOGIT, "logit", "-f", svc->log.file, "-n", sz, "-r", num, NULL);
+				execlp(_PATH_LOGIT, "logit", "-f", svc->log.file, "-n", sz, "-r", num, debug ? "-s" : "", NULL);
 			}
 			_exit(1);
 		}
@@ -351,9 +351,9 @@ static int lredirect(svc_t *svc)
 			char pid[16];
 
 			snprintf(pid, sizeof(pid), "%d", svc_pid);
-			execlp("logger", "logger", "-t", tag, "-p", prio, "-I", pid, NULL);
+			execlp("logger", "logger", "-t", tag, "-p", prio, debug ? "-s" : "", "-I", pid, NULL);
 		} else {
-			execlp(_PATH_LOGIT, "logit", "-t", tag, "-p", prio, NULL);
+			execlp(_PATH_LOGIT, "logit", "-t", tag, "-p", prio, debug ? "-s" : "", NULL);
 		}
 		_exit(1);
 	}
