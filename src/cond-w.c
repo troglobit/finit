@@ -222,8 +222,16 @@ static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct
 static void cond_delpath(const char *path)
 {
 	nftw(path, do_delete, 20, FTW_DEPTH);
-	if (remove(path) && errno != ENOENT)
-		err(1, "Failed removing condition path %s", path);
+	if (remove(path)) {
+		switch (errno) {
+		case ENOENT:	/* Ignore */
+		case ENOTEMPTY:	/* Only at shutdown and for directories */
+			break;
+		default:
+			err(1, "Failed removing condition path %s", path);
+			break;
+		}
+	}
 }
 
 int cond_set_path(const char *path, enum cond_state next)
