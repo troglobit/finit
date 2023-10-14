@@ -695,6 +695,10 @@ int main(int argc, char *argv[])
 	cond_set_oneshot(plugin_hook_str(HOOK_BANNER));
 	cond_set_oneshot(plugin_hook_str(HOOK_ROOTFS_UP));
 
+	/* Some bootstrap tasks may need to know if we're in a container. */
+	if (in_container())
+		cond_set("int/container");
+
 	/*
 	 * Initialize .conf system and load static /etc/finit.conf then
 	 * tell the world what we used.
