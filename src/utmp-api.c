@@ -89,6 +89,9 @@ int utmp_set(int type, int pid, char *line, char *id, char *user)
 	if (!has_utmp())
 		return 0;
 
+	if (!fexist(_PATH_UTMP))
+		touch(_PATH_UTMP);
+
 	switch (type) {
 	case RUN_LVL:
 	case BOOT_TIME:
