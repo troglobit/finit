@@ -19,6 +19,8 @@ if WATCHDOGD
 pkglibexec_PROGRAMS += watchdogd
 endif
 
+dist_pkglibexec_SCRIPTS = coldplug
+
 finit_pkglibdir      = $(pkglibdir)
 finit_pkglib_SCRIPTS = rescue.conf sample.conf
 

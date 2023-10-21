@@ -1,0 +1,42 @@
+# System hotplug handled by udev or mdev
+#
+# Your system usually has either udevd, mdev, or mdevd.  They probe the system
+# for devices, loading modules and any firmware needed.  Since the bootstrap
+# often needs to be synchronized carefully, we suggest using your system log
+# daemon as the barrier for all other services.  E.g.:
+#
+#    service if:udevd <run/udevadm:5/success> [S0123456789] syslogd -F -- System log daemon
+#    service if:mdev  <run/mdev/success>      [S0123456789] syslogd -F -- System log daemon
+#
+# This provdes a <pid/syslogd> condition that can act as a barrier for all
+# other services.  Notice the `if:` statement and the condition for starting
+# syslogd is only considered if either udevd or mdev (service) is loaded and
+# is guaranteed to run after each respective run stanza have completed.
+#
+# Override this file by copying it to /etc/finit.d/, using the same name, then
+# change the contents any way you like, it can even be empty.
+
+# Check for systemd-udevd and eudev, if we find both, we opt for the latter.
+service nowarn [S12345789] cgroup.system name:udevd pid:udevd log /lib/systemd/systemd-udevd -- Device event daemon (udev)
+service nowarn [S12345789] cgroup.system name:udevd pid:udevd log udevd -D -- Device event daemon (udev)
+
+# Wait for udevd to start, then trigger coldplug events and module loading.
+# The last 'settle' call waits for it to finalize processing all uevents.
+run nowarn if:udevd cgroup.init :1 [S] <pid/udevd> log udevadm settle -t 0                  --
+run nowarn if:udevd cgroup.init :2 [S] <pid/udevd> log udevadm control --reload             --
+run nowarn if:udevd cgroup.init :3 [S] <pid/udevd> log udevadm trigger -c add -t devices    -- Requesting device events
+run nowarn if:udevd cgroup.init :4 [S] <pid/udevd> log udevadm trigger -c add -t subsystems -- Requesting subsystem events
+run nowarn if:udevd cgroup.init :5 [S] <pid/udevd> log udevadm settle -t 30                 -- Waiting for udev to finish
+
+# If udevd is not available, try mdev.  The "new" daemon mode (-df) was added
+# in BusyBox 1.31.0, 2019.  It calls `mdev -s` internally but does not create
+# a PID file when that is done, so synchronization with coldplug is fragile.
+service nowarn conflict:udevd cgroup.init \
+	[S12345789] mdev -df -S -- Device event daemon (mdev)
+
+# Trigger a replay of all uevents from boot, before userspace was up and the
+# filesystem mounted.  Compared to udevd, we don't know when 'mdev -df' has
+# finished processing all events, i.e., depending on <run/coldplug/success> is
+# not an indicator of all devices having been (re)discovered and fully set up.
+run nowarn conflict:udevd cgroup.init name:coldplug if:<service/mdev/running> \
+	[S] @pkglibexecdir@/coldplug -- Cold plugging system
