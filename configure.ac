@@ -293,12 +293,17 @@ AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 AM_CONDITIONAL(TESTSERV,  [test "x$enable_testserv_plugin" = "xyes"])
 
+# Workaround for as-of-yet unreleased runstatedir support, planned for
+# autoconf 2.70, which some major distros have backported.
+AS_IF([test -z "$runstatedir"], runstatedir="$localstatedir/run")
+AC_SUBST(runstatedir)
+
 # Override default libdir, used for plugins and rescue.conf
 pkglibdir=$libdir/finit
 AC_SUBST(pkglibexecdir)
 AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
 AC_DEFINE_UNQUOTED(FINIT_EXECPATH_, "$pkglibexecdir", [Finit libexec path])
-AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "/run/finit/system", [Finit runtime dynamic system services])
+AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "$runstatedir/finit/system", [Finit runtime dynamic system services])
 
 AC_EXPAND_DIR(plugin_path, "$pkglibdir/plugins")
 AC_SUBST(plugin_path)
