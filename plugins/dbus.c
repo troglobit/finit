@@ -143,7 +143,7 @@ static void setup(void *arg)
 
 	/* Generate machine id for dbus */
 	if (whichp("dbus-uuidgen"))
-		run_interactive("dbus-uuidgen --ensure", "Creating machine UUID for D-Bus");
+		run_interactive("dbus-uuidgen --ensure", "Verifying D-Bus machine UUID");
 
 	/*
 	 * Register service with Finit
