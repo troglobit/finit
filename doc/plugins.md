@@ -28,9 +28,16 @@ For your convenience a set of *optional* plugins are available:
   system and runs at `HOOK_BASEFS_UP`.  The `/var`, `/run`, and `/dev`
   file systems must be writable for this plugin to work.
 
-  Note: On an embedded system both `/var` and `/run` can be `tmpfs` RAM
-  disks and `/dev` is usually a `devtmpfs`.  This must be defined in the
-  `/etc/fstab` file and in the Linux kernel config.
+  This plugin is a wrapper for the [tmpfiles.d(5)][] implementation that
+  Finit has.  Capable but limited: no aging, attributes, or subvolumes.
+
+  By default, `/lib/finit/tmpfiles.d` carries all the default .conf
+  files distributed with Finit.  It is read first but can be overridden
+  by any of the standard tmpfiles.d directories, e.g. `/etc/tmpfiles.d`.
+
+  > **Note:** On an embedded system both `/var` and `/run` can be `tmpfs`
+  > RAM disks and `/dev` is usually a `devtmpfs`.  This must be defined
+  > in the `/etc/fstab` file and in the Linux kernel config.
 
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
   _Optional plugin._
@@ -50,8 +57,11 @@ For your convenience a set of *optional* plugins are available:
   customized at build-time using the `--with-hook-scripts-path=PATH`
   argument to `configure`.
 
-* *hotplug.so*: Setup and start either udev or mdev hotplug daemon, if
-  available.  Enabled by default.
+* *hotplug.so*: Replaced with `/lib/finit/system/10-hotplug.conf`, which
+  checks for `udevd` and `mdev` at boot.  This file can be overridden by a
+  file in `/etc/finit.d/10-hotplug.conf`.
+
+  Enabled by default.
   
   > See the [Services](config.md#services) section in the configuration
   > guide for an example how to run `mdevd`, alternative to plain mdev.
@@ -217,3 +227,5 @@ Plugins like `tty.so` extend finit by acting on events, they are called
 I/O plugins and are called from the finit main loop when `poll()`
 detects an event.  See the source code for `plugins/*.c` for more help
 and ideas.
+
+[tmpfiles.d(5)]: https://www.freedesktop.org/software/systemd/man/tmpfiles.d.html

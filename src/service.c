@@ -1430,6 +1430,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
+	char ident[MAX_IDENT_LEN];
 	char *ifstmt = NULL;
 	char *notify = NULL;
 	struct tty tty = { 0 };
@@ -1554,8 +1555,16 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	name = parse_name(cmd, name);
-	if (!id)
+	strlcpy(ident, name, sizeof(ident));
+	if (!id) {
 		id = "";
+	} else {
+		strlcat(ident, ":", sizeof(ident));
+		strlcat(ident, id, sizeof(ident));
+	}
+
+	if (ifstmt && !svc_ifthen(1, ident, ifstmt))
+		return 0;
 
 	levels = conf_parse_runlevels(runlevels);
 	if (runlevel != INIT_LEVEL && !ISOTHER(levels, INIT_LEVEL)) {

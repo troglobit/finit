@@ -19,11 +19,14 @@ Bootstrap
 12. Remount `/` read-write if `/` is listed in `/etc/fstab` without `ro`
 13. Call 1st level hooks, `HOOK_ROOTFS_UP`
 14. Mount all file systems listed in `/etc/fstab` and swap, if available.
-    On mount error `HOOK_MOUNT_ERROR` is called.  After mount, regardless
-    of error, `HOOK_MOUNT_POST` is called
+    Finit verifies that `/dev/shm`, `/dev/pts`, `/run`, and `/tmp` are
+    mounted.  If not, Finit mounts them as `tmpfs` because otherwise the rest
+    of the boot may fail.  On any mount error `HOOK_MOUNT_ERROR` is called.
+    After mount, regardless of error, `HOOK_MOUNT_POST` is called
 15. Enable SysV init signals
 16. Call 2nd level hooks, `HOOK_BASEFS_UP`
-17. Cleanup stale files from `/tmp/*` et al, handled by `bootmisc` plugin
+17. Cleanup stale files from `/tmp/*` et al and (re)create temporary files and
+    directories according to [tmpfiles.d(5)][], handled by `bootmisc` plugin
 18. Load kernel params from `/etc/sysctl.d/*.conf`, `/etc/sysctl.conf`
     et al. (Supports all locations that SysV init does.), handled by
     `procps` plugin
@@ -56,4 +59,5 @@ well before all 'S' runlevel tasks are started.  This could be used with
 system images that are created read-only and all configuration is stored
 on external media.
 
-[run-parts(8)]: http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
+[run-parts(8)]:  http://manpages.debian.org/cgi-bin/man.cgi?query=run-parts
+[tmpfiles.d(5)]:  https://www.freedesktop.org/software/systemd/man/tmpfiles.d.html

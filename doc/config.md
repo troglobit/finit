@@ -668,10 +668,13 @@ also the `--quiet` and `--batch` options.
 
 One-shot like 'run', but starts in parallel with the next command.
   
-Both `run` and `task` commands are run in a shell, so pipes and
-redirects can be freely used:
+Both `run` and `task` commands are run in a shell, so basic pipes and
+redirects can be used:
 
     task [s] echo "foo" | cat >/tmp/bar
+
+Please note, `;`, `&&`, `||`, and similar are *not supported*.  Any
+non-trivial constructs are better placed in a separate shell script.
 
 
 ### SysV Init Scripts

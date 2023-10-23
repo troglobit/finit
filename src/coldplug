@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# With the daemon mode ('mdev -df') we no longer need the hotplug helper
+echo "" > /proc/sys/kernel/hotplug
+
+# Wait for 'mdev -df' to set up its event queue.
+sleep 1
+
+# Trigger 'add' event for all devices and subsystems to load all modules
+# and any firmware needed by the hardware.
+find /sys/devices -name uevent -print | while IFS='' read X; do echo add > $X; done

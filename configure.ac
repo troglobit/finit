@@ -15,7 +15,7 @@ AC_CONFIG_FILES([Makefile
 	man/Makefile
 	plugins/Makefile
 	src/Makefile
-	system/Makefile
+	system/Makefile system/10-hotplug.conf
 	tmpfiles.d/Makefile
 	test/test.env test/Makefile
 	test/lib/Makefile test/src/Makefile])
@@ -94,12 +94,12 @@ AC_ARG_ENABLE(all_plugins,
 AC_PLUGIN([alsa-utils],    [no],  [Save and restore ALSA sound settings using alsactl])
 AC_PLUGIN([dbus],          [no],  [Setup and start system message bus, D-Bus])
 AC_PLUGIN([modules-load],  [no],  [Scans /etc/modules-load.d for modules to load])
-AC_PLUGIN([modprobe],      [yes], [Coldplug modules using modalias magic])
+AC_PLUGIN([modprobe],      [no],  [Coldplug modules using modalias magic])
 AC_PLUGIN([resolvconf],    [no],  [Setup necessary files for resolvconf])
 AC_PLUGIN([x11-common],    [no],  [Console setup (for X)])
 AC_PLUGIN([netlink],       [yes], [Basic netlink plugin for IFUP/IFDN and GW events. Can be replaced with externally built plugin that links with libnl or similar.])
 AC_PLUGIN([hook-scripts],  [no],  [Trigger script execution from hook points])
-AC_PLUGIN([hotplug],       [yes], [Setup and start udev or mdev hotplug daemon])
+AC_PLUGIN([hotplug],       [yes], [Start udevd or mdev kernel event datamon])
 AC_PLUGIN([rtc],           [yes], [Save and restore RTC using hwclock])
 AC_PLUGIN([tty],           [yes], [Automatically activate new TTYs, e.g. USB-to-serial])
 AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
@@ -293,12 +293,17 @@ AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 AM_CONDITIONAL(TESTSERV,  [test "x$enable_testserv_plugin" = "xyes"])
 
+# Workaround for as-of-yet unreleased runstatedir support, planned for
+# autoconf 2.70, which some major distros have backported.
+AS_IF([test -z "$runstatedir"], runstatedir="$localstatedir/run")
+AC_SUBST(runstatedir)
+
 # Override default libdir, used for plugins and rescue.conf
 pkglibdir=$libdir/finit
 AC_SUBST(pkglibexecdir)
 AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
 AC_DEFINE_UNQUOTED(FINIT_EXECPATH_, "$pkglibexecdir", [Finit libexec path])
-AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "/run/finit/system", [Finit runtime dynamic system services])
+AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "$runstatedir/finit/system", [Finit runtime dynamic system services])
 
 AC_EXPAND_DIR(plugin_path, "$pkglibdir/plugins")
 AC_SUBST(plugin_path)
