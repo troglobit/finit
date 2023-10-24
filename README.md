@@ -3,7 +3,6 @@
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [Bootstrap](doc/bootstrap.md#bootstrap)
 * [Runlevels](#runlevels)
 * [Syntax](doc/config.md#syntax)
   * [Runparts & /etc/rc.local](#runparts--etcrclocal)
@@ -391,8 +390,7 @@ Right after the runlevel change when all services have started properly,
 No configuration stanza in `/etc/finit.conf` is required for `rc.local`.
 If it exists and is an executable shell script Finit calls it at the very
 end of the boot, before calling the `HOOK_SYSTEM_UP`.  See more on hooks
-in [doc/plugins.md](doc/plugins.md#hooks), and about the system bootstrap
-in [doc/bootstrap.md](doc/bootstrap.md).
+in [doc/plugins.md](doc/plugins.md#hooks).
 
 
 ### Limitations
