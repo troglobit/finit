@@ -218,8 +218,10 @@ restart:
 		plugin_run_hooks(HOOK_SYSTEM_UP);
 		service_step_all(SVC_TYPE_ANY);
 
+#ifndef ALLPROGRESS
 		/* Disable progress output at normal runtime */
 		enable_progress(0);
+#endif
 
 		/* System bootrapped, launch TTYs et al */
 		bootstrap = 0;

@@ -63,6 +63,10 @@ AC_ARG_ENABLE(fastboot,
         AS_HELP_STRING([--enable-fastboot], [Skip fsck check on filesystems listed in /etc/fstab]),,[
 	enable_fastboot=no])
 
+AC_ARG_ENABLE(allprogress,
+        AS_HELP_STRING([--enable-allprogress], [Progress output on all runlevels, not just S]),,[
+	enable_allprogress=no])
+
 AC_ARG_ENABLE(fsckfix,
         AS_HELP_STRING([--enable-fsckfix], [Run fsck fix mode (options: -yf) on filesystems listed in /etc/fstab]),,[
 	enable_fsckfix=no])
@@ -179,6 +183,10 @@ AS_IF([test "x$enable_kernel_cmdline" = "xyes"], [
 
 AS_IF([test "x$enable_fastboot" = "xyes"], [
 	AC_DEFINE(FAST_BOOT, 1, [Skip fsck check on filesystems listed in /etc/fstab])])
+
+AS_IF([test "x$enable_allprogress" = "xyes"], [
+	AC_DEFINE(ALL_PROGRESS, 1, [Progress output on all runlevels, not just S])])
+
 
 AS_IF([test "x$enable_fsckfix" = "xyes"], [
 	AC_DEFINE(FSCK_FIX, 1, [Run fsck fix mode (options: -yf) on filesystems listed in /etc/fstab])])
