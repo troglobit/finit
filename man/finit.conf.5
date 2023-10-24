@@ -778,7 +778,18 @@ start/stop script is a generic script for the given service,
 .Cm foo ,
 and the options for the service are sourced from the file
 .Pa /etc/default/foo .
-Like this:
+
+Any number of environment variables can be sourced from such a file,
+and will be available both in the environment of the service process as well as the
+service invocation stanza, but note that variable references in an environment file are not expanded.
+
+This fails, and OTHERVAR will hold the unexpanded text verbatim:
+.Bd -unfilled -offset indent
+     SOMEVAR=xyz
+     OTHERVAR=--ohno $SOMEVAR
+.Ed
+
+This works:
 .Bd -unfilled -offset indent
 /etc/default/foo:
 

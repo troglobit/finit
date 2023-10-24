@@ -301,7 +301,19 @@ Finit supports sourcing environment variables from `/etc/default/*`, or
 similar `--with-sysconfig=DIR`.  This is a common pattern from SysV init
 scripts, where the start-stop script is a generic script for the given
 service, `foo`, and the options for the service are sourced from the
-file `/etc/default/foo`.  Like this:
+file `/etc/default/foo`. 
+
+Any number of environment variables can be sourced from such a file,
+and will be available both in the environment of the service process as well as the
+service invocation stanza.
+
+Please note that variable references in an environment file are not expanded. 
+The following example fails with `OTHERVAR` holding the unexpanded text "`--ohno $SOMEVAR`" verbatim:
+
+        SOMEVAR=xyz
+        OTHERVAR=--ohno $SOMEVAR
+        
+This works:
 
 * `/etc/default/foo`:
 
