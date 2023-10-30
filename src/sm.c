@@ -52,19 +52,19 @@ sm_t sm;
  */
 static void sm_check_bootstrap(void *work)
 {
-	static int cnt = 120 * 10;	/* We run with 100ms period */
+	static int timeout = 120;
         int level = cfglevel;
 
 	dbg("Step all services ...");
 	service_step_all(SVC_TYPE_ANY);
 
-	if (cnt-- > 0 && !service_completed()) {
-		dbg("Not all bootstrap run/tasks have completed yet ... %d", cnt);
+	if (timeout-- > 0 && !service_completed()) {
+		dbg("Not all bootstrap run/tasks have completed yet ... %d", timeout);
 		schedule_work(work);
 		return;
 	}
 
-	if (cnt > 0)
+	if (timeout > 0)
 		dbg("All run/task have completed, resuming bootstrap.");
 	else
 		dbg("Timeout, resuming bootstrap.");
