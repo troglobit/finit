@@ -205,7 +205,6 @@ AS_IF([test "x$bash_dir" = "xyes"], [
 		[BASH_DIR="$(pkg-config --variable=completionsdir bash-completion)"],
 		[BASH_DIR="$datadir/bash-completion/completions"])], [
 	BASH_DIR="$bash_dir"])
-AC_SUBST([BASH_DIR])
 
 AS_IF([test "x$with_fstab" != "xno"], [
 	AS_IF([test "x$fstab" = "xyes"], [fstab=$sysconfdir/fstab])
@@ -338,6 +337,9 @@ AC_DEFINE_UNQUOTED(RESCUE_CONF, "$rescue_conf", [Finit rescue mode .conf])
 AC_EXPAND_DIR(sample_conf, "$pkglibdir/sample.conf")
 AC_DEFINE_UNQUOTED(SAMPLE_CONF, "$sample_conf", [Finit sameple.conf for initctl create])
 
+AC_EXPAND_DIR(bash_completion_dir, "$BASH_DIR")
+AC_SUBST(BASH_DIR, "$bash_completion_dir")
+
 AS_IF([test "$heading" = ""],   [heading="<DEFAULT>"])
 AS_IF([test "$heading" = "no"], [heading="<NONE>"])
 
@@ -374,6 +376,7 @@ Behavior:
 Optional features:
   Install doc/..........: $enable_doc
   Install contrib/......: $enable_contrib
+  Bash completion.......: $bash_completion_dir
   Built-in keventd......: $with_keventd
   Built-in sulogin......: $with_sulogin $sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
