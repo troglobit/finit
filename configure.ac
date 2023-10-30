@@ -16,9 +16,9 @@ AC_CONFIG_FILES([Makefile
 	plugins/Makefile
 	src/Makefile
 	system/Makefile system/10-hotplug.conf
-	tmpfiles.d/Makefile
 	test/test.env test/Makefile
-	test/lib/Makefile test/src/Makefile])
+	test/lib/Makefile test/src/Makefile
+	tmpfiles.d/Makefile])
 
 # Older versions of autoconf (<2.58) do not have AC_CONFIG_MACRO_DIR()
 #m4_include([m4/plugin.m4])
