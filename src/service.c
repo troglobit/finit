@@ -2203,6 +2203,7 @@ static void service_retry(svc_t *svc)
 static void svc_set_state(svc_t *svc, svc_state_t new_state)
 {
 	svc_state_t *state = (svc_state_t *)&svc->state;
+	const svc_state_t old_state = svc->state;
 
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
 	if (new_state == SVC_STOPPING_STATE) {
@@ -2223,7 +2224,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		snprintf(failure, sizeof(failure), "%s/%s/failure", svc_typestr(svc), svc_ident(svc, NULL, 0));
 
 		/* create success/failure condition when entering SVC_DONE_STATE. */
-		if (*state == SVC_DONE_STATE) {
+		if (new_state == SVC_DONE_STATE) {
 			if (svc->started && !WEXITSTATUS(svc->status))
 				cond_set_oneshot(success);
 			else
@@ -2231,7 +2232,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		}
 
 		/* clear all conditions when entering SVC_HALTED_STATE. */
-		if (*state == SVC_HALTED_STATE) {
+		if (new_state == SVC_HALTED_STATE) {
 			cond_clear(success);
 			cond_clear(failure);
 		}
@@ -2241,9 +2242,14 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		char cond[MAX_COND_LEN];
 
 		snprintf(cond, sizeof(cond), "service/%s/", svc_ident(svc, NULL, 0));
-		cond_clear(cond);
 
-		switch (svc->state) {
+		if ((old_state == SVC_RUNNING_STATE && new_state == SVC_PAUSED_STATE) ||
+		    (old_state == SVC_PAUSED_STATE  && new_state == SVC_RUNNING_STATE))
+			; 	/* only paused during reload, don't clear conds. */
+		else
+			cond_clear(cond);
+
+		switch (new_state) {
 		case SVC_HALTED_STATE:
 		case SVC_RUNNING_STATE:
 			strlcat(cond, svc_status(svc), sizeof(cond));
