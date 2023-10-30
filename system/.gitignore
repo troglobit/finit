@@ -1,2 +1,4 @@
 Makefile
 Makefile.in
+# generated
+10-hotplug.conf
