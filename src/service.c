@@ -413,6 +413,7 @@ static void source_env(svc_t *svc)
 	len = sizeof(buf);
 	while (fgets(line, len, fp)) {
 		char *key = chomp(line);
+		wordexp_t we = { 0 };
 		char *value, *end;
 
 		/* skip any leading whitespace */
@@ -466,7 +467,19 @@ static void source_env(svc_t *svc)
 				*end-- = 0;
 		}
 
-		setenv(key, value, 1);
+		switch (wordexp(value, &we, 0)) {
+		case 0:
+			setenv(key, we.we_wordv[0], 1);
+			wordfree(&we);
+			break;
+
+		case WRDE_NOSPACE:
+			wordfree(&we);
+			/* fallthrough */
+		default:
+			setenv(key, value, 1);
+			break;
+		}
 	}
 
 	fclose(fp);
