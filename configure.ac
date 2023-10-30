@@ -106,6 +106,10 @@ AC_PLUGIN([urandom],       [yes], [Setup and save random seed at boot/shutdown])
 AC_PLUGIN([testserv],      [no],  [Test plugin to start test serv daemon])
 
 # Check for extra arguments or packages
+AC_ARG_WITH([bash-completion-dir],
+	AS_HELP_STRING([--with-bash-completion-dir[=PATH]], [Directory to install Bash completion, default: auto]),
+	[bash_dir=$withval], [bash_dir=yes])
+
 AC_ARG_WITH(fstab,
         AS_HELP_STRING([--with-fstab=FILE], [System default fstab, default $sysconfdir/fstab]),
 	[fstab=$withval], [fstab=yes])
@@ -196,6 +200,13 @@ AS_IF([test "x$enable_rescue" != "xno"], [
 AM_CONDITIONAL(LOGROTATE, [test "x$enable_logrotate" = "xyes"])
 
 ### With features ##############################################################################
+AS_IF([test "x$bash_dir" = "xyes"], [
+	PKG_CHECK_MODULES([BASH_COMPLETION], [bash-completion >= 2.0],
+		[BASH_DIR="$(pkg-config --variable=completionsdir bash-completion)"],
+		[BASH_DIR="$datadir/bash-completion/completions"])], [
+	BASH_DIR="$bash_dir"])
+AC_SUBST([BASH_DIR])
+
 AS_IF([test "x$with_fstab" != "xno"], [
 	AS_IF([test "x$fstab" = "xyes"], [fstab=$sysconfdir/fstab])
 	AC_EXPAND_DIR(fstab_path, "$fstab")
@@ -285,11 +296,12 @@ AS_IF([test "x$with_plugin_path" != "xno"], [
 	AC_DEFINE_UNQUOTED(EXTERNAL_PLUGIN_PATH, "$plugin_path", [Built-in default: /usr/lib/finit/plugins:/usr/local/lib/finit/plugins])])
 
 # Control build with automake flags
-AM_CONDITIONAL(STATIC,    [test "x$enable_static" = "xyes"])
+AM_CONDITIONAL(BASH,      [test "x$bash_dir"      != "xno"])
+AM_CONDITIONAL(STATIC,    [test "x$enable_static"  = "xyes"])
 AM_CONDITIONAL(KEVENTD,   [test "x$with_keventd"  != "xno"])
 AM_CONDITIONAL(SULOGIN,   [test "x$with_sulogin"  != "xno"])
 AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
-AM_CONDITIONAL(DOC,       [test "x$enable_doc" = "xyes"])
+AM_CONDITIONAL(DOC,       [test "x$enable_doc"     = "xyes"])
 AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
 AM_CONDITIONAL(TESTSERV,  [test "x$enable_testserv_plugin" = "xyes"])
 

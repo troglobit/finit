@@ -10,6 +10,10 @@ if DOC
 SUBDIRS           += doc
 endif
 
+if BASH
+bashdir            = $(BASH_DIR)
+dist_bash_DATA     = initctl
+endif
 # Compat hook
 install-dev:
 	@make -C src install-pkgincludeHEADERS
