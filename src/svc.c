@@ -710,6 +710,7 @@ int svc_conflicts(svc_t *svc)
  */
 int svc_ifthen(int is_conf, const char *ident, char *stmt)
 {
+	char stmts[MAX_IDENT_LEN];
 	int not = 0;
 	svc_t *svc;
 
@@ -724,39 +725,46 @@ int svc_ifthen(int is_conf, const char *ident, char *stmt)
 		if (is_conf)
 			return 1;
 
-		if (stmt[0] == '!') {
-			stmt++;
-			not++;
-		}
-
 		while (ptr[i] != '>' && ptr[i] != 0)
 			i++;
 		ptr[i] = 0;
 
-		cond = cond_get(stmt);
-		if (not && cond == COND_ON)
-			return 0;
-		if (!not && cond == COND_OFF)
-			return 0;
+		strlcpy(stmts, stmt, sizeof(stmts));
+		for (stmt = strtok(stmts, ","); stmt; stmt = strtok(NULL, ","), not = 0) {
+			if (stmt[0] == '!') {
+				stmt++;
+				not++;
+			}
+
+			cond = cond_get(stmt);
+			if (not && cond == COND_ON)
+				return 0;
+			if (!not && cond == COND_OFF)
+				return 0;
+		}
+
 		return 1;
 	}
 
 	if (!is_conf)
 		return 1;
 
-	if (stmt[0] == '!') {
-		stmt++;
-		not++;
-	}
+	strlcpy(stmts, stmt, sizeof(stmts));
+	for (stmt = strtok(stmts, ","); stmt; stmt = strtok(NULL, ","), not = 0) {
+		if (stmt[0] == '!') {
+			stmt++;
+			not++;
+		}
 
-	svc = svc_find_by_str(stmt);
-	if (not && svc) {
-		logit(LOG_NOTICE, "skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
-		return 0;
-	}
-	if (!not && !svc) {
-		logit(LOG_NOTICE, "skipping %s, %s not available.", ident, stmt);
-		return 0;
+		svc = svc_find_by_str(stmt);
+		if (not && svc) {
+			logit(LOG_NOTICE, "skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
+			return 0;
+		}
+		if (!not && !svc) {
+			logit(LOG_NOTICE, "skipping %s, %s not available.", ident, stmt);
+			return 0;
+		}
 	}
 
 	return 1;
