@@ -3,3 +3,5 @@
 
 foo=bar
 baz=qux
+
+xyzzy=$foo
