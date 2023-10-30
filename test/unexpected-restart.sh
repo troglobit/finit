@@ -15,10 +15,10 @@ test_setup()
 {
     run "cat >> $FINIT_CONF" <<EOF
 service log:stdout name:A serv -np -i A
-service log:stdout notify:systemd <pid/A>           name:B serv -np -i B -N 0 -- B needs A
-service log:stdout notify:systemd <service/B/ready> name:C serv -np -i C -N 0 -- C needs B(service)
-service log:stdout notify:systemd <pid/B>           name:D serv -np -i D -N 0 -- D needs B(pid)
-task <service/C/ready,service/D/ready>              name:allup /sbin/initctl cond set allup -- Everything is up
+service log:stdout notify:systemd <pid/A>           name:B serv -np -i B -N 0         -- B needs A
+service log:stdout notify:systemd <service/B/ready> name:C serv -np -i C -N 0         -- C needs B(service)
+service log:stdout notify:systemd <pid/B>           name:D serv -np -i D -N 0         -- D needs B(pid)
+task <service/C/ready,service/D/ready>              name:allup initctl cond set allup -- Everything is up
 EOF
     say "Test start $(date)"
 }
