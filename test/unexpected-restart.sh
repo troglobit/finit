@@ -30,17 +30,18 @@ test_teardown()
 
 pidof()
 {
-    texec initctl status $1 -j|jq .pid
+    texec initctl -j status "$1" | jq .pid
 }
 
+# shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-
-sep
-say "finit config:"
+sep "$FINIT_CONF"
 run "cat $FINIT_CONF"
 sep
 run "initctl reload"
+run "initctl status"
+sep
 
 say "waiting for primary startup to complete"
 retry 'assert_status allup "done"' 100 1
@@ -49,12 +50,12 @@ oldpid=$(pidof C)
 assert_status D "running"
 doldpid=$(pidof D)
 
-say "pre-reload status"
+sep "pre-reload status"
 run "initctl status"
 sep
 
-# toggle_finit_debug
 say "Reload Finit, who gets restarted?"
+#run "initctl debug"
 run "initctl reload"
 sleep 2
 
@@ -64,7 +65,9 @@ assert_status C "running"
 assert_status D "running"
 
 newpid=$(pidof C)
+# shellcheck disable=SC2086
 assert "C was not restarted" $oldpid -eq $newpid
 
 dnewpid=$(pidof D)
+# shellcheck disable=SC2086
 assert "D was not restarted" $doldpid -eq $dnewpid
