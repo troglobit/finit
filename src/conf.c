@@ -445,7 +445,7 @@ void conf_save_exec_order(svc_t *svc, char *cmdline, int result)
 				free(prepared);
 			prepared = malloc(++len);
 			if (!prepared)
-				return;
+				goto done;
 			snprintf(prepared, len, "        %-7s  %-64s (%s)", svc_typestr(svc), cmdline, svc->desc);
 		}
 	} else {
@@ -458,7 +458,7 @@ void conf_save_exec_order(svc_t *svc, char *cmdline, int result)
 			fprintf(fp, "%s  %-7s  %-64s (%s)\n", ststr, svc_typestr(svc), cmdline, svc->desc);
 		}
 	}
-
+done:
 	fclose(fp);
 }
 
