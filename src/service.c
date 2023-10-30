@@ -1414,7 +1414,11 @@ static void parse_cmdline_args(svc_t *svc, char *cmd, char **args)
  * before they are started.  Or restarted, or even SIGHUP'ed, when the
  * gateway changes or interfaces come and go.  The special case when a
  * service is declared with <!> means it does not support SIGHUP but
- * must be STOP/START'ed at system reconfiguration.
+ * must be STOP/START'ed at system reconfiguration.  For run/task a <!>
+ * means Finit can relax its promise to run at least once per runlevel.
+ * I.e., for run/task conditions that would otherwise block bootstrap:
+ *
+ *     task [S0123456789] <!sys/pwr/fail> name:pwrfail initctl poweroff -- Power failure, shutting down
  *
  * Conditions can for example be: pid/NAME:ID for process dependencies,
  * net/<IFNAME>/up or net/<IFNAME>/exists.  The condition handling is
@@ -2500,7 +2504,7 @@ restart:
 
 		case COND_ON:
 			if (svc_is_changed(svc)) {
-				if (svc_nohup(svc))
+				if (svc_nohup(svc) || !svc_is_daemon(svc))
 					service_stop(svc);
 				else {
 					/*
@@ -2601,7 +2605,12 @@ void service_runtask_clean(void)
 		if (!svc_is_runtask(svc))
 			continue;
 
-		svc->once = 0;
+		/* run/task declared with <!> */
+		if (svc->sighup)
+			svc->once = 1;
+		else
+			svc->once = 0;
+
 		if (svc->state == SVC_DONE_STATE)
 			svc_set_state(svc, SVC_HALTED_STATE);
 	}

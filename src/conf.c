@@ -656,11 +656,22 @@ void conf_parse_cond(svc_t *svc, char *cond)
 		return;
 	}
 
-	/* First character must be '!' if SIGHUP is not supported. */
+	/*
+	 * First character must be '!' if:
+	 *   - service:  SIGHUP is not supported
+	 *   - run/task: Do not block bootstrap
+	 */
 	ptr = cond;
 	if (ptr[i] == '!') {
-		svc->sighup = 0;
 		ptr++;
+
+		if (svc_is_runtask(svc)) {
+			/* see service_runtask_clean() */
+			svc->sighup = 1;
+			svc->once = 1;
+		} else {
+			svc->sighup = 0;
+		}
 	}
 
 	while (ptr[i] != '>' && ptr[i] != 0)

@@ -27,6 +27,16 @@ specified separated by comma.  Multiple conditions are logically AND'ed
 during evaluation, i.e. all conditions must be satisfied in order for a
 service to run.
 
+A special syntax, using a leading `!` in run/task/service conditions,
+denote if a:
+
+ - service does not support `SIGHUP`
+ - run/task should not block runlevel changes (i.e., bootstrap)
+
+Finit guarantees by default that all run/tasks run (at least) once
+per runlevel.  For most tasks this is a good default, for example
+checking SSH host keys or loading keymap.  However, for conditions
+that are unlikely to happen it is not. (See example below.)
 
 ### Example
 
@@ -40,6 +50,19 @@ being created, i.e., the service's default readiness notification.
 **NOTE:** Conditions also stop services when a condition is no longer
   asserted.  I.e., if the Zebra process above stops or restarts, netd
   will also stop or restart.
+
+Another example is `dropbear`, it does not support `SIGHUP`, but we can
+also see optional sourcing of arguments from an environment file:
+
+    service [2345789] <!> env:-/etc/default/dropbear dropbear -F -R $DROPBEAR_ARGS -- Dropbear SSH daemon
+
+Finally, the weird "block runlevel changes" example.  Here we see what
+happens when Finit receives `SIGPWR`, sent from a power daemon like
+[powstatd(8)][].  A condition is asserted and a user can set up their
+own task to act on it.  We do not want this task to block Finit from
+moving to the next runlevel after bootstrap, so we set `<!>`:
+
+    task [S0123456789] <!sys/pwr/fail> name:pwrfail initctl poweroff -- Power failure, shutting down
 
 
 Triggering
@@ -260,3 +283,5 @@ Therefore, any plugin that supplies Finit with conditions must ensure
 that their state is updated after each reconfiguration.  This can be
 done by binding to the `HOOK_SVC_RECONF` hook.  For an example of how
 to do this, see `plugins/pidfile.c`.
+
+[powstatd(8)]: https://manpages.ubuntu.com/manpages/trusty/en/man8/powstatd.8.html
