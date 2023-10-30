@@ -174,17 +174,21 @@ layout, as specified in the [FHS][]:
          |- spool/
          `- tmp/
 
-Finit starts (very early) by mounting `/dev`, `/proc/`, and `/sys`,
-unless they (i.e., `/dev`) are already mounted.  When all plugins and
-other, core Finit functions, have been set up, all relevant filesystems
-(`PASS > 0`) are checked and mounted from the selected `fstab`, either
+Finit starts by mounting the critical file systems `/dev`, `/proc/`, and
+`/sys`, unless they are already mounted.  When all plugins and other,
+core Finit functions, have been set up, all relevant filesystems (where
+`PASS > 0`) are checked and mounted from the selected `fstab`, either
 the default `/etc/fstab`, or any custom one selected from the command
 line, or at build time.
 
-Any file system not listed `fstab` are automatically mounted by Finit,
-as listed above, provided their respective mount point exists.
+To provide a smooth ride, file system not listed in the given `fstab`,
+e.g. `/tmp` and `/run`, are automatically mounted by Finit, as listed
+above, provided their respective mount point exists.
 
 With all filesystems mounted, Finit calls `swapon`.
+
+> **Tip:** to see what happens when all filesystems are mounted, have a
+> look at the [`bootmisc.so` plugin](plugins.md).
 
 At shutdown, and after having stopped all services and other lingering
 processes have been killed, filesystems are unmounted in the reverse
