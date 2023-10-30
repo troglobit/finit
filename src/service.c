@@ -992,7 +992,11 @@ int service_stop(svc_t *svc)
 	if (!svc->desc[0])
 		do_progress = 0;
 
-	if (runlevel != 1 && do_progress)
+	/*
+	 * Skip run/tasks in progress, would otherwise print silly stuff
+	 * like: "Stopping Shutting down" ...
+	 */
+	if (runlevel != 1 && do_progress && (svc_is_daemon(svc) || svc_is_sysv(svc)))
 		print_desc("Stopping ", svc->desc);
 
 	if (!svc_is_sysv(svc)) {
@@ -1048,7 +1052,7 @@ int service_stop(svc_t *svc)
 		}
 	}
 
-	if (runlevel != 1 && do_progress)
+	if (runlevel != 1 && do_progress && (svc_is_daemon(svc) || svc_is_sysv(svc)))
 		print_result(rc);
 
 	return rc;
