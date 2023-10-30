@@ -37,5 +37,6 @@ while true; do
     sleep 1
 done
 
+sleep 1
 texec diff -u /usr/share/runparts/ref.log /tmp/runparts.log
 texec cmp /usr/share/runparts/ref.log /tmp/runparts.log || fail "runparts in wrong order"
