@@ -12,12 +12,12 @@ cp "$top_builddir/test/src/serv" "$SYSROOT/sbin/"
 FINITBIN="$(pwd)/$top_builddir/src/finit" DEST="$SYSROOT" make -f "$srcdir/lib/sysroot.mk"
 
 # Drop plugins we don't need in test, only causes confusing FAIL in logs.
-for plugin in tty.so urandom.so rtc.so modprobe.so hotplug.so; do
+for plugin in tty.so urandom.so rtc.so modprobe.so; do
     find "$SYSROOT" -name $plugin -delete
 done
 
 # Drop system .conf files we don't need in test, same as above
-for conf in hotplug.conf; do
+# shellcheck disable=SC2043
+for conf in 10-hotplug.conf; do
     find "$SYSROOT" -name $conf -delete
 done
-
