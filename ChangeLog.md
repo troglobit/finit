@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.5][] - 2023-10-04
+[4.5][] - 2023-10-30
 --------------------
 
 ### Changes
@@ -22,7 +22,7 @@ All relevant changes are documented in this file.
 - Improved logging on failure to `execvp()` a run/task/service, now
   with `errno`, e.g., "No such file or directory" when the command
   is missing from `$PATH`
-- Add support for Bash completion to `initctl`, issue #360
+- Add Bash completion support for `initctl`, configurable, issue #360
 - Handle absolute path to `initctl [enable|disable]`, not supported
 - Update `finit.conf(5)` man page with the recommended directory
   hierarchy in `/etc/finit.d/`
@@ -43,6 +43,18 @@ All relevant changes are documented in this file.
 - Plugins and bundled services: dbus, keventd, watchdogd, and runparts,
   are now loaded *after* all services in `/lib/finit/system/`.  A new
   runtime-only path (for inspection) in `/run/finit/system/` is used
+- Redirect `log*` output to console when `finit.debug` is enabled
+- Assert `<int/container>` condition if we detect running in container
+- Add support for mdev's netlink daemon mode, issue #367
+- Add support for mdevd in `10-hotplug.conf`, preferred over plain mdev
+- Disable modprobe plugin by default, udevd and mdev/mdevd loads modules
+- Update documentation for run/task shell limitations, issue #376
+- Update documentation regarding automount of `/run` and `/tmp`
+- Update plugin documentation, add section about limited tmpfiles.d(5) support
+- Skip registering service when `if:!name` matches a known service.
+  This allows conditional loading of alternative services, e.g. if udevd
+  is already loaded we do not need mdevd
+- Drop `doc/bootstrap.md`, inaccurate and confusing to users
 
 ### Fixes
 - Fix #227: believed to have been fixed in v4.3, the root cause was
@@ -64,12 +76,35 @@ All relevant changes are documented in this file.
   at bootstrap is now saved in `/run/finit/conf.order` for inspection,
   `/run/finit/exec.order` shows the start order of each process
 - Fix #372: lost `udevadm` calls due to overloading
+- Adjust final `udevadm settle` timeout: 5 -> 30 sec
 - Fixed dbus plugin, the function that located `<pidfile> ...` in the
   `dbus/system.conf` caused spurious line breaks which led to the
   service not being loaded properly
 - The `runparts` executor now skips backup files (`foo~`)
 - The `runparts` stanza now properly appends ` start` to scripts that
   start with `S[0-9]+`.  This has been broken for a very long time.
+- Fix #377: expand service `env:file` variables, allow constructs like:
+
+        RUNDIR=/var/run/somesvc
+        DAEMON_ARGS=--workdir $RUNDIR --other-args...
+- Fix #378: warn on console if run/task times out during bootstrap
+- Fix #378: add run/task support for `<!>` to allow transition from
+  bootstrap to multi-user runlevel even though task has not run yet.
+- Fix #382: do not clear `<service/foo/STATE>` conditions on reload.  
+  Introduced back in v4.3-rc2, 82cc10be8, the support for automatic
+  service conditions have had a weird and unintended behavior.  Any
+  change in state (see `doc/svc-machine.png`) caused Finit to clear
+  out *all* previously acquired service conditions.
+
+  However, when moving between RUNNING and PAUSED states, a service
+  should not have its conditions cleared.  The PAUSED state, seen
+  also by all conditions moving to FLUX, is only temporary while an
+  `initctl reload` is processed.  If a service has no changes to be
+  applied it will move back to RUNNING.
+
+  Also, we cannot clear the service conditions because other run/task
+  or services may depend on it and clearing them would cause Finit to
+  `SIGTERM` these processes (since they are no longer eligible to run).
 
 
 [4.4][] - 2023-05-15
