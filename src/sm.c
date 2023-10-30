@@ -53,21 +53,29 @@ sm_t sm;
 static void sm_check_bootstrap(void *work)
 {
 	static int timeout = 120;
-        int level = cfglevel;
+	int bootstrap_done;
+	int level = cfglevel;
+	svc_t *svc = NULL;
 
 	dbg("Step all services ...");
 	service_step_all(SVC_TYPE_ANY);
 
-	if (timeout-- > 0 && !service_completed()) {
+	bootstrap_done = service_completed(&svc);
+	if (timeout-- > 0 && !bootstrap_done) {
 		dbg("Not all bootstrap run/tasks have completed yet ... %d", timeout);
 		schedule_work(work);
 		return;
 	}
 
-	if (timeout > 0)
+	if (timeout > 0) {
 		dbg("All run/task have completed, resuming bootstrap.");
-	else
+	} else {
 		dbg("Timeout, resuming bootstrap.");
+		if (svc)
+			print(2, "Timeout waiting for %s to run, resuming bootstrap", svc_ident(svc, NULL, 0));
+		else
+			print(2, "Timeout waiting for unknown run/task, resuming bootstrap");
+	}
 
 	dbg("Flushing pending .conf file events ...");
 	conf_flush_events();

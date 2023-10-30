@@ -2609,6 +2609,7 @@ void service_runtask_clean(void)
 
 /**
  * service_completed - Have run/task completed in current runlevel
+ * @svcp: On %FALSE return, this points to the first incomplete svc
  *
  * This function checks if all run/task have run once in the current
  * runlevel.  E.g., at bootstrap we must wait for these scripts or
@@ -2621,7 +2622,7 @@ void service_runtask_clean(void)
  * Returns:
  * %TRUE(1) or %FALSE(0)
  */
-int service_completed(void)
+int service_completed(svc_t **svcp)
 {
 	svc_t *svc, *iter = NULL;
 
@@ -2643,6 +2644,8 @@ int service_completed(void)
 
 		if (!svc->once) {
 			dbg("%s has not yet completed ...", svc_ident(svc, NULL, 0));
+			if (svcp)
+				*svcp = svc;
 			return 0;
 		}
 		dbg("%s has completed ...", svc_ident(svc, NULL, 0));
