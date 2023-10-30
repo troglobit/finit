@@ -37,6 +37,7 @@ while true; do
     sleep 1
 done
 
+sleep 1
 texec cat /tmp/sysv.log
 texec diff -u /usr/share/runparts/sysv.log /tmp/sysv.log
 texec cmp /usr/share/runparts/sysv.log /tmp/sysv.log || fail "runparts sysv in wrong order"
