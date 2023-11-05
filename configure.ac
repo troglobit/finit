@@ -314,7 +314,8 @@ pkglibdir=$libdir/finit
 AC_SUBST(pkglibexecdir)
 AC_EXPAND_DIR(pkglibexecdir, "$libexecdir/finit")
 AC_DEFINE_UNQUOTED(FINIT_EXECPATH_, "$pkglibexecdir", [Finit libexec path])
-AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "$runstatedir/finit/system", [Finit runtime dynamic system services])
+AC_EXPAND_DIR(finit_runpath, "$runstatedir/finit/system")
+AC_DEFINE_UNQUOTED(FINIT_RUNPATH_, "$finit_runpath", [Finit runtime dynamic system services])
 
 AC_EXPAND_DIR(plugin_path, "$pkglibdir/plugins")
 AC_SUBST(plugin_path)
