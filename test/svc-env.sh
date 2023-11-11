@@ -22,7 +22,7 @@ test_teardown()
 
 sep "/etc/env:"
 run "cat /etc/env"
-run "echo 'service env:/etc/env serv -np -e xyzzy:bar -- serv checks xyzzy=bar' > $FINIT_CONF"
+run "echo 'service env:/etc/env serv -np -e xyzzy:bar -e \"FOO_ARGS:-i bar -l bar endarg\" -- serv checks xyzzy=bar' > $FINIT_CONF"
 
 say 'Reload Finit'
 run "initctl reload"
