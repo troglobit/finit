@@ -150,11 +150,11 @@ static void setup(void *arg)
 	 * Note: dbus drops privs after starting up.
 	 */
 	if (pidfn) {
-		snprintf(line, sizeof(line), "[S123456789] cgroup.system name:dbus pid:!%s %s %s -- %s",
+		snprintf(line, sizeof(line), "[S123456789] cgroup.system notify:none name:dbus pid:!%s %s %s -- %s",
 			 pidfn, cmd, DBUS_ARGS, DBUS_DESC);
 		free(pidfn);
 	} else
-		snprintf(line, sizeof(line), "[S123456789] cgroup.system name:dbus %s %s -- %s",
+		snprintf(line, sizeof(line), "[S123456789] cgroup.system notify:none name:dbus %s %s -- %s",
 			 cmd, DBUS_ARGS, DBUS_DESC);
 
 	conf_save_service(SVC_TYPE_SERVICE, line, "dbus.conf");

@@ -958,6 +958,18 @@ static int parse_static(char *line, int is_rcsd)
 		return 0;
 	}
 
+	/*
+	 * Before Finit 5 the default readiness notification is PID.
+	 * This default can be changed by setting 'readiness none' in
+	 * the file /etc/finit.conf, only read once at bootstrap.
+	 */
+	if (BOOTSTRAP && MATCH_CMD(line, "readiness ", x)) {
+		char *token = strip_line(x);
+
+		if (!strcmp(token, "none"))
+			readiness = SVC_NOTIFY_NONE;
+	}
+
 	if (MATCH_CMD(line, "reboot-delay ", x)) {
 		syncsec = strtonum(strip_line(x), 0, 60, NULL);
 		return 0;
@@ -1579,7 +1591,7 @@ int conf_init(uev_ctx_t *ctx)
 	 */
 #ifdef WDT_DEVNODE
 	if (whichp(FINIT_EXECPATH_ "/watchdogd") && fexist(WDT_DEVNODE)) {
-		conf_save_service(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init name:watchdog :finit "
+		conf_save_service(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init notify:none name:watchdog :finit "
 				  FINIT_EXECPATH_ "/watchdogd -- Finit watchdog daemon", "watchdogd.conf");
 	}
 #endif
@@ -1587,7 +1599,7 @@ int conf_init(uev_ctx_t *ctx)
 	 * Start kernel event daemon as soon as possible, if enabled
 	 */
 	if (whichp(FINIT_EXECPATH_ "/keventd"))
-		conf_save_service(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init "
+		conf_save_service(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init notify:none "
 				  FINIT_EXECPATH_ "/keventd -- Finit kernel event daemon", "keventd.conf");
 
 	dbg("Allow plugins to register early runlevel 1 run/task/services ...");
@@ -1621,7 +1633,7 @@ int conf_init(uev_ctx_t *ctx)
 		if (runparts_sysv)
 			strlcat(args, "-s ", sizeof(args));
 
-		snprintf(conf, sizeof(conf), "[S] <int/bootstrap> log:console %s %s %s"
+		snprintf(conf, sizeof(conf), "[S] <int/bootstrap> notify:none log:console %s %s %s"
 			 " -- Calling runparts %s in the background",
 			 _PATH_RUNPARTS, args, runparts, runparts);
 		conf_save_service(SVC_TYPE_TASK, conf, "runparts.conf");

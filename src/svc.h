@@ -83,6 +83,14 @@ typedef enum {
 	SVC_ONCRASH_SCRIPT,
 } svc_oncrash_action_t;
 
+/* 0: none, 1: systemd, 2: s6 */
+typedef enum {
+	SVC_NOTIFY_NONE = 0,
+	SVC_NOTIFY_PID,
+	SVC_NOTIFY_SYSTEMD,
+	SVC_NOTIFY_S6,
+} svc_notify_t;
+
 #define MAX_ID_LEN       16
 #define MAX_ARG_LEN      64
 #define MAX_CMD_LEN      256
@@ -202,7 +210,7 @@ typedef struct svc {
 	/*
 	 * Readiness notification socket: systemd, s6
 	 */
-	int	       notify;	       /* 0: none, 1: systemd, 2: s6 */
+	svc_notify_t   notify;
 	uev_t	       notify_watcher; /* i/o watcher */
 
 	/* time at svc_del(), used by gc timer */

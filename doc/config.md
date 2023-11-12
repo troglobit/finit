@@ -356,17 +356,31 @@ most notably systemd and s6, other methods for signaling "readiness"
 arrived and daemons were adapted to these new schemes to a larger
 extent.
 
-As of Finit v4.4 partial support for systemd and s6 is available.  The
-native PID file mode of operation is still default, the other's can be
-defined per service, like this:
+As of Finit v4.4 partial support for systemd and s6 style readiness
+notification is available, and the native PID file mode of operation is,
+as of Finit v4.6 optional, by default it is still enabled, but this can
+be changed in `finit.conf`:
 
+    readiness none
+
+This will be made the default in Finit 5.0.  In this mode of operation,
+every service needs to explicitly declare their readiness notification,
+like this:
+
+    service notify:pid     watchdogd
     service notify:systemd foo
     service notify:s6      bar
+    service notify:none    qux
+
+The `notify:none` syntax is for completeness in systems which run in
+`readiness pid` mode (default).  Services declared with `notify:none`
+will assert ready condition as soon as Finit has started them, e.g.,
+`service/qux/ready`.
 
 To synchronize two services the following condition can be used:
 
-    service notify:systemd    A
-    service <service/A/ready> B
+    service notify:pid                 watchdogd
+    service <service/watchdogd/ready>  stress-ng --cpu 8
 
 For details on the syntax and options, see below.
 

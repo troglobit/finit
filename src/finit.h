@@ -121,6 +121,7 @@ extern int    single;
 extern int    bootstrap;
 extern int    kerndebug;
 extern int    syncsec;
+extern int    readiness;
 extern char  *fstab;
 extern char  *sdown;
 extern char  *network;

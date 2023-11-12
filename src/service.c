@@ -701,11 +701,12 @@ static int service_start(svc_t *svc)
 			wordexp_t we = { 0 };
 			int rc;
 
-			if (svc->notify) {
+			if (svc->notify == SVC_NOTIFY_SYSTEMD || svc->notify == SVC_NOTIFY_S6) {
 				if (client_command(INIT_CMD_NOTIFY_SOCKET)) {
 					err(1, "%s: failed creating notify socket", svc_ident(svc, NULL, 0));
 					client_disconnect();
-					svc->notify = 0; /* does not change parent, restarting may work. */
+					/* does not change parent, restarting may work. */
+					svc->notify = SVC_NOTIFY_NONE;
 				} else {
 					char val[20];
 
@@ -730,7 +731,7 @@ static int service_start(svc_t *svc)
 				if (len == 0)
 					break;
 
-				if (svc->notify) {
+				if (svc->notify == SVC_NOTIFY_SYSTEMD || svc->notify == SVC_NOTIFY_S6) {
 					char *ptr = strstr(arg, "%n");
 
 					if (ptr) {
@@ -907,6 +908,19 @@ static void service_kill(svc_t *svc)
 		print(2, NULL);
 }
 
+/* Ensure we don't have any notify socket lingering */
+static void service_notify_stop(svc_t *svc)
+{
+	if (svc->notify != SVC_NOTIFY_SYSTEMD && svc->notify != SVC_NOTIFY_S6)
+		return;
+
+	uev_io_stop(&svc->notify_watcher);
+	if (svc->notify_watcher.fd > 0) {
+		close(svc->notify_watcher.fd);
+		svc->notify_watcher.fd = 0;
+	}
+}
+
 /*
  * Clean up any lingering state from dead/killed services
  */
@@ -922,12 +936,7 @@ static void service_cleanup(svc_t *svc)
 		logit(LOG_CRIT, "Failed removing service %s pidfile %s",
 		      svc_ident(svc, NULL, 0), fn);
 
-	/* Ensure we don't have any notify socket lingering */
-	if (svc->notify && svc->notify_watcher.fd > 0) {
-		uev_io_stop(&svc->notify_watcher);
-		close(svc->notify_watcher.fd);
-		svc->notify_watcher.fd = 0;
-	}
+	service_notify_stop(svc);
 
 	/* No longer running, update books. */
 	if (svc_is_tty(svc) && svc->pid > 1)
@@ -1188,13 +1197,15 @@ static void parse_log(svc_t *svc, char *arg)
 	}
 }
 
-static int parse_notify(char *arg)
+static svc_notify_t parse_notify(char *arg)
 {
 	if (!strcmp(arg, "systemd"))
-		return 1;
+		return SVC_NOTIFY_SYSTEMD;
 	if (!strcmp(arg, "s6"))
-		return 2;
-	return 0;		/* unsupported/disabled */
+		return SVC_NOTIFY_S6;
+	if (!strcmp(arg, "pid"))
+		return SVC_NOTIFY_PID;
+	return SVC_NOTIFY_NONE;	/* unsupported/none */
 }
 
 static void parse_env(svc_t *svc, char *env)
@@ -1759,17 +1770,12 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else
 			svc->log.enabled = 0;
 	}
-	if (notify) {
-		int type = parse_notify(notify);
 
-		if (type <= 0)
-			goto disable_notify;
-		svc->notify = type;
-	} else if (svc->notify) {
-	disable_notify:
-		/* XXX: close existing socket */
-		svc->notify = 0;
-	}
+	if (notify)
+		svc->notify = parse_notify(notify);
+	  else
+		svc->notify = readiness;
+
 	if (desc)
 		strlcpy(svc->desc, desc, sizeof(svc->desc));
 	else if (type == SVC_TYPE_TTY)
@@ -2373,11 +2379,7 @@ restart:
 			char condstr[MAX_COND_LEN];
 
 			dbg("%s: stopped, cleaning up timers and conditions ...", svc_ident(svc, NULL, 0));
-			if (svc->notify && svc->notify_watcher.fd > 0) {
-				uev_io_stop(&svc->notify_watcher);
-				close(svc->notify_watcher.fd);
-				svc->notify_watcher.fd = 0;
-			}
+			service_notify_stop(svc);
 
 			service_timeout_cancel(svc);
 			cond_clear(mkcond(svc, condstr, sizeof(condstr)));
@@ -2686,7 +2688,7 @@ void service_notify_reconf(void)
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (!svc->notify)
+		if (svc->notify == SVC_NOTIFY_PID)
 			continue; /* managed by pidfile plugin */
 
 		if (svc->state != SVC_RUNNING_STATE)
@@ -2739,7 +2741,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 		service_ready(svc);
 
 		/* s6 applications close their socket after notification */
-		if (svc->notify == 2) {
+		if (svc->notify == SVC_NOTIFY_S6) {
 			uev_io_stop(w);
 			close(w->fd);
 			w->fd = 0;

@@ -18,8 +18,8 @@
 # change the contents any way you like, it can even be empty.
 
 # Check for systemd-udevd and eudev, if we find both, we opt for the latter.
-service nowarn [S12345789] cgroup.system name:udevd pid:udevd log /lib/systemd/systemd-udevd -- Device event daemon (udev)
-service nowarn [S12345789] cgroup.system name:udevd pid:udevd log udevd -D -- Device event daemon (udev)
+service nowarn [S12345789] cgroup.system name:udevd notify:none pid:udevd log /lib/systemd/systemd-udevd -- Device event daemon (udev)
+service nowarn [S12345789] cgroup.system name:udevd notify:none pid:udevd log udevd -D -- Device event daemon (udev)
 
 # Wait for udevd to start, then trigger coldplug events and module loading.
 # The last 'settle' call waits for it to finalize processing all uevents.
@@ -34,7 +34,7 @@ run nowarn if:udevd cgroup.init :5 [S] <pid/udevd> log udevadm settle -t 30     
 # <run/coldplug/success> (same as for plain mdev below) can be relied on as a
 # barrier for services that, e.g., need to probe for switchcore ports or PHYs
 # that require firmware loading before they show up.
-service nowarn conflict:udevd,mdev cgroup.init if:!udevd \
+service nowarn conflict:udevd,mdev cgroup.init notify:none if:!udevd \
 	[S12345789] notify:s6 mdevd -O 4 -D %n -- Device event daemon (mdevd)
 run     nowarn conflict:udevd,mdev cgroup.init name:coldplug <service/mdevd/ready> \
 	[S] mdevd-coldplug -- Cold plugging system
@@ -42,7 +42,7 @@ run     nowarn conflict:udevd,mdev cgroup.init name:coldplug <service/mdevd/read
 # If neither udevd or mdevd are available, fall back to mdev.  The new daemon
 # mode calls `mdev -s` internally but does not create a PID file when that is
 # done, so synchronization with coldplug is fragile.
-service nowarn conflict:udevd,mdevd cgroup.init if:!udevd,!mdevd \
+service nowarn conflict:udevd,mdevd cgroup.init notify:none if:!udevd,!mdevd \
 	[S12345789] mdev -df -S -- Device event daemon (mdev)
 
 # Trigger a replay of all uevents from boot, before userspace was up and the

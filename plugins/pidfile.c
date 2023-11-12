@@ -88,7 +88,7 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		 * systemd style services rely on their respective
 		 * readiness notification.  Issue #343
 		 */
-		if (!svc->notify)
+		if (svc->notify == SVC_NOTIFY_PID)
 			svc_started(svc);
 
 		if (!svc_has_pidfile(svc)) {
@@ -121,11 +121,11 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		}
 
 		cond_set(cond);
-		if (!svc->notify)
+		if (svc->notify == SVC_NOTIFY_PID)
 			service_ready(svc);
 	} else if (mask & IN_DELETE) {
 		cond_clear(cond);
-		if (!svc->notify)
+		if (svc->notify == SVC_NOTIFY_PID)
 			service_ready(svc);
 	}
 }
@@ -240,7 +240,7 @@ static void pidfile_reconf(void *arg)
 		if (svc_is_changed(svc) || svc_is_starting(svc))
 			continue;
 
-		if (!svc->notify)
+		if (svc->notify == SVC_NOTIFY_PID)
 			service_ready(svc);
 
 		mkcond(svc, cond, sizeof(cond));
