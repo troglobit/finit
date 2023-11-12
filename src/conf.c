@@ -545,6 +545,23 @@ static void parse_env(char *line)
 			*end-- = 0;
 	}
 
+	/* strip any leading 'set ' */
+	end = key;
+	if (!strncmp(key, "set", 3))
+		end += 3;
+
+	/* check key, no spaces allowed */
+	while (*end && isspace(*end))
+		end++;
+	key = end;
+	while (*end && !isspace(*end))
+		end++;
+	if (*end != 0) {
+		warnx("'%s=%s': not a valid identifier", key, val);
+		return;	/* invalid key */
+	}
+
+	dbg("Global env '%s'='%s'", key, val);
 	setenv(key, val, 1);
 
 	node = malloc(sizeof(*node));

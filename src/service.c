@@ -471,6 +471,22 @@ static void source_env(svc_t *svc)
 				*end-- = 0;
 		}
 
+		/* strip any leading 'set ' */
+		end = key;
+		if (!strncmp(key, "set", 3))
+			end += 3;
+
+		/* check key, no spaces allowed */
+		while (*end && isspace(*end))
+			end++;
+		key = end;
+		while (*end && !isspace(*end))
+			end++;
+		if (*end != 0) {
+			warnx("'%s=%s': not a valid identifier", key, val);
+			continue;	/* invalid key */
+		}
+
 		switch (wordexp(value, &we, 0)) {
 		case 0:
 			for (i = 0, *val = 0; i < we.we_wordc; i++) {

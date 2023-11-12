@@ -2,6 +2,11 @@
 set -eu
 
 TEST_DIR=$(dirname "$0")
+# shellcheck disable=SC2034
+BOOTSTRAP="foo=bar\n\
+set COLORTERM=yes\n\
+b aq=oroszoe\n\
+baz=qux"
 
 test_setup()
 {
@@ -19,13 +24,14 @@ test_teardown()
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
+say "Waiting for runlevel 2"
+sleep 2
+
 #run "initctl debug"
-say "Add custom envs to $FINIT_CONF ..."
-run "echo 'foo=bar' >  $FINIT_CONF"
-run "echo 'baz=qux' >> $FINIT_CONF"
 
 say "Add service stanza to $FINIT_CONF ..."
 run "echo 'service serv -np -e foo:bar -- Verify foo=bar' >> $FINIT_CONF"
+#run "cat $FINIT_CONF"
 
 say 'Reload Finit'
 run "initctl reload"
