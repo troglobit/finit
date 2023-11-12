@@ -394,11 +394,8 @@ static int redirect(svc_t *svc)
  */
 static void source_env(svc_t *svc)
 {
-	char buf[LINE_SIZE];
-	char *line;
-	size_t len;
+	char *buf, *val, *line, *fn;
 	FILE *fp;
-	char *fn;
 
 	fn = svc_getenv(svc);
 	if (!fn)
@@ -409,12 +406,19 @@ static void source_env(svc_t *svc)
 	if (!fp)
 		return;
 
+	buf = alloca(LINE_SIZE);
+	val = alloca(LINE_SIZE);
+	if (!buf || !val) {
+		warn("Failed allocating temporary env buffer");
+		return;
+	}
+
 	line = buf;
-	len = sizeof(buf);
-	while (fgets(line, len, fp)) {
+	while (fgets(line, LINE_SIZE, fp)) {
 		char *key = chomp(line);
 		wordexp_t we = { 0 };
 		char *value, *end;
+		size_t i;
 
 		/* skip any leading whitespace */
 		while (isspace(*key))
@@ -469,7 +473,12 @@ static void source_env(svc_t *svc)
 
 		switch (wordexp(value, &we, 0)) {
 		case 0:
-			setenv(key, we.we_wordv[0], 1);
+			for (i = 0, *val = 0; i < we.we_wordc; i++) {
+				if (i > 0)
+					strlcat(val, " ", LINE_SIZE);
+				strlcat(val, we.we_wordv[i], LINE_SIZE);
+			}
+			setenv(key, val, 1);
 			wordfree(&we);
 			break;
 
