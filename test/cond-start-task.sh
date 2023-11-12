@@ -80,6 +80,9 @@ test_one()
     say "Done, drop stanza from $TEST_CONF ..."
     run "rm $TEST_CONF"
     run "initctl reload"
+
+    # Done, disable debug
+    run "initctl debug"
 }
 
 
