@@ -216,7 +216,7 @@ restart:
 		service_step_all(SVC_TYPE_ANY);
 
 		/* Allow runparts to start */
-		cond_set("int/bootstrap");
+		cond_set_oneshot("int/bootstrap");
 
 		if (sm->newlevel == -1)
 			break;

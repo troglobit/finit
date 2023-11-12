@@ -697,7 +697,7 @@ int main(int argc, char *argv[])
 
 	/* Some bootstrap tasks may need to know if we're in a container. */
 	if (in_container())
-		cond_set("int/container");
+		cond_set_oneshot("int/container");
 
 	/*
 	 * Initialize .conf system and load static /etc/finit.conf then
