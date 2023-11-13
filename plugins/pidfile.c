@@ -79,7 +79,7 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		return;
 	}
 
-	dbg("Found svc %s for %s with pid %d", svc->name, fn, svc->pid);
+	dbg("Found svc %s for %s with pid %d", svc_ident(svc, NULL, 0), fn, svc->pid);
 	mkcond(svc, cond, sizeof(cond));
 
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {

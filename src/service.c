@@ -2582,7 +2582,7 @@ restart:
 			break;
 
 		case COND_OFF:
-			dbg("Condition for %s is off, sending SIGCONT + SIGTERM", svc->name);
+			dbg("Condition for %s is off, sending SIGCONT + SIGTERM", svc_ident(svc, NULL, 0));
 			kill(svc->pid, SIGCONT);
 			service_stop(svc);
 			break;
