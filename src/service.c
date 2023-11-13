@@ -2549,6 +2549,8 @@ restart:
 
 				svc_mark_clean(svc);
 			}
+			if (svc->notify == SVC_NOTIFY_NONE)
+				service_ready(svc);
 			break;
 		}
 		break;
@@ -2573,11 +2575,16 @@ restart:
 			svc_set_state(svc, SVC_RUNNING_STATE);
 			/* Reassert condition if we go from waiting and no change */
 			if (!svc_is_changed(svc)) {
-				char name[MAX_COND_LEN];
+				if (svc->notify == SVC_NOTIFY_PID) {
+					char name[MAX_COND_LEN];
 
-				mkcond(svc, name, sizeof(name));
-				dbg("Reassert condition %s", name);
-				cond_set_path(cond_path(name), COND_ON);
+					mkcond(svc, name, sizeof(name));
+					dbg("Reassert condition %s", name);
+					cond_set_path(cond_path(name), COND_ON);
+				}
+
+				dbg("Reassert %s ready condition", svc_ident(svc, NULL, 0));
+				service_ready(svc);
 			}
 			break;
 
@@ -2710,7 +2717,7 @@ void service_notify_reconf(void)
 		if (svc->state != SVC_RUNNING_STATE)
 			continue;
 
-		if (svc_is_changed(svc) || svc_is_starting(svc))
+		if (svc->notify != SVC_NOTIFY_NONE && (svc_is_changed(svc) || svc_is_starting(svc)))
 			continue;
 
 		service_ready(svc);
