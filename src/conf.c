@@ -1422,7 +1422,8 @@ static int conf_change_act(char *dir, char *name, uint32_t mask)
 	struct conf_change *node;
 	char *rp = NULL;
 
-	if (name[0])
+	/* Check for actual printable characters, sometimes STX */
+	if (name[0] && name[0] >= ' ')
 		paste(fn, sizeof(fn), dir, name);
 	else
 		strlcpy(fn, dir, sizeof(fn));
