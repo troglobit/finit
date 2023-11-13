@@ -23,11 +23,11 @@ service nowarn [S12345789] cgroup.system name:udevd notify:none pid:udevd log ud
 
 # Wait for udevd to start, then trigger coldplug events and module loading.
 # The last 'settle' call waits for it to finalize processing all uevents.
-run nowarn if:udevd cgroup.init :1 [S] <pid/udevd> log udevadm settle -t 0                  --
-run nowarn if:udevd cgroup.init :2 [S] <pid/udevd> log udevadm control --reload             --
-run nowarn if:udevd cgroup.init :3 [S] <pid/udevd> log udevadm trigger -c add -t devices    -- Requesting device events
-run nowarn if:udevd cgroup.init :4 [S] <pid/udevd> log udevadm trigger -c add -t subsystems -- Requesting subsystem events
-run nowarn if:udevd cgroup.init :5 [S] <pid/udevd> log udevadm settle -t 30                 -- Waiting for udev to finish
+run nowarn if:udevd cgroup.init :1 [S] <service/udevd/ready> log udevadm settle -t 0                  --
+run nowarn if:udevd cgroup.init :2 [S] <service/udevd/ready> log udevadm control --reload             --
+run nowarn if:udevd cgroup.init :3 [S] <service/udevd/ready> log udevadm trigger -c add -t devices    -- Requesting device events
+run nowarn if:udevd cgroup.init :4 [S] <service/udevd/ready> log udevadm trigger -c add -t subsystems -- Requesting subsystem events
+run nowarn if:udevd cgroup.init :5 [S] <service/udevd/ready> log udevadm settle -t 30                 -- Waiting for udev to finish
 
 # If udevd is not available, check for mdevd.  Unlike plain 'mdev -df', the
 # mdevd-coldplug process exits when mdevd has completed.  So the condition
