@@ -4,6 +4,26 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.6][] - 2023-11-13
+--------------------
+
+### Changes
+- Add support for service `notify:pid` and `readiness none` global
+  option to change how Finit expects readiness notification, issue #386
+
+### Fixes
+- Fix #383: dbus and runparts regression in Finit v4.5.  The configure
+  script must expand `FINIT_RUNPATH_` before defining it in `config.h`
+- Fix #384: service environment variables drop everything but the first
+  argument, e.g., `VAR="foo bar qux"` drops everything but `foo`
+- Fix #385: internal conditions, e.g., `<int/bootstrap>` turn into flux
+  when leaving bootstrap, causing depending services to stop
+- Fix #387: global environment variables declared with `set VAR=NAME` do
+  not drop leading `set `, causing `'set VAR'='NAME'` in env.
+- Sanity check environment variables, for services and globally.  Ensure
+  the variable name (key) does not contain spaces, or a leading `set `
+
+
 [4.5][] - 2023-10-30
 --------------------
 
@@ -1613,7 +1633,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.5...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.6...HEAD
+[4.6]: https://github.com/troglobit/finit/compare/4.5...4.6
 [4.5]: https://github.com/troglobit/finit/compare/4.4...4.5
 [4.4]: https://github.com/troglobit/finit/compare/4.3...4.4
 [4.3]: https://github.com/troglobit/finit/compare/4.2...4.3
