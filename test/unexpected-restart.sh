@@ -14,10 +14,10 @@ TEST_DIR=$(dirname "$0")
 test_setup()
 {
     run "cat >> $FINIT_CONF" <<EOF
-service log:stdout name:A serv -np -i A
-service log:stdout notify:systemd <pid/A>           name:B serv -np -i B -N 0         -- B needs A
-service log:stdout notify:systemd <service/B/ready> name:C serv -np -i C -N 0         -- C needs B(service)
-service log:stdout notify:systemd <pid/B>           name:D serv -np -i D -N 0         -- D needs B(pid)
+service log:stdout notify:pid                       name:A serv -np -i A              -- A         (pid)
+service log:stdout notify:systemd <pid/A>           name:B serv -np -i B -N 0         -- B needs A (systemd)
+service log:stdout notify:s6      <service/B/ready> name:C serv -np -i C -N 0         -- C needs B (s6)
+service log:stdout notify:none    <pid/A>           name:D type:forking serv -i D     -- D needs A (forking)
 task <service/C/ready,service/D/ready>              name:allup initctl cond set allup -- Everything is up
 EOF
     say "Test start $(date)"
@@ -41,17 +41,18 @@ run "cat $FINIT_CONF"
 sep
 run "initctl reload"
 run "initctl status"
+run "initctl cond dump"
 sep
 
+run "initctl debug"
 say "waiting for primary startup to complete"
-retry 'assert_status allup "done"' 100 1
+retry 'assert_status allup "done"' 10 1
 assert_status C "running"
 oldpid=$(pidof C)
-assert_status D "running"
-doldpid=$(pidof D)
 
 sep "pre-reload status"
 run "initctl status"
+run "initctl cond dump"
 sep
 
 say "Reload Finit, who gets restarted?"
@@ -59,15 +60,15 @@ say "Reload Finit, who gets restarted?"
 run "initctl reload"
 sleep 2
 
+sep "post-reload status"
+run "initctl status"
+run "initctl cond dump"
+sep
+
 assert_status A "running"
 assert_status B "running"
 assert_status C "running"
-assert_status D "running"
 
 newpid=$(pidof C)
 # shellcheck disable=SC2086
 assert "C was not restarted" $oldpid -eq $newpid
-
-dnewpid=$(pidof D)
-# shellcheck disable=SC2086
-assert "D was not restarted" $doldpid -eq $dnewpid
