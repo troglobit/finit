@@ -80,10 +80,6 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	}
 
 	dbg("Found svc %s for %s with pid %d", svc_ident(svc, NULL, 0), fn, svc->pid);
-	if (svc->notify != SVC_NOTIFY_PID) {
-		dbg("svc %s does not use PID readiness notification, skipping.", svc_ident(svc, NULL, 0));
-		return;
-	}
 	mkcond(svc, cond, sizeof(cond));
 
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
@@ -124,8 +120,9 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 			}
 		}
 
-		cond_set(cond);
 		if (svc->notify == SVC_NOTIFY_PID)
+			cond_set(cond);
+		if (svc->notify == SVC_NOTIFY_PID || svc->notify == SVC_NOTIFY_NONE)
 			service_ready(svc);
 	} else if (mask & IN_DELETE) {
 		cond_clear(cond);
