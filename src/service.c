@@ -1620,7 +1620,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		strlcat(ident, id, sizeof(ident));
 	}
 
-	if (ifstmt && !svc_ifthen(1, ident, ifstmt))
+	if (ifstmt && !svc_ifthen(1, ident, ifstmt, nowarn))
 		return 0;
 
 	levels = conf_parse_runlevels(runlevels);
@@ -2027,7 +2027,7 @@ void service_mark_unavail(void)
 		if (!svc->ifstmt[0])
 			continue;
 
-		if (!svc_ifthen(1, svc_ident(svc, buf, sizeof(buf)), svc->ifstmt))
+		if (!svc_ifthen(1, svc_ident(svc, buf, sizeof(buf)), svc->ifstmt, svc->nowarn))
 			svc_mark(svc);
 	}
 }

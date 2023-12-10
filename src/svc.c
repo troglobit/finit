@@ -649,7 +649,7 @@ int svc_enabled(svc_t *svc)
 		return 0;
 	}
 
-	if (!svc_ifthen(0, NULL, svc->ifstmt)) {
+	if (!svc_ifthen(0, NULL, svc->ifstmt, svc->nowarn)) {
 //		dbg("ifthen:%s>", svc->ifstmt[0] ? svc->ifstmt : "<");
 		return 0;
 	}
@@ -704,11 +704,12 @@ int svc_conflicts(svc_t *svc)
  * @is_conf: Set when called by service_mark_unavail()
  * @ident:   svc_t identififcation (name:id)
  * @stmt:    if: statement from .conf file
+ * @quiet:   If non-zero, do not warn in syslog
  *
  * Returns:
  * %TRUE(1) yes, use this svc_t, %FALSE(0) prune
  */
-int svc_ifthen(int is_conf, const char *ident, char *stmt)
+int svc_ifthen(int is_conf, const char *ident, char *stmt, int quiet)
 {
 	char stmts[MAX_IDENT_LEN];
 	int not = 0;
