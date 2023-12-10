@@ -759,11 +759,13 @@ int svc_ifthen(int is_conf, const char *ident, char *stmt, int quiet)
 
 		svc = svc_find_by_str(stmt);
 		if (not && svc) {
-			logit(LOG_NOTICE, "skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
+			if (!quiet)
+				logit(LOG_NOTICE, "skipping %s, %s already loaded.", ident, svc_ident(svc, NULL, 0));
 			return 0;
 		}
 		if (!not && !svc) {
-			logit(LOG_NOTICE, "skipping %s, %s not available.", ident, stmt);
+			if (!quiet)
+				logit(LOG_NOTICE, "skipping %s, %s not available.", ident, stmt);
 			return 0;
 		}
 	}
