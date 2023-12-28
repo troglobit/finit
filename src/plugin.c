@@ -28,6 +28,7 @@
 #include <dirent.h>		/* readdir() et al */
 #include <poll.h>
 #include <string.h>
+#include <libgen.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 # include <libite/queue.h>	/* BSD sys/queue.h API */
@@ -86,9 +87,11 @@ int plugin_register(plugin_t *plugin)
 	if (!plugin->name) {
 #ifndef ENABLE_STATIC
 		Dl_info info;
+		char *dli_fname = strdup(info.dli_fname);
 
-		if (dladdr(plugin, &info) && info.dli_fname)
-			plugin->name = basename(info.dli_fname);
+		if (dladdr(plugin, &info) && dli_fname)
+			plugin->name = basename(dli_fname);
+		free(dli_fname);
 #endif
 		if (!plugin->name)
 			plugin->name = "unknown";

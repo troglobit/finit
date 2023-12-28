@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <string.h>
+#include <libgen.h>
 #include <sys/inotify.h>
 #include <sys/resource.h>
 #ifdef _LIBITE_LITE
