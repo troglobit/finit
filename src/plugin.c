@@ -28,7 +28,6 @@
 #include <dirent.h>		/* readdir() et al */
 #include <poll.h>
 #include <string.h>
-#include <libgen.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 # include <libite/queue.h>	/* BSD sys/queue.h API */
@@ -44,6 +43,7 @@
 #include "private.h"
 #include "service.h"
 #include "sig.h"
+#include "util.h"
 
 #define is_io_plugin(p) ((p)->io.cb && (p)->io.fd > 0)
 #define SEARCH_PLUGIN(str)						\
@@ -87,11 +87,9 @@ int plugin_register(plugin_t *plugin)
 	if (!plugin->name) {
 #ifndef ENABLE_STATIC
 		Dl_info info;
-		char *dli_fname = strdup(info.dli_fname);
 
-		if (dladdr(plugin, &info) && dli_fname)
-			plugin->name = basename(dli_fname);
-		free(dli_fname);
+		if (dladdr(plugin, &info) && info.dli_fname)
+			plugin->name = basenm(info.dli_fname);
 #endif
 		if (!plugin->name)
 			plugin->name = "unknown";
@@ -256,7 +254,7 @@ void plugin_run_hook(hook_point_t no, void *arg)
 
 	PLUGIN_ITERATOR(p, tmp) {
 		if (p->hook[no].cb) {
-			dbg("Calling %s hook n:o %d (arg: %p) ...", basename(p->name), no, arg ?: "NIL");
+			dbg("Calling %s hook n:o %d (arg: %p) ...", basenm(p->name), no, arg ?: "NIL");
 			p->hook[no].cb(arg ? arg : p->hook[no].arg);
 		}
 	}
@@ -304,9 +302,9 @@ int plugin_io_init(plugin_t *p)
 	if (!is_io_plugin(p))
 		return 0;
 
-	dbg("Initializing plugin %s for I/O", basename(p->name));
+	dbg("Initializing plugin %s for I/O", basenm(p->name));
 	if (uev_io_init(ctx, &p->watcher, generic_io_cb, p, p->io.fd, p->io.flags)) {
-		warn("Failed setting up I/O plugin %s", basename(p->name));
+		warn("Failed setting up I/O plugin %s", basenm(p->name));
 		return 1;
 	}
 

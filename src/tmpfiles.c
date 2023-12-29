@@ -492,7 +492,7 @@ void tmpfilesd(void)
 
 		/* check for overrides */
 		for (j = i + 1; j < gl.gl_pathc; j++) {
-			if (strcmp(basename(fn), basename(gl.gl_pathv[j])))
+			if (strcmp(basenm(fn), basenm(gl.gl_pathv[j])))
 				continue;
 			fn = NULL;
 			break;

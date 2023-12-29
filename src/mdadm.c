@@ -26,9 +26,9 @@
 #include <glob.h>
 #include <stdio.h>
 #include <string.h>
-#include <libgen.h>
 
 #include "helpers.h"
+#include "util.h"
 
 
 static glob_t *get_arrays(void)
@@ -59,7 +59,7 @@ void mdadm_wait(void)
 		for (i = 0; i < gl->gl_pathc; i++) {
 			char *array;
 
-			array = basename(gl->gl_pathv[i]);
+			array = basenm(gl->gl_pathv[i]);
 			snprintf(cmd, sizeof(cmd), "mdadm --wait-clean /dev/%s >/dev/null", array);
 			run_interactive(cmd, "Marking MD array %s as clean", array);
 		}

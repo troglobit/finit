@@ -151,6 +151,24 @@ char *progname(char *arg0)
        return prognm;
 }
 
+/**
+ * basenm - Our custom basename implementation
+ * @path: The path to parse
+ *
+ * Returns either the parsed basename, or
+ * a copy of the given path
+*/
+char *basenm(const char *path) {
+	char *basename;
+
+	basename = rindex(path, '/');
+	if (!basename)
+		return (char *) path;
+
+	basename++;
+	return basename;
+}
+
 char *str(char *fmt, ...)
 {
 	static char buf[32];
