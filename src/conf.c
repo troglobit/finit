@@ -1311,7 +1311,7 @@ int conf_reload(void)
 			if (strncmp(path, FINIT_SYSPATH_, strlen(FINIT_SYSPATH_)) &&
 			    strncmp(path, FINIT_RUNPATH_, strlen(FINIT_RUNPATH_)))
 				continue;
-			if (strcmp(basename(path), basename(gl.gl_pathv[j])))
+			if (strcmp(basenm(path), basenm(gl.gl_pathv[j])))
 				continue;
 			path = NULL; /* replacement later in list, skip this */
 			break;

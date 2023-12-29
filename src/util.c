@@ -151,6 +151,19 @@ char *progname(char *arg0)
        return prognm;
 }
 
+/* basename(3) replacement that does not modify its argument */
+char *basenm(const char *path)
+{
+	char *basename;
+
+	basename = rindex(path, '/');
+	if (!basename)
+		return (char *) path;
+
+	basename++;
+	return basename;
+}
+
 char *str(char *fmt, ...)
 {
 	static char buf[32];

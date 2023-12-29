@@ -132,11 +132,10 @@ static FILE *maybe_fopen_alias(const char *file, const char *path)
 {
 	const char *basename;
 
-	basename = rindex(path, '/');
-	if (!basename)
+	basename = basenm(path);
+	if (!strcmp(basename, path))
 		return NULL;
 
-	basename++;
 	if (strcmp(file, basename))
 		return NULL;
 
