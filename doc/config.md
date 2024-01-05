@@ -459,7 +459,7 @@ Cgroups
 
 There are three major cgroup configuration directives:
 
- 1. Global top-level group: init, system, user, or a custom group
+ 1. Global top-level group: `init`, `system`, `user`, or a custom group
  2. Selecting a top-level group for a set of run/task/services
  3. Per run/task/service limits
 
@@ -509,6 +509,10 @@ to the file `/sys/fs/cgroup/maint/foo/cpu.max`.  There is no filtering,
 except for expanding the shorthand `mem.` to `memory.`, if the file is
 not available, either the cgroup controller is not available in your
 Linux kernel, or the name is misspelled.
+
+A daemon using `SCHED_RR` currently need to run outside the default cgroups.
+
+    service [...] <...> cgroup.root /path/to/daemon arg -- Real-Time process
 
 > Linux cgroups and details surrounding values are not explained in the
 > Finit documentation.  The Linux admin-guide cover this well:
