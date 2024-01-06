@@ -1,8 +1,7 @@
 SUBDIRS    = available
 docsdir   := @docdir@/contrib/alpine/finit.d
 d_LINKS    = acpid.conf crond.conf dropbear.conf getty.conf	\
-	     keymap.conf modules.conf ntpd.conf			\
-	     klogd.conf syslogd.conf
+	     keymap.conf modules.conf ntpd.conf syslogd.conf
 
 install-exec-hook:
 	@$(MKDIR_P) $(DESTDIR)$(docsdir)/available
