@@ -15,22 +15,39 @@ jobs:
   coverity:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        id: coverity-toolchain-cache
-        with:
-          path: cov-analysis-linux64
-          key: ${{ runner.os }}-coverity
-      - name: Download Coverity Scan
-        if: steps.coverity-toolchain-cache.outputs.cache-hit != 'true'
+      - uses: actions/checkout@v4
+      - name: Fetch latest Coverity Scan MD5
+        id: var
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
         run: |
-          wget -q https://scan.coverity.com/download/cxx/linux64 \
-               --post-data "token=$TOKEN&project=${COVERITY_PROJ}" \
-               -O cov-analysis-linux64.tar.gz
-          mkdir cov-analysis-linux64
-          tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
+          wget -q https://scan.coverity.com/download/cxx/linux64         \
+               --post-data "token=$TOKEN&project=${COVERITY_PROJ}&md5=1" \
+               -O coverity-latest.tar.gz.md5
+          echo "md5=$(cat coverity-latest.tar.gz.md5)" | tee -a $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: coverity-latest.tar.gz
+          key: ${{ runner.os }}-coverity-${{ steps.var.outputs.md5 }}
+          restore-keys: |
+            ${{ runner.os }}-coverity-${{ steps.var.outputs.md5 }}
+            ${{ runner.os }}-coverity-
+            ${{ runner.os }}-coverity
+      - name: Download Coverity Scan
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+        run: |
+          if [ ! -f coverity-latest.tar.gz ]; then
+            wget -q https://scan.coverity.com/download/cxx/linux64   \
+                 --post-data "token=$TOKEN&project=${COVERITY_PROJ}" \
+                 -O coverity-latest.tar.gz
+          else
+            echo "Latest Coverity Scan available from cache :-)"
+            md5sum coverity-latest.tar.gz
+          fi
+          mkdir coverity
+          tar xzf coverity-latest.tar.gz --strip 1 -C coverity
       - name: Install dependencies
         run: |
           sudo apt-get -y update
@@ -48,7 +65,7 @@ jobs:
           ./configure --prefix= --enable-x11-common-plugin --with-watchdog --with-keventd
           export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
           cov-build --dir cov-int make
-      - name: Submit result to Coverity Scan
+      - name: Submit results to Coverity Scan
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
         run: |
@@ -61,3 +78,8 @@ jobs:
             --form version=trunk \
             --form description="${PROJECT_NAME} $(git rev-parse HEAD)" \
             https://scan.coverity.com/builds?project=${COVERITY_PROJ}
+      - name: Upload build.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverity-build.log
+          path: cov-int/build-log.txt

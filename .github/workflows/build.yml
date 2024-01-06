@@ -28,7 +28,7 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install pkg-config tree jq libuev-dev libite-dev
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Static Finit
         run: |
           ./autogen.sh
@@ -61,7 +61,7 @@ jobs:
         run: |
           make check || (cat test/test-suite.log; false)
       - name: Upload Test Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: finit-test-${{ matrix.compiler }}
           path: test/*.log
