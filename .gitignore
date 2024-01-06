@@ -14,6 +14,7 @@ GTAGS
 /autom4te.cache
 /aclocal.m4
 /ar-lib
+/backup/
 /compile
 /config.cache
 /config.h
@@ -35,6 +36,9 @@ GTAGS
 
 /test-driver
 /test-suite.log
+
+# Misc
+/.gdb_history
 
 # TroglOS build system
 /.config
