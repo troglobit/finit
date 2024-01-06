@@ -355,6 +355,8 @@ static void fs_remount_root(int fsckerr)
  */
 static void fs_finalize(void)
 {
+	int flags = MS_NOEXEC | MS_NOSUID;
+
 	/*
 	 * Some systems rely on us to both create /dev/shm and, to mount
 	 * a tmpfs there.  Any system with dbus needs shared memory, so
@@ -362,8 +364,8 @@ static void fs_finalize(void)
 	 * the /etc/fstab file already.
 	 */
 	if (!fismnt("/dev/shm")) {
-		makedir("/dev/shm", 0777);
-		fs_mount("shm", "/dev/shm", "tmpfs", 0, "mode=0777");
+		makedir("/dev/shm", 1777);
+		fs_mount("shm", "/dev/shm", "tmpfs", flags | MS_NODEV, "mode=1777");
 	}
 
 	/* Modern systems use /dev/pts */
@@ -381,7 +383,13 @@ static void fs_finalize(void)
 		snprintf(opts, sizeof(opts), "gid=%d,mode=%d,ptmxmode=0666", gid, mode);
 
 		makedir("/dev/pts", 0755);
-		fs_mount("devpts", "/dev/pts", "devpts", MS_NOSUID | MS_NOEXEC, opts);
+		fs_mount("devpts", "/dev/pts", "devpts", flags, opts);
+	}
+
+	/* Needed on systems like Alpine Linux */
+	if (!fismnt("/dev/mqueue")) {
+		makedir("/dev/mqueue", 1777);
+		fs_mount("mqueue", "/dev/mqueue", "tmpfs", flags | MS_NODEV, NULL);
 	}
 
 	/*
