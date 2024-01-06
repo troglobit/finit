@@ -1003,7 +1003,7 @@ int service_stop(svc_t *svc)
 			return 0;
 		}
 
-		dbg("Sending %s to pid:%d name:%s", sig, svc->pid, nm);
+		dbg("Sending %s to pid:%d name:%s(%s)", sig, svc->pid, id, nm);
 		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...", id, svc->pid, sig);
 	} else {
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", cmdline);
