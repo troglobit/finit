@@ -1,5 +1,5 @@
-HowTo: Finit on Alpine Linux 3.4-3.6
-====================================
+HowTo: Finit on Alpine Linux 3.4...3.19
+=======================================
 
 HowTo use Finit to boot an [Alpine Linux][] system.  It is assumed that
 the user has already installed make, a compiler, C library header files,
