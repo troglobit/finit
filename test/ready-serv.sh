@@ -19,9 +19,10 @@ test_teardown()
 
 test_one()
 {
-    service=$1
+    service=$(echo "$1" | tr -s " ")
     file=/tmp/ready
 
+    sep
     say "Add service stanza '$service' to $FINIT_CONF ..."
     run "echo '$service' > $FINIT_CONF"
 
@@ -29,6 +30,9 @@ test_one()
     run "initctl reload"
 
     retry 'assert_num_children 1 serv'
+    retry 'assert_ready "serv"' 5 1
+#    run "initctl status"
+#    run "initctl cond dump"
     assert_file_contains "$file" "READY"
     run "rm -f $file"
 
@@ -46,6 +50,6 @@ test_one()
 
 #run "initctl debug"
 
-test_one "service                ready:/bin/ready.sh serv -np       -- Native style notification"
-test_one "service notify:s6      ready:/bin/ready.sh serv -np -N %n -- s6 style notification"
-test_one "service notify:systemd ready:/bin/ready.sh serv -np       -- systemd style notification"
+test_one "service                ready:/bin/ready.sh serv -np       -- Native PID style notification"
+test_one "service notify:s6      ready:/bin/ready.sh serv -n -N %n  -- s6 style notification"
+test_one "service notify:systemd ready:/bin/ready.sh serv -n        -- systemd style notification"

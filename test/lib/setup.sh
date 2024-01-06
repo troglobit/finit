@@ -96,6 +96,14 @@ assert_nocond()
 	assert "Condition $cond cleared" "$(texec initctl -v cond get "$cond")" = "off"
 }
 
+assert_ready()
+{
+    srv=$1
+    cond="service/$srv/ready"
+
+    assert "$cond asserted" "$(texec initctl cond dump |grep "<$cond>" |awk '{print $3}')" = "on"
+}
+
 assert_is_pidfile()
 {
 	assert "Process has PID file: $2" "$(texec initctl -p status "$1" | awk '/PID file/{print $4}')" = "$2"
