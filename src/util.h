@@ -55,7 +55,7 @@ extern char *prognm;
 #endif
 
 char *progname     (char *arg0);
-char *basenm       (const char *path);
+const char *basenm (const char *path);
 
 char *str          (char *fmt, ...)                        __attribute__ ((format (printf, 1, 2)));
 int   fnread       (char *buf, size_t len, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));

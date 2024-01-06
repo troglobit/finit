@@ -49,15 +49,16 @@ static glob_t *get_arrays(void)
  */
 void mdadm_wait(void)
 {
-	size_t i;
 	glob_t *gl;
-	char cmd[160];
 
 	/* Setup kernel specific settings, e.g. allow broadcast ping, etc. */
 	gl = get_arrays();
 	if (gl) {
+		size_t i;
+
 		for (i = 0; i < gl->gl_pathc; i++) {
-			char *array;
+			const char *array;
+			char cmd[160];
 
 			array = basenm(gl->gl_pathv[i]);
 			snprintf(cmd, sizeof(cmd), "mdadm --wait-clean /dev/%s >/dev/null", array);

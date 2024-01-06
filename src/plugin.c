@@ -78,23 +78,26 @@ static char *trim_ext(char *name)
 
 int plugin_register(plugin_t *plugin)
 {
+	const char *nm;
+
 	if (!plugin) {
 		errno = EINVAL;
 		return 1;
 	}
 
 	/* Setup default name if none is provided */
-	if (!plugin->name) {
+	nm = plugin->name;
+	if (!nm) {
 #ifndef ENABLE_STATIC
 		Dl_info info;
 
 		if (dladdr(plugin, &info) && info.dli_fname)
-			plugin->name = basenm(info.dli_fname);
+			nm = basenm(info.dli_fname);
 #endif
-		if (!plugin->name)
-			plugin->name = "unknown";
+		if (!nm)
+			nm = "unknown";
 	}
-	plugin->name = trim_ext(strdup(plugin->name));
+	plugin->name = trim_ext(strdup(nm));
 
 	/* Already registered? */
 	if (plugin_find(plugin->name)) {

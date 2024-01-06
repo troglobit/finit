@@ -152,13 +152,13 @@ char *progname(char *arg0)
 }
 
 /* basename(3) replacement that does not modify its argument */
-char *basenm(const char *path)
+const char *basenm(const char *path)
 {
-	char *basename;
+	const char *basename;
 
 	basename = rindex(path, '/');
 	if (!basename)
-		return (char *) path;
+		return path;
 
 	basename++;
 	return basename;
