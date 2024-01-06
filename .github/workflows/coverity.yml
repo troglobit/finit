@@ -59,11 +59,13 @@ jobs:
           (cd libuev-2.4.0 && ./configure --prefix=/usr && make && sudo make install-strip)
           (cd libite-2.5.2 && ./configure --prefix=/usr && make && sudo make install-strip)
           sudo ldconfig
-      - name: Build
+      - name: Configure
         run: |
           ./autogen.sh
           ./configure --prefix= --enable-x11-common-plugin --with-watchdog --with-keventd
-          export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
+      - name: Build
+        run: |
+          export PATH=`pwd`/coverity/bin:$PATH
           cov-build --dir cov-int make
       - name: Submit results to Coverity Scan
         env:
