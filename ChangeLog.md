@@ -4,6 +4,21 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.7][UNRELEASED]
+--------------------
+
+### Changes
+- Silence "not available" messages for run/task/service with `nowarn`
+- Update docs, `cgroup.root` workaround for `SCHED_RR` tasks
+
+### Fixes
+- Add missing `/var/tmp` and `/var/lock -> /run/lock` (tmpfiles.d)
+- Fix #388: log redirection broken unless Finit runs in debug mode.
+  Found and fixed by Ryan Rorison
+- Fix #389: must libc requires `libgen.h` for `basename()` function.
+  Reported and worked around with new `basenm()` function by Stargirl
+
+
 [4.6][] - 2023-11-13
 --------------------
 
