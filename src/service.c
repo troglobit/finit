@@ -2330,8 +2330,8 @@ void service_forked(svc_t *svc)
 	svc_set_state(svc, SVC_RUNNING_STATE);
 }
 
-/* Set service/foo/ready condition for services and call optional ready:script */
-void service_ready(svc_t *svc)
+/* Set or clear service/foo/ready condition for services and call optional ready:script */
+void service_ready(svc_t *svc, int ready)
 {
 	char buf[MAX_COND_LEN];
 
@@ -2339,10 +2339,13 @@ void service_ready(svc_t *svc)
 		return;
 
 	snprintf(buf, sizeof(buf), "service/%s/ready", svc_ident(svc, NULL, 0));
-	cond_set(buf);
+	if (ready) {
+		cond_set(buf);
 
-	if (svc_has_ready(svc))
-		service_ready_script(svc);
+		if (svc_has_ready(svc))
+			service_ready_script(svc);
+	} else
+		cond_clear(buf);
 }
 
 /*
@@ -2551,7 +2554,7 @@ restart:
 				svc_mark_clean(svc);
 			}
 			if (svc->notify == SVC_NOTIFY_NONE)
-				service_ready(svc);
+				service_ready(svc, 1);
 			break;
 		}
 		break;
@@ -2585,7 +2588,7 @@ restart:
 				}
 
 				dbg("Reassert %s ready condition", svc_ident(svc, NULL, 0));
-				service_ready(svc);
+				service_ready(svc, 1);
 			}
 			break;
 
@@ -2721,7 +2724,7 @@ void service_notify_reconf(void)
 		if (svc->notify != SVC_NOTIFY_NONE && (svc_is_changed(svc) || svc_is_starting(svc)))
 			continue;
 
-		service_ready(svc);
+		service_ready(svc, 1);
 	}
 }
 
@@ -2762,7 +2765,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 		 * the service_notify_reconf() function to step the
 		 * generation of the READY condition.
 		 */
-		service_ready(svc);
+		service_ready(svc, 1);
 
 		/* s6 applications close their socket after notification */
 		if (svc->notify == SVC_NOTIFY_S6) {

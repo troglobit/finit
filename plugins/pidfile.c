@@ -123,11 +123,11 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		if (svc->notify == SVC_NOTIFY_PID)
 			cond_set(cond);
 		if (svc->notify == SVC_NOTIFY_PID || svc->notify == SVC_NOTIFY_NONE)
-			service_ready(svc);
+			service_ready(svc, 1);
 	} else if (mask & IN_DELETE) {
 		cond_clear(cond);
 		if (svc->notify == SVC_NOTIFY_PID)
-			service_ready(svc);
+			service_ready(svc, 0);
 	}
 }
 
@@ -242,7 +242,7 @@ static void pidfile_reconf(void *arg)
 			continue;
 
 		if (svc->notify == SVC_NOTIFY_PID)
-			service_ready(svc);
+			service_ready(svc, 1);
 
 		mkcond(svc, cond, sizeof(cond));
 		if (cond_get(cond) == COND_ON)
