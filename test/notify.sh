@@ -74,7 +74,7 @@ test_one()
     # Issue #343; pidfile.so inadvertedly marked systemd services as
     # 'started' when they created their PID file.  The serv test daemon
     # waits 3 sec between pidfile and notify to trigger this bug.
-    if [ "$type" != "native" ]; then
+    if [ "$type" != "pid" ]; then
 	say "Verify 'ready' is *not* asserted immediately on restart + reload"
 	run "initctl restart serv"
 	run "initctl reload"
@@ -103,7 +103,7 @@ test_one()
 
 #run "initctl debug"
 
-test_one "native"  "service log:stdout                serv -np       -- pid file readiness"
+test_one "pid"     "service log:stdout notify:pid     serv -np       -- pid file readiness"
 test_one "s6"      "service log:stdout notify:s6      serv -n -N %n  -- s6 readiness"
 test_one "systemd" "service log:stdout notify:systemd serv -n        -- systemd readiness"
 
