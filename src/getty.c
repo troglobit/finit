@@ -121,6 +121,9 @@ static int osrel(struct osrel *rel)
 			snprintf(rel->version, sizeof(rel->version), "(%s)", codename);
 	}
 
+	if (rel->id[0] && !strcmp(rel->id, "alpine"))
+		return 1;	/* compat mode for \r et al. */
+
 	return 0;
 }
 
