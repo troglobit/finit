@@ -78,8 +78,8 @@ static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct
 	if (ftw->level == 0)
 		return 1;
 
-	if (remove(fpath))
-		warn("Failed removing condition %s", fpath);
+	if (remove(fpath) && errno != EBUSY)
+		warn("Failed removing %s", fpath);
 
 	return 0;
 
