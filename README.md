@@ -25,7 +25,7 @@ Fast init for Linux systems.  Reverse engineered from the [EeePC
 fastinit][] over ten years ago by [Claudio Matsuoka][] — "gaps filled
 with frog DNA …"
 
-![Alpine screenshot](img/finit4-screenshot.png)  
+![Alpine screenshot](img/alpine-3.19-screenshot.png)  
 *Figure 1: Screenshot showing Finit booting [Alpine Linux](https://www.alpinelinux.org/).*
 
 Features include:
