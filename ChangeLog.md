@@ -10,12 +10,15 @@ All relevant changes are documented in this file.
 ### Changes
 - Silence "not available" messages for run/task/service with `nowarn`
 - Update docs, `cgroup.root` workaround for `SCHED_RR` tasks
+- Drop runlevels 0 and 6 from `keventd`, not needed at reboot/poweroff
 - Mount `/dev/shm` with mode 1777 (sticky bit)
 - Mount `/dev/mqueue` if available, inspiration from Alpine Linux
 - Update Alpine Linux installer and configuration files, tested on
   Alpine v3.19, some assembly still required
 
 ### Fixes
+- Fix confusing warning message when tmpfiles.d fails to install symlink
+- Fix tmpfiles.d legacy `/run/lock/subsys`, ordering
 - Add missing `/var/tmp` and `/var/lock -> /run/lock` (tmpfiles.d)
 - Fix #388: log redirection broken unless Finit runs in debug mode.
   Found and fixed by Ryan Rorison
@@ -1652,7 +1655,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.6...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.7...HEAD
+[4.7]: https://github.com/troglobit/finit/compare/4.6...4.7
 [4.6]: https://github.com/troglobit/finit/compare/4.5...4.6
 [4.5]: https://github.com/troglobit/finit/compare/4.4...4.5
 [4.4]: https://github.com/troglobit/finit/compare/4.3...4.4
