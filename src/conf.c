@@ -1617,7 +1617,7 @@ int conf_init(uev_ctx_t *ctx)
 	 * Start kernel event daemon as soon as possible, if enabled
 	 */
 	if (whichp(FINIT_EXECPATH_ "/keventd"))
-		conf_save_service(SVC_TYPE_SERVICE, "[S0123456789] cgroup.init notify:none "
+		conf_save_service(SVC_TYPE_SERVICE, "[S12345789] cgroup.init notify:none "
 				  FINIT_EXECPATH_ "/keventd -- Finit kernel event daemon", "keventd.conf");
 
 	dbg("Allow plugins to register early runlevel 1 run/task/services ...");
