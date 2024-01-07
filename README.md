@@ -26,7 +26,7 @@ fastinit][] over ten years ago by [Claudio Matsuoka][] — "gaps filled
 with frog DNA …"
 
 ![Alpine screenshot](img/alpine-screenshot2.png)  
-*Figure 1: Screenshot showing Finit booting [Alpine Linux](https://www.alpinelinux.org/).*
+*Figure 1: Screenshot of Finit booting [Alpine Linux (HowTo)](https://github.com/troglobit/finit/tree/master/contrib/alpine).*
 
 Features include:
 
