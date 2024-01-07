@@ -4,12 +4,16 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.7][UNRELEASED]
+[4.7][] - 2024-01-07
 --------------------
 
 ### Changes
 - Silence "not available" messages for run/task/service with `nowarn`
 - Update docs, `cgroup.root` workaround for `SCHED_RR` tasks
+- Mount `/dev/shm` with mode 1777 (sticky bit)
+- Mount `/dev/mqueue` if available, inspiration from Alpine Linux
+- Update Alpine Linux installer and configuration files, tested on
+  Alpine v3.19, some assembly still required
 
 ### Fixes
 - Add missing `/var/tmp` and `/var/lock -> /run/lock` (tmpfiles.d)
