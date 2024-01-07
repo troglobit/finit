@@ -22,8 +22,7 @@ Introduction
 ------------
 
 Fast init for Linux systems.  Reverse engineered from the [EeePC
-fastinit][] over ten years ago by [Claudio Matsuoka][] — "gaps filled
-with frog DNA …"
+fastinit][] by [Claudio Matsuoka][] — "gaps filled with frog DNA …"
 
 ![Alpine screenshot](img/alpine-screenshot2.png)  
 *Figure 1: Screenshot of Finit booting [Alpine Linux (HowTo)](https://github.com/troglobit/finit/tree/master/contrib/alpine).*
@@ -65,7 +64,9 @@ distributions:
 > **Note:** support for various Linux distributions does not mean Finit
 > installs easily on all architectures.  The bundled install scripts are
 > examples for standard installations, tested on amd64 (x86_64) systems.
-> Custom setups, for embedded systems, can be found in [myLinux][].
+> Custom setups, e.g., for embedded systems, can be found in any of the
+> following [Buildroot][] based examples: [myLinux][], [Infix][], or the
+> plain [br2-finit-demo](https://github.com/troglobit/br2-finit-demo).
 
 
 Example
@@ -705,6 +706,8 @@ and proposed extensions.
 [EeePC fastinit]:   https://web.archive.org/web/20071208212450/http://wiki.eeeuser.com/boot_process:the_boot_process
 [Claudio Matsuoka]: https://github.com/cmatsuoka
 [Joachim Wiberg]:   https://troglobit.com
+[Buildroot]:        https://buildroot.org
+[Infix]:            https://kernelkit.github.io
 [finit.conf(5)]:    https://man.troglobit.com/man5/finit.conf.5.html
 [License]:          https://en.wikipedia.org/wiki/MIT_License
 [License Badge]:    https://img.shields.io/badge/License-MIT-teal.svg
