@@ -24,6 +24,7 @@ All relevant changes are documented in this file.
   Found and fixed by Ryan Rorison
 - Fix #389: must libc requires `libgen.h` for `basename()` function.
   Reported and worked around with new `basenm()` function by Stargirl
+- Fix #392: `service/foo/ready` condition reasserted on pidfile removal
 
 
 [4.6][] - 2023-11-13
