@@ -405,8 +405,7 @@ The event loop is the whole thing which Finit is built around, except
 for runlevel S, which remains a slow procession through a lot of set up,
 with a few hooks and blocking call outs to external scripts.
 
-However, not all `initctl` commands are prohibited, supported commands:
-are:
+However, not all `initctl` commands are prohibited. Supported commands:
 
  - `inictl cond`: only operate of files in `/run/finit/cond`
  - `initctl enable/disable`: enabled run/task/service is activated on
