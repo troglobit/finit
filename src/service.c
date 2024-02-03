@@ -2261,7 +2261,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 	/* if PID isn't collected within SVC_TERM_TIMEOUT msec, kill it! */
 	if (new_state == SVC_STOPPING_STATE) {
 		dbg("%s is stopping, wait %d sec before sending SIGKILL ...",
-		   svc_ident(svc, NULL, 0), svc->killdelay / 1000);
+		    svc_ident(svc, NULL, 0), svc->killdelay / 1000);
 		service_timeout_cancel(svc);
 		service_timeout_after(svc, svc->killdelay, service_kill);
 	}
@@ -2299,6 +2299,8 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		if ((old_state == SVC_RUNNING_STATE && new_state == SVC_PAUSED_STATE) ||
 		    (old_state == SVC_PAUSED_STATE  && new_state == SVC_RUNNING_STATE))
 			; 	/* only paused during reload, don't clear conds. */
+		else if (sm_is_in_teardown(&sm))
+			cond_clear_noupdate(cond);
 		else
 			cond_clear(cond);
 

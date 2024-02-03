@@ -35,6 +35,7 @@
 #include "cond.h"
 #include "pid.h"
 #include "service.h"
+#include "sm.h"
 
 struct cond_boot {
 	TAILQ_ENTRY(cond_boot) link;
@@ -214,7 +215,10 @@ static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct
 		err(1, "Failed removing condition %s", fpath);
 
 	cond = ptr + strlen(COND_BASE) + 1;
-	cond_update(cond);
+	if (sm_is_in_teardown(&sm))
+		cond_clear_noupdate(cond);
+	else
+		cond_update(cond);
 
 	return 0;
 }
