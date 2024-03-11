@@ -42,8 +42,6 @@ static int loglevel = LOG_INFO;
 
 void log_init(void)
 {
-	ttinit();
-
 	if (debug)
 		loglevel = LOG_DEBUG;
 	else
@@ -53,13 +51,6 @@ void log_init(void)
 /* If we enabled terse mode at boot, restore to previous setting at shutdown */
 void log_exit(void)
 {
-	/*
-	 * Unless in debug mode at shutdown, Reinitialize screen,
-	 * terminal may have been resized at runtime
-	 */
-	if (!debug)
-		ttinit();
-
 	enable_progress(1);
 }
 
