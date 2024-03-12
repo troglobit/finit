@@ -47,6 +47,7 @@ static void setup(void *arg)
 #ifdef RANDOMSEED
 	struct rand_pool_info *rpi;
 	ssize_t len = 0;
+	struct stat st;
 	int rc = -1;
 	int fd, err;
 
@@ -55,7 +56,7 @@ static void setup(void *arg)
 		return;
 	}
 
-	if (!fexist(RANDOMSEED)) {
+	if (stat(RANDOMSEED, &st) || st.st_size < 512) {
 		int ret = 1;
 		mode_t prev;
 		FILE *fp;
@@ -64,16 +65,34 @@ static void setup(void *arg)
 		prev = umask(077);
 		fp = fopen(RANDOMSEED, "w");
 		if (fp) {
-			int iter = 128;
-			struct timeval tv;
+			const char *hwrng = "/dev/hwrng";
+			FILE *hw;
 
-			gettimeofday(&tv, NULL);
-			srandom(tv.tv_sec % 3600);
-			while (iter--) {
-				uint32_t i, prng = random();
+			hw = fopen(hwrng, "r");
+			if (hw) {
+				char buf[512];
+				size_t len;
 
-				for (i = 0; i < sizeof(prng); i++)
-					fputc((prng >> (i * CHAR_BIT)) & UCHAR_MAX, fp);
+				len = fread(buf, sizeof(buf[0]), sizeof(buf), hw);
+				if (len == 0) {
+					fclose(hw);
+					goto no_hwrng;
+				}
+
+				len = fwrite(buf, sizeof(buf[0]), len, fp);
+				fclose(hw);
+			} else {
+				struct timeval tv;
+				int iter = 128;
+no_hwrng:
+				gettimeofday(&tv, NULL);
+				srandom(tv.tv_sec % 3600);
+				while (iter--) {
+					uint32_t i, prng = random();
+
+					for (i = 0; i < sizeof(prng); i++)
+						fputc((prng >> (i * CHAR_BIT)) & UCHAR_MAX, fp);
+				}
 			}
 			ret = fclose(fp);
 		}
