@@ -434,6 +434,10 @@ static void tmpfiles(char *line)
 			}
 		}
 		break;
+	case 'X':
+	case 'x':
+		dbg("Unsupported x/X command, ignoring %s, no support for clean at runtime.", path);
+		break;
 	case 'Z':
 		opts = "-R";
 		/* fallthrough */
