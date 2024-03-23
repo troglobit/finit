@@ -1,4 +1,10 @@
 #!/bin/sh
+#
+# Verify pre:script and post:script runs as intended when starting,
+# stopping and disabling services in various configurations and
+# conditions.
+#
+
 set -eu
 
 TEST_DIR=$(dirname "$0")
@@ -16,6 +22,65 @@ test_teardown()
     run "rm -f $FINIT_CONF"
 }
 
+startit()
+{
+    service=$1
+    conf=$2
+    pre=$3
+    precont=$4
+
+    say "Add stanza '$service' to $conf ..."
+    run "echo '$service' > $conf"
+
+    if echo "$conf" |grep -q available; then
+	# configlets need must be enabled
+	run "initctl enable serv"
+    fi
+
+    say 'Reload Finit'
+    run "initctl reload"
+
+    # Ensure service has started before checking pre condition
+    retry 'assert_num_children 1 serv'
+
+    # Verify pre:script has run
+    if [ -n "$pre" ]; then
+	assert_file_contains "$pre" "$precont"
+	# Drop pre condition indicator for next test
+	run "rm -f $pre"
+    fi
+}
+
+stopit()
+{
+    conf=$1
+    post=$2
+    postcont=$3
+
+    if echo "$conf" |grep -q available; then
+	say 'Disable service & reload'
+	run "initctl disable serv"
+	run "initctl reload"
+    else
+	say 'Stop the service'
+	run "initctl stop serv"
+    fi
+
+    # Ensure service has stopped before checking for post condition
+    retry 'assert_num_children 0 serv'
+
+    # Verify post:script has run
+    if [ -n "$post" ]; then
+	assert_file_contains "$post" "$postcont"
+	# Drop post condition indicator for next test
+	run "rm -f $post"
+    fi
+
+    say "Done, drop $conf ..."
+    run "rm $conf"
+    run "initctl reload"
+}
+
 test_one()
 {
     pre=$1
@@ -23,31 +88,15 @@ test_one()
     service=$3
     post=$4
     postcont=$5
+    avail="$FINIT_RCSD/available/serv.conf"
 
-    say "Add service stanza '$service' to $FINIT_CONF ..."
-    run "echo '$service' > $FINIT_CONF"
+    sep "Stage 1/2"
+    startit "$service" "$FINIT_CONF" "$pre" "$precont"
+    stopit "$FINIT_CONF" "$post" "$postcont"
 
-    say 'Reload Finit'
-    run "initctl reload"
-
-    retry 'assert_num_children 1 serv'
-    if [ -n "$pre" ]; then
-	assert_file_contains "$pre" "$precont"
-	run "rm -f $pre"
-    fi
-
-    say 'Stop the service'
-    run "initctl stop serv"
-
-    retry 'assert_num_children 0 serv'
-    if [ -n "$post" ]; then
-	assert_file_contains "$post" "$postcont"
-	run "rm -f $post"
-    fi
-
-    say "Done, drop service from $FINIT_CONF ..."
-    run "rm $FINIT_CONF"
-    run "initctl reload"
+    sep "Stage 2/2"
+    startit "$service" "$avail" "$pre" "$precont"
+    stopit "$avail" "$post" "$postcont"
 }
 
 # shellcheck source=/dev/null
