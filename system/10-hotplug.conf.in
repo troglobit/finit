@@ -18,8 +18,10 @@
 # change the contents any way you like, it can even be empty.
 
 # Check for systemd-udevd and eudev, if we find both, we opt for the latter.
-service nowarn [S12345789] cgroup.system name:udevd notify:none pid:udevd log /lib/systemd/systemd-udevd -- Device event daemon (udev)
-service nowarn [S12345789] cgroup.system name:udevd notify:none pid:udevd log udevd -- Device event daemon (udev)
+service nowarn cgroup.system name:udevd notify:none env:-/etc/default/udevd pid:udevd log \
+	[S12345789] /lib/systemd/systemd-udevd $UDEVD_ARGS -- Device event daemon (udev)
+service nowarn cgroup.system name:udevd notify:none env:-/etc/default/udevd pid:udevd log \
+	[S12345789] udevd $UDEVD_ARGS -- Device event daemon (udev)
 
 # Wait for udevd to start, then trigger coldplug events and module loading.
 # The last 'settle' call waits for it to finalize processing all uevents.
