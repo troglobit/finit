@@ -138,31 +138,32 @@ int run(char *cmd, char *log)
 
 	pid = fork();
 	if (0 == pid) {
-		int rc = EX_OSERR;
+		char *pfx = *log ? ": " : "";
+		char buf[256];
+		FILE *pp;
+		int rc;
 
 		setsid();
 		sig_unblock();
 		if (!log) {
 			do_redirect();
 			execvp(args[0], args);
-		} else {
-			char *pfx = *log ? ": " : "";
-			FILE *pp;
-
-			pp = popen(cmd, "r");
-			if (pp) {
-				char buf[256];
-
-				while (fgets(buf, sizeof(buf), pp)) {
-					chomp(buf);
-					logit(LOG_NOTICE, "%s%s%s", log, pfx, buf);
-				}
-
-				rc = pclose(pp);
-			}
+			_exit(EX_OSERR);
 		}
 
-		_exit(rc);
+		pp = popen(cmd, "r");
+		if (!pp)
+			_exit(EX_OSERR);
+
+		while (fgets(buf, sizeof(buf), pp)) {
+			chomp(buf);
+			logit(LOG_NOTICE, "%s%s%s", log, pfx, buf);
+		}
+
+		rc = pclose(pp);
+		if (rc == -1)
+			_exit(EX_OSERR);
+		_exit(WEXITSTATUS(rc));
 	} else if (-1 == pid) {
 		err(1, "%s", !log ? args[0] : cmd);
 		if (backup)
