@@ -4,6 +4,31 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.8][UNRELEASED] - Next release
+--------------------
+
+### Changes
+ - getty: trigger /etc/issue compat mode for Alpine Linux
+ - tmpfiles.d: skip `x11.conf` unless X11 common plugin is enabled
+ - tmpfiles.d: ignore x/X command, nos support for cleanup at runtime
+ - Drop debug mode `-D` from `udevd` in `hotplug.conf.in`, allow the
+   user to set this in `/etc/default/udevd` instead
+ - Certain initctl APIs at bootstrap are not supported, update warning
+   log to include command (number) for troubleshooting, issue #398
+ - Add support for hwrng to urandom plugin and check for empty seed
+
+### Fixes
+ - Fix #397: system shutdown/reboot can block on console input if action
+   is started remotely (ssh).  Caused by legact TTY screen size probing,
+   removed from both bootstrap and shutdown/reboot
+ - Fix #400: both `HOOK_MOUNT_ERROR` and `sulogin()` fail to trigger on
+   either mount or `fsck` errors.  Problem caused by unresolved status
+   from pipe, calling `pclose()` without extracting exit status
+ - Cosmetic issue with `[ OK ]` messages being printed out of order at
+   shutdown/reboot.  Caused by nested calls to `service_stop()`
+ - Cosmetic issue with duplicate "Restoring RTC" message at bootstrap
+
+
 [4.7][] - 2024-01-07
 --------------------
 
