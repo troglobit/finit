@@ -377,9 +377,9 @@ int serv_touch(char *arg)
 	fn = conf(path, sizeof(path), arg, 0);
 	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
-			ERRX(72, "%s not available.", arg);
+			ERRX(noerr ? 0 : 72, "%s not available.", arg);
 		if (is_builtin(arg))
-			ERRX(4, "%s is a built-in service.", arg);
+			ERRX(noerr ? 0 : 4, "%s is a built-in service.", arg);
 
 		strlcpy(path, finit_conf, sizeof(path));
 		fn = path;
@@ -387,7 +387,7 @@ int serv_touch(char *arg)
 
 	/* libite:touch() follows symlinks */
 	if (utimensat(AT_FDCWD, fn, NULL, AT_SYMLINK_NOFOLLOW))
-		ERR(71, "failed marking %s for reload", fn);
+		ERR(noerr ? 0 : 71, "failed marking %s for reload", fn);
 
 	return 0;
 }
