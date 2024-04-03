@@ -109,6 +109,26 @@ static inline int paste(char *buf, size_t len, const char *dir, const char *file
 			fisslashdir(dir) ? "" : file[0] == '/' ? "" : "/", file);
 }
 
+/* ensure path has suffix */
+static inline int suffix(char *path, size_t len, const char *sfx)
+{
+	size_t slen = strlen(sfx);
+	size_t plen = strlen(path);
+
+	if (plen < slen)
+		slen = strlcat(path, sfx, len);
+	else {
+		plen -= slen;
+		if (strcmp(&path[plen], sfx))
+			slen = strlcat(path, sfx, len);
+	}
+
+	if (slen >= len)
+		return -1;
+
+	return 0;
+}
+
 #endif /* FINIT_UTIL_H_ */
 
 /**

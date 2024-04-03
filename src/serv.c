@@ -374,6 +374,15 @@ int serv_touch(char *arg)
 		return serv_list("enabled");
 	}
 
+	/* 1. Try /etc/finit.d/enabled/$arg.conf to handle template@.conf */
+	paste(path, sizeof(path), finit_rcsd, "enabled/");
+	strlcat(path, arg, sizeof(path));
+	if (!suffix(path, sizeof(path), ".conf") && fexist(path)) {
+		fn = path;
+		goto touchit;
+	}
+
+	/* 2. Try /etc/finit.d/available/$arg.conf and other combos (legacy) */
 	fn = conf(path, sizeof(path), arg, 0);
 	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
@@ -385,6 +394,7 @@ int serv_touch(char *arg)
 		fn = path;
 	}
 
+touchit:
 	/* libite:touch() follows symlinks */
 	if (utimensat(AT_FDCWD, fn, NULL, AT_SYMLINK_NOFOLLOW))
 		ERR(noerr ? 0 : 71, "failed marking %s for reload", fn);
