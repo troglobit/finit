@@ -224,16 +224,9 @@ int serv_list(char *arg)
 .*/
 static char *conf(char *path, size_t len, char *name, int creat)
 {
-	char corr[40];
-
 	if (!name || !name[0] || !strcmp(name, "finit") || !strcmp(name, "finit.conf")) {
 		strlcpy(path, finit_conf, len);
 		return path;
-	}
-
-	if (!strstr(name, ".conf")) {
-		snprintf(corr, sizeof(corr), "%s.conf", name);
-		name = corr;
 	}
 
 	if (!fisdir(finit_rcsd))
@@ -243,14 +236,19 @@ static char *conf(char *path, size_t len, char *name, int creat)
 	if (!fisdir(path)) {
 		if (creat && mkdir(path, 0755) && errno != EEXIST)
 			return NULL;
-		else
-			paste(path, len, finit_rcsd, name);
+		paste(path, len, finit_rcsd, name);
 	} else
 		strlcat(path, name, len);
 
+	if (suffix(path, len, ".conf"))
+		return NULL;
+
 	/* fall back to static service unless edit/create */
-	if (!creat && !fexist(path))
+	if (!creat && !fexist(path)) {
 		paste(path, len, finit_rcsd, name);
+		if (suffix(path, len, ".conf"))
+			return NULL;
+	}
 
 	return path;
 }
@@ -336,14 +334,14 @@ int do_disable(char *arg, int check)
 		return serv_list("available");
 	}
 
-	len = strlen(arg);
-	serv = alloca(len + 6);
+	len = strlen(arg) + 7;
+	serv = alloca(len);
 	if (!serv)
 		ERR(71, "failed allocating stack");
 
-	strlcpy(serv, arg, len + 6);
-	if (len < 6 || strcmp(&serv[len - 5], ".conf"))
-		strlcat(serv, ".conf", len + 6);
+	strlcpy(serv, arg, len);
+	if (suffix(serv, len, ".conf"))
+		ERR(71, "failed composing service name (%s)", serv);
 
 	if (chdir(finit_rcsd))
 		ERR(72, "failed cd %s", finit_rcsd);
