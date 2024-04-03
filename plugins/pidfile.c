@@ -52,7 +52,7 @@ static int pidfile_add_path(struct iwatch *iw, char *path)
 			ptr = slash++;
 			slash = strchr(ptr, '/');
 			if (slash) {
-				dbg("Path too deep, skipping.");
+				dbg("Path too deep, skipping %s", path);
 				return -1;
 			}
 		}
