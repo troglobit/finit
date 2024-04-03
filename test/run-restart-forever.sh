@@ -1,6 +1,6 @@
 #!/bin/sh
 # Regression test for issue #351 - verify that a dirty run/task in
-# runlevel S is not restarted forever jus because it exits with a
+# runlevel S is not restarted forever just because it exits with a
 # non-zero error code.
 set -eu
 
