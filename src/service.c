@@ -1633,10 +1633,16 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 	if (type == SVC_TYPE_TTY) {
 		size_t i, len = 0;
+		char *ptr;
 
 		if (tty_parse_args(&tty, cmd, &args))
 			return errno;
 
+		if (tty_isatcon(tty.dev))
+			dev = tty_atcon();
+		else
+			dev = tty.dev;
+	next:
 		if (tty.cmd)
 			len += strlen(tty.cmd);
 		else
@@ -1659,14 +1665,22 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		if (!cmd)
 			return errno;
 
-		if (tty_isatcon(tty.dev))
-			dev = tty_atcon();
-		else
-			dev = tty.dev;
-
 		/* tty's always respawn, never incr. restart_cnt */
 		respawn = 1;
-	next:
+
+		/* Create name:id tuple for identity, e.g., tty:S0 */
+		ptr = strrchr(dev, '/');
+		if (ptr)
+			ptr++;
+		else
+			ptr = dev;
+		if (!strncmp(ptr, "tty", 3))
+			ptr += 3;
+
+		name = "tty";
+		if (!id || id[0] == 0)
+			id = ptr;
+
 		svc = svc_find_by_tty(dev);
 	} else
 		svc = svc_find(name, id);
@@ -1722,8 +1736,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	conf_parse_cond(svc, cond);
 
 	if (type == SVC_TYPE_TTY) {
-		char *ptr;
-
 		if (dev)
 			strlcpy(svc->dev, dev, sizeof(svc->dev));
 		if (tty.baud)
@@ -1738,19 +1750,6 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 
 		/* TTYs cannot be redirected */
 		log = NULL;
-
-		/* Create name:id tuple for identity, e.g., tty:S0 */
-		ptr = strrchr(svc->dev, '/');
-		if (ptr)
-			ptr++;
-		else
-			ptr = svc->dev;
-		if (!strncmp(ptr, "tty", 3))
-			ptr += 3;
-		if (!id || id[0] == 0)
-			id = ptr;
-		strlcpy(svc->name, "tty", sizeof(svc->name));
-		strlcpy(svc->id, id, sizeof(svc->id));
 	}
 
 	parse_cmdline_args(svc, cmd, &args);
@@ -1870,8 +1869,10 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	/* continue expanding any 'tty @console ...' */
 	if (tty_isatcon(tty.dev)) {
 		dev = tty_atcon();
-		if (dev)
+		if (dev) {
+			id = NULL; /* reset for next tty:ID */
 			goto next;
+		}
 	}
 
 	return 0;
