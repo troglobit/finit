@@ -87,14 +87,22 @@ svc_t *wdog     = NULL;		/* No watchdog by default */
  */
 static void banner(void)
 {
+#ifndef KERNEL_LOGGING
 	/*
 	 * Silence kernel logs, assuming users have sysklogd or
-	 * similar enabled to start emptying /dev/kmsg, but for
-	 * our progress we want to own the console.
+	 * similar enabled to start emptying /dev/kmsg.
+	 *
+	 * Instead of using `configure --disable-kernel-logging`, we
+	 * recommend adjusting the kernel log level in the kernel's
+	 * menuconfig, or using sysctl kernel.printk, or setting the
+	 * desired log level, on the kernel cmdline, e.g. 'quiet'.
+	 *
+	 * By default KERNEL_LOGGING is enabled so you can see any
+	 * warnings/errors or higher on your system console.
 	 */
 	if (!debug && !kerndebug)
 		klogctl(6, NULL, 0);
-
+#endif
 	/*
 	 * First level hooks, if you want to run here, you're
 	 * pretty much on your own.  Nothing's up yet ...

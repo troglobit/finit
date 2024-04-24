@@ -71,6 +71,10 @@ AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--disable-redirect], [Disable redirection of service output to /dev/null]),,[
 	enable_redirect=yes])
 
+AC_ARG_ENABLE(kernel_logging,
+        AS_HELP_STRING([--disable-kernel-logging], [Disable kernel logging to console (use 'quiet' instead!]),,[
+	enable_kernel_logging=yes])
+
 AC_ARG_ENABLE(logrotate,
         AS_HELP_STRING([--disable-logrotate], [Disable built-in rotation of /var/log/wtmp]),,[
 	enable_logrotate=yes])
@@ -180,6 +184,9 @@ AS_IF([test "x$enable_auto_reload" = "xyes"], [
 
 AS_IF([test "x$enable_kernel_cmdline" = "xyes"], [
         AC_DEFINE(KERNEL_CMDLINE, 1, [Dumpster diving after init args from /proc/cmdline])])
+
+AS_IF([test "x$enable_kernel_logging" = "xyes"], [
+        AC_DEFINE(KERNEL_LOGGING, 1, [Keep kernel warn/err logs to console])])
 
 AS_IF([test "x$enable_fastboot" = "xyes"], [
 	AC_DEFINE(FAST_BOOT, 1, [Skip fsck check on filesystems listed in /etc/fstab])])
@@ -382,6 +389,8 @@ Optional features:
   Built-in sulogin......: $with_sulogin $sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
+  Parse kernel cmdline..: $enable_kernel_cmdline
+  Keep kernel logging...: $enable_kernel_logging
   Skip fsck check.......: $enable_fastboot
   Run fsck fix mode.....: $enable_fsckfix
   Redirect output.......: $enable_redirect
