@@ -1632,7 +1632,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	}
 
 	if (type == SVC_TYPE_TTY) {
-		size_t i, len = 0;
+		size_t i, len;
 		char *ptr;
 
 		if (tty_parse_args(&tty, cmd, &args))
@@ -1643,6 +1643,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		else
 			dev = tty.dev;
 	next:
+		len = 0;
 		if (tty.cmd)
 			len += strlen(tty.cmd);
 		else
