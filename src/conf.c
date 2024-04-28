@@ -348,8 +348,11 @@ static void parse_kernel_loglevel(void)
  */
 void conf_parse_cmdline(int argc, char *argv[])
 {
+	const char *ptr;
+
 	/* Set up defaults */
-	fstab      = strdup(FINIT_FSTAB);
+	if ((ptr = FINIT_FSTAB))
+		fstab = strdup(ptr);
 	finit_conf = strdup(FINIT_CONF);
 	finit_rcsd = strdup(FINIT_RCSD);
 	path       = getenv("PATH");
