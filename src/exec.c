@@ -138,8 +138,7 @@ int run(char *cmd, char *log)
 
 	pid = fork();
 	if (0 == pid) {
-		char *pfx = *log ? ": " : "";
-		char buf[256];
+		char *pfx, buf[256];
 		FILE *pp;
 		int rc;
 
@@ -155,6 +154,7 @@ int run(char *cmd, char *log)
 		if (!pp)
 			_exit(EX_OSERR);
 
+		pfx = *log ? ": " : "";
 		while (fgets(buf, sizeof(buf), pp)) {
 			chomp(buf);
 			logit(LOG_NOTICE, "%s%s%s", log, pfx, buf);
