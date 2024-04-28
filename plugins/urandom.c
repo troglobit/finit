@@ -82,9 +82,10 @@ static void setup(void *arg)
 				len = fwrite(buf, sizeof(buf[0]), len, fp);
 				fclose(hw);
 			} else {
+no_hwrng:
 				struct timeval tv;
 				int iter = 128;
-no_hwrng:
+
 				gettimeofday(&tv, NULL);
 				srandom(tv.tv_sec % 3600);
 				while (iter--) {
