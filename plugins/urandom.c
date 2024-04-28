@@ -42,6 +42,23 @@
 #define RANDOM_BYTES (32*1024)
 #endif
 
+#ifdef RANDOMSEED
+static void fallback(FILE *fp)
+{
+	struct timeval tv;
+	int iter = 128;
+
+	gettimeofday(&tv, NULL);
+	srandom(tv.tv_sec % 3600);
+	while (iter--) {
+		uint32_t i, prng = random();
+
+		for (i = 0; i < sizeof(prng); i++)
+			fputc((prng >> (i * CHAR_BIT)) & UCHAR_MAX, fp);
+	}
+}
+#endif
+
 static void setup(void *arg)
 {
 #ifdef RANDOMSEED
@@ -74,26 +91,13 @@ static void setup(void *arg)
 				size_t len;
 
 				len = fread(buf, sizeof(buf[0]), sizeof(buf), hw);
-				if (len == 0) {
-					fclose(hw);
-					goto no_hwrng;
-				}
-
-				len = fwrite(buf, sizeof(buf[0]), len, fp);
+				if (len == 0)
+					fallback(fp);
+				else
+					len = fwrite(buf, sizeof(buf[0]), len, fp);
 				fclose(hw);
 			} else {
-no_hwrng:
-				struct timeval tv;
-				int iter = 128;
-
-				gettimeofday(&tv, NULL);
-				srandom(tv.tv_sec % 3600);
-				while (iter--) {
-					uint32_t i, prng = random();
-
-					for (i = 0; i < sizeof(prng); i++)
-						fputc((prng >> (i * CHAR_BIT)) & UCHAR_MAX, fp);
-				}
+				fallback(fp);
 			}
 			ret = fclose(fp);
 		}
