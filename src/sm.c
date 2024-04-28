@@ -316,9 +316,11 @@ restart:
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 
+#ifdef FINIT_RC_LOCAL
 		/* Compat SysV init */
 		if (prevlevel == INIT_LEVEL && !rescue)
 			run_bg(FINIT_RC_LOCAL, NULL);
+#endif
 
 		/*
 		 * "I've seen things you people wouldn't believe.  Attack ships on fire off

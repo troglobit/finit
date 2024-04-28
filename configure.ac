@@ -234,10 +234,9 @@ AC_DEFINE_UNQUOTED(FINIT_RCSD, "$rcsd_path", [Finit rcS.d/, default /etc/finit.d
 AC_SUBST(FINIT_RCSD, "$rcsd_path")
 
 AS_IF([test "x$with_rc_local" != "xno"], [
-	AS_IF([test "x$rclocal" = "xyes"], [
-		rclocal=$sysconfdir/rc.local])])
-AC_EXPAND_DIR(rclocal_path, "$rclocal")
-AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$rclocal_path", [Compat SysV /etc/rc.local file to run last at boot.])
+	AS_IF([test "x$rclocal" = "xyes"], [rclocal=$sysconfdir/rc.local])
+	AC_EXPAND_DIR(rclocal_path, "$rclocal")
+	AC_DEFINE_UNQUOTED(FINIT_RC_LOCAL, "$rclocal_path", [Compat SysV /etc/rc.local file to run last at boot.])])
 
 AS_IF([test "x$with_sysconfig" != "xno"], [
 	AS_IF([test "x$sysconfig" != "xdefault"], [
@@ -370,7 +369,7 @@ cat <<EOF
   Finit config file.....: $conf_path
   Finit config.d path...: $rcsd_path
   Finit plugin path.....: $plugin_path
-  Compat rc.local path..: $rclocal_path
+  Compat rc.local path..: `eval echo $rclocal`
   System environment....: ${sysconfig_path:-${sysconfig}}
   Random seed path......: $random_path
   C Compiler............: $CC $CFLAGS $CPPFLAGS $LDFLAGS $LIBS
