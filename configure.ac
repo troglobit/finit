@@ -59,6 +59,10 @@ AC_ARG_ENABLE(kernel_cmdline,
         AS_HELP_STRING([--enable-kernel-cmdline], [Parse init args from /proc/cmdline (don't use!)]),,[
 	enable_kernel_cmdline=no])
 
+AC_ARG_ENABLE(cgroup2,
+        AS_HELP_STRING([--disable-cgroup2], [Disable checking cgroup v2 available from /sys/fs/cgroup]),,[
+        enable_cgroup2=yes])
+
 AC_ARG_ENABLE(fastboot,
         AS_HELP_STRING([--enable-fastboot], [Skip fsck check on filesystems listed in /etc/fstab]),,[
 	enable_fastboot=no])
@@ -187,6 +191,9 @@ AS_IF([test "x$enable_kernel_cmdline" = "xyes"], [
 
 AS_IF([test "x$enable_kernel_logging" = "xyes"], [
         AC_DEFINE(KERNEL_LOGGING, 1, [Keep kernel warn/err logs to console])])
+
+AS_IF([test "x$enable_cgroup2" = "xyes"], [
+        AC_DEFINE(CGROUP2_ENABLED, 1, [Check cgroup v2 available from /sys/fs/cgroup])])
 
 AS_IF([test "x$enable_fastboot" = "xyes"], [
 	AC_DEFINE(FAST_BOOT, 1, [Skip fsck check on filesystems listed in /etc/fstab])])
@@ -388,6 +395,7 @@ Optional features:
   Built-in sulogin......: $with_sulogin $sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
+  Check cgroup2.........: $enable_cgroup2
   Parse kernel cmdline..: $enable_kernel_cmdline
   Keep kernel logging...: $enable_kernel_logging
   Skip fsck check.......: $enable_fastboot
