@@ -395,7 +395,7 @@ Optional features:
   Built-in sulogin......: $with_sulogin $sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
-  Check cgroup2.........: $enable_cgroup2
+  Use cgroup v2.........: $enable_cgroup
   Parse kernel cmdline..: $enable_kernel_cmdline
   Keep kernel logging...: $enable_kernel_logging
   Skip fsck check.......: $enable_fastboot
