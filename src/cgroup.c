@@ -463,6 +463,11 @@ void cgroup_init(uev_ctx_t *ctx)
 	FILE *fp;
 	int fd;
 
+#ifndef CGROUP2_ENABLED
+	avail = 0;
+	return;
+#endif
+
 	if (mount("none", FINIT_CGPATH, "cgroup2", opts, NULL)) {
 		if (errno == ENOENT)
 			logit(LOG_INFO, "Kernel does not support cgroups v2, disabling.");
