@@ -59,10 +59,6 @@ AC_ARG_ENABLE(kernel_cmdline,
         AS_HELP_STRING([--enable-kernel-cmdline], [Parse init args from /proc/cmdline (don't use!)]),,[
 	enable_kernel_cmdline=no])
 
-AC_ARG_ENABLE(cgroup2,
-        AS_HELP_STRING([--disable-cgroup2], [Disable checking cgroup v2 available from /sys/fs/cgroup]),,[
-        enable_cgroup2=yes])
-
 AC_ARG_ENABLE(fastboot,
         AS_HELP_STRING([--enable-fastboot], [Skip fsck check on filesystems listed in /etc/fstab]),,[
 	enable_fastboot=no])
@@ -70,6 +66,10 @@ AC_ARG_ENABLE(fastboot,
 AC_ARG_ENABLE(fsckfix,
         AS_HELP_STRING([--enable-fsckfix], [Run fsck fix mode (options: -yf) on filesystems listed in /etc/fstab]),,[
 	enable_fsckfix=no])
+
+AC_ARG_ENABLE(cgroup,
+        AS_HELP_STRING([--disable-cgroup], [Disable cgroup v2 support, default: autodetect from /sys/fs/cgroup]),,[
+        enable_cgroup=yes])
 
 AC_ARG_ENABLE(redirect,
         AS_HELP_STRING([--disable-redirect], [Disable redirection of service output to /dev/null]),,[
@@ -192,8 +192,8 @@ AS_IF([test "x$enable_kernel_cmdline" = "xyes"], [
 AS_IF([test "x$enable_kernel_logging" = "xyes"], [
         AC_DEFINE(KERNEL_LOGGING, 1, [Keep kernel warn/err logs to console])])
 
-AS_IF([test "x$enable_cgroup2" = "xyes"], [
-        AC_DEFINE(CGROUP2_ENABLED, 1, [Check cgroup v2 available from /sys/fs/cgroup])])
+AS_IF([test "x$enable_cgroup" = "xyes"], [
+        AC_DEFINE(CGROUP2_ENABLED, 1, [Autodetect cgroup v2 support from /sys/fs/cgroup])])
 
 AS_IF([test "x$enable_fastboot" = "xyes"], [
 	AC_DEFINE(FAST_BOOT, 1, [Skip fsck check on filesystems listed in /etc/fstab])])
