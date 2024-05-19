@@ -25,7 +25,7 @@ jobs:
                --post-data "token=$TOKEN&project=${COVERITY_PROJ}&md5=1" \
                -O coverity-latest.tar.gz.md5
           echo "md5=$(cat coverity-latest.tar.gz.md5)" | tee -a $GITHUB_OUTPUT
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: cache
         with:
           path: coverity-latest.tar.gz
