@@ -16,6 +16,9 @@ All relevant changes are documented in this file.
  - Certain initctl APIs at bootstrap are not supported, update warning
    log to include command (number) for troubleshooting, issue #398
  - Add support for hwrng to urandom plugin and check for empty seed
+ - Add `runparts -b` (batch mode) support, disables escape sequences
+ - New configure `--without-rc-local`, disables `/etc/rc.local` support
+ - New configure `--disable-cgroup` option, disables cgroup v2 detection
 
 ### Fixes
  - Fix #397: system shutdown/reboot can block on console input if action
@@ -24,6 +27,10 @@ All relevant changes are documented in this file.
  - Fix #400: both `HOOK_MOUNT_ERROR` and `sulogin()` fail to trigger on
    either mount or `fsck` errors.  Problem caused by unresolved status
    from pipe, calling `pclose()` without extracting exit status
+ - Fix #402: `initctl touch` does not respect `-n` (no error) flag
+ - Fix #403: `initctl touch` does not support template services
+ - Fix #404: possible undefined behavior when `--with-fstab=no` is set
+ - Fix #405: `@console` getty does not work with `tty0 ttyS0`
  - Cosmetic issue with `[ OK ]` messages being printed out of order at
    shutdown/reboot.  Caused by nested calls to `service_stop()`
  - Cosmetic issue with duplicate "Restoring RTC" message at bootstrap
