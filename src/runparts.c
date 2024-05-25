@@ -26,18 +26,27 @@
 #else
 #include <sys/prctl.h>
 
+const char *active_msg = NULL;
+int interactive = 1;
 int debug;
 
 static void print_desc(const char *prefix, const char *msg)
 {
-	fprintf(stderr, "\e[1m[\e[0m\e[1;33m ⋯  \e[0m\e[1m]\e[0m %s %s", prefix, msg);
+	if (interactive)
+		fprintf(stderr, "\e[1m[\e[0m\e[1;33m ⋯  \e[0m\e[1m]\e[0m %s %s", prefix, msg);
+	else
+		fprintf(stderr, "%s %s ...\n", prefix, msg);
+	active_msg = msg;
 }
 static void print_result(int rc)
 {
-	if (rc)
-		fputs("\r\e[1m[\e[0m\e[1;31mFAIL\e[0m\e[1m]\e[0m\n", stderr);
-	else
-		fputs("\r\e[1m[\e[0m\e[1;32m OK \e[0m\e[1m]\e[0m\n", stderr);
+	if (interactive) {
+		if (rc)
+			fputs("\r\e[1m[\e[0m\e[1;31mFAIL\e[0m\e[1m]\e[0m\n", stderr);
+		else
+			fputs("\r\e[1m[\e[0m\e[1;32m OK \e[0m\e[1m]\e[0m\n", stderr);
+	} else
+		fprintf(stderr, "[%s]  %s\n", rc ? "FAIL" : " OK ", active_msg ?: "");
 }
 
 void sig_unblock(void)
@@ -193,8 +202,11 @@ int main(int argc, char *argv[])
 	int rc, c, progress = 0, sysv = 0;
 	char *dir;
 
-	while ((c = getopt(argc, argv, "dh?ps")) != EOF) {
+	while ((c = getopt(argc, argv, "bdh?ps")) != EOF) {
 		switch(c) {
+		case 'b':	/* batch mode */
+			interactive = 0;
+			break;
 		case 'd':
 			debug = 1;
 			break;
