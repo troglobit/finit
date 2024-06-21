@@ -19,6 +19,10 @@ All relevant changes are documented in this file.
  - Add `runparts -b` (batch mode) support, disables escape sequences
  - New configure `--without-rc-local`, disables `/etc/rc.local` support
  - New configure `--disable-cgroup` option, disables cgroup v2 detection
+ - Extend `initctl` timeout connecting and waiting for Finit reply.  The
+   previous 2 + 2 second poll timeout has proved to be too short on more
+   complex systems.  Now a 15 + 15 second timeout is applied which should
+   be more resistant to temporary overload scenarios, issue #407
 
 ### Fixes
  - Fix #397: system shutdown/reboot can block on console input if action
