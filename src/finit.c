@@ -409,7 +409,7 @@ static void fs_finalize(void)
 	 * To override any of this behavior, add entries to /etc/fstab
 	 * for /run (and optionally /run/lock).
 	 */
-	if (fisdir("/run") && !fismnt("/run")) {
+	if (fisdir("/run") && !fismnt("/run") && !fistmpfs("/run")) {
 		fs_mount("tmpfs", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, "mode=0755,size=10%");
 
 		/* This prevents user DoS of /run by filling /run/lock at the expense of another tmpfs, max 5MiB */
@@ -418,7 +418,7 @@ static void fs_finalize(void)
 	}
 
 	/* Modern systems use tmpfs for /tmp */
-	if (!fismnt("/tmp"))
+	if (!fismnt("/tmp") && !fistmpfs("/tmp"))
 		fs_mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "mode=1777");
 }
 

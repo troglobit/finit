@@ -42,6 +42,8 @@
 # include <sys/ioctl.h>
 #endif
 #include <sys/sysinfo.h>	/* sysinfo() */
+#include <sys/vfs.h> /* statfs */
+#include <linux/magic.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 #else
@@ -570,6 +572,20 @@ int ismnt(char *file, char *dir, char *mode)
 int fismnt(char *dir)
 {
 	return ismnt("/proc/mounts", dir, NULL);
+}
+
+/* Return 1 if dir is a backed by tmpfs or overlayfs */
+int fistmpfs(char *dir)
+{
+	struct statfs info = {0};
+
+	if (statfs(dir, &info))
+		return 0;
+
+	if (info.f_type == TMPFS_MAGIC || info.f_type == OVERLAYFS_SUPER_MAGIC)
+		return 1;
+
+	return 0;
 }
 
 #ifdef HAVE_TERMIOS_H
