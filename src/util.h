@@ -80,6 +80,7 @@ void  de_dotdot    (char *file);
 
 int   ismnt        (char *file, char *dir, char *mode);
 int   fismnt       (char *dir);
+int   fistmpfs     (char *dir);
 
 #ifdef HAVE_TERMIOS_H
 int     ttinit     (void);
