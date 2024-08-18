@@ -368,8 +368,9 @@ cat <<EOF
 
 ------------------ Summary ------------------
  $PACKAGE_NAME version $PACKAGE_VERSION
-  Prefix................: $prefix
-  Exec prefix...........: $eprefix
+  Prefix................: $(eval echo $prefix)
+  Exec prefix...........: $(eval echo $exec_prefix)
+  Libdir................: $(eval echo $libdir)
   Sysconfdir............: `eval echo $sysconfdir`
   Localstatedir.........: `eval echo $localstatedir`
   Default fstab.........: `eval echo $fstab`
