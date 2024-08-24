@@ -90,7 +90,7 @@ static int rmrf(const char *path)
 	if (!fisdir(path))
 		return 0;
 
-	nftw(path, do_delete, 20, FTW_DEPTH);
+	nftw(path, do_delete, 20, FTW_DEPTH | FTW_PHYS);
 	if (remove(path) && errno != ENOENT)
 		warn("Failed removing path %s", path);
 
