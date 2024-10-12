@@ -4,10 +4,14 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.8][UNRELEASED] - Next release
+[4.8][] - 2024-10-13
 --------------------
 
 ### Changes
+ - Avoid remounting already mounted `/run` and `/tmp` directories.  This
+   extends the existing support for detecting mounted directories to
+   include complex mount hierarchies are in use, overlayfs and tmpfs
+   mounts.  Feature by Mathias Thore, Atlas Copco
  - getty: trigger /etc/issue compat mode for Alpine Linux
  - tmpfiles.d: skip `x11.conf` unless X11 common plugin is enabled
  - tmpfiles.d: ignore x/X command, nos support for cleanup at runtime
@@ -19,6 +23,8 @@ All relevant changes are documented in this file.
  - Add `runparts -b` (batch mode) support, disables escape sequences
  - New configure `--without-rc-local`, disables `/etc/rc.local` support
  - New configure `--disable-cgroup` option, disables cgroup v2 detection
+ - `initctl show template@foo.conf` now shows how an enabled template
+   service has been evaluated by Finit, issue #411
  - Extend `initctl` timeout connecting and waiting for Finit reply.  The
    previous 2 + 2 second poll timeout has proved to be too short on more
    complex systems.  Now a 15 + 15 second timeout is applied which should
@@ -35,6 +41,12 @@ All relevant changes are documented in this file.
  - Fix #403: `initctl touch` does not support template services
  - Fix #404: possible undefined behavior when `--with-fstab=no` is set
  - Fix #405: `@console` getty does not work with `tty0 ttyS0`
+ - Fix #409: prevent tmpfiles from following symlinks for `L+` and `R`,
+   otherwise symlink targets would also be removed.  Found and fixed by
+   Mathias Thore and Ming Liu, Atlas Copco
+ - Fix #414: Frr Zebra immediately restarts on `initctl stop zebra`.
+   The fix likely works for all Frr/Quagga services due to the way they
+   create and delete their pid file
  - Cosmetic issue with `[ OK ]` messages being printed out of order at
    shutdown/reboot.  Caused by nested calls to `service_stop()`
  - Cosmetic issue with duplicate "Restoring RTC" message at bootstrap
@@ -1692,7 +1704,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.7...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.8...HEAD
+[4.8]: https://github.com/troglobit/finit/compare/4.7...4.8
 [4.7]: https://github.com/troglobit/finit/compare/4.6...4.7
 [4.6]: https://github.com/troglobit/finit/compare/4.5...4.6
 [4.5]: https://github.com/troglobit/finit/compare/4.4...4.5
