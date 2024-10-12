@@ -66,6 +66,7 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 	char cond[MAX_COND_LEN];
 	char fn[PATH_MAX];
 	svc_t *svc;
+	char *nm;
 
 	paste(fn, sizeof(fn), dir, name);
 	if (fnmatch("*\\.pid", fn, 0) && fnmatch("*/pid", fn, 0))
@@ -79,8 +80,15 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		return;
 	}
 
-	dbg("Found svc %s for %s with pid %d", svc_ident(svc, NULL, 0), fn, svc->pid);
+	/* Service condistion to set/clear */
 	mkcond(svc, cond, sizeof(cond));
+
+	nm = svc_ident(svc, NULL, 0);
+	dbg("Found svc %s for %s with pid %d", nm, fn, svc->pid);
+	if (svc_is_stopping(svc)) {
+		dbg("Ignoring pidfile death rattles while service %s is %s", nm, svc_status(svc));
+		goto sneaky_zebra;
+	}
 
 	if (mask & (IN_CLOSE_WRITE | IN_ATTRIB | IN_MODIFY | IN_MOVED_TO)) {
 		/*
@@ -125,6 +133,7 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		if (svc->notify == SVC_NOTIFY_PID || svc->notify == SVC_NOTIFY_NONE)
 			service_ready(svc, 1);
 	} else if (mask & IN_DELETE) {
+	sneaky_zebra:
 		cond_clear(cond);
 		if (svc->notify == SVC_NOTIFY_PID)
 			service_ready(svc, 0);
