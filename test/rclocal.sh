@@ -1,5 +1,6 @@
 #!/bin/sh
 # Regression test for basic /etc/rc.local functionality
+# shellcheck disable=SC2317
 set -eu
 
 TEST_DIR=$(dirname "$0")
