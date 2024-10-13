@@ -222,7 +222,7 @@ int serv_list(char *arg)
  * If the resulting file doesn't exist, and creat is not set, *or*
  * the base directory doesn't exist, we return NULL.
 .*/
-static char *conf(char *path, size_t len, char *name, int creat)
+static char *conf(char *path, size_t len, char *name, int creat, int template)
 {
 	if (!name || !name[0] || !strcmp(name, "finit") || !strcmp(name, "finit.conf")) {
 		strlcpy(path, finit_conf, len);
@@ -245,7 +245,13 @@ static char *conf(char *path, size_t len, char *name, int creat)
 
 	/* fall back to static service unless edit/create */
 	if (!creat && !fexist(path)) {
-		paste(path, len, finit_rcsd, name);
+		char *at = strchr(path, '@');
+
+		if (template && at)
+			*++at = 0;
+		else
+			paste(path, len, finit_rcsd, name);
+
 		if (suffix(path, len, ".conf"))
 			return NULL;
 	}
@@ -381,7 +387,7 @@ int serv_touch(char *arg)
 	}
 
 	/* 2. Try /etc/finit.d/available/$arg.conf and other combos (legacy) */
-	fn = conf(path, sizeof(path), arg, 0);
+	fn = conf(path, sizeof(path), arg, 0, 0);
 	if (!fexist(fn)) {
 		if (!strstr(arg, "finit.conf"))
 			ERRX(noerr ? 0 : 72, "%s not available.", arg);
@@ -405,13 +411,18 @@ int serv_show(char *arg)
 	char path[256];
 	char *fn;
 
-	fn = conf(path, sizeof(path), arg, 0);
+	fn = conf(path, sizeof(path), arg, 0, 0);
 	if (!fexist(fn)) {
 		if (is_builtin(arg))
 			ERRX(4, "%s is a built-in service.", arg);
 
-		WARNX("Cannot find %s", arg);
-		return 1;
+		fn = conf(path, sizeof(path), arg, 0, 1);
+		if (!fn || !fexist(fn)) {
+			WARNX("Cannot find %s", arg);
+			return 1;
+		}
+
+		return systemf("cat %s | sed 's/%%i/system/g'", fn);
 	}
 
 	return systemf("cat %s", fn);
@@ -442,7 +453,7 @@ static int do_edit(char *arg, int creat)
 	char path[256];
 	char *fn;
 
-	fn = conf(path, sizeof(path), arg, creat);
+	fn = conf(path, sizeof(path), arg, creat, 0);
 	if (!fexist(fn)) {
 		if (is_builtin(arg))
 			ERRX(4, "%s is a built-in service.", arg);
@@ -496,7 +507,7 @@ int serv_creat(char *arg)
 		return do_edit(arg, 1);
 
 	/* Open fn for writing from pipe */
-	fn = conf(buf, sizeof(buf), arg, 1);
+	fn = conf(buf, sizeof(buf), arg, 1, 0);
 	if (!fn)
 		ERR(73, "failed creating conf %s", arg);
 
@@ -525,7 +536,7 @@ int serv_delete(char *arg)
 		return serv_list("available");
 	}
 
-	fn = conf(buf, sizeof(buf), arg, 0);
+	fn = conf(buf, sizeof(buf), arg, 0, 0);
 	if (!fn) {
 		if (is_builtin(arg))
 			ERRX(4, "%s is a built-in service.", arg);
