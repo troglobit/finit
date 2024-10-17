@@ -2001,6 +2001,10 @@ static void svc_mark_affected(char *cond)
  * Called on conf_reload() to update service reverse dependencies.
  * E.g., if ospfd depends on zebra and the zebra Finit conf has
  * changed, we need to mark the ospfd Finit conf as changed too.
+ *
+ * However, a daemon that depends on syslogd (sysklogd project), need
+ * not be reloeaded (SIGHUP'ed or stop/started) because syslogd support
+ * reloading its configuration file on SIGHUP.
  */
 void service_update_rdeps(void)
 {
@@ -2011,6 +2015,10 @@ void service_update_rdeps(void)
 
 		if (!svc_is_changed(svc))
 			continue;
+
+		/* Service supports reloading conf without stop/start  */
+		if (!svc_is_nohup(svc))
+			continue; /* Yup, no need to stop start rdeps */
 
 		svc_mark_affected(mkcond(svc, cond, sizeof(cond)));
 	}

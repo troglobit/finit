@@ -259,6 +259,7 @@ static inline int svc_is_tty       (svc_t *svc) { return svc && SVC_TYPE_TTY    
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);}
 static inline int svc_is_forking   (svc_t *svc) { return svc && svc->forking; }
 static inline int svc_is_manual    (svc_t *svc) { return svc && svc->manual; }
+static inline int svc_is_nohup     (svc_t *svc) { return svc && (0 == svc->sighup); }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
 static inline int svc_nohup        (svc_t *svc) { return svc &&  (0 == svc->sighup || 0 != svc->args_dirty); }
