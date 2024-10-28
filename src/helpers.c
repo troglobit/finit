@@ -87,6 +87,9 @@ void console_init(void)
 	/* Enable line wrap, if disabled previously, e.g., qemu */
 	dprint(STDOUT_FILENO, "\033[?7h", 5);
 
+	/* Reset atttributes, background and foreground color  */
+	dprint(STDOUT_FILENO, "\033[49m\033[39m\e[2J", 14);
+
 	log_init();
 }
 
