@@ -147,7 +147,7 @@ static void file_save(void *arg)
 	}
 
 	if ((rc = time_get(&tm))) {
-		logit(LOG_ERR, "System clock invalid, before %s, not saving", rtc_timestamp);
+		logit(LOG_WARNING, "System clock invalid, before %s, not saving", rtc_timestamp);
 		print_desc(NULL, "System clock invalid, skipping");
 	} else {
 		char buf[32] = { 0 };
@@ -238,7 +238,7 @@ static void rtc_save(void *arg)
 	}
 
 	if (rc && errno == EINVAL) {
-		logit(LOG_ERR, "System clock invalid, before %s, not saving to RTC", rtc_timestamp);
+		logit(LOG_WARNING, "System clock invalid, before %s, not saving to RTC", rtc_timestamp);
 		rc = 2;
 	}
 
@@ -275,13 +275,13 @@ static void rtc_restore(void *arg)
 	}
 
 	if (rc) {
-		logit(LOG_ERR, "Failed restoring system clock from RTC.");
+		logit(LOG_WARNING, "Failed restoring system clock from RTC.");
 		if (EINVAL == errno)
-			logit(LOG_ERR, "RTC time is too old (before %s)", rtc_timestamp);
+			logit(LOG_WARNING, "RTC time is too old (before %s)", rtc_timestamp);
 		else if (ENOENT == errno)
-			logit(LOG_ERR, "RTC has no previously saved (valid) time.");
+			logit(LOG_WARNING, "RTC has no previously saved (valid) time.");
 		else
-			logit(LOG_ERR, "RTC error code %d: %s", errno, strerror(errno));
+			logit(LOG_WARNING, "RTC error code %d: %s", errno, strerror(errno));
 
 		print(2, NULL);
 
@@ -322,7 +322,7 @@ PLUGIN_INIT(plugin_init)
 	struct tm tm = { 0 };
 
 	if (!strptime(rtc_timestamp, RTC_FMT, &tm)) {
-		logit(LOG_ERR, "Invalid restore date '%s', reverting to '%s'",
+		logit(LOG_WARNING, "Invalid restore date '%s', reverting to '%s'",
 		      rtc_timestamp, RTC_TIMESTAMP_BEGIN_2000);
 		rtc_timestamp = RTC_TIMESTAMP_BEGIN_2000;
 	} else
