@@ -68,6 +68,60 @@ static void tz_restore(char *tz)
 	tzset();
 }
 
+static int time_set(struct tm *tm)
+{
+	struct tm fallback = { 0 };
+	struct timeval tv = { 0 };
+	char tz[128];
+	int rc = 0;
+
+	tz_set(tz, sizeof(tz));
+
+	if (!tm) {
+		logit(LOG_NOTICE, "Resetting system clock to kernel default, %s.", rtc_timestamp);
+		tm = &fallback;
+
+		/* Attempt to set RTC to a sane value ... */
+		tv.tv_sec = rtc_date_fallback;
+		if (!gmtime_r(&tv.tv_sec, tm)) {
+			rc = 1;
+			goto out;
+		}
+	}
+
+	tm->tm_isdst = -1; /* Use tzdata to figure it out, please. */
+	tv.tv_sec = mktime(tm);
+	if (tv.tv_sec == (time_t)-1 || tv.tv_sec < rtc_date_fallback) {
+		errno = EINVAL;
+		rc = 2;
+	} else {
+		if (settimeofday(&tv, NULL) == -1)
+			rc = 1;
+	}
+out:
+	tz_restore(tz);
+	return rc;
+}
+
+static int time_get(struct tm *tm)
+{
+	struct timeval tv = { 0 };
+	char tz[128];
+	int rc = 0;
+
+	tz_set(tz, sizeof(tz));
+
+	rc = gettimeofday(&tv, NULL);
+	if (rc < 0 || tv.tv_sec < rtc_date_fallback)
+		rc = 2;
+	else
+		gmtime_r(&tv.tv_sec, tm);
+
+	tz_restore(tz);
+
+	return rc;
+}
+
 static int rtc_open(void)
 {
 	char *alt[] = {
@@ -91,10 +145,8 @@ static int rtc_open(void)
 
 static void rtc_save(void *arg)
 {
-	struct timeval tv = { 0 };
 	struct tm tm = { 0 };
 	int fd, rc = 0;
-	char tz[128];
 
 	if (rescue) {
 		dbg("Skipping %s plugin in rescue mode.", __FILE__);
@@ -105,38 +157,26 @@ static void rtc_save(void *arg)
 	if (fd < 0)
 		return;
 
-	tz_set(tz, sizeof(tz));
-	rc = gettimeofday(&tv, NULL);
-	if (rc < 0 || tv.tv_sec < rtc_date_fallback) {
+	if ((rc = time_get(&tm))) {
 		print_desc(NULL, "System clock invalid, not saving to RTC");
-	invalid:
+	} else {
+		print_desc(NULL, "Saving system clock (UTC) to RTC");
+		rc = ioctl(fd, RTC_SET_TIME, &tm);
+	}
+
+	if (rc && errno == EINVAL) {
 		logit(LOG_ERR, "System clock invalid, before %s, not saving to RTC", rtc_timestamp);
 		rc = 2;
-		goto out;
 	}
 
-	print_desc(NULL, "Saving system time (UTC) to RTC");
-
-	gmtime_r(&tv.tv_sec, &tm);
-	if (ioctl(fd, RTC_SET_TIME, &tm) < 0) {
-		if (EINVAL == errno)
-			goto invalid;
-		rc = 1;
-		goto out;
-	}
-
-out:
-	tz_restore(tz);
 	print(rc, NULL);
 	close(fd);
 }
 
 static void rtc_restore(void *arg)
 {
-	struct timeval tv = { 0 };
 	struct tm tm = { 0 };
 	int fd, rc = 0;
-	char tz[128];
 
 	if (rescue) {
 		dbg("Skipping %s plugin in rescue mode.", __FILE__);
@@ -149,16 +189,19 @@ static void rtc_restore(void *arg)
 		return;
 	}
 
-	tz_set(tz, sizeof(tz));
-	if (ioctl(fd, RTC_RD_TIME, &tm) < 0) {
+	if ((rc = ioctl(fd, RTC_RD_TIME, &tm)) < 0) {
 		char msg[120];
 
 		snprintf(msg, sizeof(msg), "Failed restoring system clock, %s",
 			 EINVAL == errno ? "RTC time is too old"   :
 			 ENOENT == errno ? "RTC has no saved time" : "see log for details");
 		print_desc(NULL, msg);
+	} else {
+		print_desc(NULL, "Restoring system clock (UTC) from RTC");
+		rc = time_set(&tm);
+	}
 
-	invalid:
+	if (rc) {
 		logit(LOG_ERR, "Failed restoring system clock from RTC.");
 		if (EINVAL == errno)
 			logit(LOG_ERR, "RTC time is too old (before %s)", rtc_timestamp);
@@ -167,33 +210,10 @@ static void rtc_restore(void *arg)
 		else
 			logit(LOG_ERR, "RTC error code %d: %s", errno, strerror(errno));
 
-		/* Been here already? */
-		if (rc)
-			goto out;
-
-		/* Attempt to set RTC to a sane value ... */
-		tv.tv_sec = rtc_date_fallback;
-		if (!gmtime_r(&tv.tv_sec, &tm))
-			goto out;
-
-		logit(LOG_NOTICE, "Resetting RTC to kernel default, %s.", rtc_timestamp);
+		time_set(NULL);
 		rc = 2;
 	}
 
-	if (!rc)
-		print_desc(NULL, "Restoring system clock (UTC) from RTC");
-	tm.tm_isdst = -1; /* Use tzdata to figure it out, please. */
-	tv.tv_sec = mktime(&tm);
-	if (tv.tv_sec == (time_t)-1 || tv.tv_sec < rtc_date_fallback) {
-		errno = EINVAL;
-		goto invalid;
-	}
-
-	if (settimeofday(&tv, NULL) == -1)
-		rc = 1;
-
-out:
-	tz_restore(tz);
 	print(rc, NULL);
 	close(fd);
 }
