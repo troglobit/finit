@@ -177,7 +177,7 @@ AC_ARG_WITH(plugin-path,
 	[plugin_path=$withval], [plugin_path=yes])
 
 AC_ARG_WITH(rtc-date,
-	AS_HELP_STRING([--with-rtc-date=DATE], [If RTC date/time is too old, restore to DATE, format "YYYY-MM-DD HH:MM", default "2000-01-01 00:00"]),
+	AS_HELP_STRING([--with-rtc-date=DATE], [If RTC date/time is too old, restore to DATE, format "YYYY-MM-DD HH:MM:SS", default "2000-01-01 00:00:00"]),
 	[rtc_date=$withval], [rtc_date=no])
 
 AC_ARG_WITH(rtc-file,
@@ -282,7 +282,7 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 	AC_DEFINE_UNQUOTED(RANDOMSEED, "$random_path", [Improve random at boot by seeding it with sth from before.])])
 
 AS_IF([test "x$rtc_date" != "xno"], [
-	AC_DEFINE(RTC_TIMESTAMP_CUSTOM, "$rtc_date", [Custom RTC restore date, default: 2000-01-01 00:00])], [
+	AC_DEFINE_UNQUOTED(RTC_TIMESTAMP_CUSTOM, "$rtc_date", [Custom RTC restore date, default: 2000-01-01 00:00])], [
 	rtc_date=""])
 
 AS_IF([test "x$rtc_file" != "xno"], [

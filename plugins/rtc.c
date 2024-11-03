@@ -321,10 +321,12 @@ PLUGIN_INIT(plugin_init)
 {
 	struct tm tm = { 0 };
 
-	if (!strptime(rtc_timestamp, "%Y-%m-%d %H:%M", &tm))
-		rtc_date_fallback = mktime(&tm);
-	else
+	if (!strptime(rtc_timestamp, RTC_FMT, &tm)) {
+		logit(LOG_ERR, "Invalid restore date '%s', reverting to '%s'",
+		      rtc_timestamp, RTC_TIMESTAMP_BEGIN_2000);
 		rtc_timestamp = RTC_TIMESTAMP_BEGIN_2000;
+	} else
+		rtc_date_fallback = mktime(&tm);
 
 	uev_timer_init(ctx, &rtc_timer, update, NULL, RTC_PERIOD, RTC_PERIOD);
 
