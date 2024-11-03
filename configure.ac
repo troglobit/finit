@@ -180,6 +180,10 @@ AC_ARG_WITH(rtc-date,
 	AS_HELP_STRING([--with-rtc-date=DATE], [If RTC date/time is too old, restore to DATE, format "YYYY-MM-DD HH:MM", default "2000-01-01 00:00"]),
 	[rtc_date=$withval], [rtc_date=no])
 
+AC_ARG_WITH(rtc-file,
+        AS_HELP_STRING([--with-rtc-file=FILE], [If RTC is missing, save and restore system clock from this file, default: no]),
+	[rtc_file=$withval], [rtc_file=no])
+
 ### Enable features ###########################################################################
 
 # Create config.h from selected features and fallback defaults
@@ -280,6 +284,13 @@ AS_IF([test "x$with_random_seed" != "xno"], [
 AS_IF([test "x$rtc_date" != "xno"], [
 	AC_DEFINE(RTC_TIMESTAMP_CUSTOM, "$rtc_date", [Custom RTC restore date, default: 2000-01-01 00:00])], [
 	rtc_date=""])
+
+AS_IF([test "x$rtc_file" != "xno"], [
+	AS_IF([test "x$rtc_file" = "xyes"], [
+		rtc_file=/var/lib/misc/rtc])
+	AC_EXPAND_DIR(rtcfile_path, "$rtc_file")
+	AC_DEFINE_UNQUOTED(RTC_FILE, "$rtcfile_path", [Save and restore system time from this file if /dev/rtc is missing.])],[
+	AC_DEFINE_UNQUOTED(RTC_FILE, NULL)])
 
 AS_IF([test "x$with_keventd" != "xno"], [with_keventd=yes])
 
@@ -387,6 +398,7 @@ Behavior:
   Boot heading..........: $heading
   Plugins...............: $plugins
   RTC restore date......: $RTC_DATE
+  RTC fallback file.....: $rtc_file
 
 Optional features:
   Install doc/..........: $enable_doc
