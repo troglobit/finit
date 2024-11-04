@@ -36,14 +36,25 @@
 #include "helpers.h"
 #include "plugin.h"
 
-/* Kernel RTC driver validates against this date for sanity check */
+/*
+ * Kernel RTC driver validates against this date for sanity check.  The
+ * on NTP sync the driver can also update the RTC every 11 mins.  We use
+ * the same update interval to handle manual time set and file save.
+ */
 #define RTC_TIMESTAMP_BEGIN_2000 "2000-01-01 00:00:00"
+#define RTC_FMT                  "%Y-%m-%d %H:%M:%S"
+#define RTC_PERIOD               (11 * 60 * 1000)
+
 #ifdef  RTC_TIMESTAMP_CUSTOM
 static char  *rtc_timestamp     = RTC_TIMESTAMP_CUSTOM;
 #else
 static char  *rtc_timestamp     = RTC_TIMESTAMP_BEGIN_2000;
 #endif
 static time_t rtc_date_fallback = 946684800LL;
+
+static char  *rtc_file          = RTC_FILE;
+static uev_t  rtc_timer;
+
 
 static void tz_set(char *tz, size_t len)
 {
@@ -66,6 +77,122 @@ static void tz_restore(char *tz)
 	else
 		setenv("TZ", tz, 1);
 	tzset();
+}
+
+static int time_set(struct tm *tm)
+{
+	struct tm fallback = { 0 };
+	struct timeval tv = { 0 };
+	char tz[128];
+	int rc = 0;
+
+	tz_set(tz, sizeof(tz));
+
+	if (!tm) {
+		logit(LOG_NOTICE, "Resetting system clock to kernel default, %s.", rtc_timestamp);
+		tm = &fallback;
+
+		/* Attempt to set RTC to a sane value ... */
+		tv.tv_sec = rtc_date_fallback;
+		if (!gmtime_r(&tv.tv_sec, tm)) {
+			rc = 1;
+			goto out;
+		}
+	}
+
+	tm->tm_isdst = -1; /* Use tzdata to figure it out, please. */
+	tv.tv_sec = mktime(tm);
+	if (tv.tv_sec == (time_t)-1 || tv.tv_sec < rtc_date_fallback) {
+		errno = EINVAL;
+		rc = 2;
+	} else {
+		if (settimeofday(&tv, NULL) == -1)
+			rc = 1;
+	}
+out:
+	tz_restore(tz);
+	return rc;
+}
+
+static int time_get(struct tm *tm)
+{
+	struct timeval tv = { 0 };
+	char tz[128];
+	int rc = 0;
+
+	tz_set(tz, sizeof(tz));
+
+	rc = gettimeofday(&tv, NULL);
+	if (rc < 0 || tv.tv_sec < rtc_date_fallback)
+		rc = 2;
+	else
+		gmtime_r(&tv.tv_sec, tm);
+
+	tz_restore(tz);
+
+	return rc;
+}
+
+static void file_save(void *arg)
+{
+	struct tm tm = { 0 };
+	int rc = 0;
+	FILE *fp;
+
+	fp = fopen(rtc_file, "w");
+	if (!fp) {
+		logit(LOG_WARNING, "Failed saving system clock to %s, code %d: %s",
+		      rtc_file, errno, strerror(errno));
+		return;
+	}
+
+	if ((rc = time_get(&tm))) {
+		logit(LOG_WARNING, "System clock invalid, before %s, not saving", rtc_timestamp);
+		print_desc(NULL, "System clock invalid, skipping");
+	} else {
+		char buf[32] = { 0 };
+
+		print_desc(NULL, "Saving system clock to file");
+		strftime(buf, sizeof(buf), RTC_FMT, &tm);
+		fprintf(fp, "%s\n", buf);
+	}
+
+	print(rc, NULL);
+	fclose(fp);
+}
+
+static void file_restore(void *arg)
+{
+	struct tm tm = { 0 };
+	int rc = 1;
+	FILE *fp;
+
+	if (!rtc_file) {
+		logit(LOG_NOTICE, "System has no RTC (missing driver?), skipping restore.");
+		return;
+	}
+
+	print_desc(NULL, "Restoring system clock from backup");
+
+	fp = fopen(rtc_file, "r");
+	if (fp) {
+		char buf[32];
+
+		if (fgets(buf, sizeof(buf), fp)) {
+			chomp(buf);
+			strptime(buf, RTC_FMT, &tm);
+			rc = time_set(&tm);
+		}
+		fclose(fp);
+	} else
+		logit(LOG_WARNING, "Missing %s", rtc_file);
+
+	if (rc) {
+		time_set(NULL);
+		rc = 2;
+	}
+
+	print(rc, NULL);
 }
 
 static int rtc_open(void)
@@ -91,10 +218,8 @@ static int rtc_open(void)
 
 static void rtc_save(void *arg)
 {
-	struct timeval tv = { 0 };
 	struct tm tm = { 0 };
 	int fd, rc = 0;
-	char tz[128];
 
 	if (rescue) {
 		dbg("Skipping %s plugin in rescue mode.", __FILE__);
@@ -105,38 +230,26 @@ static void rtc_save(void *arg)
 	if (fd < 0)
 		return;
 
-	tz_set(tz, sizeof(tz));
-	rc = gettimeofday(&tv, NULL);
-	if (rc < 0 || tv.tv_sec < rtc_date_fallback) {
+	if ((rc = time_get(&tm))) {
 		print_desc(NULL, "System clock invalid, not saving to RTC");
-	invalid:
-		logit(LOG_ERR, "System clock invalid, before %s, not saving to RTC", rtc_timestamp);
+	} else {
+		print_desc(NULL, "Saving system clock (UTC) to RTC");
+		rc = ioctl(fd, RTC_SET_TIME, &tm);
+	}
+
+	if (rc && errno == EINVAL) {
+		logit(LOG_WARNING, "System clock invalid, before %s, not saving to RTC", rtc_timestamp);
 		rc = 2;
-		goto out;
 	}
 
-	print_desc(NULL, "Saving system time (UTC) to RTC");
-
-	gmtime_r(&tv.tv_sec, &tm);
-	if (ioctl(fd, RTC_SET_TIME, &tm) < 0) {
-		if (EINVAL == errno)
-			goto invalid;
-		rc = 1;
-		goto out;
-	}
-
-out:
-	tz_restore(tz);
 	print(rc, NULL);
 	close(fd);
 }
 
 static void rtc_restore(void *arg)
 {
-	struct timeval tv = { 0 };
 	struct tm tm = { 0 };
 	int fd, rc = 0;
-	char tz[128];
 
 	if (rescue) {
 		dbg("Skipping %s plugin in rescue mode.", __FILE__);
@@ -145,58 +258,54 @@ static void rtc_restore(void *arg)
 
 	fd = rtc_open();
 	if (fd < 0) {
-		logit(LOG_NOTICE, "System has no RTC (missing driver?), skipping restore.");
+		file_restore(arg);
 		return;
 	}
 
-	tz_set(tz, sizeof(tz));
-	if (ioctl(fd, RTC_RD_TIME, &tm) < 0) {
+	if ((rc = ioctl(fd, RTC_RD_TIME, &tm)) < 0) {
 		char msg[120];
 
 		snprintf(msg, sizeof(msg), "Failed restoring system clock, %s",
 			 EINVAL == errno ? "RTC time is too old"   :
 			 ENOENT == errno ? "RTC has no saved time" : "see log for details");
 		print_desc(NULL, msg);
-
-	invalid:
-		logit(LOG_ERR, "Failed restoring system clock from RTC.");
-		if (EINVAL == errno)
-			logit(LOG_ERR, "RTC time is too old (before %s)", rtc_timestamp);
-		else if (ENOENT == errno)
-			logit(LOG_ERR, "RTC has no previously saved (valid) time.");
-		else
-			logit(LOG_ERR, "RTC error code %d: %s", errno, strerror(errno));
-
-		/* Been here already? */
-		if (rc)
-			goto out;
-
-		/* Attempt to set RTC to a sane value ... */
-		tv.tv_sec = rtc_date_fallback;
-		if (!gmtime_r(&tv.tv_sec, &tm))
-			goto out;
-
-		logit(LOG_NOTICE, "Resetting RTC to kernel default, %s.", rtc_timestamp);
-		rc = 2;
-	}
-
-	if (!rc)
+	} else {
 		print_desc(NULL, "Restoring system clock (UTC) from RTC");
-	tm.tm_isdst = -1; /* Use tzdata to figure it out, please. */
-	tv.tv_sec = mktime(&tm);
-	if (tv.tv_sec == (time_t)-1 || tv.tv_sec < rtc_date_fallback) {
-		errno = EINVAL;
-		goto invalid;
+		rc = time_set(&tm);
 	}
 
-	if (settimeofday(&tv, NULL) == -1)
-		rc = 1;
+	if (rc) {
+		logit(LOG_WARNING, "Failed restoring system clock from RTC.");
+		if (EINVAL == errno)
+			logit(LOG_WARNING, "RTC time is too old (before %s)", rtc_timestamp);
+		else if (ENOENT == errno)
+			logit(LOG_WARNING, "RTC has no previously saved (valid) time.");
+		else
+			logit(LOG_WARNING, "RTC error code %d: %s", errno, strerror(errno));
 
-out:
-	tz_restore(tz);
-	print(rc, NULL);
+		print(2, NULL);
+
+		/* Try restoring from last save game */
+		if (rtc_file)
+			file_restore(arg);
+	} else
+		print(0, NULL);
+
 	close(fd);
 }
+
+
+static void save(void *arg)
+{
+	rtc_save(arg);
+	file_save(arg);
+}
+
+static void update(uev_t *w, void *arg, int events)
+{
+	save(arg);
+}
+
 
 static plugin_t plugin = {
 	.name = __FILE__,
@@ -204,7 +313,7 @@ static plugin_t plugin = {
 		.cb  = rtc_restore
 	},
 	.hook[HOOK_SHUTDOWN] = {
-		.cb  = rtc_save
+		.cb  = save
 	}
 };
 
@@ -212,10 +321,14 @@ PLUGIN_INIT(plugin_init)
 {
 	struct tm tm = { 0 };
 
-	if (!strptime(rtc_timestamp, "%Y-%m-%d %H:%M", &tm))
-		rtc_date_fallback = mktime(&tm);
-	else
+	if (!strptime(rtc_timestamp, RTC_FMT, &tm)) {
+		logit(LOG_WARNING, "Invalid restore date '%s', reverting to '%s'",
+		      rtc_timestamp, RTC_TIMESTAMP_BEGIN_2000);
 		rtc_timestamp = RTC_TIMESTAMP_BEGIN_2000;
+	} else
+		rtc_date_fallback = mktime(&tm);
+
+	uev_timer_init(ctx, &rtc_timer, update, NULL, RTC_PERIOD, RTC_PERIOD);
 
 	plugin_register(&plugin);
 }

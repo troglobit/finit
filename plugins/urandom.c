@@ -154,7 +154,7 @@ static void setup(void *arg)
 	close(fd);
 	free(rpi);
 	if (rc < 0)
-		logit(LOG_ERR, "Failed adding entropy to kernel random pool: %s", strerror(err));
+		logit(LOG_WARNING, "Failed adding entropy to kernel random pool: %s", strerror(err));
 	print_result(rc < 0);
 	return;
 fallback:
