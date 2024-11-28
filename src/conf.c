@@ -1432,15 +1432,21 @@ static int conf_change_act(char *dir, char *name, uint32_t mask)
 		strlcpy(fn, dir, sizeof(fn));
 	dbg("path: %s mask: %08x", fn, mask);
 
-	/* Handle disabling/removal of service */
-	rp = realpath(fn, NULL);
-	if (!rp) {
-		if (errno != ENOENT)
-			goto fail;
+	if (strchr(name, '@')) {
+		/* Skip realpath for templates */
 		rp = strdup(fn);
-		if (!rp)
-			goto fail;
+	} else {
+		/* Handle disabling/removal of service */
+		rp = realpath(fn, NULL);
+		if (!rp) {
+			if (errno != ENOENT)
+				goto fail;
+			rp = strdup(fn);
+		}
 	}
+
+	if (!rp)
+		goto fail;
 
 	node = conf_find(rp);
 	if (node) {
