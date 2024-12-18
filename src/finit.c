@@ -272,8 +272,13 @@ static int fsck(int pass)
 		 * errors were corrected but that the boot may proceed.
 		 */
 		if (fsck_rc > 1) {
-			logit(LOG_CONSOLE | LOG_ALERT, "Failed fsck %s, attempting sulogin ...", dev);
-			sulogin(1);
+			if (hasmntopt(mnt,"nofail")) {
+                        	logit(LOG_CONSOLE | LOG_WARNING, "Ignoring failed fsck %s because of nofail option", dev);
+                        	fsck_rc = 0;
+			} else {
+				logit(LOG_CONSOLE | LOG_ALERT, "Failed fsck %s, attempting sulogin ...", dev);
+				sulogin(1);
+			}
 		}
 		rc += fsck_rc;
 	}
