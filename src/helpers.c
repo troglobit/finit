@@ -585,7 +585,8 @@ int in_container(void)
 		"lxc",
 		"docker",
 		"kubepod",
-		"unshare"
+		"unshare",
+		"systemd-nspawn"
 	};
 	const char *files[] = {
 		"/run/.containerenv",
