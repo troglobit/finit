@@ -39,6 +39,9 @@ jobs:
           ./configure  --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var \
                        --enable-x11-common-plugin --enable-testserv-plugin --with-watchdog \
                        --with-keventd
+      - name: Enable unprivileged userns (unshare)
+        run: |
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
       - name: Build release ...
         run: |
           make release || (cat test/test-suite.log; false)

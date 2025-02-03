@@ -41,6 +41,9 @@ jobs:
       - name: Install to /tmp
         run: |
           DESTDIR=/tmp make install-strip
+      - name: Enable unprivileged userns (unshare)
+        run: |
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
       - name: Check dist tarball
         run: |
           ver=$(/tmp/sbin/initctl -V | awk '/Finit.*/ {print $2;}')
