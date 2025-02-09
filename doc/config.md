@@ -890,33 +890,45 @@ configurable with the following options:
   * `oncrash:script` -- similarly, but instead of rebooting, call the
     `post:script` action if set, see below.
 
-When stopping a service (run/task/sysv/service), either manually or
-when moving to another runlevel, Finit starts by sending `SIGTERM`, to
-allow the process to shut down gracefully.  If the process has not
-been collected within 3 seconds, Finit sends `SIGKILL`.  To halt the
-process using a different signal, use the option `halt:SIGNAL`, e.g.,
-`halt:SIGPWR`.  To change the delay between your halt signal and KILL,
-use the option `kill:SEC`, e.g., `kill:10` to wait 10 seconds before
-sending `SIGKILL`.
+When stopping a service (run/task/sysv/service), either manually or when
+moving to another runlevel, Finit starts by sending `SIGTERM`, to allow
+the process to shut down gracefully.  However, if the process has not
+been collected within 3 seconds, Finit will send `SIGKILL`.  To stop the
+process using a different signal than `SIGTERM`, use `halt:SIGNAL`,
+e.g., `halt:SIGPWR`.  To change the delay between the stop signal and
+KILL, use the option `kill:<1-60>`, e.g., `kill:10` to wait 10 seconds
+before sending `SIGKILL`.
 
-Services support `pre:script` and `post:script` actions as well.  These
-run as the same `@USER:GROUP` as the service itself, with any `env:file`
-sourced.  The scripts must use an absolute path, but are executed from
-the `$HOME` of the given user.  The scripts are not called with any
-argument (currently), but both get the `SERVICE_IDENT=foo` environment
-variable set.  Here `foo` denotes the identity of the service, which if
-there are multiple services named `foo`, may be `foo:1`, or any unique
-identifier specified in the .conf file.  The `post:script` is called
-with an additional set of environment variables:
+Services, including the `sysv` variant, support pre/post/ready scripts:
+
+  * `pre:[0-3600,]script`
+  * `post:[0-3600,]script`
+  * `ready:[0-3600,]script`
+
+The optional number (0-3600) is the timeout before Finit kills the
+script, it defaults to the kill delay value and can be disabled by
+setting it to zero.  These scripts run as the same `@USER:GROUP` as the
+service itself, with any `env:file` sourced.  The scripts must use an
+absolute path, but are executed from the `$HOME` of the given user.  The
+scripts are not called with any argument, but get a set of environment
+variables:
+
+  * `SERVICE_IDENT=foo:1`
+  * `SERVICE_NAME=foo`
+  * `SERVICE_ID=1`
+
+The `post:script` is called with an additional set of environment
+variables:
 
  - `EXIT_CODE=[exited,signal]`: set to one of `exited` or `signal`
  - `EXIT_STATUS=[num,SIGNAME]`: set to one of exit status code from
    the program, if it exited normally, or the signal name (`HUP`,
    `TERM`, etc.) if it exited due to signal
 
-These script actions *must terminate*, so they have a default execution
-time of 3 seconds before they are SIGKILLed, this can be adjusted using
-the above `kill:SEC` syntax.
+> [!IMPORTANT]
+> These script actions are intended for setup, cleanup, and readiness
+> notification.  It is up to the user to ensure the scripts terminate.
+
 
 #### Conditional Loading
 

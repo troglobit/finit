@@ -100,6 +100,9 @@ static void service_timeout_cb(uev_t *w, void *arg, int events)
  */
 int service_timeout_after(svc_t *svc, int timeout, void (*cb)(svc_t *svc))
 {
+	if (timeout == 0)
+		return 0;	/* OK, not starting timer. */
+
 	if (svc->timer_cb)
 		return -EBUSY;
 
@@ -153,7 +156,7 @@ static void service_script_kill(svc_t *svc)
 	}
 }
 
-static int service_script_add(svc_t *svc, pid_t pid)
+static int service_script_add(svc_t *svc, pid_t pid, int tmo)
 {
 	struct assoc *ptr = malloc(sizeof(*ptr));
 
@@ -166,7 +169,7 @@ static int service_script_add(svc_t *svc, pid_t pid)
 	ptr->pid = pid;
 	TAILQ_INSERT_TAIL(&svc_assoc_list, ptr, link);
 
-	service_timeout_after(svc, svc->killdelay, service_script_kill);
+	service_timeout_after(svc, tmo, service_script_kill);
 
 	return 0;
 }
@@ -1297,12 +1300,35 @@ static void parse_killdelay(svc_t *svc, char *delay)
 	svc->killdelay = (int)(sec * 1000);
 }
 
-static void parse_script(char *type, char *script, char *buf, size_t len)
+/*
+ * pre:[0-3600,]/path/to/script
+ */
+static void parse_script(svc_t *svc, char *type, char *script, int *tmo, char *buf, size_t len)
 {
-	if (access(script, X_OK))
-		logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.", type, script);
+	char *path;
+
+	path = strchr(script, ',');
+	if (path) {
+		const char *errstr;
+		long long sec;
+
+		*path++ = 0;
+
+		sec = strtonum(script, 0, 3600, &errstr);
+		if (errstr) {
+			errx(1, "%s: tmo %s is %s (0-3600)", svc_ident(svc, NULL, 0), script, errstr);
+			return;
+		}
+		*tmo = (int)(sec * 1000);
+	} else {
+		path = script;
+		*tmo = svc->killdelay;
+	}
+
+	if (access(path, X_OK))
+		logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.", type, path);
 	else
-		strlcpy(buf, script, len);
+		strlcpy(buf, path, len);
 }
 
 /*
@@ -1770,15 +1796,15 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	else
 		svc->killdelay = SVC_TERM_TIMEOUT;
 	if (pre_script)
-		parse_script("pre", pre_script, svc->pre_script, sizeof(svc->pre_script));
+		parse_script(svc, "pre", pre_script, &svc->pre_tmo, svc->pre_script, sizeof(svc->pre_script));
 	else
 		memset(svc->pre_script, 0, sizeof(svc->pre_script));
 	if (post_script)
-		parse_script("post", post_script, svc->post_script, sizeof(svc->post_script));
+		parse_script(svc, "post", post_script, &svc->post_tmo, svc->post_script, sizeof(svc->post_script));
 	else
 		memset(svc->post_script, 0, sizeof(svc->post_script));
 	if (ready_script)
-		parse_script("ready", ready_script, svc->ready_script, sizeof(svc->ready_script));
+		parse_script(svc, "ready", ready_script, &svc->ready_tmo, svc->ready_script, sizeof(svc->ready_script));
 	else
 		memset(svc->ready_script, 0, sizeof(svc->ready_script));
 	if (!svc_is_tty(svc)) {
@@ -2059,6 +2085,9 @@ static void set_pre_post_envs(svc_t *svc, const char *type)
 	char buf[25 + 256] = "/etc/default:/etc/conf.d";
 
 	setenv("SERVICE_TYPE", svc_typestr(svc), 1);
+	setenv("SERVICE_NAME", svc->name, 1);
+	if (svc->id[0])
+		setenv("SERVICE_ID", svc->id, 1);
 	setenv("SERVICE_IDENT", svc_ident(svc, NULL, 0), 1);
 	setenv("SERVICE_SCRIPT_TYPE", type, 1);
 
@@ -2087,6 +2116,8 @@ static void service_pre_script(svc_t *svc)
 		};
 		char *env_file;
 
+		redirect(svc);
+
 		env_file = svc_getenv(svc);
 		if (env_file)
 			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->pre_script);
@@ -2101,7 +2132,7 @@ static void service_pre_script(svc_t *svc)
 	dbg("%s: pre:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->pre_script, svc->pid);
 
 	/* Short hard-coded timeout to prevent locking up Finit */
-	service_timeout_after(svc, svc->killdelay, service_kill_script);
+	service_timeout_after(svc, svc->pre_tmo, service_kill_script);
 }
 
 static void service_post_script(svc_t *svc)
@@ -2154,7 +2185,7 @@ static void service_post_script(svc_t *svc)
 	dbg("%s: post:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->post_script, svc->pid);
 
 	/* Short hard-coded timeout to prevent locking up Finit */
-	service_timeout_after(svc, svc->killdelay, service_kill_script);
+	service_timeout_after(svc, svc->post_tmo, service_kill_script);
 }
 
 void service_ready_script(svc_t *svc)
@@ -2194,7 +2225,7 @@ void service_ready_script(svc_t *svc)
 	dbg("%s: ready:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->ready_script, pid);
 
 	/* Short hard-coded timeout to prevent locking up Finit */
-	service_script_add(svc, pid);
+	service_script_add(svc, pid, svc->ready_tmo);
 }
 
 static void service_retry(svc_t *svc)

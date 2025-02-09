@@ -197,8 +197,11 @@ typedef struct svc {
 	char	       desc[MAX_STR_LEN];
 	char	       env[MAX_CMD_LEN];
 	char	       pre_script[MAX_CMD_LEN];
+	int	       pre_tmo;
 	char	       post_script[MAX_CMD_LEN];
+	int	       post_tmo;
 	char	       ready_script[MAX_CMD_LEN];
+	int	       ready_tmo;
 
 	/*
 	 * Used to forcefully kill services that won't shutdown on
