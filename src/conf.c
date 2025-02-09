@@ -1486,7 +1486,11 @@ int conf_changed(char *file)
 	if (!file)
 		return 0;
 
-	rp = realpath(file, NULL);
+	if (strchr(file, '@'))
+		rp = strdup(file);
+	else
+		rp = realpath(file, NULL);
+
 	if (!rp)
 		return 0;
 
