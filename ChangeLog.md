@@ -4,6 +4,29 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.9][UNRELEASED]
+--------------------
+
+### Changes
+ - Add individual timeout (optional) support for pre/post/ready scripts
+ - Add support for systems with broken RTC, i.e., those that at power-on
+   may reset the RTC to a random date instead of zero, issue #418
+ - Add support for detecting "in-container" when in `systemd-nspawn`
+ - Reset color attributes and clear screen when starting up.  This is
+   for boot loaders like GRUB, which leave background color artifacts
+
+### Fixes
+ - Fix #415: only mark reverse-dependencies "dirty" if the main service
+   does not support SIGHUP.  This helps avoid unnecessary restarts of
+   services that depend on a service that supports SIGHUP
+ - Fix #422: honor `notfail` flag in `/etc/fstab`
+ - Fix `initctl touch` of template services, previously marking a
+   service created from a template as "dirty" did not take
+ - Fix unintended restart of template "siblings".  I.e., `initctl touch`
+   of instantiated template service A affected B from same template
+ - Fix buggy `--with-rtc-date=DATE` configure option
+
+
 [4.8][] - 2024-10-13
 --------------------
 
@@ -1705,6 +1728,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/4.8...HEAD
+[4.9]: https://github.com/troglobit/finit/compare/4.8...4.9
 [4.8]: https://github.com/troglobit/finit/compare/4.7...4.8
 [4.7]: https://github.com/troglobit/finit/compare/4.6...4.7
 [4.6]: https://github.com/troglobit/finit/compare/4.5...4.6
