@@ -139,6 +139,9 @@ static void file_save(void *arg)
 	int rc = 0;
 	FILE *fp;
 
+	if (!rtc_file)
+		return;
+
 	fp = fopen(rtc_file, "w");
 	if (!fp) {
 		logit(LOG_WARNING, "Failed saving system clock to %s, code %d: %s",
