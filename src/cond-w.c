@@ -288,7 +288,7 @@ int cond_update(const char *name)
 	svc_t *svc, *iter = NULL;
 	int affects = 0;
 
-	dbg("%s", name);
+//	dbg("%s", name);
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
 		if (!svc_has_cond(svc) || !cond_affects(name, svc->cond))
 			continue;
@@ -321,7 +321,7 @@ int cond_set_noupdate(const char *name)
 
 void cond_set(const char *name)
 {
-	dbg("%s", name);
+//	dbg("%s", name);
 	if (cond_set_noupdate(name))
 		return;
 
@@ -372,7 +372,7 @@ int cond_clear_noupdate(const char *name)
 
 void cond_clear(const char *name)
 {
-	dbg("%s", name);
+//	dbg("%s", name);
 	if (cond_clear_noupdate(name))
 		return;
 
