@@ -150,7 +150,7 @@ static void service_script_kill(svc_t *svc)
 			continue;
 
 		dbg("Killing service %s script PID %d.", svc_ident(svc, NULL, 0), ptr->pid);
-		kill(-ptr->pid, SIGKILL);
+		kill(ptr->pid, SIGKILL);
 		TAILQ_REMOVE(&svc_assoc_list, ptr, link);
 		free(ptr);
 	}
@@ -2086,7 +2086,8 @@ static void service_kill_script(svc_t *svc)
 	if (svc->pid <= 1)
 		return;
 
-	kill(-svc->pid, SIGKILL);
+	dbg("Timeout, killing service %s script PID %d", svc_ident(svc, NULL, 0), svc->pid);
+	kill(svc->pid, SIGKILL);
 }
 
 /*
