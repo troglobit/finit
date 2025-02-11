@@ -1305,7 +1305,7 @@ static void parse_killdelay(svc_t *svc, char *delay)
  */
 static void parse_script(svc_t *svc, char *type, char *script, int *tmo, char *buf, size_t len)
 {
-	char *path;
+	char *found, *path;
 
 	path = strchr(script, ',');
 	if (path) {
@@ -1316,7 +1316,8 @@ static void parse_script(svc_t *svc, char *type, char *script, int *tmo, char *b
 
 		sec = strtonum(script, 0, 3600, &errstr);
 		if (errstr) {
-			errx(1, "%s: tmo %s is %s (0-3600)", svc_ident(svc, NULL, 0), script, errstr);
+			errx(1, "%s: tmo %s is %s (0-3600)", svc_ident(svc, NULL, 0),
+			     script, errstr);
 			return;
 		}
 		*tmo = (int)(sec * 1000);
@@ -1325,10 +1326,18 @@ static void parse_script(svc_t *svc, char *type, char *script, int *tmo, char *b
 		*tmo = svc->killdelay;
 	}
 
-	if (access(path, X_OK))
-		logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.", type, path);
-	else
-		strlcpy(buf, path, len);
+	found = which(path);
+	if (!found) {
+		/* Not in $PATH, check if path exists and is executable */
+		if (access(path, X_OK)) {
+			logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.",
+			      type, path);
+			return;
+		}
+	} else
+		free(found);
+
+	strlcpy(buf, path, len);
 }
 
 /*
