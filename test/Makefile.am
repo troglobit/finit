@@ -66,11 +66,6 @@ AM_TESTS_ENVIRONMENT	+= export LD_LIBRARY_PATH;
 AM_TESTS_ENVIRONMENT	+= top_builddir=$(top_builddir);
 AM_TESTS_ENVIRONMENT	+= export top_builddir;
 
-checkself.sh:
-	@echo '#!/bin/sh' > $@
-	@echo shellcheck $(addprefix '"$$srcdir"'/,$(filter %.sh,$(filter-out $@, $(TESTS)))) >> $@
-	@chmod +x $@
-
 TEST_EXTENSIONS		 = .sh
 TESTS			 = checkself.sh
 TESTS			+= add-remove-dynamic-service.sh
@@ -110,6 +105,15 @@ endif
 TESTS			+= unexpected-restart.sh
 
 check-recursive: setup-chroot
+
+.PHONY: checkself.sh
+checkself.sh:
+	@echo '#!/bin/sh'                                          > $@
+	@echo 'set -eu'                                           >> $@
+	@echo 'cd "$$srcdir" 2>/dev/null || cd "." || exit 1'     >> $@
+	@echo 'TESTS="$(filter %.sh,$(filter-out $@, $(TESTS)))"' >> $@
+	@echo 'shellcheck $$TESTS'                                >> $@
+	@chmod 0755 $@
 
 .PHONY: setup-chroot
 setup-chroot:
