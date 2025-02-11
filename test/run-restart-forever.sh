@@ -42,8 +42,8 @@ test_one()
 
 sep
 say "Add stanza to $FINIT_CONF"
-run "echo 'run fail.sh -- Failure' > $FINIT_RCSD/fail.conf"
-run "echo 'run initctl touch fail' > $FINIT_RCSD/touch.conf"
+run "echo 'run /sbin/fail.sh -- Failure' > $FINIT_RCSD/fail.conf"
+run "echo 'run initctl touch fail'       > $FINIT_RCSD/touch.conf"
 test_one 2
 
 sep

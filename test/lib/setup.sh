@@ -84,6 +84,14 @@ assert_status()
 	assert "Service $service $status" "$(texec initctl -p status "$service" | awk '/Status/{print $3}')" = "$status"
 }
 
+# Used by, e.g., pre-fail.sh
+assert_status_full()
+{
+	service=$1; shift
+	status="$*"
+	assert "Service $service status is: $status" "$(texec initctl -p status "$service" | awk '/Status/{sub("^ *Status : ", ""); print}')" = "$status"
+}
+
 assert_cond()
 {
 	cond=$1
