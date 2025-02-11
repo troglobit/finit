@@ -7,11 +7,19 @@ All relevant changes are documented in this file.
 [4.9][UNRELEASED]
 --------------------
 
+> [!CAUTION]
+> This release changes how Finit reacts to the exit status of `pre:`
+> scripts.  Finit will now no longer start the main process if its
+> `pre:` script fails for any reason.  So, if you have pre scripts that,
+> e.g., create directories, make sure they are idempotent.
+
 ### Changes
  - Add individual timeout (optional) support for pre/post/ready scripts
  - Add support for systems with broken RTC, i.e., those that at power-on
    may reset the RTC to a random date instead of zero, issue #418
  - Add support for detecting "in-container" when in `systemd-nspawn`
+ - Check exit status of `pre:` scripts, on failure drive service/sysv to
+   `crashed` state.  (The exit code of `post:` scripts remain ignored)
  - Reset color attributes and clear screen when starting up.  This is
    for boot loaders like GRUB, which leave background color artifacts
 

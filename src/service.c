@@ -1943,8 +1943,11 @@ void service_monitor(pid_t lost, int status)
 	}
 
 	switch (svc->state) {
-	case SVC_CLEANUP_STATE:
 	case SVC_SETUP_STATE:
+		/* If the setup phase fails, drive svc to crashed. */
+		svc->status = status;
+		/* fallthrough */
+	case SVC_CLEANUP_STATE:
 		dbg("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
 		   svc->state == SVC_CLEANUP_STATE ? svc->post_script : svc->pre_script,
 		   lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
@@ -2478,8 +2481,27 @@ restart:
 		break;
 
 	case SVC_SETUP_STATE:
-		if (!svc->pid)
-			svc_set_state(svc, SVC_STARTING_STATE);
+		if (!svc->pid) {
+			int rc = WEXITSTATUS(svc->status);
+			int ok = WIFEXITED(svc->status);
+
+			if (!ok || rc) {
+				const char *sig;
+
+				if (WIFSIGNALED(svc->status))
+					sig = sig_name(WTERMSIG(svc->status));
+				else
+					sig = "none";
+
+				logit(LOG_WARNING, "Service %s pre:%s failed, rc: %d sig:%s",
+				      svc_ident(svc, NULL, 0), svc->pre_script, rc, sig);
+
+				svc_set_state(svc, SVC_STOPPING_STATE);
+				svc_crashing(svc);
+			} else {
+				svc_set_state(svc, SVC_STARTING_STATE);
+			}
+		}
 		break;
 
 	case SVC_WAITING_STATE:
