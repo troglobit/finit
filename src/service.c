@@ -158,8 +158,9 @@ static void service_script_kill(svc_t *svc)
 
 static int service_script_add(svc_t *svc, pid_t pid, int tmo)
 {
-	struct assoc *ptr = malloc(sizeof(*ptr));
+	struct assoc *ptr;
 
+	ptr = malloc(sizeof(*ptr));
 	if (!ptr) {
 		err(1, "Failed starting service script timer");
 		return 1;
@@ -1939,13 +1940,18 @@ void service_unregister(svc_t *svc)
 
 void service_monitor(pid_t lost, int status)
 {
+	int sig = WIFSIGNALED(status);
+	int rc = WEXITSTATUS(status);
+	int ok = WIFEXITED(status);
 	svc_t *svc;
 
 	if (lost <= 1)
 		return;
 
+	/* main process as well as pre: and post: scripts use svc->pid */
 	svc = svc_find_by_pid(lost);
 	if (!svc) {
+		/* Check if ready: script in assoc list */
 		if (service_script_del(lost))
 			dbg("collected unknown PID %d", lost);
 		return;
@@ -1959,7 +1965,7 @@ void service_monitor(pid_t lost, int status)
 	case SVC_CLEANUP_STATE:
 		dbg("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
 		   svc->state == SVC_CLEANUP_STATE ? svc->post_script : svc->pre_script,
-		   lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+		   lost, ok, sig, rc);
 		/* Kill all children in the same proess group, e.g. logit */
 		dbg("Killing lingering children in same process group ...");
 		kill(-svc->pid, SIGKILL);
@@ -1967,7 +1973,7 @@ void service_monitor(pid_t lost, int status)
 
 	default:
 		dbg("collected %s(%d), normal exit: %d, signaled: %d, exit code: %d",
-		   svc_ident(svc, NULL, 0), lost, WIFEXITED(status), WIFSIGNALED(status), WEXITSTATUS(status));
+		    svc_ident(svc, NULL, 0), lost, ok, sig, rc);
 		svc->status = status;
 		break;
 	}
@@ -1992,10 +1998,7 @@ void service_monitor(pid_t lost, int status)
 		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
 		/* run/task should run at least once per runlevel */
-		if (WIFEXITED(status))
-			svc->started = 1;
-		else
-			svc->started = 0;
+		svc->started = ok;
 	}
 
 done:
@@ -2003,7 +2006,7 @@ done:
 	svc->start_time = svc->pid = 0;
 cont:
 	if (lost == run_block_pid) {
-		int result = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+		int result = ok ? rc : 1;
 
 		svc_mark_clean(svc); /* done, regardless of exit status */
 		run_block_pid = 0;
@@ -2143,8 +2146,6 @@ static void service_pre_script(svc_t *svc)
 	}
 
 	dbg("%s: pre:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->pre_script, svc->pid);
-
-	/* Short hard-coded timeout to prevent locking up Finit */
 	service_timeout_after(svc, svc->pre_tmo, service_kill_script);
 }
 
@@ -2196,11 +2197,16 @@ static void service_post_script(svc_t *svc)
 	}
 
 	dbg("%s: post:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->post_script, svc->pid);
-
-	/* Short hard-coded timeout to prevent locking up Finit */
 	service_timeout_after(svc, svc->post_tmo, service_kill_script);
 }
 
+/*
+ * Unlike the pre: and post: scripts, the ready: script cannot re-use
+ * svc->pid, so instead we use an assoc. list for matching any scripts
+ * related to the svc, handled by service_script_add() below.  When a
+ * ready: script is reaped the service_monitor() checks first for the
+ * svc, then calls service_script_del().
+ */
 void service_ready_script(svc_t *svc)
 {
 	pid_t pid;
@@ -2236,8 +2242,6 @@ void service_ready_script(svc_t *svc)
 	}
 
 	dbg("%s: ready:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->ready_script, pid);
-
-	/* Short hard-coded timeout to prevent locking up Finit */
 	service_script_add(svc, pid, svc->ready_tmo);
 }
 
