@@ -96,6 +96,12 @@ int iwatch_add1(struct iwatch *iw, char *file, uint32_t mask)
 	if (!initialized)
 		return -1;
 
+	iwp = iwatch_find_by_path(iw, file);
+	if (iwp) {
+		dbg("skipping, %s already registered", file);
+		return 0;
+	}
+
 	if (!fexist(file)) {
 		dbg("skipping %s: no such file or directory", file);
 		return 0;
