@@ -169,11 +169,17 @@ void sm_init(sm_t *sm)
 void sm_set_runlevel(sm_t *sm, int newlevel)
 {
 	sm->newlevel = newlevel;
+
+	dbg("Flushing pending .conf file events ...");
+	conf_flush_events();
 }
 
 void sm_set_reload(sm_t *sm)
 {
 	sm->reload = 1;
+
+	dbg("Flushing pending .conf file events ...");
+	conf_flush_events();
 }
 
 int sm_is_in_teardown(sm_t *sm)
