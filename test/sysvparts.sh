@@ -10,7 +10,8 @@
 #
 
 TEST_DIR=$(dirname "$0")
-#DEBUG=1
+# shellcheck disable=2034
+DEBUG=1
 
 # shellcheck disable=SC2034
 BOOTSTRAP="runparts sysv /etc/rcS.d"
