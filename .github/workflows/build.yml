@@ -21,7 +21,6 @@ jobs:
         compiler: [gcc, clang]
       fail-fast: false
     env:
-      MAKEFLAGS: -j3
       CC: ${{ matrix.compiler }}
     steps:
       - name: Install dependencies
@@ -33,14 +32,14 @@ jobs:
         run: |
           ./autogen.sh
           ./configure --prefix= --enable-static
-          make V=1
+          make -j3 V=1
       - name: Regular Finit
         run: |
           ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var \
                       --enable-x11-common-plugin --enable-testserv-plugin --with-watchdog \
                       --with-keventd
-          make clean
-          make V=1
+          make -j3 clean
+          make -j3 V=1
       - name: Install to /tmp
         run: |
           DESTDIR=/tmp make install-strip
