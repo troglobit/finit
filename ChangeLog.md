@@ -20,6 +20,7 @@ All relevant changes are documented in this file.
  - Add support for detecting "in-container" when in `systemd-nspawn`
  - Check exit status of `pre:` scripts, on failure drive service/sysv to
    `crashed` state.  (The exit code of `post:` scripts remain ignored)
+ - All pre/post/ready scripts are now also searched for in `$PATH`
  - Reset color attributes and clear screen when starting up.  This is
    for boot loaders like GRUB, which leave background color artifacts
 
@@ -27,12 +28,16 @@ All relevant changes are documented in this file.
  - Fix #415: only mark reverse-dependencies "dirty" if the main service
    does not support SIGHUP.  This helps avoid unnecessary restarts of
    services that depend on a service that supports SIGHUP
+ - Fix #417: leaking inotify watchers in the cgroup subsystem
  - Fix #422: honor `notfail` flag in `/etc/fstab`
+ - Fix #425: ordering bug in detecting .conf file changes to services
+   and `initctl reload`, or runlevel changes
  - Fix `initctl touch` of template services, previously marking a
    service created from a template as "dirty" did not take
  - Fix unintended restart of template "siblings".  I.e., `initctl touch`
    of instantiated template service A affected B from same template
  - Fix buggy `--with-rtc-date=DATE` configure option
+ - Fix kill on timeout of pre/post/ready scripts
 
 
 [4.8][] - 2024-10-13
