@@ -27,15 +27,16 @@ test_teardown()
 say "Waiting for runlevel 2"
 sleep 2
 
-#run "initctl debug"
+run "initctl debug"
 
 say "Add service stanza to $FINIT_CONF ..."
 run "echo 'service serv -np -e foo:bar -- Verify foo=bar' >> $FINIT_CONF"
-#run "cat $FINIT_CONF"
+run "cat $FINIT_CONF"
 
 say 'Reload Finit'
 run "initctl reload"
 sleep 1
+run "initctl"
 retry 'assert_num_children 1 serv'
 
 say "Modify $FINIT_CONF slightly ..."
