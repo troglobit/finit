@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.9][UNRELEASED]
+[4.9][] - 2025-02-15
 --------------------
 
 > [!CAUTION]
@@ -29,7 +29,7 @@ All relevant changes are documented in this file.
    does not support SIGHUP.  This helps avoid unnecessary restarts of
    services that depend on a service that supports SIGHUP
  - Fix #417: leaking inotify watchers in the cgroup subsystem
- - Fix #422: honor `notfail` flag in `/etc/fstab`
+ - Fix #421: add support for `nofail` mount option in `/etc/fstab`
  - Fix #425: ordering bug in detecting .conf file changes to services
    and `initctl reload`, or runlevel changes
  - Fix `initctl touch` of template services, previously marking a
@@ -1740,7 +1740,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.8...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.9...HEAD
 [4.9]: https://github.com/troglobit/finit/compare/4.8...4.9
 [4.8]: https://github.com/troglobit/finit/compare/4.7...4.8
 [4.7]: https://github.com/troglobit/finit/compare/4.6...4.7
