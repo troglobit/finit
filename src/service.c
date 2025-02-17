@@ -1524,6 +1524,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
+	char *cleanup_script = NULL;
 	char ident[MAX_IDENT_LEN];
 	char *ifstmt = NULL;
 	char *notify = NULL;
@@ -1630,6 +1631,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			post_script = arg;
 		else if (MATCH_CMD(cmd, "ready:", arg))
 			ready_script = arg;
+		else if (MATCH_CMD(cmd, "cleanup:", arg))
+			cleanup_script = arg;
 		else if (MATCH_CMD(cmd, "env:", arg))
 			env = arg;
 		/* catch both cgroup: and cgroup. handled in parse_cgroup() */
@@ -1817,6 +1820,11 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_script(svc, "ready", ready_script, &svc->ready_tmo, svc->ready_script, sizeof(svc->ready_script));
 	else
 		memset(svc->ready_script, 0, sizeof(svc->ready_script));
+	if (cleanup_script)
+		parse_script(svc, "cleanup", cleanup_script, &svc->cleanup_tmo, svc->cleanup_script, sizeof(svc->cleanup_script));
+	else
+		memset(svc->cleanup_script, 0, sizeof(svc->cleanup_script));
+
 	if (!svc_is_tty(svc)) {
 		if (log)
 			parse_log(svc, log);
@@ -1916,8 +1924,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 }
 
 /*
- * This function is called when cleaning up lingering (stopped) services
- * after a .conf reload.
+ * This function is called at the end of a runlevel change or reload
+ * command to delete all remnants of removed services.
  *
  * We need to ensure we properly stop the service before removing it,
  * including stopping any pending restart or SIGKILL timers before we
@@ -1962,10 +1970,14 @@ void service_monitor(pid_t lost, int status)
 		/* If the setup phase fails, drive svc to crashed. */
 		svc->status = status;
 		/* fallthrough */
+	case SVC_TEARDOWN_STATE:
 	case SVC_CLEANUP_STATE:
 		dbg("collected script %s(%d), normal exit: %d, signaled: %d, exit code: %d",
-		   svc->state == SVC_CLEANUP_STATE ? svc->post_script : svc->pre_script,
-		   lost, ok, sig, rc);
+		    (svc->state == SVC_TEARDOWN_STATE
+		     ? svc->post_script
+		     : (svc->state == SVC_CLEANUP_STATE
+			? svc->cleanup_script
+			: svc->pre_script)), lost, ok, sig, rc);
 		/* Kill all children in the same proess group, e.g. logit */
 		dbg("Killing lingering children in same process group ...");
 		kill(-svc->pid, SIGKILL);
@@ -2245,6 +2257,41 @@ void service_ready_script(svc_t *svc)
 	service_script_add(svc, pid, svc->ready_tmo);
 }
 
+static void service_cleanup_script(svc_t *svc)
+{
+	svc->pid = service_fork(svc);
+	if (svc->pid < 0) {
+		err(1, "Failed forking off %s cleanup:script %s", svc_ident(svc, NULL, 0), svc->cleanup_script);
+		return;
+	}
+
+	if (svc->pid == 0) {
+		char buf[CMD_SIZE];
+		char *argv[4] = {
+			"sh",
+			"-ac",
+			buf,
+			NULL
+		};
+		char *env_file;
+
+		redirect(svc);
+
+		env_file = svc_getenv(svc);
+		if (env_file)
+			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->cleanup_script);
+		else
+			strlcpy(buf, svc->cleanup_script, sizeof(buf));
+
+		set_pre_post_envs(svc, "cleanup");
+		execvp(_PATH_BSHELL, argv);
+		_exit(EX_OSERR);
+	}
+
+	dbg("%s: cleanup:script %s started as PID %d", svc_ident(svc, NULL, 0), svc->cleanup_script, svc->pid);
+	service_timeout_after(svc, svc->cleanup_tmo, service_kill_script);
+}
+
 static void service_retry(svc_t *svc)
 {
 	char *restart_cnt = (char *)&svc->restart_cnt;
@@ -2431,6 +2478,11 @@ restart:
 	   condstr(cond_get_agg(svc->cond)));
 
 	switch (svc->state) {
+	case SVC_CLEANUP_STATE:
+		if (!svc->pid)
+			svc_set_state(svc, SVC_HALTED_STATE);
+		break;
+
 	case SVC_HALTED_STATE:
 		if (enabled)
 			svc_set_state(svc, SVC_WAITING_STATE);
@@ -2469,7 +2521,7 @@ restart:
 			case SVC_TYPE_SYSV:
 			case SVC_TYPE_TTY:
 				if (svc_has_post(svc)) {
-					svc_set_state(svc, SVC_CLEANUP_STATE);
+					svc_set_state(svc, SVC_TEARDOWN_STATE);
 					service_post_script(svc);
 				} else
 					svc_set_state(svc, SVC_HALTED_STATE);
@@ -2489,9 +2541,14 @@ restart:
 		}
 		break;
 
-	case SVC_CLEANUP_STATE:
-		if (!svc->pid)
-			svc_set_state(svc, SVC_HALTED_STATE);
+	case SVC_TEARDOWN_STATE:
+		if (!svc->pid) {
+			if (svc_is_removed(svc) && svc_has_cleanup(svc)) {
+				svc_set_state(svc, SVC_CLEANUP_STATE);
+				service_cleanup_script(svc);
+			} else
+				svc_set_state(svc, SVC_HALTED_STATE);
+		}
 		break;
 
 	case SVC_SETUP_STATE:

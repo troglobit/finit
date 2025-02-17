@@ -899,19 +899,20 @@ e.g., `halt:SIGPWR`.  To change the delay between the stop signal and
 KILL, use the option `kill:<1-60>`, e.g., `kill:10` to wait 10 seconds
 before sending `SIGKILL`.
 
-Services, including the `sysv` variant, support pre/post/ready scripts:
+Services, including the `sysv` variant, support pre/post/ready and
+cleanup scripts:
 
-  * `pre:[0-3600,]script`
-  * `post:[0-3600,]script`
-  * `ready:[0-3600,]script`
+  * `pre:[0-3600,]script` -- called before the sysv/service is stated
+  * `post:[0-3600,]script` -- called after the sysv/service has stopped
+  * `ready:[0-3600,]script` -- called when the sysv/service is ready
+  * `cleanup:[0-3600,]script` -- called when run/task/sysv/service is removed
 
 The optional number (0-3600) is the timeout before Finit kills the
 script, it defaults to the kill delay value and can be disabled by
 setting it to zero.  These scripts run as the same `@USER:GROUP` as the
-service itself, with any `env:file` sourced.  The scripts must use an
-absolute path, but are executed from the `$HOME` of the given user.  The
-scripts are not called with any argument, but get a set of environment
-variables:
+service itself, with any `env:file` sourced.  The scripts are executed
+from the `$HOME` of the given user.  The scripts are not called with any
+argument, but get a set of environment variables:
 
   * `SERVICE_IDENT=foo:1`
   * `SERVICE_NAME=foo`
@@ -924,6 +925,11 @@ variables:
  - `EXIT_STATUS=[num,SIGNAME]`: set to one of exit status code from
    the program, if it exited normally, or the signal name (`HUP`,
    `TERM`, etc.) if it exited due to signal
+
+When a run/task/sys/service is removed (disable + reload) it is first
+stopped and then removed from the runlevel.  The `post:script` always
+runs when the process has stopped, and the `cleanup:script` runs when
+the the stanza has been removed from the runlevel.
 
 > [!IMPORTANT]
 > These script actions are intended for setup, cleanup, and readiness

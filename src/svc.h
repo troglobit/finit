@@ -59,8 +59,9 @@ typedef enum {
 	SVC_HALTED_STATE = 0,	/* Not allowed in runlevel, or not enabled. */
 	SVC_DONE_STATE,		/* Task/Run job has been run */
 	SVC_STOPPING_STATE,	/* Waiting to collect the child process */
-	SVC_CLEANUP_STATE,	/* Running post: script */
 	SVC_SETUP_STATE,	/* Running pre: script */
+	SVC_TEARDOWN_STATE,	/* Running post: script */
+	SVC_CLEANUP_STATE,	/* Running cleanup: script */
 	SVC_PAUSED_STATE,	/* Condition is in flux, process SIGSTOPed */
 	SVC_WAITING_STATE,	/* Enabled but condition not satisfied */
 	SVC_STARTING_STATE,	/* Conditions OK and pre: script done, start */
@@ -196,12 +197,18 @@ typedef struct svc {
 	char           conflict[MAX_ARG_LEN];
 	char	       desc[MAX_STR_LEN];
 	char	       env[MAX_CMD_LEN];
+
 	char	       pre_script[MAX_CMD_LEN];
 	int	       pre_tmo;
+
 	char	       post_script[MAX_CMD_LEN];
 	int	       post_tmo;
+
 	char	       ready_script[MAX_CMD_LEN];
 	int	       ready_tmo;
+
+	char	       cleanup_script[MAX_CMD_LEN];
+	int	       cleanup_tmo;
 
 	/*
 	 * Used to forcefully kill services that won't shutdown on
@@ -270,6 +277,7 @@ static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && s
 static inline int svc_has_pre      (svc_t *svc) { return svc->pre_script[0];  }
 static inline int svc_has_post     (svc_t *svc) { return svc->post_script[0]; }
 static inline int svc_has_ready    (svc_t *svc) { return svc->ready_script[0];}
+static inline int svc_has_cleanup  (svc_t *svc) { return svc->cleanup_script[0]; }
 
 static inline void svc_starting    (svc_t *svc) { if (svc) svc->starting = 1;       }
 static inline void svc_started     (svc_t *svc) { if (svc) svc->starting = 0;       }
@@ -390,10 +398,13 @@ static inline char *svc_status(svc_t *svc)
 			return "stopping";
 		}
 
-	case SVC_CLEANUP_STATE:
-		return "cleanup";
+	case SVC_TEARDOWN_STATE:
+		return "teardown";
 
 	case SVC_SETUP_STATE:
+		return "setup";
+
+	case SVC_CLEANUP_STATE:
 		return "setup";
 
 	case SVC_PAUSED_STATE:
