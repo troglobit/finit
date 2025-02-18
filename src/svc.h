@@ -52,8 +52,8 @@ typedef enum {
 } svc_type_t;
 
 #define SVC_TYPE_ANY          (-1)
-#define SVC_TYPE_RESPAWN      (SVC_TYPE_SERVICE | SVC_TYPE_TTY)
-#define SVC_TYPE_RUNTASK      (SVC_TYPE_RUN | SVC_TYPE_TASK | SVC_TYPE_SYSV)
+#define SVC_TYPE_RESPAWN      (SVC_TYPE_SERVICE | SVC_TYPE_SYSV | SVC_TYPE_TTY)
+#define SVC_TYPE_RUNTASK      (SVC_TYPE_RUN | SVC_TYPE_TASK)
 
 typedef enum {
 	SVC_HALTED_STATE = 0,	/* Not allowed in runlevel, or not enabled. */

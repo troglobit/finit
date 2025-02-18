@@ -2006,7 +2006,7 @@ void service_monitor(pid_t lost, int status)
 	kill(-svc->pid, SIGKILL);
 
 	/* Try removing PID file (in case service does not clean up after itself) */
-	if (svc_is_daemon(svc) || svc_is_tty(svc)) {
+	if (svc_is_daemon(svc) || svc_is_sysv(svc) || svc_is_tty(svc)) {
 		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
 		/* run/task should run at least once per runlevel */
@@ -2396,7 +2396,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		}
 	}
 
-	if (svc_is_daemon(svc)) {
+	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
 		char cond[MAX_COND_LEN];
 
 		snprintf(cond, sizeof(cond), "service/%s/", svc_ident(svc, NULL, 0));
@@ -2653,7 +2653,7 @@ restart:
 				break;
 			}
 
-			if (svc_is_runtask(svc)) { /* only run/task, not sysv here */
+			if (svc_is_runtask(svc)) {
 				svc_set_state(svc, SVC_STOPPING_STATE);
 				svc->restart_tot++;
 				svc->once++;

@@ -201,7 +201,7 @@ restart:
 	switch (sm->state) {
 	case SM_BOOTSTRAP_STATE:
 		dbg("Bootstrapping all services in runlevel S from %s", finit_conf);
-		service_step_all(SVC_TYPE_RUNTASK | SVC_TYPE_SERVICE);
+		service_step_all(SVC_TYPE_RUNTASK | SVC_TYPE_SERVICE | SVC_TYPE_SYSV);
 
 		sm->state = SM_BOOTSTRAP_WAIT_STATE;
 		break;
