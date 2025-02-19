@@ -23,6 +23,7 @@
 
 #include "config.h"
 #include "finit.h"
+#include "log.h"
 #include "schedule.h"
 
 #define SC_INIT 0x494E4954	/* "INIT", see ascii(7) */
@@ -35,6 +36,7 @@ static void cb(uev_t *w, void *arg, int events)
 	struct wq *work = (struct wq *)arg;
 
 	if (UEV_ERROR == events) {
+		dbg("%s(): spurious problem with schedule work timer, restarting.", __func__);
 		uev_timer_start(w);
 		return;
 	}

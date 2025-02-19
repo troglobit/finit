@@ -1542,6 +1542,11 @@ static int conf_iwatch_read(int fd)
 
 static void conf_cb(uev_t *w, void *arg, int events)
 {
+	if (UEV_ERROR == events) {
+		dbg("%s(): iwatch socket %d invalid.", __func__, w->fd);
+		return;
+	}
+
 	if (conf_iwatch_read(w->fd)) {
 		err(1, "invalid inotify event");
 		return;

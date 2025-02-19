@@ -81,7 +81,12 @@ static void service_timeout_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = arg;
 
-	/* Ignore any UEV_ERROR, we're a one-shot cb so just run it. */
+	if (UEV_ERROR == events) {
+		dbg("%s(): spurious problem, svc %s.", __func__, svc_ident(svc, NULL, 0));
+		uev_timer_start(w);
+		return;
+	}
+
 	if (svc->timer_cb)
 		svc->timer_cb(svc);
 }
@@ -2875,7 +2880,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 	ssize_t len;
 
 	if (UEV_ERROR == events) {
-		warn("Spurious problem with %s notify callback, restarting.", svc_ident(svc, NULL, 0));
+		dbg("Spurious problem with %s notify callback, restarting.", svc_ident(svc, NULL, 0));
 		uev_io_start(w);
 		return;
 	}
@@ -2933,6 +2938,7 @@ static void service_interval_cb(uev_t *w, void *arg, int events)
 
 	(void)arg;
 	if (UEV_ERROR == events) {
+		dbg("%s(): spurious problem, restarting.", __func__);
 		uev_timer_start(w);
 		return;
 	}

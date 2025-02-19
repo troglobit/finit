@@ -259,6 +259,11 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 	ssize_t sz;
 	size_t off;
 
+	if (UEV_ERROR == events) {
+		dbg("%s(): inotify socket %d invalid.", __func__, w->fd);
+		return;
+	}
+
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
 		err(1, "invalid inotify event");

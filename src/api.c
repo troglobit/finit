@@ -332,6 +332,11 @@ static void api_cb(uev_t *w, void *arg, int events)
 	int sd, lvl;
 	svc_t *svc;
 
+	if (UEV_ERROR == events) {
+		dbg("%s(): api socket %d invalid.", __func__, w->fd);
+		goto error;
+	}
+
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
 		err(1, "Failed serving API request");
@@ -578,8 +583,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 leave:
 	close(sd);
-	if (UEV_ERROR == events)
-		goto error;
 	return;
 error:
 	api_exit();
