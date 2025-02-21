@@ -32,6 +32,10 @@
 #include "helpers.h"
 #include "plugin.h"
 
+#ifndef SYSCTL_PATH
+#define SYSCTL_PATH "/sbin/sysctl"
+#endif
+
 static void setup(void *arg)
 {
 	glob_t gl;
@@ -54,7 +58,7 @@ static void setup(void *arg)
 		for (i = 0; i < gl.gl_pathc; i++) {
 			char cmd[160];
 
-			snprintf(cmd, sizeof(cmd), "/sbin/sysctl -e -p %s >/dev/null", gl.gl_pathv[i]);
+			snprintf(cmd, sizeof(cmd), "%s -e -p %s >/dev/null", SYSCTL_PATH, gl.gl_pathv[i]);
 			run(cmd, "sysctl");
 		}
 		globfree(&gl);
