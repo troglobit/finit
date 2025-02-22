@@ -58,10 +58,11 @@ typedef enum {
 typedef enum {
 	SVC_HALTED_STATE = 0,	/* Not allowed in runlevel, or not enabled. */
 	SVC_DONE_STATE,		/* Task/Run job has been run */
+	SVC_DEAD_STATE,		/* Process is dead and scheduled for removal */
+	SVC_CLEANUP_STATE,	/* Running cleanup: script */
+	SVC_TEARDOWN_STATE,	/* Running post: script */
 	SVC_STOPPING_STATE,	/* Waiting to collect the child process */
 	SVC_SETUP_STATE,	/* Running pre: script */
-	SVC_TEARDOWN_STATE,	/* Running post: script */
-	SVC_CLEANUP_STATE,	/* Running cleanup: script */
 	SVC_PAUSED_STATE,	/* Condition is in flux, process SIGSTOPed */
 	SVC_WAITING_STATE,	/* Enabled but condition not satisfied */
 	SVC_STARTING_STATE,	/* Conditions OK and pre: script done, start */
@@ -247,6 +248,7 @@ void	    svc_foreach	           (int (*cb)(svc_t *));
 void        svc_foreach_type       (int types, int (*cb)(svc_t *));
 
 svc_t	   *svc_stop_completed	   (void);
+svc_t      *svc_clean_completed    (void);
 
 void	    svc_mark		   (svc_t *svc);
 void	    svc_mark_dynamic       (void);
@@ -405,7 +407,7 @@ static inline char *svc_status(svc_t *svc)
 		return "setup";
 
 	case SVC_CLEANUP_STATE:
-		return "setup";
+		return "cleanup";
 
 	case SVC_PAUSED_STATE:
 		return "paused";
@@ -418,6 +420,9 @@ static inline char *svc_status(svc_t *svc)
 
 	case SVC_RUNNING_STATE:
 		return "running";
+
+	case SVC_DEAD_STATE:
+		return "dead";
 
 	default:
 		return "UNKNOWN";

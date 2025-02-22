@@ -107,6 +107,9 @@ static char *sm_status(sm_state_t state)
 	case SM_BOOTSTRAP_STATE:
 		return "bootstrap";
 
+	case SM_BOOTSTRAP_WAIT_STATE:
+		return "bootstrap/wait";
+
 	case SM_RUNNING_STATE:
 		return "running";
 
@@ -116,15 +119,20 @@ static char *sm_status(sm_state_t state)
 	case SM_RUNLEVEL_WAIT_STATE:
 		return "runlevel/wait";
 
+	case SM_RUNLEVEL_CLEAN_STATE:
+		return "runlevel/clean";
+
 	case SM_RELOAD_CHANGE_STATE:
 		return "reload/change";
 
 	case SM_RELOAD_WAIT_STATE:
 		return "reload/wait";
 
-	default:
-		return "unknown";
+	case SM_RELOAD_CLEAN_STATE:
+		return "reload/clean";
 	}
+
+	return "unknown";
 }
 
 static char sm_runlevel(int lvl)
@@ -319,6 +327,22 @@ restart:
 		sm->in_teardown = 0;
 		service_step_all(SVC_TYPE_ANY);
 
+		sm->state = SM_RUNLEVEL_CLEAN_STATE;
+		break;
+
+	case SM_RUNLEVEL_CLEAN_STATE:
+		/*
+		 * Wait for post:script or cleanup:script to be collected,
+		 * which moves the svc to HALTED or DEAD state.  We will
+		 * be called by the service_monitor() on collect.
+		 */
+		svc = svc_clean_completed();
+		if (svc) {
+			dbg("Waiting to collect post/cleanup script for %s, cmd %s(%d) ...",
+			    svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
+			break;
+		}
+
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);
 
@@ -371,6 +395,22 @@ restart:
 
 		dbg("Starting services after reconf ...");
 		service_step_all(SVC_TYPE_ANY);
+
+		sm->state = SM_RELOAD_CLEAN_STATE;
+		break;
+
+	case SM_RELOAD_CLEAN_STATE:
+		/*
+		 * Wait for post:script or cleanup:script to be collected,
+		 * which moves the svc to HALTED or DEAD state.  We will
+		 * be called by the service_monitor() on collect.
+		 */
+		svc = svc_clean_completed();
+		if (svc) {
+			dbg("Waiting to collect post/cleanup script for %s, cmd %s(%d) ...",
+			    svc_ident(svc, NULL, 0), svc->cmd, svc->pid);
+			break;
+		}
 
 		/* Cleanup stale services */
 		svc_clean_dynamic(service_unregister);

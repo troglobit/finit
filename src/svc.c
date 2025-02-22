@@ -348,6 +348,43 @@ svc_t *svc_stop_completed(void)
 	return NULL;
 }
 
+
+/**
+ * svc_clean_completed - Have post: and cleanup: scripts finished?
+ *
+ * Called late in runlevel and reload transitions to check if all post: and
+ * cleanup:scripts have completed.  A removed service should end up in the
+ * DEAD state, while a service with a post:script ends up in HALTED.
+ *
+ * Returns:
+ * %NULL if post: and cleanup: scripts have run, otherwise a pointer to
+ * the first found svc_t waiting for post: or cleanup:script.
+ */
+svc_t *svc_clean_completed(void)
+{
+	svc_t *svc, *iter = NULL;
+
+	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
+		if (svc_enabled(svc))
+			continue;
+
+		if (svc_is_runtask(svc) && svc->state == SVC_DONE_STATE)
+			continue;
+
+		if (svc_is_removed(svc)) {
+			if (svc->state == SVC_DEAD_STATE)
+				continue; /* any cleanup:script done */
+		} else {
+			if (svc->state == SVC_HALTED_STATE)
+				continue; /* any post:script done */
+		}
+
+		return svc;
+	}
+
+	return NULL;
+}
+
 /**
  * svc_find - Find a service object by its full path name
  * @name: Full path name, e.g., /sbin/syslogd
@@ -580,7 +617,7 @@ void svc_clean_dynamic(void (*cb)(svc_t *))
 	svc_t *svc, *iter = NULL;
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc->removed && cb)
+		if (svc_is_removed(svc) && cb)
 			cb(svc);
 	}
 }

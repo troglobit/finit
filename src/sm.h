@@ -29,9 +29,11 @@ typedef enum {
 	SM_BOOTSTRAP_WAIT_STATE,  /* Waiting for bootstrap to complete */
 	SM_RUNNING_STATE,         /* Normal state, services running */
 	SM_RUNLEVEL_CHANGE_STATE, /* A runlevel change has occurred */
-	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped runlevel processes to be halted */
+	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped processes to halt */
+	SM_RUNLEVEL_CLEAN_STATE,  /* Wait for post:scripts and cleanup:scripts */
 	SM_RELOAD_CHANGE_STATE,   /* A reload event has occurred */
-	SM_RELOAD_WAIT_STATE,     /* Waiting for all stopped reload processes to be halted */
+	SM_RELOAD_WAIT_STATE,     /* Waiting for all stopped processes to halt */
+	SM_RELOAD_CLEAN_STATE,    /* Wait for post:scripts and cleanup:scripts */
 } sm_state_t;
 
 typedef struct sm {

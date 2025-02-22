@@ -2483,16 +2483,13 @@ restart:
 	   condstr(cond_get_agg(svc->cond)));
 
 	switch (svc->state) {
-	case SVC_CLEANUP_STATE:
-		if (!svc->pid)
-			svc_set_state(svc, SVC_HALTED_STATE);
-		break;
-
 	case SVC_HALTED_STATE:
 		if (enabled)
 			svc_set_state(svc, SVC_WAITING_STATE);
 		else {
-			if (svc_is_conflict(svc)) {
+			if (svc_is_removed(svc)) {
+				svc_set_state(svc, SVC_DEAD_STATE);
+			} else if (svc_is_conflict(svc)) {
 #if 0
 				logit(svc->nowarn ? LOG_DEBUG : LOG_INFO,
 				      "%s in conflict with %s, checking again ...",
@@ -2502,6 +2499,30 @@ restart:
 					svc_unblock(svc);
 			}
 		}
+		break;
+
+	case SVC_TEARDOWN_STATE:
+		if (!svc->pid) {
+			dbg("%s: post script done.", svc_ident(svc, NULL, 0));
+			service_timeout_cancel(svc);
+
+			if (svc_is_removed(svc) && svc_has_cleanup(svc)) {
+				svc_set_state(svc, SVC_CLEANUP_STATE);
+				service_cleanup_script(svc);
+			} else
+				svc_set_state(svc, SVC_HALTED_STATE);
+		}
+		break;
+
+	case SVC_CLEANUP_STATE:
+		if (!svc->pid) {
+			dbg("%s: cleanup script done.", svc_ident(svc, NULL, 0));
+			svc_set_state(svc, SVC_HALTED_STATE);
+		}
+		break;
+
+	case SVC_DEAD_STATE:
+		/* End of the line ☠ */
 		break;
 
 	case SVC_DONE_STATE:
@@ -2528,6 +2549,9 @@ restart:
 				if (svc_has_post(svc)) {
 					svc_set_state(svc, SVC_TEARDOWN_STATE);
 					service_post_script(svc);
+				} else if (svc_is_removed(svc) && svc_has_cleanup(svc)) {
+					svc_set_state(svc, SVC_CLEANUP_STATE);
+					service_cleanup_script(svc);
 				} else
 					svc_set_state(svc, SVC_HALTED_STATE);
 				break;
@@ -2543,16 +2567,6 @@ restart:
 				errx(1, "unknown service type %d", svc->type);
 				break;
 			}
-		}
-		break;
-
-	case SVC_TEARDOWN_STATE:
-		if (!svc->pid) {
-			if (svc_is_removed(svc) && svc_has_cleanup(svc)) {
-				svc_set_state(svc, SVC_CLEANUP_STATE);
-				service_cleanup_script(svc);
-			} else
-				svc_set_state(svc, SVC_HALTED_STATE);
 		}
 		break;
 
