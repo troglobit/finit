@@ -493,7 +493,7 @@ static void source_env(svc_t *svc)
 		while (*end && !isspace(*end))
 			end++;
 		if (*end != 0) {
-			warnx("'%s=%s': not a valid identifier", key, val);
+			warnx("'%s=%s': not a valid identifier", key, value);
 			continue;	/* invalid key */
 		}
 
