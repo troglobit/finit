@@ -172,7 +172,7 @@ int tty_parse_args(struct tty *tty, char *cmd, char **args)
 			passenv = 1;
 		else if (!strcmp(cmd, "rescue"))
 			tty->rescue = 1;	/* for rescue shells */
-		else if (whichp(cmd))		/* in $PATH? */
+		else if (!tty->cmd && whichp(cmd))
 			tty->cmd = cmd;
 		else
 			tty->args[tty->num++] = cmd;
