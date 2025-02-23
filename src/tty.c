@@ -229,8 +229,9 @@ int tty_parse_args(struct tty *tty, char *cmd, char **args)
 		return errno = EINVAL;
 	}
 
-	dbg("Registering %s getty on TTY %s at %s baud with term %s", tty->cmd ? "external" : "built-in",
-	   tty->dev, tty->baud ?: "0", tty->term ?: "N/A");
+	dbg("Registering %s getty on TTY %s at %s baud with term %s",
+	    tty->cmd ? "external" : "built-in",
+	    tty->dev, tty->baud ?: "0", tty->term ?: "N/A");
 
 	/* Built-in getty now comes as standalone program */
 	if (!tty->cmd) {

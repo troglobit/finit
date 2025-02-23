@@ -199,7 +199,6 @@ int run(char *cmd, char *log)
 int run_interactive(char *cmd, char *fmt, ...)
 {
 	int status, oldout = 1, olderr = 2;
-	char line[LINE_SIZE];
 	FILE *fp;
 
 	if (!cmd) {
@@ -244,6 +243,7 @@ int run_interactive(char *cmd, char *fmt, ...)
 
 	/* Dump any results of cmd on stderr after we've printed [ OK ] or [FAIL]  */
 	if (fp && !debug) {
+		char line[LINE_SIZE];
 		size_t len, written;
 
 		rewind(fp);
@@ -281,7 +281,7 @@ int exec_runtask(char *cmd, char *args[])
 	return execvp(_PATH_BSHELL, argv);
 }
 
-static void prepare_tty(char *tty, speed_t speed, char *procname, struct rlimit rlimit[])
+static void prepare_tty(char *tty, speed_t speed, const char *procname, struct rlimit rlimit[])
 {
 	char name[80];
 	int fd, dummy;
@@ -351,7 +351,7 @@ static int activate_console(int noclear, int nowait)
 	dprint(STDERR_FILENO, clr, strlen(clr));
 	dprint(STDERR_FILENO, msg, strlen(msg));
 	while ((rc = read(STDIN_FILENO, &ch, 1)) > 0 && ch != '\r' && ch != '\n')
-		continue;
+		;
 
 	/* On any error (likely EINTR), we avoid starting getty */
 	if (rc == -1)
