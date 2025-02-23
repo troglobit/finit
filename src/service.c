@@ -497,24 +497,17 @@ static void source_env(svc_t *svc)
 			continue;	/* invalid key */
 		}
 
-		switch (wordexp(value, &we, 0)) {
-		case 0:
+		if (wordexp(value, &we, 0)) {
+			setenv(key, value, 1);
+		} else {
 			for (i = 0, *val = 0; i < we.we_wordc; i++) {
 				if (i > 0)
 					strlcat(val, " ", LINE_SIZE);
 				strlcat(val, we.we_wordv[i], LINE_SIZE);
 			}
 			setenv(key, val, 1);
-			wordfree(&we);
-			break;
-
-		case WRDE_NOSPACE:
-			wordfree(&we);
-			/* fallthrough */
-		default:
-			setenv(key, value, 1);
-			break;
 		}
+		wordfree(&we);
 	}
 
 	fclose(fp);
