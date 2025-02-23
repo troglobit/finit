@@ -1675,6 +1675,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		if (tty_parse_args(&tty, cmd, &args))
 			return errno;
 
+		/* NOTE: this may result in dev == NULL! */
 		if (tty_isatcon(tty.dev))
 			dev = tty_atcon();
 		else
@@ -1707,17 +1708,19 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		respawn = 1;
 
 		/* Create name:id tuple for identity, e.g., tty:S0 */
-		ptr = strrchr(dev, '/');
-		if (ptr)
-			ptr++;
-		else
-			ptr = dev;
-		if (!strncmp(ptr, "tty", 3))
-			ptr += 3;
+		if (dev) {
+			ptr = strrchr(dev, '/');
+			if (ptr)
+				ptr++;
+			else
+				ptr = dev;
+			if (!strncmp(ptr, "tty", 3))
+				ptr += 3;
 
-		name = "tty";
-		if (!id || id[0] == 0)
-			id = ptr;
+			name = "tty";
+			if (!id || id[0] == 0)
+				id = ptr;
+		}
 
 		svc = svc_find_by_tty(dev);
 	} else
