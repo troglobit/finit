@@ -141,6 +141,7 @@ static inline int ln(const char *target, const char *linkpath)
 
 	return 0;
 }
+
 static inline int dprint(int fd, const char *s, size_t len)
 {
 	size_t loop = 3;
@@ -159,7 +160,7 @@ static inline int dprint(int fd, const char *s, size_t len)
 	return rc;
 }
 
-static inline char *fgetval(char *line, const char *key, char *sep)
+static inline char *fgetval(const char *line, const char *key, char *sep)
 {
 	char *ptr, *str, *copy;
 	size_t len;
