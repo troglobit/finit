@@ -280,7 +280,7 @@ static int fsck(int pass)
 				sulogin(1);
 			}
 		}
-		rc += fsck_rc;
+		rc |= fsck_rc;
 	}
 
 	endmntent(fp);
