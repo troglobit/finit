@@ -919,9 +919,10 @@ argument, but get a set of environment variables:
   * `SERVICE_ID=1`
 
 The `post:script` is called with an additional set of environment
-variables:
+variables.  Yes, the text is correct, the naming was an accident:
 
- - `EXIT_CODE=[exited,signal]`: set to one of `exited` or `signal`
+ - `EXIT_CODE=[exited,signal,crashed]`: normal exit, signaled, or
+   crashed
  - `EXIT_STATUS=[num,SIGNAME]`: set to one of exit status code from
    the program, if it exited normally, or the signal name (`HUP`,
    `TERM`, etc.) if it exited due to signal

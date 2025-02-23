@@ -175,13 +175,13 @@ task [s] echo "foo" | cat >/tmp/bar
 .Ed
 .It Cm sysv Oo LVLS Oc Ao COND Ac Ar /path/to/script ARGS Op -- Optional description
 Similar to
-.Cm task
+.Cm service
 is the
 .Cm sysv
 stanza, which can be used to call SysV style start/stop scripts.  The
-primary intention for this command is to be able to re-use much of
-existing setup and init scripts in Linux distributions.
-.Pp  
+primary intention for this command is to be able to re-use traditional
+SysV init scripts in Linux distributions.
+.Pp
 When entering an allowed runlevel, Finit calls
 .Cm init-script start ,
 when entering a disallowed runlevel, Finit calls
@@ -434,30 +434,42 @@ e.g.,
 .Cm kill:10
 to wait 10 seconds before sending SIGKILL.
 .Pp
-Services support the
-.Cm pre:script
-and
-.Cm post:script
-command actions as well.  These run as the same
+Services, including the
+.Cm sysv
+variant, support pre/post/ready and cleanup scripts:
+.Bl -tag -width 1n
+.It Cm pre:[0-3600,]script
+called before the sysv/service is stated
+.It Cm post:[0-3600,]script
+called after the sysv/service has stopped
+.It Cm ready:[0-3600,]script
+called when the sysv/service is ready
+.It Cm cleanup:[0-3600,]script
+called when run/task/sysv/service is removed
+.El
+.Pp
+The optional number (0-3600) is the timeout before Finit kills the
+script, it defaults to the kill delay value and can be disabled by
+setting it to zero.  These scripts run as the same
 .Cm @USER:GROUP
 as the service itself, with any
 .Cm env:file
 sourced.  The scripts must use an absolute path, but are executed from
 the
 .Cm $HOME
-of the given user.  The scripts are not called with any argument
-(currently), but both get the
-.Cm SERVICE_IDENT=foo
-environment variable set.  Here
-.Cm foo
-denotes the identity of the service, which if there are multiple
-services named
-.Cm foo ,
-may be
-.Cm foo:1 ,
-or any unique identifier specified in the .conf file.  The
+of the given user.  The scripts are not called with any argument, but
+both get a set of environment variables:
+.Pp
+.Bl -tag -width 1n -compact
+.It Cm SERVICE_IDENT=foo:1
+.It Cm SERVICE_NAME=foo
+.It Cm SERVICE_ID=1
+.El
+.Pp
+The
 .Cm post:script
-is called with an additional set of environment variables:
+is called with an additional set of environment variables, and yes the
+naming looks like it should be swapped:
 .Bl -tag -offset indent -width 1n
 .It Cm EXIT_CODE=[exited,signal,crashed]
 set to one of
@@ -471,10 +483,12 @@ set to one of exit status code from the program, if it exited normally,
 or the signal name (HUP, TERM, etc.) if it exited due to signal
 .El
 .Pp
-The scripts have a default execution time of 3 seconds before they are
-SIGKILLed, this can be adjusted using the
-.Cm kill:SEC
-modifier syntax.
+When a run/task/sys/service is removed (disable + reload) it is first
+stopped and then removed from the runlevel.  The
+.Cm post:script
+always runs when the process has stopped, and the
+.Cm cleanup:script
+runs when the the stanza has been removed from the runlevel.
 .It Cm runparts Aq DIR
 Call
 .Xr run-parts 8
