@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>		/* gettimeofday() */
 #include <sys/types.h>
+#include <sys/resource.h>	/* getrusage() */
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 #else
@@ -43,13 +44,27 @@
 #endif
 
 #ifdef RANDOMSEED
+/*
+ * This is the fallback seed function, please make sure you have drivers
+ * enabling /dev/hwrng instead.
+ */
 static void fallback(FILE *fp)
 {
+	unsigned long seed;
 	struct timeval tv;
+	struct rusage ru;
 	int iter = 128;
 
 	gettimeofday(&tv, NULL);
-	srandom(tv.tv_sec % 3600);
+	getrusage(RUSAGE_SELF, &ru);
+
+	/* Mix multiple sources of "randomness" */
+	seed = tv.tv_sec ^ (tv.tv_usec << 16);
+	seed ^= ru.ru_utime.tv_sec ^ (ru.ru_utime.tv_usec << 16);
+	seed ^= ru.ru_stime.tv_sec ^ (ru.ru_stime.tv_usec << 16);
+	seed ^= getpid() << 8;
+
+	srandom(seed);
 	while (iter--) {
 		uint32_t i, prng = random();
 
