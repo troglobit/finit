@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'dev'
+  workflow_dispatch:
 
 env:
   PROJECT_NAME: finit
