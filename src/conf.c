@@ -1579,25 +1579,26 @@ int conf_monitor(void)
 	 * have or not have symlinks in place.  We need to monitor for
 	 * changes to either symlink or target.
 	 */
-	rc += iwatch_add(&iw_conf, finit_rcsd, IN_ONLYDIR);
+	rc |= iwatch_add(&iw_conf, finit_rcsd, IN_ONLYDIR);
 	snprintf(path, sizeof(path), "%s/available/", finit_rcsd);
-	rc += iwatch_add(&iw_conf, path, IN_ONLYDIR | IN_DONT_FOLLOW);
+	rc |= iwatch_add(&iw_conf, path, IN_ONLYDIR | IN_DONT_FOLLOW);
 	snprintf(path, sizeof(path), "%s/enabled/", finit_rcsd);
-	rc += iwatch_add(&iw_conf, path, IN_ONLYDIR | IN_DONT_FOLLOW);
-	rc += iwatch_add(&iw_conf, finit_conf, 0);
+	rc |= iwatch_add(&iw_conf, path, IN_ONLYDIR | IN_DONT_FOLLOW);
+	rc |= iwatch_add(&iw_conf, finit_conf, 0);
 
 	/*
 	 * Systems with /etc/default, /etc/conf.d, or similar, can also
 	 * monitor changes in env files sourced by .conf files (above)
 	 * define your own with --with-sysconfig=/path/to/envfiles
 	 */
-	rc += iwatch_add(&iw_conf, "/etc/default/", IN_ONLYDIR);
-	rc += iwatch_add(&iw_conf, "/etc/conf.d/", IN_ONLYDIR);
+	rc |= iwatch_add(&iw_conf, "/etc/default/", IN_ONLYDIR);
+	rc |= iwatch_add(&iw_conf, "/etc/conf.d/", IN_ONLYDIR);
 #ifdef FINIT_SYSCONFIG
-	rc += iwatch_add(&iw_conf, FINIT_SYSCONFIG, IN_ONLYDIR);
+	rc |= iwatch_add(&iw_conf, FINIT_SYSCONFIG, IN_ONLYDIR);
 #endif
+	rc |= conf_reload();
 
-	return rc + conf_reload();
+	return rc;
 }
 
 /*
