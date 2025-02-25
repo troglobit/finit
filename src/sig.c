@@ -232,6 +232,8 @@ void do_iterate_proc(int (*cb)(int, void *), void *data)
 					dbg("Skipping %s ...", file);
 				else if (file[0] == '@')
 					dbg("Skipping %s ...", &file[1]);
+				else if (strstr(file, "initctl"))
+					dbg("Skipping %s ...", file);
 				else
 					if (cb(pid, data)) {
 						dbg("PID %d is still alive (%s)", pid, file);
