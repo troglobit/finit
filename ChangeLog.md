@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.10][] - 2025-02-23
+[4.10][] - 2025-02-28
 ---------------------
 
 ### Changes
@@ -17,6 +17,7 @@ All relevant changes are documented in this file.
  - Fix #427: using an external getty with custom login program cause
    Finit to use login program as the getty command
  - Fix #428: allow `sysctl` path to be set at build time
+ - Fix #429: regression in v4.9 causing Finit to segfault at shutdown
  - Fix possible memory leak when sourcing a service `env:file`
  - Finit now waits until all `post:scripts` have run before returning
    OK to `initctl <reload|runlevel>`.  This also applies to the new
