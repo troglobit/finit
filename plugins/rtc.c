@@ -338,6 +338,7 @@ PLUGIN_INIT(plugin_init)
 
 PLUGIN_EXIT(plugin_exit)
 {
+	uev_timer_stop(&rtc_timer);
 	plugin_unregister(&plugin);
 }
 
