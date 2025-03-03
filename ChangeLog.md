@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.10][] - 2025-02-28
+[4.10][] - 2025-03-03
 ---------------------
 
 ### Changes
@@ -22,6 +22,7 @@ All relevant changes are documented in this file.
  - Finit now waits until all `post:scripts` have run before returning
    OK to `initctl <reload|runlevel>`.  This also applies to the new
    `cleanup:scripts` introduced in this release
+ - RFC3154 conformance formatting fix for `/dev/kmsg` fallback logging
 
 
 [4.9][] - 2025-02-15
@@ -1760,44 +1761,45 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.9...HEAD
-[4.9]: https://github.com/troglobit/finit/compare/4.8...4.9
-[4.8]: https://github.com/troglobit/finit/compare/4.7...4.8
-[4.7]: https://github.com/troglobit/finit/compare/4.6...4.7
-[4.6]: https://github.com/troglobit/finit/compare/4.5...4.6
-[4.5]: https://github.com/troglobit/finit/compare/4.4...4.5
-[4.4]: https://github.com/troglobit/finit/compare/4.3...4.4
-[4.3]: https://github.com/troglobit/finit/compare/4.2...4.3
-[4.2]: https://github.com/troglobit/finit/compare/4.1...4.2
-[4.1]: https://github.com/troglobit/finit/compare/4.0...4.1
-[4.0]: https://github.com/troglobit/finit/compare/3.1...4.0
-[3.1]: https://github.com/troglobit/finit/compare/3.0...3.1
-[3.0]: https://github.com/troglobit/finit/compare/2.4...3.0
-[2.4]: https://github.com/troglobit/finit/compare/2.3...2.4
-[2.3]: https://github.com/troglobit/finit/compare/2.2...2.3
-[2.2]: https://github.com/troglobit/finit/compare/2.1...2.2
-[2.1]: https://github.com/troglobit/finit/compare/2.0...2.1
-[2.0]: https://github.com/troglobit/finit/compare/1.12...2.0
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.10...HEAD
+[4.10]: https://github.com/troglobit/finit/compare/4.9...4.10
+[4.9]:  https://github.com/troglobit/finit/compare/4.8...4.9
+[4.8]:  https://github.com/troglobit/finit/compare/4.7...4.8
+[4.7]:  https://github.com/troglobit/finit/compare/4.6...4.7
+[4.6]:  https://github.com/troglobit/finit/compare/4.5...4.6
+[4.5]:  https://github.com/troglobit/finit/compare/4.4...4.5
+[4.4]:  https://github.com/troglobit/finit/compare/4.3...4.4
+[4.3]:  https://github.com/troglobit/finit/compare/4.2...4.3
+[4.2]:  https://github.com/troglobit/finit/compare/4.1...4.2
+[4.1]:  https://github.com/troglobit/finit/compare/4.0...4.1
+[4.0]:  https://github.com/troglobit/finit/compare/3.1...4.0
+[3.1]:  https://github.com/troglobit/finit/compare/3.0...3.1
+[3.0]:  https://github.com/troglobit/finit/compare/2.4...3.0
+[2.4]:  https://github.com/troglobit/finit/compare/2.3...2.4
+[2.3]:  https://github.com/troglobit/finit/compare/2.2...2.3
+[2.2]:  https://github.com/troglobit/finit/compare/2.1...2.2
+[2.1]:  https://github.com/troglobit/finit/compare/2.0...2.1
+[2.0]:  https://github.com/troglobit/finit/compare/1.12...2.0
 [1.12]: https://github.com/troglobit/finit/compare/1.11...1.12
 [1.11]: https://github.com/troglobit/finit/compare/1.10...1.11
 [1.10]: https://github.com/troglobit/finit/compare/1.9...1.10
-[1.9]: https://github.com/troglobit/finit/compare/1.8...1.9
-[1.8]: https://github.com/troglobit/finit/compare/1.7...1.8
-[1.7]: https://github.com/troglobit/finit/compare/1.6...1.7
-[1.6]: https://github.com/troglobit/finit/compare/1.5...1.6
-[1.5]: https://github.com/troglobit/finit/compare/1.4...1.5
-[1.4]: https://github.com/troglobit/finit/compare/1.3...1.4
-[1.3]: https://github.com/troglobit/finit/compare/1.2...1.3
-[1.2]: https://github.com/troglobit/finit/compare/1.1...1.2
-[1.1]: https://github.com/troglobit/finit/compare/1.0...1.1
-[1.0]: https://github.com/troglobit/finit/compare/0.9...1.0
-[0.9]: https://github.com/troglobit/finit/compare/0.8...0.9
-[0.8]: https://github.com/troglobit/finit/compare/0.7...0.8
-[0.7]: https://github.com/troglobit/finit/compare/0.6...0.7
-[0.6]: https://github.com/troglobit/finit/compare/0.5...0.6
-[0.5]: https://github.com/troglobit/finit/compare/0.4...0.5
-[0.4]: https://github.com/troglobit/finit/compare/0.3...0.4
-[0.3]: https://github.com/troglobit/finit/compare/0.2...0.3
-[0.2]: https://github.com/troglobit/finit/compare/0.1...0.2
+[1.9]:  https://github.com/troglobit/finit/compare/1.8...1.9
+[1.8]:  https://github.com/troglobit/finit/compare/1.7...1.8
+[1.7]:  https://github.com/troglobit/finit/compare/1.6...1.7
+[1.6]:  https://github.com/troglobit/finit/compare/1.5...1.6
+[1.5]:  https://github.com/troglobit/finit/compare/1.4...1.5
+[1.4]:  https://github.com/troglobit/finit/compare/1.3...1.4
+[1.3]:  https://github.com/troglobit/finit/compare/1.2...1.3
+[1.2]:  https://github.com/troglobit/finit/compare/1.1...1.2
+[1.1]:  https://github.com/troglobit/finit/compare/1.0...1.1
+[1.0]:  https://github.com/troglobit/finit/compare/0.9...1.0
+[0.9]:  https://github.com/troglobit/finit/compare/0.8...0.9
+[0.8]:  https://github.com/troglobit/finit/compare/0.7...0.8
+[0.7]:  https://github.com/troglobit/finit/compare/0.6...0.7
+[0.6]:  https://github.com/troglobit/finit/compare/0.5...0.6
+[0.5]:  https://github.com/troglobit/finit/compare/0.4...0.5
+[0.4]:  https://github.com/troglobit/finit/compare/0.3...0.4
+[0.3]:  https://github.com/troglobit/finit/compare/0.2...0.3
+[0.2]:  https://github.com/troglobit/finit/compare/0.1...0.2
 [libuEv]: https://github.com/troglobit/libuev
 [dea3ae8]: https://github.com/troglobit/finit/commit/dea3ae8
