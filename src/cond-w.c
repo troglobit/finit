@@ -113,7 +113,7 @@ static void cond_boot_strap(void)
  *
  *    => 'pid/' + 'teamd' + '' = condition <pid/teamd>
  *
- * When you add a second aggrate you need to tell Finit it's a different
+ * When you add a second aggregate you need to tell Finit it's a different
  * instance usugin the :ID syntax:
  *
  *    service :lag2 teamd -f /etc/teamd/lag2.conf -- Aggregate lag2

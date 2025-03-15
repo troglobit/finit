@@ -1,5 +1,5 @@
 #!/bin/sh
-# Verify handling of dependant services, bug #314
+# Verify handling of dependent services, bug #314
 # Two services: foo and bar, where bar depends on foo:
 #
 #   - bar must not start until foo is ready

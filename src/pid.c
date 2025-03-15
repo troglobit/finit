@@ -192,7 +192,7 @@ int pid_file_set(svc_t *svc, char *file, int not)
  * pid:foo.tla  --> /run/foo.tla.pid
  * pid:/tmp/foo --> /tmp/foo.pid        (Not handled by pidfile plugin!)
  *
- * An exclamation mark, or logial NOT, in the first character position
+ * An exclamation mark, or logical NOT, in the first character position
  * indicates that Finit should *not* manage the PID file, and that the
  * process uses a "non-standard" location.  Eg. if service is 'bar'
  * Finit would assume the PID file is /run/bar.pid and the below simply

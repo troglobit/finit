@@ -2214,7 +2214,7 @@ static void service_post_script(svc_t *svc)
 }
 
 /*
- * Unlike the pre: and post: scripts, the ready: script cannot re-use
+ * Unlike the pre: and post: scripts, the ready: script cannot reuse
  * svc->pid, so instead we use an assoc. list for matching any scripts
  * related to the svc, handled by service_script_add() below.  When a
  * ready: script is reaped the service_monitor() checks first for the
@@ -2940,7 +2940,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
  *
  * This does not affect the restart_tot counter, which you can see in
  * the output from 'initctl status foo', along with this instability
- * "index" in parethesis: total (cnt/max)
+ * "index" in parenthesis: total (cnt/max)
  */
 static void service_interval_cb(uev_t *w, void *arg, int events)
 {

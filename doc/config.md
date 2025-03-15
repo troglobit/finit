@@ -708,7 +708,7 @@ non-trivial constructs are better placed in a separate shell script.
 
 Similar to `task` is the `sysv` stanza, which can be used to call SysV
 style scripts.  The primary intention for this command is to be able to
-re-use much of existing setup and init scripts in Linux distributions.
+reuse much of existing setup and init scripts in Linux distributions.
   
 When entering an allowed runlevel, Finit calls `init-script start`, when
 entering a disallowed runlevel, Finit calls `init-script stop`, and if
@@ -731,11 +731,10 @@ option to run it in the foreground, more on this below in `service`.
 **Syntax:** `service [LVLS] <COND> /path/to/daemon ARGS -- Optional description`
 
 Service, or daemon, to be monitored and automatically restarted if it
-exits prematurely.  Finit tries to restart services that die, by
-default 10 times before giving up and marking them as *crashed*.
-After which they have to be manually restarted with `initctl restart
-NAME`.  The limits controling this are configurable, see the options
-below.
+exits prematurely.  Finit tries to restart services that die, by default
+10 times before giving up and marking them as *crashed*.  After which
+they have to be manually restarted with `initctl restart NAME`.  The
+limits controlling this are configurable, see the options below.
 
 > **Tip:** to allow endless restarts, see below option `respawn`
   
@@ -1034,7 +1033,7 @@ before continuing.  None of them can issue commands to start, stop, or
 restart other services.  Also, ensure all your services and programs
 either terminate or start in the background or you will block Finit.
 
-> **Note:** `runparts` scrips are only read and executed in runlevel S.
+> **Note:** `runparts` scripts are only read and executed in runlevel S.
 > See [hook scripts](plugins.md#hooks) for other ways to run scripts at
 > certain points during the complete lifetime of the system.
 

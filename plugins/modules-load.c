@@ -41,7 +41,7 @@
  *
  * Please note, the :ID is there for your benefit, it ensures that tasks
  * in Finit are unique.  If you have two tasks with the same name and ID
- * (or no ID), the last one read replaces any preceeding one!
+ * (or no ID), the last one read replaces any preceding one!
  */
 
 #include <unistd.h>

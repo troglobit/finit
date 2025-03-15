@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Verifies that a run task can call initctl at bootstrap and runlevel 2,
-# without blocking, performing serveral tasks:
+# without blocking, performing several tasks:
 #
 #  1. Query running services
 #  2. Stop/Start a running service

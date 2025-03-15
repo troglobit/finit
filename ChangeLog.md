@@ -89,7 +89,7 @@ All relevant changes are documented in this file.
 
 ### Fixes
  - Fix #397: system shutdown/reboot can block on console input if action
-   is started remotely (ssh).  Caused by legact TTY screen size probing,
+   is started remotely (ssh).  Caused by legacy TTY screen size probing,
    removed from both bootstrap and shutdown/reboot
  - Fix #400: both `HOOK_MOUNT_ERROR` and `sulogin()` fail to trigger on
    either mount or `fsck` errors.  Problem caused by unresolved status
@@ -347,7 +347,7 @@ All relevant changes are documented in this file.
   `/etc/finit.conf`.
 
   For the complete experience a new top-level configuration file directive
-  `rcsd PATH` has aslo been added.  It in turn can be used by `factory.conf`
+  `rcsd PATH` has also been added.  It in turn can be used by `factory.conf`
   as follows to override `/etc/finit.d`:
 
         rcsd /etc/factory.d
@@ -930,7 +930,7 @@ make sure to read the whole change log when upgrading.
   previously hard-coded in Finit, e.g., starting the bundled watchdogd,
   various distro packed udevd and other hotplugging tools
 * A proper rescue mode has been added.  It is started extremely early
-  and is protected with a bundled `suslogin`.  Exiting rescue mode now
+  and is protected with a bundled `sulogin`.  Exiting rescue mode now
   brings up the system as a normal boot, as one expects
 * Support for `sysv` start/stop scripts as well as monitoring forking
   services, stared using `sysv` or `service` stanza

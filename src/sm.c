@@ -243,7 +243,7 @@ restart:
 		/* Disable progress output at normal runtime */
 		enable_progress(0);
 
-		/* System bootrapped, launch TTYs et al */
+		/* System bootstrapped, launch TTYs et al */
 		bootstrap = 0;
 		service_step_all(SVC_TYPE_RESPAWN);
 		sm->state = SM_RUNNING_STATE;

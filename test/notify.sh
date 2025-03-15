@@ -71,7 +71,7 @@ test_one()
     assert_status "serv" "running"
     assert_cond "service/serv/ready"
 
-    # Issue #343; pidfile.so inadvertedly marked systemd services as
+    # Issue #343; pidfile.so inadvertently marked systemd services as
     # 'started' when they created their PID file.  The serv test daemon
     # waits 3 sec between pidfile and notify to trigger this bug.
     if [ "$type" != "pid" ]; then

@@ -148,7 +148,7 @@ typedef struct svc {
 	char           cond[MAX_COND_LEN];
 
 	/* Instance specifics */
-	int            job;	       /* For intenal use only, canonical ref is NAME:ID */
+	int            job;	       /* For internal use only, canonical ref is NAME:ID */
 	char           name[MAX_ARG_LEN];
 	char           id[MAX_ID_LEN]; /* :ID */
 	char           ifstmt[MAX_IDENT_LEN];
