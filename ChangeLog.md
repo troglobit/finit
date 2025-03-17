@@ -3,6 +3,16 @@ Change Log
 
 All relevant changes are documented in this file.
 
+[4.11][UNRELEASED]
+---------------------
+
+### Changes
+ - N/A
+
+### Fixes
+ - Fix pre/post/ready/cleanup script execution if service has an
+   optional `env:file` (leading `-`)
+
 
 [4.10][] - 2025-03-03
 ---------------------
@@ -1762,6 +1772,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/4.10...HEAD
+[4.11]: https://github.com/troglobit/finit/compare/4.10...4.11
 [4.10]: https://github.com/troglobit/finit/compare/4.9...4.10
 [4.9]:  https://github.com/troglobit/finit/compare/4.8...4.9
 [4.8]:  https://github.com/troglobit/finit/compare/4.7...4.8
