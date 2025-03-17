@@ -2147,8 +2147,9 @@ static void service_pre_script(svc_t *svc)
 
 		redirect(svc);
 
+		/* Warning in service_start() after svc_checkenv() */
 		env_file = svc_getenv(svc);
-		if (env_file)
+		if (env_file && fexist(env_file))
 			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->pre_script);
 		else
 			strlcpy(buf, svc->pre_script, sizeof(buf));
@@ -2184,8 +2185,9 @@ static void service_post_script(svc_t *svc)
 		rc = WEXITSTATUS(svc->status);
 		sig = WTERMSIG(svc->status);
 
+		/* Warning in service_start() after svc_checkenv() */
 		env_file = svc_getenv(svc);
-		if (env_file)
+		if (env_file && fexist(env_file))
 			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->post_script);
 		else
 			strlcpy(buf, svc->post_script, sizeof(buf));
@@ -2243,8 +2245,9 @@ void service_ready_script(svc_t *svc)
 		};
 		char *env_file;
 
+		/* Warning in service_start() after svc_checkenv() */
 		env_file = svc_getenv(svc);
-		if (env_file)
+		if (env_file && fexist(env_file))
 			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->ready_script);
 		else
 			strlcpy(buf, svc->ready_script, sizeof(buf));
@@ -2278,8 +2281,9 @@ static void service_cleanup_script(svc_t *svc)
 
 		redirect(svc);
 
+		/* Warning in service_start() after svc_checkenv() */
 		env_file = svc_getenv(svc);
-		if (env_file)
+		if (env_file && fexist(env_file))
 			snprintf(buf, sizeof(buf), ". %s; exec %s", env_file, svc->cleanup_script);
 		else
 			strlcpy(buf, svc->cleanup_script, sizeof(buf));
