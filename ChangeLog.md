@@ -10,6 +10,12 @@ All relevant changes are documented in this file.
  - N/A
 
 ### Fixes
+ - Fix #432: allow services in `setup` state to be stopped.  This fixes
+   a serious blocker introduced in 4.10 that prevented systems from
+   being rebooted when any service was in this state
+ - Fix fallback `SIGKILL` when stopping a service with `SIGTERM` does
+   not work.  This fixes a serious issue with services not responding to
+   the default `SIGTERM`
  - Fix pre/post/ready/cleanup script execution if service has an
    optional `env:file` (leading `-`)
 
