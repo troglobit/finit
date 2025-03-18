@@ -2571,6 +2571,11 @@ restart:
 		break;
 
 	case SVC_SETUP_STATE:
+		if (!enabled) {
+			service_stop(svc);
+			break;
+		}
+
 		if (!svc->pid) {
 			int rc = WEXITSTATUS(svc->status);
 			int ok = WIFEXITED(svc->status);
