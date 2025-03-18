@@ -2484,9 +2484,9 @@ restart:
 
 	switch (svc->state) {
 	case SVC_HALTED_STATE:
-		if (enabled)
+		if (enabled) {
 			svc_set_state(svc, SVC_WAITING_STATE);
-		else {
+		} else {
 			if (svc_is_removed(svc)) {
 				svc_set_state(svc, SVC_DEAD_STATE);
 			} else if (svc_is_conflict(svc)) {
