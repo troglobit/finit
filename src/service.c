@@ -915,12 +915,12 @@ static void service_kill(svc_t *svc)
 		return;
 	}
 
-	dbg("%s: Sending SIGKILL to process group %d", nm, svc->pid);
+	dbg("%s: Sending SIGKILL to process %d", nm, svc->pid);
 	logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending SIGKILL ...", id, svc->pid);
 	if (runlevel != 1)
 		print_desc("Killing ", svc->desc);
 
-	kill(-svc->pid, SIGKILL);
+	kill(svc->pid, SIGKILL);
 
 	/* Let SIGKILLs stand out, show result as [WARN] */
 	if (runlevel != 1)
