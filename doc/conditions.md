@@ -47,9 +47,10 @@ both the `pid/setupd` *and* `pid/zebra` conditions are satisfied.  A
 `pid/` condition is satisfied by the corresponding service's PID file
 being created, i.e., the service's default readiness notification.
 
-**NOTE:** Conditions also stop services when a condition is no longer
-  asserted.  I.e., if the Zebra process above stops or restarts, netd
-  will also stop or restart.
+> [!IMPORTANT]
+> Conditions also stop services when a condition is no longer asserted.
+> I.e., if the `zebra` process above stops or restarts, `netd` will also
+> stop or restart.
 
 Another example is `dropbear`, it does not support `SIGHUP`, but we can
 also see optional sourcing of arguments from an environment file:
@@ -106,10 +107,15 @@ on this, see [Internals](#internals).)  Thus, after a reconfiguration it
 is up to the "owner" of the condition to convey the new (or possibly
 unchanged) state of it.
 
-> **Note:** For `pid/` conditions it is expected that services "touch"
->           or recreate their PID file on `SIGHUP`.
-
 Static (one-shot) conditions, like `usr/`, never enter the `flux` state.
+
+> [!IMPORTANT]
+> For `pid/` conditions it is expected that the service reassert, i.e.,
+> "touch" or recreate, their PID file on `SIGHUP`.  This can be done by
+> calling `utimensat()` on the PID file.  Provided, of course, that the
+> service supports reloading on `SIGHUP`, otherwise it will be restarted
+> by Finit when they instead exit on the signal.  For such services, use
+> `<!>` to tell Finit the service does not support `SIGHUP`.
 
 
 Built-in Conditions
@@ -171,9 +177,10 @@ Built-in conditions:
 - `boot/arg`
 - `dev/node` and `dev/dir/node`
 
-**Note:** `up` means administratively up, the interface flag `IFF_UP`.
-  `running` is the `IFF_RUNNING` flag, meaning operatively up.  The
-  difference is that `running` tells if the NIC has link.
+> [!NOTE]
+> Here, `up` means administratively up, the interface flag `IFF_UP`.
+> `running` is the `IFF_RUNNING` flag, meaning operatively up.  The
+> difference is that `running` tells if the NIC has link.
 
 
 Composition
@@ -205,8 +212,9 @@ the service stanza for the daemon.  It is far from optimal since any
 synchronization of depending services may fail due to the daemon not
 having reinitialized/created their IPC sockets, or similar.
 
-> **Note:** in versions of Finit prior to v4, the PID conditions were
->           called 'svc' conditions, and they were far more complex.
+> [!NOTE]
+> In versions of Finit prior to v4, the PID conditions were called 'svc'
+> conditions, and they were far more complex.
 
 
 Debugging

@@ -4,10 +4,11 @@ Tips & Tricks with the kernel cmdline
 This document summarizes the different boot parameters that can be
 passed on the Linux kernel command line.  Not limited to Finit.
 
-The `bool` setting is one of `on, off, true false, 1, 0`.
+> [!IMPORTANT]
+> Remember to use `--` to separate kernel parameters from parameters to
+> init.  E.g., `init=/sbin/finit -- finit.debug rescue`
 
-> **NOTE:** remember to use `--` to separate kernel parameters from
-> parameters to init.  E.g., `init=/sbin/finit -- finit.debug rescue`
+The `bool` setting is one of `on, off, true false, 1, 0`.
 
 * `debug`: Enable kernel debug.  Debug messages are printed to the
    console until Finit starts up, unless `loglevel=7` (below) is used.
@@ -30,7 +31,8 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
   Very useful for selecting different boot modes, e.g. manufacturing test,
   firmware upgrade, or rescue mode.
 
-  > Note: `<boot/...>` conditions cannot be cleared with `initctl`!
+> [!NOTE]
+> `<boot/...>` conditions cannot be cleared with `initctl`!
 
 * `finit.config=/path/to/alternative/finit.conf`: override the
   compile-time bootstrap config file, default:

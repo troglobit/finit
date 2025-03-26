@@ -24,7 +24,8 @@ the maintainer(s) and make it easier for them to include your code.
 Coding Style
 ------------
 
-> **Tip:** Always submit code that follows the style of surrounding code!
+> [!TIP]
+> Always submit code that follows the style of surrounding code!
 
 First of all, lines are allowed to be longer than 72 characters these
 days.  In fact, there exist no enforced maximum, but keeping it around

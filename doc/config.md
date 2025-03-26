@@ -46,8 +46,9 @@ Plugins start at [hook points](plugins.md#hooks) and can run various set
 up, or install event handlers that later provide runtime services, e.g.,
 PID file monitoring, or [conditions](conditions.md).
 
-> **Tip:** see [SysV Init Compatibility](#sysv-init-compatibility) for
-> help to quickly get going with an existing SysV or BusyBox init setup.
+> [!TIP]
+> See [SysV Init Compatibility](#sysv-init-compatibility) for help to
+> quickly get going with an existing SysV or BusyBox init setup.
 
 
 ### Configuration Files
@@ -127,8 +128,9 @@ properties of the `run` statement.  For an example on the relation of
 `service` and `run` statements, and dependency handling between them,
 see [Conditional Loading](#conditional-loading), below.
 
-> **Note:** the `finit.conf` and `finit.d/` names are only defaults.
-> They can be changed at compile-time with two `configure` options:
+> [!NOTE]
+> The names `finit.conf` and `finit.d/` are only defaults.  They can be
+> changed at compile-time with two `configure` options:
 > `--with-config=/etc/foo.conf` and `--with-rcsd=/var/foo.d`.
 >
 > They can also be overridden from the [kernel command line](cmdline.md)
@@ -187,8 +189,9 @@ above, provided their respective mount point exists.
 
 With all filesystems mounted, Finit calls `swapon`.
 
-> **Tip:** to see what happens when all filesystems are mounted, have a
-> look at the [`bootmisc.so` plugin](plugins.md).
+> [!TIP]
+> To see what happens when all filesystems are mounted, have a look at
+> the [`bootmisc.so` plugin](plugins.md).
 
 At shutdown, and after having stopped all services and other lingering
 processes have been killed, filesystems are unmounted in the reverse
@@ -231,11 +234,12 @@ Networking is expected to be available in all runlevels except: S, 1
 file, Finit calls `ifup -a` -- at the very least the loopback interface
 is brought up.
 
-> **Note:** when moving from runlevel S to 2, all run/task/services that
-> were constrained to runlevel S only are dropped from bookkeeping.  So
-> when reaching the prompt, `initctl` will not show these run/tasks.
-> This is a safety mechanism to prevent bootstrap-only tasks from
-> accidentally being run again.  E.g., `console-setup.sh` above.
+> [!NOTE]
+> When moving from runlevel S to 2, all run/task/services that were
+> constrained to runlevel S only are dropped from bookkeeping.  So when
+> reaching the prompt, `initctl` will not show these run/tasks.  This is
+> a safety mechanism to prevent bootstrap-only tasks from accidentally
+> being run again.  E.g., `console-setup.sh` above.
 
 
 ### Managing Services
@@ -322,7 +326,8 @@ the `ps` command we can see that the process is started with:
 
     foo -n --extra-arg=bar -s -x
 
-> **Note:** the leading `-` determines if Finit should treat a missing
+> [!NOTE]
+> The leading `-` in `env:` determines if Finit should treat a missing
 > environment file as blocking the start of the service or not.  When
 > `-` is used, a missing environment file does *not* block the start.
 
@@ -384,12 +389,13 @@ To synchronize two services the following condition can be used:
 
 For details on the syntax and options, see below.
 
-> **Note:** on `initctl reload` conditions are normally set in "flux",
-> while figuring out which to stop, start or restart.  Services that
-> need to be restarted have their `ready` condition removed prior to
-> Finit sending them SIGHUP (if they support that), or stop-starting
-> them.  A daemon is expected to reassert its readiness, e.g. systemd
-> style daemons to write `READY=1\n`.
+> [!NOTE]
+> On `initctl reload` conditions are set in "flux", while figuring out
+> which to stop, start or restart.  Services that need to be restarted
+> have their `ready` condition removed prior to Finit sending them
+> SIGHUP (if they support that), or stop-starting them.  A daemon is
+> expected to reassert its readiness, e.g. systemd style daemons to
+> write `READY=1\n`.
 >
 > However, the s6 notify mode does not support this because in s6 you
 > are expected to close your notify descriptor after having written
@@ -429,9 +435,10 @@ example employs a wrapper script in `/etc/start.d`.
         # Execute the program
         exec /usr/bin/program $OPTIONS
 
-> **Note:** the example sets `<!>` to denote that it doesn't support
->           `SIGHUP`.  That way Finit will stop/start the service
->           instead of sending SIGHUP at restart/reload events.
+> [!NOTE]
+> The example sets `<!>` to denote that it doesn't support `SIGHUP`.
+> That way Finit will stop/start the service instead of sending SIGHUP
+> at restart/reload events.
 
 
 Templating
@@ -514,6 +521,7 @@ A daemon using `SCHED_RR` currently need to run outside the default cgroups.
 
     service [...] <...> cgroup.root /path/to/daemon arg -- Real-Time process
 
+> [!NOTE]
 > Linux cgroups and details surrounding values are not explained in the
 > Finit documentation.  The Linux admin-guide cover this well:
 > <https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html>
@@ -539,12 +547,9 @@ service name:sysklogd [S123456789]   \
 ```
 
 The .conf files `/etc/finit.conf` and `/etc/finit.d/*` support the
-following directives:
-
-
-> **Note:** not all directives are available in `/etc/finit.d/*.conf`
-> and some directives are only available at bootstrap, runlevel `S`,
-> see [Limitations](#limitations) below for details.
+following directives.  Some directives have restrictions, e.g., only
+available at bootstrap, runlevel `S`, see [Limitations](#limitations)
+below for details.
 
 
 ### Hostname
@@ -556,7 +561,8 @@ the contents of that file is used.
 
 Deprecated.  We recommend using `/etc/hostname` instead.
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> [!NOTE]
+> Only read and executed in runlevel S (bootstrap).
 
 
 ### Kernel Modules
@@ -574,7 +580,8 @@ BusyBox mdev tool, add to `/etc/mdev.conf`:
 
     $MODALIAS=.*  root:root       0660    @modprobe -b "$MODALIAS"
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> [!NOTE]
+> Only read and executed in runlevel S (bootstrap).
 
 
 ### Networking
@@ -587,7 +594,8 @@ Deprecated.  We recommend using dedicated task/run stanzas per runlevel,
 or `/etc/network/interfaces` if you have a system with `ifupdown`, like
 Debian, Ubuntu, Linux Mint, or an embedded BusyBox system.
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> [!NOTE]
+> Only read and executed in runlevel S (bootstrap).
 
 
 ### Alternate finit.d/
@@ -608,8 +616,9 @@ another set of .conf files, e.g.:
 
     rcsd /etc/factory.d
 
-> **Note:** this directive is only available from the top-level
-> bootstrap .conf file.
+> [!NOTE]
+> This directive is only available from the top-level bootstrap .conf
+> file, usually `/etc/finit.conf`.
 
 ### Resource Limits
 
@@ -651,7 +660,8 @@ Finit disables networking in this mode.
 
 *Default:* 2
 
-> **Note:** only read and executed in runlevel S (bootstrap).
+> [!NOTE]
+> Only read and executed in runlevel S (bootstrap).
 
 
 ### One-shot Commands (sequence)
@@ -665,10 +675,11 @@ optional arguments and description.  `run` commands are guaranteed to be
 completed before running the next command.  Useful when serialization is
 required.
 
-> **Warning:** try to avoid the `run` command.  It blocks much of the
-> functionality in Finit, like (re)starting other (perhaps crashing)
-> services while a `run` task is executing.  Use other synchronization
-> mechanisms instead, like conditions.
+> [!WARNING]
+> Try to avoid the `run` command.  It blocks much of the functionality
+> in Finit, like (re)starting other (perhaps crashing) services while a
+> `run` task is executing.  Use other synchronization mechanisms
+> instead, like conditions.
 
 Incomplete list of unsupported `initctl` commands in `run` tasks:
 
@@ -723,7 +734,8 @@ file, but rather watch that file for the resulting forked-off PID.  This
 syntax also works for forking daemons that do not have a command line
 option to run it in the foreground, more on this below in `service`.
 
-> **Tip:** see also [SysV Init Compatibility](#sysv-init-compatibility).
+> [!TIP]
+> See also [SysV Init Compatibility](#sysv-init-compatibility).
 
 
 ### Services
@@ -736,7 +748,8 @@ exits prematurely.  Finit tries to restart services that die, by default
 they have to be manually restarted with `initctl restart NAME`.  The
 limits controlling this are configurable, see the options below.
 
-> **Tip:** to allow endless restarts, see below option `respawn`
+> [!TIP]
+> To allow endless restarts, see below option `respawn`
   
 For daemons that support it, we recommend appending `--foreground`,
 `--no-background`, `-n`, `-F`, or similar command line argument to
@@ -1033,8 +1046,9 @@ before continuing.  None of them can issue commands to start, stop, or
 restart other services.  Also, ensure all your services and programs
 either terminate or start in the background or you will block Finit.
 
-> **Note:** `runparts` scripts are only read and executed in runlevel S.
-> See [hook scripts](plugins.md#hooks) for other ways to run scripts at
+> [!NOTE]
+> `runparts` scripts are only read and executed in runlevel S.  See
+> [hook scripts](plugins.md#hooks) for other ways to run scripts at
 > certain points during the complete lifetime of the system.
 
 **Recommendations:**
@@ -1307,8 +1321,9 @@ This rescue mode can be disabled at configure time using:
 
 The rescue mode comes in two flavors; *traditional* and *fallback*.
 
-> **Note:** in this mode `initctl` will not work.  Use the `-f` flag to
-> force `reboot`, `shutdown`, or `poweroff`.
+> [!NOTE]
+> In this mode `initctl` will not work.  Use the `-f` flag to force
+> `reboot`, `shutdown`, or `poweroff`.
 
 
 ### Traditional
@@ -1320,11 +1335,12 @@ program is used instead.  If a successful login is made, or if the user
 exits (Ctrl-D), the rescue mode is ended and the system boots up
 normally.
 
-> **Note:** the bundled sulogin in Finit can at configure time be given
-> another user than the default (root).  If the sulogin user does not
-> have a password, or __the account is locked__, the user is presented
-> with a password-less `"Press enter to enter maintenance mode."`,
-> prompt which opens up a root shell.
+> [!WARNING]
+> The bundled sulogin in Finit can at configure time be given another
+> user than the default (root).  If the sulogin user does not have a
+> password, or __the account is locked__, the user is presented with a
+> prompt: `"Press enter to enter maintenance mode."`, which will open
+> up a root shell *without prompting for password*!
 
 
 ### Fallback
@@ -1372,10 +1388,11 @@ These can now also be set in any `.conf` file in `/etc/finit.d`.
 There is, however, nothing preventing you from having all configuration
 settings in `/etc/finit.conf`.
 
-> **Note:** The `/etc/finit.d` directory was previously the default
->          Finit [runparts](#run-parts-scripts) directory.  Finit >=v4.0
->          no longer has a default `runparts` directory, make sure to
->          update your setup, or the finit configuration, accordingly.
+> [!IMPORTANT]
+> The default `rcsd`, i.e., `/etc/finit.d`, was previously the Finit
+> [runparts](#run-parts-scripts) directory.  Finit >=v4.0 no longer has
+> a default `runparts` directory, make sure to update your setup, or the
+> finit configuration, accordingly.
 
 
 Watchdog

@@ -1,5 +1,5 @@
-Building
-========
+Building Finit
+==============
 
 * [Introduction](#introduction)
 * [Configure](#configure)
@@ -17,14 +17,15 @@ optional plugins to enable.  It depends on two external libraries:
 - [libuEv][], the event loop
 - [libite][] (-lite), much needed frog DNA
 
-**NOTE:** Most free/open source software that uses `configure` default
-  to install to `/usr/local`.  However, some Linux distributions do no
-  longer search that path for installed software, e.g. Fedora and Alpine
-  Linux.  To get finit's configure script to find its dependencies you
-  have to help the `pkg-config` tool a bit if you do not change the
-  default prefix path:
-
-    PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure
+> [!IMPORTANT]
+> Most free/open source software packages that use `configure` default
+> to install to `/usr/local`.  However, some Linux distributions do no
+> longer search that path for installed software, e.g. Fedora and Alpine
+> Linux.  To get finit's configure script to find its dependencies you
+> have to help the `pkg-config` tool a bit if you do not change the
+> default prefix path:
+>
+>     PKG_CONFIG_LIBDIR=/usr/local/lib/pkgconfig ./configure
 
 The configure script checks for all dependencies, including the correct
 version of the above mentioned libraries.  Currently required versions:
@@ -71,12 +72,13 @@ Below are a few of the main switches to configure:
 
 For more configure flags, see <kbd>./configure --help</kbd>
 
-> **Note:** the configure script is not available in the GIT sources.  It is
->           however included in (officially supported) released tarballs.  The
->           idea is that you should not need GNU autotools to build, only the
->           above mentioned dependencies, a POSIX shell, a C compiler and make.
->           Any contributing to Finit can generate it from `configure.ac` using
->           the `autogen.sh` script.
+> [!NOTE]
+> The configure script is not available in the GIT sources.  It is
+> however included in (officially supported) released tarballs.  The
+> idea is that you should not need GNU autotools to build, only the
+> above mentioned dependencies, a POSIX shell, a C compiler and make.
+> Any contributing to Finit can generate it from `configure.ac` using
+> the `autogen.sh` script.
 
 
 Example
@@ -115,10 +117,11 @@ Linux config to:
 
     CONFIG_UEVENT_HELPER_PATH="/sbin/mdev"
 
-**Note:** If you run into problems starting Finit, take a look at
-  `finit.c`.  One of the most common problems is a custom Linux kernel
-  build that lack `CONFIG_DEVTMPFS`.  Another is too much cruft in the
-  system `/etc/fstab`.
+> [!TIP]
+> If you run into problems starting Finit, take a look at `finit.c`.
+> One of the most common problems is a custom Linux kernel build that
+> lack `CONFIG_DEVTMPFS`.  Another is too much cruft in the system
+> `/etc/fstab`.
 
 
 Running
@@ -157,8 +160,10 @@ enabled.  The default Finit rescue mode configuration is installed into
 
 By default the a root shell, without login, is started.
 
-> **Note:** in this mode `initctl` will not work.  Use the `-f` flag to
-> force `reboot`, `shutdown`, or `poweroff`.
+> [!IMPORTANT]
+> In rescue mode `initctl` will not work, the same goes for `reboot`,
+> `shutdown`, and `poweroff` commands, provided they are the Finit
+> versions of these commands.  Use the `-f` flag to force the action.
 
 
 Debugging
@@ -187,8 +192,9 @@ kernel usually reboots: `configure --enable-emergency-shell`.  However,
 the behavior of Finit is severely limited when this is enabled, so use
 it only for debugging start up issues when Finit crashes.
 
-**NOTE:** Neither of these options should be enabled on production
-         systems since they can potentially give a user root access.
+> [!CAUTION]
+> None of these options should be enabled on production systems since
+> they can potentially give a user root access.
 
 
 [1]:       ftp://troglobit.com/finit/finit-4.3.tar.gz
