@@ -35,9 +35,10 @@ For your convenience a set of *optional* plugins are available:
   files distributed with Finit.  It is read first but can be overridden
   by any of the standard tmpfiles.d directories, e.g. `/etc/tmpfiles.d`.
 
-  > **Note:** On an embedded system both `/var` and `/run` can be `tmpfs`
-  > RAM disks and `/dev` is usually a `devtmpfs`.  This must be defined
-  > in the `/etc/fstab` file and in the Linux kernel config.
+> [!NOTE]
+> On an embedded system both `/var` and `/run` can be `tmpfs` RAM
+> disks and `/dev` is usually a `devtmpfs`.  This must be defined in
+> the `/etc/fstab` file and in the Linux kernel config.
 
 * *dbus.so*: Setup and start system message bus, D-Bus, at boot.
   _Optional plugin._
@@ -63,8 +64,9 @@ For your convenience a set of *optional* plugins are available:
 
   Enabled by default.
   
-  > See the [Services](config.md#services) section in the configuration
-  > guide for an example how to run `mdevd`, alternative to plain mdev.
+> [!TIP]
+> See the [Services](config.md#services) section in the configuration
+> guide for an example how to run `mdevd`, alternative to plain mdev.
 
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
   Enabled by default.
@@ -89,16 +91,17 @@ For your convenience a set of *optional* plugins are available:
 
         set index 1234
 
-  **Note:** unlike the traditional .conf `module` directive, which load
-  any listed module immediately, this plugin creates a background `task`
-  which load the module(s) in the background.  The program is modprobe,
-  `/sbin/modprobe`, which you can override per .conf file:
+  Since these tasks run in the background, they return `[ OK ]` at boot,
+  unless the modprobe tool does not exist.  Check syslog for warnings
+  and the actual status of the operation using `initctl`.
 
-        set modprobe /path/to/maybe-a-modprobe-wrapper
-
-  Since these tasks run in the background, they usually return `[ OK ]`
-  at boot, unless the modprobe tool does not exist.  Check syslog for
-  warnings and the actual status of the operation using `initctl`.
+> [!IMPORTANT]
+> Unlike the traditional .conf `module` directive, which load any listed
+> module immediately, this plugin creates a background `task` which load
+> the module(s) in the background.  The program is modprobe,
+> `/sbin/modprobe`, which you can override per .conf file:
+> 
+>     set modprobe /path/to/maybe-a-modprobe-wrapper
 
 * *netlink.so*: Listens to Linux kernel Netlink events for gateway and
   interfaces.  These events are then sent to the Finit service monitor
@@ -158,8 +161,10 @@ hook points:
     EOF
     $ chmod +x /libexec/finit/hook/sys/down/foo.sh
 
-> **Note:** to use hook scripts, even for pre-bootstrap and pre-shutdown
-> tasks, you must build with `configure --enable-hook-scripts-plugin`.
+> [!IMPORTANT]
+> To use hook scripts, even for pre-bootstrap and pre-shutdown tasks,
+> you must build with `configure --enable-hook-scripts-plugin`.
+
 
 ### Bootstrap Hooks
 

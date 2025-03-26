@@ -20,8 +20,9 @@ tools pre-systemd work as intended.
 
     root@debian:~# apt install initscripts console-setup
 
-> **Note:** as of Debian 11 (Bullseye), libuev and libite are part of
-> the main section of Debian.  So just install the -dev packages :)
+> [!TIP]
+> As of Debian 11 (Bullseye), libuev and libite are part of the main
+> section of Debian.  So just install the -dev packages :)
 
 The following script can then be used to configure, build, install and
 set up your system to run Finit:
@@ -47,7 +48,8 @@ comands to `initctl`, followed by `reload` to activate your changes.
 You can also use a standard [/etc/rc.local](rc.local) for one-shot tasks
 and initialization like keyboard language etc.
 
-> **NOTE:** X Window system, you may need to `sudo apt install elogind`
+> [!NOTE]
+> For the X Window system, you may need to `sudo apt install elogind`
 > (Bullseye and later), followed by `initctl reload` to activate it (it
 > is enabled by default), and logout/login again.  The elogind daemon
 > ensures a regular non-root user can start and interact with an X

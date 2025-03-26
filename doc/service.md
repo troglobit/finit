@@ -22,8 +22,9 @@ Finit can *not* start and monitor a daemon that:
 | ✔ | No      | No               | Yes, optionally        |
 | ✘ | Yes     | No               | No                     |
 
-> **Note:** PID files is one mechanism used to assert conditions to
-> synchronize the start and stop of other, dependent, services.
+> [!NOTE]
+> PID files is one mechanism used to assert conditions to synchronize
+> the start and stop of other, dependent, services.
 
 ### Forks to Background w/ PID File
 

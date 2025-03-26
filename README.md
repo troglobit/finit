@@ -61,12 +61,13 @@ distributions:
   * [Alpine Linux](contrib/alpine/), and
   * [Debian GNU/Linux](contrib/debian/), also works on Ubuntu/Linux Mint
 
-> **Note:** support for various Linux distributions does not mean Finit
-> installs easily on all architectures.  The bundled install scripts are
-> examples for standard installations, tested on amd64 (x86_64) systems.
-> Custom setups, e.g., for embedded systems, can be found in any of the
-> following [Buildroot][] based examples: [myLinux][], [Infix][], or the
-> plain [br2-finit-demo](https://github.com/troglobit/br2-finit-demo).
+> [!NOTE]
+> Support for various Linux distributions does not mean Finit installs
+> easily on all architectures.  The bundled install scripts are examples
+> for standard installations, tested on amd64 (x86_64) systems.  Custom
+> setups, e.g., for embedded systems, can be found in the following
+> [Buildroot][] based examples: [myLinux][], [Infix][], or the plain
+> [br2-finit-demo](https://github.com/troglobit/br2-finit-demo).
 
 
 Example
@@ -78,9 +79,10 @@ be placed in `/etc/finit.d/available` and enabled by an operator using
 the [initctl](#commands--status) tool.  See the above mentioned Linux
 distributions, or [myLinux][].
 
-> **Note:** as of Finit v4.4, .conf lines can be broken up using the
-> standard UNIX continuation character (`\`), also trailing comments are
-> now supported.  The latter means you need to escape any hashes used in
+> [!TIP]
+> As of Finit v4.4, `.conf` lines can be broken up using the standard
+> UNIX continuation character (`\`), trailing comments are now also
+> supported.  The latter means you need to escape any hashes used in
 > directives and descriptions (`\#`).  For more on this and examples,
 > see the [finit.conf(5)][] manual or [doc/config.md](doc/config.md).
 
@@ -285,6 +287,7 @@ run  [S]                /path/to/ident    --
 task [2] <hw/model/foo> /path/to/foo-init -- Initializing Foo board
 ```
 
+> [!TIP]
 > Notice the trick with an empty description to hide the call to `ident`
 > in the Finit progress output.
 
@@ -367,9 +370,10 @@ The `initctl` tool has three commands to help debug and optimize the
 setup and monitoring of cgroups.  See the `ps`, `top`, and `cgroup`
 commands for details.
 
-> **Note:** systems that do not support cgroups, specifically version 2,
-> are automatically detected.  On such systems the above functionality
-> is disabled early at boot.
+> [!NOTE]
+> Systems that do not support cgroups, specifically version 2, are
+> automatically detected.  On such systems the above functionality is
+> disabled early at boot.
 
 
 Runparts & /etc/rc.local
@@ -573,9 +577,10 @@ file must be used to tell Finit to stop and start it on `reload` and
 `runlevel` changes.  If `<>` holds more [conditions](doc/conditions.md),
 these will also affect how a service is maintained.
 
-> **Note:** even though it is possible to start services not belonging in
-> the current runlevel these services will not be respawned automatically
-> by Finit if they exit (crash).  Hence, if the runlevel is 2, the below
+> [!NOTE]
+> Even though it is possible to start services not belonging in the
+> current runlevel these services will not be respawned automatically by
+> Finit if they exit (crash).  Hence, if the runlevel is 2, the below
 > Dropbear SSH service will not be restarted if it is killed or exits.
 
 The `status` command is the default, it displays a quick overview of all
