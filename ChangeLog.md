@@ -3,11 +3,13 @@ Change Log
 
 All relevant changes are documented in this file.
 
-[4.11][UNRELEASED]
+[4.11][] - 2025-03-27
 ---------------------
 
 ### Changes
- - N/A
+ - Update documentation regarding transition from runlevel S to 2, how
+   run/tasks must "complete" before Finit can move to the next runlevel
+ - Improve argument handling in bundled getty when launching login
 
 ### Fixes
  - Fix #432: allow services in `setup` state to be stopped.  This fixes
@@ -1777,7 +1779,7 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.10...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.11...HEAD
 [4.11]: https://github.com/troglobit/finit/compare/4.10...4.11
 [4.10]: https://github.com/troglobit/finit/compare/4.9...4.10
 [4.9]:  https://github.com/troglobit/finit/compare/4.8...4.9
