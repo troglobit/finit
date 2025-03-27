@@ -312,9 +312,9 @@ static int exec_login(char *name)
 	struct stat st;
 
 	if (passenv)
-		execl(_PATH_LOGIN, _PATH_LOGIN, "-p", name, NULL);
+		execl(_PATH_LOGIN, _PATH_LOGIN, "-p", "--", name, NULL);
 	else
-		execl(_PATH_LOGIN, _PATH_LOGIN, name, NULL);
+		execl(_PATH_LOGIN, _PATH_LOGIN, "--", name, NULL);
 
 	/*
 	 * Failed to exec login, should not happen on normal systems.
