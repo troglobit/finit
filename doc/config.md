@@ -201,6 +201,18 @@ order, and `swapoff` is called.
 
 ### Runlevels
 
+Finit supports runlevels, but unlike other init systems runlevels are
+declared per service/run/task/sysv command.  When booting up a system
+Finit pass through three phases:
+
+ 1. Setting up the console, parsing any command line options, and other
+    housekeeping tasks like mounting all filesystems, and calling `fsck`
+ 2. Starting all run/task/services in runlevel S, then waiting for all
+    services to have started, and all run/tasks to have completed
+ 3. Go to runlevel 2, or whatever the user has set in the configuration
+
+Available runlevels:
+
  - `  S`: bootStrap
  - `  1`: Single user mode
  - `2-5`: traditional multi-user mode
@@ -208,31 +220,33 @@ order, and `swapoff` is called.
  - `7-9`: multi-user mode (extra)
  - `  0`: shutdown
 
-Runlevels are declared per service/run/task/sysv command.  Starting in
-runlevel S (bootStrap), usually only for tasks supposed to run once at
-boot, and services like `syslogd`, which you need to start and run
-throughout the whole time your system is up.
+Runlevel S (bootStrap), is for tasks supposed to run once at boot, and
+services like `syslogd`, which need to start early and run throughout
+the lifetime of your system.
 
-Before `S` is started, however, Finit performs a lot of housekeeping
-tasks like mounting all filesystems, calling `fsck` if needed, and
-making sure the everything is OK.
+Example:
 
     task [S] /lib/console-setup/console-setup.sh
     service [S12345] env:-/etc/default/rsyslog rsyslogd -n $RSYSLOGD_ARGS
 
-After runlevel S, Finit proceeds to runlevel 2.  This can be changed in
-`/etc/finit.conf` using the `runlevel N` directive, or by a script
-running in runlevel S that calls, e.g., `initctl runlevel 9`.  The
-latter is useful if startup scripts detect problems outside of Finit's
-control, e.g., critical services/devices missing or hardware problems.
+When bootstrap has completed, Finit moves to runlevel 2.  This can be
+changed in `/etc/finit.conf` using the `runlevel N` directive, or by a
+script running in runlevel S that calls, e.g., `initctl runlevel 9`.
+The latter is useful if startup scripts detect problems outside of
+Finit's control, e.g., critical services/devices missing or hardware
+problems.
 
-Before starting the services in runlevel 2, Finit first stops everything
-that is not allowed to run in 2, and then brings up networking.
-Networking is expected to be available in all runlevels except: S, 1
-(single user level), 6, and 0.  Networking is enabled either by the
-`network script` directive, or if you have an `/etc/network/interfaces`
-file, Finit calls `ifup -a` -- at the very least the loopback interface
-is brought up.
+Each runlevel must be allowed to "complete".  Meaning, all services in
+runlevel S must have started and all run/tasks have been started and
+collected (exited).  Finit waits 120 seconds for all run/tasks in S to
+complete before proceeding to 2.
+
+Finit first stops everything that is not allowed to run in 2, and then
+brings up networking.  Networking is expected to be available in all
+runlevels except: S, 1 (single user level), 6, and 0.  Networking is
+enabled either by the `network script` directive, or if you have an
+`/etc/network/interfaces` file, Finit calls `ifup -a` -- at the very
+least the loopback interface is brought up.
 
 > [!NOTE]
 > When moving from runlevel S to 2, all run/task/services that were
@@ -651,9 +665,10 @@ stanzas can share the same rlimits if they are in the same .conf.
 
 **Syntax:** `runlevel <N>`
 
-The system runlevel to go to after bootstrap (S) has completed.  `N`
-is the runlevel number 0-9, where 6 is reserved for reboot and 0 for
-halt.
+The system runlevel to go to after bootstrap (S) has completed.  `N` is
+the runlevel number 0-9, where 6 is reserved for reboot and 0 for halt.
+Completed in this context means all services have been started and all
+run/tasks have been started and collected.
 
 It is recommended to keep runlevel 1 as single-user mode, because
 Finit disables networking in this mode.
