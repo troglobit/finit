@@ -20,6 +20,8 @@ All relevant changes are documented in this file.
    the default `SIGTERM`
  - Fix pre/post/ready/cleanup script execution if service has an
    optional `env:file` (leading `-`)
+ - Fix blocked signals for pre/post/ready/cleanup scripts preventing
+   normal shutdown when a service/sysv is stopped in its setup state
 
 
 [4.10][] - 2025-03-03

@@ -2155,6 +2155,8 @@ static void service_pre_script(svc_t *svc)
 			strlcpy(buf, svc->pre_script, sizeof(buf));
 
 		set_pre_post_envs(svc, "pre");
+		sig_unblock();
+
 		execvp(_PATH_BSHELL, argv);
 		_exit(EX_OSERR);
 	}
@@ -2192,6 +2194,7 @@ static void service_post_script(svc_t *svc)
 		else
 			strlcpy(buf, svc->post_script, sizeof(buf));
 		set_pre_post_envs(svc, "post");
+		sig_unblock();
 
 		if (WIFEXITED(svc->status)) {
 			char val[4];
@@ -2253,6 +2256,8 @@ void service_ready_script(svc_t *svc)
 			strlcpy(buf, svc->ready_script, sizeof(buf));
 
 		set_pre_post_envs(svc, "ready");
+		sig_unblock();
+
 		execvp(_PATH_BSHELL, argv);
 		_exit(EX_OSERR);
 	}
@@ -2289,6 +2294,8 @@ static void service_cleanup_script(svc_t *svc)
 			strlcpy(buf, svc->cleanup_script, sizeof(buf));
 
 		set_pre_post_envs(svc, "cleanup");
+		sig_unblock();
+
 		execvp(_PATH_BSHELL, argv);
 		_exit(EX_OSERR);
 	}
