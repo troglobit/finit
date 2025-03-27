@@ -22,6 +22,9 @@ All relevant changes are documented in this file.
    optional `env:file` (leading `-`)
  - Fix blocked signals for pre/post/ready/cleanup scripts preventing
    normal shutdown when a service/sysv is stopped in its setup state
+ - Fix issue where a pre:script creates a PID file in `/run` cause the
+   service to move from setup state to running.  Any `svc_t` in setup,
+   teardown, or cleanup state should be ignored in the pidfile plugin
 
 
 [4.10][] - 2025-03-03

@@ -80,6 +80,23 @@ static void pidfile_update_conds(char *dir, char *name, uint32_t mask)
 		return;
 	}
 
+	switch (svc->state) {
+	case SVC_TEARDOWN_STATE:
+	case SVC_CLEANUP_STATE:
+	case SVC_SETUP_STATE:
+		/*
+		 * E.g., a setup script for a container may run in lieu
+		 * of crun, trying to fetch a container image from the
+		 * network.  This script may want to advertise its PID
+		 * to the system for clean and swift reboots.
+		 */
+		dbg("%s[%d]: ignoring any PID file changes in CLEANUP/TEARDOWN/SETUP",
+		    svc_ident(svc, NULL, 0), svc->pid);
+		return;
+	default:
+		break;
+	}
+
 	/* Service condistion to set/clear */
 	mkcond(svc, cond, sizeof(cond));
 
