@@ -2912,7 +2912,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 	}
 
 	len = read(w->fd, buf, sizeof(buf) - 1);
-	if (len == -1) {
+	if (len <= 0) {
 		warn("Failed reading notification from %s", svc_ident(svc, NULL, 0));
 		return;
 	}
@@ -2920,7 +2920,7 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 	buf[len] = 0;
 
 	/* systemd and s6, respectively.  The latter then closes the socket */
-	if (!strcmp(buf, "READY=1\n") || !strcmp(buf, "\n")) {
+	if (!strcmp(buf, "READY=1\n") || buf[len - 1] == '\n') {
 		/*
 		 * native (pidfile) services are marked as started by
 		 * the pidfile plugin.
