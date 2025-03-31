@@ -193,7 +193,7 @@ int run_parts(char *dir, char *cmd, const char *env[], int progress, int sysv)
 #ifndef __FINIT__
 static int usage(int rc)
 {
-	warnx("usage: runparts [-dhps?] DIRECTORY");
+	warnx("usage: runparts [-bdhps?] DIRECTORY");
 	return rc;
 }
 
