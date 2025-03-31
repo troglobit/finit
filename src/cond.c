@@ -96,16 +96,16 @@ enum cond_state cond_get(const char *name)
 
 enum cond_state cond_get_agg(const char *names)
 {
-	static char conds[MAX_COND_LEN];
 	enum cond_state s = COND_ON;
-	char *cond;
 
-	if (!names)
-		return COND_ON;
+	if (names) {
+		char conds[strlen(names) + 1];
+		const char *cond;
 
-	strlcpy(conds, names, sizeof(conds));
-	for (cond = strtok(conds, ","); s && cond; cond = strtok(NULL, ","))
-		s = min(s, cond_get(cond));
+		strlcpy(conds, names, sizeof(conds));
+		for (cond = strtok(conds, ","); s && cond; cond = strtok(NULL, ","))
+			s = min(s, cond_get(cond));
+	}
 
 	return s;
 }
