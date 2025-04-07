@@ -104,13 +104,14 @@ static void setup(void *arg)
 			hw = fopen(hwrng, "r");
 			if (hw) {
 				char buf[512];
-				size_t len;
+				size_t num;
 
-				len = fread(buf, sizeof(buf[0]), sizeof(buf), hw);
-				if (len == 0)
+				num = fread(buf, sizeof(buf[0]), sizeof(buf), hw);
+				if (num == 0)
 					fallback(fp);
 				else
-					len = fwrite(buf, sizeof(buf[0]), len, fp);
+					fwrite(buf, sizeof(buf[0]), num, fp);
+
 				fclose(hw);
 			} else {
 				fallback(fp);
