@@ -3,6 +3,19 @@ Change Log
 
 All relevant changes are documented in this file.
 
+
+[4.12][UNRELEASED]
+---------------------
+
+### Changes
+ - Improve notify:s6 readiness compatibility, by Aaron Andersen
+ - Update `runparts` usage text
+
+### Fixes
+ - Fix variable overloading in urandom plugin
+ - Fix buffer overwrite in urandom plugin, reported by Aaron Andersen
+
+
 [4.11][] - 2025-03-27
 ---------------------
 
@@ -1785,6 +1798,7 @@ Major bug fix release.
 * Initial release
 
 [UNRELEASED]: https://github.com/troglobit/finit/compare/4.11...HEAD
+[4.12]: https://github.com/troglobit/finit/compare/4.11...4.12
 [4.11]: https://github.com/troglobit/finit/compare/4.10...4.11
 [4.10]: https://github.com/troglobit/finit/compare/4.9...4.10
 [4.9]:  https://github.com/troglobit/finit/compare/4.8...4.9
