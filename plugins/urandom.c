@@ -78,6 +78,7 @@ static void setup(void *arg)
 {
 #ifdef RANDOMSEED
 	struct rand_pool_info *rpi;
+	unsigned char *rpi_buf;
 	ssize_t len = 0;
 	struct stat st;
 	int rc = -1;
@@ -137,10 +138,11 @@ static void setup(void *arg)
 		goto fallback;
 	}
 
+	rpi_buf = (unsigned char *)rpi->buf;
 	do {
 		ssize_t num;
 
-		num = read(fd, &rpi->buf[len], RANDOM_BYTES - len);
+		num = read(fd, &rpi_buf[len], RANDOM_BYTES - len);
 		if (num <= 0) {
 			if (num == -1 && errno == EINTR)
 				continue;
