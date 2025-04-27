@@ -251,7 +251,7 @@ All services in runlevel S) are started first, followed by the desired
 run-time runlevel.  Run tasks in runlevel S can be started in sequence
 by using `run [S] cmd`.  Changing runlevels at runtime is done like any
 other init, e.g. <kbd>init 4</kbd>, but also using the more advanced
-`intictl` tool.
+[`initctl`](#commands--status) tool.
 
 
 **Conditions**
