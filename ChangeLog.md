@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.12][UNRELEASED]
+[4.12][] - 2025-04-28
 ---------------------
 
 ### Changes
