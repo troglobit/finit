@@ -393,7 +393,7 @@ like this:
 
 The `notify:none` syntax is for completeness in systems which run in
 `readiness pid` mode (default).  Services declared with `notify:none`
-will assert ready condition as soon as Finit has started them, e.g.,
+will transition to ready as soon as Finit has started them, e.g.,
 `service/qux/ready`.
 
 To synchronize two services the following condition can be used:
@@ -405,8 +405,8 @@ For details on the syntax and options, see below.
 
 > [!NOTE]
 > On `initctl reload` conditions are set in "flux", while figuring out
-> which to stop, start or restart.  Services that need to be restarted
-> have their `ready` condition removed prior to Finit sending them
+> which services to stop, start or restart.  Services that need to be
+> restarted have their `ready` condition removed before Finit issue a
 > SIGHUP (if they support that), or stop-starting them.  A daemon is
 > expected to reassert its readiness, e.g. systemd style daemons to
 > write `READY=1\n`.
@@ -416,10 +416,10 @@ For details on the syntax and options, see below.
 > `\n`.  This means s6 style daemons currently must be stop-started.
 > (Declare the service with `<!>` in its condition statement.)
 >
-> For native PID file style readiness notification a daemon is expected
-> to either create its PID file, if it does not exist yet, or touch it
-> using `utimensat()` or similar.  This triggers both the `<pid/>` and
-> `<.../ready>` conditions.
+> For default, PID file style readiness notification, daemons are
+> expected to either create their PID files, or touch it using
+> `utimensat()` to reassert readiness.  Triggering both the `<pid/>`
+> and `<.../ready>` conditions.
 
 
 Service Wrapper Scripts
