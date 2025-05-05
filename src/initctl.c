@@ -767,7 +767,7 @@ static int plugins_list(char *arg)
  */
 char *runlevel_string(int currlevel, int levels)
 {
-	static char lvl[21];
+	static char lvl[32];
 	int i = INIT_LEVEL;
 	int pos = 1;
 
