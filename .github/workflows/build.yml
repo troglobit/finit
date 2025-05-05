@@ -37,7 +37,8 @@ jobs:
         run: |
           ./configure --prefix=/usr --exec-prefix= --sysconfdir=/etc --localstatedir=/var \
                       --enable-x11-common-plugin --enable-testserv-plugin --with-watchdog \
-                      --with-keventd
+                      --with-keventd \
+                      CFLAGS="-fsanitize=address -ggdb"
           make -j3 clean
           make -j3 V=1
       - name: Install to /tmp

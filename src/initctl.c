@@ -767,27 +767,25 @@ static int plugins_list(char *arg)
  */
 char *runlevel_string(int currlevel, int levels)
 {
-	static char lvl[21];
+	static char lvl[32];
 	int i = INIT_LEVEL;
-	int pos = 1;
 
-	memset(lvl, 0, sizeof(lvl));
-	lvl[0] = '[';
+	strlcpy(lvl, "[", sizeof(lvl));
 
 	do {
 		if (ISSET(levels, i)) {
-			if (!plain && currlevel == i)
-				pos = strlcat(lvl, "\e[1m", sizeof(lvl));
-
-			if (i == INIT_LEVEL)
-				lvl[pos++] = 'S';
-			else
-				lvl[pos++] = '0' + i;
+			char l[2] = { '0' + i, 0 };
 
 			if (!plain && currlevel == i)
-				pos = strlcat(lvl, "\e[0m", sizeof(lvl));
+				strlcat(lvl, "\e[1m", sizeof(lvl));
+
+			strlcat(lvl, i == INIT_LEVEL ? "S" : l, sizeof(lvl));
+
+
+			if (!plain && currlevel == i)
+				strlcat(lvl, "\e[0m", sizeof(lvl));
 		} else {
-			lvl[pos++] = '-';
+			strlcat(lvl, "-", sizeof(lvl));
 		}
 
 		/* XXX: ugly hack to get order right: S0123456789 */
@@ -798,8 +796,7 @@ char *runlevel_string(int currlevel, int levels)
 	} while (i < INIT_LEVEL);
 
 
-	lvl[pos++] = ']';
-	lvl[pos]   = 0;
+	strlcat(lvl, "]", sizeof(lvl));
 
 	return lvl;
 }
