@@ -59,6 +59,7 @@
 #define _PATH_RUNPARTS          FINIT_EXECPATH_ "/runparts"
 #define _PATH_SULOGIN           FINIT_EXECPATH_ "/sulogin"
 #define _PATH_GETTY             FINIT_EXECPATH_ "/getty"
+#define _PATH_TMPFILES          FINIT_EXECPATH_ "/tmpfiles"
 
 #define CMD_SIZE                1024
 #define LINE_SIZE               1024

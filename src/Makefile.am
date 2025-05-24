@@ -8,7 +8,7 @@ AM_LDFLAGS         = -export-dynamic
 endif
 
 sbin_PROGRAMS        = finit initctl
-pkglibexec_PROGRAMS  = getty logit runparts
+pkglibexec_PROGRAMS  = getty logit runparts tmpfiles
 if SULOGIN
 pkglibexec_PROGRAMS += sulogin
 endif
@@ -43,6 +43,11 @@ sulogin_SOURCES      = sulogin.c
 sulogin_CFLAGS       = -W -Wall -Wextra -std=gnu99
 sulogin_LDADD        = -lcrypt
 
+tmpfiles_SOURCES     = tmpfiles.c
+tmpfiles_CFLAGS      = -W -Wall -Wextra -std=gnu99
+tmpfiles_CFLAGS     += $(lite_CFLAGS)
+tmpfiles_LDADD       = $(lite_LIBS)
+
 logit_SOURCES        = logit.c logrotate.c
 logit_CFLAGS         = -W -Wall -Wextra -Wno-unused-parameter -std=gnu99
 logit_CFLAGS        += $(lite_CFLAGS)
@@ -66,7 +71,6 @@ finit_SOURCES      = api.c	cgroup.c	cgroup.h	\
 		     sig.c	sig.h				\
 		     sm.c	sm.h				\
 		     svc.c	svc.h				\
-		     tmpfiles.c	tmpfiles.h			\
 		     tty.c	tty.h				\
 		     util.c	util.h				\
 		     utmp-api.c	utmp-api.h
