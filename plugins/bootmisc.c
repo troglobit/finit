@@ -38,7 +38,6 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
-#include "tmpfiles.h"
 #include "util.h"
 #include "utmp-api.h"
 
@@ -163,7 +162,7 @@ static void setup(void *arg)
 	kernel_links();
 
 	/* Create all system tmpfiles.d(5) */
-	tmpfilesd();
+	run_interactive(_PATH_TMPFILES, "Creating required directories and files");
 
 	/* Set BOOT_TIME UTMP entry */
 	utmp_set_boot();
