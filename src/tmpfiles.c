@@ -39,9 +39,31 @@
 # include <lite/lite.h>
 #endif
 
+#include "svc.h"
 #include "helpers.h"
 #include "log.h"
 #include "util.h"
+
+int debug;
+int runlevel;
+char *osheading;
+svc_t *wdog;
+uev_ctx_t *ctx;
+int syncsec;
+int rescue;
+char *network;
+int cfglevel;
+char *finit_rcsd;
+char *sdown;
+char *hostname;
+int bootstrap;
+int single;
+int readiness;
+char *finit_conf;
+char *fstab;
+int prevlevel;
+int cmdlevel;
+int kerndebug;
 
 static int glob_do(const char *path, int (*cb)(const char *))
 {
