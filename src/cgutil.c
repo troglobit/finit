@@ -58,34 +58,47 @@ int cgroup_avail(void)
 	return fismnt(FINIT_CGPATH);
 }
 
-char *pid_cmdline(int pid, char *buf, size_t len)
+static size_t flen(FILE *fp)
 {
-	size_t i, sz;
-	char *ptr;
+	size_t total = 0, sz;
+	char buf[512];
+
+	while ((sz = fread(buf, 1, sizeof(buf), fp)) > 0)
+		total += sz;
+	rewind(fp);
+
+	return total;
+}
+
+char *pid_cmdline(int pid)
+{
+	size_t i, len;
+	char *buf;
 	FILE *fp;
 
 	fp = fopenf("r", "/proc/%d/cmdline", pid);
-	if (!fp) {
-		buf[0] = 0;
-		return buf;
-	}
+	if (!fp)
+		return strdup("");	/* regular process */
 
-	sz = fread(buf, sizeof(buf[0]), len - 1, fp);
-	fclose(fp);
-	if (!sz)
+	len = flen(fp);
+	if (len == 0) {
+	fail:
+		fclose(fp);
 		return NULL;		/* kernel thread */
-
-	buf[sz] = 0;
-
-	ptr = strchr(buf, 0);
-	if (ptr && ptr != buf) {
-		ptr++;
-		sz -= ptr - buf;
-		memmove(buf, ptr, sz + 1);
 	}
 
-	for (i = 0; i < sz; i++) {
-		if (buf[i] == 0)
+	buf = calloc(len + 1, 1);
+	if (!buf)
+		goto fail;
+
+	if (fread(buf, 1, len, fp) < len) {
+		free(buf);
+		goto fail;
+	}
+
+	/* replace all NUL chars with space */
+	for (i = 0; i < len; i++) {
+		if (buf[i] == '\0')
 			buf[i] = ' ';
 	}
 
@@ -423,7 +436,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 
 		i = 0;
 		while (fgets(buf, sizeof(buf), fp)) {
-			char comm[80] = { 0 };
+			char *cmdline;
 			pid_t pid;
 
 			pid = atoi(chomp(buf));
@@ -431,8 +444,8 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 				continue;
 
 			/* skip kernel threads for now (no cmdline) */
-			pid_comm(pid, comm, sizeof(comm));
-			if (pid_cmdline(pid, buf, sizeof(buf))) {
+			cmdline = pid_cmdline(pid);
+			if (cmdline) {
 				char proc[ttcols];
 
 				switch (mode) {
@@ -450,7 +463,7 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 				strlcat(row, pfx, rplen);
 				strlcat(row, ++i == num ? END : FORK, rlen);
 
-				snprintf(proc, sizeof(proc), " %d %s %s", pid, comm, buf);
+				snprintf(proc, sizeof(proc), " %d %s", pid, cmdline);
 
 				if (plain) {
 					strlcat(row, proc, rplen);
@@ -468,6 +481,8 @@ int cgroup_tree(char *path, char *pfx, int mode, int pos)
 				}
 
 				puts(row);
+
+				free(cmdline);
 			}
 
 			if (mode == 1) {
