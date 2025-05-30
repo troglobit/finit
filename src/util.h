@@ -25,6 +25,8 @@
 #define FINIT_UTIL_H_
 
 #include "config.h"
+
+#include <ctype.h>
 #ifdef HAVE_TERMIOS_H
 #include <poll.h>
 #include <stdio.h>
@@ -128,6 +130,39 @@ static inline int suffix(char *path, size_t len, const char *sfx)
 		return -1;
 
 	return 0;
+}
+
+static inline void hexdump(const char *buf, size_t len)
+{
+    size_t i, j;
+
+    for (i = 0; i < len; i += 16) {
+        printf("%08zx  ", i);
+
+        for (j = 0; j < 8 && i + j < len; j++)
+            printf("%02x ", buf[i + j]);
+
+        if (j == 8) {
+            printf(" ");
+        } else {
+            for (; j < 8; j++)
+                printf("   ");
+            printf(" ");
+        }
+
+        for (j = 8; j < 16 && i + j < len; j++)
+            printf("%02x ", buf[i + j]);
+
+        for (; j < 16; j++)
+            printf("   ");
+
+        printf(" |");
+        for (j = 0; j < 16 && i + j < len; j++) {
+            char c = buf[i + j];
+            printf("%c", isprint(c) ? c : '.');
+        }
+        printf("|\n");
+    }
 }
 
 #endif /* FINIT_UTIL_H_ */
