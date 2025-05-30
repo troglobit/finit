@@ -121,23 +121,43 @@ char *pid_comm(int pid, char *buf, size_t len)
 	return ptr;
 }
 
-char *pid_cgroup(int pid, char *buf, size_t len)
+char *pid_cgroup(int pid)
 {
-	char *ptr = NULL;
+	char *buf, *ptr = NULL;
+	size_t len;
 	FILE *fp;
 
 	fp = fopenf("r", "/proc/%d/cgroup", pid);
 	if (!fp)
 		return NULL;
 
+	len = flen(fp);
+	if (len == 0) {
+		fclose(fp);
+		return NULL;
+	}
+	len++;
+
+	buf = calloc(1, len);
+	if (!buf) {
+		fclose(fp);
+		return NULL;
+	}
+
 	if (fgets(buf, len, fp))
 		ptr = chomp(buf);
 	fclose(fp);
 
-	if (ptr)
-		ptr = strchr(buf, '/');
+	if (ptr) {
+		ptr = strchr(ptr, '/');
+		if (ptr) {
+			memmove(buf, ptr, strlen(ptr) + 1);
+			return buf;
+		}
+	}
 
-	return ptr;
+	free(buf);
+	return NULL;
 }
 
 static char *cgroup_val(char *path, char *file, char *buf, size_t len)

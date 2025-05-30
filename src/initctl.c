@@ -1135,14 +1135,14 @@ static int show_status(char *arg)
 		printf("   Restarts : %d (%d/%d)\n", svc->restart_tot, svc->restart_cnt, svc->restart_max);
 		printf("  Runlevels : %s\n", runlevel_string(runlevel, svc->runlevels));
 		if (cgrp && svc->pid > 1) {
-			char grbuf[128];
+			const struct cg *cg;
 			char path[256];
-			struct cg *cg;
 			char *group;
 
-			group = pid_cgroup(svc->pid, grbuf, sizeof(grbuf));
+			group = pid_cgroup(svc->pid);
 			if (!group)
 				goto no_cgroup; /* ... or PID doesn't exist (anymore) */
+
 			snprintf(path, sizeof(path), "%s/%s", FINIT_CGPATH, group);
 			cg = cg_conf(path);
 
@@ -1151,6 +1151,8 @@ static int show_status(char *arg)
 			       group, cg->cg_cpu.set, cg->cg_cpu.weight, cg->cg_cpu.max,
 			       cg->cg_mem.min, cg->cg_mem.max);
 			show_cgroup_tree(group, "              ");
+
+			free(group);
 		}
 	no_cgroup:
 		printf("\n");
