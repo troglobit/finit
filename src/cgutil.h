@@ -55,7 +55,6 @@ struct cg {
 int cgroup_avail(void);
 
 char *pid_cmdline (int pid);
-char *pid_comm    (int pid, char *buf, size_t len);
 char *pid_cgroup  (int pid);
 
 uint64_t cgroup_memory(char *group);

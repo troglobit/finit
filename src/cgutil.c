@@ -105,22 +105,6 @@ char *pid_cmdline(int pid)
 	return buf;
 }
 
-char *pid_comm(int pid, char *buf, size_t len)
-{
-	char *ptr = NULL;
-	FILE *fp;
-
-	fp = fopenf("r", "/proc/%d/comm", pid);
-	if (!fp)
-		return NULL;
-
-	if (fgets(buf, len, fp))
-		ptr = chomp(buf);
-	fclose(fp);
-
-	return ptr;
-}
-
 char *pid_cgroup(int pid)
 {
 	char *buf, *ptr = NULL;
