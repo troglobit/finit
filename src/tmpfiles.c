@@ -315,6 +315,43 @@ static void tmpfiles(char *line)
 
 	strc = stat(path, &st);
 
+	// file and directory removal logic
+	switch (type[0]) {
+	case 'b':
+	case 'c':
+	case 'C':
+	case 'd':
+	case 'D':
+	case 'e':
+	case 'f':
+	case 'F':
+	case 'l': /* Finit extension, like 'L' but only if target exists */
+	case 'L':
+	case 'p':
+		break;
+	case 'r':
+		rc = glob_do(path, erase);
+		if (rc && errno == ENOENT)
+			rc = 0;
+		break;
+	case 'R':
+		rc = glob_do(path, rmrf);
+		break;
+	case 'w':
+		break;
+	case 'X':
+	case 'x':
+		dbg("Unsupported x/X command, ignoring %s, no support for clean at runtime.", path);
+		break;
+	case 'Z':
+	case 'z':
+		break;
+	default:
+		errx(1, "Unsupported tmpfiles command '%s'", type);
+		return;
+	}
+
+	// file & directory creation logic
 	switch (type[0]) {
 	case 'b':
 		rc = parse_mm(arg, &major, &minor);
@@ -448,12 +485,7 @@ static void tmpfiles(char *line)
 		rc = mkfifo(path, mode ?: 0644);
 		break;
 	case 'r':
-		rc = glob_do(path, erase);
-		if (rc && errno == ENOENT)
-			rc = 0;
-		break;
 	case 'R':
-		rc = glob_do(path, rmrf);
 		break;
 	case 'w':
 		if (!arg)
