@@ -25,6 +25,7 @@
 
 #include <dirent.h>
 #include <ftw.h>
+#include <getopt.h>
 #include <glob.h>
 #include <libgen.h>
 #include <grp.h>
@@ -64,6 +65,9 @@ char *fstab;
 int prevlevel;
 int cmdlevel;
 int kerndebug;
+
+int c_flag = 0;
+int r_flag = 0;
 
 static int glob_do(const char *path, int (*cb)(const char *))
 {
@@ -316,213 +320,217 @@ static void tmpfiles(char *line)
 	strc = stat(path, &st);
 
 	// file and directory removal logic
-	switch (type[0]) {
-	case 'b':
-	case 'c':
-	case 'C':
-	case 'd':
-	case 'D':
-	case 'e':
-	case 'f':
-	case 'F':
-	case 'l': /* Finit extension, like 'L' but only if target exists */
-	case 'L':
-	case 'p':
-		break;
-	case 'r':
-		rc = glob_do(path, erase);
-		if (rc && errno == ENOENT)
-			rc = 0;
-		break;
-	case 'R':
-		rc = glob_do(path, rmrf);
-		break;
-	case 'w':
-		break;
-	case 'X':
-	case 'x':
-		dbg("Unsupported x/X command, ignoring %s, no support for clean at runtime.", path);
-		break;
-	case 'Z':
-	case 'z':
-		break;
-	default:
-		errx(1, "Unsupported tmpfiles command '%s'", type);
-		return;
+	if (r_flag) {
+		switch (type[0]) {
+		case 'b':
+		case 'c':
+		case 'C':
+		case 'd':
+		case 'D':
+		case 'e':
+		case 'f':
+		case 'F':
+		case 'l': /* Finit extension, like 'L' but only if target exists */
+		case 'L':
+		case 'p':
+			break;
+		case 'r':
+			rc = glob_do(path, erase);
+			if (rc && errno == ENOENT)
+				rc = 0;
+			break;
+		case 'R':
+			rc = glob_do(path, rmrf);
+			break;
+		case 'w':
+			break;
+		case 'X':
+		case 'x':
+			dbg("Unsupported x/X command, ignoring %s, no support for clean at runtime.", path);
+			break;
+		case 'Z':
+		case 'z':
+			break;
+		default:
+			errx(1, "Unsupported tmpfiles command '%s'", type);
+			return;
+		}
 	}
 
 	// file & directory creation logic
-	switch (type[0]) {
-	case 'b':
-		rc = parse_mm(arg, &major, &minor);
-		if (rc)
-			break;
-		if (!strc) {
-			if (type[1] != '+')
+	if (c_flag) {
+		switch (type[0]) {
+		case 'b':
+			rc = parse_mm(arg, &major, &minor);
+			if (rc)
 				break;
-			erase(path);
-		}
-		mkparent(path, 0755);
-		rc = blkdev(path, mode ?: 0644, major, minor);
-		break;
-	case 'c':
-		rc = parse_mm(arg, &major, &minor);
-		if (rc)
-			break;
-		if (!strc) {
-			if (type[1] != '+')
-				break;
-			erase(path);
-		}
-		mkparent(path, 0755);
-		rc = chardev(path, mode ?: 0644, major, minor);
-		break;
-	case 'C':
-		if (!arg) {
-			paste(buf, sizeof(buf), "/usr/share/factory", path);
-			arg = buf;
-		}
-		if (!strc) {
-			struct dirent **namelist;
-			int num;
-
-			if (!S_ISDIR(st.st_mode))
-				break;
-			num = scandir(path, &namelist, NULL, NULL);
-			free(namelist);
-			if (num >= 3)
-				break; /* not empty */
-		}
-		if (fisdir(arg) && !fisslashdir(arg)) {
-			size_t len = strlen(arg) + 2;
-
-			dst = malloc(len);
-			if (!dst)
-				break;
-			snprintf(dst, len, "%s/", arg);
-			arg = dst;
-		}
-		mkparent(path, 0755);
-		rc = rsync(arg, path, LITE_FOPT_KEEP_MTIME, NULL);
-		if (rc && errno == ENOENT)
-			rc = 0;
-		break;
-	case 'd':
-	case 'D':
-		mkparent(path, 0755);
-		rc = mksubsys(path, mode ?: 0755, user, group);
-		break;
-	case 'e':
-		if (glob(path, GLOB_NOESCAPE, NULL, &gl))
-			break;
-
-		for (size_t i = 0; i < gl.gl_pathc; i++)
-			rc += mksubsys(gl.gl_pathv[i], mode ?: 0755, user, group);
-		break;
-	case 'f':
-	case 'F':
-		mkparent(path, 0755);
-		if (type[1] == '+' || type[0] == 'F') {
-			/* f+/F will create or truncate the file */
-			if (!arg) {
-				rc = create(path, mode ?: 0644, user, group);
-				break;
+			if (!strc) {
+				if (type[1] != '+')
+					break;
+				erase(path);
 			}
-			fp = fopen(path, "w+");
-		} else {
-			/* f will create the file if it doesn't exist */
-			if (strc)
-				fp = fopen(path, "w");
-		}
-
-		if (fp) {
-			write_arg(fp, arg);
-			rc = fclose(fp);
-		}
-		break;
-	case 'l': /* Finit extension, like 'L' but only if target exists */
-		if (!arg) {
-			paste(buf, sizeof(buf), "/usr/share/factory", path);
-			if (stat(buf, &ast))
-				break;
-		} else if (arg[0] != '/') {
-			char *tmp;
-
-			tmp = dirname(strdupa(path));
-			paste(buf, sizeof(buf), tmp, arg);
-			dst = realpath(buf, NULL);
-			if (!dst)
-				break;
-			if (stat(dst, &ast))
-				break;
-		} else {
-			if (stat(arg, &ast))
-				break;
-		}
-		/* fallthrough */
-	case 'L':
-		if (!strc) {
-			if (type[1] != '+')
-				break;
-			rmrf(path);
-		}
-		mkparent(path, 0755);
-		if (!arg) {
-			paste(buf, sizeof(buf), "/usr/share/factory", path);
-			arg = buf;
-		}
-		rc = ln(arg, path);
-		if (rc && errno == EEXIST)
-			rc = 0;
-		break;
-	case 'p':
-		if (!strc) {
-			if (type[1] != '+')
-				break;
-			erase(path);
-		}
-		mkparent(path, 0755);
-		rc = mkfifo(path, mode ?: 0644);
-		break;
-	case 'r':
-	case 'R':
-		break;
-	case 'w':
-		if (!arg)
+			mkparent(path, 0755);
+			rc = blkdev(path, mode ?: 0644, major, minor);
 			break;
-
-		if (glob(path, GLOB_NOESCAPE, NULL, &gl))
+		case 'c':
+			rc = parse_mm(arg, &major, &minor);
+			if (rc)
+				break;
+			if (!strc) {
+				if (type[1] != '+')
+					break;
+				erase(path);
+			}
+			mkparent(path, 0755);
+			rc = chardev(path, mode ?: 0644, major, minor);
 			break;
+		case 'C':
+			if (!arg) {
+				paste(buf, sizeof(buf), "/usr/share/factory", path);
+				arg = buf;
+			}
+			if (!strc) {
+				struct dirent **namelist;
+				int num;
 
-		for (size_t i = 0; i < gl.gl_pathc; i++) {
-			fp = fopen(gl.gl_pathv[i], type[1] == '+' ? "a" : "w");
+				if (!S_ISDIR(st.st_mode))
+					break;
+				num = scandir(path, &namelist, NULL, NULL);
+				free(namelist);
+				if (num >= 3)
+					break; /* not empty */
+			}
+			if (fisdir(arg) && !fisslashdir(arg)) {
+				size_t len = strlen(arg) + 2;
+
+				dst = malloc(len);
+				if (!dst)
+					break;
+				snprintf(dst, len, "%s/", arg);
+				arg = dst;
+			}
+			mkparent(path, 0755);
+			rc = rsync(arg, path, LITE_FOPT_KEEP_MTIME, NULL);
+			if (rc && errno == ENOENT)
+				rc = 0;
+			break;
+		case 'd':
+		case 'D':
+			mkparent(path, 0755);
+			rc = mksubsys(path, mode ?: 0755, user, group);
+			break;
+		case 'e':
+			if (glob(path, GLOB_NOESCAPE, NULL, &gl))
+				break;
+
+			for (size_t i = 0; i < gl.gl_pathc; i++)
+				rc += mksubsys(gl.gl_pathv[i], mode ?: 0755, user, group);
+			break;
+		case 'f':
+		case 'F':
+			mkparent(path, 0755);
+			if (type[1] == '+' || type[0] == 'F') {
+				/* f+/F will create or truncate the file */
+				if (!arg) {
+					rc = create(path, mode ?: 0644, user, group);
+					break;
+				}
+				fp = fopen(path, "w+");
+			} else {
+				/* f will create the file if it doesn't exist */
+				if (strc)
+					fp = fopen(path, "w");
+			}
+
 			if (fp) {
 				write_arg(fp, arg);
 				rc = fclose(fp);
 			}
-		}
-		break;
-	case 'X':
-	case 'x':
-		dbg("Unsupported x/X command, ignoring %s, no support for clean at runtime.", path);
-		break;
-	case 'Z':
-		opts = "-R";
-		/* fallthrough */
-	case 'z':
-		if (!whichp("restorecon"))
 			break;
-		if (glob(path, GLOB_NOESCAPE, NULL, &gl))
-			break;
+		case 'l': /* Finit extension, like 'L' but only if target exists */
+			if (!arg) {
+				paste(buf, sizeof(buf), "/usr/share/factory", path);
+				if (stat(buf, &ast))
+					break;
+			} else if (arg[0] != '/') {
+				char *tmp;
 
-		for (size_t i = 0; i < gl.gl_pathc; i++) {
-			snprintf(buf, sizeof(buf), "restorecon %s %s", opts, gl.gl_pathv[i]);
-			run(buf, "restorecon");
+				tmp = dirname(strdupa(path));
+				paste(buf, sizeof(buf), tmp, arg);
+				dst = realpath(buf, NULL);
+				if (!dst)
+					break;
+				if (stat(dst, &ast))
+					break;
+			} else {
+				if (stat(arg, &ast))
+					break;
+			}
+			/* fallthrough */
+		case 'L':
+			if (!strc) {
+				if (type[1] != '+')
+					break;
+				rmrf(path);
+			}
+			mkparent(path, 0755);
+			if (!arg) {
+				paste(buf, sizeof(buf), "/usr/share/factory", path);
+				arg = buf;
+			}
+			rc = ln(arg, path);
+			if (rc && errno == EEXIST)
+				rc = 0;
+			break;
+		case 'p':
+			if (!strc) {
+				if (type[1] != '+')
+					break;
+				erase(path);
+			}
+			mkparent(path, 0755);
+			rc = mkfifo(path, mode ?: 0644);
+			break;
+		case 'r':
+		case 'R':
+			break;
+		case 'w':
+			if (!arg)
+				break;
+
+			if (glob(path, GLOB_NOESCAPE, NULL, &gl))
+				break;
+
+			for (size_t i = 0; i < gl.gl_pathc; i++) {
+				fp = fopen(gl.gl_pathv[i], type[1] == '+' ? "a" : "w");
+				if (fp) {
+					write_arg(fp, arg);
+					rc = fclose(fp);
+				}
+			}
+			break;
+		case 'X':
+		case 'x':
+			dbg("Unsupported x/X command, ignoring %s, no support for clean at runtime.", path);
+			break;
+		case 'Z':
+			opts = "-R";
+			/* fallthrough */
+		case 'z':
+			if (!whichp("restorecon"))
+				break;
+			if (glob(path, GLOB_NOESCAPE, NULL, &gl))
+				break;
+
+			for (size_t i = 0; i < gl.gl_pathc; i++) {
+				snprintf(buf, sizeof(buf), "restorecon %s %s", opts, gl.gl_pathv[i]);
+				run(buf, "restorecon");
+			}
+			break;
+		default:
+			errx(1, "Unsupported tmpfiles command '%s'", type);
+			return;
 		}
-		break;
-	default:
-		errx(1, "Unsupported tmpfiles command '%s'", type);
-		return;
 	}
 
 	if (dst)
@@ -532,14 +540,62 @@ static void tmpfiles(char *line)
 		warn("Failed %s operation on path %s", type, path);
 }
 
-/*
- * Only the three last tmpfiles.d/ directories are defined in
- * tmpfiles.d(5) as system search paths.  Finit adds two more
- * before that to have Finit specific ones sorted first, and
- * a configure prefix specific one after that for user needs.
- */
+static int usage(int rc)
+{
+	fprintf(stderr,
+		"Usage: tmpfiles [COMMAND...]\n"
+		"\n"
+		"Commands:\n"
+		"  -c, --create              Create files and directories\n"
+		"  -r, --remove              Remove files and directories marked for removal\n"
+		"  -h, --help                This help text\n"
+		"\n");
+
+	return rc;
+}
+
 int main(int argc, char *argv[])
 {
+	struct option long_options[] = {
+		{ "create",     0, NULL, 'c' },
+		{ "remove",     0, NULL, 'r' },
+		{ "help",       0, NULL, 'h' },
+		{ NULL, 0, NULL, 0 }
+	};
+
+	int c;
+
+	while ((c = getopt_long(argc, argv, "crh?", long_options, NULL)) != EOF) {
+		switch(c) {
+		case 'c':
+			c_flag = 1;
+			break;
+
+		case 'r':
+			r_flag = 1;
+			break;
+
+		case 'h':
+		case '?':
+			return usage(0);
+
+		default:
+			return usage(1);
+		}
+	}
+
+	if (c_flag + r_flag == 0) {
+		fprintf(stderr, "You need to specify at least one of --create or --remove.\n");
+		return 1;
+	}
+
+	/*
+	 * Only the three last tmpfiles.d/ directories are defined in
+	 * tmpfiles.d(5) as system search paths.  Finit adds two more
+	 * before that to have Finit specific ones sorted first, and
+	 * a configure prefix specific one after that for user needs.
+	 */
+
 	/* in priority order */
 	char *dir[] = {
 		FINIT_TMPFILES "/*.conf",
