@@ -326,7 +326,12 @@ static void tmpfiles(char *line)
 		case 'c':
 		case 'C':
 		case 'd':
+			break;
 		case 'D':
+			if (fisdir(path)) {
+				nftw(path, do_delete, 20, FTW_DEPTH | FTW_PHYS);
+			}
+			break;
 		case 'e':
 		case 'f':
 		case 'F':
