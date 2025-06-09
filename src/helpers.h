@@ -26,6 +26,7 @@
 #define FINIT_HELPERS_H_
 
 #include <ctype.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -204,6 +205,22 @@ static inline char *fgetval(const char *line, const char *key, char *sep)
 	memmove(copy, ptr, len);
 
 	return realloc(copy, len);
+}
+
+static inline int is_dir_empty(const char *path)
+{
+	struct dirent **namelist;
+	int num;
+
+	num = scandir(path, &namelist, NULL, NULL);
+	if (num < 0)
+		return 0;
+
+	for (int i = 0; i < num; i++)
+		free(namelist[i]);
+	free(namelist);
+
+	return num >= 3;
 }
 
 #endif /* FINIT_HELPERS_H_ */
