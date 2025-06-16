@@ -41,7 +41,7 @@ export PATH
 # Not supported by Busybox unshare:
 #  --cgroup --time
 exec "$unshare"						\
-     --user --map-root-user				\
+     --user --map-root-user --map-auto			\
      --fork --pid --mount-proc				\
      --mount						\
      --mount-proc					\
