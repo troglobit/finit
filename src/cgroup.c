@@ -37,6 +37,8 @@
 #include "cgroup.h"
 #include "finit.h"
 #include "iwatch.h"
+#include "conf.h"
+#include "service.h"
 #include "log.h"
 #include "util.h"
 
