@@ -349,6 +349,12 @@ static void api_cb(uev_t *w, void *arg, int events)
 		goto error;
 	}
 
+	/*
+	 * TODO: refactor to use accept4() and a new uev handler for the
+	 * client socket instead of risking blocking PID 1 if the client
+	 * is misbehaving.
+	 */
+//	sd = accept4(w->fd, NULL, NULL, SOCK_NONBLOCK);
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
 		err(1, "Failed serving API request");
@@ -613,7 +619,7 @@ int api_init(uev_ctx_t *ctx)
 	int sd;
 
 	dbg("Setting up external API socket ...");
-	sd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
+	sd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
 	if (-1 == sd) {
 		err(1, "Failed starting external API socket");
 		return 1;
