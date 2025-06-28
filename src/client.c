@@ -97,16 +97,6 @@ int client_request(struct init_request *rq, ssize_t len)
 		return -1;
 	}
 
-	/*
-	 * Exception, only command that don't need to wait for a
-	 * response from Finit.  Registers the client socket as a
-	 * readiness notification socket with Finit
-	 */
-	if (rq->cmd == INIT_CMD_NOTIFY_SOCKET) {
-		rq->cmd = INIT_CMD_ACK;
-		return 0;
-	}
-
 	pfd.fd = sd;
 	pfd.events = POLLIN | POLLERR | POLLHUP;
 	if ((rc = poll(&pfd, 1, REQUEST_TIMEOUT)) <= 0) {

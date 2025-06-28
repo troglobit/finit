@@ -85,7 +85,7 @@ typedef enum {
 	SVC_ONCRASH_SCRIPT,
 } svc_oncrash_action_t;
 
-/* 0: none, 1: systemd, 2: s6 */
+/* 0: none, 1: finit (native), 2: systemd, 3: s6 */
 typedef enum {
 	SVC_NOTIFY_NONE = 0,
 	SVC_NOTIFY_PID,

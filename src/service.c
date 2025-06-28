@@ -30,6 +30,7 @@
 #include <sys/reboot.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 #include <net/if.h>
 #ifdef _LIBITE_LITE
@@ -56,6 +57,9 @@
 #include "utmp-api.h"
 #include "schedule.h"
 
+#define NOTIFY_PATH "@run/finit/notify/%d"
+
+
 /*
  * run tasks block other tasks/services from starting, we track the
  * current run task here.  For service_step() and service_start().
@@ -68,6 +72,8 @@ static struct wq work = {
 int service_interval = SERVICE_INTERVAL_DEFAULT;
 
 static void svc_set_state(svc_t *svc, svc_state_t new_state);
+static void service_notify_cb(uev_t *w, void *arg, int events);
+
 
 /**
  * service_timeout_cb - libuev callback wrapper for service timeouts
@@ -582,6 +588,9 @@ static int service_start(svc_t *svc)
 	int result = 0, do_progress = 1;
 	char cmdline[CMD_SIZE] = "";
 	sigset_t nmask, omask;
+	int pipefd[2];
+	int fd = -1;
+	int sd = -1;
 	pid_t pid;
 	size_t i;
 
@@ -627,6 +636,29 @@ static int service_start(svc_t *svc)
 	if (svc_is_sysv(svc))
 		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s start' ...", cmdline);
 
+	switch (svc->notify) {
+	case SVC_NOTIFY_S6:
+		if (pipe(pipefd) == -1) {
+			err(1, "%s: failed opening pipe for s6 notify", svc_ident(svc, NULL, 0));
+			svc_missing(svc);
+			return 1;
+		}
+		fd = pipefd[1];
+		sd = pipefd[0];
+		break;
+
+	case SVC_NOTIFY_SYSTEMD:
+		sd = socket(AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+		if (sd == -1) {
+			err(1, "%s: failed opening notify socket", svc_ident(svc, NULL, 0));
+			svc_missing(svc);
+			return 1;
+		}
+		break;
+	default:
+		break;
+	}
+
 	if (!svc->desc[0])
 		do_progress = 0;
 
@@ -653,37 +685,71 @@ static int service_start(svc_t *svc)
 
 	pid = service_fork(svc);
 	if (pid < 0) {
+		if (sd != -1)
+			close(sd);
+		if (fd != -1)
+			close(fd);
 		result = -1;
 		goto fail;
 	}
 	if (pid > 1) {
+		struct sockaddr_un sun;
+		size_t len;
+
 		dbg("Starting %s as PID %d", svc_ident(svc, NULL, 0), pid);
 		svc->pid = pid;
 		svc->start_time = jiffies();
+
+		switch (svc->notify) {
+		case SVC_NOTIFY_SYSTEMD:
+			memset(&sun, 0, sizeof(sun));
+			sun.sun_family = AF_UNIX;
+			snprintf(sun.sun_path, sizeof(sun.sun_path), NOTIFY_PATH, pid);
+			len = strlen(sun.sun_path);
+			sun.sun_path[0] = 0;
+			result = bind(sd, (struct sockaddr *)&sun, offsetof(struct sockaddr_un, sun_path) + len);
+			if (result == -1) {
+				err(1, "%s: failed binding to notify socket", svc_ident(svc, NULL, 0));
+				close(sd);
+				break;
+			}
+			/* fallthrough */
+		case SVC_NOTIFY_S6:
+			close(fd); /* client-end of pipefd for s6 notify */
+			result = uev_io_init(ctx, &svc->notify_watcher, service_notify_cb, svc, sd, UEV_READ);
+			if (result < 0) {
+				err(1, "%s: failed setting up notify callback", svc_ident(svc, NULL, 0));
+				if (svc->notify == SVC_NOTIFY_S6)
+					close(fd);
+				close(sd);
+				break;
+			}
+		default:
+			break;
+		}
 	} else if (pid == 0) {
+		char str[strlen(NOTIFY_PATH) + 32];
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		int status;
 
 		if (!svc_is_tty(svc))
 			redirect(svc);
 
+		switch (svc->notify) {
+		case SVC_NOTIFY_SYSTEMD:
+			snprintf(str, sizeof(str), NOTIFY_PATH, getpid());
+			setenv("NOTIFY_SOCKET", str, 1);
+			/* fallthrough */
+		case SVC_NOTIFY_S6:
+			close(sd);
+			break;
+		default:
+			break;
+		}
+
 		if (!svc_is_sysv(svc)) {
 			wordexp_t we = { 0 };
 			int rc;
-
-			if (svc->notify == SVC_NOTIFY_SYSTEMD || svc->notify == SVC_NOTIFY_S6) {
-				if (client_command(INIT_CMD_NOTIFY_SOCKET)) {
-					err(1, "%s: failed creating notify socket", svc_ident(svc, NULL, 0));
-					client_disconnect();
-					/* does not change parent, restarting may work. */
-					svc->notify = SVC_NOTIFY_NONE;
-				} else {
-					char val[20];
-
-					snprintf(val, sizeof(val), "%d", client_socket());
-					setenv("NOTIFY_SOCKET", val, 1);
-				}
-			}
 
 			if ((rc = wordexp(svc->cmd, &we, 0))) {
 				errx(1, "%s: failed wordexp(%s): %d", svc_ident(svc, NULL, 0), svc->cmd, rc);
@@ -701,11 +767,11 @@ static int service_start(svc_t *svc)
 				if (len == 0)
 					break;
 
-				if (svc->notify == SVC_NOTIFY_SYSTEMD || svc->notify == SVC_NOTIFY_S6) {
+				if (svc->notify == SVC_NOTIFY_S6) {
 					char *ptr = strstr(arg, "%n");
 
 					if (ptr) {
-						len = snprintf(str, sizeof(str), "%d", client_socket());
+						len = snprintf(str, sizeof(str), "%d", fd);
 						if (len > 0 && len <= 2) {
 							ptr[0] = ' ';
 							ptr[1] = ' ';
@@ -2929,14 +2995,15 @@ void service_notify_reconf(void)
  * Called when a service sends readiness notification, or when
  * the service closes its end of the IPC connection.
  */
-void service_notify_cb(uev_t *w, void *arg, int events)
+static void service_notify_cb(uev_t *w, void *arg, int events)
 {
 	svc_t *svc = (svc_t *)arg;
+	int ready = 0;
 	char buf[32];
 	ssize_t len;
 
 	if (UEV_ERROR == events) {
-		dbg("Spurious problem with %s notify callback, restarting.", svc_ident(svc, NULL, 0));
+		dbg("%s: spurious problem with notify callback, restarting.", svc_ident(svc, NULL, 0));
 		uev_io_start(w);
 		return;
 	}
@@ -2946,11 +3013,24 @@ void service_notify_cb(uev_t *w, void *arg, int events)
 		warn("Failed reading notification from %s", svc_ident(svc, NULL, 0));
 		return;
 	}
-
 	buf[len] = 0;
 
-	/* systemd and s6, respectively.  The latter then closes the socket */
-	if (!strcmp(buf, "READY=1\n") || buf[len - 1] == '\n') {
+	/* Check for systemd READY=1 or s6 newline termination */
+	if (svc->notify == SVC_NOTIFY_SYSTEMD) {
+		char *token = strtok(buf, "\n");
+
+		while (token) {
+			if (!strcmp(token, "READY=1")) {
+				ready = 1;
+				break;
+			}
+			token = strtok(NULL, "\n");
+		}
+	} else if (svc->notify == SVC_NOTIFY_S6 && buf[len - 1] == '\n') {
+		ready = 1;
+	}
+
+	if (ready) {
 		/*
 		 * native (pidfile) services are marked as started by
 		 * the pidfile plugin.

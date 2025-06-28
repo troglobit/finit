@@ -46,7 +46,6 @@ int          api_exit         (void);
 void         conf_flush_events(void);
 
 void         service_monitor  (pid_t lost, int status);
-void         service_notify_cb(uev_t *w, void *arg, int events);
 
 const char  *plugin_hook_str  (hook_point_t no);
 int          plugin_exists    (hook_point_t no);
