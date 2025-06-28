@@ -15,8 +15,8 @@ test_setup()
 {
     run "cat >> $FINIT_CONF" <<EOF
 service log:stdout notify:pid                       name:A serv -np -i A              -- A         (pid)
-service log:stdout notify:systemd <pid/A>           name:B serv -np -i B -N 0         -- B needs A (systemd)
-service log:stdout notify:s6      <service/B/ready> name:C serv -np -i C -N 0         -- C needs B (s6)
+service log:stdout notify:systemd <pid/A>           name:B serv -np -i B              -- B needs A (systemd)
+service log:stdout notify:s6      <service/B/ready> name:C serv -np -i C -N %n        -- C needs B (s6)
 service log:stdout notify:none    <pid/A>           name:D type:forking serv -i D     -- D needs A (forking)
 task <service/C/ready,service/D/ready>              name:allup initctl cond set allup -- Everything is up
 EOF
