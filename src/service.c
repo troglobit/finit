@@ -208,13 +208,16 @@ static int stdin_redirect(void)
 {
 	int fd;
 
-	fd = open("/dev/null", O_RDONLY | O_APPEND);
-	if (-1 != fd) {
-		dup2(fd, STDIN_FILENO);
-		return close(fd);
+	fd = open("/dev/null", O_RDONLY);
+	if (fd == -1) {
+		warn("Failed opening /dev/null for stdin redirect");
+		return -1;
 	}
 
-	return -1;
+	dup2(fd, STDIN_FILENO);
+	close(fd);
+
+	return 0;
 }
 
 /*
@@ -261,11 +264,9 @@ static void fallback_logger(char *ident, char *prio)
 static int lredirect(svc_t *svc)
 {
 	static int have_sysklogd = -1;
-	pid_t pid, svc_pid;
+	pid_t svc_pid = getpid();
+	pid_t pid;
 	int fd;
-
-	svc_pid = getpid();
-	dbg("%s pid: %d", svc_ident(svc, NULL, 0), svc_pid);
 
 	/*
 	 * Open PTY to connect to logger.  A pty isn't buffered
