@@ -16,6 +16,7 @@
 #include <sysexits.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include "sd-daemon.h"
 
 #define PROGNM "serv"
 
@@ -160,7 +161,7 @@ static int usage(int rc)
 		" -h       Show help text (this)\n"
 		" -i IDENT Change process identity, incl. logs, pidfile, etc.\n"
 		" -n       Run in foreground\n"
-		" -N SOCK  Send 'READY=1\\n' on $NOTIFY_SOCKET or SOCK\n"
+		" -N SOCK  Send '\\n' on SOCK (integer), for s6 readiness\n"
 		" -p       Create PID file despite running in foreground\n"
 		" -P FILE  Create PID file using FILE\n"
 		" -r SVC   Call initctl to restart service SVC (self)\n"
@@ -169,6 +170,8 @@ static int usage(int rc)
 		"when it's done setting up its signal handler(s), creates a PID file\n"
 		"to let the rest of the system know it's done.  When the program runs\n"
 		"in the foreground it does not create a PID file by default.\n"
+		"\n"
+		"When acting as a systemd daemon, this program expects NOTIFY_SOCKET\n"
 		"\n"
 		"Regardless of how This daemon is started it provides a single service\n"
 		"to others, spice ... guarded by sandworms.\n",
@@ -256,13 +259,13 @@ int main(int argc, char *argv[])
 	if (do_pidfile > 0)
 		pidfile(pidfn);
 
-	if (!do_notify) {
-		const char *sock = getenv("NOTIFY_SOCKET");
+	if (!do_notify && getenv("NOTIFY_SOCKET"))
+		do_notify = 1;
 
-		/* systemd style */
-		if (sock)
-			do_notify = atoi(sock);
-	}
+	if (do_notify)
+		inf("Will notify %s ...", notify_s6 ? "s6" : "systemd");
+	else
+		inf("No notify socket ...");
 
 	if (do_crash) {
 		inf("Simulating crash, exiting with code %d", EX_SOFTWARE);
@@ -279,15 +282,24 @@ int main(int argc, char *argv[])
 
 		if (reloading) {
 			if (do_notify > 0) {
+				/* Issue #343: see notify.sh test for more details */
 				inf("Delaying notify by 3 seconds for notify.sh ...");
 				sleep(3);
-				inf("Notifying Finit on socket %d, READY=1", do_notify);
-				if (write(do_notify, "READY=1\n", 8) == -1)
-					err(1, "Failed sending ready notification to Finit");
+
 				if (notify_s6) {
+					inf("Notifying Finit on socket %d", do_notify);
+					if (write(do_notify, "\n", 1) < 1)
+						err(1, "Failed sending ready notification to Finit");
 					inf("s6 notify, closing socket %d ...", do_notify);
-					close(do_notify);
+					if (close(do_notify))
+						err(1, "Failed closing notify socket");
 					do_notify = 0;
+				} else {
+					int rc;
+
+					inf("Notifying Finit on NOTIFY_SOCKET");
+					rc = sd_notify(0, "READY=1");
+					inf("sd_notify () => %d", rc);
 				}
 			}
 			if (do_pidfile > 0)
