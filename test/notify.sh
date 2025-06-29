@@ -25,6 +25,15 @@ test_one()
     type=$1
     service=$2
 
+    # Skip systemd tests if serv doesn't have libsystemd support
+    if [ "$type" = "systemd" ]; then
+        if ! "$TEST_DIR/src/serv" -C | grep -q "libsystemd"; then
+	    sep
+            say "Skipping systemd test - serv built without libsystemd support"
+            return 0
+        fi
+    fi
+
     sep
 
 #    num=$(run "find /proc/1/fd |wc -l")

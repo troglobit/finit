@@ -12,6 +12,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
 	doc/Makefile
+	libsystemd/Makefile libsystemd/libsystemd.pc
 	man/Makefile
 	plugins/Makefile
 	src/Makefile
@@ -168,6 +169,10 @@ AC_ARG_WITH(watchdog,
         AS_HELP_STRING([--with-watchdog@<:@=DEV@:>@], [Enable built-in watchdog, default: /dev/watchdog]),
 	[watchdog=$withval], [with_watchdog=no watchdog=])
 
+AC_ARG_WITH(libsystemd,
+        AS_HELP_STRING([--with-libsystemd], [Build replacement libsystemd library, default: yes]),
+	[with_libsystemd=$withval], [with_libsystemd=yes])
+
 AC_ARG_WITH(hook-scripts-path,
         AS_HELP_STRING([--with-hook-scripts-path=DIR], [Base directory for hook scripts, default $libexecdir/finit/hook]),
 	[hook_scripts_path=$withval], [hook_scripts_path=yes])
@@ -308,6 +313,9 @@ AS_IF([test "x$with_watchdog" != "xno"], [
         AC_DEFINE_UNQUOTED(WDT_DEVNODE, "$watchdog", [Built-in watchdog device node])], [
 	watchdog=])
 
+AS_IF([test "x$with_libsystemd" != "xno"], [
+        AC_DEFINE(HAVE_LIBSYSTEMD, 1, [Build replacement libsystemd library support])])
+
 AS_IF([test "x$enable_hook_scripts_plugin" != "xno"], [
 	AS_IF([test "x$hook_scripts_path" = "xyes"], [hook_scripts_path=$libexecdir/finit/hook])
 	AC_EXPAND_DIR(hook_scripts_path, "$hook_scripts_path")
@@ -319,14 +327,15 @@ AS_IF([test "x$with_plugin_path" != "xno"], [
 	AC_DEFINE_UNQUOTED(EXTERNAL_PLUGIN_PATH, "$plugin_path", [Built-in default: /usr/lib/finit/plugins:/usr/local/lib/finit/plugins])])
 
 # Control build with automake flags
-AM_CONDITIONAL(BASH,      [test "x$bash_dir"      != "xno"])
-AM_CONDITIONAL(STATIC,    [test "x$enable_static"  = "xyes"])
-AM_CONDITIONAL(KEVENTD,   [test "x$with_keventd"  != "xno"])
-AM_CONDITIONAL(SULOGIN,   [test "x$with_sulogin"  != "xno"])
-AM_CONDITIONAL(WATCHDOGD, [test "x$with_watchdog" != "xno"])
-AM_CONDITIONAL(DOC,       [test "x$enable_doc"     = "xyes"])
-AM_CONDITIONAL(CONTRIB,   [test "x$enable_contrib" = "xyes"])
-AM_CONDITIONAL(TESTSERV,  [test "x$enable_testserv_plugin" = "xyes"])
+AM_CONDITIONAL(BASH,        [test "x$bash_dir"        != "xno"])
+AM_CONDITIONAL(STATIC,      [test "x$enable_static"    = "xyes"])
+AM_CONDITIONAL(KEVENTD,     [test "x$with_keventd"    != "xno"])
+AM_CONDITIONAL(SULOGIN,     [test "x$with_sulogin"    != "xno"])
+AM_CONDITIONAL(WATCHDOGD,   [test "x$with_watchdog"   != "xno"])
+AM_CONDITIONAL(LIBSYSTEMD,  [test "x$with_libsystemd" != "xno"])
+AM_CONDITIONAL(DOC,         [test "x$enable_doc"       = "xyes"])
+AM_CONDITIONAL(CONTRIB,     [test "x$enable_contrib"   = "xyes"])
+AM_CONDITIONAL(TESTSERV,    [test "x$enable_testserv_plugin" = "xyes"])
 
 # Workaround for as-of-yet unreleased runstatedir support, planned for
 # autoconf 2.70, which some major distros have backported.
@@ -408,6 +417,7 @@ Optional features:
   Built-in sulogin......: $with_sulogin $sulogin
   Built-in watchdogd....: $with_watchdog $watchdog
   Built-in logrotate....: $enable_logrotate
+  Replacement libsystemd: $with_libsystemd
   Use cgroup v2.........: $enable_cgroup
   Parse kernel cmdline..: $enable_kernel_cmdline
   Keep kernel logging...: $enable_kernel_logging

@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS    = -I m4
-SUBDIRS            = man plugins src system test tmpfiles.d
+SUBDIRS            = man plugins src system tmpfiles.d
 doc_DATA           = README.md LICENSE contrib/finit.conf
 EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
 
@@ -8,6 +8,17 @@ SUBDIRS           += contrib
 endif
 if DOC
 SUBDIRS           += doc
+endif
+if LIBSYSTEMD
+SUBDIRS           += libsystemd
+endif
+
+if LIBSYSTEMD
+SUBDIRS           += test
+# Explicit dependency to ensure libsystemd is built before test
+test: libsystemd
+else
+SUBDIRS           += test
 endif
 
 if BASH

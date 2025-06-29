@@ -5,6 +5,10 @@
  * in foregrund it does not create a PID file by default.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -16,7 +20,9 @@
 #include <sysexits.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#ifdef HAVE_LIBSYSTEMD
 #include "sd-daemon.h"
+#endif
 
 #define PROGNM "serv"
 
@@ -146,6 +152,16 @@ static void pidfile(char *pidfn)
 	}
 }
 
+static int capabilities(void)
+{
+#ifdef HAVE_LIBSYSTEMD
+	puts("libsystemd");
+#endif
+	puts("s6");
+
+	return 0;
+}
+
 static int usage(int rc)
 {
 	FILE *fp = rc ? stderr : stdout;
@@ -153,6 +169,7 @@ static int usage(int rc)
 	fprintf(fp,
 		"%s [-nhp] [-P FILE]\n"
 		"\n"
+		" -C       Show capabilities and exit\n"
 		" -c       Crash (exit) immediately\n"
 		" -e K:V   Verify K environment variable is V value\n"
 		" -E K     Verify K is not set in the environment\n"
@@ -195,11 +212,13 @@ int main(int argc, char *argv[])
 	char cmd[80];
 	int c;
 
-	while ((c = getopt(argc, argv, "ce:E:f:F:hi:nN:pP:r:")) != EOF) {
+	while ((c = getopt(argc, argv, "cCe:E:f:F:hi:nN:pP:r:")) != EOF) {
 		switch (c) {
 		case 'c':
 			do_crash = 1;
 			break;
+		case 'C':
+			return capabilities();
 		case 'e':
 			verify_env(optarg);
 			break;
@@ -295,11 +314,15 @@ int main(int argc, char *argv[])
 						err(1, "Failed closing notify socket");
 					do_notify = 0;
 				} else {
+#ifdef HAVE_LIBSYSTEMD
 					int rc;
 
 					inf("Notifying Finit on NOTIFY_SOCKET");
 					rc = sd_notify(0, "READY=1");
 					inf("sd_notify () => %d", rc);
+#else
+					inf("Skipping systemd notify - built without libsystemd support");
+#endif
 				}
 			}
 			if (do_pidfile > 0)
