@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,6 +23,8 @@
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "sd-daemon.h"
 
 /*
  * NOTE: As per spec., this function does not return POSIX OK(0) but
@@ -80,5 +83,135 @@ int sd_notify(int unset_environment, const char *state)
 		return written < 0 ? -errno : -EPROTO;
 	}
 
+	return 1;
+}
+
+/*
+ * Printf-style notification function
+ */
+int sd_notifyf(int unset_environment, const char *format, ...)
+{
+	va_list ap;
+	char *state;
+	int ret;
+
+	if (!format)
+		return -EINVAL;
+
+	va_start(ap, format);
+	ret = vasprintf(&state, format, ap);
+	va_end(ap);
+
+	if (ret < 0)
+		return -ENOMEM;
+
+	ret = sd_notify(unset_environment, state);
+	free(state);
+
+	return ret;
+}
+
+/*
+ * PID-specific notification function
+ */
+int sd_pid_notify(pid_t pid, int unset_environment, const char *state)
+{
+	char path[256], *env;
+	size_t len;
+	int ret;
+
+	if (!state)
+		return -EINVAL;
+
+	len = strlen(state);
+	if (len == 0)
+		return -EINVAL;
+
+	if (pid == 0)
+		pid = getpid();
+
+	env = getenv("NOTIFY_SOCKET");
+	if (env) {
+		env = strdup(env);
+		if (!env)
+			return -errno;
+	}
+
+	snprintf(path, sizeof(path), "@run/finit/notify/%d", pid);
+	setenv("NOTIFY_SOCKET", path, 1);
+
+	ret = sd_notify(unset_environment, state);
+
+	if (env) {
+		setenv("NOTIFY_SOCKET", env, 1);
+		free(env);
+	}
+
+	return ret;
+}
+
+/*
+ * PID-specific printf-style notification function
+ */
+int sd_pid_notifyf(pid_t pid, int unset_environment, const char *format, ...)
+{
+	va_list ap;
+	char *state;
+	int ret;
+
+	if (!format)
+		return -EINVAL;
+
+	va_start(ap, format);
+	ret = vasprintf(&state, format, ap);
+	va_end(ap);
+
+	if (ret < 0)
+		return -ENOMEM;
+
+	ret = sd_pid_notify(pid, unset_environment, state);
+	free(state);
+
+	return ret;
+}
+
+/*
+ * Socket activation stub - Finit doesn't support socket activation yet
+ * Returns 0 (no file descriptors passed)
+ */
+int sd_listen_fds(int unset_environment)
+{
+	if (unset_environment) {
+		unsetenv("LISTEN_PID");
+		unsetenv("LISTEN_FDS");
+		unsetenv("LISTEN_FDNAMES");
+	}
+
+	return 0;
+}
+
+/*
+ * Watchdog stub - Finit doesn't support watchdog yet
+ * Returns 0 (no watchdog enabled)
+ */
+int sd_watchdog_enabled(int unset_environment, uint64_t *usec)
+{
+	if (unset_environment) {
+		unsetenv("WATCHDOG_PID");
+		unsetenv("WATCHDOG_USEC");
+	}
+
+	if (usec)
+		*usec = 0;
+
+	return 0;
+}
+
+/*
+ * System detection function
+ * Returns 1 to indicate systemd compatibility (trick applications)
+ */
+int sd_booted(void)
+{
 	return 1;
 }
