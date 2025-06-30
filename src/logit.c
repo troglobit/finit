@@ -36,6 +36,9 @@
 # include <lite/lite.h>
 #endif
 
+#define LOG_MAX (200 * 1024)
+#define LOG_NUM 5
+
 static const char version_info[] = PACKAGE_NAME " v" PACKAGE_VERSION;
 extern int logrotate(char *file, int num, off_t sz);
 
@@ -161,13 +164,14 @@ static int usage(int code)
 
 int main(int argc, char *argv[])
 {
-	int c, rc, num = 5;
+	char *ident = NULL, *logfile = NULL;
+	int log_opts = LOG_NOWAIT;
 	int facility = LOG_USER;
 	int level = LOG_INFO;
-	int log_opts = LOG_NOWAIT;
-	off_t size = 200 * 1024;
-	char *ident = NULL, *logfile = NULL;
+	off_t size = LOG_MAX;
 	char buf[512] = "";
+	int num = LOG_NUM;
+	int c, rc;
 
 	while ((c = getopt(argc, argv, "f:hn:p:r:st:v")) != EOF) {
 		switch (c) {
