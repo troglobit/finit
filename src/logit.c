@@ -90,15 +90,51 @@ reopen:
 	return fclose(fp);
 }
 
-static int logit(int level, char *buf, size_t len)
+/*
+ * Parse possible systemd style log <level> prefix from message
+ * For details, see libsystemd/sd-daemon.h
+ *
+ * Returns the level, and updates buf to point past the prefix
+ */
+static int parse_level(char **buf, int default_level)
 {
-	if (buf[0]) {
-		syslog(level, "%s", buf);
-		return 0;
+	char *msg = *buf;
+
+	if (msg[0] == '<' && msg[2] == '>' && msg[1] >= '0' && msg[1] <= '7') {
+		int level;
+
+		switch (msg[1]) {
+		case '0': level = LOG_EMERG;    break;
+		case '1': level = LOG_ALERT;    break;
+		case '2': level = LOG_CRIT;     break;
+		case '3': level = LOG_ERR;      break;
+		case '4': level = LOG_WARNING;  break;
+		case '5': level = LOG_NOTICE;   break;
+		case '6': level = LOG_INFO;     break;
+		case '7': level = LOG_DEBUG;    break;
+		default:  level = default_level; break;
+		}
+
+		*buf = msg + 3;
+		return (default_level & ~LOG_PRIMASK) | level;
 	}
 
+	return default_level;
+}
+
+static int do_log(int level, char *msg)
+{
+	syslog(parse_level(&msg, level), "%s", msg);
+	return 0;
+}
+
+static int logit(int level, char *buf, size_t len)
+{
+	if (buf[0])
+		return do_log(level, buf);
+
 	while ((fgets(buf, len, stdin)))
-		syslog(level, "%s", buf);
+		do_log(level, buf);
 
 	return 0;
 }
