@@ -342,6 +342,7 @@ static int lredirect(svc_t *svc)
 		if (svc->log.prio[0])
 			prio = svc->log.prio;
 
+		/* Neither sysklogd logger or native logit tool available */
 		if (!have_sysklogd && !whichp(_PATH_LOGIT)) {
 			logit(LOG_INFO, _PATH_LOGIT " missing, using syslog for %s instead", svc->name);
 			fallback_logger(tag, prio);
@@ -367,7 +368,13 @@ static int lredirect(svc_t *svc)
 			_exit(1);
 		}
 
-		if (have_sysklogd) {
+		/*
+		 * For now, let systemd programs go via our native logit
+		 * tool.  It supports systemd logging defines for stderr
+		 * parsing.  The only real downside is that it cannot do
+		 * PID faking, like sysklogd's logger tool.
+		 */
+		if (have_sysklogd && svc->notify != SVC_NOTIFY_SYSTEMD) {
 			char pid[16];
 
 			snprintf(pid, sizeof(pid), "%d", svc_pid);
