@@ -1191,6 +1191,83 @@ void service_runlevel(int newlevel)
 }
 
 /*
+ * Parse run/task/service arguments with support for quoted strings, both
+ * single and double quotes to allow arguments containing spaces.
+ *
+ * Returns next argument or NULL if end of line
+ * Updates *line to point past the parsed argument
+ */
+static char *parse_args(char **line)
+{
+	char *start, *end = NULL, *arg;
+	char in_quote = 0;
+	int has_colon = 0;
+
+	if (!line || !*line)
+		return NULL;
+
+	/* Skip leading whitespace */
+	while (**line && (**line == ' ' || **line == '\t'))
+		(*line)++;
+
+	if (!**line)
+		return NULL;
+
+	start = *line;
+
+	/* Parse the token */
+	while (**line) {
+		if (in_quote) {
+			if (**line == in_quote) {
+				/* End quote found */
+				in_quote = 0;
+			}
+		} else {
+			if (**line == '\'' || **line == '"') {
+				/* Start quote */
+				in_quote = **line;
+			} else if (**line == ':') {
+				/* Found colon - this might be key:value format */
+				has_colon = 1;
+			} else if (**line == ' ' || **line == '\t') {
+				/* Whitespace - check if we're in key:value mode */
+				if (has_colon) {
+					/* Look ahead to see if there's a comma after whitespace */
+					char *lookahead = *line;
+					while (*lookahead && (*lookahead == ' ' || *lookahead == '\t'))
+						lookahead++;
+					if (*lookahead == ',') {
+						/* Continue parsing - this space is part of the token */
+						(*line)++;
+						continue;
+					}
+				}
+				/* End token at whitespace */
+				end = *line;
+				break;
+			}
+		}
+		(*line)++;
+	}
+
+	/* Set end if we reached end of string */
+	if (!end)
+		end = *line;
+
+	/* Null terminate the argument */
+	if (end > start) {
+		arg = start;
+		if (*end) {
+			*end = '\0';
+			*line = end + 1;
+		}
+		return arg;
+	}
+
+	return NULL;
+}
+
+/*
  * log:/path/to/logfile,priority:facility.level,tag:ident
  */
 static void parse_log(svc_t *svc, char *arg)
@@ -1564,7 +1641,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		}
 	}
 
-	cmd = strtok_r(line, " \t", &args);
+	args = line;
+	cmd = parse_args(&args);
 	if (!cmd) {
 	incomplete:
 		errx(1, "Incomplete service '%s', cannot register", cfg);
@@ -1644,7 +1722,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			break;
 
 		/* Check if valid command follows... */
-		cmd = strtok_r(NULL, " ", &args);
+		cmd = parse_args(&args);
 		if (!cmd)
 			goto incomplete;
 	}

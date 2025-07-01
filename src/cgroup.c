@@ -88,6 +88,21 @@ static void cgset(const char *path, char *ctrl, char *prop)
 	}
 	*val++ = 0;
 
+	/* unquote value, if quoted */
+	if (val[0] == '"' || val[0] == '\'') {
+		char q = val[0];
+		char *end;
+
+		end = strchr(&val[1], q);
+		if (!end) {
+			errx(1, "Syntax error, unterminated quote in %s/%s.%s=%s", path, ctrl, prop, val);
+			return;
+		}
+
+		val++;
+		*end = 0;
+	}
+
 	/* disallow sneaky relative paths */
 	if (strstr(ctrl, "..") || strstr(prop, "..")) {
 		errx(1, "Possible security violation; '..' not allowed in cgroup config!");
