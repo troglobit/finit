@@ -165,6 +165,27 @@ static inline void hexdump(const char *buf, size_t len)
     }
 }
 
+/* drop quotes from a string at point, if any */
+static inline int unquote(char **str, char *end)
+{
+	char *ptr = *str;
+
+	/* unquote value, if quoted */
+	if (ptr[0] == '"' || ptr[0] == '\'') {
+		char q = ptr[0];
+
+		if (!end && !(end = strchr(&ptr[1], q)))
+			return -1;
+
+		if (*end == q) {
+			*str = &ptr[1];
+			*end = 0;
+		}
+	}
+
+	return 0;
+}
+
 #endif /* FINIT_UTIL_H_ */
 
 /**

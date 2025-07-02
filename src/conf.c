@@ -527,14 +527,7 @@ static void parse_env(char *line)
 		val++;
 
 	/* unquote value, if quoted */
-	if (val[0] == '"' || val[0] == '\'') {
-		char q = val[0];
-
-		if (*end == q) {
-			val = &val[1];
-			*end = 0;
-		}
-	}
+	unquote(&val, end);
 
 	/* find end of key */
 	end = key;

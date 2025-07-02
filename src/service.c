@@ -460,14 +460,7 @@ static void source_env(svc_t *svc)
 			value++;
 
 		/* unquote value, if quoted */
-		if (value[0] == '"' || value[0] == '\'') {
-			char q = value[0];
-
-			if (*end == q) {
-				value = &value[1];
-				*end = 0;
-			}
-		}
+		unquote(&value, end);
 
 		/* find end of key */
 		end = key;
