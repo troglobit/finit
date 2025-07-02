@@ -1374,7 +1374,7 @@ static char *parse_name(char *cmd, char *arg)
  */
 static void parse_cmdline_args(svc_t *svc, char *cmd, char **args)
 {
-	char prev[MAX_ARG_LEN];
+	char prev[MAX_CMD_LEN];
 	int diff = 0;
 	char sep = 0;
 	char *arg;
