@@ -244,6 +244,9 @@ static void fallback_logger(char *ident, char *prio)
 	int level = LOG_NOTICE;
 	char buf[256];
 
+	strlcpy(buf, prio, sizeof(buf));
+	log_parse(buf, &facility, &level);
+
 	prctl(PR_SET_NAME, "finitlog", 0, 0, 0);
 	openlog(ident, LOG_NOWAIT | LOG_PID, facility);
 	while ((fgets(buf, sizeof(buf), stdin)))
@@ -327,6 +330,11 @@ static int lredirect(svc_t *svc)
 		/* Default syslog identity name[:id] */
 		tag = svc_ident(svc, buf, sizeof(buf));
 
+		if (svc->log.ident[0])
+			tag = svc->log.ident;
+		if (svc->log.prio[0])
+			prio = svc->log.prio;
+
 		if (!have_sysklogd && !whichp(_PATH_LOGIT)) {
 			logit(LOG_INFO, _PATH_LOGIT " missing, using syslog for %s instead", svc->name);
 			fallback_logger(tag, prio);
@@ -351,11 +359,6 @@ static int lredirect(svc_t *svc)
 			}
 			_exit(1);
 		}
-
-		if (svc->log.ident[0])
-			tag = svc->log.ident;
-		if (svc->log.prio[0])
-			prio = svc->log.prio;
 
 		if (have_sysklogd) {
 			char pid[16];
@@ -425,10 +428,12 @@ static void source_env(svc_t *svc)
 
 	line = buf;
 	while (fgets(line, LINE_SIZE, fp)) {
-		char *key = chomp(line);
 		wordexp_t we = { 0 };
-		char *value, *end;
+		char *key, *value;
 		size_t i;
+
+		/* Trim newline */
+		key = chomp(line);
 
 		/* skip any leading whitespace */
 		while (isspace(*key))
@@ -438,64 +443,9 @@ static void source_env(svc_t *svc)
 		if (*key == '#' || *key == ';')
 			continue;
 
-		/* find end of line */
-		end = key;
-		while (*end)
-			end++;
-
-		/* strip trailing whitespace */
-		if (end > key) {
-			end--;
-			while (isspace(*end))
-				*end-- = 0;
-		}
-
-		value = strchr(key, '=');
-		if (!value)
+		key = conf_parse_env(key, &value);
+		if (!key)
 			continue;
-		*value++ = 0;
-
-		/* strip leading whitespace from value */
-		while (isspace(*value))
-			value++;
-
-		/* unquote value, if quoted */
-		if (value[0] == '"' || value[0] == '\'') {
-			char q = value[0];
-
-			if (*end == q) {
-				value = &value[1];
-				*end = 0;
-			}
-		}
-
-		/* find end of key */
-		end = key;
-		while (*end)
-			end++;
-
-		/* strip trailing whitespace */
-		if (end > key) {
-			end--;
-			while (isspace(*end))
-				*end-- = 0;
-		}
-
-		/* strip any leading 'set ' */
-		end = key;
-		if (!strncmp(key, "set", 3))
-			end += 3;
-
-		/* check key, no spaces allowed */
-		while (*end && isspace(*end))
-			end++;
-		key = end;
-		while (*end && !isspace(*end))
-			end++;
-		if (*end != 0) {
-			warnx("'%s=%s': not a valid identifier", key, value);
-			continue;	/* invalid key */
-		}
 
 		if (wordexp(value, &we, 0)) {
 			setenv(key, value, 1);
@@ -1191,6 +1141,83 @@ void service_runlevel(int newlevel)
 }
 
 /*
+ * Parse run/task/service arguments with support for quoted strings, both
+ * single and double quotes to allow arguments containing spaces.
+ *
+ * Returns next argument or NULL if end of line
+ * Updates *line to point past the parsed argument
+ */
+static char *parse_args(char **line)
+{
+	char *start, *end = NULL, *arg;
+	char in_quote = 0;
+	int has_colon = 0;
+
+	if (!line || !*line)
+		return NULL;
+
+	/* Skip leading whitespace */
+	while (**line && (**line == ' ' || **line == '\t'))
+		(*line)++;
+
+	if (!**line)
+		return NULL;
+
+	start = *line;
+
+	/* Parse the token */
+	while (**line) {
+		if (in_quote) {
+			if (**line == in_quote) {
+				/* End quote found */
+				in_quote = 0;
+			}
+		} else {
+			if (**line == '\'' || **line == '"') {
+				/* Start quote */
+				in_quote = **line;
+			} else if (**line == ':') {
+				/* Found colon - this might be key:value format */
+				has_colon = 1;
+			} else if (**line == ' ' || **line == '\t') {
+				/* Whitespace - check if we're in key:value mode */
+				if (has_colon) {
+					/* Look ahead to see if there's a comma after whitespace */
+					char *lookahead = *line;
+					while (*lookahead && (*lookahead == ' ' || *lookahead == '\t'))
+						lookahead++;
+					if (*lookahead == ',') {
+						/* Continue parsing - this space is part of the token */
+						(*line)++;
+						continue;
+					}
+				}
+				/* End token at whitespace */
+				end = *line;
+				break;
+			}
+		}
+		(*line)++;
+	}
+
+	/* Set end if we reached end of string */
+	if (!end)
+		end = *line;
+
+	/* Null terminate the argument */
+	if (end > start) {
+		arg = start;
+		if (*end) {
+			*end = '\0';
+			*line = end + 1;
+		}
+		return arg;
+	}
+
+	return NULL;
+}
+
+/*
  * log:/path/to/logfile,priority:facility.level,tag:ident
  */
 static void parse_log(svc_t *svc, char *arg)
@@ -1564,7 +1591,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		}
 	}
 
-	cmd = strtok_r(line, " \t", &args);
+	args = line;
+	cmd = parse_args(&args);
 	if (!cmd) {
 	incomplete:
 		errx(1, "Incomplete service '%s', cannot register", cfg);
@@ -1644,7 +1672,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			break;
 
 		/* Check if valid command follows... */
-		cmd = strtok_r(NULL, " ", &args);
+		cmd = parse_args(&args);
 		if (!cmd)
 			goto incomplete;
 	}
@@ -2798,6 +2826,7 @@ void service_step_all(int types)
 
 void service_worker(void *unused)
 {
+	(void)unused;
 	service_step_all(SVC_TYPE_RESPAWN | SVC_TYPE_RUNTASK);
 }
 

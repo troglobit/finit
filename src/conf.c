@@ -490,14 +490,16 @@ void conf_save_service(int type, char *cfg, char *file)
 	fclose(fp);
 }
 
-/*
- * Sets, and makes a note of, all KEY=VALUE lines in a given .conf line
- * from finit.conf, or other .conf file.  Note, PATH is always reset in
- * the conf_reset_env() function.
+/**
+ * conf_parse_env - Parse a key=value line
+ * @line: Line buffer without newline
+ * @value:  Whitespace trimmed value
+ *
+ * Returns:
+ * %NULL on error, otherwise a whitespace trimmed key.
  */
-static void parse_env(char *line)
+char *conf_parse_env(char *line, char **value)
 {
-	struct env_entry *node;
 	char *key, *val, *end;
 
 	/* skip any leading whitespace */
@@ -519,7 +521,7 @@ static void parse_env(char *line)
 
 	val = strchr(key, '=');
 	if (!val)
-		return;
+		return NULL;
 	*val++ = 0;
 
 	/* strip leading whitespace from value */
@@ -527,14 +529,8 @@ static void parse_env(char *line)
 		val++;
 
 	/* unquote value, if quoted */
-	if (val[0] == '"' || val[0] == '\'') {
-		char q = val[0];
-
-		if (*end == q) {
-			val = &val[1];
-			*end = 0;
-		}
-	}
+	unquote(&val, end);
+	*value = val;
 
 	/* find end of key */
 	end = key;
@@ -561,18 +557,42 @@ static void parse_env(char *line)
 		end++;
 	if (*end != 0) {
 		warnx("'%s=%s': not a valid identifier", key, val);
-		return;	/* invalid key */
+		return NULL;	/* invalid key */
 	}
+
+	return key;
+}
+
+/*
+ * Sets, and makes a note of, all KEY=VALUE lines in a given .conf line
+ * from finit.conf, or other .conf file.  Note, PATH is always reset in
+ * the conf_reset_env() function.
+ */
+static void parse_env(char *line)
+{
+	struct env_entry *node;
+	char *key, *val;
+
+	key = conf_parse_env(line, &val);
+	if (!key)
+		return;
 
 	dbg("Global env '%s'='%s'", key, val);
 	setenv(key, val, 1);
 
 	node = malloc(sizeof(*node));
 	if (!node) {
+	nomem:
 		err(1, "Out of memory cannot track env vars");
 		return;
 	}
+
 	node->name = strdup(key);
+	if (!node->name) {
+		free(node);
+		goto nomem;
+	}
+
 	TAILQ_INSERT_HEAD(&env_list, node, link);
 }
 
@@ -1542,6 +1562,8 @@ static int conf_iwatch_read(int fd)
 
 static void conf_cb(uev_t *w, void *arg, int events)
 {
+	(void)arg;
+
 	if (UEV_ERROR == events) {
 		dbg("%s(): iwatch socket %d invalid.", __func__, w->fd);
 		return;

@@ -320,6 +320,8 @@ static int init_plugins(uev_ctx_t *ctx)
 	plugin_t *p, *tmp;
 	int fail = 0;
 
+	(void)ctx;
+
 	PLUGIN_ITERATOR(p, tmp) {
 		if (plugin_io_init(p))
 			fail++;

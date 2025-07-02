@@ -77,7 +77,7 @@ void devmon_add_cond(const char *cond)
 	struct dev_node *node;
 
 	if (!cond || strncmp(cond, "dev/", 4)) {
-		dbg("no match");
+//		dbg("no match %s", cond ?: "<NIL>");
 		return;
 	}
 
@@ -164,6 +164,8 @@ static void devmon_scandir(struct iwatch *iw, char *dir, int len)
 	size_t i;
 	int rc;
 
+	(void)iw;
+
 	snprintf(path, sizeof(path), "%s/*", dir);
 	rc = glob(path, GLOB_NOSORT, NULL, &gl);
 	if (rc && rc != GLOB_NOMATCH)
@@ -206,6 +208,13 @@ static void devmon_cb(uev_t *w, void *arg, int events)
 	struct inotify_event *ev;
 	ssize_t sz;
 	size_t off;
+
+	(void)arg;
+
+	if (UEV_ERROR == events) {
+		errx(1, "Unrecoverable error in devmon watcher");
+		return;
+	}
 
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {

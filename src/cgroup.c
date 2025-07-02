@@ -88,6 +88,12 @@ static void cgset(const char *path, char *ctrl, char *prop)
 	}
 	*val++ = 0;
 
+	/* unquote value, if quoted */
+	if (unquote(&val, NULL)) {
+		errx(1, "Syntax error, unterminated quote in %s/%s.%s=%s", path, ctrl, prop, val);
+		return;
+	}
+
 	/* disallow sneaky relative paths */
 	if (strstr(ctrl, "..") || strstr(prop, "..")) {
 		errx(1, "Possible security violation; '..' not allowed in cgroup config!");
@@ -261,6 +267,7 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 	ssize_t sz;
 	size_t off;
 
+	(void)arg;
 	if (UEV_ERROR == events) {
 		dbg("%s(): inotify socket %d invalid.", __func__, w->fd);
 		return;
