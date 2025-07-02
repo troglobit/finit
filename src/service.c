@@ -244,6 +244,9 @@ static void fallback_logger(char *ident, char *prio)
 	int level = LOG_NOTICE;
 	char buf[256];
 
+	strlcpy(buf, prio, sizeof(buf));
+	log_parse(buf, &facility, &level);
+
 	prctl(PR_SET_NAME, "finitlog", 0, 0, 0);
 	openlog(ident, LOG_NOWAIT | LOG_PID, facility);
 	while ((fgets(buf, sizeof(buf), stdin)))
@@ -327,6 +330,11 @@ static int lredirect(svc_t *svc)
 		/* Default syslog identity name[:id] */
 		tag = svc_ident(svc, buf, sizeof(buf));
 
+		if (svc->log.ident[0])
+			tag = svc->log.ident;
+		if (svc->log.prio[0])
+			prio = svc->log.prio;
+
 		if (!have_sysklogd && !whichp(_PATH_LOGIT)) {
 			logit(LOG_INFO, _PATH_LOGIT " missing, using syslog for %s instead", svc->name);
 			fallback_logger(tag, prio);
@@ -351,11 +359,6 @@ static int lredirect(svc_t *svc)
 			}
 			_exit(1);
 		}
-
-		if (svc->log.ident[0])
-			tag = svc->log.ident;
-		if (svc->log.prio[0])
-			prio = svc->log.prio;
 
 		if (have_sysklogd) {
 			char pid[16];
