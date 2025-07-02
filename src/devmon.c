@@ -77,7 +77,7 @@ void devmon_add_cond(const char *cond)
 	struct dev_node *node;
 
 	if (!cond || strncmp(cond, "dev/", 4)) {
-		dbg("no match");
+//		dbg("no match %s", cond ?: "<NIL>");
 		return;
 	}
 
