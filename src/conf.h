@@ -47,6 +47,7 @@ void conf_saverc          (void);
 void conf_save_exec_order (svc_t *svc, char *cmdline, int result);
 void conf_save_service    (int type, char *cfg, char *file);
 void conf_parse_cmdline   (int argc, char *argv[]);
+char *conf_parse_env      (char *line, char **val);
 int  conf_parse_runlevels (char *runlevels);
 void conf_parse_cond      (svc_t *svc, char *cond);
 

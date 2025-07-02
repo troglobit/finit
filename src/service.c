@@ -425,10 +425,12 @@ static void source_env(svc_t *svc)
 
 	line = buf;
 	while (fgets(line, LINE_SIZE, fp)) {
-		char *key = chomp(line);
 		wordexp_t we = { 0 };
-		char *value, *end;
+		char *key, *value;
 		size_t i;
+
+		/* Trim newline */
+		key = chomp(line);
 
 		/* skip any leading whitespace */
 		while (isspace(*key))
@@ -438,57 +440,9 @@ static void source_env(svc_t *svc)
 		if (*key == '#' || *key == ';')
 			continue;
 
-		/* find end of line */
-		end = key;
-		while (*end)
-			end++;
-
-		/* strip trailing whitespace */
-		if (end > key) {
-			end--;
-			while (isspace(*end))
-				*end-- = 0;
-		}
-
-		value = strchr(key, '=');
-		if (!value)
+		key = conf_parse_env(key, &value);
+		if (!key)
 			continue;
-		*value++ = 0;
-
-		/* strip leading whitespace from value */
-		while (isspace(*value))
-			value++;
-
-		/* unquote value, if quoted */
-		unquote(&value, end);
-
-		/* find end of key */
-		end = key;
-		while (*end)
-			end++;
-
-		/* strip trailing whitespace */
-		if (end > key) {
-			end--;
-			while (isspace(*end))
-				*end-- = 0;
-		}
-
-		/* strip any leading 'set ' */
-		end = key;
-		if (!strncmp(key, "set", 3))
-			end += 3;
-
-		/* check key, no spaces allowed */
-		while (*end && isspace(*end))
-			end++;
-		key = end;
-		while (*end && !isspace(*end))
-			end++;
-		if (*end != 0) {
-			warnx("'%s=%s': not a valid identifier", key, value);
-			continue;	/* invalid key */
-		}
 
 		if (wordexp(value, &we, 0)) {
 			setenv(key, value, 1);
