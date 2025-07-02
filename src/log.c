@@ -32,6 +32,9 @@
 # include <lite/lite.h>
 #endif
 
+#define SYSLOG_NAMES
+#include <syslog.h>
+
 #include "finit.h"
 #include "helpers.h"
 #include "log.h"
@@ -104,6 +107,73 @@ static const char *l2s(int prio)
         default:          break;
         }
         return "UNK";
+}
+
+static int s2f(const char *str)
+{
+	for (int i = 0; facilitynames[i].c_name; i++) {
+		if (string_match(facilitynames[i].c_name, str))
+			return facilitynames[i].c_val;
+	}
+
+	return -1;
+}
+
+static int s2l(const char *str)
+{
+	for (int i = 0; prioritynames[i].c_name; i++) {
+		if (string_match(prioritynames[i].c_name, str))
+			return prioritynames[i].c_val;
+	}
+
+	return -1;
+}
+
+/*
+ * Parse syslog facility.priority strings into their numerical values
+ * using arrays defined in <syslog.h>.  Note, the 'prio' argument may
+ * be one of:
+ *
+ *  - facility.level
+ *  - facility
+ *  - level
+ *
+ * It is up to the callee to assign defaults to 'facility' and 'level'
+ * before calling this function.  If There is any match the respective
+ * facility or level will be assigned and this function returns OK.
+ */
+int log_parse(char *prio, int *facility, int *level)
+{
+	char *fac = prio, *lvl;
+	int f = -1;
+	int l = -1;
+
+	if (!prio || !facility || !level)
+		return -1;
+
+	lvl = strchr(prio, '.');
+	if (lvl) {
+		*lvl = 0;
+		lvl++;
+	}
+
+	if (lvl && *lvl)
+		l = s2l(lvl);
+
+	f = s2f(fac);
+	if (l < 0)
+		l = s2l(fac);
+
+	if (l < 0 && f <= 0)
+		return -1;
+
+	if (l <= LOG_DEBUG)
+		*level = l;
+
+	if (f <= LOG_LOCAL7)
+		*facility = f;
+
+	return 0;
 }
 
 /*

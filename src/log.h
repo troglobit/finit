@@ -78,6 +78,7 @@ void    log_init (void);
 void    log_exit (void);
 
 void    log_debug(void);
+int     log_parse(char *prio, int *facility, int *level);
 
 void    logit    (int prio, const char *fmt, ...)   __attribute__ ((format (printf, 2, 3)));
 void    flog     (char *file, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
