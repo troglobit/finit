@@ -582,10 +582,17 @@ static void parse_env(char *line)
 
 	node = malloc(sizeof(*node));
 	if (!node) {
+	nomem:
 		err(1, "Out of memory cannot track env vars");
 		return;
 	}
+
 	node->name = strdup(key);
+	if (!node->name) {
+		free(node);
+		goto nomem;
+	}
+
 	TAILQ_INSERT_HEAD(&env_list, node, link);
 }
 
