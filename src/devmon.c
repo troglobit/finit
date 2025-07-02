@@ -164,6 +164,8 @@ static void devmon_scandir(struct iwatch *iw, char *dir, int len)
 	size_t i;
 	int rc;
 
+	(void)iw;
+
 	snprintf(path, sizeof(path), "%s/*", dir);
 	rc = glob(path, GLOB_NOSORT, NULL, &gl);
 	if (rc && rc != GLOB_NOMATCH)
@@ -206,6 +208,8 @@ static void devmon_cb(uev_t *w, void *arg, int events)
 	struct inotify_event *ev;
 	ssize_t sz;
 	size_t off;
+
+	(void)arg;
 
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {

@@ -202,6 +202,9 @@ static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct
 {
 	const char *cond, *ptr;
 
+	(void)sb;
+	(void)tflag;
+
 	if (ftw->level == 0)
 		return 1;
 
@@ -389,6 +392,8 @@ void cond_reload(void)
 static int do_assert(const char *fpath, const struct stat *sb, int tflg, struct FTW *ftw, int set)
 {
 	char *nm;
+
+	(void)sb;
 
 	if (ftw->level == 0)
 		return 1;

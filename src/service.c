@@ -2823,6 +2823,7 @@ void service_step_all(int types)
 
 void service_worker(void *unused)
 {
+	(void)unused;
 	service_step_all(SVC_TYPE_RESPAWN | SVC_TYPE_RUNTASK);
 }
 

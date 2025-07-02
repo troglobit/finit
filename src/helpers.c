@@ -293,6 +293,8 @@ static size_t print_timestamp(char *buf, size_t len)
 	sscanf(buf, "%f %f", &stamp, &dummy);
 	return snprintf(buf, len, "[ %.6f ]", stamp);
 #else
+	(void)buf;
+	(void)len;
 	return 0;
 #endif
 }

@@ -59,6 +59,8 @@ static int call(int (*action)(svc_t *, void *), char *buf, size_t len)
 
 static int stop(svc_t *svc, void *user_data)
 {
+	(void)user_data;
+
 	if (!svc)
 		return 1;
 
@@ -72,6 +74,8 @@ static int stop(svc_t *svc, void *user_data)
 
 static int start(svc_t *svc, void *user_data)
 {
+	(void)user_data;
+
 	if (!svc)
 		return 1;
 
@@ -105,6 +109,8 @@ static int restart(svc_t *svc, void *user_data)
 
 static int reload(svc_t *svc, void *user_data)
 {
+	(void)user_data;
+
 	if (!svc)
 		return 1;
 
@@ -148,6 +154,8 @@ static char query_buf[368];
 static int missing(char *job, char *id, void *user_data)
 {
 	char buf[20];
+
+	(void)user_data;
 
 	if (!job)
 		job = "";
@@ -228,6 +236,8 @@ struct wq emergency = { .cb = bypass_shutdown };
 
 static void bypass_shutdown(void *unused)
 {
+	(void)unused;
+
 	cprintf("TIMEOUT TIMEOUT SHUTTING DOWN NOW!!\n");
 	do_shutdown(halt);
 }
@@ -331,6 +341,8 @@ static void api_cb(uev_t *w, void *arg, int events)
 	struct init_request rq;
 	int sd, lvl;
 	svc_t *svc;
+
+	(void)arg;
 
 	if (UEV_ERROR == events) {
 		dbg("%s(): api socket %d invalid.", __func__, w->fd);

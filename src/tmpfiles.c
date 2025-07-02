@@ -114,6 +114,9 @@ static int parse_mm(char *arg, int *major, int *minor)
 
 static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftw)
 {
+	(void)sb;
+	(void)tflag;
+
 	if (ftw->level == 0)
 		return 1;
 

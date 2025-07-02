@@ -260,6 +260,7 @@ static int status_cb(int pid, void *data)
 {
 	int *has_proc = (int *)data;
 
+	(void)pid;
 	*has_proc = 1;
 
 	return 1;
@@ -425,6 +426,8 @@ void do_shutdown(shutop_t op)
  */
 static void sighup_cb(uev_t *w, void *arg, int events)
 {
+	(void)arg;
+
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -451,6 +454,9 @@ static void sighup_cb(uev_t *w, void *arg, int events)
  */
 static void sigint_cb(uev_t *w, void *arg, int events)
 {
+	(void)w;
+	(void)arg;
+
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -467,6 +473,9 @@ static void sigint_cb(uev_t *w, void *arg, int events)
  */
 static void sigpwr_cb(uev_t *w, void *arg, int events)
 {
+	(void)w;
+	(void)arg;
+
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -481,6 +490,8 @@ static void sigpwr_cb(uev_t *w, void *arg, int events)
  */
 static void sigusr1_cb(uev_t *w, void *arg, int events)
 {
+	(void)arg;
+
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -502,6 +513,9 @@ static void sigusr1_cb(uev_t *w, void *arg, int events)
  */
 static void sigusr2_cb(uev_t *w, void *arg, int events)
 {
+	(void)w;
+	(void)arg;
+
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -522,6 +536,9 @@ static void sigusr2_cb(uev_t *w, void *arg, int events)
  */
 static void sigterm_cb(uev_t *w, void *arg, int events)
 {
+	(void)w;
+	(void)arg;
+
 	dbg("...");
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -544,6 +561,9 @@ static void sigchld_cb(uev_t *w, void *arg, int events)
 {
 	int status;
 	pid_t pid;
+
+	(void)w;
+	(void)arg;
 
 	if (UEV_ERROR == events) {
 		errx(1, "Unrecoverable error in signal watcher");
@@ -601,6 +621,9 @@ const char *sig_name(int signo)
  */
 static void chld_handler(int sig, siginfo_t *info, void *ctx)
 {
+	(void)sig;
+	(void)info;
+	(void)ctx;
 	/* NOP */
 }
 
