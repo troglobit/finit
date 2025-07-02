@@ -211,6 +211,11 @@ static void devmon_cb(uev_t *w, void *arg, int events)
 
 	(void)arg;
 
+	if (UEV_ERROR == events) {
+		errx(1, "Unrecoverable error in devmon watcher");
+		return;
+	}
+
 	sz = read(w->fd, ev_buf, sizeof(ev_buf) - 1);
 	if (sz <= 0) {
 		err(1, "invalid inotify event");
