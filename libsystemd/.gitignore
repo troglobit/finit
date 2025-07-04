@@ -1,0 +1,7 @@
+.deps/*
+.libs/*
+.dirstamp
+*.lo
+libsystemd.*
+Makefile
+Makefile.in

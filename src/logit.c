@@ -36,6 +36,9 @@
 # include <lite/lite.h>
 #endif
 
+#define LOG_MAX (200 * 1024)
+#define LOG_NUM 5
+
 static const char version_info[] = PACKAGE_NAME " v" PACKAGE_VERSION;
 extern int logrotate(char *file, int num, off_t sz);
 
@@ -87,23 +90,61 @@ reopen:
 	return fclose(fp);
 }
 
-static int logit(int level, char *buf, size_t len)
+/*
+ * Parse possible systemd style log <level> prefix from message
+ * For details, see libsystemd/sd-daemon.h
+ *
+ * Returns the level, and updates buf to point past the prefix
+ */
+static int parse_level(char **buf, int default_level)
 {
-	if (buf[0]) {
-		syslog(level, "%s", buf);
-		return 0;
+	char *msg = *buf;
+
+	if (msg[0] == '<' && msg[2] == '>' && msg[1] >= '0' && msg[1] <= '7') {
+		int level;
+
+		switch (msg[1]) {
+		case '0': level = LOG_EMERG;    break;
+		case '1': level = LOG_ALERT;    break;
+		case '2': level = LOG_CRIT;     break;
+		case '3': level = LOG_ERR;      break;
+		case '4': level = LOG_WARNING;  break;
+		case '5': level = LOG_NOTICE;   break;
+		case '6': level = LOG_INFO;     break;
+		case '7': level = LOG_DEBUG;    break;
+		default:  level = default_level; break;
+		}
+
+		*buf = msg + 3;
+		return (default_level & ~LOG_PRIMASK) | level;
 	}
 
+	return default_level;
+}
+
+static int do_log(int level, char *msg)
+{
+	syslog(parse_level(&msg, level), "%s", msg);
+	return 0;
+}
+
+static int logit(int level, char *buf, size_t len)
+{
+	if (buf[0])
+		return do_log(level, buf);
+
 	while ((fgets(buf, len, stdin)))
-		syslog(level, "%s", buf);
+		do_log(level, buf);
 
 	return 0;
 }
 
-static int parse_prio(char *arg, int *f, int *l)
+static int parse_prio(char *arg, int *fac, int *lvl)
 {
 	char *duparg = strdup(arg);
-	char *ptr, *prio;
+	const char *prio;
+	char *ptr;
+	int found;
 
 	if (!duparg)
 		prio = arg;
@@ -114,22 +155,33 @@ static int parse_prio(char *arg, int *f, int *l)
 	if (ptr) {
 		*ptr++ = 0;
 
+		found = -1;
 		for (int i = 0; facilitynames[i].c_name; i++) {
 			if (!strcmp(facilitynames[i].c_name, prio)) {
-				*f = facilitynames[i].c_val;
+				found = facilitynames[i].c_val;
 				break;
 			}
 		}
 
+		if (found == -1)
+			return 1;
+
+		*fac = found;
 		prio = ptr;
 	}
 
+	found = -1;
 	for (int i = 0; prioritynames[i].c_name; i++) {
+
 		if (!strcmp(prioritynames[i].c_name, prio)) {
-			*l = prioritynames[i].c_val;
+			found = prioritynames[i].c_val;
 			break;
 		}
 	}
+
+	if (found == -1)
+		return 1;
+	*lvl = found;
 
 	if (duparg != arg)
 		free(duparg);
@@ -161,13 +213,14 @@ static int usage(int code)
 
 int main(int argc, char *argv[])
 {
-	int c, rc, num = 5;
+	char *ident = NULL, *logfile = NULL;
+	int log_opts = LOG_NOWAIT;
 	int facility = LOG_USER;
 	int level = LOG_INFO;
-	int log_opts = LOG_NOWAIT;
-	off_t size = 200 * 1024;
-	char *ident = NULL, *logfile = NULL;
+	off_t size = LOG_MAX;
 	char buf[512] = "";
+	int num = LOG_NUM;
+	int c, rc;
 
 	while ((c = getopt(argc, argv, "f:hn:p:r:st:v")) != EOF) {
 		switch (c) {

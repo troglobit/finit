@@ -349,6 +349,12 @@ static void api_cb(uev_t *w, void *arg, int events)
 		goto error;
 	}
 
+	/*
+	 * TODO: refactor to use accept4() and a new uev handler for the
+	 * client socket instead of risking blocking PID 1 if the client
+	 * is misbehaving.
+	 */
+//	sd = accept4(w->fd, NULL, NULL, SOCK_NONBLOCK);
 	sd = accept(w->fd, NULL, NULL);
 	if (sd < 0) {
 		err(1, "Failed serving API request");
@@ -565,20 +571,6 @@ static void api_cb(uev_t *w, void *arg, int events)
 			result = do_signal(rq.data, sizeof(rq.data), rq.runlevel);
 			break;
 
-		case INIT_CMD_NOTIFY_SOCKET:
-			svc = svc_find_by_pid(rq.runlevel);
-			if (!svc) {
-				errx(1, "Unknown PID, cannot register notify socket");
-				result = 1;
-				break;
-			}
-
-			if (uev_io_init(ctx, &svc->notify_watcher, service_notify_cb, svc, sd, UEV_READ)) {
-				err(1, "Failed initializing %s readiness notifier", svc_ident(svc, NULL, 0));
-				break;
-			}
-			return;	/* Don't close sd, used for notify */
-
 		default:
 			dbg("Unsupported cmd: %d", rq.cmd);
 			break;
@@ -613,7 +605,7 @@ int api_init(uev_ctx_t *ctx)
 	int sd;
 
 	dbg("Setting up external API socket ...");
-	sd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
+	sd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
 	if (-1 == sd) {
 		err(1, "Failed starting external API socket");
 		return 1;

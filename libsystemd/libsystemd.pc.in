@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libsystemd
+Description: Finit replacement for systemd notification library
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lsystemd
+Cflags: -I${includedir}
