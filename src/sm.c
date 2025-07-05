@@ -57,9 +57,6 @@ static struct {
 	int        in_reload;   /* Set when waiting for all processes to be halted */
 } sm;
 
-#ifndef FINIT_NOLOGIN_PATH
-#define FINIT_NOLOGIN_PATH _PATH_NOLOGIN /* Stop user logging in. */
-#endif
 
 /*
  * Wait for system bootstrap to complete, all SVC_TYPE_RUNTASK must be

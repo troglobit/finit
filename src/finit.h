@@ -54,6 +54,11 @@
 #define FINIT_CGPATH            "/sys/fs/cgroup"
 #endif
 
+/* Prevent users from logging in at critical stages */
+#ifndef FINIT_NOLOGIN_PATH
+#define FINIT_NOLOGIN_PATH      _PATH_NOLOGIN
+#endif
+
 /* To use these, include config.h, or define FINIT_EXECPATH_ */
 #define _PATH_LOGIT             FINIT_EXECPATH_ "/logit"
 #define _PATH_RUNPARTS          FINIT_EXECPATH_ "/runparts"
