@@ -670,7 +670,7 @@ static int service_start(svc_t *svc)
 		do_progress = 0;
 
 	if (do_progress) {
-		if (svc_is_daemon(svc) || svc_is_sysv(svc))
+		if (svc_is_daemon(svc))
 			print_desc("Starting ", svc->desc);
 		else
 			print_desc("", svc->desc);
@@ -680,7 +680,7 @@ static int service_start(svc_t *svc)
 	svc_starting(svc);
 
 	/* Increment total restarts, unless first time or non-service */
-	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+	if (svc_is_daemon(svc)) {
 		if (svc->restart_cnt || svc->restart_tot)
 			svc->restart_tot++;
 	}
@@ -1057,7 +1057,7 @@ int service_stop(svc_t *svc)
 	 * Skip run/tasks in progress, would otherwise print silly stuff
 	 * like: "Stopping Shutting down" ...
 	 */
-	if (runlevel != 1 && do_progress && (svc_is_daemon(svc) || svc_is_sysv(svc)))
+	if (runlevel != 1 && do_progress && svc_is_daemon(svc))
 		print_desc("Stopping ", svc->desc);
 
 	if (!svc_is_sysv(svc)) {
@@ -1113,7 +1113,7 @@ int service_stop(svc_t *svc)
 		}
 	}
 
-	if (runlevel != 1 && do_progress && (svc_is_daemon(svc) || svc_is_sysv(svc)))
+	if (runlevel != 1 && do_progress && svc_is_daemon(svc))
 		print_result(rc);
 
 	return rc;
@@ -1969,7 +1969,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	svc->oncrash_action = oncrash_action;
 
 	/* Decode any (optional) pid:/optional/path/to/file.pid */
-	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+	if (svc_is_daemon(svc)) {
 		char tmp[sizeof(svc->name) + 6]; /* pid:! + svc->name */
 
 		/* no pid: set, figure out a default to track this svc */
@@ -2109,7 +2109,7 @@ void service_monitor(pid_t lost, int status)
 	kill(-svc->pid, SIGKILL);
 
 	/* Try removing PID file (in case service does not clean up after itself) */
-	if (svc_is_daemon(svc) || svc_is_sysv(svc) || svc_is_tty(svc)) {
+	if (svc_is_daemon(svc) || svc_is_tty(svc)) {
 		service_cleanup(svc);
 	} else if (svc_is_runtask(svc)) {
 		/* run/task should run at least once per runlevel */
@@ -2510,7 +2510,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		}
 	}
 
-	if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+	if (svc_is_daemon(svc)) {
 		char cond[MAX_COND_LEN];
 
 		snprintf(cond, sizeof(cond), "service/%s/", svc_ident(svc, NULL, 0));
@@ -2766,7 +2766,7 @@ restart:
 		}
 
 		if (!svc->pid) {
-			if (svc_is_daemon(svc) || svc_is_sysv(svc) || svc_is_tty(svc)) {
+			if (svc_is_daemon(svc) || svc_is_tty(svc)) {
 				svc_restarting(svc); /* BLOCK_RESTARTING */
 				svc_set_state(svc, SVC_HALTED_STATE);
 
@@ -3087,7 +3087,7 @@ static void service_interval_cb(uev_t *w, void *arg, int events)
 	}
 
 	for (svc = svc_iterator(&iter, 1); svc; svc = svc_iterator(&iter, 0)) {
-		if (svc_is_daemon(svc) || svc_is_sysv(svc)) {
+		if (svc_is_daemon(svc)) {
 			char *restart_cnt = (char *)&svc->restart_cnt;
 
 			if (!svc_is_running(svc))

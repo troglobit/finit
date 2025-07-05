@@ -52,6 +52,7 @@ typedef enum {
 } svc_type_t;
 
 #define SVC_TYPE_ANY          (-1)
+#define SVC_TYPE_DAEMON       (SVC_TYPE_SERVICE | SVC_TYPE_SYSV)
 #define SVC_TYPE_RESPAWN      (SVC_TYPE_SERVICE | SVC_TYPE_SYSV | SVC_TYPE_TTY)
 #define SVC_TYPE_RUNTASK      (SVC_TYPE_RUN | SVC_TYPE_TASK)
 
@@ -265,7 +266,7 @@ int         svc_ifthen             (int is_conf, const char *ident, char *stmt, 
 
 int         svc_parse_jobstr       (char *str, size_t len, void *user_data, int (*found)(svc_t *, void *), int (not_found)(char *, char *, void *));
 
-static inline int svc_is_daemon    (svc_t *svc) { return svc && SVC_TYPE_SERVICE == svc->type; }
+static inline int svc_is_daemon    (svc_t *svc) { return svc && (SVC_TYPE_DAEMON & svc->type); }
 static inline int svc_is_sysv      (svc_t *svc) { return svc && SVC_TYPE_SYSV    == svc->type; }
 static inline int svc_is_tty       (svc_t *svc) { return svc && SVC_TYPE_TTY     == svc->type; }
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);}
