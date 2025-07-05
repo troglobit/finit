@@ -218,7 +218,7 @@ static int do_delete(const char *fpath, const struct stat *sb, int tflag, struct
 		err(1, "Failed removing condition %s", fpath);
 
 	cond = ptr + strlen(COND_BASE) + 1;
-	if (sm_is_in_teardown(&sm))
+	if (sm_in_reload())
 		cond_clear_noupdate(cond);
 	else
 		cond_update(cond);

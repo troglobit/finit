@@ -38,7 +38,24 @@
 #include "sm.h"
 #include "utmp-api.h"
 
-sm_t sm;
+typedef enum {
+	SM_BOOTSTRAP_STATE = 0,   /* Init state, bootstrap services */
+	SM_BOOTSTRAP_WAIT_STATE,  /* Waiting for bootstrap to complete */
+	SM_RUNNING_STATE,         /* Normal state, services running */
+	SM_RUNLEVEL_CHANGE_STATE, /* A runlevel change has occurred */
+	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped processes to halt */
+	SM_RUNLEVEL_CLEAN_STATE,  /* Wait for post:scripts and cleanup:scripts */
+	SM_RELOAD_CHANGE_STATE,   /* A reload event has occurred */
+	SM_RELOAD_WAIT_STATE,     /* Waiting for all stopped processes to halt */
+	SM_RELOAD_CLEAN_STATE,    /* Wait for post:scripts and cleanup:scripts */
+} sm_state_t;
+
+static struct {
+	sm_state_t state;         /* Running, Changed, Waiting, ... */
+	int        newlevel;      /* Set to new runlevel on change, -1 otherwise */
+	int        reload;        /* Set on reload event, else 0  */
+	int        in_reload;   /* Set when waiting for all processes to be halted */
+} sm;
 
 #ifndef FINIT_NOLOGIN_PATH
 #define FINIT_NOLOGIN_PATH _PATH_NOLOGIN /* Stop user logging in. */
@@ -90,7 +107,7 @@ static void sm_check_bootstrap(void *work)
 	} else
 		dbg("Change to default runlevel(%d), starting all services ...", cfglevel);
 
-	service_runlevel(level);
+	sm_runlevel(level);
 
 	/* Clean up bootstrap-only tasks/services that never started */
 	dbg("Clean up all bootstrap-only tasks/services ...");
@@ -135,7 +152,7 @@ static char *sm_status(sm_state_t state)
 	return "unknown";
 }
 
-static char sm_runlevel(int lvl)
+static char sm_rl2ch(int lvl)
 {
 	if (lvl == INIT_LEVEL)
 		return 'S';
@@ -158,60 +175,39 @@ static void nologin(void)
 		erase(FINIT_NOLOGIN_PATH);
 }
 
-void sm_init(sm_t *sm)
+void sm_init(void)
 {
 	static struct wq work = {
 		.cb = sm_check_bootstrap,
 		.delay = 1000
 	};
 
-	sm->state = SM_BOOTSTRAP_STATE;
-	sm->newlevel = -1;
-	sm->reload = 0;
-	sm->in_teardown = 0;
+	sm.state = SM_BOOTSTRAP_STATE;
+	sm.newlevel = -1;
+	sm.reload = 0;
+	sm.in_reload = 0;
 
 	dbg("Starting bootstrap finalize timer ...");
 	schedule_work(&work);
 }
 
-void sm_set_runlevel(sm_t *sm, int newlevel)
-{
-	sm->newlevel = newlevel;
-
-	dbg("Flushing pending .conf file events ...");
-	conf_flush_events();
-}
-
-void sm_set_reload(sm_t *sm)
-{
-	sm->reload = 1;
-
-	dbg("Flushing pending .conf file events ...");
-	conf_flush_events();
-}
-
-int sm_is_in_teardown(sm_t *sm)
-{
-	return sm->in_teardown;
-}
-
-void sm_step(sm_t *sm)
+void sm_step(void)
 {
 	sm_state_t old_state;
 	svc_t *svc;
 
 restart:
-	old_state = sm->state;
+	old_state = sm.state;
 
 	dbg("state: %s, runlevel: %c, newlevel: %d, teardown: %d, reload: %d",
-	    sm_status(sm->state), sm_runlevel(runlevel), sm->newlevel, sm->in_teardown, sm->reload);
+	    sm_status(sm.state), sm_rl2ch(runlevel), sm.newlevel, sm.in_reload, sm.reload);
 
-	switch (sm->state) {
+	switch (sm.state) {
 	case SM_BOOTSTRAP_STATE:
 		dbg("Bootstrapping all services in runlevel S from %s", finit_conf);
 		service_step_all(SVC_TYPE_RUNTASK | SVC_TYPE_SERVICE | SVC_TYPE_SYSV);
 
-		sm->state = SM_BOOTSTRAP_WAIT_STATE;
+		sm.state = SM_BOOTSTRAP_WAIT_STATE;
 		break;
 
 	/*
@@ -232,7 +228,7 @@ restart:
 		/* Allow runparts to start */
 		cond_set_oneshot("int/bootstrap");
 
-		if (sm->newlevel == -1)
+		if (sm.newlevel == -1)
 			break;
 
 		/* Hooks that should run at the very end */
@@ -246,7 +242,7 @@ restart:
 		/* System bootstrapped, launch TTYs et al */
 		bootstrap = 0;
 		service_step_all(SVC_TYPE_RESPAWN);
-		sm->state = SM_RUNNING_STATE;
+		sm.state = SM_RUNNING_STATE;
 		break;
 
 	case SM_RUNNING_STATE:
@@ -254,26 +250,26 @@ restart:
 		service_step_all(SVC_TYPE_ANY);
 
 		/* runlevel changed? */
-		if (sm->newlevel >= 0 && sm->newlevel <= 9) {
-			if (runlevel == sm->newlevel) {
-				sm->newlevel = -1;
+		if (sm.newlevel >= 0 && sm.newlevel <= 9) {
+			if (runlevel == sm.newlevel) {
+				sm.newlevel = -1;
 				break;
 			}
-			sm->state = SM_RUNLEVEL_CHANGE_STATE;
+			sm.state = SM_RUNLEVEL_CHANGE_STATE;
 			break;
 		}
 
 		/* reload ? */
-		if (sm->reload) {
-			sm->reload = 0;
-			sm->state = SM_RELOAD_CHANGE_STATE;
+		if (sm.reload) {
+			sm.reload = 0;
+			sm.state = SM_RELOAD_CHANGE_STATE;
 		}
 		break;
 
 	case SM_RUNLEVEL_CHANGE_STATE:
 		prevlevel    = runlevel;
-		runlevel     = sm->newlevel;
-		sm->newlevel = -1;
+		runlevel     = sm.newlevel;
+		sm.newlevel = -1;
 
 		/* Restore terse mode and run hooks before shutdown */
 		if (runlevel == 0 || runlevel == 6) {
@@ -282,11 +278,11 @@ restart:
 			plugin_run_hooks(HOOK_SHUTDOWN);
 		}
 
-		dbg("Setting new runlevel --> %c <-- previous %c", sm_runlevel(runlevel), sm_runlevel(prevlevel));
+		dbg("Setting new runlevel --> %c <-- previous %c", sm_rl2ch(runlevel), sm_rl2ch(prevlevel));
 		if (osheading)
-			logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %c", osheading, sm_runlevel(runlevel));
+			logit(LOG_CONSOLE | LOG_NOTICE, "%s, entering runlevel %c", osheading, sm_rl2ch(runlevel));
 		else
-			logit(LOG_CONSOLE | LOG_NOTICE, "Entering runlevel %c", sm_runlevel(runlevel));
+			logit(LOG_CONSOLE | LOG_NOTICE, "Entering runlevel %c", sm_rl2ch(runlevel));
 		runlevel_set(prevlevel, runlevel);
 
 		/* Disable login in single-user mode as well as shutdown/reboot */
@@ -302,10 +298,10 @@ restart:
 		service_runtask_clean();
 
 		dbg("Stopping services not allowed in new runlevel ...");
-		sm->in_teardown = 1;
+		sm.in_reload = 1;
 		service_step_all(SVC_TYPE_ANY);
 
-		sm->state = SM_RUNLEVEL_WAIT_STATE;
+		sm.state = SM_RUNLEVEL_WAIT_STATE;
 		break;
 
 	case SM_RUNLEVEL_WAIT_STATE:
@@ -324,10 +320,10 @@ restart:
 		plugin_run_hooks(HOOK_RUNLEVEL_CHANGE);  /* Reconfigure HW/VLANs/etc here */
 
 		dbg("Starting services new to this runlevel ...");
-		sm->in_teardown = 0;
+		sm.in_reload = 0;
 		service_step_all(SVC_TYPE_ANY);
 
-		sm->state = SM_RUNLEVEL_CLEAN_STATE;
+		sm.state = SM_RUNLEVEL_CLEAN_STATE;
 		break;
 
 	case SM_RUNLEVEL_CLEAN_STATE:
@@ -361,7 +357,7 @@ restart:
 		if (runlevel == 0 || runlevel == 6)
 			do_shutdown(halt);
 
-		sm->state = SM_RUNNING_STATE;
+		sm.state = SM_RUNNING_STATE;
 		break;
 
 	case SM_RELOAD_CHANGE_STATE:
@@ -373,11 +369,11 @@ restart:
 		 * let all affected services move to WAITING/HALTED
 		 */
 		dbg("Stopping services not allowed after reconf ...");
-		sm->in_teardown = 1;
+		sm.in_reload = 1;
 		cond_reload();
 		service_step_all(SVC_TYPE_ANY);
 
-		sm->state = SM_RELOAD_WAIT_STATE;
+		sm.state = SM_RELOAD_WAIT_STATE;
 		break;
 
 	case SM_RELOAD_WAIT_STATE:
@@ -391,12 +387,12 @@ restart:
 			break;
 		}
 
-		sm->in_teardown = 0;
+		sm.in_reload = 0;
 
 		dbg("Starting services after reconf ...");
 		service_step_all(SVC_TYPE_ANY);
 
-		sm->state = SM_RELOAD_CLEAN_STATE;
+		sm.state = SM_RELOAD_CLEAN_STATE;
 		break;
 
 	case SM_RELOAD_CLEAN_STATE:
@@ -422,13 +418,65 @@ restart:
 		service_notify_reconf();
 
 		dbg("Reconfiguration done");
-		sm->state = SM_RUNNING_STATE;
+		sm.state = SM_RUNNING_STATE;
 		break;
 	}
 
-	if (sm->state != old_state)
+	if (sm.state != old_state)
 		goto restart;
 }
+
+/**
+ * sm_in_reload - System currently in reload or runlevel change?
+ *
+ * Returns:
+ * %TRUE(1) or %FALSE(0)
+ */
+int sm_in_reload(void)
+{
+	return sm.in_reload;
+}
+
+/**
+ * sm_reload - Called on SIGHUP, 'init q' or 'initctl reload'
+ *
+ * This function is called when Finit has received SIGHUP to reload
+ * .conf files in /etc/finit.d.  It is responsible for starting,
+ * stopping and reloading (forwarding SIGHUP) to processes affected.
+ */
+void sm_reload(void)
+{
+	sm.reload = 1;
+
+	dbg("Flushing pending .conf file events ...");
+	conf_flush_events();
+
+	sm_step();
+}
+
+/**
+ * sm_runlevel - Change to a new runlevel
+ * @newlevel: New runlevel to activate
+ *
+ * Stops all services not in @newlevel and starts, or lets continue to run,
+ * those in @newlevel.  Also updates @prevlevel and active @runlevel.
+ */
+void sm_runlevel(int newlevel)
+{
+	if (!rescue && (runlevel == 1 || runlevel == INIT_LEVEL) && !IS_RESERVED_RUNLEVEL(newlevel))
+		networking(1);
+
+	sm.newlevel = newlevel;
+
+	dbg("Flushing pending .conf file events ...");
+	conf_flush_events();
+
+	sm_step();
+
+	if (!rescue && IS_RESERVED_RUNLEVEL(runlevel))
+		networking(0);
+}
+
 
 /**
  * Local Variables:

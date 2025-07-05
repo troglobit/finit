@@ -47,6 +47,7 @@
 #include "private.h"
 #include "schedule.h"
 #include "service.h"
+#include "sm.h"
 #include "sig.h"
 #include "util.h"
 
@@ -275,19 +276,19 @@ static int do_reboot(int cmd, int timeout, char *buf, size_t len)
 	case INIT_CMD_REBOOT:
 		dbg("reboot");
 		halt = SHUT_REBOOT;
-		service_runlevel(6);
+		sm_runlevel(6);
 		break;
 
 	case INIT_CMD_HALT:
 		dbg("halt");
 		halt = SHUT_HALT;
-		service_runlevel(0);
+		sm_runlevel(0);
 		break;
 
 	case INIT_CMD_POWEROFF:
 		dbg("poweroff");
 		halt = SHUT_OFF;
-		service_runlevel(0);
+		sm_runlevel(0);
 		break;
 
 	case INIT_CMD_SUSPEND:
@@ -316,7 +317,7 @@ typedef struct {
 } ev_t;
 
 ev_t ev_list[] = {
-	{ "RELOAD", service_reload_dynamic   },
+	{ "RELOAD", sm_reload   },
 	{ NULL, NULL }
 };
 
@@ -437,7 +438,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 				if (runlevel == INIT_LEVEL)
 					cfglevel = lvl;
 				else
-					service_runlevel(lvl);
+					sm_runlevel(lvl);
 				break;
 
 			default:
@@ -453,7 +454,7 @@ static void api_cb(uev_t *w, void *arg, int events)
 
 		case INIT_CMD_RELOAD: /* 'init q' and 'initctl reload' */
 			dbg("reload");
-			service_reload_dynamic();
+			sm_reload();
 			break;
 
 		case INIT_CMD_START_SVC:

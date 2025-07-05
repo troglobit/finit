@@ -24,32 +24,12 @@
 #ifndef FINIT_SM_H_
 #define FINIT_SM_H_
 
-typedef enum {
-	SM_BOOTSTRAP_STATE = 0,   /* Init state, bootstrap services */
-	SM_BOOTSTRAP_WAIT_STATE,  /* Waiting for bootstrap to complete */
-	SM_RUNNING_STATE,         /* Normal state, services running */
-	SM_RUNLEVEL_CHANGE_STATE, /* A runlevel change has occurred */
-	SM_RUNLEVEL_WAIT_STATE,   /* Waiting for all stopped processes to halt */
-	SM_RUNLEVEL_CLEAN_STATE,  /* Wait for post:scripts and cleanup:scripts */
-	SM_RELOAD_CHANGE_STATE,   /* A reload event has occurred */
-	SM_RELOAD_WAIT_STATE,     /* Waiting for all stopped processes to halt */
-	SM_RELOAD_CLEAN_STATE,    /* Wait for post:scripts and cleanup:scripts */
-} sm_state_t;
+void sm_init      (void);
+void sm_step      (void);
 
-typedef struct sm {
-	sm_state_t state;         /* Running, Changed, Waiting, ... */
-	int newlevel;             /* Set on runlevel change to new runlevel, -1 if not change */
-	int reload;               /* Set on reload event, else 0  */
-	int in_teardown;          /* Set when waiting for all processes to be halted */
-} sm_t;
-
-extern sm_t  sm;
-
-void sm_init(sm_t *sm);
-void sm_step(sm_t *sm);
-void sm_set_runlevel(sm_t *sm, int newlevel);
-void sm_set_reload(sm_t *sm);
-int  sm_is_in_teardown(sm_t *sm);
+int  sm_in_reload (void);
+void sm_reload    (void);
+void sm_runlevel  (int newlevel);
 
 #endif	/* FINIT_SM_H_ */
 

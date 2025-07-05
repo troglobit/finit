@@ -27,12 +27,10 @@
 
 #include "svc.h"
 
-void	  service_runlevel	 (int newlevel);
 int	  service_register	 (int type, char *line, struct rlimit rlimit[], char *file);
 void      service_unregister     (svc_t *svc);
 
 void      service_runtask_clean  (void);
-void      service_reload_dynamic (void);
 void      service_update_rdeps   (void);
 void      service_mark_unavail   (void);
 

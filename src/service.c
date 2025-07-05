@@ -1182,38 +1182,6 @@ static int service_restart(svc_t *svc)
 	return rc;
 }
 
-/**
- * service_reload_dynamic - Called on SIGHUP, 'init q' or 'initctl reload'
- *
- * This function is called when Finit has received SIGHUP to reload
- * .conf files in /etc/finit.d.  It is responsible for starting,
- * stopping and reloading (forwarding SIGHUP) to processes affected.
- */
-void service_reload_dynamic(void)
-{
-	sm_set_reload(&sm);
-	sm_step(&sm);
-}
-
-/**
- * service_runlevel - Change to a new runlevel
- * @newlevel: New runlevel to activate
- *
- * Stops all services not in @newlevel and starts, or lets continue to run,
- * those in @newlevel.  Also updates @prevlevel and active @runlevel.
- */
-void service_runlevel(int newlevel)
-{
-	if (!rescue && (runlevel == 1 || runlevel == INIT_LEVEL) && !IS_RESERVED_RUNLEVEL(newlevel))
-		networking(1);
-
-	sm_set_runlevel(&sm, newlevel);
-	sm_step(&sm);
-
-	if (!rescue && IS_RESERVED_RUNLEVEL(runlevel))
-		networking(0);
-}
-
 /*
  * Parse run/task/service arguments with support for quoted strings, both
  * single and double quotes to allow arguments containing spaces.
@@ -2137,7 +2105,7 @@ cont:
 			dbg("collected bootstrap task %s(%d), removing.", svc_ident(svc, NULL, 0), lost);
 	}
 
-	sm_step(&sm);
+	sm_step();
 }
 
 static void svc_mark_affected(char *cond)
@@ -2518,7 +2486,7 @@ static void svc_set_state(svc_t *svc, svc_state_t new_state)
 		if ((old_state == SVC_RUNNING_STATE && new_state == SVC_PAUSED_STATE) ||
 		    (old_state == SVC_PAUSED_STATE  && new_state == SVC_RUNNING_STATE))
 			; 	/* only paused during reload, don't clear conds. */
-		else if (sm_is_in_teardown(&sm))
+		else if (sm_in_reload())
 			cond_clear_noupdate(cond);
 		else
 			cond_clear(cond);
@@ -2713,7 +2681,7 @@ restart:
 			svc_set_state(svc, SVC_HALTED_STATE);
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
 			/* wait until all processes have been stopped before continuing... */
-			if (sm_is_in_teardown(&sm))
+			if (sm_in_reload())
 				break;
 
 			/* Don't start if it conflicts with something else already started */
@@ -2808,15 +2776,16 @@ restart:
 
 		case COND_ON:
 			if (svc_is_changed(svc)) {
-				if (svc_nohup(svc) || !svc_is_daemon(svc))
+				if (svc_nohup(svc) || !svc_is_daemon(svc)) {
 					service_stop(svc);
-				else {
+				} else {
 					/*
 					 * wait until all processes have been
 					 * stopped before continuing...
 					 */
-					if (sm_is_in_teardown(&sm))
+					if (sm_in_reload())
 						break;
+
 					service_restart(svc);
 				}
 

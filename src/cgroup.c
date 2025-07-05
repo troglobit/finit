@@ -303,7 +303,7 @@ static void cgroup_events_cb(uev_t *w, void *arg, int events)
 
 #ifdef AUTO_RELOAD
 	if (conf_any_change())
-		service_reload_dynamic();
+		sm_reload();
 #endif
 }
 

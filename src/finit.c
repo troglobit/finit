@@ -745,8 +745,8 @@ int main(int argc, char *argv[])
 	 * Initialize state machine and start all bootstrap tasks
 	 * NOTE: no network available!
 	 */
-	sm_init(&sm);
-	sm_step(&sm);
+	sm_init();
+	sm_step();
 
 	/*
 	 * Enter main loop to monitor /dev/initctl and services

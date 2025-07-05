@@ -94,6 +94,7 @@
 #include "private.h"
 #include "sig.h"
 #include "service.h"
+#include "sm.h"
 #include "util.h"
 #include "utmp-api.h"
 
@@ -444,7 +445,7 @@ static void sighup_cb(uev_t *w, void *arg, int events)
 	api_init(w->ctx);
 
 	/* INIT_CMD_RELOAD: 'init q', 'initctl reload', and SIGHUP */
-	service_reload_dynamic();
+	sm_reload();
 }
 
 /*
@@ -528,7 +529,7 @@ static void sigusr2_cb(uev_t *w, void *arg, int events)
 	}
 
 	halt = SHUT_OFF;
-	service_runlevel(0);
+	sm_runlevel(0);
 }
 
 /*
@@ -551,7 +552,7 @@ static void sigterm_cb(uev_t *w, void *arg, int events)
 	}
 
 	halt = SHUT_REBOOT;
-	service_runlevel(6);
+	sm_runlevel(6);
 }
 
 /*
