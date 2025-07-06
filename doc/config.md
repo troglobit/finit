@@ -916,14 +916,17 @@ configurable with the following options:
     has *crashed*, if this option is set the system is rebooted
   * `oncrash:script` -- similarly, but instead of rebooting, call the
     `post:script` action with exit code `crashed`, see below
-  * `reload:script args` -- some services do not support `SIGHUP` but
+  * `reload:script [args]` -- some services do not support `SIGHUP` but
     may have other ways to update the configuration of a running daemon.
     When `reload:script` is defined it is preferred over `SIGHUP`
+  * `stop:script [args]` -- some services may require alternate methods
+    to be stopped.  When `stop:script` is defined it is preferred over
+    `SIGTERM` and `stop`, for `service` and `sysv` stanzas, respectively
 
 > [!CAUTION]
-> The `reload:script` is called in as PID 1, without any timeout!
-> Meaning, it is up to you to ensure this script is not blocking
-> for seconds at a time or never terminates.
+> Both `reload:script` and `stop:script` are called as PID 1, without
+> any timeout!  Meaning, it is up to you to ensure the script is not
+> blocking for seconds at a time or never terminates.
 
 When stopping a service (run/task/sysv/service), either manually or when
 moving to another runlevel, Finit starts by sending `SIGTERM`, to allow
