@@ -1002,6 +1002,7 @@ static void service_cleanup(svc_t *svc)
  */
 int service_stop(svc_t *svc)
 {
+	const char *id = svc_ident(svc, NULL, 0);
 	char cmdline[CMD_SIZE] = "";
 	int do_progress = 1;
 	int rc = 0;
@@ -1014,11 +1015,11 @@ int service_stop(svc_t *svc)
 
 	service_timeout_cancel(svc);
 
-	compose_cmdline(svc, cmdline, sizeof(cmdline));
-	if (!svc_is_sysv(svc)) {
+	if (svc->stop_script[0]) {
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], calling stop:%s ...", id, svc->pid, svc->stop_script);
+	} else if (!svc_is_sysv(svc)) {
 		char *nm = pid_get_name(svc->pid, NULL, 0);
 		const char *sig = sig_name(svc->sighalt);
-		char *id = svc_ident(svc, NULL, 0);
 
 		if (svc->pid <= 1)
 			return 1;
@@ -1030,9 +1031,10 @@ int service_stop(svc_t *svc)
 		}
 
 		dbg("Sending %s to pid:%d name:%s(%s)", sig, svc->pid, id, nm);
-		logit(LOG_CONSOLE | LOG_NOTICE, "Stopping %s[%d], sending %s ...", id, svc->pid, sig);
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], stopping, sending %s ...", id, svc->pid, sig);
 	} else {
-		logit(LOG_CONSOLE | LOG_NOTICE, "Calling '%s stop' ...", cmdline);
+		compose_cmdline(svc, cmdline, sizeof(cmdline));
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], calling '%s stop' ...", id, svc->pid, cmdline);
 	}
 
 	/*
@@ -1060,7 +1062,9 @@ int service_stop(svc_t *svc)
 	if (runlevel != 1 && do_progress && svc_is_daemon(svc))
 		print_desc("Stopping ", svc->desc);
 
-	if (!svc_is_sysv(svc)) {
+	if (svc->stop_script[0]) {
+		rc = run(svc->stop_script, NULL);
+	} else if (!svc_is_sysv(svc)) {
 		if (svc->pid > 1) {
 			/*
 			 * Send SIGTERM to parent process of process group, not to the
@@ -1071,11 +1075,8 @@ int service_stop(svc_t *svc)
 			rc = kill(svc->pid, svc->sighalt);
 			dbg("kill(%d, %d) => rc %d, errno %d", svc->pid, svc->sighalt, rc, errno);
 			/* PID lost or forking process never really started */
-			if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
-				service_cleanup(svc);
-				svc_set_state(svc, SVC_HALTED_STATE);
-			} else
-				svc_set_state(svc, SVC_STOPPING_STATE);
+			if (rc == -1 && (errno == ESRCH || errno == ENOENT))
+				rc = 1;
 		} else {
 			service_cleanup(svc);
 			svc_set_state(svc, SVC_HALTED_STATE);
@@ -1083,7 +1084,6 @@ int service_stop(svc_t *svc)
 	} else {
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		size_t i = 0, j;
-		pid_t pid;
 
 		args[i++] = svc->cmd;
 		/* this handles, e.g., bridge-stop br0 stop */
@@ -1095,8 +1095,7 @@ int service_stop(svc_t *svc)
 		args[i++] = "stop";
 		args[i] = NULL;
 
-		pid = fork();
-		switch (pid) {
+		switch (fork()) {
 		case 0:
 			setsid();
 			redirect(svc);
@@ -1108,10 +1107,15 @@ int service_stop(svc_t *svc)
 			rc = 1;
 			break;
 		default:
-			svc_set_state(svc, SVC_STOPPING_STATE);
 			break;
 		}
 	}
+
+	if (rc == 1) {
+		service_cleanup(svc);
+		svc_set_state(svc, SVC_HALTED_STATE);
+	} else
+		svc_set_state(svc, SVC_STOPPING_STATE);
 
 	if (runlevel != 1 && do_progress && svc_is_daemon(svc))
 		print_result(rc);
@@ -1149,7 +1153,7 @@ static int service_reload(svc_t *svc)
 		print_desc("Restarting ", svc->desc);
 
 	if (svc->reload_script[0]) {
-		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], calling %s ...", id, svc->pid, svc->reload_script);
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], calling reload:%s ...", id, svc->pid, svc->reload_script);
 		rc = run(svc->reload_script, NULL);
 	} else 	if (svc->sighup) {
 		if (svc->pid <= 1) {
@@ -1608,7 +1612,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
-	char *reload_script = NULL, *cleanup_script = NULL;
+	char *reload_script = NULL, *stop_script = NULL;
+	char *cleanup_script = NULL;
 	char ident[MAX_IDENT_LEN];
 	char *ifstmt = NULL;
 	char *notify = NULL;
@@ -1720,6 +1725,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			cleanup_script = arg;
 		else if (MATCH_CMD(cmd, "reload:", arg))
 			reload_script = arg;
+		else if (MATCH_CMD(cmd, "stop:", arg))
+			stop_script = arg;
 		else if (MATCH_CMD(cmd, "env:", arg))
 			env = arg;
 		/* catch both cgroup: and cgroup. handled in parse_cgroup() */
@@ -1919,6 +1926,11 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_script(svc, "reload", reload_script, NULL, svc->reload_script, sizeof(svc->reload_script));
 	else
 		memset(svc->reload_script, 0, sizeof(svc->reload_script));
+
+	if (stop_script)
+		parse_script(svc, "stop", stop_script, NULL, svc->stop_script, sizeof(svc->stop_script));
+	else
+		memset(svc->stop_script, 0, sizeof(svc->stop_script));
 
 	if (!svc_is_tty(svc)) {
 		if (log)
