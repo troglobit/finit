@@ -30,6 +30,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "log.h"
 
 #define ALSACTL "alsactl"
 

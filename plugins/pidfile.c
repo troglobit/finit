@@ -34,6 +34,7 @@
 #include "plugin.h"
 #include "service.h"
 #include "iwatch.h"
+#include "log.h"
 
 static struct iwatch iw_pidfile;
 

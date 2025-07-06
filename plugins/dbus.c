@@ -33,7 +33,9 @@
 #include "helpers.h"
 #include "plugin.h"
 #include "service.h"
+#include "util.h"
 #include "conf.h"
+#include "log.h"
 
 #define DBUS_DAEMON "dbus-daemon"
 #define DBUS_ARGS   "--nofork --system --syslog-only"

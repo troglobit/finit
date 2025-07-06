@@ -58,6 +58,7 @@
 #include "plugin.h"
 #include "service.h"
 #include "conf.h"
+#include "log.h"
 
 #ifndef MODULES_LOAD_PATH
 #define MODULES_LOAD_PATH "/etc/modules-load.d"

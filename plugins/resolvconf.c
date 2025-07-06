@@ -30,6 +30,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "log.h"
 
 /*
  * No need to clean up files in /etc/resolvconf/run/interface/

@@ -50,6 +50,7 @@
 #include "finit.h"
 #include "util.h"
 #include "plugin.h"
+#include "log.h"
 
 struct module {
 	TAILQ_ENTRY(module) link;

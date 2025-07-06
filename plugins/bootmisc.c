@@ -40,6 +40,7 @@
 #include "plugin.h"
 #include "util.h"
 #include "utmp-api.h"
+#include "log.h"
 
 static int is_tmpfs(char *path)
 {

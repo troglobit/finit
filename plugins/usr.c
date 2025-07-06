@@ -31,6 +31,7 @@
 #include "pid.h"
 #include "plugin.h"
 #include "iwatch.h"
+#include "log.h"
 
 static struct iwatch iw_usr;
 
