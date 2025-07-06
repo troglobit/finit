@@ -14,7 +14,6 @@ TEST_DIR=$(dirname "$0")
 
 test_teardown()
 {
-    sep "Test done $(date)"
     assert "Running test teardown." "run rm -f $FINIT_RCSD/service.conf"
 }
 

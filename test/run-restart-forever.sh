@@ -15,8 +15,6 @@ test_setup()
 
 test_teardown()
 {
-    say "Test done $(date)"
-
     say "Running test teardown."
     run "rm -f $FINIT_CONF"
 }

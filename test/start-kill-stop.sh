@@ -12,8 +12,6 @@ TEST_DIR=$(dirname "$0")
 test_teardown()
 {
 #	run "initctl status -j serv"
-	say "Test done $(date)"
-
 	say "Running test teardown."
 	run "rm -f $FINIT_CONF"
 }

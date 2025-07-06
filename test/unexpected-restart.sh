@@ -22,11 +22,6 @@ task <service/C/ready,service/D/ready>              name:allup initctl cond set 
 EOF
 }
 
-test_teardown()
-{
-    say "Test done $(date)"
-}
-
 pidof()
 {
     texec initctl -j status "$1" | jq .pid

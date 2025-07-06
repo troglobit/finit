@@ -6,11 +6,6 @@ set -eu
 TEST_DIR=$(dirname "$0")
 FINIT_RUNLEVEL=9
 
-test_teardown()
-{
-    say "Test done $(date)"
-}
-
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 

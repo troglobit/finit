@@ -21,11 +21,6 @@ run [4] name:four  initctl restart service.sh -- Restart service"
 # shellcheck disable=SC2034
 RCLOCAL="echo \"$0 ==============\" &1>2"
 
-test_teardown()
-{
-    say "Test done $(date)"
-}
-
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 

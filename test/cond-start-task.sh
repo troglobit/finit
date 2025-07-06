@@ -9,7 +9,6 @@ TEST_DIR=$(dirname "$0")
 
 test_teardown()
 {
-    say "Test done $(date)"
     say "Running test teardown."
     run "rm -f $TEST_CONF"
 }

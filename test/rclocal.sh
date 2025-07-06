@@ -7,11 +7,6 @@ RCLOCAL="echo 'KILROY WAS HERE' > /tmp/rclocal"
 TEST_DIR=$(dirname "$0")
 #DEBUG=1
 
-test_teardown()
-{
-    say "Test done $(date)"
-}
-
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 

@@ -11,11 +11,6 @@ BOOTSTRAP="run [S] crasher.sh -- Party crasher"
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-test_teardown()
-{
-    say "Test done $(date)"
-}
-
 say "Hello SMTP Spoken here"
 run initctl
 run initctl status crasher.sh

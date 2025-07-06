@@ -263,6 +263,7 @@ teardown()
 {
 	test_status="$?"
 
+	echo "Test done $(date)"
 	wdkill
 	if type test_teardown > /dev/null 2>&1 ; then
 		test_teardown
