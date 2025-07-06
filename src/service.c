@@ -1139,7 +1139,7 @@ static int service_reload(svc_t *svc)
 	const char *id = svc_ident(svc, NULL, 0);
 	int do_progress = 1;
 	pid_t lost = 0;
-	int rc;
+	int rc = 1;
 
 	/* Ignore if service is invalid or finit is SIGSTOP'ed */
 	if (!svc || is_norespawn())
@@ -1170,7 +1170,6 @@ static int service_reload(svc_t *svc)
 		}
 	} else {
 		warnx("%s: neither HUP nor reload:script defined, no action.", id);
-		rc = 1;
 	}
 
 	if (!rc) {
