@@ -38,6 +38,7 @@
 #ifdef HAVE_SYS_SYSMACROS_H
 #include <sys/sysmacros.h>
 #endif
+#include <sys/prctl.h>
 #ifdef _LIBITE_LITE
 # include <libite/lite.h>
 #else
@@ -626,6 +627,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Clear command line arguments for ps display, issue #442
 	 */
+	prctl(PR_SET_NAME, "init", 0, 0, 0);
 	for (int i = 1; i < argc; i++)
 		memset(argv[i], 0, strlen(argv[i]));
 

@@ -698,8 +698,7 @@ static int service_start(svc_t *svc)
 			close(fd);
 		result = -1;
 		goto fail;
-	}
-	if (pid > 1) {
+	} else if (pid > 0) {
 		struct sockaddr_un sun;
 		size_t len;
 
@@ -722,19 +721,19 @@ static int service_start(svc_t *svc)
 			}
 			/* fallthrough */
 		case SVC_NOTIFY_S6:
-			close(fd); /* client-end of pipefd for s6 notify */
+			if (svc->notify == SVC_NOTIFY_S6)
+				close(fd); /* client-end of pipefd for s6 notify */
+
 			result = uev_io_init(ctx, &svc->notify_watcher, service_notify_cb, svc, sd, UEV_READ);
 			if (result < 0) {
 				err(1, "%s: failed setting up notify callback", svc_ident(svc, NULL, 0));
-				if (svc->notify == SVC_NOTIFY_S6)
-					close(fd);
 				close(sd);
 				break;
 			}
 		default:
 			break;
 		}
-	} else if (pid == 0) {
+	} else { /* pid == 0 */
 		char str[strlen(NOTIFY_PATH) + 32];
 		char *args[MAX_NUM_SVC_ARGS + 1];
 		int status;
@@ -885,8 +884,6 @@ static int service_start(svc_t *svc)
 		syslog(LOG_ERR, "failed starting %s, exit code %d: %s", svc_ident(svc, NULL, 0),
 		       status, strerror(errno));
 		_exit(status);
-	} else if (debug) {
-		dbg("Starting PID %d: %s", svc->pid, cmdline);
 	}
 
 	if (!svc_is_sysv(svc))

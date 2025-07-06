@@ -124,7 +124,9 @@ static int parse_level(char **buf, int default_level)
 
 static int do_log(int level, char *msg)
 {
-	syslog(parse_level(&msg, level), "%s", msg);
+	level = parse_level(&msg, level);
+	syslog(level, "%s", msg);
+
 	return 0;
 }
 
@@ -164,7 +166,7 @@ static int parse_prio(char *arg, int *fac, int *lvl)
 		}
 
 		if (found == -1)
-			return 1;
+			goto notfound;
 
 		*fac = found;
 		prio = ptr;
@@ -179,11 +181,15 @@ static int parse_prio(char *arg, int *fac, int *lvl)
 		}
 	}
 
-	if (found == -1)
+	if (found == -1) {
+	notfound:
+		if (duparg)
+			free(duparg);
 		return 1;
+	}
 	*lvl = found;
 
-	if (duparg != arg)
+	if (duparg)
 		free(duparg);
 
 	return 0;
