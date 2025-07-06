@@ -35,6 +35,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "log.h"
 
 /*
  * Kernel RTC driver validates against this date for sanity check.  The

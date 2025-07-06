@@ -38,6 +38,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "log.h"
 
 #ifndef RANDOM_BYTES
 #define RANDOM_BYTES (32*1024)

@@ -31,6 +31,7 @@
 #include <sys/mount.h>
 
 #include "helpers.h"
+#include "log.h"
 
 /*
  * SysV init on Debian/Ubuntu skips these protected mount points

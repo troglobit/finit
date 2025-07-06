@@ -39,7 +39,6 @@
 #else
 # include <lite/lite.h>
 #endif
-#include "log.h"
 
 #define PROGRESS_DEFAULT PROGRESS_MODERN
 

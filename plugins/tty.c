@@ -38,6 +38,7 @@
 #include "plugin.h"
 #include "service.h"
 #include "tty.h"
+#include "log.h"
 
 static void tty_watcher(void *arg, int fd, int events);
 

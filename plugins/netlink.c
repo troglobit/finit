@@ -29,6 +29,7 @@
 
 #include "finit.h"
 #include "cond.h"
+#include "log.h"
 #include "helpers.h"
 #include "plugin.h"
 #include "service.h"

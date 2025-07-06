@@ -29,6 +29,7 @@
 #include "finit.h"
 #include "cond.h"
 #include "conf.h"
+#include "log.h"
 #include "helpers.h"
 #include "private.h"
 #include "schedule.h"
