@@ -164,7 +164,7 @@ static int parse_prio(char *arg, int *fac, int *lvl)
 		}
 
 		if (found == -1)
-			return 1;
+			goto notfound;
 
 		*fac = found;
 		prio = ptr;
@@ -179,11 +179,15 @@ static int parse_prio(char *arg, int *fac, int *lvl)
 		}
 	}
 
-	if (found == -1)
+	if (found == -1) {
+	notfound:
+		if (duparg)
+			free(duparg);
 		return 1;
+	}
 	*lvl = found;
 
-	if (duparg != arg)
+	if (duparg)
 		free(duparg);
 
 	return 0;
