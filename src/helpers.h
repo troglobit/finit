@@ -26,7 +26,6 @@
 #define FINIT_HELPERS_H_
 
 #include <ctype.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -71,14 +70,6 @@ void    print           (int action, const char *fmt, ...) __attribute__ ((forma
 void    print_desc      (char *action, char *desc);
 int     print_result    (int fail);
 
-int     getuser         (char *username, char **home);
-int     getgroup        (char *group);
-
-int     getcuser        (char *buf, size_t len);
-int     getcgroup       (char *buf, size_t len);
-
-int     mksubsys        (const char *dir, mode_t mode, char *user, char *group);
-
 void    set_hostname    (char **hostname);
 void    networking      (int updown);
 int     in_container    (void);
@@ -91,57 +82,6 @@ pid_t   run_getty       (char *tty, char *cmd, char *args[], int noclear, int no
 pid_t   run_sh          (char *tty, int noclear, int nowait, struct rlimit rlimit[]);
 pid_t   run_bg          (char *cmd, char *args[]);
 int     run_parts       (char *dir, char *cmd, const char *env[], int progress, int sysv);
-
-/*
- * Defaults to user "root" and group "wheel" (root) if:
- *   1) the user is missing
- *   2) the group or the file /etc/group is missing
- */
-static inline int create(char *path, mode_t mode, char *user, char *group)
-{
-	int fd, uid, gid;
-
-	if (!path) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	uid = getuser(user, NULL);
-	if (uid < 0)
-		uid = 0;
-	gid = getgroup(group);
-	if (gid < 0)
-		gid = 0;
-
-	fd = creat(path, mode);
-	if (fd == -1) {
-		warn("Failed creating %s properly", path);
-		return -1;
-	}
-	close(fd);
-	if (chown(path, uid, gid)) {
-		warn("Failed chowning %s properly", path);
-		return -1;
-	}
-
-	return 0;
-}
-
-static inline int ln(const char *target, const char *linkpath)
-{
-	if (!target || !linkpath) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (symlink(target, linkpath)) {
-		if (errno != EEXIST)
-			warn("Failed creating %s -> %s symlink", target, linkpath);
-		return -1;
-	}
-
-	return 0;
-}
 
 static inline int dprint(int fd, const char *s, size_t len)
 {

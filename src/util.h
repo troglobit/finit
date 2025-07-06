@@ -55,11 +55,21 @@ extern char *prognm;
 # include <lite/conio.h>
 # include <lite/lite.h>
 #endif
+#include "log.h"
 
 char *progname     (char *arg0);
 const char *basenm (const char *path);
 
 char *str          (char *fmt, ...)                        __attribute__ ((format (printf, 1, 2)));
+
+int   getuser      (char *username, char **home);
+int   getgroup     (char *group);
+
+int   getcuser     (char *buf, size_t len);
+int   getcgroup    (char *buf, size_t len);
+
+int   mksubsys     (const char *dir, mode_t mode, char *user, char *group);
+
 int   fnread       (char *buf, size_t len, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 int   fnwrite      (char *value, char *fmt, ...)           __attribute__ ((format (printf, 2, 3)));
 int   fngetint     (char *path, int *val);
@@ -93,6 +103,57 @@ int     ttcooked   (void);
 #define ttraw()    0
 #define ttcooked() 0
 #endif
+
+/*
+ * Defaults to user "root" and group "wheel" (root) if:
+ *   1) the user is missing
+ *   2) the group or the file /etc/group is missing
+ */
+static inline int create(char *path, mode_t mode, char *user, char *group)
+{
+	int fd, uid, gid;
+
+	if (!path) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	uid = getuser(user, NULL);
+	if (uid < 0)
+		uid = 0;
+	gid = getgroup(group);
+	if (gid < 0)
+		gid = 0;
+
+	fd = creat(path, mode);
+	if (fd == -1) {
+		warn("Failed creating %s properly", path);
+		return -1;
+	}
+	close(fd);
+	if (chown(path, uid, gid)) {
+		warn("Failed chowning %s properly", path);
+		return -1;
+	}
+
+	return 0;
+}
+
+static inline int ln(const char *target, const char *linkpath)
+{
+	if (!target || !linkpath) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (symlink(target, linkpath)) {
+		if (errno != EEXIST)
+			warn("Failed creating %s -> %s symlink", target, linkpath);
+		return -1;
+	}
+
+	return 0;
+}
 
 static inline char *strterm(char *str, size_t len)
 {

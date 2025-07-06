@@ -26,8 +26,6 @@
 
 #include <ctype.h>		/* isblank() */
 #include <errno.h>
-#include <grp.h>
-#include <pwd.h>
 #include <limits.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -370,98 +368,6 @@ int print_result(int fail)
 {
 	print(!!fail, NULL);
 	return fail;
-}
-
-int getuser(char *username, char **home)
-{
-#ifdef ENABLE_STATIC
-	if (home)
-		*home = "/";	/* XXX: Fixme */
-	return fgetint("/etc/passwd", "x:\n", username);
-#else
-	struct passwd *usr;
-
-	if (!username || (usr = getpwnam(username)) == NULL)
-		return -1;
-
-	if (home)
-		*home = usr->pw_dir;
-	return  usr->pw_uid;
-#endif
-}
-
-int getgroup(char *group)
-{
-#ifdef ENABLE_STATIC
-	return fgetint("/etc/group", "x:\n", group);
-#else
-	struct group *grp;
-
-	if ((grp = getgrnam(group)) == NULL)
-		return -1;
-
-	return grp->gr_gid;
-#endif
-}
-
-/* get current user */
-int getcuser(char *buf, size_t len)
-{
-	char *ptr = "root";
-
-#ifndef ENABLE_STATIC
-	struct passwd *pw = getpwuid(getuid());
-
-	if (pw)
-		ptr = pw->pw_name;
-#endif
-	if (strlcpy(buf, ptr, len) > len)
-		return -1;
-
-	return 0;
-}
-
-/* get current group */
-int getcgroup(char *buf, size_t len)
-{
-	char *ptr = "root";
-
-#ifndef ENABLE_STATIC
-	struct group *gr = getgrgid(getgid());
-
-	if (gr)
-		ptr = gr->gr_name;
-#endif
-	if (strlcpy(buf, ptr, len) > len)
-		return -1;
-
-	return 0;
-}
-
-int mksubsys(const char *dir, mode_t mode, char *user, char *group)
-{
-	mode_t omask;
-	int uid, gid;
-	int rc = 0;
-
-	omask = umask(0);
-
-	uid = getuser(user, NULL);
-	if (uid >= 0) {
-		gid = getgroup(group);
-		if (gid < 0)
-			gid = 0;
-
-		rc = makedir(dir, mode);
-		if (rc && errno == EEXIST)
-			rc = chmod(dir, mode);
-		if (chown(dir, uid, gid))
-			err(1, "Failed chown(%s, %d, %d)", dir, uid, gid);
-	}
-
-	umask(omask);
-
-	return rc;
 }
 
 void set_hostname(char **hostname)
