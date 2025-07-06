@@ -516,10 +516,8 @@ static void tmpfiles(char *line)
 			if (glob(path, GLOB_NOESCAPE, NULL, &gl))
 				break;
 
-			for (size_t i = 0; i < gl.gl_pathc; i++) {
-				snprintf(buf, sizeof(buf), "restorecon %s %s", opts, gl.gl_pathv[i]);
-				system(buf);
-			}
+			for (size_t i = 0; i < gl.gl_pathc; i++)
+				systemf("restorecon %s %s", opts, gl.gl_pathv[i]);
 			break;
 		default:
 			errx(1, "Unsupported tmpfiles command '%s'", type);
