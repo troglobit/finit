@@ -78,10 +78,9 @@ int sd_notify(int unset_environment, const char *state)
 		unsetenv("NOTIFY_SOCKET");
 
 	written = write(sd, state, len);
-	if (written != (ssize_t) len) {
-		close(sd);
+	close(sd);
+	if (written != (ssize_t) len)
 		return written < 0 ? -errno : -EPROTO;
-	}
 
 	return 1;
 }
