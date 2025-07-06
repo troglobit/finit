@@ -624,6 +624,12 @@ int main(int argc, char *argv[])
 	conf_parse_cmdline(argc, argv);
 
 	/*
+	 * Clear command line arguments for ps display, issue #442
+	 */
+	for (int i = 1; i < argc; i++)
+		memset(argv[i], 0, strlen(argv[i]));
+
+	/*
 	 * Figure out system console(s) and call log_init() to set
 	 * correct log level, possibly finit.debug enabled.
 	 */
