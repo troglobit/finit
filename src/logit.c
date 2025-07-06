@@ -124,7 +124,9 @@ static int parse_level(char **buf, int default_level)
 
 static int do_log(int level, char *msg)
 {
-	syslog(parse_level(&msg, level), "%s", msg);
+	level = parse_level(&msg, level);
+	syslog(level, "%s", msg);
+
 	return 0;
 }
 
