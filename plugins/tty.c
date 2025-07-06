@@ -108,13 +108,13 @@ static void tty_watcher(void *arg, int fd, int events)
 	}
 }
 
-PLUGIN_INIT(plugin_init)
+PLUGIN_INIT(__init)
 {
 	setup();
 	plugin_register(&plugin);
 }
 
-PLUGIN_EXIT(plugin_exit)
+PLUGIN_EXIT(__exit)
 {
 	plugin_unregister(&plugin);
 	if (plugin.io.fd)

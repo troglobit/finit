@@ -320,7 +320,7 @@ static plugin_t plugin = {
 	}
 };
 
-PLUGIN_INIT(plugin_init)
+PLUGIN_INIT(__init)
 {
 	struct tm tm = { 0 };
 
@@ -336,7 +336,7 @@ PLUGIN_INIT(plugin_init)
 	plugin_register(&plugin);
 }
 
-PLUGIN_EXIT(plugin_exit)
+PLUGIN_EXIT(__exit)
 {
 	uev_timer_stop(&rtc_timer);
 	plugin_unregister(&plugin);

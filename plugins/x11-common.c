@@ -50,12 +50,12 @@ static plugin_t plugin = {
 	.hook[HOOK_SVC_PLUGIN] = { .cb  = setup },
 };
 
-PLUGIN_INIT(plugin_init)
+PLUGIN_INIT(__init)
 {
 	plugin_register(&plugin);
 }
 
-PLUGIN_EXIT(plugin_exit)
+PLUGIN_EXIT(__exit)
 {
 	plugin_unregister(&plugin);
 }

@@ -414,7 +414,7 @@ static plugin_t plugin = {
 	},
 };
 
-PLUGIN_INIT(plugin_init)
+PLUGIN_INIT(__init)
 {
 	struct sockaddr_nl sa;
 	int sd;
@@ -447,7 +447,7 @@ PLUGIN_INIT(plugin_init)
 	plugin_register(&plugin);
 }
 
-PLUGIN_EXIT(plugin_exit)
+PLUGIN_EXIT(__exit)
 {
 	plugin_unregister(&plugin);
 	close(plugin.io.fd);

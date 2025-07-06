@@ -338,7 +338,7 @@ static plugin_t plugin = {
 	.depends = { "netlink" }, /* bootmisc depends on us */
 };
 
-PLUGIN_INIT(plugin_init)
+PLUGIN_INIT(__init)
 {
 	int fd;
 
@@ -353,7 +353,7 @@ PLUGIN_INIT(plugin_init)
 	plugin_register(&plugin);
 }
 
-PLUGIN_EXIT(plugin_exit)
+PLUGIN_EXIT(__exit)
 {
 	plugin_unregister(&plugin);
 	iwatch_exit(&iw_pidfile);
