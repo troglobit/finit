@@ -1,16 +1,10 @@
 #!/bin/sh
 # Verify selecting alternate runlevel from cmdline
+# shellcheck disable=SC2034
 set -eu
 
 TEST_DIR=$(dirname "$0")
-
-# shellcheck disable=SC2034
 FINIT_RUNLEVEL=9
-
-test_setup()
-{
-    say "Test start $(date)"
-}
 
 test_teardown()
 {

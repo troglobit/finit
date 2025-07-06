@@ -8,11 +8,6 @@ set COLORTERM=yes\n\
 b aq=oroszoe\n\
 baz=qux"
 
-test_setup()
-{
-    say "Test start $(date)"
-}
-
 test_teardown()
 {
     say "Test done $(date)"

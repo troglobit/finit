@@ -362,6 +362,8 @@ echo "Finit running as PID $finit_pid"
 #tty=/dev/$(texec cat /sys/class/tty/console/active)
 #texec cat "$tty" &
 
+sep "Test start $(date)"
+
 # Allow Finit to start up properly before launching the test
 i=0
 set +u

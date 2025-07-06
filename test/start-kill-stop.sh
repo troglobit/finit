@@ -24,7 +24,6 @@ test_teardown()
 say "Check deps ..."
 check_dep jq
 
-say "Test start $(date)"
 rm -f "$SYSROOT"/oldpid
 
 say "Add service stanza in $FINIT_CONF"

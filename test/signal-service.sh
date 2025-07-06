@@ -16,8 +16,6 @@ test_teardown()
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-say "Test start $(date)"
-
 say 'Ensure file system is cleared'
 run "rm -f /tmp/usr1.log"
 

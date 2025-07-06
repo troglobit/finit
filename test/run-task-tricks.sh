@@ -21,18 +21,13 @@ run [4] name:four  initctl restart service.sh -- Restart service"
 # shellcheck disable=SC2034
 RCLOCAL="echo \"$0 ==============\" &1>2"
 
-# shellcheck source=/dev/null
-. "$TEST_DIR/lib/setup.sh"
-
-test_setup()
-{
-    say "Test start $(date)"
- }
-
 test_teardown()
 {
     say "Test done $(date)"
 }
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/lib/setup.sh"
 
 say "$FINIT_CONF:"
 run "cat $FINIT_CONF"

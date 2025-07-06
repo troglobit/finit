@@ -20,7 +20,6 @@ service log:stdout notify:s6      <service/B/ready> name:C serv -np -i C -N %n  
 service log:stdout notify:none    <pid/A>           name:D type:forking serv -i D     -- D needs A (forking)
 task <service/C/ready,service/D/ready>              name:allup initctl cond set allup -- Everything is up
 EOF
-    say "Test start $(date)"
 }
 
 test_teardown()
