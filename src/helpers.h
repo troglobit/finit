@@ -120,7 +120,7 @@ static inline char *fgetval(const char *line, const char *key, char *sep)
 	 * Check if we should strip optional separator, e.g.,
 	 * 'foo = bar' => '= bar' should be stripped to 'bar'
 	 */
-	while (str && strchr(sep, str[0])) {
+	while (strchr(sep, str[0])) {
 		ptr = strsep(&str, sep);
 		if (!ptr)
 			goto fail;
