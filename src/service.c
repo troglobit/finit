@@ -1386,26 +1386,36 @@ static void parse_script(svc_t *svc, char *type, char *script, int *tmo, char *b
 		if (errstr) {
 			errx(1, "%s: tmo %s is %s (0-3600)", svc_ident(svc, NULL, 0),
 			     script, errstr);
-			return;
+			goto err;
 		}
 		*tmo = (int)(sec * 1000);
 	} else {
 		path = script;
-		*tmo = svc->killdelay;
+		if (tmo)
+			*tmo = svc->killdelay;
+	}
+
+	if (unquote(&path, NULL)) {
+		errx(1, "Syntax error, unterminated quote in %s:%s", type, path);
+		goto err;
 	}
 
 	found = which(path);
 	if (!found) {
-		/* Not in $PATH, check if path exists and is executable */
-		if (access(path, X_OK)) {
-			logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.",
-			      type, path);
-			return;
-		}
-	} else
-		free(found);
+		logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.", type, path);
+		goto err;
+	}
+	free(found);
+
+	if (strlen(path) >= len) {
+		errx(1, "Command too long in %s:%s", type, path);
+		goto err;
+	}
 
 	strlcpy(buf, path, len);
+	return;
+err:
+	memset(buf, 0, len);
 }
 
 /*
