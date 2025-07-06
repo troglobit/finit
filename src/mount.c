@@ -41,7 +41,7 @@
  * and regular filesystems that can be safely unmounted before we do
  * swapoff, and remount / as read-only, respectively.
  */
-static int is_protected(char *dir)
+static int is_protected(const char *dir)
 {
 	size_t i;
 	char *protected_mnts[] = {
@@ -112,7 +112,7 @@ static int unmount(const char *target)
 
 void unmount_tmpfs(void)
 {
-	struct mntent *mnt;
+	const struct mntent *mnt;
 	FILE *fp = NULL;
 
 	while ((mnt = iterator("/proc/mounts", &fp))) {
@@ -123,7 +123,7 @@ void unmount_tmpfs(void)
 
 void unmount_regular(void)
 {
-	struct mntent *mnt;
+	const struct mntent *mnt;
 	FILE *fp = NULL;
 
 	while ((mnt = iterator("/proc/mounts", &fp))) {
