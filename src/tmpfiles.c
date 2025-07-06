@@ -541,6 +541,7 @@ static int usage(int rc)
 		"\n"
 		"Commands:\n"
 		"  -c, --create              Create files and directories\n"
+		"  -d, --debug               Show developer debug messages\n"
 		"  -r, --remove              Remove files and directories marked for removal\n"
 		"  -h, --help                This help text\n"
 		"\n");
@@ -552,6 +553,7 @@ int main(int argc, char *argv[])
 {
 	struct option long_options[] = {
 		{ "create",     0, NULL, 'c' },
+		{ "debug",      0, NULL, 'd' },
 		{ "remove",     0, NULL, 'r' },
 		{ "help",       0, NULL, 'h' },
 		{ NULL, 0, NULL, 0 }
@@ -559,10 +561,14 @@ int main(int argc, char *argv[])
 
 	int c;
 
-	while ((c = getopt_long(argc, argv, "crh?", long_options, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "cdrh?", long_options, NULL)) != EOF) {
 		switch(c) {
 		case 'c':
 			c_flag = 1;
+			break;
+
+		case 'd':
+			debug = 1;
 			break;
 
 		case 'r':
