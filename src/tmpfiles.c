@@ -40,31 +40,10 @@
 # include <lite/lite.h>
 #endif
 
-#include "svc.h"
-#include "helpers.h"
 #include "log.h"
 #include "util.h"
 
 int debug;
-int runlevel;
-char *osheading;
-svc_t *wdog;
-uev_ctx_t *ctx;
-int syncsec;
-int rescue;
-char *network;
-int cfglevel;
-char *finit_rcsd;
-char *sdown;
-char *hostname;
-int bootstrap;
-int single;
-int readiness;
-char *finit_conf;
-char *fstab;
-int prevlevel;
-int cmdlevel;
-int kerndebug;
 
 int c_flag = 0;
 int r_flag = 0;
@@ -539,7 +518,7 @@ static void tmpfiles(char *line)
 
 			for (size_t i = 0; i < gl.gl_pathc; i++) {
 				snprintf(buf, sizeof(buf), "restorecon %s %s", opts, gl.gl_pathv[i]);
-				run(buf, "restorecon");
+				system(buf);
 			}
 			break;
 		default:

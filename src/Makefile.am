@@ -44,13 +44,8 @@ sulogin_SOURCES      = sulogin.c
 sulogin_CFLAGS       = -W -Wall -Wextra -std=gnu99
 sulogin_LDADD        = -lcrypt
 
-tmpfiles_SOURCES     = tmpfiles.c helpers.c util.c exec.c log.c    \
-		       svc.c sig.c sm.c api.c mount.c service.c    \
-		       schedule.c cond.c cond-w.c pid.c plugin.c   \
-		       utmp-api.c client.c cgroup.c mdadm.c tty.c  \
-		       iwatch.c conf.c devmon.c logrotate.c stty.c \
-		       runparts.c
-tmpfiles_CFLAGS      = -W -Wall -Wextra -std=gnu99 -D__FINIT__
+tmpfiles_SOURCES     = tmpfiles.c util.c util.h log.h
+tmpfiles_CFLAGS      = -W -Wall -Wextra -std=gnu99
 tmpfiles_CFLAGS     += $(lite_CFLAGS) $(uev_CFLAGS)
 tmpfiles_LDADD       = $(lite_LIBS) $(uev_LIBS)
 
