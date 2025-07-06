@@ -1120,33 +1120,26 @@ int service_stop(svc_t *svc)
 }
 
 /**
- * service_restart - Restart a service by sending %SIGHUP
+ * service_reload - Reload a service
  * @svc: Service to reload
  *
  * This function does some basic checks of the runtime state of Finit
- * and a sanity check of the @svc before sending %SIGHUP.
+ * and a sanity check of the @svc before sending %SIGHUP or calling
+ * the reload:script command.
  *
  * Returns:
  * POSIX OK(0) or non-zero on error.
  */
-static int service_restart(svc_t *svc)
+static int service_reload(svc_t *svc)
 {
+	const char *id = svc_ident(svc, NULL, 0);
 	int do_progress = 1;
 	pid_t lost = 0;
 	int rc;
 
-	/* Ignore if finit is SIGSTOP'ed */
-	if (is_norespawn())
+	/* Ignore if service is invalid or finit is SIGSTOP'ed */
+	if (!svc || is_norespawn())
 		return 1;
-
-	if (!svc || !svc->sighup)
-		return 1;
-
-	if (svc->pid <= 1) {
-		dbg("%s: bad PID %d for %s, SIGHUP", svc_ident(svc, NULL, 0), svc->pid, svc->cmd);
-		svc->start_time = svc->pid = 0;
-		return 1;
-	}
 
 	/* Skip progress if desc disabled or bootstrap task */
 	if (!svc->desc[0] || svc_in_runlevel(svc, INIT_LEVEL))
@@ -1155,14 +1148,28 @@ static int service_restart(svc_t *svc)
 	if (do_progress)
 		print_desc("Restarting ", svc->desc);
 
-	dbg("Sending SIGHUP to PID %d", svc->pid);
-	logit(LOG_CONSOLE | LOG_NOTICE, "Restarting %s[%d], sending SIGHUP ...",
-	      svc_ident(svc, NULL, 0), svc->pid);
-	rc = kill(svc->pid, SIGHUP);
-	if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
-		/* nobody home, reset internal state machine */
-		lost = svc->pid;
+	if (svc->reload_script[0]) {
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], calling %s ...", id, svc->pid, svc->reload_script);
+		rc = run(svc->reload_script, NULL);
+	} else 	if (svc->sighup) {
+		if (svc->pid <= 1) {
+			dbg("%s[%d]: bad PID, cannot reload service", id, svc->pid);
+			svc->start_time = svc->pid = 0;
+			goto done;
+		}
+		dbg("%s[%d], sending SIGHUP", id, svc->pid);
+		logit(LOG_CONSOLE | LOG_NOTICE, "%s[%d], sending SIGHUP ...", id, svc->pid);
+		rc = kill(svc->pid, SIGHUP);
+		if (rc == -1 && (errno == ESRCH || errno == ENOENT)) {
+			/* nobody home, reset internal state machine */
+			lost = svc->pid;
+		}
 	} else {
+		warnx("%s: neither HUP nor reload:script defined, no action.", id);
+		rc = 1;
+	}
+
+	if (!rc) {
 		/* Declare we're waiting for svc to re-assert/touch its pidfile */
 		svc_starting(svc);
 
@@ -1172,7 +1179,7 @@ static int service_restart(svc_t *svc)
 			touch(pid_file(svc));
 		}
 	}
-
+done:
 	if (do_progress)
 		print_result(rc);
 
@@ -1601,7 +1608,7 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 	char *id = NULL, *env = NULL, *cgroup = NULL;
 	char *pre_script = NULL, *post_script = NULL;
 	char *ready_script = NULL, *conflict = NULL;
-	char *cleanup_script = NULL;
+	char *reload_script = NULL, *cleanup_script = NULL;
 	char ident[MAX_IDENT_LEN];
 	char *ifstmt = NULL;
 	char *notify = NULL;
@@ -1711,6 +1718,8 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 			ready_script = arg;
 		else if (MATCH_CMD(cmd, "cleanup:", arg))
 			cleanup_script = arg;
+		else if (MATCH_CMD(cmd, "reload:", arg))
+			reload_script = arg;
 		else if (MATCH_CMD(cmd, "env:", arg))
 			env = arg;
 		/* catch both cgroup: and cgroup. handled in parse_cgroup() */
@@ -1905,6 +1914,11 @@ int service_register(int type, char *cfg, struct rlimit rlimit[], char *file)
 		parse_script(svc, "cleanup", cleanup_script, &svc->cleanup_tmo, svc->cleanup_script, sizeof(svc->cleanup_script));
 	else
 		memset(svc->cleanup_script, 0, sizeof(svc->cleanup_script));
+
+	if (reload_script)
+		parse_script(svc, "reload", reload_script, NULL, svc->reload_script, sizeof(svc->reload_script));
+	else
+		memset(svc->reload_script, 0, sizeof(svc->reload_script));
 
 	if (!svc_is_tty(svc)) {
 		if (log)
@@ -2151,7 +2165,7 @@ void service_update_rdeps(void)
 			continue;
 
 		/* Service supports reloading conf without stop/start  */
-		if (!svc_is_nohup(svc))
+		if (!svc_is_noreload(svc))
 			continue; /* Yup, no need to stop start rdeps */
 
 		svc_mark_affected(mkcond(svc, cond, sizeof(cond)));
@@ -2786,7 +2800,11 @@ restart:
 
 		case COND_ON:
 			if (svc_is_changed(svc)) {
-				if (svc_nohup(svc) || !svc_is_daemon(svc)) {
+				/*
+				 * If service does not suport reload, or its command line
+				 * arguments have been modified, we need to stop-start it.
+				 */
+				if (svc_is_noreload(svc) || svc->args_dirty) {
 					service_stop(svc);
 				} else {
 					/*
@@ -2796,7 +2814,7 @@ restart:
 					if (sm_in_reload())
 						break;
 
-					service_restart(svc);
+					service_reload(svc);
 				}
 
 				svc_mark_clean(svc);

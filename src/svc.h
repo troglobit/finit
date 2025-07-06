@@ -212,6 +212,9 @@ typedef struct svc {
 	char	       cleanup_script[MAX_CMD_LEN];
 	int	       cleanup_tmo;
 
+	/* When set, used instead of SIGHUP or stop-start */
+	char	       reload_script[MAX_CMD_LEN];
+
 	/*
 	 * Used to forcefully kill services that won't shutdown on
 	 * termination and to delay restarts of crashing services.
@@ -272,10 +275,9 @@ static inline int svc_is_tty       (svc_t *svc) { return svc && SVC_TYPE_TTY    
 static inline int svc_is_runtask   (svc_t *svc) { return svc && (SVC_TYPE_RUNTASK & svc->type);}
 static inline int svc_is_forking   (svc_t *svc) { return svc && svc->forking; }
 static inline int svc_is_manual    (svc_t *svc) { return svc && svc->manual; }
-static inline int svc_is_nohup     (svc_t *svc) { return svc && (0 == svc->sighup); }
+static inline int svc_is_noreload  (svc_t *svc) { return svc && (0 == svc->sighup && 0 == svc->reload_script[0]); }
 
 static inline int svc_in_runlevel  (svc_t *svc, int runlevel) { return svc && ISSET(svc->runlevels, runlevel); }
-static inline int svc_nohup        (svc_t *svc) { return svc &&  (0 == svc->sighup || 0 != svc->args_dirty); }
 static inline int svc_has_pidfile  (svc_t *svc) { return svc_is_daemon(svc) && svc->pidfile[0] != 0 && svc->pidfile[0] != '!'; }
 static inline int svc_has_pre      (svc_t *svc) { return svc->pre_script[0];  }
 static inline int svc_has_post     (svc_t *svc) { return svc->post_script[0]; }
