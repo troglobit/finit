@@ -15,8 +15,6 @@ test_teardown()
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-say "Test start $(date)"
-
 say "Add a dynamic service in $FINIT_RCSD/service.conf"
 run "echo 'service [2345] kill:20 log service.sh -- Dyn serv' > $FINIT_RCSD/service.conf"
 

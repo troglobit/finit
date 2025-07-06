@@ -8,25 +8,19 @@
 #  - SNNfoo should be called with a 'start' argument
 #  - KNNfoo should be called with a 'stop' argument
 #
+# shellcheck disable=SC2034
 
+BOOTSTRAP="runparts /etc/rc.d"
 TEST_DIR=$(dirname "$0")
 #DEBUG=1
-
-# shellcheck disable=SC2034
-BOOTSTRAP="runparts /etc/rc.d"
-
-# shellcheck source=/dev/null
-. "$TEST_DIR/lib/setup.sh"
-
-test_setup()
-{
-    say "Test start $(date)"
- }
 
 test_teardown()
 {
     say "Test done $(date)"
 }
+
+# shellcheck source=/dev/null
+. "$TEST_DIR/lib/setup.sh"
 
 while true; do
     lvl=$(texec initctl runlevel)

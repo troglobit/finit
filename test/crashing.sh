@@ -5,11 +5,6 @@ set -eu
 
 TEST_DIR=$(dirname "$0")
 
-test_setup()
-{
-    say "Test start $(date)"
-}
-
 test_teardown()
 {
     say "Test done $(date)"

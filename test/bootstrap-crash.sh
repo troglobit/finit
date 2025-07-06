@@ -11,11 +11,6 @@ BOOTSTRAP="run [S] crasher.sh -- Party crasher"
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-test_setup()
-{
-    say "Test start $(date)"
-}
-
 test_teardown()
 {
     say "Test done $(date)"

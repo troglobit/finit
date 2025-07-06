@@ -642,6 +642,7 @@ int main(int argc, char *argv[])
 				continue;
 
 			tmpfiles(line);
+			free(line);
 		}
 
 		fclose(fp);

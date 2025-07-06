@@ -6,7 +6,6 @@ TEST_DIR=$(dirname "$0")
 
 test_setup()
 {
-    say "Test start $(date)"
     run "mkdir -p /etc/default"
 }
 

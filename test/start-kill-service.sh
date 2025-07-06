@@ -17,7 +17,6 @@ test_teardown()
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-say "Test start $(date)"
 rm -f "$SYSROOT"/oldpid
 
 say "Add service stanza in $FINIT_CONF"

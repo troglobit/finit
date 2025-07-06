@@ -15,8 +15,6 @@ test_teardown()
 # shellcheck source=/dev/null
 . "$TEST_DIR/lib/setup.sh"
 
-say "Test start $(date)"
-
 say "Add service stanza in $FINIT_RCSD/service.conf"
 run "echo 'service [2345] kill:20 log service.sh -- Subserv' > $FINIT_RCSD/service.conf"
 
