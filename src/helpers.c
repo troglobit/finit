@@ -40,6 +40,7 @@
 
 #include "finit.h"
 #include "helpers.h"
+#include "conf.h"
 #include "log.h"
 #include "private.h"
 #include "sig.h"

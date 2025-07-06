@@ -37,6 +37,7 @@
 #endif
 
 #include "finit.h"
+#include "conf.h"
 #include "svc.h"
 #include "helpers.h"
 #include "pid.h"

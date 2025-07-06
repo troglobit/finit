@@ -33,6 +33,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "conf.h"
 #include "log.h"
 
 static void setup(void *arg)

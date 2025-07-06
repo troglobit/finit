@@ -31,6 +31,7 @@
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
+#include "conf.h"
 #include "log.h"
 
 #ifndef SYSCTL_PATH

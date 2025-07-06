@@ -41,6 +41,8 @@ extern int   service_interval;
 extern char *fsck_mode;
 extern char *fsck_repair;
 
+extern uev_ctx_t *ctx;
+
 int          api_init         (uev_ctx_t *ctx);
 int          api_exit         (void);
 void         conf_flush_events(void);

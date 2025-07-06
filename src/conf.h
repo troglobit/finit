@@ -27,6 +27,24 @@
 #include "cgroup.h"
 #include "svc.h"
 
+extern int   runlevel;
+extern int   cfglevel;
+extern int   cmdlevel;
+extern int   prevlevel;
+extern int   debug;
+extern int   rescue;
+extern int   single;
+extern int   bootstrap;
+extern int   kerndebug;
+extern int   syncsec;
+extern int   readiness;
+extern char *fstab;
+extern char *sdown;
+extern char *network;
+extern char *hostname;
+extern char *runparts;
+extern char *osheading;
+
 extern int logfile_size_max;
 extern int logfile_count_max;
 

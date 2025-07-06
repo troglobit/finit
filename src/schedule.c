@@ -22,7 +22,7 @@
  */
 
 #include "config.h"
-#include "finit.h"
+#include "private.h"
 #include "log.h"
 #include "schedule.h"
 
