@@ -4,6 +4,40 @@ Change Log
 All relevant changes are documented in this file.
 
 
+[4.13][UNRELEASED]
+---------------------
+
+> [!NOTE]
+> The release where we introduce a bare bones `libsystemd` replacement
+> with an `systemd/sd-daemon.h` include file.  Other features are the
+> `reload:script` and `stop:script`, mimicking ExecReload and ExecStop
+> in systemd.
+
+### Changes
+ - Support for `stop:'script [args]'` to stop a sysv/service instead of
+   the common `foo-stop-start.sh stop`, or `SIGTERM`, issue #412
+ - New `tmpfiles` new stand-alone program, refactored from the existing
+   tmpfiles.d support in Finit, by Aaron Andersen, PR #439
+ - All `notify:systemd` services now log with `logit` by default.  This
+   because it now supports systemd style log severity, leading `<NUM>`
+ - Support for quoted arguments to run/task/service options, issue #441
+ - Clear command line arguments after bootstrap, issue #442
+ - Support for `reload:'script [args]'` to trigger a configuration
+   reload in a service, issue #446
+
+### Fixes
+ - Fix #437: buffer overflow in `initctl status`
+ - Fix #438: support very long command lines in `initctl ps/top`
+ - Fix #440: broken systemd readiness notification — Finit now supports
+   proper abstract sockets for systemd and a pipe for s6 notification
+ - Fix #443: build warnings, by Ming Liu, Atlas Copco
+ - Fix #444: handle loooooong arguments, by Aaron Andersen
+ - Fix service's redirected stdout/stderr log priority in fallback mode,
+   when neither `logger` or `logit` is available.  This fix also checks
+   for systemd style log severity, leading `<NUM>` in log messages
+ - Ensure API socket used by `initctl` is non-blocking (event loop)
+
+
 [4.12][] - 2025-04-28
 ---------------------
 
@@ -1797,7 +1831,8 @@ Major bug fix release.
 
 * Initial release
 
-[UNRELEASED]: https://github.com/troglobit/finit/compare/4.11...HEAD
+[UNRELEASED]: https://github.com/troglobit/finit/compare/4.12...HEAD
+[4.13]: https://github.com/troglobit/finit/compare/4.12...4.13
 [4.12]: https://github.com/troglobit/finit/compare/4.11...4.12
 [4.11]: https://github.com/troglobit/finit/compare/4.10...4.11
 [4.10]: https://github.com/troglobit/finit/compare/4.9...4.10
