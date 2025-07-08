@@ -1,21 +1,8 @@
-Finit Conditions
-================
+Conditions
+==========
 
-![The service state machine](svc-machine.png "The service state machine")
-
-* [Introduction](#introduction)
-* [Triggering](#triggering)
-* [Built-in Conditions](#built-in--conditions)
-* [Debugging](#debugging)
-* [Internals](#internals)
-
-
-Introduction
-------------
-
-Conditions are a relatively new addition to Finit, introduced in v3,
-with the intention of providing a mechanism for common synchronization
-problems.  For example:
+Conditions were added to Finit in v3 with the intention of providing a
+mechanism for common synchronization problems.  For example:
 
 - *"wait for service A to start before starting service B"*, or
 - *"wait for basic network access to be available"*
@@ -89,7 +76,8 @@ User-defined conditions are controlled using the `initctl cond set` and
 
 The purpose of user-defined conditions is to be able to start or stop
 services, or run/task jobs, on external site-dependent stimuli.
-Example:
+
+**Example:**
 
     service [2345] <usr/foo> alarm --arg foo -- Foo alarm
 
@@ -276,6 +264,8 @@ A condition is always in one of three states:
 
 All conditions that have not explicitly been set are interpreted as
 being in the `off` state.
+
+![The service state machine](svc-machine.png "The service state machine")
 
 When a reconfiguration is requested, Finit transitions all conditions to
 the `flux` state.  As a result, services that depend on a condition are

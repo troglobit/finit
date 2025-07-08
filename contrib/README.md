@@ -6,6 +6,7 @@ install and try out Finit on various Linux distributions.
 
 * [Alpine](alpine/)
 * [Debian](debian/)
+* [Void](void/)
 
 If you have ideas on how to simplify, extend, or even add new example
 configurations for other distributions you are most welcome! :)

@@ -1,0 +1,111 @@
+site_name: doc/
+site_description: Fast Init for Linux Systems
+site_url: https://troglobit.github.io/finit/
+repo_url: https://github.com/troglobit/finit
+repo_name: troglobit/finit
+copyright: Copyright &copy; 2008-2025 Joachim Wiberg
+docs_dir: doc/
+edit_uri: edit/master/doc/
+
+exclude_docs: |
+  TODO.md
+
+theme:
+  logo: logo.png
+  name: material
+  features:
+    - toc.follow
+    - toc.integrate
+    - navigation.path
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+#    - navigation.tabs
+#    - navigation.sections
+#    - navigation.expand
+#    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.share
+#    - content.action.edit
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: orange
+      accent: orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: black
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+nav:
+  - Introduction: index.md
+  - Example: example.md
+  - Features: features.md
+  - Commands & Status: initctl.md
+  - Rebooting & Halting: commands.md
+  - Runlevels: runlevels.md
+  - Runparts & /etc/rc.local: runparts.md
+  - Configuration:
+    - Overview: config/index.md
+    - Files & Layout: config/files.md
+    - Conditions: conditions.md
+    - Cgroups: config/cgroups.md
+    - Environment Variables: config/env.md
+    - One-shot Tasks: config/task-and-run.md
+    - Services:
+      - Syntax: config/services.md
+      - Options: config/service-opts.md
+      - Environment: config/service-env.md
+      - Synchronization: config/service-sync.md
+      - Wrapper Scripts: config/service-wrappers.md
+    - Run-parts Scripts: config/runparts.md
+    - Runlevels: config/runlevels.md
+    - TTY & Console: config/tty.md
+    - Templating: config/templating.md
+    - Logging: config/logging.md
+    - SysV Compatibility: config/sysv.md
+    - Rescue Mode: config/rescue.md
+    - Limitations: config/limitations.md
+  - Usage:
+    - Building: build.md
+    - Command Line: cmdline.md
+    - Plugins: plugins.md
+    - Services: service.md
+    - Signals: signals.md
+  - Reference:
+    - Distributions: distro.md
+    - keventd: keventd.md
+    - Watchdog: watchdog.md
+    - Service State Machine: state-machine.md
+    - Requirements: requirements.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - callouts
+
+
+extra:
+  homepage: https://troglobit.com/projects/finit/
