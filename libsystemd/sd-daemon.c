@@ -23,6 +23,11 @@
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef _LIBITE_LITE
+# include <libite/lite.h>
+#else
+# include <lite/lite.h>
+#endif
 
 #include "sd-daemon.h"
 
