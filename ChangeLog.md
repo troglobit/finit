@@ -8,33 +8,32 @@ All relevant changes are documented in this file.
 ---------------------
 
 > [!NOTE]
-> The release where we introduce a bare bones `libsystemd` replacement
-> with an `systemd/sd-daemon.h` include file.  Other features are the
-> `reload:script` and `stop:script`, mimicking ExecReload and ExecStop
-> in systemd.
+
+> This release introduce a bare bones `libsystemd` replacement with an
+> `<systemd/sd-daemon>.h` include file.  Other systemd features are the
+> `reload:script` and `stop:script`, mimicking ExecReload and ExecStop.
 
 ### Changes
- - Support for `stop:'script [args]'` to stop a sysv/service instead of
-   the common `foo-stop-start.sh stop`, or `SIGTERM`, issue #412
- - New `tmpfiles` new stand-alone program, refactored from the existing
+ - New `tmpfiles` stand-alone program, refactored from the existing
    tmpfiles.d support in Finit, by Aaron Andersen, PR #439
  - All `notify:systemd` services now log with `logit` by default.  This
-   because it now supports systemd style log severity, leading `<NUM>`
+   because it supports systemd style log severity, leading `"<NUM>"`
  - Support for quoted arguments to run/task/service options, issue #441
  - Clear command line arguments after bootstrap, issue #442
+ - Support for `stop:'script [args]'` to stop a sysv/service instead of
+   the common `foo-stop-start.sh stop`, or `SIGTERM`, issue #412
  - Support for `reload:'script [args]'` to trigger a configuration
    reload in a service, issue #446
 
 ### Fixes
  - Fix #437: buffer overflow in `initctl status`
  - Fix #438: support very long command lines in `initctl ps/top`
- - Fix #440: broken systemd readiness notification — Finit now supports
-   proper abstract sockets for systemd and a pipe for s6 notification
+ - Fix #440: broken systemd and s6 readiness notification
  - Fix #443: build warnings, by Ming Liu, Atlas Copco
  - Fix #444: handle loooooong arguments, by Aaron Andersen
  - Fix service's redirected stdout/stderr log priority in fallback mode,
    when neither `logger` or `logit` is available.  This fix also checks
-   for systemd style log severity, leading `<NUM>` in log messages
+   for systemd style log severity, leading `"<NUM>"` in log messages
  - Ensure API socket used by `initctl` is non-blocking (event loop)
 
 
