@@ -920,7 +920,7 @@ configurable with the following options:
     may have other ways to update the configuration of a running daemon.
     When `reload:script` is defined it is preferred over `SIGHUP`.  Like
 	systemd, Finit sets `$MAINPID` as a convenience to scripts, which in
-	effect also allow `reload:kill -HUP $MAINPID`
+	effect also allow `reload:'kill -HUP $MAINPID'`
   * `stop:script [args]` -- some services may require alternate methods
     to be stopped.  When `stop:script` is defined it is preferred over
     `SIGTERM` and `stop` for `service` and `sysv` stanzas, respectively.
