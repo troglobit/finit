@@ -9,6 +9,10 @@ STANZA2="sysv [2345] pid:!/run/service.pid name:service.sh log:stdout	\
 		reload:'/etc/init.d/S01-service.sh reload'		\
 		stop:'/etc/init.d/S01-service.sh stop'			\
 		/etc/init.d/S01-service.sh -- SysV test service"
+STANZA3="sysv [2345] pid:!/run/service.pid name:service.sh log:stdout	\
+		reload:'kill -HUP \\\$MAINPID'				\
+		stop:'kill -TERM \\\$MAINPID'				\
+		/etc/init.d/S01-service.sh -- SysV test service"
 TEST_DIR=$(dirname "$0")
 #DEBUG=1
 
@@ -50,10 +54,13 @@ test_one()
 
 . "$TEST_DIR/lib/setup.sh"
 
-sep "―― 1) Basic sysv daemon"
+sep "―― 1) Basic stop/start/HUP sysv daemon"
 test_one "$STANZA1"
 
-sep "―― 2) Custom reload/start script for sysv daemon"
+sep "―― 2) Custom stop/reload script"
 test_one "$STANZA2"
+
+sep "―― 3) Custom stop/start/reload with \$MAINPID"
+test_one "$STANZA3"
 
 return 0
