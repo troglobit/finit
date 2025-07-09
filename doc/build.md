@@ -1,16 +1,6 @@
 Building Finit
 ==============
 
-* [Introduction](#introduction)
-* [Configure](#configure)
-* [Example](#example)
-* [Running](#running)
-* [Debugging](#debugging)
-
-
-Introduction
-------------
-
 Finit comes with a traditional configure script to control features and
 optional plugins to enable.  It depends on two external libraries:
 

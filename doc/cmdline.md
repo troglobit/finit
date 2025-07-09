@@ -29,7 +29,7 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
   system bootstrap.
 
   Very useful for selecting different boot modes, e.g. manufacturing test,
-  firmware upgrade, or rescue mode.
+  firmware upgrade, or [rescue mode][rescue].
 
 > [!NOTE]
 > `<boot/...>` conditions cannot be cleared with `initctl`!
@@ -39,10 +39,10 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 
         ./configure --with-config=/etc/finit.conf
 
-   Useful when starting up in various rescue mode, factory, or
+   Useful when starting up in various [rescue mode][rescue], factory, or
    production test setups.  Use the top-level configuration file
-   directive `rcsd /path/to/finit.d` to override the default
-   rcS.d directory.
+   directive `rcsd /path/to/finit.d` to override the default rcS.d
+   directory.
 
 * `finit.debug[=bool]`: Enable finit debug.  This is operated
 	independently of the kernel `debug` setting.  New as of Finit v4.
@@ -75,7 +75,7 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `init=/bin/sh`: Bypass system default init and tell kernel to start a
 	shell.  Note, this shell is very limited and does not support
 	signals and has no job control.  Recommend using, and modifying,
-	`rescue` mode instead.
+	[`rescue` mode][rescue] instead.
 
 * `loglevel=<0-7>`, sets the kernel's log level, which is more granular
   than `debug`.  Also, when `loglevel=7`, Finit will *not disable*
@@ -90,12 +90,11 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 * `quiet`: Suppress kernel logging to console, except for warnings and
   errors.  Also, see `loglevel` and `quiet` above.
 
-* `rescue`: Start rescue/maintenance mode.  If your system comes with
-    the bundled `sulogin` program (Finit, or from util-linux/Busybox),
-    you will be given a root login to a maintenance shell.  However, if
-    `sulogin` is missing, the file `/lib/finit/rescue.conf` is read and
-    the system booted in a limited fallback mode.  See [config.md][]
-    for more information.
+* `rescue`: Start [rescue/maintenance mode][rescue].  If your system
+    comes with the bundled `sulogin` program (Finit, or from util-linux,
+    or Busybox), you will be given a root login to a maintenance shell.
+    However, if `sulogin` is missing, the file `/lib/finit/rescue.conf`
+    is read and the system booted in a limited fallback mode.
 
     This option can be disabled with `configure --without-rescue`
 
@@ -116,5 +115,5 @@ The `bool` setting is one of `on, off, true false, 1, 0`.
 
 For more on kernel boot parameters, see the man page [bootparam(7)][].
 
-[config.md]:    config.md#rescue-mode
+[rescue]:       config/rescue.md
 [bootparam(7)]: https://www.man7.org/linux/man-pages/man7/bootparam.7.html

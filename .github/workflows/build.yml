@@ -8,14 +8,19 @@ on:
       - '**'
       - '!dev'
   pull_request:
-    branches:
-      - '**'
+    types: [opened, synchronize, reopened, labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     # Verify we can build on latest Ubuntu with both gcc and clang
     name: ${{ matrix.compiler }}
     runs-on: ubuntu-latest
+    # Skip redundant builds for PRs - prefer PR builds over push builds
+    if: github.event_name != 'push' || github.ref == 'refs/heads/master'
     strategy:
       matrix:
         compiler: [gcc, clang]

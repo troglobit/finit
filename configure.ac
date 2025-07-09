@@ -11,7 +11,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/alpine/Makefile contrib/alpine/finit.d/Makefile contrib/alpine/finit.d/available/Makefile
 	contrib/debian/Makefile contrib/debian/finit.d/Makefile contrib/debian/finit.d/available/Makefile
 	contrib/void/Makefile   contrib/void/finit.d/Makefile   contrib/void/finit.d/available/Makefile
-	doc/Makefile
+	doc/Makefile doc/config/Makefile
 	libsystemd/Makefile libsystemd/libsystemd.pc
 	man/Makefile
 	plugins/Makefile

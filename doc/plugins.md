@@ -1,12 +1,6 @@
 Hooks & Plugins
 ===============
 
-* [Plugins](#plugins)
-* [Hooks](#hooks)
-  * [Bootstrap Hooks](#bootstrap-hooks)
-  * [Runtime Hooks](#runtime-hooks)
-  * [Shutdown Hooks](#shutdown-hooks)
-
 Finit can be extended to add general functionality in the form of I/O
 monitors, or hook plugins.  It is even possible to run scripts at these
 hook points, see below.
@@ -65,7 +59,7 @@ For your convenience a set of *optional* plugins are available:
   Enabled by default.
   
 > [!TIP]
-> See the [Services](config.md#services) section in the configuration
+> See the [Services](config/services.md) section in the configuration
 > guide for an example how to run `mdevd`, alternative to plain mdev.
 
 * *rtc.so*: Restore and save system clock from/to RTC on boot/halt.
@@ -135,7 +129,7 @@ the second is the condition name and hook script path.  A hook script is
 a plain shell script, or program, that does a very small dedicated job
 at the below hook points.
 
-See [Run-parts Scripts](config.md#run-parts-scripts) for details on the
+See [Run-parts Scripts](config/runparts.md) for details on the
 requirements, possibilities, and *limitations* of hook scripts.
 
 All hook scripts are called with at least one environment variable set,
