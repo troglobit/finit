@@ -2,12 +2,15 @@ name: Dotty the Documenteer
 
 on:
   push:
+    branches:
+      - master
     paths:
       - 'doc/**'
       - 'README.md'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - 'doc/**'
       - 'README.md'
