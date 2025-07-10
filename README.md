@@ -1,5 +1,5 @@
 [![License Badge][]][License] [![GitHub Status][]][GitHub] [![Coverity Status][]][Coverity Scan]
-<img align="right" src="img/finit3.png" alt="Finit: Fast Init">
+<img align="right" src="doc/img/finit3.png" alt="Finit: Fast Init">
 
 Finit is an alternative to [SysV init](https://en.wikipedia.org/wiki/Init)
 and [systemd](https://www.freedesktop.org/wiki/Software/systemd/), focused
@@ -14,7 +14,7 @@ For detailed information, explore our extensive documentation
 :books: **<https://troglobit.github.io/finit/>**
 
 <div align="center">
-  <img src="img/alpine-screenshot2.png" alt="Alpine screenshot"><br/>
+  <img src="doc/img/alpine-screenshot2.png" alt="Alpine screenshot"><br/>
 </div>
 
 For working examples, see the :rocket: [contrib/](contrib/) section or these
