@@ -1,6 +1,8 @@
 Introduction
 ============
 
+![Alpine screenshot](img/alpine-screenshot2.png){ align=right }
+
 > Reverse engineered from the [EeePC fastinit][]  
 > "gaps filled with frog DNA …"  
 > — [Claudio Matsuoka][]
@@ -12,7 +14,8 @@ at [hook points](plugins.md#hooks) and can run various set up tasks
 and/or install event handlers that later provide runtime services, e.g.,
 PID file monitoring, or [conditions](conditions.md).
 
-Features include:
+Features
+--------
 
   * [Runlevels][5], defined per service
   * One-shot tasks, services (daemons), or [SysV init][4] start/stop scripts
