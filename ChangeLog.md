@@ -8,12 +8,12 @@ All relevant changes are documented in this file.
 ---------------------
 
 > [!NOTE]
-
 > This release introduce a bare bones `libsystemd` replacement with an
 > `<systemd/sd-daemon>.h` include file.  Other systemd features are the
 > `reload:script` and `stop:script`, mimicking ExecReload and ExecStop.
 
 ### Changes
+ - Drop xz tarballs from distribution, gzip is good enough
  - New `tmpfiles` stand-alone program, refactored from the existing
    tmpfiles.d support in Finit, by Aaron Andersen, PR #439
  - All `notify:systemd` services now log with `logit` by default.  This
