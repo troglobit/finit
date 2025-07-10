@@ -10,7 +10,7 @@ they have to be manually restarted with `initctl restart NAME`.  The
 limits controlling this are configurable, see the options below.
 
 > [!TIP]
-> To allow endless restarts, see below option `respawn`
+> To allow endless restarts, see the [`respawn` option](service-opts.md)
   
 For daemons that support it, we recommend appending `--foreground`,
 `--no-background`, `-n`, `-F`, or similar command line argument to
@@ -151,7 +151,7 @@ which also provides a service named `udevd`.
     run nowarn if:udevd <pid/udevd> :1 udevadm settle -t 0
 
 This line is only loaded if we know of a service named `udevd`.  Again,
-we do not warn if `udevadm` is not found, Execution will also stop here
+we do not warn if `udevadm` is not found, execution will also stop here
 until the PID condition is asserted, i.e., Finit detecting udevd has
 started.
 
@@ -165,8 +165,9 @@ can also be written as:
 
     run nowarn if:!udevd [S] mdev -s -- Populating device tree
 
-The reason for using `confict` in this example is that a conflict can be
+The reason for using `conflict` in this example is that a conflict can be
 resolved.  Stanzas marked with `conflict:foo` are rechecked at runtime.
+
 
 Conditional Execution
 ---------------------
@@ -188,7 +189,7 @@ in true sequence.  If loading the file `startup-config` fails confd sets
 the condition `usr/fail-startup`, thus allowing the next run statement
 to load `failure-config`.
 
-Notice critical the difference between `<pid/sysrepo>` condition and
+Notice the critical difference between the `<pid/sysrepo>` condition and
 `if:<usr/fail-startup>`.  The former is a condition for starting and the
 latter is a condition to check if a run/task/service is qualified to
 even be considered.
