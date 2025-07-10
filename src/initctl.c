@@ -1342,7 +1342,7 @@ static int usage(int rc)
 		"                            This allows restart of run/tasks that have already run\n"
 		"                            Note: Finit .conf file(s) are *not* reloaded!\n"
 		"  restart  <NAME>[:ID]      Restart (stop/start) service by name\n"
-		"  signal   <NAME>[:ID] <S>  Send signal S to service by name, with optional ID\n"
+		"  kill     <NAME>[:ID] <S>  Send signal S to service by name, with optional ID\n"
 		"  ident    [NAME]           Show matching identities for NAME, or all\n"
 		"  status   <NAME>[:ID]      Show service status, by name\n"
 		"  status                    Show status of services, default command\n");

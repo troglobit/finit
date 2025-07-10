@@ -49,7 +49,7 @@ Commands:
                             This allows restart of run/tasks that have already run
                             Note: Finit .conf file(s) are *not* reloaded!
   restart  <NAME>[:ID]      Restart (stop/start) service by name
-  signal   <NAME>[:ID] <S>  Send signal S to service by name, with optional ID
+  kill     <NAME>[:ID] <S>  Send signal S to service by name, with optional ID
   ident    [NAME]           Show matching identities for NAME, or all
   status   <NAME>[:ID]      Show service status, by name
   status                    Show status of services, default command
