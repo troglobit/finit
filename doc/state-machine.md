@@ -6,7 +6,7 @@ run/tasks there is an additional end state called `DONE`.  All processes
 managed by Finit start in the `HALTED` state.  The image shows how both
 conditions and commands drive the machine.
 
-![The service state machine](svc-machine.png "The service state machine")
+![The service state machine](img/svc-machine.png "The service state machine")
 
 The current state depends on the two following conditions:
 

@@ -265,7 +265,7 @@ A condition is always in one of three states:
 All conditions that have not explicitly been set are interpreted as
 being in the `off` state.
 
-![The service state machine](svc-machine.png "The service state machine")
+![The service state machine](img/svc-machine.png "The service state machine")
 
 When a reconfiguration is requested, Finit transitions all conditions to
 the `flux` state.  As a result, services that depend on a condition are

@@ -11,7 +11,7 @@ exclude_docs: |
   TODO.md
 
 theme:
-  logo: logo.png
+  logo: img/logo.png
   name: material
   features:
     - toc.follow
