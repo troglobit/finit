@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd June 6, 2021
+.Dd July 10, 2025
 .\" Please adjust this date whenever revising the manpage.
 .Dt INITCTL 8 SMM
 .Os Linux
@@ -24,39 +24,39 @@ This program follows the usual UNIX command line syntax, with long
 options starting with two dashes (`-').  The options are as follows:
 .Bl -tag -width Ds
 .It Fl b, -batch
-Batch mode, no screen size probing.  Useful for scripting.
+Batch mode, no screen size probing.  Useful for scripting
 .It Fl c, -create
 Create missing paths (and files) as needed.  Useful with the
 .Cm edit
-command.
+command
 .It Fl f, -force
-Ignore missing files and arguments, never prompt.
+Ignore missing files and arguments, never prompt
 .It Fl h, -help
-Show built-in help text.
+Show built-in help text
 .It Fl j, -json
 JSON output in
 .Ar status
 and
 .Ar cond
-commands.
+commands
 .It Fl n, -noerr
 When scripting
 .Nm
 to stop, start, restart, or signal a task or service, this option can be
 used to ignore error 69 (no such task or service) and instead return 0
-(OK).
+(OK)
 .It Fl 1, -once
-Only one lap in commands like top.
+Only one lap in commands like top
 .It Fl p, -plain
-Use plain table headings, no ANSI control characters.
+Use plain table headings, no ANSI control characters
 .It Fl q, -quiet
-Silent, only return status of command.
+Silent, only return status of command
 .It Fl t, -no-heading
-Skip table headings.
+Skip table headings
 .It Fl v, -verbose
-Verbose output, where applicable.
+Verbose output, where applicable
 .It Fl V, -version
-Show program version.
+Show program version
 .El
 .Sh COMMANDS
 .Bl -tag -width Ds
@@ -66,9 +66,9 @@ Toggle
 (daemon) debug to
 .Pa /dev/console
 .It Nm Ar help
-Show built-in help text.
+Show built-in help text
 .It Nm Ar version
-Show program version.
+Show program version
 .It Nm Ar ls | list
 List all
 .Cm *.conf
@@ -112,9 +112,10 @@ like
 .Ar edit
 this tells
 .Nm finit
-that a configuration has been changed and is a candidate to be restarted
-(or SIGHUP'ed) on
+that a configuration has been changed and is a candidate to be reloaded
+(SIGHUP'ed or restarted) on
 .Cm initctl reload
+in dependency order
 .It Nm Ar enable Ar CONF
 Enable
 .Cm .conf
@@ -127,12 +128,12 @@ Disable
 .Cm .conf
 in
 .Pa /etc/finit.d/enabled ,
-i.e., removes symlink.
+i.e., removes symlink
 .It Nm Ar reload
-Reload
+Reload all (touched)
 .Cm *.conf in
-.Pa /etc/finit.d ,
-i.e., activates changes.
+.Pa /etc/finit.d
+and activate changes
 .It Nm Ar cond set Ar COND Op COND ...
 Set (assert) user-defined condition,
 .Cm +usr/COND
@@ -148,7 +149,7 @@ The command is geared for scripting, check the exit code to get the
 status of the condition: 0 - on, 1 - off, 255 - flux.  For a more
 verbose output, use the
 .Fl v
-option.
+option
 .It Nm Ar cond clr | clear Ar COND Op COND ...
 Clear (deassert) user-defined condition,
 .Cm -usr/COND
@@ -157,28 +158,28 @@ Show condition status, default
 .Cm cond
 command.  Also supports the
 .Fl j
-option for detailed JSON output.
+option for detailed JSON output
 .It Nm Ar cond dump Op Cm TYPE
 Dump all, or a given type of, conditions and their status.  Also
 supports the
 .Fl j
-option for detailed JSON output.
+option for detailed JSON output
 .It Nm Ar ident Op Cm NAME
 Display indentities of all run/task/services, or only instances
 matching
 .Cm NAME .
 A partial string, e.g.,
 .Cm NAM ,
-will not match anything.
+will not match anything
 .It Nm Ar log Op Cm NAME
 Show ten last Finit, or
 .Cm NAME ,
-messages from syslog.
+messages from syslog
 .It Nm Ar start Cm NAME[:ID]
 Start service by name, with optional ID, e.g.,
 .Cm initctl start tty:1
 .It Nm Ar stop Cm NAME[:ID]
-Stop/Pause a running service by name.
+Stop/Pause a running service by name
 .It Nm Ar reload Cm NAME[:ID]
 Reload service as if its configuration had changed.  Internally,
 .Nm finit
@@ -193,17 +194,19 @@ it is the same as calling
 Except for two things:
 .Bl -enum -offset indent -compact
 .It
-if the service supports HUP, it's signaled instead of stop-started, and
+if the service supports HUP (or has a
+.Cm reload:script )
+it is signaled instead of stop-started, and
 .It
 it allows restarting run/task in the same runlevel -- which is otherwise
-restricted.
+restricted
 .El
-.It Nm Ar signal Cm NAME:[ID] S
+.It Nm Ar <kill | signal> Cm NAME:[ID] S
 Send signal S to service, by name.
 .Cm S
-may be a complete signal name such as SIGHUP, or short name such as HUP, or the signal number such as 1 (SIGHUP).
+may be a complete signal name such as SIGHUP, or short name such as HUP, or the signal number such as 1 (SIGHUP)
 .It Nm Ar restart Cm NAME[:ID]
-Restart (stop/start) service by name.
+Restart (stop/start) service by name
 .It Nm Ar status Cm NAME[:ID]
 Show service status, by name.  If only
 .Cm NAME
@@ -225,48 +228,48 @@ option for detailed JSON output suitable for machine parsing.
 .Pp
 .Sy Tip:
 .Xr jq 1
-is a useful scripting tool in combination with JSON output.
+is a useful scripting tool in combination with JSON output
 .It Nm Ar status
 Show status of all services, default command.  Also supports the
 .Fl j
-option for detailed JSON output.
+option for detailed JSON output
 .It Nm Ar cgroup
-List cgroup config overview.
+List cgroup config overview
 .It Nm Ar ps
-List processes based on cgroups.
+List processes based on cgroups
 .It Nm Ar top
-Show top-like listing based on cgroups.
+Show top-like listing based on cgroups
 .It Nm Ar plugins
-List installed plugins.
+List installed plugins
 .It Nm Ar runlevel Op Ar 0-9
 Show or set runlevel: 0 halt, 6 reboot.
 .Pp
 If called at boot (runlevel S) to set the runlevel, Finit only schedules
 the change, effectively overriding the configured runlevel from
 .Pa /etc/finit.conf .
-Useful to trigger a fail-safe mode, or similar.
+Useful to trigger a fail-safe mode, or similar
 .It Nm Ar reboot
 Reboot system, default if
 .Cm reboot
 is symlinked to
-.Nm .
+.Nm 
 .It Nm Ar halt
 Halt system, default if
 .Cm halt
 is symlinked to
-.Nm .
+.Nm 
 .It Nm Ar poweroff
 Power-off system, default if
 .Cm poweroff
 is symlinked to
-.Nm .
+.Nm 
 .It Nm Ar suspend
 Suspend system, default if
 .Cm suspend
 is symlinked to
-.Nm .
+.Nm 
 .It Nm Ar utmp show
-Raw dump of UTMP/WTMP db.
+Raw dump of UTMP/WTMP db
 .El
 .Sh SEE ALSO
 .Xr finit.conf 5

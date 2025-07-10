@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd July 11, 2023
+.Dd July 10, 2025
 .Dt FINIT.CONF 5 SMM
 .Os Linux
 .Sh NAME
@@ -178,7 +178,7 @@ Similar to
 .Cm service
 is the
 .Cm sysv
-stanza, which can be used to call SysV style start/stop scripts.  The
+directive, which can be used to call SysV style start/stop scripts.  The
 primary intention for this command is to be able to re-use traditional
 SysV init scripts in Linux distributions.
 .Pp
@@ -194,7 +194,7 @@ on
 .Cm initctl reload .
 Similar to how
 .Cm service
-stanzas work.
+directives work.
 .Pp
 Forking services started with
 .Cm sysv
@@ -416,7 +416,30 @@ The post:script is called with the same environment variables
 for the
 .Cm EXIT_CODE
 variable which is set to
-.Cm "crashed" .
+.Cm "crashed"
+.It Cm reload:'script [args]'
+some services do not support SIGHUP but may have other ways to update
+the configuration of a running daemon.  When
+.Cm reload:script
+is defined it is preferred over SIGHUP.  Like systemd,
+.Nm finit
+sets
+.Cm $MAINPID
+as a convenience to scripts, which in effect also allow
+.Cm reload:'kill -HUP $MAINPID'
+.It Cm stop:'script [args]'
+Some services may require alternate methods to be stopped.  When
+.Cm stop:script
+is defined it is preferred over SIGTERM and stop, for
+.Cm service
+and
+.Cm sysv
+directives, respectively.
+Similar to
+.Cm reload:script ,
+.Nm finit
+sets
+.Cm $MAINPID .
 .El
 .Pp
 When stopping a service (run/task/sysv/service), either manually or when
@@ -535,7 +558,7 @@ size limit is reached.
 .It Cm tty Oo LVLS Oc Ao COND Ac Ar DEV Oo BAUD Oc Oo noclear Oc Oo nowait Oc Oo nologin Oc Oo TERM Oc
 This form of the
 .Cm tty
-stanza uses the built-in getty on the given TTY device
+directive uses the built-in getty on the given TTY device
 .Ar DEV ,
 in the given runlevels.
 .Ar DEV may be the special keyword
@@ -545,8 +568,8 @@ useful on embedded systems.
 .Pp
 The default baud rate is 0, i.e., keep kernel default.
 .Pp
-The `tty` stanza inherits runlevel, condition (and other feature)
-parsing from the `service` stanza.  So TTYs can run in one or many
+The `tty` directive inherits runlevel, condition (and other feature)
+parsing from the `service` directive.  So TTYs can run in one or many
 runlevels and depend on any condition supported by Finit.  This is
 useful e.g. to depend on `<pid/elogind>` before starting a TTY.
 .Bd -unfilled -offset indent
@@ -555,7 +578,7 @@ tty [12345] /dev/ttyAMA0 115200 noclear vt220
 .It Cm tty Oo LVLS Oc Ao COND Ac Ar CMD DEV Oo noclear Oc Oo nowait Oc
 This form of the
 .Cm tty
-stanza is for using an external getty, like agetty or the BusyBox getty.
+directive is for using an external getty, like agetty or the BusyBox getty.
 .Pp
 By default, these first two syntax variants
 .Em clear
@@ -625,7 +648,7 @@ board bringup and system debugging it can come in handy.
 .Pp
 One can also use the
 .Cm service
-stanza to start a stand-alone shell:
+directive to start a stand-alone shell:
 .Bd -unfilled -offset indent
 service [12345] /bin/sh -l
 .Ed
@@ -650,9 +673,9 @@ is started to present a bare-bones root login prompt.  If the root
 (uid:0, gid:0) user does not have a password set, no rescue is possible.
 .El
 .Sh COMMAND MODIFIERS
-The run/task/tty/service/sysv stanzas take modifiers, or options, to
+The run/task/tty/service/sysv directives take modifiers, or options, to
 control their behavior.  This section lists them with their limitations.
-All modifiers must be placed between the stanza and its command.
+All modifiers must be placed between the directive and its command.
 .Bl -tag -width 1n
 .It Cm @user:group
 Every
@@ -946,9 +969,10 @@ or
 service [...] <...> cgroup.maint /path/to/foo args -- description
 .Ed
 .Pp
-The latter form also allows per-stanza limits on the form:
+The latter form also allows per-stanza limits on the form (notice the
+single quotes for arguments that contain spaces):
 .Bd -unfilled -offset indent
-service [...] <...> cgroup.maint:cpu.max:10000,mem.max:655360 /path/to/foo args -- description
+service [...] <...> cgroup.maint:cpu.max:'200000 100000',mem.max:655360 /path/to/foo args -- description
 .Ed
 .Pp
 Notice the comma separation and the
@@ -968,6 +992,97 @@ available in your Linux kernel, or the name is misspelled.
 Linux cgroups and details surrounding values are not explained in the
 Finit documentation.  The Linux admin-guide cover this well:
 .Lk https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+.Sh CONDITIONAL LOADING
+Finit support conditional loading of stanzas.  The following example is
+take from the
+.Pa system/hotplug.conf
+file in the Finit distribution.  Here we only show a simplified subset.
+.Pp
+Starting with the
+.Cm nowarn
+option.
+.Bd -unfilled -offset indent
+service nowarn name:udevd pid:udevd /lib/systemd/systemd-udevd
+service nowarn name:udevd pid:udevd udevd
+.Ed
+.Pp
+When loading the .conf file Finit looks for
+.Pa /lib/systemd/systemd-udevd
+if that is not found Finit automatically logs a warning.  The
+.Cm nowarn
+option disables this warning so that the second line can be evaluated,
+which also provides a service named
+.Cm udevd .
+.Bd -unfilled -offset indent
+run nowarn if:udevd <pid/udevd> :1 udevadm settle -t 0
+.Ed
+.Pp
+This line is only loaded if we know of a service named
+.Cm udevd .
+Again, we do not warn if
+.Cm udevadm
+is not found, execution will also stop here until the PID condition is
+asserted, i.e., Finit detecting udevd has started.
+.Bd -unfilled -offset indent
+run nowarn conflict:udevd [S] mdev -s -- Populating device tree
+.Ed
+.Pp
+If
+.Cm udevd
+is not available, we try to run
+.Cm mdev ,
+but if that is not found, again we do not warn.
+.Pp
+Conditional loading statements can also be negated, so the previous stanza
+can also be written as:
+.Bd -unfilled -offset indent
+run nowarn if:!udevd [S] mdev -s -- Populating device tree
+.Ed
+.Pp
+The reason for using
+.Cm conflict
+in this example is that a conflict can be resolved.  Stanzas marked with
+.C, conflict:foo
+are rechecked at runtime.
+.Sh CONDITIONAL EXECUTION
+Similar to conditional loading of stanzas there is conditional runtime
+execution.  This can be confusing at first, since Finit already has a
+condition subsystem, but this is more akin to the qualification to a
+runlevel.  E.g., a
+.Cm task [123]
+is qualified to run only in runlevel 1, 2, and 3.  It is not considered
+for other runlevels.
+.Pp
+Conditional execution qualify a run/task/service based on a condition.
+Consider this (simplified) example from the Infix operating system:
+.Bd -unfilled -offset indent
+run [S]                       name:startup <pid/sysrepo> confd -b --load startup-config
+run [S] if:<usr/fail-startup> name:failure <pid/sysrepo> confd    --load failure-config
+.Ed
+.Pp
+The two run statements reside in the same .conf file so Finit runs them
+in true sequence.  If loading the file
+.Cm startup-config
+fails
+.Cm confd
+sets the condition
+.Cm usr/fail-startup ,
+thus allowing the next run statement to load
+.Cm failure-config .
+.Pp
+Notice the critical difference between the
+.Cm <pid/sysrepo>
+condition and
+.Cm if:<usr/fail-startup> .
+The former is a condition for starting and the latter is a condition to
+check if a run/task/service is qualified to even be considered.
+.Pp
+Conditional execution statements can also be negated, so provided the
+file loaded did the opposite, i.e., set a condition on success, the
+previous stanza can also be written as:
+.Bd -unfilled -offset indent
+run [S] if:<!usr/startup-ok> name:failure <pid/sysrepo> confd ...
+.Ed
 .Sh LIMITATIONS
 As of Finit v4 there are no limitations to where
 .Cm .conf

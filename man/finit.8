@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.Dd Apr 22, 2023
+.Dd Jul 9, 2025
 .\" Please adjust this date whenever revising the manpage.
 .Dt FINIT 8 SMM
 .Os Linux
@@ -10,30 +10,66 @@
 .Nm finit
 .Nd Fast init for Linux systems
 .Sh SYNOPSIS
-.Nm /sbin/finit
-.Op --
+.Nm /sbin/finit --
 .Op debug
-.Op finit.cond=foo[,bar[,baz]]
-.Op finit.config=/path/to/alt/finit.conf
-.Op finit.debug
-.Op finit.fstab=/etc/fstab.alt
-.Op finit.status=<on,off>
-.Op finit.status_style=<classic,modern>
-.Op loglevel=<0-7>
-.Op panic=SEC
 .Op quiet
 .Op rescue | recover
 .Op single | S
+.Op panic=SEC
+.Op loglevel=<0-7>
+.Op fsck.mode=[auto,skip,force]
+.Op fsck.repair=[no,yes,preen]
+.Op finit.debug=<true,false>
+.Op finit.fstab=/path/to/fstab
+.Op finit.cond=foo[,bar[,baz]]
+.Op finit.config=/path/to/finit.conf
+.Op finit.status_style=<classic,modern>
+.Op finit.status=<on,off>
 .Nm /sbin/telinit
 .Op Fl hv
-.Op q | Q | 0-9
+.Op q | Q | s | S | 0-9
 .Sh DESCRIPTION
 Fast init for Linux systems.  Reverse engineered from the EeePC
 fastinit, 10+ years ago by Claudio Matsuoka, "gaps filled with frog
 DNA ...".  Focus is on small and embedded systems, although Finit is
 fully usable on server and desktop systems as well.
+.Sh OPTIONS
+When
+.Sy not
+started as PID 1,
+.Nm
+behaves like
+.Nm telinit ,
+following classic UNIX command line syntax.  The options are:
 .Pp
-Features include:
+.Bl -tag -width Ds -compact -offset indent
+.It Fl h
+Show built-in help text.
+.It Fl v
+Show program version.
+.El
+.Pp
+More options are implemented for SysV init support, but are ignored.
+.Sh ARGUMENTS
+When
+.Sy not
+started as PID 1,
+.Nm ,
+or
+.Nm telinit ,
+take these arguments:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It q | Q
+Reload configuration, same as
+.Cm initctl reload .
+.It 0 - 9
+Go to runlevel N, same as
+.Cm initctl reload N .
+.It s | S
+Go to single user mode, runlevel 1.
+.El
+.Sh FEATURES
 .Bl -bullet -width 1n -compact
 .It
 Runlevels, defined per service
@@ -93,6 +129,27 @@ Enable kernel debug.  Debug messages are printed to the console until
 Finit starts up, unless
 .Cm loglevel=7
 (below) is used.
+.It Cm fsck.mode=<auto,force,skip>
+Defaults to
+.Cm auto ,
+unless Finit is built with
+.Cm configure --enable-fastboot ,
+in which case the default is
+.Cm skip .
+.It Cm fsck.repair=<preen,yes,no>
+Defaults to
+.Cm preen ,
+unless Finit is built with
+.Cm configure --enable-fsckfix ,
+in which case the default is
+.Cm yes .
+This configure option also sets
+.Cm fsck.mode=force ,
+unless fastboot is also enabled.  I.e.,
+.Cm configure --enable-fastboot
+build option overrides the
+.Cm fsck.mode
+default value.
 .It Cm finit.cond=foo[,bar[,baz]]
 set
 .Cm <boot/foo>
