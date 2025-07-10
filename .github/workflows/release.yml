@@ -5,6 +5,9 @@ on:
     tags:
       - '[0-9]+.[0-9]+*'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     name: Build and upload release tarball
