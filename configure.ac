@@ -1,4 +1,4 @@
-AC_INIT([Finit], [4.13-beta1], [https://github.com/troglobit/finit/issues],
+AC_INIT([Finit], [4.13-rc1], [https://github.com/troglobit/finit/issues],
 	[finit], [https://troglobit.com/projects/finit/])
 AC_CONFIG_AUX_DIR(aux)
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])

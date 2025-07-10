@@ -4,7 +4,7 @@ Change Log
 All relevant changes are documented in this file.
 
 
-[4.13][UNRELEASED]
+[4.13][] - 2025-07-10
 ---------------------
 
 > [!NOTE]
@@ -16,6 +16,8 @@ All relevant changes are documented in this file.
  - Drop xz tarballs from distribution, gzip is good enough
  - New `tmpfiles` stand-alone program, refactored from the existing
    tmpfiles.d support in Finit, by Aaron Andersen, PR #439
+    - `--remove` command runs only the `r` and `R` rules
+    - `--create` is used for all other cases (bootstrap)
  - All `notify:systemd` services now log with `logit` by default.  This
    because it supports systemd style log severity, leading `"<NUM>"`
  - Support for quoted arguments to run/task/service options, issue #441
