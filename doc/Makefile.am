@@ -1,4 +1,6 @@
 SUBDIRS         = config
+EXTRA_DIST      = AUTHORS ChangeLog.md
+
 docsdir        := @docdir@/doc
 dist_docs_DATA  = build.md cmdline.md commands.md conditions.md 	\
 		  distro.md example.md features.md index.md initctl.md	\

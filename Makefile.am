@@ -1,7 +1,6 @@
 ACLOCAL_AMFLAGS    = -I m4
 SUBDIRS            = man plugins src system tmpfiles.d
-doc_DATA           = README.md LICENSE contrib/finit.conf
-EXTRA_DIST         = README.md LICENSE ChangeLog.md contrib/finit.conf
+dist_doc_DATA      = README.md LICENSE contrib/finit.conf
 
 if CONTRIB
 SUBDIRS           += contrib
