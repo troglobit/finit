@@ -13,6 +13,7 @@ All relevant changes are documented in this file.
 > `reload:script` and `stop:script`, mimicking ExecReload and ExecStop.
 
 ### Changes
+ - `initctl signal` command has been renamed to `initctl kill`
  - Drop xz tarballs from distribution, gzip is good enough
  - New `tmpfiles` stand-alone program, refactored from the existing
    tmpfiles.d support in Finit, by Aaron Andersen, PR #439
