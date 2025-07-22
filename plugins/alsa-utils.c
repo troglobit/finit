@@ -27,6 +27,7 @@
 # include <lite/lite.h>
 #endif
 
+#include "conf.h"
 #include "finit.h"
 #include "helpers.h"
 #include "plugin.h"
