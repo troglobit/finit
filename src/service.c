@@ -1464,7 +1464,7 @@ static void parse_script(svc_t *svc, char *type, char *script, int *tmo, char *b
 
 	found = which(path);
 	if (!found) {
-		logit(LOG_WARNING, "%s:%s is missing or not executable, skipping.", type, path);
+		logit(LOG_WARNING, "%s:'%s' is missing or not executable, skipping.", type, path);
 		goto err;
 	}
 	free(found);
