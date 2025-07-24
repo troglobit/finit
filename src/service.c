@@ -2467,6 +2467,10 @@ static void service_retry(svc_t *svc)
 	int timeout;
 
 	service_timeout_cancel(svc);
+
+	if (is_norespawn())
+		return;
+
 	if (svc->respawn) {
 		dbg("%s crashed/exited, respawning ...", svc_ident(svc, NULL, 0));
 		svc_unblock(svc);
@@ -2769,6 +2773,9 @@ restart:
 		} else if (cond_get_agg(svc->cond) == COND_ON) {
 			/* wait until all processes have been stopped before continuing... */
 			if (sm_in_reload())
+				break;
+
+			if (is_norespawn())
 				break;
 
 			/* Don't start if it conflicts with something else already started */
