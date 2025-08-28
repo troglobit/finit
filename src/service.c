@@ -1420,9 +1420,9 @@ static void parse_killdelay(svc_t *svc, char *delay)
 	const char *errstr;
 	long long sec;
 
-	sec = strtonum(delay, 1, 60, &errstr);
+	sec = strtonum(delay, 1, 300, &errstr);
 	if (errstr) {
-		errx(1, "%s: killdelay %s is %s (1-60)", svc_ident(svc, NULL, 0), delay, errstr);
+		errx(1, "%s: killdelay %s is %s (1-300)", svc_ident(svc, NULL, 0), delay, errstr);
 		return;
 	}
 
