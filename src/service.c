@@ -88,7 +88,7 @@ static void service_timeout_cb(uev_t *w, void *arg, int events)
 	svc_t *svc = arg;
 
 	if (UEV_ERROR == events) {
-		dbg("%s(): spurious problem, svc %s.", __func__, svc_ident(svc, NULL, 0));
+		dbg("%s: spurious problem", svc_ident(svc, NULL, 0));
 		uev_timer_start(w);
 		return;
 	}
@@ -3154,7 +3154,7 @@ static void service_interval_cb(uev_t *w, void *arg, int events)
 
 	(void)arg;
 	if (UEV_ERROR == events) {
-		dbg("%s(): spurious problem, restarting.", __func__);
+		dbg("spurious problem, restarting.");
 		uev_timer_start(w);
 		return;
 	}
