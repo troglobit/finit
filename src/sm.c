@@ -359,6 +359,8 @@ restart:
 		break;
 
 	case SM_RELOAD_CHANGE_STATE:
+		sm.in_reload = 1;
+
 		/* First reload all *.conf in /etc/finit.d/ */
 		conf_reload();
 
@@ -367,9 +369,10 @@ restart:
 		 * let all affected services move to WAITING/HALTED
 		 */
 		dbg("Stopping services not allowed after reconf ...");
-		sm.in_reload = 1;
-		cond_reload();
 		service_step_all(SVC_TYPE_ANY);
+
+		/* Step the generation ... */
+		cond_reload();
 
 		sm.state = SM_RELOAD_WAIT_STATE;
 		break;
