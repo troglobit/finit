@@ -4,6 +4,25 @@ Change Log
 All relevant changes are documented in this file.
 
 
+
+[4.14][] - 2025-08-29
+---------------------
+
+Minor bug fix release.
+
+### Changes
+ - Add exit status/signal info when a process dies, by Mattias Berthel
+ - Extend `service kill:SEC` to support up to 300 sec.
+ - Extend `norespawn` debug to cover `service_retry()`
+ - Build *without* libsystemd replacement by default
+
+### Fixes
+ - Fix #449: ALSA plugin fail-to-build-from-source
+ - Fix `sysv` stop command process environment, should be same as start
+ - Fix state machine ordering issue: enter new config generation *after*
+   services disabled in previous generation have been stopped
+
+
 [4.13][] - 2025-07-10
 ---------------------
 
