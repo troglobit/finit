@@ -43,4 +43,4 @@ release: distcheck
 DISTCHECK_CONFIGURE_FLAGS = --prefix=/usr --sysconfdir=/etc --localstatedir=/var   \
 			    --enable-testserv-plugin --enable-x11-common-plugin    \
 			    --with-watchdog --with-keventd --with-fstab=/etc/fstab \
-			    --with-bash-completion-dir=no
+			    --with-libsystemd --with-bash-completion-dir=no
