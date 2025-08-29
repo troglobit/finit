@@ -2098,6 +2098,7 @@ void service_unregister(svc_t *svc)
 		return;
 
 	service_stop(svc);
+	service_timeout_cancel(svc);
 
 	for (c = strtok(svc->cond, ","); c; c = strtok(NULL, ","))
 		devmon_del_cond(c);
@@ -2137,6 +2138,10 @@ void service_monitor(pid_t lost, int status)
 		     : (svc->state == SVC_CLEANUP_STATE
 			? svc->cleanup_script
 			: svc->pre_script)), lost, ok, sig, rc);
+
+		/* Prevent: spurious problem from timeout callback */
+		service_timeout_cancel(svc);
+
 		/* Kill all children in the same proess group, e.g. logit */
 		dbg("Killing lingering children in same process group ...");
 		kill(-svc->pid, SIGKILL);
