@@ -1147,10 +1147,11 @@ int service_stop(svc_t *svc)
 		args[i++] = "stop";
 		args[i] = NULL;
 
-		switch (fork()) {
+		switch (service_fork(svc)) {
 		case 0:
-			setsid();
 			redirect(svc);
+			setsid();
+			sig_unblock();
 			exec_runtask(args[0], &args[1]);
 			_exit(0);
 			break;
