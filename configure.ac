@@ -1,4 +1,4 @@
-AC_INIT([Finit], [4.13], [https://github.com/troglobit/finit/issues],
+AC_INIT([Finit], [4.14-rc1], [https://github.com/troglobit/finit/issues],
 	[finit], [https://troglobit.com/projects/finit/])
 AC_CONFIG_AUX_DIR(aux)
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])
@@ -171,7 +171,7 @@ AC_ARG_WITH(watchdog,
 
 AC_ARG_WITH(libsystemd,
         AS_HELP_STRING([--with-libsystemd], [Build replacement libsystemd library, default: yes]),
-	[with_libsystemd=$withval], [with_libsystemd=yes])
+	[with_libsystemd=$withval], [with_libsystemd=no])
 
 AC_ARG_WITH(hook-scripts-path,
         AS_HELP_STRING([--with-hook-scripts-path=DIR], [Base directory for hook scripts, default $libexecdir/finit/hook]),
