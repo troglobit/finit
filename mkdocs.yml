@@ -1,4 +1,4 @@
-site_name: doc/
+site_name: Documentation
 site_description: Fast Init for Linux Systems
 site_url: https://troglobit.github.io/finit/
 repo_url: https://github.com/troglobit/finit
@@ -6,6 +6,8 @@ repo_name: troglobit/finit
 copyright: Copyright &copy; 2008-2025 Joachim Wiberg
 docs_dir: doc/
 edit_uri: edit/master/doc/
+extra_css:
+  - extra.css
 
 exclude_docs: |
   TODO.md
