@@ -170,15 +170,17 @@ static void file_save(void *arg)
 static void file_restore(void *arg)
 {
 	struct tm tm = { 0 };
-	int rc = 1;
+	int rc = 0;
 	FILE *fp;
+	char msg[120];
 
 	if (!rtc_file) {
-		logit(LOG_NOTICE, "System has no RTC (missing driver?), skipping restore.");
+		snprintf(msg, sizeof(msg), "Resetting system clock to kernel default, %s.", rtc_timestamp);
+		print_desc(NULL, msg);
+		rc = time_set(NULL);
+		print(rc, NULL);
 		return;
 	}
-
-	print_desc(NULL, "Restoring system clock from backup");
 
 	fp = fopen(rtc_file, "r");
 	if (fp) {
@@ -187,18 +189,25 @@ static void file_restore(void *arg)
 		if (fgets(buf, sizeof(buf), fp)) {
 			chomp(buf);
 			strptime(buf, RTC_FMT, &tm);
-			rc = time_set(&tm);
+			if (!strptime(buf, RTC_FMT, &tm))
+				rc = 1;
 		}
 		fclose(fp);
-	} else
-		logit(LOG_WARNING, "Missing %s", rtc_file);
+	}
+		rc = 1;
 
 	if (rc) {
-		time_set(NULL);
-		rc = 2;
+		print_desc(NULL, "Failed to restore system clock from restore file");
+		print(2, NULL);
+		snprintf(msg, sizeof(msg), "Resetting system clock to kernel default, %s.", rtc_timestamp);
+		print_desc(NULL, msg);
+		rc = time_set(NULL);
+		print(rc, NULL);
+	} else {
+		print_desc(NULL, "Restoring system clock from restore file");
+		rc = time_set(&tm);
+		print(rc, NULL);
 	}
-
-	print(rc, NULL);
 }
 
 static int rtc_open(void)
@@ -292,8 +301,7 @@ static void rtc_restore(void *arg)
 		print(2, NULL);
 
 		/* Try restoring from last save game */
-		if (rtc_file)
-			file_restore(arg);
+		file_restore(arg);
 	} else
 		print(0, NULL);
 
