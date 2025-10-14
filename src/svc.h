@@ -94,7 +94,7 @@ typedef enum {
 	SVC_NOTIFY_S6,
 } svc_notify_t;
 
-#define MAX_ID_LEN       16
+#define MAX_ID_LEN       65
 #define MAX_ARG_LEN      64
 #define MAX_CMD_LEN      256
 #define MAX_IDENT_LEN    (MAX_ARG_LEN + MAX_ID_LEN + 1)
